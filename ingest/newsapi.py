@@ -35,7 +35,16 @@ def pull() -> list[dict]:
 
     docs = []
     for bank, queries in BANKS.items():
-        query = " OR ".join(f'"{q}"' for q in queries)
+        # Exclude the bare short alias (e.g. plain "DBS") from the query terms —
+        # confirmed live to pull in unrelated global news (US college football
+        # articles) that happen to contain the substring "DBS" with no
+        # Singapore/banking context at all. The bare alias is kept in BANKS for
+        # in-text detection on already-relevant text (Reddit etc.), just not
+        # for driving an unscoped global search. Also AND-gate on Singapore
+        # context to keep the query genuinely selective.
+        specific_terms = [q for q in queries if " " in q or "." in q]  # drops bare "DBS"/"OCBC"/"UOB"
+        bank_query = " OR ".join(f'"{q}"' for q in specific_terms)
+        query = f'({bank_query}) AND (Singapore OR SGX)'
         url = "https://newsapi.org/v2/everything"
         params = {
             "q": query,

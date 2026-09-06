@@ -35,8 +35,12 @@ from ingest.db import make_doc_id, now_iso, upsert_documents
 BASE_URL = "https://arctic-shift.photon-reddit.com/api"
 
 # r/SingaporeInvestments is included for historical (pre-2023-10) pulls only —
-# see module docstring. r/singapore was tested and dropped (0% bank-mention rate).
-SUBREDDITS = ["singaporefi", "SingaporeInvestments", "investing"]
+# see module docstring. r/singapore and r/investing were both tested and
+# dropped: 0 bank-mentioning items out of 7,000+ fetched across two separate
+# samples (90-day and 12-day) — pure noise for this project, and r/investing's
+# comment volume in particular is large enough that fetching it for zero
+# payoff would dominate ingestion time.
+SUBREDDITS = ["singaporefi", "SingaporeInvestments"]
 
 PAGE_LIMIT = 100          # Arctic Shift's max per page
 MAX_PAGES_PER_WINDOW = 500  # safety cap so a runaway window can't loop forever

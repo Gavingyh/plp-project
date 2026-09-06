@@ -37,7 +37,12 @@ def pull() -> list[dict]:
 
     docs = []
     for bank, queries in BANKS.items():
-        ticker = queries[2]  # e.g. "D05.SI" — see BANKS in ingest/base.py
+        # AV's ticker validator rejects periods ("Invalid ticker format" for
+        # "D05.SI" — confirmed live), so strip the exchange suffix. This is a
+        # format fix only: valid-format tickers ("D05", "D05SI", "D05-SI")
+        # were also tested live and all returned 0 results — AV genuinely
+        # doesn't index SGX-listed names, format aside (see MVP plan finding b).
+        ticker = queries[2].split(".")[0]  # "D05.SI" -> "D05"
         url = "https://www.alphavantage.co/query"
         params = {
             "function": "NEWS_SENTIMENT",

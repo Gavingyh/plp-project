@@ -54,6 +54,31 @@ CREATE TABLE IF NOT EXISTS sentences (
 CREATE INDEX IF NOT EXISTS idx_sentences_doc ON sentences(doc_id);
 CREATE INDEX IF NOT EXISTS idx_sentences_bank ON sentences(bank);
 CREATE INDEX IF NOT EXISTS idx_sentences_norm_hash ON sentences(norm_hash);
+
+-- Analyst consensus (ratings + price targets), one row per bank per day.
+-- Structured numeric data, NOT text — deliberately separate from `documents`,
+-- which feeds sentence-splitting and FinBERT sentiment scoring.
+CREATE TABLE IF NOT EXISTS analyst_consensus (
+    bank                TEXT NOT NULL,
+    as_of_date          TEXT NOT NULL,   -- YYYY-MM-DD, one snapshot per day
+    ticker              TEXT NOT NULL,
+    n_analysts          INTEGER,
+    recommendation_key  TEXT,            -- e.g. 'buy', 'hold'
+    recommendation_mean REAL,            -- 1.0=strong buy .. 5.0=strong sell
+    target_mean         REAL,
+    target_median       REAL,
+    target_high         REAL,
+    target_low          REAL,
+    current_price       REAL,
+    strong_buy          INTEGER,
+    buy                 INTEGER,
+    hold                INTEGER,
+    sell                INTEGER,
+    strong_sell         INTEGER,
+    fetched_at          TEXT NOT NULL,
+    PRIMARY KEY (bank, as_of_date)
+);
+CREATE INDEX IF NOT EXISTS idx_analyst_consensus_bank ON analyst_consensus(bank);
 """
 
 

@@ -114,6 +114,46 @@ def get_coverage(bank: str | None = None, aspect: str | None = None) -> dict:
             "by_source": {src: cnt for src, cnt in by_source}, "has_data": n > 0}
 
 
+def get_analyst_consensus(bank: str) -> dict:
+    """Latest analyst consensus (ratings + price targets) for one bank.
+
+    This is consensus *aggregate* data from Yahoo Finance, NOT the contents of
+    any analyst report — say so when reporting it. Returns has_data=False when
+    no snapshot exists yet.
+    """
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT as_of_date, n_analysts, recommendation_key, recommendation_mean, "
+            "target_mean, target_high, target_low, current_price, "
+            "strong_buy, buy, hold, sell, strong_sell "
+            "FROM analyst_consensus WHERE bank = ? ORDER BY as_of_date DESC LIMIT 1",
+            (bank,),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return {"bank": bank, "has_data": False,
+                "reason": "no analyst consensus snapshot stored yet — "
+                          "run `python -m ingest.yahoo_analyst`"}
+
+    (as_of, n, key, mean, t_mean, t_high, t_low, price,
+     s_buy, buy_, hold, sell_, s_sell) = row
+    upside = None
+    if t_mean is not None and price:
+        upside = round(100 * (t_mean - price) / price, 1)
+    return {
+        "bank": bank, "has_data": True, "as_of_date": as_of,
+        "n_analysts": n, "consensus_rating": key, "rating_mean_1best_5worst": mean,
+        "target_mean": t_mean, "target_high": t_high, "target_low": t_low,
+        "current_price": price, "implied_upside_pct": upside,
+        "rating_breakdown": {"strong_buy": s_buy, "buy": buy_, "hold": hold,
+                              "sell": sell_, "strong_sell": s_sell},
+        "source_note": "Yahoo Finance consensus aggregate, not analyst report text",
+    }
+
+
 def search_evidence(query: str, bank: str | None = None, aspect: str | None = None,
                      sentiment: str | None = None, k: int = 5) -> dict:
     """RAG evidence search (chatbot/retrieval.py) — quotes with citations for
@@ -194,6 +234,18 @@ TOOL_SCHEMAS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "get_analyst_consensus",
+        "description": "Get professional analyst consensus for one bank: number of analysts, "
+                        "consensus rating, average/high/low price targets, and implied upside. "
+                        "This is consensus aggregate data, NOT the text or reasoning of any "
+                        "analyst report — do not claim to know why analysts hold that view.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]}},
+            "required": ["bank"],
+        },
+    },
 ]
 
 TOOL_FUNCTIONS = {
@@ -202,4 +254,5 @@ TOOL_FUNCTIONS = {
     "get_trend": lambda **kw: get_trend(**kw),
     "get_coverage": lambda **kw: get_coverage(**kw),
     "search_evidence": lambda **kw: search_evidence(**kw),
+    "get_analyst_consensus": lambda **kw: get_analyst_consensus(**kw),
 }

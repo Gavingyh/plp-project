@@ -16,7 +16,7 @@ USAGE:
 import argparse
 from datetime import datetime, timedelta, timezone
 
-from ingest import alphavantage, arctic_shift, newsapi
+from ingest import alphavantage, arctic_shift, newsapi, yahoo_analyst
 from ingest.db import count_by_source_bank, total_count, upsert_documents
 
 
@@ -43,6 +43,11 @@ def main(reddit_since: str | None):
     a, i = upsert_documents(docs)
     print(f"Arctic Shift: {i}/{a} new\n")
     total_attempted += a; total_inserted += i
+
+    print("--- Yahoo analyst consensus ---")
+    consensus_rows = yahoo_analyst.pull()
+    n_consensus = yahoo_analyst.upsert(consensus_rows)
+    print(f"Analyst consensus: {n_consensus} bank snapshots\n")
 
     print(f"{'=' * 60}\nBATCH SUMMARY\n{'=' * 60}")
     print(f"Total this run: {total_inserted}/{total_attempted} new documents inserted")

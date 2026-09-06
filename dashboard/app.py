@@ -56,6 +56,20 @@ def load_evidence(bank: str, aspect: str) -> pd.DataFrame:
         conn.close()
 
 
+@st.cache_data(ttl=300)
+def load_analyst_consensus() -> pd.DataFrame:
+    conn = get_connection()
+    try:
+        return pd.read_sql_query(
+            "SELECT bank, as_of_date, n_analysts, recommendation_key, target_mean, "
+            "current_price FROM analyst_consensus WHERE as_of_date = "
+            "(SELECT MAX(as_of_date) FROM analyst_consensus)", conn)
+    except Exception:
+        return pd.DataFrame()  # table may not exist yet on a fresh install
+    finally:
+        conn.close()
+
+
 def disclosure_footer():
     st.caption(
         f"Not financial advice — sentiment is an indicator, not a recommendation. "
@@ -95,6 +109,37 @@ with tab1:
                 r = row.iloc[0]
                 st.metric(bank, f"{r['score']:+.3f}", help=f"n={int(r['n'])} data points")
                 st.caption(f"n={int(r['n'])} · pos {int(r['pos_n'])} / neu {int(r['neu_n'])} / neg {int(r['neg_n'])}")
+
+    st.divider()
+    st.subheader("Professional analyst consensus")
+    st.caption(
+        "Consensus aggregates from Yahoo Finance (unofficial API) — the number of "
+        "analysts covering each bank and their average price target. This is NOT "
+        "the content of any analyst report, and is separate from the social/news "
+        "sentiment scores above."
+    )
+    consensus_df = load_analyst_consensus()
+    if consensus_df.empty:
+        st.info("No analyst consensus data yet — run `python -m ingest.yahoo_analyst`.")
+    else:
+        acols = st.columns(3)
+        for acol, bank in zip(acols, BANKS):
+            brow = consensus_df[consensus_df.bank == bank]
+            with acol:
+                if brow.empty:
+                    st.metric(f"{bank} consensus", "No data")
+                else:
+                    b = brow.iloc[0]
+                    upside = None
+                    if pd.notna(b["target_mean"]) and b["current_price"]:
+                        upside = 100 * (b["target_mean"] - b["current_price"]) / b["current_price"]
+                    st.metric(
+                        f"{bank} — {b['recommendation_key'] or 'n/a'}",
+                        f"S${b['target_mean']:.2f}" if pd.notna(b["target_mean"]) else "n/a",
+                        delta=f"{upside:+.1f}% vs spot" if upside is not None else None,
+                    )
+                    st.caption(f"{int(b['n_analysts'])} analysts · as of {b['as_of_date']}"
+                               if pd.notna(b["n_analysts"]) else f"as of {b['as_of_date']}")
     disclosure_footer()
 
 with tab2:

@@ -69,17 +69,22 @@ def disclosure_footer():
 st.title("🏦 Singapore Bank Sentiment Dashboard")
 st.caption("DBS · OCBC · UOB — overall & aspect-based sentiment from news, social, and earnings sources")
 
-df = load_index()
-if df.empty:
+df_all = load_index()
+if df_all.empty:
     st.warning("No sentiment data yet. Run the pipeline: `python run_daily_batch.py` → "
                "`python -m preprocess.pipeline` → `python -m aspects.assign` → "
                "`python -m sentiment.score` → `python -m aggregate.index`")
     st.stop()
 
+# sentiment_index now carries 3 rows per (bank, aspect) — one per window
+# ('7d', '30d', 'all_time', see aggregate/index.py). Overview/Heatmap use the
+# all-time snapshot; Time Series is the one view that shows all three.
+df = df_all[df_all.window == "all_time"]
+
 tab1, tab2, tab3, tab4 = st.tabs(["Overview", "Aspect Heatmap", "Time Series", "Evidence"])
 
 with tab1:
-    st.subheader("Overall sentiment by bank")
+    st.subheader("Overall sentiment by bank (all-time)")
     cols = st.columns(3)
     for col, bank in zip(cols, BANKS):
         row = df[(df.bank == bank) & (df.aspect == "ALL")]
@@ -93,7 +98,7 @@ with tab1:
     disclosure_footer()
 
 with tab2:
-    st.subheader("Sentiment by bank × aspect")
+    st.subheader("Sentiment by bank × aspect (all-time)")
     aspect_df = df[df.aspect != "ALL"]
     if aspect_df.empty:
         st.info("No aspect-level data yet.")
@@ -109,13 +114,36 @@ with tab2:
     disclosure_footer()
 
 with tab3:
-    st.subheader("Sentiment over time")
-    st.info(
-        "Rolling time-series windows aren't implemented yet — aggregate/index.py currently "
-        "computes a single all-time snapshot per (bank, aspect). This is a documented MVP "
-        "scope cut (see MVP plan Phase 6); the schema (`sentiment_index.window`) already "
-        "supports adding '7d'/'30d' rows once that's built."
+    st.subheader("Sentiment by window: 7d vs 30d vs all-time")
+    st.caption(
+        "Not a continuous time series yet — three discrete rolling windows "
+        "(aggregate/index.py). A day-by-day series is a documented next step; "
+        "this at least shows real recent-vs-baseline movement rather than a stub."
     )
+    c1, c2 = st.columns(2)
+    with c1:
+        ts_bank = st.selectbox("Bank", BANKS, key="ts_bank")
+    with c2:
+        ts_aspects = ["ALL"] + sorted(df_all[df_all.aspect != "ALL"]["aspect"].unique().tolist())
+        ts_aspect = st.selectbox("Aspect", ts_aspects, key="ts_aspect")
+
+    window_df = df_all[(df_all.bank == ts_bank) & (df_all.aspect == ts_aspect)]
+    window_order = {"7d": 0, "30d": 1, "all_time": 2}
+    window_df = window_df.assign(_order=window_df.window.map(window_order)).sort_values("_order")
+
+    if window_df.empty:
+        st.info("No data for this bank/aspect.")
+    else:
+        wc1, wc2, wc3 = st.columns(3)
+        for col, (_, r) in zip((wc1, wc2, wc3), window_df.iterrows()):
+            with col:
+                if r["n"] == 0:
+                    st.metric(r["window"], "No data")
+                else:
+                    st.metric(r["window"], f"{r['score']:+.3f}", help=f"n={int(r['n'])}")
+                    st.caption(f"n={int(r['n'])}")
+        if len(window_df) >= 2 and (window_df["n"] >= 5).sum() >= 2:
+            st.line_chart(window_df.set_index("window")["score"])
     disclosure_footer()
 
 with tab4:

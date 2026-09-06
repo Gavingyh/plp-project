@@ -18,55 +18,67 @@ from chatbot.retrieval import search_evidence as _search_evidence
 MIN_VOLUME_FOR_SCORE = 5  # below this, report insufficient data rather than a number
 
 
-def get_sentiment(bank: str, aspect: str | None = None) -> dict:
-    """Current sentiment index for a bank, optionally filtered to one aspect
-    ('ALL' aspect = overall). Returns insufficient_data=True below the volume floor."""
+def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time") -> dict:
+    """Sentiment index for a bank, optionally filtered to one aspect ('ALL' aspect
+    = overall) and one window ('7d', '30d', or 'all_time' — see aggregate/index.py).
+    Returns insufficient_data=True below the volume floor, or if no row exists at
+    all for this window (e.g. genuinely nothing published in the last 7 days)."""
     conn = get_connection()
     try:
         aspect_filter = aspect or "ALL"
         row = conn.execute(
             "SELECT score, n, pos_n, neu_n, neg_n, confidence_mean, model_version, computed_at "
-            "FROM sentiment_index WHERE bank = ? AND aspect = ? ORDER BY computed_at DESC LIMIT 1",
-            (bank, aspect_filter),
+            "FROM sentiment_index WHERE bank = ? AND aspect = ? AND window = ? "
+            "ORDER BY computed_at DESC LIMIT 1",
+            (bank, aspect_filter, window),
         ).fetchone()
     finally:
         conn.close()
 
     if row is None:
-        return {"bank": bank, "aspect": aspect_filter, "insufficient_data": True,
-                "reason": "no sentiment data computed for this bank/aspect combination"}
+        return {"bank": bank, "aspect": aspect_filter, "window": window, "insufficient_data": True,
+                "reason": f"no sentiment data computed for this bank/aspect/window combination "
+                          f"(window={window!r} may genuinely have zero items, or the pipeline "
+                          "hasn't been run since new data came in)"}
     score, n, pos, neu, neg, conf, model_version, computed_at = row
     if n < MIN_VOLUME_FOR_SCORE:
-        return {"bank": bank, "aspect": aspect_filter, "insufficient_data": True, "n": n,
+        return {"bank": bank, "aspect": aspect_filter, "window": window,
+                "insufficient_data": True, "n": n,
                 "reason": f"only {n} data points, below the minimum of {MIN_VOLUME_FOR_SCORE} "
                           "needed to report a reliable score"}
-    return {"bank": bank, "aspect": aspect_filter, "score": score, "n": n,
+    return {"bank": bank, "aspect": aspect_filter, "window": window, "score": score, "n": n,
             "positive_n": pos, "neutral_n": neu, "negative_n": neg,
             "confidence_mean": conf, "model_version": model_version, "computed_at": computed_at,
             "insufficient_data": False}
 
 
-def compare_banks(aspect: str | None = None) -> dict:
+def compare_banks(aspect: str | None = None, window: str = "all_time") -> dict:
     """Side-by-side sentiment across DBS/OCBC/UOB for one aspect (or overall)."""
-    results = {bank: get_sentiment(bank, aspect) for bank in ("DBS", "OCBC", "UOB")}
-    return {"aspect": aspect or "ALL", "banks": results}
+    results = {bank: get_sentiment(bank, aspect, window) for bank in ("DBS", "OCBC", "UOB")}
+    return {"aspect": aspect or "ALL", "window": window, "banks": results}
 
 
 def get_trend(bank: str, aspect: str | None = None) -> dict:
-    """Direction/magnitude of sentiment change over time.
+    """Direction/magnitude of sentiment change: compares the 7d window against
+    the 30d window (both from aggregate/index.py's rolling windows). Falls back
+    to reporting all_time alone if either rolling window has insufficient data —
+    a trend computed from a handful of items either side is noise, not signal."""
+    recent = get_sentiment(bank, aspect, window="7d")
+    baseline = get_sentiment(bank, aspect, window="30d")
+    fallback = get_sentiment(bank, aspect, window="all_time")
 
-    MVP LIMITATION: sentiment_index currently stores a single all-time
-    aggregate per (bank, aspect) — see aggregate/index.py `window` column,
-    which is hard-coded to 'all_time' for the MVP. Rolling 7d/30d windows
-    (plan Phase 6, step 3) are a documented next step, not yet implemented.
-    This tool is wired up now so the chatbot's tool-calling contract is
-    stable, but currently returns the single available data point rather
-    than a real trend line.
-    """
-    current = get_sentiment(bank, aspect)
-    return {**current, "trend_available": False,
-            "note": "Rolling-window trend data isn't implemented yet (MVP scope) — "
-                     "only an all-time aggregate is available. See aggregate/index.py."}
+    if recent["insufficient_data"] or baseline["insufficient_data"]:
+        return {**fallback, "trend_available": False,
+                "note": "Not enough recent data to compute a 7d-vs-30d trend "
+                        f"(7d insufficient={recent['insufficient_data']}, "
+                        f"30d insufficient={baseline['insufficient_data']}) — "
+                        "showing the all-time snapshot instead."}
+
+    delta = round(recent["score"] - baseline["score"], 4)
+    direction = "improving" if delta > 0.02 else "declining" if delta < -0.02 else "stable"
+    return {"bank": bank, "aspect": aspect or "ALL", "trend_available": True,
+            "direction": direction, "delta_7d_vs_30d": delta,
+            "recent_7d": recent, "baseline_30d": baseline}
 
 
 def get_coverage(bank: str | None = None, aspect: str | None = None) -> dict:
@@ -140,9 +152,9 @@ TOOL_SCHEMAS = [
     },
     {
         "name": "get_trend",
-        "description": "Get sentiment trend/direction for a bank and aspect over time. "
-                        "NOTE: currently returns only an all-time snapshot, not a real trend "
-                        "(rolling windows not yet implemented) — the tool response says so.",
+        "description": "Get sentiment trend/direction for a bank and aspect: compares the last "
+                        "7 days against the last 30 days. Falls back to an all-time snapshot "
+                        "(trend_available=false) if either window is too thin to compare.",
         "input_schema": {
             "type": "object",
             "properties": {

@@ -27,6 +27,11 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY")
 
+# Free tier is 100 req/day. 4 pages x 3 banks = 12 requests per run — cheap
+# relative to quota, but paginating fully (DBS alone reported 349 totalResults
+# on a single-page pull) recovers volume the original single-page pull missed.
+MAX_PAGES = 4
+
 
 def pull() -> list[dict]:
     if not NEWSAPI_KEY:
@@ -46,42 +51,56 @@ def pull() -> list[dict]:
         bank_query = " OR ".join(f'"{q}"' for q in specific_terms)
         query = f'({bank_query}) AND (Singapore OR SGX)'
         url = "https://newsapi.org/v2/everything"
-        params = {
-            "q": query,
-            "language": "en",
-            "sortBy": "publishedAt",
-            "pageSize": 100,
-            "apiKey": NEWSAPI_KEY,
-        }
-        try:
-            resp = request_with_retries(url, params)
-            data = resp.json()
-            articles = data.get("articles", [])
-            print(f"[NewsAPI] {bank}: {len(articles)} articles "
-                  f"(totalResults reported: {data.get('totalResults', '?')})")
-            for a in articles:
-                title = a.get("title") or ""
-                description = a.get("description") or ""
-                body = f"{title}. {description}".strip(". ")
-                if not body:
-                    continue
-                resolved_bank = resolve_bank(body, fallback=bank)
-                docs.append({
-                    "doc_id": make_doc_id("newsapi", a.get("url") or title),
-                    "source": "newsapi",
-                    "source_detail": a.get("source", {}).get("name"),
-                    "bank": resolved_bank,
-                    "doc_type": "article",
-                    "title": title,
-                    "body": body,
-                    "published_at": a.get("publishedAt") or now_iso(),
-                    "url": a.get("url") or "",
-                    "ingested_at": now_iso(),
-                    "raw": a,
-                })
-        except Exception as e:
-            print(f"[NewsAPI] {bank}: ERROR — {e}")
-        time.sleep(1)  # be polite to free tier
+
+        total_this_bank = 0
+        for page in range(1, MAX_PAGES + 1):
+            params = {
+                "q": query,
+                "language": "en",
+                "sortBy": "publishedAt",
+                "pageSize": 100,
+                "page": page,
+                "apiKey": NEWSAPI_KEY,
+            }
+            try:
+                resp = request_with_retries(url, params)
+                data = resp.json()
+                articles = data.get("articles", [])
+                total_results = data.get("totalResults", "?")
+                print(f"[NewsAPI] {bank} page {page}: {len(articles)} articles "
+                      f"(totalResults reported: {total_results})")
+                for a in articles:
+                    title = a.get("title") or ""
+                    description = a.get("description") or ""
+                    body = f"{title}. {description}".strip(". ")
+                    if not body:
+                        continue
+                    resolved_bank = resolve_bank(body, fallback=bank)
+                    docs.append({
+                        "doc_id": make_doc_id("newsapi", a.get("url") or title),
+                        "source": "newsapi",
+                        "source_detail": a.get("source", {}).get("name"),
+                        "bank": resolved_bank,
+                        "doc_type": "article",
+                        "title": title,
+                        "body": body,
+                        "published_at": a.get("publishedAt") or now_iso(),
+                        "url": a.get("url") or "",
+                        "ingested_at": now_iso(),
+                        "raw": a,
+                    })
+                total_this_bank += len(articles)
+                # Stop paginating once we've covered totalResults, or the page
+                # came back short (no more results), or a free-tier page-depth
+                # limit kicks in (NewsAPI's developer plan restricts how far
+                # back `page` can go regardless of pageSize).
+                if len(articles) < 100 or (isinstance(total_results, int) and total_this_bank >= total_results):
+                    break
+            except Exception as e:
+                print(f"[NewsAPI] {bank} page {page}: ERROR — {e}")
+                break  # free-tier page-depth limits surface as errors here — stop, don't retry deeper pages
+            time.sleep(1)  # be polite to free tier
+        time.sleep(1)
 
     return docs
 

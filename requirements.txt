@@ -23,3 +23,6 @@ anthropic>=0.40.0
 
 # Phase 5 evaluation — lexicon baseline
 vaderSentiment>=3.3.2
+
+# tests
+pytest>=8.0.0

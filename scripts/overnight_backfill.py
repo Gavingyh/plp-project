@@ -78,7 +78,39 @@ def log(msg: str):
         f.write(line + "\n")
 
 
+def _check_environment():
+    """Fail loudly and immediately if this isn't running under the project's
+    venv — rather than silently burning through every chunk with the same
+    error. Hit live: a real overnight run got invoked under miniforge's
+    Python 3.9 instead of .venv-plp's 3.14 (almost certainly because a
+    conda auto-activation in the shell profile ran after `source
+    .venv-plp/bin/activate` and shadowed it) and failed all 79 real chunks
+    identically — the codebase's `str | None` syntax (PEP 604) doesn't
+    parse on 3.9. Zero data was lost that couldn't be recovered by
+    re-running, but the whole night's run time was wasted silently."""
+    if sys.version_info < (3, 10):
+        print(f"FATAL: running under Python {sys.version.split()[0]} ({sys.executable}), "
+              "but this codebase requires 3.10+ (uses `X | None` type syntax throughout). "
+              "This almost always means .venv-plp wasn't actually active when this script "
+              "was launched — a conda/miniforge base env auto-activating in your shell "
+              "profile is a common cause, since it can run *after* `source "
+              ".venv-plp/bin/activate` and silently take over `python3` on PATH.\n\n"
+              "Fix: invoke the venv's interpreter by absolute path instead of relying on "
+              "shell activation:\n"
+              "  caffeinate -i /Users/gavin/Projects/plp-project/.venv-plp/bin/python3 "
+              "scripts/overnight_backfill.py", file=sys.stderr)
+        sys.exit(1)
+    try:
+        import requests  # noqa: F401
+    except ImportError:
+        print(f"FATAL: 'requests' isn't importable under {sys.executable} — this isn't the "
+              "project's venv. See the Python-version message above for the fix.", file=sys.stderr)
+        sys.exit(1)
+
+
 def run():
+    _check_environment()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--since", default="2020-01-01")
     parser.add_argument("--until", default=datetime.now().strftime("%Y-%m-%d"))

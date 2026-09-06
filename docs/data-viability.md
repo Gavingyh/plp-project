@@ -3,6 +3,29 @@
 Findings from running the actual pipeline against live data (2026-09-06),
 answering the unknowns flagged in the MVP plan before building further on them.
 
+## Aspect discovery + similarity-floor calibration (added later same day)
+
+`python -m aspects.discover` (2,888 sentences) found 9 real clusters (52%
+noise), but they split along a coarser axis than the proposal's 4 aspects —
+"consumer banking service" vs. "investment/stock discussion" — rather than
+subdividing into dividend/asset-quality/NIM/guidance. Full detail and the
+decision this raises are in `config/aspects.yaml`'s header comment.
+
+Separately, and more decisively: `aspects/compare_taxonomies.py` found the
+original `similarity_floor: 0.35` in `config/aspects.yaml` wasn't
+discriminating **for any taxonomy**, not just the proposal's one. Even a
+2-aspect coarse candidate matched *both* aspects on ~100% of sentences at
+that floor (avg 2.00/2 matched). A live sweep (0.35 -> 2.00 avg matched,
+0.6% other; 0.50 -> 1.96, 0.6%; 0.60 -> 1.89, 2.8%; 0.70 -> 1.63, 9.2%;
+0.75 -> 1.29, 18.9%) showed the floor needed to move much higher just to get
+any real separation. Recalibrated to 0.65 (documented in `config/aspects.yaml`
+as a starting point, not final — re-sweep when the corpus or taxonomy
+changes materially). Effect on the real proposal-aligned taxonomy: avg
+aspects-matched-per-sentence dropped from 3.97/4 to roughly 2.3/4, and
+`other` went from ~0% to ~31% — the per-aspect sample sizes in
+`sentiment_index` now actually differ meaningfully bank-to-bank instead of
+being near-identical across all 4 aspects.
+
 ## Alpha Vantage — confirmed non-viable for SGX names
 
 Two separate issues, tested live:

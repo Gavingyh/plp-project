@@ -78,4 +78,18 @@ aspects:
 # Sentences whose best cosine similarity to any non-OTHER centroid falls
 # below this threshold are assigned to "other" rather than forced into the
 # nearest-but-still-distant aspect.
-similarity_floor: 0.35
+#
+# RECALIBRATED 2026-09-06 from 0.35 -> 0.65, backed by a live sweep
+# (aspects/compare_taxonomies.py), not guessed. At 0.35, even a 2-aspect
+# coarse candidate matched BOTH aspects on ~100% of sentences (avg 2.00/2) —
+# meaning 0.35 wasn't discriminating between anything, for any taxonomy.
+# The sweep: floor 0.35->2.00 avg matched/0.1% other; 0.50->1.96/0.6%;
+# 0.60->1.89/2.8%; 0.70->1.63/9.2%; 0.75->1.29/18.9%. 0.65 is a starting
+# recalibration between those points, not a final answer — re-sweep whenever
+# the corpus grows materially (earnings text added, full backfill in) or the
+# taxonomy changes, since the right floor depends on both.
+# NOTE: this is a pure calibration fix (how confidently something must match
+# before counting), independent of the taxonomy-content decision above —
+# safe to apply without the same sign-off, since it changes threshold, not
+# meaning.
+similarity_floor: 0.65

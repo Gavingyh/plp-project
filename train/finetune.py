@@ -116,13 +116,20 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16)
         label2id=LABEL2ID,
     )
 
+    # transformers 5.x dropped warmup_ratio from TrainingArguments (confirmed live,
+    # not assumed — a smoke test caught this before real labeled data existed) —
+    # compute the equivalent step count by hand to preserve the intended 10% warmup.
+    steps_per_epoch = max(1, len(train_df) // batch_size)
+    total_steps = steps_per_epoch * epochs
+    warmup_steps = max(1, round(0.10 * total_steps))
+
     training_args = TrainingArguments(
         output_dir=os.path.join(MODEL_OUT_DIR, f"seed_{seed}"),
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         learning_rate=lr,
-        warmup_ratio=0.10,
+        warmup_steps=warmup_steps,
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,

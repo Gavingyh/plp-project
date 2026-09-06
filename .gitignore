@@ -1,6 +1,9 @@
 .env
 data/
+models/
 __pycache__/
 *.pyc
 .venv-plp/
 .DS_Store
+*.egg-info/
+.pytest_cache/

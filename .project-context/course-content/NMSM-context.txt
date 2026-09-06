@@ -1,0 +1,111 @@
+NMSM COURSE CONTEXT — NEW MEDIA AND SENTIMENT MINING
+Module 2 of 4, Graduate Certificate in Practical Language Processing (Part-Time), NUS-ISS
+Instructors: Dr. Fan Zhenzhen (Day 1), Dr. Wang Aobo (Day 2-3)
+Dates: 25 Jul, 01 Aug, 08 Aug 2026 (3 teaching days, AM + PM sessions)
+ 
+Note: this file is a condensed synthesis of ~250 pages of lecture slides plus the two
+workshop instruction sheets, built to give future conversations a fast, working sense of
+what this course covered — not a verbatim transcript. See "WHAT WAS LEFT OUT" at the
+bottom for what was deliberately excluded and why.
+ 
+ 
+1. WHERE THIS MODULE SITS IN THE CERTIFICATE
+ 
+The Graduate Certificate in Practical Language Processing (GC-PLP) has 4 modules:
+- Module 1: Text Analytics (3 days) — preprocessing, document classification/clustering, information extraction
+- Module 2: New Media and Sentiment Mining (3 days) — THIS MODULE — sentiment detection/classification, entity/aspect extraction
+- Module 3: Text Processing using Machine Learning (4 days) — DNNs for text mining, model training techniques
+- Module 4: Conversational UIs (4 days) — architecture, conversation flow, building/evaluating chatbots
+ 
+After all 4 modules, candidates complete a Practice Module (group project) applying the combined skill set, plus a written exam. Both must be passed to earn the certificate. The Practice Module requirements, deadlines, and this team's specific project decisions are tracked separately in the project doc "PLP Practice Module — Project Context" — that doc is the team's actual working project (Retail Investor Sentiment Dashboard for DBS/OCBC/UOB); this file is the generic course content that project draws on.
+ 
+Module learning outcomes (by end of NMSM):
+- Identify where sentiment analysis can be applied
+- Evaluate/apply classification techniques for sentiment classification using open-source libraries
+- Design a sentiment analysis system for applications like customer feedback and reviews
+- Perform sentiment analysis at a granular level for entities and aspects (ABSA)
+- Grasp the Deep Learning fundamentals underpinning DNN techniques used in sentiment analysis
+ 
+ 
+2. DAY-BY-DAY CONTENT
+ 
+--- DAY 1 AM — Introduction to Sentiment Analysis in New Media ---
+- Traditional media (one-way) vs new media (bidirectional, user-generated content: massive volume, unfiltered, real-time, noisy)
+- Sentiment analysis defined; formal definition of an opinion as a quintuple: (entity, aspect, sentiment, opinion holder, time)
+- Sentiment vs emotion distinction
+- 8 typical sub-tasks of sentiment analysis: subjectivity classification, polarity classification, entity/holder/time extraction, opinion summarization, sarcasm detection, coreference resolution & word sense disambiguation, opinion search/retrieval, opinion spam detection
+- 3 levels of sentiment analysis: message-level, sentence-level, entity/aspect-level
+- 3 general approaches: rule-based (lexicons, NLP preprocessing), ML-based (feature engineering + training), hybrid — noted that modern LLMs can plug into any of these as classifiers/feature generators/annotators
+- Applications covered in depth: customer feedback & reviews (VoC), social media monitoring (brand/reputation tracking), financial prediction (sentiment as a signal alongside price/volume/macro data — includes a gold-trading and general market-sentiment example), fraud detection (suspicious language, fake reviews, DeFi scam detection via transformer + sentiment, real-time scam-call detection)
+- In-class group activity: sentiment analysis plan for YouTube comments (BYD vs Tesla)
+- PLP Project Briefing also delivered on Day 1 (the practice-module project requirements — see project doc)
+ 
+--- DAY 1 PM — Entity & Aspect Mining (ABSA foundations) ---
+- Why ABSA: document-level sentiment loses nuance (worked example: hotel review — one 4-star rating vs positive/negative per aspect)
+- ABSA subtasks table: Aspect Term Extraction (AE), Opinion Term Extraction (OE), Aspect-level Sentiment Classification (ALSC), Aspect-oriented Opinion Extraction (AOE), Aspect Extraction+Sentiment (AESC), Pair Extraction, Triplet Extraction
+- Entity extraction & resolution: rule-based NER, supervised (HMM/CRF), semi-supervised (PU learning, Bayesian Sets); entity resolution challenges — polysemy, synonymy, hierarchical entities
+- Aspect extraction methods (5 families): ① frequency-based (noun-phrase counting + PMI co-occurrence filtering), ② lexico-syntactic/dependency parsing (double propagation, OA/AO/AA/OO relation rules, aspect-candidate ranking), ③ supervised ML/sequence labeling, ④ deep learning (LSTM/Transformers), ⑤ LLM-based (zero/few-shot)
+- Aspect grouping into categories (common-words, dictionary/synonym, WordNet distance, taxonomy mapping, topic modeling/LDA, semi-supervised seed expansion)
+- Implicit vs explicit aspects (e.g. "the camera is expensive" implies price without naming it) — traditional methods handle explicit aspects; implicit aspects need inference (ML/LLMs)
+- Exercise: heuristic ABSA (workshop notebook)
+ 
+--- DAY 2 AM — ABSA as Sequence Modeling + Training-Free Approaches ---
+- Aspect extraction reframed as sequence labeling (IOB/IO tagging: B-ASP/I-ASP/B-OPN/O)
+- Evolution of sequence models walked through in depth: HMM (Markov assumption, Viterbi decoding) → CRF (discriminative, richer/overlapping features, addresses HMM's independence assumptions) → RNN/LSTM/GRU (learned gating, long-range dependencies) → Transformers (self-attention, parallel processing) → pre-trained LMs (BERT/GPT family) → LLMs (zero/few-shot prompting)
+- Fine-tuning BERT for ABSA as token classification; BART as a sequence-to-sequence approach for joint aspect/opinion/sentiment extraction
+- Training-free approaches: (A) task reformulation — extractive QA (BERT fine-tuned on SQuAD, review-as-context) and NLI (premise/hypothesis entailment, CORN framework), both limited to explicit aspects and single-answer/fixed-label constraints; (B) prompt-based LLM ABSA — zero-shot, few-shot, multi-turn QA pipelines
+- Detailed anatomy of a structured ABSA prompt: ROLE → TASK → SCHEMA → CONSTRAINTS → EXAMPLE(S) → INPUT, with worked zero-shot and few-shot examples producing structured JSON output
+- LLMs' edge at implicit aspect detection (world knowledge + reasoning) and at LLM-assisted aspect-category discovery (asking the LLM to propose a domain's aspect taxonomy before extraction)
+- Workshops: zero-shot ABSA notebook, CRF-based aspect extraction notebook (trained/tested on SemEval-style restaurant review IOB data)
+ 
+--- DAY 2 PM — Building Sentiment Analysis Systems + Summarization/Visualization ---
+Part I — System design considerations and methods:
+- Design trade-offs: cost & speed (lightweight models for high-volume streams), domain-specific tuning (e.g. FinBERT/AZFinText for financial text vs general models), explainability (SHAP, LIME, permutation feature importance), real-time analysis needs
+- 5-step system design process: (1) clarify business objectives, (2) identify/understand text data source, (3) identify/curate training corpora (garbage-in-garbage-out), (4) sentiment classification & scoring (supervised: Naive Bayes/kNN/MaxEnt/SVM; unsupervised: syntactic patterns, sentiment lexicons), (5) define KPIs tied to business objectives, communicated via visualization/dashboards
+- Lexicon-based semi-supervised approach: opinion lexicons (positive/negative terms, phrases, slang, idioms), building lexicons (manual + dictionary + corpus-based, iterative bootstrapping), applying lexicons — mark sentiment words, apply sentiment shifters/negation, handle but-clauses, aggregate; detailed sentiment composition rules (negation reversal, quantity-change reversal for positive/negative polarity items, sentiment conflict resolution, intensification, context-dependent word senses)
+- Supervised approach: training-set generation principles (match training/test domain, high-precision/low-recall labeling, balanced classes, iterative WordNet/SentiWordNet bootstrapping, user-generated ratings as weak labels — mind rating bias); feature engineering (POS tags, opinion lexicons/n-grams, negation, syntactic dependency, sentiment-aware tokens, word vectors, TF-IDF) and feature selection; classic classifiers (Naive Bayes, kNN, MaxEnt, SVM, deep learning)
+- Pros/cons: unsupervised (domain-independent, flexible, but heavy lexicon-building effort) vs supervised (powerful but needs labeled data per domain, poor cross-domain transfer)
+ 
+Part II — Sentiment Summarization & Visualization:
+- Extractive vs abstractive summarization
+- Sentiment aggregation across 3 levels: opinion holder, time, entity/aspect
+- Contrastive Opinion Summarization (Kim & Zhai 2009) — pairing contrastive positive/negative sentence sets
+- Visualization techniques: word clouds (frequency-based, fast but ambiguous with multiple entities), sentiment heat maps (aspect x sentiment score grids, cognitively demanding), time-series sentiment (tracks positive/negative/controversial/neutral volume over time, useful for policy/event monitoring)
+- Workshop: sentiment visualization notebook
+ 
+--- DAY 3 — From Features to Neural Representations: DL Foundations for Sentiment Analysis ---
+- Classic NLP (TF-IDF/PPMI: long, sparse, interpretable, poor at context) vs deep learning (short, dense, learned, captures context)
+- Word embedding families: (1) count-based — word co-occurrence + SVD; (2) count+learn — GloVe (Global Vectors), derives embeddings by fitting word-pair vectors to log co-occurrence counts via a weighted least-squares loss; (3) predictive/learn — Word2Vec CBOW (predict target word from context) and Skip-gram (predict context from target word, negative sampling)
+- Deep learning basics for NLP: perceptron → multi-layer perceptron, forward propagation, the standard DL training loop (initialize weights → forward pass → compute loss → backpropagation → optimizer step, repeat)
+- Activation functions: sigmoid, tanh, ReLU (and ReLU family), softmax for multi-class output; vanishing/exploding gradient issues
+- Loss functions: categorical cross-entropy (CBOW), binary cross-entropy
+- Optimization: gradient descent, delta rule, chain rule for backprop, SGD vs Adam trade-offs, fixed vs dynamic learning rate strategies, typical learning-rate ranges by model type (MLP/RNN/CNN ~1e-2–1e-3, LSTM/CNN ~1e-3, BERT ~1e-5)
+- Guidance on when to use pre-trained embeddings (useful for low-data classification/tagging/ranking tasks; less useful for translation/generation; not useful for generic language modeling)
+- Workshop: Word2Vec trained from scratch (CBOW and Skip-gram)
+ 
+ 
+3. WORKSHOP / HANDS-ON COMPONENT
+ 
+Across the 3 days, workshops built up from qualitative to quantitative techniques, generally
+using either restaurant review data (SemEval-style, IOB-tagged) or a Twitter US-airline
+sentiment dataset (Raw_Tweets_Airline.csv):
+ 
+- Day 1 PM: Heuristic ABSA exercise (frequency/lexico-syntactic rules) on review data, producing an aspect-sentiment treemap.
+- Day 2 AM: Zero-shot LLM-based ABSA notebook; CRF-based aspect extraction trained/evaluated on SemEval-style restaurant review IOB data (train/test split provided).
+- Day 2 PM: Sentiment summarization/visualization notebook.
+- Day 3 (AM/PM workshop assignment, graded deliverable): using the airline Twitter review dataset —
+  Table 1: identify the most positive and most negative review for the "Staff" aspect, per airline.
+  Table 2/3: for each airline, find the review most similar (by cosine similarity) to US Airways' most positive/negative "Staff" review, using pre-trained GloVe embeddings.
+  Table 4: repeat the similarity ranking using word vectors trained from scratch on the airline data itself (CBOW or Skip-gram), then compare which embedding source (pre-trained GloVe vs self-trained) produced better/more sensible similarity results.
+  This was the applied test of the Day 3 word-embeddings content — comparing generic pre-trained vs domain-trained vectors on a real similarity task.
+ 
+ 
+4. WHAT WAS LEFT OUT OF THIS CONTEXT FILE (and why)
+ 
+Deliberately excluded as not "course scope" material:
+- Course Admin/Programme Operations Admin Brief.pdf, Welcome Letter.pdf, NUS Guest WIFI Registration.pdf — pure campus logistics (fire evacuation routes, dress code, shuttle timings, wifi setup). Not useful as course-scope context; skipped entirely.
+- Raw workshop code and data: the .ipynb notebooks (ABSA_Heuristic, ABSA_ZeroShot, Aspect_Extraction_with_CRF, Word2Vec_workshop, Sentiment_Mining_Tools, NMSM_Senti_visualization_Workshop), the IOB-tagged restaurant training/test files, Raw_Tweets_Airline.csv, and glove.6B.100d.txt (347MB pre-trained vector file) — these are working artifacts/data, not descriptions of course scope. They still live in the original NMSM folder on your machine if a future conversation needs to actually run or inspect them.
+- The PLP Practice Module Briefing PDF's admin content (deadlines, deliverable weightings, proposal structure) was condensed into section 1 above rather than duplicated in full, since your team's specific version of this is already tracked in the "PLP Practice Module — Project Context" project doc.
+ 
+If you want a *deeper* pass later — e.g. full technical detail from the CRF/HMM math, or the complete slide-by-slide text of any one deck — that's a reasonable next step, just flagging it wasn't done here by default to keep this file usable as quick context rather than a 250-page dump.
+ 

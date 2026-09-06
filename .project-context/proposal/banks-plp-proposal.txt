@@ -1,0 +1,81 @@
+PLP Practice Module — Project Context
+Banks PLP proposal (LLM-friendly).txt
+PRACTICE PROJECT PROPOSAL: RETAIL INVESTOR SENTIMENT DASHBOARD
+Author: Spencer Ng
+ 
+Module: Graduate Certificate in Practical Language Processing — Practice Module (NUS-ISS)
+Document type: Practice Project Proposal — submitted to project mentor/reviewer ahead of the compulsory briefing
+Date: 02 Aug 2026
+ 
+ 
+PROBLEM STATEMENT
+ 
+Singapore retail investors show strong appetite for local equities but lack the information and confidence to act on it. In the SIAS-Beansprout Singapore Retail Investor Pulse Survey (Mar 2025, n=1,011), over 80% of respondents remained interested or open to investing in Singapore stocks, yet 55% cited a lack of attractive stocks and 57% cited low returns as key barriers. This is surprising, and perhaps telling of a lack of knowledge given that certain sectors in Singapore have outperformed even the growth stocks in the US. In fact, 24% readily acknowledge a lack of guidance and research, while 19% cite lack of familiarity as an investment barrier. Among investors with only a small Singapore allocation, 31% cited lack of familiarity as their main reason for staying out, and 81% said they read an analyst report before investing — showing how dependent decisions are on scarce, hard-to-access third-party research.
+ 
+Separately, an MDRT survey of 2,000 Singaporean adults (Apr 2025) found only 34% rated their own financial literacy "good" and 15% "excellent" — a majority rate themselves no better than average.
+ 
+This gap is especially consequential for Singapore's three listed banks — DBS, OCBC, and UOB — which together carry a combined market capitalisation above S$180 billion and make up roughly half of the Straits Times Index, making them the most widely held stocks on the local exchange and the default entry point for most retail portfolios. Because so much retail wealth is concentrated in just three counters, even a modest gap in understanding their quarterly results, dividend policy, and asset-quality commentary translates into an outsized share of retail investors' overall market risk. Yet, per the survey above, investors are still left leaning on scarce analyst PDFs rather than a regularly updated read of sentiment, earnings, and news.
+ 
+ 
+PROPOSED SOLUTION: A SENTIMENT & ASPECT-BASED INSIGHT DASHBOARD
+ 
+We propose building a dashboard for Singapore's three listed banks — DBS, OCBC, and UOB — that ingests and fuses four data streams in scheduled batches (e.g. daily, not a live stream):
+1. Quarterly earnings releases
+2. Social media chatter
+3. Analyst consensus reports
+4. News articles
+ 
+The dashboard surfaces both overall and aspect-based sentiment (e.g. dividend policy, asset quality/provisioning, net interest margin, management guidance) per bank. This gives retail investors a single, regularly refreshed view of the state of the bank stocks, directly plugging the familiarity and research-access gaps identified above.
+ 
+ 
+PURPOSE OF SENTIMENT ANALYSIS
+ 
+Overall and aspect-based sentiment is scored per unit of content (e.g. one analyst point of view, one social media comment) and blended into a per-bank sentiment index, recomputed after each batch cycle to flag momentum shifts ahead of results.
+ 
+This sentiment should not be taken as guidance to buy or not buy the stock in isolation, but rather as an indicator for retail investors to get an overall sense of sentiment on bank stocks and then drill down into specific aspects to understand the fundamental or technical situation better — and hence make more informed decisions.
+ 
+ 
+HOW TO RUN ASPECT-BASED SENTIMENT ANALYSIS (TEXT MACHINE LEARNING)
+ 
+We will use FinBERT, applying transfer learning with pre-trained LLMs. FinBERT serves two purposes:
+ 
+Job 1 — Spotting what topics people are talking about (aspects).
+Out of the box, FinBERT has already read a huge amount of financial writing, so it has a good "feel" for financial language — it can tell that two sentences are about the same topic even if they use completely different words. We use it to turn each tweet, news snippet, or line of an earnings release into a kind of meaning fingerprint, then group similar fingerprints together. That grouping is how the dashboard automatically discovers topics such as "people are talking about dividends here" or "this cluster is about asset quality" — without predefining what topics to look for. This part doesn't need fine-tuning because it is just measuring how similar two pieces of text are, not making a judgment call.
+ 
+Job 2 — Deciding if that topic is good or bad news (this is what needs fine-tuning).
+Knowing a sentence is about "asset quality" doesn't tell you whether it's good or bad news about asset quality. That's a specific judgment call, and out-of-the-box FinBERT doesn't make that call reliably for our exact use case — it wasn't trained specifically to look at a bank-earnings sentence and output positive/neutral/negative. Fine-tuning is the process of showing FinBERT several hundred examples where the correct answer is already known (e.g. "this sentence about UOB's provisioning = negative," "this one about DBS's dividend = positive"), so it learns to make that same call consistently on new, unseen sentences.
+ 
+ 
+HOW TO MEASURE ACCURACY OF SENTIMENT
+ 
+For fine-tuning a model that is already pretrained (as opposed to training one from scratch), less labeled data is needed: roughly 1,000 labeled examples total, aiming for at least 200-300 per sentiment class (positive/neutral/negative) so no class is starved of examples.
+ 
+A hold-out group — data the model never trained on (e.g. a 70% train / 30% test split of the annotated seed set, or k-fold cross-validation given the seed set is small) — is used to compare the model's predictions against the human labels on that held-out set.
+ 
+Metrics that matter: accuracy, precision, recall, and F1-score computed per class, plus a macro-averaged F1 (which weighs all three classes equally rather than letting the majority class dominate the score).
+ 
+ 
+CHATBOT DEVELOPMENT
+ 
+A conversational assistant lets investors ask natural-language questions (e.g. "How does the market feel about DBS's Q2 results?") and receive an aspect-based sentiment summary with supporting evidence, rather than needing to interpret raw charts alone.
+ 
+ 
+ALIGNMENT WITH PRACTICE MODULE DELIVERABLES
+ 
+Practice Module Requirement: Conversational user interface
+Addressed by: Chatbot layer for natural-language Q&A over the dashboard
+ 
+Practice Module Requirement: At least two text mining tasks
+Addressed by: Unsupervised topic/aspect discovery + supervised aspect-sentiment classification
+ 
+Practice Module Requirement: A sentiment mining component
+Addressed by: Overall + aspect-based sentiment engine across four batch-ingested data sources
+ 
+Practice Module Requirement: At least one deep neural network task
+Addressed by: Supervised, fine-tuned FinBERT sentiment classifier
+ 
+ 
+EXPECTED OUTCOME
+ 
+The prototype will cover DBS, OCBC, and UOB, giving retail investors a faster, evidence-backed read of sentiment — refreshed on a regular batch cycle rather than in real time — than manually reading analyst PDFs or scrolling social feeds. This directly addresses the barriers identified in the SIAS-Beansprout 2025 survey, without constituting financial advice.
+ 

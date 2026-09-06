@@ -3,6 +3,28 @@
 Findings from running the actual pipeline against live data (2026-09-06),
 answering the unknowns flagged in the MVP plan before building further on them.
 
+## Full backfill complete (2026-09-07)
+
+`scripts/overnight_backfill.py` finished a full Reddit backfill via Arctic
+Shift, 2020-01-01 through 2026-09-07 (82 monthly chunks, all succeeded on
+the corrected run — see the script's own commit history for a real incident
+where the first attempt silently failed all 79 real chunks under the wrong
+Python interpreter and produced zero data). Final corpus:
+
+| | documents | sentences |
+|---|---|---|
+| DBS | — | 11,814 |
+| UOB | — | 9,001 |
+| OCBC | — | 3,815 |
+| **total** | **21,746** | **24,630** |
+
+OCBC is still the thinnest bank by a wide margin (~3.1x behind DBS by
+sentence count now, similar ratio to the original 12-month sample) but its
+absolute volume (3,815 sentences) is now easily enough to support Phase 4
+labeling's per-class minimums even after a three-way split. The full
+downstream pipeline (preprocess -> assign -> score -> aggregate) has been
+re-run against this complete corpus; `sentiment_index` reflects it.
+
 ## Aspect discovery + similarity-floor calibration (added later same day)
 
 `python -m aspects.discover` (2,888 sentences) found 9 real clusters (52%

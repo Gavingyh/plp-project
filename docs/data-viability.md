@@ -90,6 +90,19 @@ tell these apart. If it's (1), the proxy needs either fuller article text
 detection pattern — 0/172 as a permanent state would mean the "analyst view"
 flag never fires, which defeats its purpose.
 
+**Attempted, partially blocked (2026-09-06):** tried fetching full article
+text for a JPMorgan-target-raise headline and a DBS-guidance headline to
+check whether the full body (vs. NewsAPI's title+description snippet)
+contains broker+rating language the proxy would catch. Both `straitstimes.com`
+and `channelnewsasia.com` — the two outlets carrying the actual analyst-call
+coverage in this pull — refused simple fetches outright, the same bot-
+protection pattern hit earlier against `sgx.com` and `sginvestors.io`. A
+third article (retailbankerinternational.com) fetched fine but was a
+non-analyst HR/AI story, not a useful test case. **Still unresolved**: is
+0/26 a text-length artifact or a real absence? Whoever picks this up next
+should either get manual access to one full Straits Times/CNA article
+behind their own login, or accept the proxy may need loosening and move on.
+
 ## SGX / analyst-aggregator direct scraping — confirmed non-viable
 
 Tested live, not just assumed:

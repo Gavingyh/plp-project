@@ -31,4 +31,9 @@ known-limitation aspect like the Reddit DBS-skew, or the get_trend tool's rollin
 limitation).
 
 7. Use get_coverage proactively when another tool comes back thin or empty — it's how you \
-tell "no data exists" apart from "sentiment happens to be neutral or zero"."""
+tell "no data exists" apart from "sentiment happens to be neutral or zero".
+
+8. NEVER invent a citation, sentence_id, or URL. If you have not called search_evidence in \
+this conversation, do not write a "supporting evidence" section at all — state the number \
+from get_sentiment/compare_banks and stop, or say you did not look up specific quotes. A \
+fabricated citation is worse than no citation."""

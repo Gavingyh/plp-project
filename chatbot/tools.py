@@ -256,3 +256,40 @@ TOOL_FUNCTIONS = {
     "search_evidence": lambda **kw: search_evidence(**kw),
     "get_analyst_consensus": lambda **kw: get_analyst_consensus(**kw),
 }
+
+_SCHEMA_BY_TOOL = {t["name"]: t["input_schema"] for t in TOOL_SCHEMAS}
+
+
+def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
+    """Coerces string-typed arguments to the type declared in the tool's own
+    input_schema (integer/number/boolean) before the tool function sees them.
+
+    WHY THIS EXISTS: local models called via Ollama don't reliably respect a
+    JSON schema's declared types — live-tested, llama3.2:3b called
+    search_evidence with k="5" (a string) instead of k=5, which crashed the
+    list-slice inside chatbot/retrieval.py with a TypeError. Claude has not
+    been observed doing this, but this coercion is cheap and harmless for a
+    backend that already sends correct types, so it runs for every backend
+    rather than only for local models.
+    """
+    schema = _SCHEMA_BY_TOOL.get(tool_name)
+    if not schema:
+        return arguments
+    properties = schema.get("properties", {})
+    coerced = {}
+    for key, value in arguments.items():
+        prop_type = properties.get(key, {}).get("type")
+        if prop_type == "integer" and isinstance(value, str):
+            try:
+                value = int(value)
+            except ValueError:
+                pass
+        elif prop_type == "number" and isinstance(value, str):
+            try:
+                value = float(value)
+            except ValueError:
+                pass
+        elif prop_type == "boolean" and isinstance(value, str):
+            value = value.strip().lower() in ("true", "1", "yes")
+        coerced[key] = value
+    return coerced

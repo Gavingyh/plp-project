@@ -30,7 +30,10 @@ st.set_page_config(page_title="SG Bank Sentiment Dashboard", layout="wide")
 def load_index() -> pd.DataFrame:
     conn = get_connection()
     try:
-        df = pd.read_sql_query("SELECT * FROM sentiment_index", conn)
+        # Only the blended rows here; per-source rows are shown separately in
+        # the source-composition panel (see aggregate/index.py).
+        df = pd.read_sql_query(
+            "SELECT * FROM sentiment_index WHERE source = 'ALL'", conn)
     finally:
         conn.close()
     return df
@@ -52,6 +55,20 @@ def load_evidence(bank: str, aspect: str) -> pd.DataFrame:
                        ORDER BY s.published_at DESC LIMIT 30"""
             params = (bank, aspect)
         return pd.read_sql_query(query, conn, params=params)
+    finally:
+        conn.close()
+
+
+@st.cache_data(ttl=300)
+def load_source_breakdown(window: str = "all_time") -> pd.DataFrame:
+    conn = get_connection()
+    try:
+        return pd.read_sql_query(
+            "SELECT bank, source, score, n FROM sentiment_index "
+            "WHERE aspect = 'ALL' AND window = ? AND source != 'ALL' "
+            "ORDER BY bank, source", conn, params=(window,))
+    except Exception:
+        return pd.DataFrame()
     finally:
         conn.close()
 
@@ -109,6 +126,30 @@ with tab1:
                 r = row.iloc[0]
                 st.metric(bank, f"{r['score']:+.3f}", help=f"n={int(r['n'])} data points")
                 st.caption(f"n={int(r['n'])} · pos {int(r['pos_n'])} / neu {int(r['neu_n'])} / neg {int(r['neg_n'])}")
+
+    st.divider()
+    st.subheader("What the blended score is made of")
+    st.caption(
+        "The headline numbers above blend every source. These are the same "
+        "scores split by source — worth checking before comparing banks, "
+        "because coverage is currently very unequal: earnings material is "
+        "management describing its own results (measurably far more positive "
+        "than retail chatter), and UOB has almost none of it because its IR "
+        "site blocks automated access. A cross-bank gap may reflect that, not "
+        "real sentiment."
+    )
+    breakdown_df = load_source_breakdown()
+    if breakdown_df.empty:
+        st.info("No per-source rows yet — run `python -m aggregate.index`.")
+    else:
+        pivot_src = breakdown_df.pivot(index="source", columns="bank", values="score")
+        pivot_src_n = breakdown_df.pivot(index="source", columns="bank", values="n")
+        st.dataframe(
+            pivot_src.style.background_gradient(cmap="RdYlGn", vmin=-1, vmax=1).format("{:.3f}"),
+            use_container_width=True,
+        )
+        st.caption("Sentence count (n) behind each cell:")
+        st.dataframe(pivot_src_n.fillna(0).astype(int), use_container_width=True)
 
     st.divider()
     st.subheader("Professional analyst consensus")

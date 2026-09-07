@@ -28,8 +28,11 @@ def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time"
         aspect_filter = aspect or "ALL"
         row = conn.execute(
             "SELECT score, n, pos_n, neu_n, neg_n, confidence_mean, model_version, computed_at "
+            # source='ALL' is the blended headline row; per-source rows sit
+            # alongside it (see aggregate/index.py) and must not be picked up
+            # here by accident.
             "FROM sentiment_index WHERE bank = ? AND aspect = ? AND window = ? "
-            "ORDER BY computed_at DESC LIMIT 1",
+            "AND source = 'ALL' ORDER BY computed_at DESC LIMIT 1",
             (bank, aspect_filter, window),
         ).fetchone()
     finally:

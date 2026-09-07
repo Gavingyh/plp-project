@@ -44,17 +44,36 @@ SHRINKAGE_K = 5
 _LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 
 # Source weight: how much one item from this source counts relative to a
-# baseline Reddit comment (weight 1.0). Earnings commentary and
-# analyst-flagged news carry more signal per item than a single social post.
-_SOURCE_WEIGHT = {"earnings": 3.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0}
+# baseline Reddit comment (weight 1.0).
+#
+# earnings WAS 3.0, dropped to 1.0 on 2026-09-07 after the earnings corpus
+# actually landed. That 3.0 was set when earnings was assumed to be a handful
+# of high-signal documents; it became the second-largest source (10,658
+# sentences), and it is management describing its own results, which is
+# measurably far more positive than any other source: 24.7% of earnings
+# sentences score positive vs 2.3% of Reddit sentences. Triple-weighting
+# self-authored promotional prose amplified a known skew instead of damping
+# it. 1.0 counts it honestly without letting it dominate.
+_SOURCE_WEIGHT = {"earnings": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0}
 
 WINDOWS = {"7d": 7, "30d": 30, "all_time": None}
+
+# 'ALL' means "blended across every source" — the headline number. Individual
+# source rows sit alongside it so the dashboard, API and write-up can show
+# what the blend is actually made of (retail chatter vs. management framing),
+# rather than presenting one opaque figure. This matters here: earnings
+# coverage is very unequal across banks (DBS 9,093 sentences, OCBC 1,561,
+# UOB 4 — UOB's IR site is WAF-blocked and its PDFs need adding by hand), so
+# a blended cross-bank comparison is only trustworthy once a reader can see
+# the composition behind it.
+SOURCE_ALL = "ALL"
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS sentiment_index (
     bank            TEXT NOT NULL,
     aspect          TEXT NOT NULL,     -- 'ALL' for the overall per-bank row
     window          TEXT NOT NULL,     -- '7d' | '30d' | 'all_time'
+    source          TEXT NOT NULL,     -- 'ALL' for the blended row, else one source
     score           REAL NOT NULL,     -- shrunk, weighted, in [-1, 1]
     n               INTEGER NOT NULL,
     pos_n           INTEGER NOT NULL,
@@ -63,7 +82,7 @@ CREATE TABLE IF NOT EXISTS sentiment_index (
     confidence_mean REAL NOT NULL,
     model_version   TEXT NOT NULL,
     computed_at     TEXT NOT NULL,
-    PRIMARY KEY (bank, aspect, window, model_version)
+    PRIMARY KEY (bank, aspect, window, source, model_version)
 );
 """
 
@@ -95,30 +114,44 @@ def _compute_rows_for_window(all_rows, window_name: str, days: int | None):
     if days is not None:
         cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
 
-    groups = defaultdict(list)     # (bank, aspect, model_version) -> [(label, confidence, weight)]
-    overall = defaultdict(list)    # (bank, model_version) -> [...] for the aspect='ALL' row
+    # Keyed by (bank, aspect, source, model_version); 'ALL' is used for the
+    # blended-across-sources and blended-across-aspects rows respectively, so a
+    # single grouping pass produces every combination the consumers need.
+    groups = defaultdict(list)
     for bank, aspect, label, confidence, model_version, source, published_at in all_rows:
         if cutoff is not None and published_at < cutoff:
             continue
-        weight = _SOURCE_WEIGHT.get(source, 1.0)
-        groups[(bank, aspect, model_version)].append((label, confidence, weight))
-        overall[(bank, model_version)].append((label, confidence, weight))
+        item = (label, confidence, _SOURCE_WEIGHT.get(source, 1.0))
+        groups[(bank, aspect, source, model_version)].append(item)          # per aspect, per source
+        groups[(bank, aspect, SOURCE_ALL, model_version)].append(item)      # per aspect, blended
+        groups[(bank, "ALL", source, model_version)].append(item)           # per source, all aspects
+        groups[(bank, "ALL", SOURCE_ALL, model_version)].append(item)       # the headline number
 
     out = []
     ts = now_iso()
-    for (bank, aspect, model_version), items in groups.items():
+    for (bank, aspect, source, model_version), items in groups.items():
         score, n, pos, neu, neg, conf = _summarize(items)
-        out.append((bank, aspect, window_name, score, n, pos, neu, neg, conf, model_version, ts))
-    for (bank, model_version), items in overall.items():
-        score, n, pos, neu, neg, conf = _summarize(items)
-        out.append((bank, "ALL", window_name, score, n, pos, neu, neg, conf, model_version, ts))
+        out.append((bank, aspect, window_name, source, score, n, pos, neu, neg,
+                     conf, model_version, ts))
     return out
+
+
+def _ensure_schema(conn):
+    """Creates sentiment_index, migrating an older copy that predates the
+    `source` column. Safe to drop and rebuild: every row is fully derived from
+    aspect_sentiment and recomputed from scratch on each run anyway."""
+    conn.executescript(_SCHEMA)
+    columns = {r[1] for r in conn.execute("PRAGMA table_info(sentiment_index)")}
+    if "source" not in columns:
+        conn.execute("DROP TABLE sentiment_index")
+        conn.executescript(_SCHEMA)
+        conn.commit()
 
 
 def run() -> int:
     init_db()
     conn = get_connection()
-    conn.executescript(_SCHEMA)
+    _ensure_schema(conn)
     all_rows = _fetch_all_rows(conn)
 
     out = []
@@ -129,9 +162,9 @@ def run() -> int:
         conn.execute("DELETE FROM sentiment_index")  # full recompute each run — cheap at this scale
         conn.executemany(
             """INSERT INTO sentiment_index
-               (bank, aspect, window, score, n, pos_n, neu_n, neg_n, confidence_mean,
-                model_version, computed_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+               (bank, aspect, window, source, score, n, pos_n, neu_n, neg_n,
+                confidence_mean, model_version, computed_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
             out,
         )
         conn.commit()
@@ -141,4 +174,4 @@ def run() -> int:
 
 if __name__ == "__main__":
     n = run()
-    print(f"Recomputed sentiment_index: {n} (bank, aspect, window) rows")
+    print(f"Recomputed sentiment_index: {n} (bank, aspect, window, source) rows")

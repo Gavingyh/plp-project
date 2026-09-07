@@ -35,7 +35,7 @@ def test_single_positive_sentence_is_shrunk_toward_neutral(temp_db):
     run_aggregate()
     conn = temp_db.get_connection()
     row = conn.execute(
-        "SELECT score, n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='all_time'"
+        "SELECT score, n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='all_time' AND source='ALL'"
     ).fetchone()
     conn.close()
     score, n = row
@@ -52,7 +52,7 @@ def test_n_and_class_counts_always_stored(temp_db):
     run_aggregate()
     conn = temp_db.get_connection()
     row = conn.execute(
-        "SELECT n, pos_n, neu_n, neg_n FROM sentiment_index WHERE bank='OCBC' AND aspect='asset_quality' AND window='all_time'"
+        "SELECT n, pos_n, neu_n, neg_n FROM sentiment_index WHERE bank='OCBC' AND aspect='asset_quality' AND window='all_time' AND source='ALL'"
     ).fetchone()
     conn.close()
     assert row == (1, 0, 0, 1)
@@ -66,7 +66,7 @@ def test_larger_volume_shrinks_less(temp_db):
     run_aggregate()
     conn = temp_db.get_connection()
     score, n = conn.execute(
-        "SELECT score, n FROM sentiment_index WHERE bank='UOB' AND aspect='dividend_policy' AND window='all_time'"
+        "SELECT score, n FROM sentiment_index WHERE bank='UOB' AND aspect='dividend_policy' AND window='all_time' AND source='ALL'"
     ).fetchone()
     conn.close()
     assert n == 20
@@ -80,24 +80,56 @@ def test_overall_all_row_aggregates_across_aspects(temp_db):
     _insert_scored_sentence(temp_db, "s2", "DBS", "asset_quality", "negative", 1.0)
     run_aggregate()
     conn = temp_db.get_connection()
-    n = conn.execute("SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='ALL' AND window='all_time'").fetchone()[0]
+    n = conn.execute("SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='ALL' AND window='all_time' AND source='ALL'").fetchone()[0]
     conn.close()
     assert n == 2  # both sentences counted in the overall bank-level row
 
 
-def test_source_weight_affects_score(temp_db):
-    # Earnings-sourced items are weighted 3x a Reddit comment (aggregate/index.py
-    # _SOURCE_WEIGHT) — two positive Reddit comments should NOT fully offset
-    # one negative earnings-sourced item at equal confidence.
+def test_news_outweighs_reddit(temp_db):
+    # newsapi is weighted 1.5 vs arctic_shift's 1.0, so an equally-confident
+    # negative news item should outweigh one positive Reddit comment.
+    _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "negative", 1.0, source="newsapi")
+    _insert_scored_sentence(temp_db, "s2", "DBS", "dividend_policy", "positive", 1.0, source="arctic_shift")
+    run_aggregate()
+    conn = temp_db.get_connection()
+    score = conn.execute(
+        "SELECT score FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='all_time' AND source='ALL'"
+    ).fetchone()[0]
+    conn.close()
+    assert score < 0
+
+
+def test_earnings_no_longer_outweighs_reddit(temp_db):
+    # Regression guard for a deliberate 2026-09-07 change: earnings weight was
+    # dropped 3.0 -> 1.0 once the earnings corpus actually landed. It is
+    # management describing its own results (24.7% of its sentences score
+    # positive vs 2.3% of Reddit's), so triple-weighting it amplified a known
+    # skew. Equal-confidence earnings and Reddit items must now cancel out.
     _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "negative", 1.0, source="earnings")
     _insert_scored_sentence(temp_db, "s2", "DBS", "dividend_policy", "positive", 1.0, source="arctic_shift")
     run_aggregate()
     conn = temp_db.get_connection()
     score = conn.execute(
-        "SELECT score FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='all_time'"
+        "SELECT score FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='all_time' AND source='ALL'"
     ).fetchone()[0]
     conn.close()
-    assert score < 0  # earnings' negative should outweigh Reddit's positive
+    assert abs(score) < 1e-6, f"expected earnings and Reddit to cancel, got {score}"
+
+
+def test_per_source_rows_written_alongside_blended_row(temp_db):
+    # The blend must remain inspectable: each contributing source gets its own
+    # row so the dashboard/API can show what the headline number is made of.
+    _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "negative", 1.0, source="earnings")
+    _insert_scored_sentence(temp_db, "s2", "DBS", "dividend_policy", "positive", 1.0, source="arctic_shift")
+    run_aggregate()
+    conn = temp_db.get_connection()
+    rows = dict(conn.execute(
+        "SELECT source, n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' "
+        "AND window='all_time'").fetchall())
+    conn.close()
+    assert rows["ALL"] == 2          # blended row counts both
+    assert rows["earnings"] == 1     # and each source is broken out
+    assert rows["arctic_shift"] == 1
 
 
 def test_old_data_excluded_from_7d_window_but_kept_in_all_time(temp_db):
@@ -108,10 +140,10 @@ def test_old_data_excluded_from_7d_window_but_kept_in_all_time(temp_db):
     run_aggregate()
     conn = temp_db.get_connection()
     n_7d = conn.execute(
-        "SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='7d'"
+        "SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='7d' AND source='ALL'"
     ).fetchone()
     n_all = conn.execute(
-        "SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='all_time'"
+        "SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='all_time' AND source='ALL'"
     ).fetchone()
     conn.close()
     # 60-day-old data has no row at all in the 7d window (no groups formed for
@@ -128,7 +160,7 @@ def test_recent_data_included_in_7d_window(temp_db):
     run_aggregate()
     conn = temp_db.get_connection()
     n_7d = conn.execute(
-        "SELECT n FROM sentiment_index WHERE bank='UOB' AND aspect='asset_quality' AND window='7d'"
+        "SELECT n FROM sentiment_index WHERE bank='UOB' AND aspect='asset_quality' AND window='7d' AND source='ALL'"
     ).fetchone()
     conn.close()
     assert n_7d == (1,)

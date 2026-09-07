@@ -3,6 +3,61 @@
 Findings from running the actual pipeline against live data (2026-09-06),
 answering the unknowns flagged in the MVP plan before building further on them.
 
+## Earnings ingestion + the cross-bank comparability problem (2026-09-07)
+
+Earnings PDFs are now ingested automatically from DBS's and OCBC's own IR
+sites (`ingest/earnings_fetch.py`) — 116 PDFs, 115 documents, 10,658
+sentences. This closed the vocabulary gap that had crippled the aspect
+taxonomy: "net interest margin" appears in 298 earnings sentences vs **0**
+in the entire Reddit corpus; "asset quality" 128 vs 0; "non-performing"
+159 vs 0.
+
+It also introduced a serious comparability problem, caught immediately and
+only partly fixable in code.
+
+**Earnings material is measurably far more positive than any other source** —
+it is management describing its own results:
+
+| source | positive | neutral | negative |
+|---|---|---|---|
+| Reddit (arctic_shift) | 2.3% | 94.8% | 3.0% |
+| earnings | **24.7%** | 67.9% | 7.4% |
+
+**And its coverage is wildly unequal**, because UOB's IR site is WAF-blocked
+while DBS's and OCBC's are open: DBS 15,386 earnings-derived aspect rows,
+OCBC 2,968, **UOB 4**.
+
+Two fixes applied:
+1. Earnings source weight dropped 3.0 -> 1.0 in `aggregate/index.py`. The
+   3.0 was set when earnings was assumed to be a handful of high-signal
+   documents; triple-weighting the second-largest and most positively-skewed
+   source amplified the skew instead of damping it.
+2. `sentiment_index` gained a `source` dimension, so every blended row now
+   sits alongside its per-source components, surfaced in the dashboard and
+   via `/sentiment/index?source=*` and `/sources`. The blend stays (the
+   proposal specifies blending all streams) but is no longer opaque.
+
+**The decisive finding, once split by source:** Reddit — the only source with
+comparable coverage across all three banks — shows **no meaningful cross-bank
+difference at all**:
+
+| bank | Reddit-only | earnings-only | blended headline |
+|---|---|---|---|
+| DBS | -0.002 (n=29,701) | +0.168 (n=15,386) | +0.056 |
+| OCBC | -0.011 (n=8,967) | +0.206 (n=2,968) | +0.044 |
+| UOB | -0.011 (n=19,986) | +0.044 (n=4) | -0.011 |
+
+The apparent "DBS and OCBC lead UOB" gap in the blended headline is an
+artifact of earnings coverage, not a sentiment finding. Retail sentiment is
+essentially identical across all three.
+
+**STILL OPEN:** the weight fix reduced the distortion (DBS's blended score
+fell from +0.101 to +0.056) but cannot remove it, because the root cause is
+coverage asymmetry rather than weighting. **Until UOB's earnings PDFs are
+downloaded by hand into `data/earnings_pdfs/UOB/`, the blended cross-bank
+comparison should not be used or reported.** The Reddit-only row is the
+defensible cross-bank comparison today.
+
 ## Full backfill complete (2026-09-07)
 
 `scripts/overnight_backfill.py` finished a full Reddit backfill via Arctic

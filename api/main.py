@@ -66,21 +66,53 @@ def sentiment_trend(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: 
 
 
 @app.get("/sentiment/index")
-def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_time)$")):
+def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_time)$"),
+                          source: str = "ALL"):
     """Raw rows from sentiment_index for the given window — one call to build
-    a full bank x aspect grid client-side, instead of one call per cell."""
+    a full bank x aspect grid client-side, instead of one call per cell.
+
+    `source` defaults to "ALL" (the blended headline number). Pass a specific
+    source ("earnings", "arctic_shift", "newsapi") to get that component
+    alone, or "*" for every row including all per-source breakdowns — useful
+    for showing what the blend is made of, which matters here because
+    earnings coverage is very unequal across banks (see /sources)."""
+    conn = get_connection()
+    try:
+        if source == "*":
+            rows = conn.execute(
+                "SELECT bank, aspect, source, score, n, pos_n, neu_n, neg_n, "
+                "confidence_mean, model_version, computed_at FROM sentiment_index "
+                "WHERE window = ?", (window,)).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT bank, aspect, source, score, n, pos_n, neu_n, neg_n, "
+                "confidence_mean, model_version, computed_at FROM sentiment_index "
+                "WHERE window = ? AND source = ?", (window, source)).fetchall()
+    finally:
+        conn.close()
+    cols = ["bank", "aspect", "source", "score", "n", "pos_n", "neu_n", "neg_n",
+            "confidence_mean", "model_version", "computed_at"]
+    return {"window": window, "source": source, "rows": [dict(zip(cols, r)) for r in rows]}
+
+
+@app.get("/sources")
+def sources_breakdown():
+    """Per-bank, per-source sentence counts — the composition behind the
+    blended index. Exposed because earnings coverage is currently very
+    unequal (UOB's IR site is WAF-blocked, so it has almost no earnings
+    material), which makes a naive cross-bank comparison misleading unless a
+    reader can see this."""
     conn = get_connection()
     try:
         rows = conn.execute(
-            "SELECT bank, aspect, score, n, pos_n, neu_n, neg_n, confidence_mean, "
-            "model_version, computed_at FROM sentiment_index WHERE window = ?",
-            (window,),
+            "SELECT bank, source, COUNT(*) FROM sentences GROUP BY bank, source"
         ).fetchall()
     finally:
         conn.close()
-    cols = ["bank", "aspect", "score", "n", "pos_n", "neu_n", "neg_n",
-            "confidence_mean", "model_version", "computed_at"]
-    return {"window": window, "rows": [dict(zip(cols, r)) for r in rows]}
+    breakdown: dict[str, dict[str, int]] = {}
+    for bank, source, n in rows:
+        breakdown.setdefault(bank, {})[source] = n
+    return {"sentences_by_bank_and_source": breakdown}
 
 
 @app.get("/coverage")

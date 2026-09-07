@@ -22,6 +22,7 @@ from datetime import datetime
 
 from ingest.base import BANKS
 from ingest.db import make_doc_id, now_iso, upsert_documents
+from ingest.earnings_fetch import _quarter_to_announcement_date
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
@@ -93,11 +94,14 @@ def pull() -> list[dict]:
                 "doc_type": "earnings_release",
                 "title": fname,
                 "body": body,
-                # Earnings PDFs don't carry a reliable machine-readable date in
-                # the file itself; the team should rename files with the
-                # quarter (e.g. DBS_2025Q3.pdf) and this date is a placeholder
-                # until Phase 2 preprocessing parses it from the filename/text.
-                "published_at": now_iso(),
+                # Real reporting date parsed from the period in the filename
+                # ("2Q26_..." -> 2026-08-01), NOT ingestion time. This matters:
+                # stamping the whole back-catalogue with now() would drop every
+                # historical earnings document into the dashboard's 7d/30d
+                # rolling windows at once and badly distort recent sentiment.
+                # Falls back to ingestion time only for files whose name carries
+                # no recognisable period.
+                "published_at": _quarter_to_announcement_date(fname) or now_iso(),
                 "url": f"file://{path}",
                 "ingested_at": now_iso(),
                 "raw": {"filename": fname, "n_prose_lines": len(paragraphs)},

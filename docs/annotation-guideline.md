@@ -32,9 +32,10 @@ that happens to share the sentence.
   incidental detail (e.g. "I banked in via DBS PayNow" in a thread about
   something else, or "DBS Altitude card" discussed purely as a rewards
   product, not the bank-as-investment), this pair should probably not have
-  been assigned this aspect at all — see `docs/data-viability.md` /
-  MVP plan Phase 2 known limitation. If you hit many of these, flag it; don't
-  force a sentiment label onto genuinely off-topic content.
+  been assigned this aspect at all — see `docs/data-viability.md` and
+  `docs/DESIGN.md` for this known relevance-filtering limitation. If you hit
+  many of these, flag it; don't force a sentiment label onto genuinely
+  off-topic content.
 - **Mixed sentiment across aspects in one sentence** ("NIM held up but
   provisions rose") — you're only labeling ONE aspect per row here; label
   strictly for the aspect column on that row, ignore the sentence's stance on

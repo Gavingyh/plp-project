@@ -1,7 +1,7 @@
 """
-Phase 4: export (sentence, aspect) candidates for human labeling.
+Export (sentence, aspect) candidates for human labeling.
 
-Implements the plan's sampling design (Phase 4, "The sampling problem, and
+Implements the sampling design ("The sampling problem, and
 the trap in solving it") — this is NOT optional detail, it's the difference
 between a valid and an inflated evaluation:
 

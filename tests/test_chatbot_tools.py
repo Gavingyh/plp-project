@@ -7,7 +7,7 @@ query that never performed that join, causing
 "sqlite3.OperationalError: no such column: sa.aspect".
 """
 
-from chatbot.tools import get_coverage, get_sentiment
+from chatbot.tools import ASPECT_KEYS, TOOL_SCHEMAS, get_coverage, get_sentiment
 from ingest.db import now_iso
 
 
@@ -58,3 +58,48 @@ def test_get_coverage_no_data_returns_false(temp_db):
 def test_get_sentiment_no_data_flags_insufficient(temp_db):
     result = get_sentiment("DBS", "asset_quality")
     assert result["insufficient_data"] is True
+
+
+# ---------------------------------------------------------------------------
+# Aspect normalization — regression coverage for a real bug found while
+# building the chatbot evaluation harness: a model called get_sentiment with
+# aspect="dividend policy" (space) instead of "dividend_policy" (the real
+# key), silently getting insufficient_data on a perfectly valid question.
+# ---------------------------------------------------------------------------
+
+def test_normalize_aspect_converts_spaces_to_underscores():
+    from chatbot.tools import normalize_aspect
+    assert normalize_aspect("dividend policy") == "dividend_policy"
+
+
+def test_normalize_aspect_case_insensitive():
+    from chatbot.tools import normalize_aspect
+    assert normalize_aspect("Net Interest Margin") == "net_interest_margin"
+
+
+def test_normalize_aspect_leaves_unrecognised_value_untouched():
+    from chatbot.tools import normalize_aspect
+    # A genuinely wrong aspect must not be silently mapped to something else -
+    # left as-is so it still surfaces as insufficient_data downstream.
+    assert normalize_aspect("totally_wrong_aspect") == "totally_wrong_aspect"
+
+
+def test_normalize_aspect_passes_none_through():
+    from chatbot.tools import normalize_aspect
+    assert normalize_aspect(None) is None
+
+
+def test_coerce_tool_arguments_normalizes_aspect_for_get_sentiment():
+    from chatbot.tools import coerce_tool_arguments
+    result = coerce_tool_arguments("get_sentiment", {"bank": "DBS", "aspect": "dividend policy"})
+    assert result["aspect"] == "dividend_policy"
+
+
+def test_all_aspect_schema_properties_have_the_real_enum():
+    """Every tool that takes an aspect must constrain it to the real
+    taxonomy, not accept an arbitrary string - that's what let the bug above
+    happen in the first place."""
+    for schema in TOOL_SCHEMAS:
+        props = schema["input_schema"].get("properties", {})
+        if "aspect" in props:
+            assert props["aspect"].get("enum") == ASPECT_KEYS, schema["name"]

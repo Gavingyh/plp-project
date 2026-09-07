@@ -1,20 +1,60 @@
 """
 Tool implementations for the agentic chatbot — see docs/DESIGN.md.
 
-Plain Python functions, not a framework (see docs/DESIGN.md, the rationale: the agent loop is small enough that a framework adds
-abstraction without adding capability at this scale).
+Plain Python functions, not a framework: the agent loop is small enough that
+a framework would add abstraction without adding capability at this scale.
 
-Every tool that reports a score also reports `n` — the hallucination/
-misleading-number defense the plan calls out is enforced HERE, in the data
-contract, not left to the model to remember to mention. `get_coverage` exists
-specifically so the agent can check "do I have data on this at all" before
-answering, rather than confabulating when it doesn't.
+Every tool that reports a score also reports `n` — the misleading-number
+defense is enforced HERE, in the data contract, not left to the model to
+remember to mention. `get_coverage` exists specifically so the agent can
+check "do I have data on this at all" before answering, rather than
+confabulating when it doesn't.
 """
+
+import os
+
+import yaml
 
 from ingest.db import get_connection
 from chatbot.retrieval import search_evidence as _search_evidence
 
 MIN_VOLUME_FOR_SCORE = 5  # below this, report insufficient data rather than a number
+
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ASPECTS_CONFIG_PATH = os.path.join(_BASE_DIR, "config", "aspects.yaml")
+
+
+def _load_aspect_keys() -> list[str]:
+    """Real aspect keys from config/aspects.yaml, so the tool schema's enum
+    and the actual taxonomy can never drift apart. A model given an open
+    string field for `aspect` was observed passing "dividend policy" (a
+    space, matching how the question was phrased) instead of the real key
+    "dividend_policy", silently producing insufficient_data on a perfectly
+    valid question. Falls back to the four proposal aspects if the config
+    can't be read, so tool schemas still build during tests that don't need
+    the real file."""
+    try:
+        with open(_ASPECTS_CONFIG_PATH) as f:
+            config = yaml.safe_load(f)
+        return list(config["aspects"].keys())
+    except Exception:
+        return ["dividend_policy", "asset_quality", "net_interest_margin",
+                "management_guidance", "other"]
+
+
+ASPECT_KEYS = _load_aspect_keys()
+
+
+def normalize_aspect(aspect: str | None) -> str | None:
+    """Best-effort correction for the failure mode above: lowercases and
+    replaces spaces/hyphens with underscores, then only accepts the result if
+    it matches a real aspect key. A genuinely wrong aspect is left as-is
+    rather than guessed at, so it still surfaces as insufficient_data instead
+    of silently mapping to the wrong aspect."""
+    if aspect is None:
+        return None
+    candidate = aspect.strip().lower().replace(" ", "_").replace("-", "_")
+    return candidate if candidate in ASPECT_KEYS else aspect
 
 
 def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time") -> dict:
@@ -86,8 +126,8 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
 def get_coverage(bank: str | None = None, aspect: str | None = None) -> dict:
     """What data actually exists — call this BEFORE answering a question the
     other tools come back empty on, to distinguish 'no data' from 'zero
-    sentiment'. This is the cheapest hallucination defense available (plan
-    Phase 8, 'Grounding rules')."""
+    sentiment'. This is the cheapest hallucination defense available; see
+    docs/DESIGN.md, grounding rules."""
     where, params = ["1=1"], []
     if bank:
         where.append("s.bank = ?"); params.append(bank)
@@ -177,8 +217,9 @@ TOOL_SCHEMAS = [
             "type": "object",
             "properties": {
                 "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
-                "aspect": {"type": "string",
-                           "description": "One of the frozen aspect keys (see config/aspects.yaml), "
+                "aspect": {"type": "string", "enum": ASPECT_KEYS,
+                           "description": "One of the frozen aspect keys, using underscores "
+                                          "(e.g. \"dividend_policy\", not \"dividend policy\"), "
                                           "or omit for overall sentiment."},
             },
             "required": ["bank"],
@@ -189,7 +230,7 @@ TOOL_SCHEMAS = [
         "description": "Compare sentiment across all three banks for one aspect, or overall.",
         "input_schema": {
             "type": "object",
-            "properties": {"aspect": {"type": "string"}},
+            "properties": {"aspect": {"type": "string", "enum": ASPECT_KEYS}},
         },
     },
     {
@@ -201,7 +242,7 @@ TOOL_SCHEMAS = [
             "type": "object",
             "properties": {
                 "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
-                "aspect": {"type": "string"},
+                "aspect": {"type": "string", "enum": ASPECT_KEYS},
             },
             "required": ["bank"],
         },
@@ -215,7 +256,7 @@ TOOL_SCHEMAS = [
             "type": "object",
             "properties": {
                 "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
-                "aspect": {"type": "string"},
+                "aspect": {"type": "string", "enum": ASPECT_KEYS},
             },
         },
     },
@@ -229,7 +270,7 @@ TOOL_SCHEMAS = [
             "properties": {
                 "query": {"type": "string", "description": "What to search for, in natural language."},
                 "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
-                "aspect": {"type": "string"},
+                "aspect": {"type": "string", "enum": ASPECT_KEYS},
                 "sentiment": {"type": "string", "enum": ["positive", "neutral", "negative"]},
                 "k": {"type": "integer", "description": "Max results, default 5"},
             },
@@ -273,6 +314,12 @@ def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
     been observed doing this, but this coercion is cheap and harmless for a
     backend that already sends correct types, so it runs for every backend
     rather than only for local models.
+
+    Also normalizes `aspect` (see normalize_aspect) — the same model called
+    get_sentiment with aspect="dividend policy" instead of "dividend_policy",
+    silently producing insufficient_data on a valid question. The schema's
+    enum constraint should prevent this going forward; this is the
+    defense-in-depth backstop for a model that ignores it anyway.
     """
     schema = _SCHEMA_BY_TOOL.get(tool_name)
     if not schema:
@@ -293,5 +340,7 @@ def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
                 pass
         elif prop_type == "boolean" and isinstance(value, str):
             value = value.strip().lower() in ("true", "1", "yes")
+        elif key == "aspect" and isinstance(value, str):
+            value = normalize_aspect(value)
         coerced[key] = value
     return coerced

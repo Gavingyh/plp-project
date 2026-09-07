@@ -1,217 +1,91 @@
-# plp-project
+# Retail Investor Sentiment Dashboard — DBS, OCBC, UOB
 
-Retail Investor Sentiment Dashboard for Singapore's three listed banks —
-DBS, OCBC, UOB. Practice Module project, Graduate Certificate in Practical
-Language Processing (NUS-ISS). See `.project-context/proposal/` for the full
-proposal and `.project-context/plan/mvp-implementation-plan.md` for the
-phased implementation plan this codebase follows.
+Aspect-based sentiment analysis of Singapore's three listed banks, built for
+the Practice Module of the Graduate Certificate in Practical Language
+Processing (NUS-ISS).
 
-## Status (2026-09-07)
+The system ingests public text about the three banks (Reddit, news, earnings
+releases, analyst consensus), splits it into sentences, assigns each sentence
+to a financial aspect, scores sentiment, and exposes the result through a
+dashboard, a REST API, and a chatbot that answers questions by querying the
+sentiment store.
 
-End-to-end pipeline is wired up and has been run against live data:
-ingestion → sentence preprocessing → aspect assignment → sentiment scoring →
-aggregation → dashboard → API → chatbot. **Phase 5's fine-tuned classifier
-does not exist yet** — that needs ~1,000 human-labeled examples (Phase 4),
-which is annotation-bound work this pipeline can't do on its own. Everything
-currently runs on **base FinBERT (zero-shot)** as a placeholder, which is
-also the plan's own required baseline #1 — so the comparison you need for
-the report falls out for free once the fine-tuned model exists.
+---
 
-The chatbot runs on either a local model (Ollama, no API key — the default
-for grading this as a school project) or Claude, selected automatically or
-explicitly via `CHATBOT_BACKEND` — see "Running the chatbot" below.
+## Documentation
 
-See `docs/data-viability.md` for what's been verified against live data
-(what works, what doesn't, and why).
+| document | what it covers |
+|---|---|
+| **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way — the decision log with the evidence behind each choice |
+| **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
+| **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
+| [docs/data-viability.md](docs/data-viability.md) | Evidence appendix — per-source findings from testing each data source |
+| [docs/annotation-guideline.md](docs/annotation-guideline.md) | Labelling scheme for the annotation task |
+| [API_KEYS.md](API_KEYS.md) | Obtaining each API key |
 
-## Setup
+---
 
-```bash
-python3 -m venv .venv-plp && source .venv-plp/bin/activate
-python3 -m pip install -r requirements.txt
-python3 -m spacy download en_core_web_sm
-cp .env.example .env   # fill in your own keys — see API_KEYS.md
-```
+## Read this before quoting any number
 
-Note: use `python3 -m pip` rather than the `pip` script directly — if this
-venv was ever created under a different directory name and the folder later
-renamed, the `pip` script's shebang points at the old path and breaks;
-`python3 -m pip` always works.
+- **The blended cross-bank comparison is not currently valid** — earnings
+  data exists for DBS and OCBC but not UOB, and earnings text is far more
+  positive than other sources. Use the Reddit-only figures for cross-bank
+  comparison.
+- **No fine-tuned model exists.** All sentiment comes from base FinBERT
+  applied zero-shot; the labelled dataset it needs hasn't been created yet.
+- **Local chatbot models fabricate citations.** Answers carrying a
+  `⚠️ VERIFICATION WARNING` cited evidence that was never retrieved.
 
-**If a FinBERT-loading step (assign/score/discover) hangs** with a
-"sending unauthenticated requests to the HF Hub" warning and near-zero CPU
-usage: HuggingFace's rate-limited etag-check can hang once the model is
-already cached locally. `export HF_HUB_OFFLINE=1` before running — this was
-hit and fixed live during development (see git history).
+Full caveats in [docs/STATUS.md](docs/STATUS.md).
 
-## Running the pipeline
+---
+
+## Quick start
 
 ```bash
-# 1. Ingest (news + Reddit). Add --reddit-since 2020-01-01 for a full backfill.
-python run_daily_batch.py
-
-# One-time, after adding PDFs to data/earnings_pdfs/<BANK>/*.pdf:
-python -m ingest.earnings
-
-# Tag analyst-consensus language in the news stream (proxy, see ingest/analyst_tag.py)
-python -m ingest.analyst_tag
-
-# 2. Preprocess: documents -> sentences
-python -m preprocess.pipeline
-
-# 3. Aspect discovery (run occasionally, inspect output, update config/aspects.yaml)
-python -m aspects.discover
-
-# 3b. Aspect assignment (run every batch, against the frozen taxonomy)
-python -m aspects.assign
-
-# 4. Sentiment scoring (currently base FinBERT zero-shot — see Status above)
-python -m sentiment.score
-
-# 5. Aggregate into the per-bank/aspect sentiment index
-python -m aggregate.index
-
-# 6. Dashboard
-streamlit run dashboard/app.py
-
-# 6b. Minimal API, for a frontend other than the Streamlit dashboard
-uvicorn api.main:app --reload --port 8000
-# interactive docs: http://localhost:8000/docs
-
-# 7. Chatbot — see "Running the chatbot" below for local vs. frontier
-python -m chatbot.agent "How does the market feel about DBS's dividend policy?"
+python3 -m venv .venv-plp
+.venv-plp/bin/python3 -m pip install -r requirements.txt
+.venv-plp/bin/python3 -m spacy download en_core_web_sm
+cp .env.example .env
 ```
 
-## Running the chatbot — local or frontier model, four backends
-
-This is a school project: grading it shouldn't require an API key. The
-chatbot backend is pluggable (`chatbot/backends/`) between one local option
-and three frontier options:
+Run the pipeline, then the dashboard:
 
 ```bash
-# Local, free, no API key — needs Ollama installed and a model pulled:
-ollama pull llama3.2:3b        # ~2GB, verified tool-calling support, recommended default
-ollama serve                   # if not already running
-python -m chatbot.agent "How does the market feel about DBS's dividend policy?"
-
-# Frontier model — set ONE key in .env, then it's picked automatically:
-#   ANTHROPIC_API_KEY  -> Claude
-#   OPENAI_API_KEY     -> GPT
-#   GEMINI_API_KEY     -> Gemini
-python -m chatbot.agent "..."
-
-# Or force any of the four explicitly, regardless of which keys are set:
-CHATBOT_BACKEND=ollama python -m chatbot.agent "..."
-CHATBOT_BACKEND=claude python -m chatbot.agent "..."
-CHATBOT_BACKEND=openai python -m chatbot.agent "..."
-CHATBOT_BACKEND=gemini python -m chatbot.agent "..."
+.venv-plp/bin/python3 run_daily_batch.py
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m preprocess.pipeline
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.assign
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m streamlit run dashboard/app.py
 ```
 
-With no key set at all, Ollama is used automatically. If more than one key
-is set, auto-detect prefers Claude, then OpenAI, then Gemini — see
-`chatbot/backends/__init__.py`.
+No API key is required — the pipeline runs on Reddit, earnings PDFs and
+local models alone. Two things that will otherwise cost you time:
+**always invoke `.venv-plp/bin/python3` by path**, and set `HF_HUB_OFFLINE=1`
+for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
-**Verification status differs sharply across backends — check before
-trusting one blindly:**
-- **Ollama**: verified live against a running instance, including the full
-  tool-call round trip. Other models confirmed working: `qwen3:4b` (~7x
-  slower per call — hidden reasoning chain first), `gemma3:4b`, `phi4-mini`
-  (tool-calling not yet verified for these two).
-- **Claude**: the original, most-exercised backend in this project, but no
-  `ANTHROPIC_API_KEY` is available in this dev environment either — not
-  live-tested here.
-- **OpenAI**: written from OpenAI's long-stable, documented Chat Completions
-  contract — no key available to verify live. Lower risk than Gemini (see
-  below) since the format is ubiquitous and hasn't changed in years.
-- **Gemini**: written from Google's documented contract, but carries real,
-  specific risk — see `chatbot/backends/gemini_backend.py`'s docstring for
-  exactly which part is most likely to be wrong (a schema type-casing
-  quirk). If you add a `GEMINI_API_KEY` and it 400s, that docstring tells
-  you where to look first.
+---
 
-**Read `chatbot/agent.py`'s module docstring before trusting local-model
-output blindly** — live-testing surfaced small models fabricating entire
-"supporting evidence" sections (fake quotes, fake URLs, fake sentence_ids)
-that were never actually retrieved. There's a code-level safety net that
-detects this and appends a `⚠️ VERIFICATION WARNING` to the response when it
-happens, but a warning is a detector, not a fix — if you see one, don't
-trust the citations above it. This did not occur with Claude in testing.
+## Layout
 
-## Labeling workflow (Phase 4 — the actual bottleneck)
+```
+ingest/       Data sources -> documents table
+preprocess/   documents -> sentences (the unit of analysis)
+aspects/      FinBERT embeddings, taxonomy discovery, aspect assignment
+sentiment/    Aspect-sentiment classification
+aggregate/    Per-bank/aspect index with volume shrinkage
+train/        Fine-tuning + evaluation (awaiting labelled data)
+dashboard/    Streamlit UI
+api/          FastAPI REST endpoints
+chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends
+config/       Aspect taxonomy, logging configuration
+scripts/      Resumable overnight backfill
+data/plp.db   SQLite store (gitignored)
+```
+
+## Tests
 
 ```bash
-python -m preprocess.export_candidates --train-dev 800 --test 200
-# -> data/labeled/candidates.csv
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
-
-Open the CSV, fill in the `label` column per `docs/annotation-guideline.md`.
-**The `split=test` rows are sampled purely at random and must stay untouched
-by any model-assisted process** — see the guideline and the plan's Phase 4
-section for why this matters (it's what makes the eventual F1 comparison
-against base FinBERT valid rather than inflated).
-
-Once labeled:
-
-```bash
-python -m train.finetune --seed 42      # needs data/labeled/candidates.csv filled in
-python -m train.evaluate --model-dir models/finbert-absa/seed_42/final
-```
-
-## Architecture
-
-```
-ingest/          NewsAPI, Alpha Vantage (dead for SGX names, kept for completeness),
-                 Arctic Shift (Reddit — PRAW replaced, API access wasn't approved),
-                 earnings PDFs, analyst-view tagging (proxy), Yahoo Finance analyst
-                 consensus. -> documents / analyst_consensus tables (SQLite).
-preprocess/      documents -> sentences (the unit of analysis for everything downstream).
-aspects/         FinBERT embeddings (embed.py, embed_store.py — shared with chatbot RAG),
-                 discovery (discover.py, offline/manual), assignment (assign.py, every batch).
-sentiment/       Aspect-sentiment classification (currently base FinBERT placeholder).
-aggregate/       Per-bank/aspect sentiment index (7d/30d/all_time windows), volume shrinkage.
-train/           Fine-tuning + evaluation (Phase 5) — not runnable until labeling is done.
-dashboard/       Streamlit app (reference UI).
-api/             Minimal FastAPI app over the same data, for any other frontend.
-chatbot/         Agentic chatbot: tools.py (structured queries + RAG evidence search +
-                 argument type-coercion for local models), retrieval.py (the RAG core —
-                 FinBERT embeddings + SQL pre-filter, no vector DB needed at this corpus
-                 scale), agent.py (tool-use loop + citation-fabrication safety net),
-                 backends/ (pluggable Claude / local-Ollama model).
-data/plp.db      SQLite store for everything above (gitignored).
-```
-
-## Files
-
-- `requirements.txt` — all dependencies across every phase
-- `.env.example` — copy to `.env` and fill in keys (never commit `.env`)
-- `API_KEYS.md` — how to get each API key
-- `run_daily_batch.py` — single entrypoint for scheduled ingestion (cron-able)
-- `docs/data-viability.md` — live-tested findings on each data source
-- `docs/annotation-guideline.md` — labeling instructions for Phase 4
-- `config/aspects.yaml` — the frozen aspect taxonomy (currently seeded from
-  the proposal's a-priori aspects, pending refinement from `aspects/discover.py`
-  output on a larger corpus)
-
-## Known limitations (see docs/data-viability.md for detail)
-
-- Alpha Vantage has zero SGX coverage — confirmed live, not just assumed.
-- NewsAPI free tier: ~1 month lookback, and only title+description text
-  (the `content` field is truncated).
-- News-derived analyst-tag proxy (`ingest/analyst_tag.py`) still returns 0
-  matches — largely superseded by `ingest/yahoo_analyst.py` (real consensus
-  ratings + price targets from Yahoo Finance, an unofficial but verified-live
-  API), kept as-is rather than removed since its 0-match result is itself a
-  documented finding. Direct SGX/aggregator scraping was tested and is
-  bot-protected against non-browser clients either way.
-- Reddit data (via Arctic Shift, a public archive) skews heavily toward DBS
-  — roughly 3x OCBC by sentence volume in the current corpus.
-- The aspect taxonomy in `config/aspects.yaml` is seeded from the proposal's
-  4 a-priori aspects; `aspects/discover.py` found the real corpus splits along
-  a coarser axis (consumer-banking-service vs. investment-discussion) instead
-  — see the file's header comment for the decision this raises.
-- `get_trend` compares two discrete windows (7d vs. 30d), not a continuous
-  day-by-day time series.
-- Local chatbot models (via Ollama) have been observed fabricating citations
-  — see "Running the chatbot" above. A code-level safety net catches and
-  flags it, but doesn't make the local model actually reliable at citing
-  evidence; treat any `⚠️ VERIFICATION WARNING` as "don't trust this answer."

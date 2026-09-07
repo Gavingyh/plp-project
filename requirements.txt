@@ -19,11 +19,16 @@ spacy>=3.8.0
 # Phase 7 — dashboard
 streamlit>=1.40.0
 
-# Phase 8 — chatbot
+# Phase 8 — chatbot (frontier backend; not required for the local Ollama backend)
 anthropic>=0.40.0
+
+# Minimal API (api/) — a frontend other than the Streamlit dashboard consumes this
+fastapi>=0.115.0
+uvicorn>=0.30.0
 
 # Phase 5 evaluation — lexicon baseline
 vaderSentiment>=3.3.2
 
 # tests
 pytest>=8.0.0
+httpx>=0.27.0   # required by fastapi.testclient.TestClient

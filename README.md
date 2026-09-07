@@ -6,16 +6,20 @@ Language Processing (NUS-ISS). See `.project-context/proposal/` for the full
 proposal and `.project-context/plan/mvp-implementation-plan.md` for the
 phased implementation plan this codebase follows.
 
-## Status (2026-09-06)
+## Status (2026-09-07)
 
 End-to-end pipeline is wired up and has been run against live data:
 ingestion → sentence preprocessing → aspect assignment → sentiment scoring →
-aggregation → dashboard → chatbot. **Phase 5's fine-tuned classifier does
-not exist yet** — that needs ~1,000 human-labeled examples (Phase 4), which
-is annotation-bound work this pipeline can't do on its own. Everything
+aggregation → dashboard → API → chatbot. **Phase 5's fine-tuned classifier
+does not exist yet** — that needs ~1,000 human-labeled examples (Phase 4),
+which is annotation-bound work this pipeline can't do on its own. Everything
 currently runs on **base FinBERT (zero-shot)** as a placeholder, which is
 also the plan's own required baseline #1 — so the comparison you need for
 the report falls out for free once the fine-tuned model exists.
+
+The chatbot runs on either a local model (Ollama, no API key — the default
+for grading this as a school project) or Claude, selected automatically or
+explicitly via `CHATBOT_BACKEND` — see "Running the chatbot" below.
 
 See `docs/data-viability.md` for what's been verified against live data
 (what works, what doesn't, and why).
@@ -70,9 +74,45 @@ python -m aggregate.index
 # 6. Dashboard
 streamlit run dashboard/app.py
 
-# 7. Chatbot (needs ANTHROPIC_API_KEY in .env)
+# 6b. Minimal API, for a frontend other than the Streamlit dashboard
+uvicorn api.main:app --reload --port 8000
+# interactive docs: http://localhost:8000/docs
+
+# 7. Chatbot — see "Running the chatbot" below for local vs. frontier
 python -m chatbot.agent "How does the market feel about DBS's dividend policy?"
 ```
+
+## Running the chatbot — local model or frontier model
+
+This is a school project: grading it shouldn't require an API key. The
+chatbot backend is pluggable (`chatbot/backends/`):
+
+```bash
+# Local, free, no API key — needs Ollama installed and a model pulled:
+ollama pull llama3.2:3b        # ~2GB, verified tool-calling support, recommended default
+ollama serve                   # if not already running
+python -m chatbot.agent "How does the market feel about DBS's dividend policy?"
+
+# Frontier model — set ANTHROPIC_API_KEY in .env, then it's picked automatically:
+python -m chatbot.agent "..."
+
+# Or force either explicitly:
+CHATBOT_BACKEND=ollama python -m chatbot.agent "..."
+CHATBOT_BACKEND=claude python -m chatbot.agent "..."
+```
+
+With no `ANTHROPIC_API_KEY` set, Ollama is used automatically. Other models
+confirmed to support tool-calling via Ollama: `qwen3:4b` (works identically,
+but ~7x slower per call — it emits a hidden reasoning chain first),
+`gemma3:4b`, `phi4-mini` (tool-calling not yet verified for these two).
+
+**Read `chatbot/agent.py`'s module docstring before trusting local-model
+output blindly** — live-testing surfaced small models fabricating entire
+"supporting evidence" sections (fake quotes, fake URLs, fake sentence_ids)
+that were never actually retrieved. There's a code-level safety net that
+detects this and appends a `⚠️ VERIFICATION WARNING` to the response when it
+happens, but a warning is a detector, not a fix — if you see one, don't
+trust the citations above it. This did not occur with Claude in testing.
 
 ## Labeling workflow (Phase 4 — the actual bottleneck)
 
@@ -99,17 +139,21 @@ python -m train.evaluate --model-dir models/finbert-absa/seed_42/final
 ```
 ingest/          NewsAPI, Alpha Vantage (dead for SGX names, kept for completeness),
                  Arctic Shift (Reddit — PRAW replaced, API access wasn't approved),
-                 earnings PDFs, analyst-view tagging. -> documents table (SQLite).
+                 earnings PDFs, analyst-view tagging (proxy), Yahoo Finance analyst
+                 consensus. -> documents / analyst_consensus tables (SQLite).
 preprocess/      documents -> sentences (the unit of analysis for everything downstream).
 aspects/         FinBERT embeddings (embed.py, embed_store.py — shared with chatbot RAG),
                  discovery (discover.py, offline/manual), assignment (assign.py, every batch).
 sentiment/       Aspect-sentiment classification (currently base FinBERT placeholder).
-aggregate/       Per-bank/aspect sentiment index, with volume shrinkage.
+aggregate/       Per-bank/aspect sentiment index (7d/30d/all_time windows), volume shrinkage.
 train/           Fine-tuning + evaluation (Phase 5) — not runnable until labeling is done.
-dashboard/       Streamlit app.
-chatbot/         Agentic chatbot: tools.py (structured queries + RAG evidence search),
-                 retrieval.py (the RAG core — FinBERT embeddings + SQL pre-filter,
-                 no vector DB needed at this corpus scale), agent.py (Claude tool-use loop).
+dashboard/       Streamlit app (reference UI).
+api/             Minimal FastAPI app over the same data, for any other frontend.
+chatbot/         Agentic chatbot: tools.py (structured queries + RAG evidence search +
+                 argument type-coercion for local models), retrieval.py (the RAG core —
+                 FinBERT embeddings + SQL pre-filter, no vector DB needed at this corpus
+                 scale), agent.py (tool-use loop + citation-fabrication safety net),
+                 backends/ (pluggable Claude / local-Ollama model).
 data/plp.db      SQLite store for everything above (gitignored).
 ```
 
@@ -130,15 +174,21 @@ data/plp.db      SQLite store for everything above (gitignored).
 - Alpha Vantage has zero SGX coverage — confirmed live, not just assumed.
 - NewsAPI free tier: ~1 month lookback, and only title+description text
   (the `content` field is truncated).
-- Analyst-consensus is a news-derived proxy (broker name + rating language),
-  not a real fourth data source — direct SGX/aggregator scraping was tested
-  and is bot-protected against non-browser clients.
+- News-derived analyst-tag proxy (`ingest/analyst_tag.py`) still returns 0
+  matches — largely superseded by `ingest/yahoo_analyst.py` (real consensus
+  ratings + price targets from Yahoo Finance, an unofficial but verified-live
+  API), kept as-is rather than removed since its 0-match result is itself a
+  documented finding. Direct SGX/aggregator scraping was tested and is
+  bot-protected against non-browser clients either way.
 - Reddit data (via Arctic Shift, a public archive) skews heavily toward DBS
-  — roughly 4x OCBC by sentence volume in the current corpus.
-- The aspect taxonomy in `config/aspects.yaml` is bootstrapped from a handful
-  of seed terms per aspect, not yet validated against real cluster centroids
-  from `aspects/discover.py` — early testing shows most sentences match
-  multiple aspects near-equally, meaning the centroids aren't discriminating
-  well yet. Needs another discovery pass once more data is in.
-- Sentiment index currently stores a single all-time snapshot per
-  (bank, aspect) — rolling time-series windows aren't implemented.
+  — roughly 3x OCBC by sentence volume in the current corpus.
+- The aspect taxonomy in `config/aspects.yaml` is seeded from the proposal's
+  4 a-priori aspects; `aspects/discover.py` found the real corpus splits along
+  a coarser axis (consumer-banking-service vs. investment-discussion) instead
+  — see the file's header comment for the decision this raises.
+- `get_trend` compares two discrete windows (7d vs. 30d), not a continuous
+  day-by-day time series.
+- Local chatbot models (via Ollama) have been observed fabricating citations
+  — see "Running the chatbot" above. A code-level safety net catches and
+  flags it, but doesn't make the local model actually reliable at citing
+  evidence; treat any `⚠️ VERIFICATION WARNING` as "don't trust this answer."

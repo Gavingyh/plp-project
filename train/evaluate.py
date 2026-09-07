@@ -1,8 +1,8 @@
 """
-Phase 5 evaluation: fine-tuned model vs. required baselines on the FROZEN
+Evaluation: fine-tuned model vs. required baselines on the FROZEN
 random test set (data/labeled/candidates.csv, split='test').
 
-Per MVP plan Phase 5, "Baselines — required, not optional": the claim
+Baselines are required, not optional: the claim
 "fine-tuning helped" is unsupported without comparing against base FinBERT
 zero-shot, a lexicon method, and a classical ML method. This script runs all
 of them on the same frozen test set so the comparison is apples-to-apples.
@@ -36,7 +36,7 @@ def _load_test_set() -> pd.DataFrame:
     df = pd.read_csv(CANDIDATES_PATH)
     df = df[(df["split"] == "test") & (df["label"].isin(LABELS))]
     if df.empty:
-        raise ValueError("No labeled test rows found — Phase 4 labeling must be complete first.")
+        raise ValueError("No labeled test rows found — Labeling must be complete first.")
     return df
 
 
@@ -126,7 +126,7 @@ def run(model_dir: str | None):
         base = results[0]
         if fine["macro_f1"] <= base["macro_f1"]:
             print("\nWARNING: fine-tuned model did NOT beat base FinBERT zero-shot. Per the plan, "
-                  "this is a reportable finding, not a bug to hide — investigate label quality "
+                  "this is a reportable finding, not a defect to hide — investigate label quality "
                   "(kappa), training set size, and whether aspect-conditioning is actually helping "
                   "before concluding the approach failed.")
 

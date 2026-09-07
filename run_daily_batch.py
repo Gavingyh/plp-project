@@ -1,7 +1,7 @@
 """
 Daily batch ingestion entrypoint — the "recomputed after each batch cycle"
 requirement from the project proposal. Run manually or via cron; not a
-live/streaming pipeline (that's a deliberate scope decision, see MVP plan).
+live/streaming pipeline (a deliberate scope decision; see docs/DESIGN.md).
 
 Pulls NewsAPI + Alpha Vantage (last day or so of news) and Arctic Shift
 (incremental Reddit pull since the last run), upserts into data/plp.db.

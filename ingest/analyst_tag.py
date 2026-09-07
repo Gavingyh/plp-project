@@ -1,5 +1,5 @@
 """
-Analyst-consensus tagging over the news stream (MVP plan Phase 1d — labeled
+Analyst-consensus tagging over the news stream (docs/DESIGN.md — labeled
 1c/1d in the plan text, "open decision, flag to mentor").
 
 A genuine fourth ingestion source for analyst consensus reports isn't
@@ -8,7 +8,7 @@ entitlements, and the obvious free alternatives are bot-protected against
 scraping —
 
   - sgx.com serves a static "unsupported browser" shell to any non-browser
-    HTTP client regardless of User-Agent (verified live: HTTP 200, but the
+    HTTP client regardless of User-Agent (confirmed: HTTP 200, but the
     body is the compatibility-warning shell, not the article).
   - sginvestors.io (an analyst-report aggregator) returns an empty HTTP 202
     Cloudflare challenge response to a plain request.

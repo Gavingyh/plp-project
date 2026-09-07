@@ -1,8 +1,7 @@
 """
-Tool implementations for the agentic chatbot — MVP plan Phase 8.
+Tool implementations for the agentic chatbot — see docs/DESIGN.md.
 
-Plain Python functions, not a framework (see plan Phase 8, "Architecture" for
-the rationale: the agent loop is small enough that a framework adds
+Plain Python functions, not a framework (see docs/DESIGN.md, the rationale: the agent loop is small enough that a framework adds
 abstraction without adding capability at this scale).
 
 Every tool that reports a score also reports `n` — the hallucination/
@@ -160,7 +159,7 @@ def get_analyst_consensus(bank: str) -> dict:
 def search_evidence(query: str, bank: str | None = None, aspect: str | None = None,
                      sentiment: str | None = None, k: int = 5) -> dict:
     """RAG evidence search (chatbot/retrieval.py) — quotes with citations for
-    any qualitative claim. See plan Phase 8, 'Grounding rules': every
+    any qualitative claim. See docs/DESIGN.md, 'Grounding rules': every
     qualitative claim must cite a sentence_id + url."""
     results = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k)
     return {"query": query, "results": results, "n_found": len(results)}
@@ -268,7 +267,7 @@ def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
     input_schema (integer/number/boolean) before the tool function sees them.
 
     WHY THIS EXISTS: local models called via Ollama don't reliably respect a
-    JSON schema's declared types — live-tested, llama3.2:3b called
+    JSON schema's declared types — observed with llama3.2:3b, which called
     search_evidence with k="5" (a string) instead of k=5, which crashed the
     list-slice inside chatbot/retrieval.py with a TypeError. Claude has not
     been observed doing this, but this coercion is cheap and harmless for a

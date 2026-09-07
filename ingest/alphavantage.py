@@ -1,7 +1,7 @@
 """
 Alpha Vantage NEWS_SENTIMENT ingestion (free tier: 25 req/day).
 
-Per the MVP plan (finding (b)): Alpha Vantage's news coverage is overwhelmingly
+Per docs/DESIGN.md (finding (b)): Alpha Vantage's news coverage is overwhelmingly
 US-listed tickers, and SGX listings (D05.SI / O39.SI / U11.SI) are generally not
 indexed. This adapter exists so the team can *prove* that empirically (Phase 0)
 rather than assume it — if it returns zero rows across all three tickers, that
@@ -46,7 +46,7 @@ def pull() -> list[dict]:
         # "D05.SI" — confirmed live), so strip the exchange suffix. This is a
         # format fix only: valid-format tickers ("D05", "D05SI", "D05-SI")
         # were also tested live and all returned 0 results — AV genuinely
-        # doesn't index SGX-listed names, format aside (see MVP plan finding b).
+        # doesn't index SGX-listed names, format aside (see docs/DESIGN.md).
         ticker = queries[2].split(".")[0]  # "D05.SI" -> "D05"
         url = "https://www.alphavantage.co/query"
         params = {

@@ -1,6 +1,6 @@
 """
 Tests for ingest/db.py — the idempotent-upsert contract every ingest adapter
-relies on. This is the property verified live during development (a
+relies on. This is the property confirmed in practice (a
 re-run of the same Arctic Shift window produced 0 new inserts on the second
 pass) — these tests lock it down so a future change can't silently break it.
 """

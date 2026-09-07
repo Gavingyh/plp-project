@@ -14,7 +14,7 @@ Source weighting is deliberately simple for the MVP: earnings and
 analyst-flagged news outnumber a single Reddit comment. Confidence weighting
 is applied via the per-row `confidence` from aspect_sentiment.
 
-Rolling windows (plan Phase 6, step 3): computes '7d', '30d', and 'all_time'
+Rolling windows (docs/DESIGN.md, step 3): computes '7d', '30d', and 'all_time'
 per (bank, aspect), so the dashboard's time-series view and the chatbot's
 get_trend tool have real data to show instead of a single snapshot.
 Window cutoffs are relative to actual wall-clock time (not the latest data
@@ -51,7 +51,7 @@ _LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 # Source weight: how much one item from this source counts relative to a
 # baseline Reddit comment (weight 1.0).
 #
-# earnings WAS 3.0, dropped to 1.0 on 2026-09-07 after the earnings corpus
+# earnings WAS 3.0, dropped to 1.0 after the earnings corpus
 # actually landed. That 3.0 was set when earnings was assumed to be a handful
 # of high-signal documents; it became the second-largest source (10,658
 # sentences), and it is management describing its own results, which is

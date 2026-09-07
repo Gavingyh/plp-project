@@ -1,7 +1,7 @@
 """Per-source text cleaning, applied before sentence segmentation.
 
 Sources differ enough in register that a shared cleaner would either
-under-clean Reddit or over-clean news. See MVP plan Phase 2, step 2.
+under-clean Reddit or over-clean news. See docs/DESIGN.md, step 2.
 """
 
 import re
@@ -35,7 +35,7 @@ def clean_reddit(text: str) -> str | None:
     text = _MARKDOWN_EMPHASIS.sub(r"\1", text)
     text = _URL.sub("", text)
     # Deliberately NOT lowercasing — FinBERT is cased-aware and casing/emphasis
-    # carries sentiment signal in this register (see plan Phase 2, step 2).
+    # carries sentiment signal in this register (see docs/DESIGN.md, step 2).
     return _WHITESPACE.sub(" ", text).strip()
 
 

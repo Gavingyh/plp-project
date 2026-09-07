@@ -1,6 +1,6 @@
 """
 Tests for ingest/base.py's bank detection/resolution — the logic behind two
-real bugs caught during development (see git history):
+regressions this suite guards against:
   1. NewsAPI's bare "DBS" query term matched unrelated global news.
   2. preprocess/pipeline.py inheriting doc-level bank onto every sentence in
      a long Reddit thread produced noise ("Calling you for $8 transaction

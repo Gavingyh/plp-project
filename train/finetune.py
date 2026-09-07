@@ -1,18 +1,18 @@
 """
-Phase 5: fine-tune FinBERT for aspect-conditioned sentiment classification.
+Fine-tune FinBERT for aspect-conditioned sentiment classification.
 
 NOT RUNNABLE YET — requires data/labeled/candidates.csv to have its `label`
-column filled in by human annotators (Phase 4, human-annotation-bound work
+column filled in by human annotators (human-annotation-bound work
 this pipeline cannot do on its own). This script is ready to run the moment
 that data exists.
 
-Sentence-pair (NLI-style) input formulation per MVP plan Phase 5:
+Sentence-pair (NLI-style) input formulation:
   [CLS] {sentence} [SEP] {aspect} [SEP]  ->  3-way softmax
 One model for all aspects (aspect supplied as context), NOT a model-per-aspect
 — splitting ~1,000 examples across 6-10 aspects would leave ~100 each, too
 few to fine-tune anything.
 
-Training config per plan: LR 2e-5, 3-5 epochs, batch 16, max_len 128,
+Training config: LR 2e-5, 3-5 epochs, batch 16, max_len 128,
 warmup 10%, early stopping on dev macro-F1, class-weighted loss, fixed seed
 (report mean +/- std across >=3 seeds — a single run's F1 can be seed noise
 at this data size).
@@ -67,7 +67,7 @@ def _load_labeled(split: str) -> pd.DataFrame:
     df = df[df["label"].isin(LABELS)]  # drops unlabeled rows
     if df.empty:
         raise ValueError(
-            f"No labeled rows found for split='{split}'. Labeling (Phase 4) needs to happen "
+            f"No labeled rows found for split='{split}'. Labeling needs to happen "
             "before this script can run — see docs/annotation-guideline.md."
         )
     return df
@@ -97,7 +97,7 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16)
 
     train_dev_df = _load_labeled("train_dev")
     # Simple 85/15 split of the labeled train_dev pool for train vs. dev
-    # (k-fold is the plan's stated alternative given a small seed set — swap
+    # (k-fold is the documented alternative given a small seed set — swap
     # in sklearn's StratifiedKFold here once labeling is complete and the
     # team decides which to use).
     train_dev_df = train_dev_df.sample(frac=1, random_state=seed).reset_index(drop=True)

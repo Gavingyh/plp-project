@@ -1,5 +1,5 @@
 """
-Streamlit dashboard — MVP plan Phase 7.
+Streamlit dashboard — see docs/DESIGN.md.
 
 Four views only, per plan scoping: bank overview, aspect heatmap, time series,
 evidence drill-down. Every view carries the plan's required disclosures:

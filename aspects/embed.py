@@ -5,7 +5,7 @@ proposal — no fine-tuning needed for this part, just measuring similarity).
 Mean-pooled over token embeddings, NOT the CLS token — BERT-family CLS vectors
 without a sentence-level training objective (like SBERT's) are known to be
 poor similarity representations; mean pooling is materially better and costs
-nothing. See MVP plan Phase 3, step 1.
+nothing. See docs/DESIGN.md, step 1.
 """
 
 import numpy as np

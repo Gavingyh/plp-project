@@ -3,8 +3,8 @@ Ollama backend — runs entirely locally, no API key, no cost. Built for this
 being a school project: a lecturer grading it should be able to run the
 chatbot with nothing but `ollama serve` and a pulled model.
 
-Tool-calling shape verified live against a running Ollama instance
-(2026-09-07) before writing this, not assumed from docs:
+Tool-calling contract, confirmed against a running Ollama instance rather
+than taken from documentation:
   - request:  POST /api/chat with a `tools` array in OpenAI function-calling
     shape ({"type": "function", "function": {name, description, parameters}})
   - response: message.tool_calls[].function.{name, arguments} — arguments

@@ -1,5 +1,5 @@
 """
-RAG evidence retrieval for the chatbot (MVP plan Phase 8, `search_evidence` tool).
+RAG evidence retrieval for the chatbot (docs/DESIGN.md, `search_evidence` tool).
 
 Hybrid retrieval, matched to this corpus's actual scale rather than a generic
 "vector DB + reranker" template:
@@ -16,7 +16,7 @@ Hybrid retrieval, matched to this corpus's actual scale rather than a generic
      BM25 index, since the corpus doesn't warrant one yet.
 
 Every result carries its source sentence_id, url, and date — the chatbot's
-citation requirement (Phase 8, grounding rules) is enforced by what this
+citation requirement is enforced by what this
 function returns, not left to the model's discretion.
 """
 

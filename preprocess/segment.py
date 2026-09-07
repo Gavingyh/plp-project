@@ -2,7 +2,7 @@
 Sentence segmentation via spaCy, with abbreviation exceptions for financial
 text (S$1.2b, Q3 FY25, p.a., etc.) that naive splitters break on.
 
-See MVP plan Phase 2, step 1.
+See docs/DESIGN.md, step 1.
 """
 
 import spacy

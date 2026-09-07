@@ -9,12 +9,12 @@ actually mean) and SGX's own commentary — third-party analyst reports are
 brokerage IP behind client entitlements and aren't on SGX at all. Meanwhile
 SGX's own API sits behind a WAF returning 403, while DBS and OCBC publish the
 exact same earnings material openly on their IR sites with no bot protection
-at all (verified live: plain requests, HTTP 200, real content). So this
+at all (confirmed: plain requests, HTTP 200, real content). So this
 fetcher needs no browser automation, no stealth/anti-detection tooling, and
 no ToS grey area — it reads openly published pages the way any reader would.
 
 UOB IS NOT INCLUDED: uobgroup.com redirects to a WAF challenge page for
-non-browser clients (verified live). Rather than escalate to fingerprint-
+non-browser clients (confirmed against the live site). Rather than escalate to fingerprint-
 spoofing to defeat that, UOB's PDFs should be downloaded by hand into
 data/earnings_pdfs/UOB/ — it's a handful of files per year. run() says so
 explicitly rather than failing silently.

@@ -2,7 +2,7 @@
 Phase 3 aspect assignment: deterministic nearest-centroid assignment against
 the FROZEN taxonomy in config/aspects.yaml. Runs every batch — unlike
 discover.py's clustering, this does NOT change the taxonomy, only which
-bucket each sentence falls into. See MVP plan Phase 3, "The key
+bucket each sentence falls into. See docs/DESIGN.md, "The key
 architectural point".
 
 Bootstrap note: until aspects/discover.py has been run on a large enough
@@ -12,7 +12,7 @@ a reasonable starting point, not the final data-driven taxonomy the plan
 calls for.
 
 A sentence may be assigned to more than one aspect if it clears the
-similarity floor for more than one non-OTHER aspect — plan Phase 3, step 6:
+similarity floor for more than one non-OTHER aspect — docs/DESIGN.md, step 6:
 "NIM held up but provisions rose" is genuinely two aspects.
 
 USAGE:

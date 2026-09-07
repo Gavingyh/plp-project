@@ -1,6 +1,6 @@
 """
 Tests for chatbot/tools.py — the structured-data tools the agent calls.
-Includes a regression test for a real bug caught during development:
+Includes a regression test for a previously-fixed defect:
 get_coverage's `where` clause list was built for one query (joined to
 sentence_aspects when `aspect` was given) and reused verbatim for a second
 query that never performed that join, causing

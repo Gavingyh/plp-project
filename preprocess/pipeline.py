@@ -6,7 +6,7 @@ Reads documents not yet processed (doc_id not already represented in
 attribution per sentence, drops near-duplicates (normalized-text hash) and
 sub-length fragments, and writes the result into the `sentences` table.
 
-This is the "unit of analysis is the sentence" step — see MVP plan,
+This is the "unit of analysis is the sentence" step — see docs/DESIGN.md,
 Architecture at a glance. Aspect assignment (Phase 3), sentiment scoring
 (Phase 5), the index (Phase 6), and the chatbot's evidence citations (Phase 8)
 all key off sentence_id from here.
@@ -35,7 +35,7 @@ _MIN_WORDS = 4  # drops trivially short fragments even after segment()'s char fi
 
 def _norm_hash(text: str) -> str:
     """Normalized-text hash for near-duplicate detection (e.g. syndicated wire
-    copy republished across outlets) — see MVP plan Phase 2, step 5."""
+    copy republished across outlets) — see docs/DESIGN.md, step 5."""
     normalized = re.sub(r"[^\w]", "", text.lower())
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:24]
 
@@ -52,14 +52,14 @@ def _sentence_id(doc_id: str, start: int, end: int) -> str:
 # ("Calling you for $8 transaction is a red flag itself.") as if they were
 # about the bank. For those sources we require an explicit in-sentence
 # mention. This is the "keyword-plus-length heuristic, known precision
-# limitation" the MVP plan flags for the relevance filter (Phase 2, step 4).
+# limitation" docs/DESIGN.md notes for the relevance filter (Phase 2, step 4).
 _INHERIT_DOC_BANK_SOURCES = {"newsapi", "alphavantage", "earnings"}
 
 
 def _resolve_sentence_bank(sentence_text: str, doc_bank: str, source: str) -> str | None:
     """Per-sentence bank attribution — a MULTI document usually has each bank
     named in a different sentence, not all sentences about all banks.
-    See MVP plan Phase 2, step 3."""
+    See docs/DESIGN.md, step 3."""
     found = detect_banks(sentence_text)
     if len(found) == 1:
         return found[0]

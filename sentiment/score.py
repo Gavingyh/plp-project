@@ -1,5 +1,5 @@
 """
-Sentiment scoring — MVP plan Phase 5/6.
+Sentiment scoring — see docs/DESIGN.md./6.
 
 STATUS: this uses BASE FinBERT's own classification head
 (ProsusAI/finbert, whole-sentence 3-class positive/neutral/negative),

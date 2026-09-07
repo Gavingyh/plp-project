@@ -1,5 +1,5 @@
 """
-Quarterly earnings release ingestion, per MVP plan Phase 1b.
+Quarterly earnings release ingestion, see docs/DESIGN.md.
 
 There is no free API for SGX company announcements worth building against.
 This is a ONE-TIME MANUAL CORPUS: a team member downloads results announcements
@@ -33,7 +33,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
 
 # A line that's mostly digits/punctuation is almost certainly a financial-
-# statement table row, not prose — drop it (see plan Phase 1b).
+# statement table row, not prose — drop it (see docs/DESIGN.md).
 _NUMERIC_LINE = re.compile(r"^[\d\s.,()%$SGDsgd/-]{10,}$")
 _MIN_PROSE_LEN = 40
 
@@ -67,7 +67,7 @@ def pull() -> list[dict]:
     if not os.path.isdir(PDF_DIR):
         logger.warning(f"No {PDF_DIR} directory found.")
         logger.info("Create data/earnings_pdfs/<BANK>/*.pdf and re-run — "
-              "see plan Phase 1b for where to source these (bank IR sites).")
+              "see docs/DESIGN.md for where to source these (bank IR sites).")
         return []
 
     docs = []

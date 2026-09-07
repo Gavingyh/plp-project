@@ -9,7 +9,7 @@ import pytest
 from chatbot.tools import get_analyst_consensus
 from ingest.yahoo_analyst import _raw, fetch_bank, upsert
 
-# Trimmed copy of a real Yahoo quoteSummary response (verified live 2026-09-07).
+# Trimmed copy of a real Yahoo quoteSummary response (confirmed against the live API).
 _FAKE_PAYLOAD = {
     "quoteSummary": {
         "result": [{

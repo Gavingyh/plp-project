@@ -3,7 +3,7 @@ Tests for ingest/earnings_fetch.py — discovering and downloading earnings
 PDFs from DBS's and OCBC's investor-relations sites.
 
 The listing-page HTML fixtures below are trimmed copies of real markup
-(fetched live 2026-09-07), so a change in either bank's URL structure
+(captured from the live page), so a change in either bank's URL structure
 surfaces as a failing discovery test rather than a silent "0 documents
 found" in production.
 

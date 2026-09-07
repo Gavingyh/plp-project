@@ -1,6 +1,6 @@
 """
 Tests for preprocess/pipeline.py's per-sentence bank attribution — this is
-the exact logic that produced real noise during development: inheriting a
+the logic behind a known source of noise: inheriting a
 document's bank onto every sentence in a long Reddit thread pulled in
 unrelated sentences ("Calling you for $8 transaction is a red flag itself.")
 as if they were about DBS. The fix restricts inheritance to short,
@@ -46,7 +46,7 @@ def test_no_mention_no_inheritable_source_drops():
 
 def test_norm_hash_ignores_case_and_punctuation():
     # This is what catches syndicated wire copy republished with minor
-    # formatting differences across outlets (plan Phase 2, dedup).
+    # formatting differences across outlets (docs/DESIGN.md, dedup).
     assert _norm_hash("DBS raised its dividend!") == _norm_hash("dbs raised its dividend")
 
 

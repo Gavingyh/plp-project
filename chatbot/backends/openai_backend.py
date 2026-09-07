@@ -1,15 +1,13 @@
 """
 OpenAI (GPT) backend — a second frontier-model option alongside Claude.
 
-NOT LIVE-TESTED: no OPENAI_API_KEY is available in this dev environment
-(same situation ClaudeBackend was originally built under — see its
-docstring history). This is written from OpenAI's documented, long-stable
-Chat Completions tool-calling contract rather than assumption-from-nothing,
-but "documented" is not the same guarantee as "verified live" — the way
-ollama_backend.py's contract was confirmed against a real running instance
-before being trusted. If you add a key, run `python -m chatbot.agent
-"..."` with CHATBOT_BACKEND=openai and treat the first real response as the
-actual verification this module hasn't had yet.
+NOT VERIFIED AGAINST THE LIVE API — no OPENAI_API_KEY was available when
+this was written. It implements OpenAI's documented Chat Completions
+tool-calling contract, which is long-stable and widely used, but that is a
+weaker guarantee than the Ollama backend has (whose contract was confirmed
+against a running instance). With a key available, run
+`CHATBOT_BACKEND=openai python -m chatbot.agent "..."` and treat the first
+successful response as this module's verification.
 
 Key contract detail that's easy to get wrong and IS specific to OpenAI
 (Ollama's version of this API pre-parses it for you — see ollama_backend.py):

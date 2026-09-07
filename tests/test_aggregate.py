@@ -1,6 +1,6 @@
 """
 Tests for aggregate/index.py's shrinkage math — the mechanism that stops a
-single Reddit comment from swinging the index to +/-1.0 (plan Phase 6,
+single Reddit comment from swinging the index to +/-1.0 (docs/DESIGN.md,
 "Sentiment aggregation"). Verifies against hand-computed expected values on
 a synthetic dataset, not just "it runs."
 """
@@ -45,7 +45,7 @@ def test_single_positive_sentence_is_shrunk_toward_neutral(temp_db):
 
 
 def test_n_and_class_counts_always_stored(temp_db):
-    # The plan is explicit: a score without its sample size is the main way
+    # By design: a score without its sample size is the main way
     # this dashboard could mislead a retail investor. n/pos/neu/neg must
     # always be present regardless of how thin the data is.
     _insert_scored_sentence(temp_db, "s1", "OCBC", "asset_quality", "negative", 0.9)
@@ -100,7 +100,7 @@ def test_news_outweighs_reddit(temp_db):
 
 
 def test_earnings_no_longer_outweighs_reddit(temp_db):
-    # Regression guard for a deliberate 2026-09-07 change: earnings weight was
+    # Regression guard for a deliberate change: earnings weight was
     # dropped 3.0 -> 1.0 once the earnings corpus actually landed. It is
     # management describing its own results (24.7% of its sentences score
     # positive vs 2.3% of Reddit's), so triple-weighting it amplified a known

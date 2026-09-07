@@ -5,7 +5,7 @@ deliverable: letting the data propose the aspect set rather than assuming it.
 
 After this, aspects/assign.py does the per-batch, deterministic nearest-
 centroid assignment against the frozen taxonomy — clustering itself does NOT
-re-run every batch (see MVP plan Phase 3, "The key architectural point":
+re-run every batch (see docs/DESIGN.md, "The key architectural point":
 users can't be shown a renumbered cluster on Tuesday).
 
 USAGE:

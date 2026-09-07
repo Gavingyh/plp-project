@@ -1,35 +1,32 @@
 """
-Agentic chatbot — MVP plan Phase 8. A plain tool-calling loop (see plan
-Phase 8, "Architecture": at this scale a framework like LangChain adds
-abstraction without adding capability, and the report has to explain
-whatever gets used), now pluggable between a local model (Ollama, no API
-key, no cost — see chatbot/backends/ollama_backend.py) and Claude (frontier,
-needs ANTHROPIC_API_KEY). See chatbot/backends/__init__.py for how the
-backend is chosen.
+Agentic chatbot: a tool-calling loop over the sentiment store.
 
-WHY PLUGGABLE: this is a school project. A lecturer grading it shouldn't
-need to hold an API key just to run the chatbot.
+The loop is deliberately plain rather than framework-based (LangChain and
+similar). At this scale a framework adds abstraction without adding
+capability, and the project report has to be able to explain whatever is
+used.
 
-CITATION VERIFICATION — READ THIS: live-tested against llama3.2:3b
-(2026-09-07). First attempt: a confident answer citing two fully-fabricated
-sources (fake Bloomberg/Reuters URLs, fake sentence_ids) despite never
-calling search_evidence. After tightening the system prompt (added an
-explicit "never invent a citation" rule) the model STILL fabricated a
-"supporting evidence" quote on the next run — this time with placeholder
-tokens ("Sentence_id: [insert sentence_id]") instead of a fake URL, which
-would have slipped straight past a naive URL-regex check. Two different
-fabrication styles from one prompt change is exactly why this is a code
-check, not a prompt-tuning problem: the invariant that actually holds is
-"if search_evidence was never called, ANY quoted evidence or sentence_id
-reference in the final answer is fabricated by definition" — this module
-enforces that directly rather than trying to enumerate every way a model
-might dress up a fake citation. Mirrors how MIN_VOLUME_FOR_SCORE etc. are
-enforced in code in chatbot/tools.py rather than left to the prompt.
+The model backend is pluggable — a local model via Ollama (no API key, no
+cost) or a hosted model (Claude, GPT, Gemini). Backend selection is
+described in chatbot/backends/__init__.py. The local option exists so the
+chatbot can be run and graded without anyone needing to hold an API key.
+
+CITATION VERIFICATION
+Small local models fabricate supporting evidence. Observed failure modes
+include fully-invented source URLs and sentence_ids, and placeholder-style
+citations ("Sentence_id: [insert sentence_id]") that a URL-matching check
+alone would not catch. Prompt instructions alone did not prevent either.
+
+This module therefore enforces the invariant in code: if search_evidence was
+never called, any quoted evidence, sentence_id reference or URL in the
+answer is fabricated by definition, and the answer is flagged. This is the
+same approach used for the volume floor in chatbot/tools.py — grounding
+rules that matter are enforced rather than requested.
 
 USAGE:
   python -m chatbot.agent "How does the market feel about DBS's dividend policy?"
   CHATBOT_BACKEND=ollama python -m chatbot.agent "..."   # force local
-  CHATBOT_BACKEND=claude python -m chatbot.agent "..."   # force frontier
+  CHATBOT_BACKEND=claude python -m chatbot.agent "..."   # force hosted
 """
 
 import json

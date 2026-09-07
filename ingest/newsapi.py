@@ -5,7 +5,7 @@ Refactored from the original news_pull.py to write into the shared `documents`
 table (ingest/db.py) instead of an overwrite-CSV, so repeated runs accumulate
 history instead of replacing it.
 
-Known free-tier limitation (see MVP plan, finding (c)): the `content` field is
+Known free-tier limitation (see docs/DESIGN.md): the `content` field is
 truncated to ~200 chars with a "[+N chars]" suffix. We therefore only rely on
 title + description as usable text — do not expect long-form content here.
 

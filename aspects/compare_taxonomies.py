@@ -1,13 +1,13 @@
 """
 Compares candidate aspect taxonomies quantitatively, using real cluster
-content from `python -m aspects.discover` (run live 2026-09-06, see
+content from `python -m aspects.discover` (see
 docs/data-viability.md and config/aspects.yaml's header comment) as the
 source for candidate B/C's seed terms — not invented, drawn from actual
 cluster exemplar sentences.
 
 THIS DOES NOT DECIDE ANYTHING. It produces a comparison table so the team/
 mentor can make the aspect-taxonomy call with evidence in front of them,
-per the MVP plan's "Aspect taxonomy sign-off" open decision. Nothing here
+per the design notes' "Aspect taxonomy sign-off" open decision. Nothing here
 overwrites config/aspects.yaml.
 
 Candidates:
@@ -59,7 +59,7 @@ CANDIDATES = {
                                  "forward guidance", "strategic priorities"],
     },
     "B_data_derived_coarse": {
-        # Seeds drawn from real cluster 4/6/8 exemplar sentences (discover.py, 2026-09-06).
+        # Seeds drawn from real cluster 4/6/8 exemplar sentences (from discover.py output).
         "investment_discussion": [
             "DBS beats VWRA over the past 5 years including dividend yield",
             "DBS Group Research raised its year-end target for the Straits Times Index",
@@ -163,7 +163,7 @@ def run():
     print("  - pct_other very high or very low are both worth a second look: too high means the")
     print("    taxonomy doesn't fit the corpus; too low (~0%) means the floor never triggers.")
     print("\nThis is decision support, not a decision — see config/aspects.yaml's header comment")
-    print("and the MVP plan's 'Aspect taxonomy sign-off' open decision.")
+    print("and the design notes' 'Aspect taxonomy sign-off' open decision.")
 
 
 if __name__ == "__main__":

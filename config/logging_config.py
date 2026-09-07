@@ -1,31 +1,23 @@
 """
-Central logging setup for the whole project.
+Central logging setup for the project.
 
-WHY THIS EXISTS, beyond "logging is good practice": three concrete problems
-hit repeatedly during development.
+Purpose:
 
-1. THIRD-PARTY NOISE DROWNED THE ACTUAL OUTPUT. Every FinBERT-touching
-   command buried its real output under transformers' weight-loading progress
-   bars, "BertModel LOAD REPORT" tables, HuggingFace "unauthenticated
-   requests" warnings and MPS `pin_memory` UserWarnings — to the point that
-   running the pipeline meant piping through
-   `grep -v "Loading weights\\|UNEXPECTED\\|Notes:\\|..."` every single time.
-   quiet_noisy_libraries() fixes that at the source, and DEBUG mode turns it
-   all back on when you actually need it.
+1. Suppress third-party noise. transformers and huggingface_hub emit
+   weight-loading progress bars, model load reports and hub warnings that
+   bury pipeline output. quiet_noisy_libraries() silences these at the
+   source; DEBUG mode restores them.
 
-2. LONG UNATTENDED RUNS LEFT NO TRACE. The overnight Reddit backfill and the
-   multi-minute embedding/scoring steps printed to a terminal that was gone
-   by morning. Everything now also goes to a rotating file
-   (data/logs/plp.log) at DEBUG level regardless of console level, so a run
-   that failed at 3am can still be diagnosed at 9am.
+2. Preserve a record of unattended runs. The overnight Reddit backfill and
+   the multi-minute embedding and scoring steps write to a rotating file
+   (data/logs/plp.log) at DEBUG level regardless of console level, so a
+   failure that happens overnight remains diagnosable afterwards.
 
-3. NO WAY TO TURN UP DETAIL WITHOUT EDITING CODE. `LOG_LEVEL=DEBUG` (or
-   `DEBUG=true`) now does it.
+3. Allow verbosity changes without code edits, via LOG_LEVEL or DEBUG.
 
-LOGS GO TO STDERR, deliberately. stdout stays clean for a program's actual
-output — `python -m chatbot.agent "..."` writes its answer to stdout and its
-tool-call trace to stderr, so the answer can still be piped or captured on
-its own.
+Logs are written to stderr so that stdout carries only a program's real
+output: `python -m chatbot.agent "..."` writes its answer to stdout and its
+tool-call trace to stderr, allowing the answer to be piped on its own.
 
 CONFIG (env vars, all optional; .env is loaded automatically):
   LOG_LEVEL   DEBUG | INFO | WARNING | ERROR   (default INFO)

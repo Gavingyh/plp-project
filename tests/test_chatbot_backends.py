@@ -3,7 +3,7 @@ Tests for the pluggable chatbot backend (chatbot/backends/) and the
 fabrication-detection safety net in chatbot/agent.py.
 
 Three real bugs were caught live against a running Ollama instance
-(llama3.2:3b, 2026-09-07) before these tests were written — each test below
+(llama3.2:3b) before these tests were written — each test below
 exists because of one of them, not as generic coverage:
   1. The model fabricated a full "supporting evidence" section (fake URLs,
      fake sentence_ids) despite never calling search_evidence.
@@ -102,7 +102,7 @@ class _FakePost:
         return _Resp()
 
 
-# Pinned real response: llama3.2:3b requesting a tool call (verified live).
+# Pinned real response: llama3.2:3b requesting a tool call (confirmed against the live site).
 _OLLAMA_TOOL_CALL_RESPONSE = {
     "message": {
         "role": "assistant", "content": "",

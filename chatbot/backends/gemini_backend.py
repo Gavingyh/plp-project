@@ -1,12 +1,10 @@
 """
 Gemini backend — a third frontier-model option alongside Claude and GPT.
 
-NOT LIVE-TESTED, and carries more real risk than openai_backend.py's
-equivalent disclaimer: no GEMINI_API_KEY is available in this dev
-environment, and Google's REST API has genuine version quirks that are
-easy to get subtly wrong from documentation alone (unlike OpenAI's format,
-which has been stable and ubiquitous long enough to be low-risk to write
-blind). Specifically:
+NOT VERIFIED AGAINST THE LIVE API, and carries more risk than the OpenAI
+backend: no GEMINI_API_KEY was available when this was written, and Google's
+REST API has version-specific details that are easy to get wrong from
+documentation alone. Specifically:
 
   - Gemini's function-declaration `type` field is a proto enum serialized
     as an UPPERCASE string ("OBJECT", "STRING", "INTEGER"...), not

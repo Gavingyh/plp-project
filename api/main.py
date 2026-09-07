@@ -102,7 +102,7 @@ def analyst_consensus(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$")):
 
 class ChatRequest(BaseModel):
     message: str
-    backend: str | None = None  # "claude" | "ollama" | None (auto-detect)
+    backend: str | None = None  # "claude" | "openai" | "gemini" | "ollama" | None (auto-detect)
 
 
 @app.post("/chat")

@@ -82,10 +82,11 @@ uvicorn api.main:app --reload --port 8000
 python -m chatbot.agent "How does the market feel about DBS's dividend policy?"
 ```
 
-## Running the chatbot — local model or frontier model
+## Running the chatbot — local or frontier model, four backends
 
 This is a school project: grading it shouldn't require an API key. The
-chatbot backend is pluggable (`chatbot/backends/`):
+chatbot backend is pluggable (`chatbot/backends/`) between one local option
+and three frontier options:
 
 ```bash
 # Local, free, no API key — needs Ollama installed and a model pulled:
@@ -93,18 +94,40 @@ ollama pull llama3.2:3b        # ~2GB, verified tool-calling support, recommende
 ollama serve                   # if not already running
 python -m chatbot.agent "How does the market feel about DBS's dividend policy?"
 
-# Frontier model — set ANTHROPIC_API_KEY in .env, then it's picked automatically:
+# Frontier model — set ONE key in .env, then it's picked automatically:
+#   ANTHROPIC_API_KEY  -> Claude
+#   OPENAI_API_KEY     -> GPT
+#   GEMINI_API_KEY     -> Gemini
 python -m chatbot.agent "..."
 
-# Or force either explicitly:
+# Or force any of the four explicitly, regardless of which keys are set:
 CHATBOT_BACKEND=ollama python -m chatbot.agent "..."
 CHATBOT_BACKEND=claude python -m chatbot.agent "..."
+CHATBOT_BACKEND=openai python -m chatbot.agent "..."
+CHATBOT_BACKEND=gemini python -m chatbot.agent "..."
 ```
 
-With no `ANTHROPIC_API_KEY` set, Ollama is used automatically. Other models
-confirmed to support tool-calling via Ollama: `qwen3:4b` (works identically,
-but ~7x slower per call — it emits a hidden reasoning chain first),
-`gemma3:4b`, `phi4-mini` (tool-calling not yet verified for these two).
+With no key set at all, Ollama is used automatically. If more than one key
+is set, auto-detect prefers Claude, then OpenAI, then Gemini — see
+`chatbot/backends/__init__.py`.
+
+**Verification status differs sharply across backends — check before
+trusting one blindly:**
+- **Ollama**: verified live against a running instance, including the full
+  tool-call round trip. Other models confirmed working: `qwen3:4b` (~7x
+  slower per call — hidden reasoning chain first), `gemma3:4b`, `phi4-mini`
+  (tool-calling not yet verified for these two).
+- **Claude**: the original, most-exercised backend in this project, but no
+  `ANTHROPIC_API_KEY` is available in this dev environment either — not
+  live-tested here.
+- **OpenAI**: written from OpenAI's long-stable, documented Chat Completions
+  contract — no key available to verify live. Lower risk than Gemini (see
+  below) since the format is ubiquitous and hasn't changed in years.
+- **Gemini**: written from Google's documented contract, but carries real,
+  specific risk — see `chatbot/backends/gemini_backend.py`'s docstring for
+  exactly which part is most likely to be wrong (a schema type-casing
+  quirk). If you add a `GEMINI_API_KEY` and it 400s, that docstring tells
+  you where to look first.
 
 **Read `chatbot/agent.py`'s module docstring before trusting local-model
 output blindly** — live-testing surfaced small models fabricating entire

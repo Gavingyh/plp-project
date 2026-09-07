@@ -19,33 +19,17 @@ hidden `thinking` chain-of-thought field first — fine for accuracy-over-
 speed use, not a snappy default).
 """
 
-import json
 import sys
 
 import requests
 
+from chatbot.backends._openai_compat import to_openai_function_tools as _to_ollama_tools
 from chatbot.backends.base import LLMBackend, ToolExecutor
 
 DEFAULT_BASE_URL = "http://localhost:11434"
 DEFAULT_MODEL = "llama3.2:3b"
 MAX_TOOL_ITERATIONS = 8
 _REQUEST_TIMEOUT = 120  # local generation, esp. "thinking" models, can be slow on CPU
-
-
-def _to_ollama_tools(claude_tool_schemas: list[dict]) -> list[dict]:
-    """Converts chatbot/tools.py's TOOL_SCHEMAS (Anthropic's native shape)
-    into the OpenAI-style function-calling shape Ollama expects."""
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": t["name"],
-                "description": t["description"],
-                "parameters": t["input_schema"],
-            },
-        }
-        for t in claude_tool_schemas
-    ]
 
 
 class OllamaBackend(LLMBackend):

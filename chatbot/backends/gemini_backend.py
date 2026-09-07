@@ -1,0 +1,143 @@
+"""
+Gemini backend — a third frontier-model option alongside Claude and GPT.
+
+NOT LIVE-TESTED, and carries more real risk than openai_backend.py's
+equivalent disclaimer: no GEMINI_API_KEY is available in this dev
+environment, and Google's REST API has genuine version quirks that are
+easy to get subtly wrong from documentation alone (unlike OpenAI's format,
+which has been stable and ubiquitous long enough to be low-risk to write
+blind). Specifically:
+
+  - Gemini's function-declaration `type` field is a proto enum serialized
+    as an UPPERCASE string ("OBJECT", "STRING", "INTEGER"...), not
+    JSON Schema's lowercase ("object", "string"). chatbot/tools.py's
+    TOOL_SCHEMAS use lowercase throughout, so _to_gemini_tools() below
+    recursively uppercases every "type" value. This is the single most
+    likely thing to be wrong if this backend 400s on first real use.
+  - The conversation-continuation shape for function results
+    (a "functionResponse" part wrapped in a role="user" turn) is written
+    from Google's documented pattern, but the exact required shape of the
+    inner `response` object has shifted across API versions historically.
+
+If you add a key: run with CHATBOT_BACKEND=gemini and treat the first real
+response as the actual verification this module hasn't had. If it 400s,
+the error body will usually say exactly which field is wrong — start there
+before assuming the whole approach is broken.
+
+Default model (GEMINI_MODEL env var to override): gemini-2.0-flash — check
+for a newer/cheaper option before relying on this long-term.
+"""
+
+import json
+import sys
+
+import requests
+
+from chatbot.backends.base import LLMBackend, ToolExecutor
+
+DEFAULT_MODEL = "gemini-2.0-flash"
+MAX_TOOL_ITERATIONS = 8
+_REQUEST_TIMEOUT = 60
+_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
+
+def _uppercase_schema_types(node):
+    """Recursively uppercases every JSON-Schema "type" value, to match
+    Gemini's proto-enum convention (STRING/OBJECT/INTEGER/...). See module
+    docstring — this is the single riskiest, most-likely-wrong conversion
+    in this file."""
+    if isinstance(node, dict):
+        return {
+            k: (v.upper() if k == "type" and isinstance(v, str) else _uppercase_schema_types(v))
+            for k, v in node.items()
+        }
+    if isinstance(node, list):
+        return [_uppercase_schema_types(item) for item in node]
+    return node
+
+
+def _to_gemini_tools(claude_tool_schemas: list[dict]) -> list[dict]:
+    return [{
+        "function_declarations": [
+            {
+                "name": t["name"],
+                "description": t["description"],
+                "parameters": _uppercase_schema_types(t["input_schema"]),
+            }
+            for t in claude_tool_schemas
+        ]
+    }]
+
+
+class GeminiBackend(LLMBackend):
+    name = "gemini"
+
+    def __init__(self, api_key: str, model: str = DEFAULT_MODEL):
+        if not api_key:
+            raise RuntimeError(
+                "GEMINI_API_KEY not set. Set it in .env to use Gemini, or use "
+                "CHATBOT_BACKEND=ollama for a free local model instead."
+            )
+        self._api_key = api_key
+        self.model = model
+
+    def _generate(self, contents: list[dict], system: str, tools: list[dict]) -> dict:
+        url = f"{_API_BASE}/{self.model}:generateContent"
+        try:
+            resp = requests.post(
+                url, params={"key": self._api_key},
+                json={
+                    "system_instruction": {"parts": [{"text": system}]},
+                    "contents": contents,
+                    "tools": tools,
+                },
+                timeout=_REQUEST_TIMEOUT,
+            )
+        except requests.exceptions.ConnectionError as e:
+            raise RuntimeError(f"Could not reach the Gemini API: {e}") from e
+        if resp.status_code == 400:
+            raise RuntimeError(
+                f"Gemini API returned 400 (bad request) — the error body usually names the "
+                f"exact bad field, check it before assuming the whole approach is broken: "
+                f"{resp.text[:500]}"
+            )
+        if resp.status_code == 401 or resp.status_code == 403:
+            raise RuntimeError(f"Gemini API rejected the key ({resp.status_code}) — "
+                                f"check GEMINI_API_KEY.")
+        resp.raise_for_status()
+        return resp.json()
+
+    def ask(self, question: str, system: str, tool_schemas: list[dict],
+            tool_executor: ToolExecutor, verbose: bool = True) -> str:
+        gemini_tools = _to_gemini_tools(tool_schemas)
+        contents = [{"role": "user", "parts": [{"text": question}]}]
+
+        for _ in range(MAX_TOOL_ITERATIONS):
+            data = self._generate(contents, system, gemini_tools)
+            candidates = data.get("candidates") or []
+            if not candidates:
+                return "(Gemini returned no candidates — possibly blocked by a safety filter.)"
+
+            content = candidates[0].get("content", {})
+            parts = content.get("parts", [])
+            contents.append({"role": "model", "parts": parts})
+
+            function_calls = [p["functionCall"] for p in parts if "functionCall" in p]
+            if not function_calls:
+                return "".join(p.get("text", "") for p in parts)
+
+            response_parts = []
+            for call in function_calls:
+                name, arguments = call["name"], call.get("args", {})
+                if verbose:
+                    print(f"  [gemini tool call] {name}({arguments})", file=sys.stderr)
+                result_json = tool_executor(name, arguments)
+                response_parts.append({
+                    "functionResponse": {"name": name,
+                                          "response": {"name": name,
+                                                       "content": json.loads(result_json)}},
+                })
+            contents.append({"role": "user", "parts": response_parts})
+
+        return ("I wasn't able to reach a final answer within the tool-call budget — "
+                "this usually means the question needs to be narrowed down.")

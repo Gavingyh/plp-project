@@ -1,0 +1,186 @@
+"""
+Runs chatbot/eval_gold_set.py against a live chatbot backend and writes a
+transcript plus a summary of what could be checked automatically.
+
+Automated checks:
+  - tool selection: did the model call the tool (and, where specified, the
+    bank/aspect) the question actually calls for?
+  - advice questions: does the answer contain a decline, per
+    chatbot/prompts.py rule 5?
+  - out-of-scope questions: does the answer indicate no data / no coverage,
+    rather than answering from general knowledge?
+  - citation fabrication rate: how often chatbot/agent.py's verification
+    check fired.
+
+NOT automated, and left in the transcript for a human to grade: whether a
+stated number is correct, and whether cited evidence is actually relevant.
+Free-text number extraction is unreliable enough that a wrong automated
+check would be worse than an honest "read this yourself".
+
+USAGE:
+  python -m chatbot.run_eval                       # default backend
+  python -m chatbot.run_eval --backend ollama
+  python -m chatbot.run_eval --limit 5              # smoke test
+"""
+
+import argparse
+import json
+import os
+from datetime import datetime, timezone
+
+from chatbot.agent import ask
+from chatbot.eval_gold_set import GOLD_SET, looks_like_advice_decline, looks_like_no_data_response
+from config.logging_config import get_logger, setup_logging
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RESULTS_PATH = os.path.join(BASE_DIR, "data", "eval", "chatbot_eval_results.jsonl")
+SUMMARY_PATH = os.path.join(BASE_DIR, "data", "eval", "chatbot_eval_summary.md")
+
+logger = get_logger(__name__)
+
+
+def _check_tool_selection(item: dict, calls: list[dict]) -> dict:
+    expected_tool = item.get("expected_tool")
+    if not expected_tool:
+        return {"applicable": False}
+    matching = [c for c in calls if c["name"] == expected_tool]
+    if not matching:
+        return {"applicable": True, "correct": False, "reason": "expected tool never called"}
+
+    call = matching[0]
+    args = call["arguments"]
+    if "expected_bank" in item and item["expected_bank"] is not None:
+        if args.get("bank") != item["expected_bank"]:
+            return {"applicable": True, "correct": False,
+                    "reason": f"wrong bank: got {args.get('bank')!r}, expected {item['expected_bank']!r}"}
+    if "expected_aspect" in item and item["expected_aspect"] is not None:
+        if args.get("aspect") != item["expected_aspect"]:
+            return {"applicable": True, "correct": False,
+                    "reason": f"wrong aspect: got {args.get('aspect')!r}, expected {item['expected_aspect']!r}"}
+    return {"applicable": True, "correct": True}
+
+
+def _check_behavior(item: dict, answer: str) -> dict:
+    expected = item.get("expected_behavior")
+    if not expected:
+        return {"applicable": False}
+    if expected == "decline_advice":
+        ok = looks_like_advice_decline(answer)
+        return {"applicable": True, "correct": ok,
+                "reason": None if ok else "no advice-decline language found"}
+    if expected == "decline_or_no_data":
+        ok = looks_like_advice_decline(answer) or looks_like_no_data_response(answer)
+        return {"applicable": True, "correct": ok,
+                "reason": None if ok else "answered without declining or flagging no data"}
+    return {"applicable": False}
+
+
+def run(backend_name: str | None = None, limit: int | None = None) -> dict:
+    items = GOLD_SET[:limit] if limit else GOLD_SET
+    os.makedirs(os.path.dirname(RESULTS_PATH), exist_ok=True)
+
+    results = []
+    for item in items:
+        logger.info("[%s] %s", item["id"], item["question"])
+        try:
+            answer, calls = ask(item["question"], verbose=False, backend_name=backend_name,
+                                 return_trace=True)
+            error = None
+        except Exception as e:
+            answer, calls, error = "", [], str(e)
+            logger.warning("[%s] FAILED: %s", item["id"], e)
+
+        fabricated = "VERIFICATION WARNING" in answer
+        tool_check = _check_tool_selection(item, calls)
+        behavior_check = _check_behavior(item, answer)
+
+        results.append({
+            "id": item["id"], "category": item["category"], "question": item["question"],
+            "answer": answer, "error": error,
+            "tool_calls": [{"name": c["name"], "arguments": c["arguments"]} for c in calls],
+            "citation_fabricated": fabricated,
+            "tool_selection_check": tool_check,
+            "behavior_check": behavior_check,
+        })
+
+    with open(RESULTS_PATH, "w") as f:
+        for r in results:
+            f.write(json.dumps(r, default=str) + "\n")
+
+    summary = _summarize(results, backend_name)
+    with open(SUMMARY_PATH, "w") as f:
+        f.write(summary)
+    logger.info("results: %s", RESULTS_PATH)
+    logger.info("summary: %s", SUMMARY_PATH)
+    return {"n": len(results), "results_path": RESULTS_PATH, "summary_path": SUMMARY_PATH}
+
+
+def _summarize(results: list[dict], backend_name: str | None) -> str:
+    n = len(results)
+    n_errors = sum(1 for r in results if r["error"])
+    n_fabricated = sum(1 for r in results if r["citation_fabricated"])
+
+    tool_checked = [r for r in results if r["tool_selection_check"]["applicable"]]
+    tool_correct = [r for r in tool_checked if r["tool_selection_check"]["correct"]]
+
+    behavior_checked = [r for r in results if r["behavior_check"]["applicable"]]
+    behavior_correct = [r for r in behavior_checked if r["behavior_check"]["correct"]]
+
+    lines = [
+        f"# Chatbot evaluation summary",
+        f"",
+        f"Backend: `{backend_name or 'auto-detected'}`  ",
+        f"Run at: {datetime.now(timezone.utc).isoformat()}  ",
+        f"Questions: {n}  ",
+        f"Errors (backend/network failures): {n_errors}",
+        f"",
+        f"## Automated checks",
+        f"",
+        f"- Tool selection: {len(tool_correct)}/{len(tool_checked)} correct"
+        f" ({len(tool_checked)} of {n} questions had an expected tool to check)",
+        f"- Behavior (advice decline / no-data acknowledgement): "
+        f"{len(behavior_correct)}/{len(behavior_checked)} correct",
+        f"- Citation fabrication flagged: {n_fabricated}/{n} answers "
+        f"({100 * n_fabricated / n:.0f}%)",
+        f"",
+        f"## Failures needing a look",
+        f"",
+    ]
+    for r in results:
+        problems = []
+        if r["error"]:
+            problems.append(f"error: {r['error']}")
+        if r["tool_selection_check"].get("applicable") and not r["tool_selection_check"].get("correct"):
+            problems.append(f"tool selection: {r['tool_selection_check']['reason']}")
+        if r["behavior_check"].get("applicable") and not r["behavior_check"].get("correct"):
+            problems.append(f"behavior: {r['behavior_check']['reason']}")
+        if r["citation_fabricated"]:
+            problems.append("citation fabrication flagged")
+        if problems:
+            lines.append(f"- **{r['id']}** ({r['category']}): {'; '.join(problems)}")
+    if not any(r["error"] or
+               (r["tool_selection_check"].get("applicable") and not r["tool_selection_check"].get("correct")) or
+               (r["behavior_check"].get("applicable") and not r["behavior_check"].get("correct")) or
+               r["citation_fabricated"]
+               for r in results):
+        lines.append("(none)")
+
+    lines += [
+        "",
+        "## Not automated — read the full transcript for these",
+        "",
+        "Whether stated numbers are correct, and whether cited evidence is "
+        "actually relevant to the question. See `data/eval/chatbot_eval_results.jsonl` "
+        "for the full transcript, including every tool call and its raw result "
+        "alongside the model's final answer.",
+    ]
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    setup_logging()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--backend", default=None)
+    parser.add_argument("--limit", type=int, default=None)
+    args = parser.parse_args()
+    print(run(backend_name=args.backend, limit=args.limit))

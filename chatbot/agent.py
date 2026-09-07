@@ -60,11 +60,15 @@ UNVERIFIED_CITATION_WARNING = (
 
 class _ToolCallTracker:
     """Records what search_evidence actually returned, so the final answer can
-    be checked against what was truly retrieved — not what the model claims."""
+    be checked against what was truly retrieved — not what the model claims.
+    Also keeps a general call log (every tool, its arguments, and its result),
+    used by chatbot/eval_gold_set.py to check whether the model called the
+    tool a question actually calls for."""
 
     def __init__(self):
         self.search_evidence_called = False
         self.verified_urls: set[str] = set()
+        self.calls: list[dict] = []
 
     def execute(self, name: str, tool_input: dict) -> str:
         fn = TOOL_FUNCTIONS.get(name)
@@ -74,6 +78,7 @@ class _ToolCallTracker:
             result = fn(**coerce_tool_arguments(name, tool_input))
         except Exception as e:
             result = {"error": str(e)}
+        self.calls.append({"name": name, "arguments": tool_input, "result": result})
         if name == "search_evidence":
             self.search_evidence_called = True
             if isinstance(result, dict):
@@ -97,7 +102,11 @@ class _ToolCallTracker:
         return False
 
 
-def ask(question: str, verbose: bool = True, backend_name: str | None = None) -> str:
+def ask(question: str, verbose: bool = True, backend_name: str | None = None,
+        return_trace: bool = False):
+    """Returns the answer string. With return_trace=True, returns
+    (answer, calls) instead, where calls is the list of tools invoked while
+    answering — used by chatbot/eval_gold_set.py, not needed for normal use."""
     backend = get_backend(backend_name)
     if verbose:
         logger.info("backend: %s (%s)", backend.name, getattr(backend, "model", "?"))
@@ -110,7 +119,7 @@ def ask(question: str, verbose: bool = True, backend_name: str | None = None) ->
             logger.warning("citation check FAILED — answer contains evidence not "
                            "actually retrieved via search_evidence")
         answer += UNVERIFIED_CITATION_WARNING
-    return answer
+    return (answer, tracker.calls) if return_trace else answer
 
 
 if __name__ == "__main__":

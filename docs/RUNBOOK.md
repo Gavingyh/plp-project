@@ -170,6 +170,22 @@ The answer goes to stdout and diagnostics to stderr, so:
 .venv-plp/bin/python3 -m chatbot.agent "..." 2>/dev/null
 ```
 
+### Evaluating the chatbot
+
+```bash
+.venv-plp/bin/python3 -m chatbot.run_eval --limit 3   # smoke test
+.venv-plp/bin/python3 -m chatbot.run_eval             # full 21-question gold set
+```
+
+Runs `chatbot/eval_gold_set.py` against the chatbot and writes:
+- `data/eval/chatbot_eval_results.jsonl` — full transcript (question, answer,
+  every tool call and its raw result)
+- `data/eval/chatbot_eval_summary.md` — automated checks: tool selection,
+  advice-decline behaviour, citation-fabrication rate
+
+Whether a stated *number* is correct isn't automated — read the transcript
+for that; free-text extraction is less trustworthy than the check itself.
+
 ---
 
 ## Logging and debugging
@@ -205,14 +221,37 @@ a failing test rather than a silent production break.
 
 ---
 
-## Labelling workflow (not yet started)
+## Labelling workflow
 
 ```bash
 .venv-plp/bin/python3 -m preprocess.export_candidates --train-dev 800 --test 200
 # -> data/labeled/candidates.csv
 ```
 
-Fill in the `label` column per [annotation-guideline.md](annotation-guideline.md).
+### Optional: LLM-assisted pre-labelling
+
+Before a human labels anything, a local model can propose a label and
+rationale for each row (`llm_prelabel` / `llm_rationale` columns only — it
+never touches `label`). This is free, runs on Ollama, and typically cuts
+labelling to correction rather than labelling from scratch.
+
+```bash
+.venv-plp/bin/python3 -m train.llm_prelabel --limit 5   # smoke test first
+.venv-plp/bin/python3 -m train.llm_prelabel              # full run, ~1-2 hours for 1,000 rows
+```
+
+Checkpointed and resumable: every result is written to
+`data/labeled/llm_prelabel_progress.jsonl` immediately, and re-running skips
+whatever is already recorded there. Safe to kill and restart, and safe to
+leave running unattended overnight (`nohup ... &` / `disown`, or `caffeinate`
+on macOS to also stop the machine sleeping).
+
+Fill in the `label` column per [annotation-guideline.md](annotation-guideline.md),
+using `llm_prelabel`/`llm_rationale` to correct rather than label from
+scratch. **Label independently first if you want to measure how often the
+model was right** — anchoring on its suggestion before forming your own view
+defeats that measurement.
+
 The `split=test` rows are randomly sampled and must stay untouched by any
 model-assisted process — that is what keeps the eventual evaluation honest.
 

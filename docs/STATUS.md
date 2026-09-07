@@ -74,13 +74,22 @@ central logging with debug configuration, resumable overnight backfill script.
 
 ### 1. Labelling — the critical blocker
 
-Zero examples labelled. This blocks the fine-tuned classifier, which blocks
-the deep-learning deliverable the proposal commits to.
+Zero examples human-labelled. This blocks the fine-tuned classifier, which
+blocks the deep-learning deliverable the proposal commits to.
 
-Everything needed is ready: `preprocess/export_candidates.py` produces a
-correctly-sampled candidate set, `docs/annotation-guideline.md` defines the
-scheme, and `train/finetune.py` / `train/evaluate.py` are written and
-smoke-tested. Only the human labelling is missing.
+The 1,000-row candidate set is exported (`data/labeled/candidates.csv`).
+`train/llm_prelabel.py` runs a local model over it to propose a label and
+rationale for each row, so labelling becomes correction rather than starting
+from scratch — check `llm_prelabel_progress.jsonl`'s line count against
+1,000 for how far a run has gotten. `train/finetune.py` / `train/evaluate.py`
+are written and smoke-tested. Only the human correction step is missing.
+
+Running pre-labelling for real surfaced something worth knowing before
+correcting: some candidates are off-topic for the aspect they were assigned
+(a product description assigned to `management_guidance`, for instance) —
+exactly the "incidental mentions" case `docs/annotation-guideline.md`
+already anticipated. Expect to flag/discard some rows rather than correct
+their label.
 
 The sampling design matters and shouldn't be shortcut: the test split is
 drawn at random *before* any model-assisted selection. If the test set were
@@ -175,10 +184,14 @@ Roughly in order of value.
    comparability.
 3. **Settle the aspect taxonomy.** Re-run discovery on the enriched corpus,
    review with the supervisor, freeze the decision.
-4. **Build the chatbot evaluation set.** A 30–40 question gold set measuring
-   tool-selection accuracy, numerical fidelity and citation validity. Given
-   the fabrication problem, this is report-worthy evidence rather than
-   routine testing.
+4. **Read the chatbot evaluation results.** `chatbot/run_eval.py` and a
+   21-question gold set now exist (`chatbot/eval_gold_set.py`), covering
+   lookups, comparisons, trends, out-of-scope questions, thin data, evidence
+   requests and advice-seeking questions. Tool-selection accuracy and
+   citation-fabrication rate are automated; whether stated numbers are
+   correct and cited evidence is relevant needs a human reading
+   `data/eval/chatbot_eval_results.jsonl`. Given the fabrication problem,
+   this is report-worthy evidence rather than routine testing.
 5. **Verify GPT/Gemini backends** with one real call each.
 6. **Continuous time series** for `get_trend`, replacing discrete windows.
 7. **Improve relevance filtering.** Sentences mentioning a bank incidentally

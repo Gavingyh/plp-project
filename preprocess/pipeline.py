@@ -24,6 +24,11 @@ from ingest.db import get_connection, init_db, now_iso
 from preprocess.clean import clean_for_source
 from preprocess.segment import segment
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 _WORD = re.compile(r"\w+")
 _MIN_WORDS = 4  # drops trivially short fragments even after segment()'s char filter
 
@@ -130,9 +135,10 @@ def run() -> dict:
 
 
 if __name__ == "__main__":
-    print(f"Run started: {datetime.now().isoformat()}\n")
+    setup_logging()
+    logger.info(f"Run started: {datetime.now().isoformat()}")
     stats = run()
-    print("=" * 50)
+    logger.info("=" * 50)
     for k, v in stats.items():
-        print(f"  {k:28s} {v}")
-    print("=" * 50)
+        logger.info(f"  {k:28s} {v}")
+    logger.info("=" * 50)

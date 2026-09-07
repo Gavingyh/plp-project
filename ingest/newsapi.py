@@ -22,6 +22,11 @@ from dotenv import load_dotenv
 from ingest.base import BANKS, request_with_retries, resolve_bank
 from ingest.db import make_doc_id, now_iso, upsert_documents
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -35,7 +40,7 @@ MAX_PAGES = 4
 
 def pull() -> list[dict]:
     if not NEWSAPI_KEY:
-        print("[NewsAPI] Skipped — set NEWSAPI_KEY in .env to run this.")
+        logger.warning("Skipped — set NEWSAPI_KEY in .env to run this.")
         return []
 
     docs = []
@@ -67,7 +72,7 @@ def pull() -> list[dict]:
                 data = resp.json()
                 articles = data.get("articles", [])
                 total_results = data.get("totalResults", "?")
-                print(f"[NewsAPI] {bank} page {page}: {len(articles)} articles "
+                logger.info(f"{bank} page {page}: {len(articles)} articles "
                       f"(totalResults reported: {total_results})")
                 for a in articles:
                     title = a.get("title") or ""
@@ -97,7 +102,7 @@ def pull() -> list[dict]:
                 if len(articles) < 100 or (isinstance(total_results, int) and total_this_bank >= total_results):
                     break
             except Exception as e:
-                print(f"[NewsAPI] {bank} page {page}: ERROR — {e}")
+                logger.error(f"{bank} page {page}: ERROR — {e}")
                 break  # free-tier page-depth limits surface as errors here — stop, don't retry deeper pages
             time.sleep(1)  # be polite to free tier
         time.sleep(1)
@@ -106,8 +111,9 @@ def pull() -> list[dict]:
 
 
 if __name__ == "__main__":
-    print(f"Run started: {datetime.now().isoformat()}\n")
+    setup_logging()
+    logger.info(f"Run started: {datetime.now().isoformat()}")
     docs = pull()
     attempted, inserted = upsert_documents(docs)
-    print(f"\nDocuments attempted: {attempted}  |  newly inserted: {inserted}  "
+    logger.info(f"Documents attempted: {attempted}  |  newly inserted: {inserted}  "
           f"|  already-seen (skipped): {attempted - inserted}")

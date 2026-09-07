@@ -22,7 +22,10 @@ import umap
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from aspects.embed_store import load_for_search, update as update_embeddings
+from config.logging_config import get_logger, setup_logging
 from ingest.db import get_connection
+
+logger = get_logger(__name__)
 
 _STOPWORDS_EXTRA = {"dbs", "ocbc", "uob", "bank", "banks", "singapore", "sgx"}
 
@@ -44,8 +47,8 @@ def _top_terms(texts: list[str], n: int = 8) -> list[str]:
 
 
 def run(min_cluster_size: int = 10) -> None:
-    print("Updating embedding cache for any un-embedded sentences...")
-    print(update_embeddings())
+    logger.info("Updating embedding cache for any un-embedded sentences...")
+    logger.info("Embedding cache: %s", update_embeddings())
 
     sentence_ids, vectors = load_for_search()
     if len(sentence_ids) < min_cluster_size * 2:
@@ -67,12 +70,12 @@ def run(min_cluster_size: int = 10) -> None:
     bank_by_id = {r[0]: r[2] for r in rows}
     texts = [text_by_id[sid] for sid in sentence_ids]
 
-    print(f"\nReducing {vectors.shape[0]} x {vectors.shape[1]} embeddings with UMAP...")
+    logger.info("Reducing %d x %d embeddings with UMAP...", vectors.shape[0], vectors.shape[1])
     reducer = umap.UMAP(n_neighbors=15, min_dist=0.0, n_components=10, metric="cosine",
                          random_state=42)
     reduced = reducer.fit_transform(vectors)
 
-    print(f"Clustering with HDBSCAN (min_cluster_size={min_cluster_size})...")
+    logger.info("Clustering with HDBSCAN (min_cluster_size=%d)...", min_cluster_size)
     clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, metric="euclidean")
     labels = clusterer.fit_predict(reduced)
 
@@ -101,6 +104,7 @@ def run(min_cluster_size: int = 10) -> None:
 
 
 if __name__ == "__main__":
+    setup_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("--min-cluster-size", type=int, default=10)
     args = parser.parse_args()

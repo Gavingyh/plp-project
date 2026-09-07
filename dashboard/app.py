@@ -19,7 +19,11 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from config.logging_config import get_logger, setup_logging
 from ingest.db import get_connection
+
+setup_logging()
+logger = get_logger(__name__)
 
 BANKS = ["DBS", "OCBC", "UOB"]
 

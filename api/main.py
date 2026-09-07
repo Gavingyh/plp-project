@@ -20,9 +20,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from chatbot.agent import ask as chatbot_ask
+from config.logging_config import get_logger, setup_logging
 from chatbot.tools import (compare_banks, get_analyst_consensus, get_coverage,
                             get_sentiment, get_trend, search_evidence)
 from ingest.db import get_connection
+
+setup_logging()
+logger = get_logger(__name__)
 
 BANKS = ["DBS", "OCBC", "UOB"]
 

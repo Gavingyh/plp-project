@@ -24,7 +24,10 @@ import sys
 import requests
 
 from chatbot.backends._openai_compat import to_openai_function_tools as _to_ollama_tools
+from config.logging_config import get_logger
 from chatbot.backends.base import LLMBackend, ToolExecutor
+
+logger = get_logger(__name__)
 
 DEFAULT_BASE_URL = "http://localhost:11434"
 DEFAULT_MODEL = "llama3.2:3b"
@@ -78,7 +81,7 @@ class OllamaBackend(LLMBackend):
                 fn = call.get("function", {})
                 name, arguments = fn.get("name"), fn.get("arguments", {})
                 if verbose:
-                    print(f"  [ollama tool call] {name}({arguments})", file=sys.stderr)
+                    logger.info("tool call: %s(%s)", name, arguments)
                 result_json = tool_executor(name, arguments)
                 messages.append({
                     "role": "tool",

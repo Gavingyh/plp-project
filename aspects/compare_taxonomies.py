@@ -39,8 +39,11 @@ import itertools
 
 import numpy as np
 
+from config.logging_config import get_logger, setup_logging
 from aspects.embed import embed_sentences
 from aspects.embed_store import load_for_search
+
+logger = get_logger(__name__)
 
 SIMILARITY_FLOOR = 0.35
 
@@ -142,7 +145,8 @@ def run():
         print("No embedded sentences found — run `python -m aspects.embed_store` first.")
         return
 
-    print(f"Comparing {len(CANDIDATES)} candidate taxonomies against {len(vectors)} sentences.\n")
+    logger.info("Comparing %d candidate taxonomies against %d sentences.",
+                len(CANDIDATES), len(vectors))
     results = [evaluate_candidate(name, seeds, vectors) for name, seeds in CANDIDATES.items()]
 
     header = f"{'candidate':26s} {'#asp':>5s} {'avg/sent':>9s} {'%other':>7s} {'separation':>11s} {'top_sim':>8s}"
@@ -163,4 +167,5 @@ def run():
 
 
 if __name__ == "__main__":
+    setup_logging()
     run()

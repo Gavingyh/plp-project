@@ -8,7 +8,10 @@ could be swapped in for school-project use without needing an API key.
 
 import sys
 
+from config.logging_config import get_logger
 from chatbot.backends.base import LLMBackend, ToolExecutor
+
+logger = get_logger(__name__)
 
 MAX_TOOL_ITERATIONS = 8  # safety cap so a confused loop can't run forever
 
@@ -46,7 +49,7 @@ class ClaudeBackend(LLMBackend):
             tool_results = []
             for call in tool_calls:
                 if verbose:
-                    print(f"  [claude tool call] {call.name}({call.input})", file=sys.stderr)
+                    logger.info("tool call: %s(%s)", call.name, call.input)
                 result_json = tool_executor(call.name, call.input)
                 tool_results.append({
                     "type": "tool_result", "tool_use_id": call.id, "content": result_json,

@@ -43,6 +43,10 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from config.logging_config import get_logger, setup_logging
+
+logger = get_logger(__name__)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 MARKER_FILE = BASE_DIR / "data" / ".backfill_progress.txt"
 LOG_FILE = BASE_DIR / "data" / "backfill_overnight.log"
@@ -72,10 +76,10 @@ def mark_completed(chunk_key: str):
 
 
 def log(msg: str):
-    line = f"[{datetime.now().isoformat(timespec='seconds')}] {msg}"
-    print(line, flush=True)
-    with open(LOG_FILE, "a") as f:
-        f.write(line + "\n")
+    """Thin wrapper kept so call sites read the same; routes through the
+    shared logger (console + this script's own log file, configured in run())
+    instead of the hand-rolled print+append it used to do."""
+    logger.info(msg)
 
 
 def _check_environment():
@@ -110,6 +114,7 @@ def _check_environment():
 
 def run():
     _check_environment()
+    setup_logging(log_file=str(LOG_FILE))
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--since", default="2020-01-01")

@@ -40,6 +40,11 @@ from datetime import datetime, timedelta, timezone
 
 from ingest.db import get_connection, init_db, now_iso
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 SHRINKAGE_K = 5
 _LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 
@@ -173,5 +178,6 @@ def run() -> int:
 
 
 if __name__ == "__main__":
+    setup_logging()
     n = run()
-    print(f"Recomputed sentiment_index: {n} (bank, aspect, window, source) rows")
+    logger.info(f"Recomputed sentiment_index: {n} (bank, aspect, window, source) rows")

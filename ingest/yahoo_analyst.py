@@ -29,6 +29,11 @@ import requests
 
 from ingest.db import get_connection, init_db, now_iso
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 # Yahoo tickers for the three banks. Keys must match ingest/base.py BANKS keys.
 TICKERS = {"DBS": "D05.SI", "OCBC": "O39.SI", "UOB": "U11.SI"}
 
@@ -66,12 +71,12 @@ def fetch_bank(session: requests.Session, crumb: str, bank: str, ticker: str) ->
     url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{ticker}"
     resp = session.get(url, params={"modules": _MODULES, "crumb": crumb}, timeout=_TIMEOUT)
     if resp.status_code != 200:
-        print(f"[YahooAnalyst] {bank} ({ticker}): HTTP {resp.status_code} — {resp.text[:150]}")
+        logger.info(f"{bank} ({ticker}): HTTP {resp.status_code} — {resp.text[:150]}")
         return None
 
     result = (resp.json().get("quoteSummary") or {}).get("result")
     if not result:
-        print(f"[YahooAnalyst] {bank} ({ticker}): no result payload")
+        logger.warning(f"{bank} ({ticker}): no result payload")
         return None
 
     data = result[0]
@@ -105,7 +110,7 @@ def pull() -> list[dict]:
     try:
         session, crumb = _make_session()
     except Exception as e:
-        print(f"[YahooAnalyst] Skipped — could not establish a Yahoo session: {e}")
+        logger.warning(f"Skipped — could not establish a Yahoo session: {e}")
         return []
 
     rows = []
@@ -113,10 +118,10 @@ def pull() -> list[dict]:
         try:
             row = fetch_bank(session, crumb, bank, ticker)
         except Exception as e:
-            print(f"[YahooAnalyst] {bank} ({ticker}): ERROR — {e}")
+            logger.error(f"{bank} ({ticker}): ERROR — {e}")
             row = None
         if row:
-            print(f"[YahooAnalyst] {bank}: {row['n_analysts']} analysts, "
+            logger.info(f"{bank}: {row['n_analysts']} analysts, "
                   f"target_mean={row['target_mean']}, rating={row['recommendation_key']}")
             rows.append(row)
         time.sleep(_POLITE_DELAY_SECONDS)
@@ -151,7 +156,8 @@ def upsert(rows: list[dict]) -> int:
 
 
 if __name__ == "__main__":
-    print(f"Run started: {datetime.now().isoformat()}\n")
+    setup_logging()
+    logger.info(f"Run started: {datetime.now().isoformat()}")
     rows = pull()
     n = upsert(rows)
-    print(f"\nAnalyst consensus rows written: {n}")
+    logger.info(f"Analyst consensus rows written: {n}")

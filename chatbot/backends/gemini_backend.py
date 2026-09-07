@@ -33,7 +33,10 @@ import sys
 
 import requests
 
+from config.logging_config import get_logger
 from chatbot.backends.base import LLMBackend, ToolExecutor
+
+logger = get_logger(__name__)
 
 DEFAULT_MODEL = "gemini-2.0-flash"
 MAX_TOOL_ITERATIONS = 8
@@ -130,7 +133,7 @@ class GeminiBackend(LLMBackend):
             for call in function_calls:
                 name, arguments = call["name"], call.get("args", {})
                 if verbose:
-                    print(f"  [gemini tool call] {name}({arguments})", file=sys.stderr)
+                    logger.info("tool call: %s(%s)", name, arguments)
                 result_json = tool_executor(name, arguments)
                 response_parts.append({
                     "functionResponse": {"name": name,

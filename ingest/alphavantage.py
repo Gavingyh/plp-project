@@ -24,6 +24,11 @@ from dotenv import load_dotenv
 from ingest.base import BANKS, request_with_retries, resolve_bank
 from ingest.db import make_doc_id, now_iso, upsert_documents
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -32,7 +37,7 @@ AV_KEY = os.environ.get("ALPHAVANTAGE_KEY")
 
 def pull() -> list[dict]:
     if not AV_KEY:
-        print("[AlphaVantage] Skipped — set ALPHAVANTAGE_KEY in .env to run this.")
+        logger.warning("Skipped — set ALPHAVANTAGE_KEY in .env to run this.")
         return []
 
     docs = []
@@ -54,10 +59,10 @@ def pull() -> list[dict]:
             resp = request_with_retries(url, params)
             data = resp.json()
             feed = data.get("feed", [])
-            print(f"[AlphaVantage] {bank} ({ticker}): {len(feed)} articles "
+            logger.info(f"{bank} ({ticker}): {len(feed)} articles "
                   f"(raw response keys: {list(data.keys())})")
             if "Note" in data or "Information" in data:
-                print(f"    -> AV message: {data.get('Note') or data.get('Information')}")
+                logger.info(f"AV message: {data.get('Note') or data.get('Information')}")
             for a in feed:
                 title = a.get("title") or ""
                 summary = a.get("summary") or ""
@@ -80,7 +85,7 @@ def pull() -> list[dict]:
                     "raw": a,
                 })
         except Exception as e:
-            print(f"[AlphaVantage] {bank}: ERROR — {e}")
+            logger.error(f"{bank}: ERROR — {e}")
         time.sleep(15)  # free tier is 25 req/day — space calls out, avoid burning quota fast
 
     return docs
@@ -97,8 +102,9 @@ def _parse_av_time(t: str | None) -> str:
 
 
 if __name__ == "__main__":
-    print(f"Run started: {datetime.now().isoformat()}\n")
+    setup_logging()
+    logger.info(f"Run started: {datetime.now().isoformat()}")
     docs = pull()
     attempted, inserted = upsert_documents(docs)
-    print(f"\nDocuments attempted: {attempted}  |  newly inserted: {inserted}  "
+    logger.info(f"Documents attempted: {attempted}  |  newly inserted: {inserted}  "
           f"|  already-seen (skipped): {attempted - inserted}")

@@ -40,11 +40,14 @@ import sys
 from dotenv import load_dotenv
 
 from chatbot.backends import get_backend
+from config.logging_config import get_logger, setup_logging
 from chatbot.prompts import SYSTEM_PROMPT
 from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+logger = get_logger(__name__)
 
 _URL_PATTERN = re.compile(r"https?://[^\s)\]}\"']+")
 _QUOTE_PATTERN = re.compile(r'"[^"]{10,}"')          # a purported verbatim quote
@@ -100,20 +103,21 @@ class _ToolCallTracker:
 def ask(question: str, verbose: bool = True, backend_name: str | None = None) -> str:
     backend = get_backend(backend_name)
     if verbose:
-        print(f"  [backend] {backend.name} ({getattr(backend, 'model', '?')})", file=sys.stderr)
+        logger.info("backend: %s (%s)", backend.name, getattr(backend, "model", "?"))
 
     tracker = _ToolCallTracker()
     answer = backend.ask(question, SYSTEM_PROMPT, TOOL_SCHEMAS, tracker.execute, verbose=verbose)
 
     if tracker.answer_has_unverified_citation(answer):
         if verbose:
-            print("  [citation check] FAILED — answer contains evidence not actually "
-                  "retrieved via search_evidence", file=sys.stderr)
+            logger.warning("citation check FAILED — answer contains evidence not "
+                           "actually retrieved via search_evidence")
         answer += UNVERIFIED_CITATION_WARNING
     return answer
 
 
 if __name__ == "__main__":
+    setup_logging()
     question = " ".join(sys.argv[1:]) or "How does the market feel about DBS's dividend policy?"
     print(f"Q: {question}\n")
     print(ask(question))

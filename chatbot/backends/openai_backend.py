@@ -27,7 +27,10 @@ import sys
 import requests
 
 from chatbot.backends._openai_compat import to_openai_function_tools
+from config.logging_config import get_logger
 from chatbot.backends.base import LLMBackend, ToolExecutor
+
+logger = get_logger(__name__)
 
 DEFAULT_MODEL = "gpt-4o-mini"
 MAX_TOOL_ITERATIONS = 8
@@ -86,7 +89,7 @@ class OpenAIBackend(LLMBackend):
                 except json.JSONDecodeError:
                     arguments = {}
                 if verbose:
-                    print(f"  [openai tool call] {name}({arguments})", file=sys.stderr)
+                    logger.info("tool call: %s(%s)", name, arguments)
                 result_json = tool_executor(name, arguments)
                 messages.append({
                     "role": "tool", "tool_call_id": call["id"], "content": result_json,

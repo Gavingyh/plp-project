@@ -42,6 +42,11 @@ from urllib.parse import quote, urljoin
 
 import requests
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
 
@@ -148,7 +153,7 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
     try:
         targets = discover(bank, since_year)
     except Exception as e:
-        print(f"[EarningsFetch] {bank}: could not read listing page — {e}")
+        logger.error(f"{bank}: could not read listing page — {e}")
         stats["failed"] += 1
         return stats
 
@@ -162,22 +167,22 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
             stats["already_present"] += 1
             continue
         if dry_run:
-            print(f"[EarningsFetch] {bank}: WOULD FETCH {local_name}")
+            logger.info(f"{bank}: WOULD FETCH {local_name}")
             continue
         try:
             resp = requests.get(url, headers={"User-Agent": _USER_AGENT}, timeout=_TIMEOUT)
             resp.raise_for_status()
             if not resp.content.startswith(b"%PDF"):
-                print(f"[EarningsFetch] {bank}: {local_name} is not a PDF (got "
+                logger.warning(f"{bank}: {local_name} is not a PDF (got "
                       f"{resp.content[:20]!r}) — skipping")
                 stats["failed"] += 1
                 continue
             with open(dest, "wb") as f:
                 f.write(resp.content)
-            print(f"[EarningsFetch] {bank}: {local_name} ({len(resp.content) // 1024}KB)")
+            logger.info(f"{bank}: {local_name} ({len(resp.content) // 1024}KB)")
             stats["downloaded"] += 1
         except Exception as e:
-            print(f"[EarningsFetch] {bank}: FAILED {local_name} — {e}")
+            logger.error(f"{bank}: FAILED {local_name} — {e}")
             stats["failed"] += 1
         time.sleep(_POLITE_DELAY_SECONDS)
     return stats
@@ -186,11 +191,11 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
 def run(since_year: int = 2023, dry_run: bool = False) -> dict:
     all_stats = {}
     for bank in SOURCES:
-        print(f"\n--- {bank} ---")
+        logger.info(f"--- {bank} ---")
         all_stats[bank] = fetch(bank, since_year=since_year, dry_run=dry_run)
 
-    print("\n--- UOB ---")
-    print("[EarningsFetch] UOB: SKIPPED — uobgroup.com sits behind a WAF that rejects "
+    logger.info("--- UOB ---")
+    logger.warning("UOB: SKIPPED — uobgroup.com sits behind a WAF that rejects "
           "non-browser clients. Download UOB's results PDFs by hand into "
           f"{os.path.join(PDF_DIR, 'UOB')}/ (a handful per year) and "
           "`python -m ingest.earnings` will pick them up with the other two.")
@@ -198,15 +203,16 @@ def run(since_year: int = 2023, dry_run: bool = False) -> dict:
 
 
 if __name__ == "__main__":
+    setup_logging()
     parser = argparse.ArgumentParser(description="Fetch earnings PDFs from bank IR sites")
     parser.add_argument("--since-year", type=int, default=2023)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
     stats = run(since_year=args.since_year, dry_run=args.dry_run)
-    print(f"\n{'=' * 50}")
+    logger.info(f"{'=' * 50}")
     for bank, s in stats.items():
-        print(f"  {bank:6s} discovered={s['discovered']:3d} downloaded={s['downloaded']:3d} "
+        logger.info(f"  {bank:6s} discovered={s['discovered']:3d} downloaded={s['downloaded']:3d} "
               f"already_present={s['already_present']:3d} failed={s['failed']:3d}")
-    print(f"{'=' * 50}")
-    print("Next: python -m ingest.earnings   (extracts prose and ingests into documents)")
+    logger.info(f"{'=' * 50}")
+    logger.info("Next: python -m ingest.earnings   (extracts prose and ingests into documents)")

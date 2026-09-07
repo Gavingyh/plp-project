@@ -30,6 +30,11 @@ import random
 
 from ingest.db import get_connection
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(BASE_DIR, "data", "labeled")
 
@@ -63,7 +68,7 @@ def export(train_dev_target: int, test_target: int, seed: int = 42) -> dict:
     rng.shuffle(candidates)
 
     if len(candidates) < train_dev_target + test_target:
-        print(f"WARNING: only {len(candidates)} candidates available, "
+        logger.warning(f"WARNING: only {len(candidates)} candidates available, "
               f"requested {train_dev_target + test_target}. Exporting what exists — "
               "run more ingestion before treating this as the real labeling set.")
 
@@ -120,14 +125,15 @@ def export(train_dev_target: int, test_target: int, seed: int = 42) -> dict:
 
 
 if __name__ == "__main__":
+    setup_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("--train-dev", type=int, default=800)
     parser.add_argument("--test", type=int, default=200)
     args = parser.parse_args()
     stats = export(args.train_dev, args.test)
-    print("=" * 50)
+    logger.info("=" * 50)
     for k, v in stats.items():
-        print(f"  {k:28s} {v}")
-    print("=" * 50)
-    print("\nNext: open data/labeled/candidates.csv, fill in the `label` column")
-    print("(positive/neutral/negative) per docs/annotation-guideline.md.")
+        logger.info(f"  {k:28s} {v}")
+    logger.info("=" * 50)
+    logger.info("Next: open data/labeled/candidates.csv, fill in the `label` column")
+    logger.info("(positive/neutral/negative) per docs/annotation-guideline.md.")

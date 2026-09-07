@@ -4,6 +4,11 @@ import re
 import time
 import requests
 
+from config.logging_config import get_logger
+
+
+logger = get_logger(__name__)
+
 # Canonical bank aliases, shared by every source so bank attribution is
 # consistent whether the mention came from a news headline, a Reddit comment,
 # or an earnings PDF.
@@ -64,7 +69,7 @@ def request_with_retries(url, params, timeout=15):
             if attempt == MAX_RETRIES:
                 break
             wait = RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
-            print(f"    -> request failed ({e}); retrying in {wait}s "
+            logger.warning(f"request failed ({e}); retrying in {wait}s "
                   f"(attempt {attempt}/{MAX_RETRIES})")
             time.sleep(wait)
     raise last_exc

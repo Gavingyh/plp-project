@@ -28,6 +28,11 @@ from aspects.embed import embed_sentences
 from aspects.embed_store import load_for_search, update as update_embeddings
 from ingest.db import get_connection, init_db, now_iso
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "aspects.yaml")
 
@@ -67,8 +72,8 @@ def run() -> dict:
     floor = config.get("similarity_floor", 0.35)
     centroids = _build_centroids(config)
 
-    print("Ensuring all sentences are embedded...")
-    print(update_embeddings())
+    logger.info("Ensuring all sentences are embedded...")
+    logger.info("Embedding cache: %s", update_embeddings())
     sentence_ids, vectors = load_for_search()
 
     init_db()
@@ -107,8 +112,9 @@ def run() -> dict:
 
 
 if __name__ == "__main__":
+    setup_logging()
     stats = run()
-    print("=" * 50)
+    logger.info("=" * 50)
     for k, v in stats.items():
-        print(f"  {k:22s} {v}")
-    print("=" * 50)
+        logger.info(f"  {k:22s} {v}")
+    logger.info("=" * 50)

@@ -32,6 +32,11 @@ import requests
 from ingest.base import BANKS, resolve_bank
 from ingest.db import make_doc_id, now_iso, upsert_documents
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_URL = "https://arctic-shift.photon-reddit.com/api"
 
 # r/SingaporeInvestments is included for historical (pre-2023-10) pulls only —
@@ -55,16 +60,16 @@ def _get(endpoint: str, **params) -> list[dict]:
     try:
         resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
     except requests.exceptions.RequestException as e:
-        print(f"    -> request error: {e}")
+        logger.error(f"request error: {e}")
         return []
     if resp.status_code == 429:
         wait = int(resp.headers.get("Retry-After", 5))
-        print(f"    -> rate limited, waiting {wait}s")
+        logger.info(f"rate limited, waiting {wait}s")
         time.sleep(wait)
         return _get(endpoint, **params)
     if resp.status_code != 200:
         # Includes the documented 422 timeout case for keyword search / heavy queries.
-        print(f"    -> {endpoint} search returned {resp.status_code}: {resp.text[:120]}")
+        logger.info(f"{endpoint} search returned {resp.status_code}: {resp.text[:120]}")
         return []
     try:
         return resp.json().get("data") or []
@@ -144,15 +149,15 @@ def pull(since: str | None = None, until: str | None = None) -> list[dict]:
 
     all_docs = []
     for sub in SUBREDDITS:
-        print(f"[ArcticShift] r/{sub}: pulling posts {since} .. {until}")
+        logger.info(f"r/{sub}: pulling posts {since} .. {until}")
         posts = _harvest_window("posts", sub, since, until, "title,selftext,url,id")
         post_docs = _to_documents(posts, sub, "submission", "selftext")
-        print(f"    {len(posts)} posts fetched, {len(post_docs)} bank-mentioning")
+        logger.info(f"{len(posts)} posts fetched, {len(post_docs)} bank-mentioning")
 
-        print(f"[ArcticShift] r/{sub}: pulling comments {since} .. {until}")
+        logger.info(f"r/{sub}: pulling comments {since} .. {until}")
         comments = _harvest_window("comments", sub, since, until, "body,link_id,id")
         comment_docs = _to_documents(comments, sub, "comment", "body")
-        print(f"    {len(comments)} comments fetched, {len(comment_docs)} bank-mentioning")
+        logger.info(f"{len(comments)} comments fetched, {len(comment_docs)} bank-mentioning")
 
         all_docs.extend(post_docs)
         all_docs.extend(comment_docs)
@@ -161,13 +166,14 @@ def pull(since: str | None = None, until: str | None = None) -> list[dict]:
 
 
 if __name__ == "__main__":
+    setup_logging()
     parser = argparse.ArgumentParser(description="Ingest Reddit data via Arctic Shift")
     parser.add_argument("--since", default=None, help="YYYY-MM-DD, default = full backfill")
     parser.add_argument("--until", default=None, help="YYYY-MM-DD, default = today")
     args = parser.parse_args()
 
-    print(f"Run started: {datetime.now().isoformat()}\n")
+    logger.info(f"Run started: {datetime.now().isoformat()}")
     docs = pull(since=args.since, until=args.until)
     attempted, inserted = upsert_documents(docs)
-    print(f"\n{'=' * 50}\nDocuments attempted: {attempted}  |  newly inserted: {inserted}  "
+    logger.info(f"{'=' * 50}\nDocuments attempted: {attempted}  |  newly inserted: {inserted}  "
           f"|  already-seen (skipped): {attempted - inserted}\n{'=' * 50}")

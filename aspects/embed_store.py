@@ -23,6 +23,11 @@ import numpy as np
 from aspects.embed import embed_sentences
 from ingest.db import get_connection
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STORE_PATH = os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")
 
@@ -80,5 +85,6 @@ def load_for_search() -> tuple[list[str], np.ndarray]:
 
 
 if __name__ == "__main__":
+    setup_logging()
     stats = update()
-    print(f"Embedding cache: {stats}")
+    logger.info(f"Embedding cache: {stats}")

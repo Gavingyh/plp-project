@@ -24,6 +24,11 @@ from ingest.base import BANKS
 from ingest.db import make_doc_id, now_iso, upsert_documents
 from ingest.earnings_fetch import _quarter_to_announcement_date
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
 
@@ -52,7 +57,7 @@ def extract_prose(pdf_path: str) -> list[str]:
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
-            for line in text.split("\n"):
+            for line in text.split(""):
                 if _is_prose(line):
                     paragraphs.append(line.strip())
     return paragraphs
@@ -60,8 +65,8 @@ def extract_prose(pdf_path: str) -> list[str]:
 
 def pull() -> list[dict]:
     if not os.path.isdir(PDF_DIR):
-        print(f"[Earnings] No {PDF_DIR} directory found.")
-        print("           Create data/earnings_pdfs/<BANK>/*.pdf and re-run — "
+        logger.warning(f"No {PDF_DIR} directory found.")
+        logger.info("Create data/earnings_pdfs/<BANK>/*.pdf and re-run — "
               "see plan Phase 1b for where to source these (bank IR sites).")
         return []
 
@@ -73,19 +78,19 @@ def pull() -> list[dict]:
         pdfs = [f for f in os.listdir(bank_dir) if f.lower().endswith(".pdf")]
         if not pdfs:
             continue
-        print(f"[Earnings] {bank}: {len(pdfs)} PDF(s) found")
+        logger.info(f"{bank}: {len(pdfs)} PDF(s) found")
         for fname in pdfs:
             path = os.path.join(bank_dir, fname)
             try:
                 paragraphs = extract_prose(path)
             except Exception as e:
-                print(f"    -> {fname}: ERROR extracting text — {e}")
+                logger.error(f"{fname}: ERROR extracting text — {e}")
                 continue
             body = "\n".join(paragraphs)
             if not body.strip():
-                print(f"    -> {fname}: no prose extracted (table-only or scanned PDF?)")
+                logger.info(f"{fname}: no prose extracted (table-only or scanned PDF?)")
                 continue
-            print(f"    -> {fname}: {len(paragraphs)} prose lines extracted")
+            logger.info(f"{fname}: {len(paragraphs)} prose lines extracted")
             docs.append({
                 "doc_id": make_doc_id("earnings", f"{bank}:{fname}"),
                 "source": "earnings",
@@ -110,8 +115,9 @@ def pull() -> list[dict]:
 
 
 if __name__ == "__main__":
-    print(f"Run started: {datetime.now().isoformat()}\n")
+    setup_logging()
+    logger.info(f"Run started: {datetime.now().isoformat()}")
     docs = pull()
     attempted, inserted = upsert_documents(docs)
-    print(f"\nDocuments attempted: {attempted}  |  newly inserted: {inserted}  "
+    logger.info(f"Documents attempted: {attempted}  |  newly inserted: {inserted}  "
           f"|  already-seen (skipped): {attempted - inserted}")

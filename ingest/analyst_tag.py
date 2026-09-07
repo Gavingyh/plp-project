@@ -34,6 +34,11 @@ from datetime import datetime
 
 from ingest.db import get_connection, init_db
 
+from config.logging_config import get_logger, setup_logging
+
+
+logger = get_logger(__name__)
+
 # Common SG/regional brokerage and research-house names that show up when
 # local media reports an analyst call. Not exhaustive — extend as false
 # negatives turn up during Phase 4 labeling review.
@@ -89,6 +94,7 @@ def backfill() -> int:
 
 
 if __name__ == "__main__":
-    print(f"Run started: {datetime.now().isoformat()}\n")
+    setup_logging()
+    logger.info(f"Run started: {datetime.now().isoformat()}")
     n = backfill()
-    print(f"Flagged {n} documents as carrying an analyst view (proxy tag, see module docstring).")
+    logger.info(f"Flagged {n} documents as carrying an analyst view (proxy tag, see module docstring).")

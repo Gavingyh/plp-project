@@ -24,7 +24,7 @@ failure mode is producing nothing.
 
 ### The rule
 
-**229 tests, no network calls.** External APIs are mocked with *captured real
+**246 tests, no network calls.** External APIs are mocked with *captured real
 payloads*, so a provider changing its response shape surfaces as a failing
 test rather than a silent production break.
 
@@ -42,7 +42,7 @@ A hand-written fixture tests your assumptions against themselves.
 | reason | consequence if violated |
 |---|---|
 | Determinism | A test that passes or fails by network weather teaches nothing |
-| Speed | 229 tests in about 60 seconds; network calls would make that minutes |
+| Speed | 246 tests in a minute or two; network calls would make that far worse |
 | Rate limits | NewsAPI's free tier allows 100 requests a day |
 | Courtesy | archive.org is a donated service |
 | Offline work | Tests run on a train |
@@ -126,7 +126,7 @@ of the four.
 |---|---|---|
 | Before the discovery tests | 214 | 25 s |
 | After | 217 | 59 s |
-| After the script tests too | 229 | ~60 s |
+| After the script and agreement tests | 246 | 106 s (under load) |
 
 The discovery tests roughly doubled the runtime, and almost none of that is
 the tests themselves — they run in about one second. It is `umap` and
@@ -166,7 +166,7 @@ of this lifespan that is an acceptable gap worth naming.
 — determinism, rate limits, and courtesy to a donated archive all point the
 same way — and captured payloads are the right fidelity compromise.
 
-**Is 229 tests enough?** For the code paths that exist, roughly. The
+**Is 246 tests enough?** For the code paths that exist, roughly. The
 significant gaps are not code paths but *properties nobody asserts*:
 
 - Segmentation correctness has no gold set.
@@ -176,7 +176,7 @@ significant gaps are not code paths but *properties nobody asserts*:
 - The backfill's mid-chunk recovery path has never been exercised.
 
 Each of those needs labelled data or human judgement rather than more mocking,
-which is why they are absent. Naming them is more useful than pretending 229
+which is why they are absent. Naming them is more useful than pretending 246
 passing tests means the system is correct.
 
 **What the suite does not tell you.** That the numbers are right. It tells you
@@ -313,7 +313,8 @@ catch.
 
 **Measured in this repository (2026-09-11)**
 
-- 214 tests in 25 s before this branch's additions; 229 in about 60 s after.
+- 214 tests in 25 s before this branch's additions; 246 in 106 s after (that
+  final run shared the machine with a model evaluation).
   The roughly 35-second increase is `umap`/`hdbscan` import cost, measured by
   running the discovery tests alone.
 

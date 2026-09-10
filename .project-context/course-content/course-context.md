@@ -77,7 +77,25 @@ DBS, OCBC, UOB together: >S$180B combined market cap, ~half of the Straits Times
 ## 5. Technical Approach (from submitted proposal)
  
 **Pretrained model:** FinBERT (ProsusAI/finbert) — BERT pretrained on financial text (analyst reports, earnings calls, financial news), further tuned on Financial PhraseBank. Chosen so the 10-man-day budget goes to labelling/fine-tuning, not pretraining from scratch.
-**Verified fact:** FinBERT benchmarks at ~88.2% accuracy vs. ~62.1% for lexicon-only (Loughran-McDonald) scoring — this number is accurate per published research, safe to cite in the report.
+**CORRECTED 2026-09-11 — DO NOT CITE THE OLD NUMBERS.** This line previously read: "FinBERT benchmarks at ~88.2% accuracy vs. ~62.1% for lexicon-only (Loughran-McDonald) scoring — this number is accurate per published research, safe to cite in the report." Neither figure could be traced to a source, and they are not in the FinBERT paper.
+
+What the primary source actually reports. Araci (2019), *FinBERT: Financial Sentiment Analysis with Pre-trained Language Models*, arXiv:1908.10063, Table 2, on the Financial PhraseBank:
+
+| model | accuracy (all data) | F1 (all data) | accuracy (100% annotator agreement) | F1 (100% agreement) |
+|---|---|---|---|---|
+| LSTM | 0.71 | 0.64 | 0.81 | 0.74 |
+| LSTM + ELMo | 0.75 | 0.70 | 0.84 | 0.77 |
+| ULMFit | 0.83 | 0.79 | 0.93 | 0.91 |
+| LPS | 0.71 | 0.71 | 0.79 | 0.80 |
+| HSC | 0.71 | 0.76 | 0.83 | 0.86 |
+| FinSSLX | — | — | 0.91 | 0.88 |
+| **FinBERT** | **0.86** | **0.84** | **0.97** | **0.95** |
+
+Two things to be careful about when citing this. **There is no Loughran-McDonald lexicon baseline in that table at all** — the comparisons are against LSTM, ELMo, ULMFit and three prior published systems, so the "vs. lexicon-only" framing has no basis in this paper. And the two accuracy columns measure different things: 0.97 is on the subset where all annotators agreed, which is the easy subset, so quoting it as FinBERT's accuracy overstates it. Quote 0.86, or quote both and say which is which.
+
+Also worth knowing for the reference list: arXiv:1908.10063 is a University of Amsterdam MSc thesis posted to arXiv (25 June 2019), not a peer-reviewed conference paper. Cite it as such.
+
+If the report wants a lexicon comparison, find one and cite it directly. One example located but **not verified in detail**: "Sentiment trading with large language models" (arXiv:2412.19245) reports FinBERT at 72.2% against the Loughran-McDonald dictionary at 50.1% on its own task — different dataset, different setup, not interchangeable with the table above.
  
 **Two-stage pipeline:**
 1. **Unsupervised — aspect discovery.** Each batch (earnings text, analyst notes, news, social chatter) embedded via FinBERT representations, clustered/topic-modelled (BERTopic or NMF) to surface recurring aspects: dividend policy, asset quality/provisioning, net interest margin, management guidance. No labels needed — pure similarity grouping.

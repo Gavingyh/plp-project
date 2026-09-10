@@ -378,7 +378,7 @@ loss.
 
 ## 10. Testing
 
-229 tests, no network calls. External APIs are mocked with captured real
+246 tests, no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
 

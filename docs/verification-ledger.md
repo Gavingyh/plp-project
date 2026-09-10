@@ -24,6 +24,7 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 |---|---|
 | Baseline, before any change | 214 passed in 25.02s |
 | After adding `tests/test_aspect_discover.py` | 217 passed in 59.50s |
+| Final, after `tests/test_scripts.py` and `tests/test_agreement.py` | **246 passed in 106.17s** |
 
 `grep -rhE '^\s*def test_' tests/ | wc -l` gives 200 function definitions.
 The gap to 214 is `@pytest.mark.parametrize` in
@@ -185,6 +186,173 @@ lsof -nP -iTCP:8501 -sTCP:LISTEN       # held by .venv-aegis (another project)
 
 Port 8501 is occupied by an unrelated Streamlit process, which is why the
 start script refuses rather than assuming the port is free.
+
+## 9. Aspect assignment, measured directly
+
+```sql
+SELECT s.text, sa.similarity FROM sentence_aspects sa
+JOIN sentences s ON s.sentence_id = sa.sentence_id
+WHERE sa.aspect = 'net_interest_margin' AND s.source = 'arctic_shift'
+ORDER BY sa.similarity DESC LIMIT 20;
+```
+
+All twenty are retail banking products: "No fees for ocbc" (0.860), "DBS Fixed
+deposit interest." (0.857), "DBS My Account: no minimum balance and fees."
+(0.851), "UOB Absolute Amex, 1.7% unlimited cashback" (0.834), "UOB credit
+card application." (0.834). None is about net interest margin.
+
+This converts STATUS's long-standing "assignment is not yet validated" caveat
+into a measured failure for this aspect and source. Full output in the
+scratchpad at run time; reproducible with the query above.
+
+Supporting term frequencies, word-boundary matched over all 36,884 sentences:
+
+| term | Reddit | earnings |
+|---|---|---|
+| `net interest margin` | 0 | 375 |
+| `\bNIM\b` | 4 | 300 |
+| `asset quality` | 0 | 198 |
+| `\bNPLs?\b` | 1 | 270 |
+| `\bdividends?\b` | 561 | 511 |
+
+**A trap worth recording.** The first attempt used SQL `LIKE '%nim%'` and
+returned 433 Reddit matches, which would have contradicted the documented
+finding. 393 of those were "minimum". Any frequency claim built on substring
+matching of a short abbreviation needs re-checking with word boundaries.
+
+## 10. Inter-annotator agreement tooling
+
+```bash
+.venv-plp/bin/python3 -m train.agreement --file data/labeled/candidates.csv \
+    --col-a llm_prelabel --col-b base_finbert_label
+```
+
+| | value |
+|---|---|
+| Rows compared | 997 |
+| Observed agreement | 0.462 |
+| Cohen's κ | 0.215 (fair) |
+
+Confusion matrix shows the disagreement is one-directional: the local model
+called 208 sentences positive and 135 negative that base FinBERT called
+neutral. Consistent with the local model having been prompted with the
+guideline's factual-valence rule while FinBERT was not.
+
+This is model-to-model agreement. **No human-to-human κ has ever been
+computed**, because zero rows are human-labelled.
+
+## 11. Service scripts
+
+Verified by a full lifecycle run on 2026-09-11, not by inspection:
+
+| test | result |
+|---|---|
+| `start.sh dashboard` on port 8501 (held by another project) | Refused, printed the owning process, exit 1 |
+| `start.sh api` on free port 8009 | Started, `/health` returned `{"status":"ok"}` |
+| `start.sh api` again | "already running", did not start a second copy |
+| `status.sh` | Correctly showed the foreign process on 8501 and the healthy API |
+| `stop.sh api` | Stopped, pid file removed, port released |
+| `stop.sh api` again | "not running", exit 0 |
+| `start.sh dashboard` on free port 8511 | Started, `/_stcore/health` returned 200 |
+| Foreign process on 8501 afterwards | **Untouched** (pid 97113 still running) |
+
+The Streamlit health endpoint was confirmed against the installed source, not
+assumed: `create_health_routes` in
+`.venv-plp/lib/python3.14/site-packages/streamlit/web/server/starlette/starlette_routes.py`
+documents `/_stcore/health` returning 200 when ready and 503 otherwise, with
+`BASE_ROUTE_CORE = "_stcore"`. Streamlit version 1.63.0.
+
+`shellcheck` is **not installed** on this machine. `bash -n` was run over every
+script instead, and `tests/test_scripts.py` runs it in CI.
+
+A parsing bug was found during this testing: `. .env` executes the file as
+shell, and `.env.example` ships with
+`REDDIT_USER_AGENT=plp-practice-module/0.1 by u/your_username`, whose unquoted
+spaces made the shell attempt to run `by`. Replaced with a line-by-line parser.
+
+## 12. Pipeline invariants
+
+Checked against `data/plp.db` on 2026-09-11. All hold, and **nothing in the
+test suite asserts any of them**:
+
+| invariant | result |
+|---|---|
+| `aspect_sentiment` rows whose `sentence_id` is absent from `sentences` | 0 |
+| `sentences` whose `doc_id` is absent from `documents` | 0 |
+| `sentences` with a null or malformed `published_at` | 0 |
+| `sentence_aspects` rows never scored | 0 |
+
+## 13. FinBERT benchmark — a withdrawn claim
+
+`.project-context/course-content/course-context.md` recorded: "FinBERT
+benchmarks at ~88.2% accuracy vs. ~62.1% for lexicon-only (Loughran-McDonald)
+scoring — this number is accurate per published research, safe to cite in the
+report."
+
+**Neither figure is in the FinBERT paper.** arXiv:1908.10063 was fetched and
+its Table 2 extracted directly from the PDF with `pdfplumber`:
+
+| model | acc (all data) | F1 | acc (100% agreement) | F1 |
+|---|---|---|---|---|
+| LSTM | 0.71 | 0.64 | 0.81 | 0.74 |
+| LSTM + ELMo | 0.75 | 0.70 | 0.84 | 0.77 |
+| ULMFit | 0.83 | 0.79 | 0.93 | 0.91 |
+| LPS | 0.71 | 0.71 | 0.79 | 0.80 |
+| HSC | 0.71 | 0.76 | 0.83 | 0.86 |
+| FinSSLX | — | — | 0.91 | 0.88 |
+| **FinBERT** | **0.86** | **0.84** | **0.97** | **0.95** |
+
+There is **no Loughran-McDonald baseline in the table at all**. The paper also
+identifies itself as an MSc thesis, University of Amsterdam, 25 June 2019.
+
+A web search for the 88.2/62.1 pair returned nothing containing them. A
+different paper (arXiv:2412.19245) reportedly gives 72.2% against
+Loughran-McDonald's 50.1% on its own task; that came from a search-result
+summary and **was not verified in the paper itself**, so it is not offered as
+a replacement citation.
+
+Corrected in place in the course-context file, with both accuracy columns
+labelled, since quoting 0.97 as "FinBERT's accuracy" overstates it.
+
+## 14. SGX reporting cadence
+
+Verified against several independent legal summaries accessed 2026-09-11
+(Allen & Gledhill, CNPLaw, Drew & Napier): SGX RegCo announced on 9 January
+2020, effective **7 February 2020**, that quarterly reporting would no longer
+be required of issuers above a S$75m market-capitalisation threshold, moving
+to a risk-based approach with semi-annual reporting as the default and
+voluntary business updates encouraged in between.
+
+Corroborated by the corpus itself: OCBC's filenames carry `1H`/`FY` for
+statutory results and `1Q`/`3Q` for updates.
+
+**For the report, cite SGX's own rulebook or announcement**, not a law-firm
+summary.
+
+## 15. Bloom's taxonomy
+
+The revised taxonomy of Anderson and Krathwohl (2001) — Remember, Understand,
+Apply, Analyze, Evaluate, Create — verified against university teaching-centre
+sources accessed 2026-09-11 (University of Illinois Chicago, Colorado
+College). The 2001 revision turned Bloom's 1956 nouns into verbs and added a
+knowledge dimension. **The book itself was not fetched**; cite it directly.
+
+## 16. Chatbot evaluation, qwen3:4b
+
+```bash
+CHATBOT_BACKEND=ollama OLLAMA_MODEL=qwen3:4b HF_HUB_OFFLINE=1 \
+    .venv-plp/bin/python3 -m chatbot.run_eval --tag qwen3_4b
+```
+
+23 questions, **23 errors**, all `Read timed out. (read timeout=120)`, 23 empty
+answers, 0 tool calls. Its 0% citation-fabrication rate therefore measures
+absence of output, not grounding — the same artifact class as `gemma3:4b`,
+which fails with HTTP 400 for lack of tool-calling support.
+
+Caveat recorded in STATUS: this run shared the machine with other work, so
+"unusably slow here" is the finding rather than a specific latency.
+
+---
 
 ---
 

@@ -368,6 +368,36 @@ Listed so a reader knows which statements this run did *not* re-check.
 - The claim that GPT and Gemini backends have never been run against their
   real APIs. Still true; no keys are present in the environment.
 
+## 17. Re-running llama3.1:8b — a confound found
+
+```bash
+CHATBOT_BACKEND=ollama OLLAMA_MODEL=llama3.1:8b HF_HUB_OFFLINE=1 \
+    .venv-plp/bin/python3 -m chatbot.run_eval --tag llama3.1_8b_rerun
+```
+
+| | run 1 | rerun |
+|---|---|---|
+| Errors | 3 | 8, all `Read timed out (timeout=120)` |
+| Tool selection reported | 12/16 | 7/16 |
+| Applicable questions that errored first | 3 | 7 |
+| **Excluding errored questions** | **12/13** | **7/9** |
+| Advice-declining | 3/7 | 3/7 |
+| Citation fabrication | 3/23 | 3/23 |
+
+Computed by joining the two result files on question id and partitioning
+tool-selection failures by whether the question also errored. Genuine
+wrong-tool choices were `lookup-2` in run 1, and `evidence-1` plus `thin-1` in
+the rerun.
+
+**Tool selection is confounded with the error rate**, exactly as citation
+fabrication is, and STATUS previously said so only about fabrication. Corrected
+there, with the table now showing both runs for this model.
+
+**Caveat on this run:** it shared the machine with a full pytest run and other
+work in this session, which is the most likely cause of the extra timeouts.
+That is this session's doing, not the model's. The confound it revealed holds
+regardless of cause.
+
 ## Command verification
 
 Every fenced command block in README, RUNBOOK, the specs and the learning

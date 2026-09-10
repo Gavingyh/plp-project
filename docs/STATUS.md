@@ -93,15 +93,17 @@ models via `chatbot/run_eval.py`. Tool selection, advice-declining behaviour
 and citation fabrication are checked automatically; whether a stated number
 is correct is not (see the note at the end of this section).
 
+Two models were run twice; those rows show both runs.
+
 | model | params | errors | tool selection | behaviour | citation fabrication |
 |---|---|---|---|---|---|
 | `llama3.2:3b` (default) | 3B | 0 | 12/16 | 3/7 | **10–11/23 (43–48%)** |
 | `phi4-mini` | 3.8B | 0 | 0/16 | 1/7 | 19/23 (83%) |
 | `gemma3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 — *artifact, see below* |
 | `qwen3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 — *artifact, see below* |
-| `llama3.1:8b` | 8B | 3 | 12/16 | 3/7 | **3/23 (13%)** |
+| `llama3.1:8b` | 8B | 3 / 8 | 12/16 / 7/16 — *see the confound below* | 3/7 | **3/23 (13%), both runs** |
 
-Six things worth carrying into the report:
+Seven things worth carrying into the report:
 
 **The default model's fabrication rate is a range because it was run twice.**
 11/23 on 2026-09-07 and 10/23 on 2026-09-10, same model, same gold set. That
@@ -147,7 +149,33 @@ grounding in code rather than in the prompt.
 **Advice-declining is the weakest area regardless of model.** 3/7 at best,
 and `advice-1`/`advice-2` fail on every model tested. For a tool carrying a
 not-financial-advice disclaimer this is the most report-relevant gap, and it
-is a prompt/design fix rather than a model choice.
+is a prompt/design fix rather than a model choice. It came out at exactly 3/7
+in four separate runs across two models, which is unusually strong support
+for that reading.
+
+**Tool selection is confounded with the error count, the same way fabrication
+is.** A question that errors never calls a tool, so it counts as a
+tool-selection failure. Re-running `llama3.1:8b` on 2026-09-11 made this
+unmistakable:
+
+| | run 1 | rerun |
+|---|---|---|
+| Errors | 3 | 8 (all timeouts) |
+| Tool selection, as reported | 12/16 | 7/16 |
+| Excluding questions that errored | **12/13** | **7/9** |
+
+Same model, same gold set. The apparent collapse from 12/16 to 7/16 is almost
+entirely timeouts — the rerun shared the machine with a full test run, which
+is this project's doing rather than the model's. Genuine wrong-tool choices
+were 1 and 2, not 4 and 9.
+
+**So do not compare the tool-selection column across rows with different error
+counts.** `llama3.2:3b`'s 12/16 and `phi4-mini`'s 0/16 are clean, because both
+had zero errors — and phi4-mini's is the damning one, since it answered every
+question and called nothing. The two 0/16 rows with 23 errors measure nothing.
+`llama3.1:8b`'s figure needs the adjustment above before it can sit beside
+them. Detail in
+[evidence/chatbot-eval-rerun-2026-09-11.md](evidence/chatbot-eval-rerun-2026-09-11.md).
 
 Per-model transcripts are in `data/eval/chatbot_eval_results_*.jsonl`,
 summaries in `data/eval/chatbot_eval_summary_*.md`. Reproduce with

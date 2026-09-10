@@ -122,7 +122,14 @@ def run(backend_name: str | None = None, limit: int | None = None,
         results.append({
             "id": item["id"], "category": item["category"], "question": item["question"],
             "answer": answer, "error": error,
-            "tool_calls": [{"name": c["name"], "arguments": c["arguments"]} for c in calls],
+            # The result is kept, not just the call. Without it the transcript
+            # cannot answer the one question this suite deliberately does not
+            # automate - whether a number the model stated is the number the
+            # tool returned - which is exactly the human check docs/STATUS.md
+            # lists as outstanding. The tracker already records it
+            # (chatbot/agent.py); this used to drop it on the way to disk.
+            "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
+                             "result": c.get("result")} for c in calls],
             "citation_fabricated": fabricated,
             "tool_selection_check": tool_check,
             "behavior_check": behavior_check,

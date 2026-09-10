@@ -157,6 +157,53 @@ Progress: `data/backfill_overnight.log` and `data/.backfill_progress.txt`.
 
 ## Interfaces
 
+### Start and stop
+
+```bash
+scripts/start.sh              # Ollama (if needed), API, dashboard
+scripts/status.sh             # what's running, on which port, healthy or not
+scripts/stop.sh               # stop everything this project started
+```
+
+Each takes an optional service name — `dashboard`, `api` or `ollama` — to act
+on just one. The scripts work from any directory.
+
+Ports come from `PLP_DASHBOARD_PORT` (default 8501) and `PLP_API_PORT`
+(default 8000):
+
+```bash
+PLP_DASHBOARD_PORT=8511 scripts/start.sh dashboard
+```
+
+What the scripts do that the raw commands below don't:
+
+- **Refuse a port they don't own.** If something else is listening, they print
+  the owning process and exit rather than starting or killing anything. This
+  is not hypothetical: 8501 is a common default and a second Streamlit project
+  on the same machine will already be there.
+- **Wait for a real health check** before reporting success — `/health` for
+  the API, `/_stcore/health` for the dashboard — so a green message means the
+  service answers, not merely that a process exists.
+- **Fail fast on the wrong interpreter**, with the same check
+  `scripts/overnight_backfill.py` uses, instead of failing per-request later.
+- **Set `HF_HUB_OFFLINE=1`** and load `.env`.
+- **Leave Ollama alone if it's already running.** `stop.sh` shuts it down only
+  if `start.sh` was the one that started it, since it's a machine-wide service
+  that other things may be using.
+
+PID files live in `data/run/`, logs in `data/logs/<service>.log`. Both start
+and stop are safe to run twice.
+
+`.env` is parsed line by line rather than sourced, because `. .env` executes
+the file as shell and `.env.example` ships with
+`REDDIT_USER_AGENT=plp-practice-module/0.1 by u/your_username` — an unquoted
+value whose spaces make `by` look like a command. Python's `dotenv` accepts
+that line, so the file is fine; shell is just the wrong parser for it.
+
+### The underlying commands
+
+These are what the scripts run, and remain the reference:
+
 ```bash
 # Dashboard
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m streamlit run dashboard/app.py
@@ -257,9 +304,14 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-214 tests, ~2 minutes. No network calls — external APIs are mocked with
-captured real payloads, so a provider changing its response shape surfaces as
-a failing test rather than a silent production break.
+229 tests. No network calls — external APIs are mocked with captured real
+payloads, so a provider changing its response shape surfaces as a failing test
+rather than a silent production break.
+
+Runtime depends on what else the machine is doing: about 60 seconds idle, and
+2.5 minutes measured while a local model evaluation ran alongside it. Roughly
+35 seconds of that is `umap`/`hdbscan` import cost (numba), paid once per run
+by the aspect-discovery tests.
 
 ---
 

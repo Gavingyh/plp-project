@@ -89,13 +89,14 @@ theoretical preference for defensive programming; it is what happened.
 
 ### What the evaluation found across four models
 
-23 questions, four local models via Ollama:
+23 questions, five local models via Ollama:
 
 | model | params | errors | tool selection | advice behaviour | citation fabrication |
 |---|---|---|---|---|---|
 | `llama3.2:3b` (default) | 3B | 0 | 12/16 | 3/7 | 10–11/23 (43–48%) |
 | `phi4-mini` | 3.8B | 0 | 0/16 | 1/7 | 19/23 (83%) |
 | `gemma3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 |
+| `qwen3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 |
 | `llama3.1:8b` | 8B | 3 | 12/16 | 3/7 | 3/23 (13%) |
 
 Four things follow, and they pull in different directions.
@@ -108,12 +109,19 @@ a bigger model does not touch. That distinction is worth the report's space:
 it tells you which problems to solve with a model swap and which need a
 redesign.
 
-**A 0% fabrication rate can be an artifact.** `gemma3:4b` scored 0/23 and it
-means nothing: it has no Ollama tool-calling support, so all 23 questions
-failed with HTTP 400 and every answer was empty. There were no citations to
-fabricate. **A rate is only interpretable alongside its denominator and its
-error count**, which is why the table carries both. Reporting gemma as the
-best-grounded model would be a straightforward misreading of a real number.
+**A 0% fabrication rate can be an artifact — twice over.** Two models score
+0/23 and neither result means anything. `gemma3:4b` has no Ollama
+tool-calling support, so all 23 questions failed with HTTP 400. `qwen3:4b`
+failed all 23 differently: every call exceeded the 120-second read timeout,
+because it emits a long hidden reasoning chain before answering and the agent
+loop needs several calls per question. Both produced 23 empty answers, so
+there were no citations to fabricate.
+
+**A rate is only interpretable alongside its denominator and its error
+count**, which is why the table carries both. Reporting either as the
+best-grounded model would be a straightforward misreading of a real number,
+and the fact that two models reach 0% for two unrelated non-reasons makes the
+point better than one did.
 
 **`phi4-mini` is the strongest argument in the project for code-level
 enforcement.** It called a tool in **0 of 16** questions yet fabricated

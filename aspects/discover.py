@@ -57,17 +57,33 @@ def run(min_cluster_size: int = 10) -> None:
               "Run more ingestion/preprocessing first.")
         return
 
+    # One full scan, filtered in Python, rather than an `IN (?,?,...)` over
+    # every cached sentence_id. That form binds one SQL variable per id and
+    # dies with "too many SQL variables" once the corpus passes SQLite's
+    # SQLITE_MAX_VARIABLE_NUMBER (32,766 here) — which it did at 36,884
+    # sentences, making this whole script unrunnable exactly when the corpus
+    # finally got big enough to cluster meaningfully.
+    wanted = set(sentence_ids)
     conn = get_connection()
     try:
-        rows = conn.execute(
-            f"SELECT sentence_id, text, bank FROM sentences "
-            f"WHERE sentence_id IN ({','.join('?' * len(sentence_ids))})",
-            sentence_ids,
-        ).fetchall()
+        rows = conn.execute("SELECT sentence_id, text, bank FROM sentences").fetchall()
     finally:
         conn.close()
-    text_by_id = {r[0]: r[1] for r in rows}
-    bank_by_id = {r[0]: r[2] for r in rows}
+    text_by_id = {r[0]: r[1] for r in rows if r[0] in wanted}
+    bank_by_id = {r[0]: r[2] for r in rows if r[0] in wanted}
+
+    # An embedded sentence whose row has since been deleted would otherwise
+    # KeyError below. embed_store prunes these, but a mid-run deletion is
+    # cheap to survive: drop the vector alongside the id so the two stay
+    # aligned.
+    missing = [i for i, sid in enumerate(sentence_ids) if sid not in text_by_id]
+    if missing:
+        logger.warning("%d embedded sentence(s) no longer in the sentences table — dropping",
+                       len(missing))
+        keep = [i for i in range(len(sentence_ids)) if i not in set(missing)]
+        sentence_ids = [sentence_ids[i] for i in keep]
+        vectors = vectors[keep]
+
     texts = [text_by_id[sid] for sid in sentence_ids]
 
     logger.info("Reducing %d x %d embeddings with UMAP...", vectors.shape[0], vectors.shape[1])

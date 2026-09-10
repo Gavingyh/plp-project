@@ -14,7 +14,7 @@ run anything mentioned here, see [RUNBOOK.md](RUNBOOK.md).
 |---|---|
 | "DBS/OCBC show more positive sentiment than UOB" | No longer an artifact of missing UOB data — all three banks now have earnings coverage (DBS 9,093 sentences, UOB 1,600, OCBC 1,561). DBS still carries ~6x the earnings volume of the other two, so check the per-source breakdown before making a blended claim. |
 | "The fine-tuned FinBERT classifier achieves X" | No fine-tuned model exists. All scores are base FinBERT, zero-shot. |
-| "The aspect breakdown shows NIM sentiment is Y" | Aspect assignment is not yet validated. Reddit sentences are assigned to `net_interest_margin` despite the Reddit corpus containing zero instances of that phrase. |
+| "The aspect breakdown shows NIM sentiment is Y" | **Measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
 | "The chatbot cites its sources" | Local models fabricate citations — 43–48% of answers on the default model, across two runs. A code check flags this, but it detects rather than prevents. See the evaluation below. |
 | "GPT / Gemini backends work" | Never run against their real APIs — no keys were available. |
 
@@ -279,9 +279,30 @@ them.
 
 The evidence that assignment is not yet trustworthy: Reddit sentences are
 assigned to `net_interest_margin` by centroid similarity, but the Reddit
-corpus contains **zero** occurrences of "net interest margin". The earnings
-corpus contains 298. Adding earnings data closed the vocabulary gap; it did
-not fix assignment.
+corpus contains **zero** occurrences of "net interest margin" and 4 of the
+abbreviation `NIM`. The earnings corpus contains 375 and 300. Adding earnings
+data closed the vocabulary gap; it did not fix assignment.
+
+**Now measured, not just suspected (2026-09-11).** The twenty Reddit sentences
+with the *highest* similarity to the `net_interest_margin` centroid are, in
+order: "No fees for ocbc", "DBS Fixed deposit interest.", "DBS My Account: no
+minimum balance and fees.", "UOB one savings terms and conditions", "UOB
+Absolute Amex, 1.7% unlimited cashback", and so on. **Not one is about net
+interest margin.** All twenty are retail banking products — fees, cards,
+fixed deposits, transfers. These are the best matches, so the rest are worse.
+
+Worse, the polarity inverts on the ones that do mention interest. "UOB One
+(5.2% interest)" is a *deposit rate paid to a customer*, which is a funding
+cost to the bank and compresses its margin. A depositor's enthusiasm is scored
+as positive sentiment on a metric it actually damages.
+
+**Practical consequence: do not report Reddit-sourced `net_interest_margin`
+rows.** They measure retail enthusiasm for deposit products. The earnings-only
+rows for that aspect are defensible; the blended and Reddit-only ones are not.
+Whether the other three aspects fail the same way has not been checked, and
+`dividend_policy` may well be fine given Reddit discusses dividends in 561
+sentences. Reproduce with the query in
+`learning/02-sentiment-mining/aspect-based-sentiment-analysis.md`.
 
 **Re-run on the full corpus, 2026-09-11.** `aspects/compare_taxonomies.py`
 was itself measuring at the wrong threshold: it hardcoded the pre-calibration

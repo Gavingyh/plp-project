@@ -142,6 +142,14 @@ Three distinct failure modes, and separating them is the useful analysis:
 **Scale did not help tool selection.** 3B and 8B both score 12/16, identical.
 Whatever causes the four misses is not model capacity.
 
+**But read that column carefully.** Re-running `llama3.1:8b` gave 7/16 rather
+than 12/16, on the same questions with the same weights, because 8 questions
+timed out and a question that times out never calls a tool. Excluding errored
+questions the two runs give 12/13 and 7/9. **Tool selection is confounded with
+the error rate**, so it is only comparable across models with similar error
+counts. `phi4-mini`'s 0/16 with zero errors is the one figure in that column
+that needs no adjustment at all, which is what makes it so damning.
+
 ### Which four, and what they say
 
 Running the diagnosis in section 6 over `llama3.2:3b`'s transcript:

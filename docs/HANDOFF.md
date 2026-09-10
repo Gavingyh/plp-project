@@ -134,7 +134,10 @@ at face value reaches the opposite of the truth.
 ### 5. Smaller decisions
 
 - **Default local model.** `llama3.1:8b` fabricates citations at 13% against
-  `llama3.2:3b`'s 43–48%, at the cost of being noticeably slower.
+  `llama3.2:3b`'s 43–48%, at the cost of being noticeably slower — slow enough
+  that it timed out on 8 of 23 questions when the machine was busy. Decide
+  whether that trade is worth it for a demo, and if you switch, raise the
+  120-second Ollama read timeout.
 - **Advice-declining.** 3 of 7 gold-set questions at best, on every model
   tested. A prompt and design problem, not a model choice, and the most
   serious behavioural gap for a tool carrying a not-financial-advice

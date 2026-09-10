@@ -132,10 +132,25 @@ ask the model anything — it observes whether the retrieval call happened.
 
 **The default model's rate is a range, not a point.** Two runs of the same
 model on the same gold set gave 11/23 and 10/23. One question on a 23-question
-set is 4.3 percentage points. Every other figure in the table rests on a
-single run and carries the same uncertainty without displaying it. This is a
-sampling-noise problem, and the honest fix in the report is to state the
-spread rather than pick the flattering number.
+set is 4.3 percentage points. This is a sampling-noise problem, and the honest
+fix in the report is to state the spread rather than pick the flattering
+number.
+
+**A second column has the same confound, and it is worse there.** Re-running
+`llama3.1:8b` moved its reported tool selection from 12/16 to 7/16 — same
+model, same questions. All 8 rerun errors were 120-second timeouts, and a
+question that times out never calls a tool, so it scores as a tool-selection
+failure. Excluding errored questions the figures are 12/13 and 7/9, and
+genuine wrong-tool choices were 1 and 2 rather than 4 and 9.
+
+The general rule this establishes: **any metric defined over "did the model do
+X" is depressed by errors, because a model that produced nothing did not do
+X.** Fabrication rate and tool selection are both such metrics. Compare them
+only across rows with comparable error counts, or adjust first.
+
+Note which figures did *not* move: fabrication was exactly 3/23 in both runs,
+and advice-declining exactly 3/7. The conclusions the project draws from this
+table are the stable ones.
 
 ### Comparing three approaches to grounding
 

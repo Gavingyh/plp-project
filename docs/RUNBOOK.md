@@ -308,10 +308,10 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
 
-Runtime depends on what else the machine is doing: about 60 seconds idle, and
-2.5 minutes measured while a local model evaluation ran alongside it. Roughly
-35 seconds of that is `umap`/`hdbscan` import cost (numba), paid once per run
-by the aspect-discovery tests.
+Runtime depends on what else the machine is doing: 62 seconds idle, and 106
+seconds measured while a local model evaluation ran alongside it. Roughly 35
+seconds of that is `umap`/`hdbscan` import cost (numba), paid once per run by
+the aspect-discovery tests.
 
 ---
 

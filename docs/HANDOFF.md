@@ -209,7 +209,7 @@ learning-material work on branch `overnight/handoff-docs`. Nothing was pushed.
 - **New:** functional and technical specifications, 19 learning topics,
   `scripts/start.sh`/`stop.sh`/`status.sh`, `train/agreement.py`, and this
   file.
-- **Tests:** 214 → 246, all passing.
+- **Tests:** 214 → 246, all passing in 62 seconds on an idle machine.
 
 ### Corrections worth knowing about
 
@@ -242,6 +242,17 @@ learning-material work on branch `overnight/handoff-docs`. Nothing was pushed.
   refresh would have invalidated numbers already written.
 - **shellcheck** on the new scripts. Not installed on this machine; `bash -n`
   and a full start/stop/status lifecycle test were run instead.
+
+### One late finding worth flagging
+
+Re-running `llama3.1:8b` on the chatbot gold set turned up a measurement
+problem, not just a model result. Its reported tool selection moved from 12/16
+to 7/16 on identical questions, because 8 answers timed out and a question
+that times out never calls a tool. **Tool-selection scores are confounded with
+error counts in exactly the way fabrication rates are**, and only the
+fabrication case was documented. Corrected in STATUS; do not compare that
+column across models with different error counts. Detail in
+[evidence/chatbot-eval-rerun-2026-09-11.md](evidence/chatbot-eval-rerun-2026-09-11.md).
 
 ### Runnable overnight next time
 

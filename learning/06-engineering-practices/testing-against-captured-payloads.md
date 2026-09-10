@@ -42,7 +42,7 @@ A hand-written fixture tests your assumptions against themselves.
 | reason | consequence if violated |
 |---|---|
 | Determinism | A test that passes or fails by network weather teaches nothing |
-| Speed | 246 tests in a minute or two; network calls would make that far worse |
+| Speed | 246 tests in about a minute; network calls would make that far worse |
 | Rate limits | NewsAPI's free tier allows 100 requests a day |
 | Courtesy | archive.org is a donated service |
 | Offline work | Tests run on a train |
@@ -126,7 +126,7 @@ of the four.
 |---|---|---|
 | Before the discovery tests | 214 | 25 s |
 | After | 217 | 59 s |
-| After the script and agreement tests | 246 | 106 s (under load) |
+| After the script and agreement tests | 246 | **62 s idle**, 106 s under load |
 
 The discovery tests roughly doubled the runtime, and almost none of that is
 the tests themselves — they run in about one second. It is `umap` and
@@ -313,8 +313,8 @@ catch.
 
 **Measured in this repository (2026-09-11)**
 
-- 214 tests in 25 s before this branch's additions; 246 in 106 s after (that
-  final run shared the machine with a model evaluation).
+- 214 tests in 25 s before this branch's additions; 246 in 62 s on an idle
+  machine, and 106 s when a model evaluation ran alongside.
   The roughly 35-second increase is `umap`/`hdbscan` import cost, measured by
   running the discovery tests alone.
 

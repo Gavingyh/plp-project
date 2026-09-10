@@ -24,7 +24,7 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 |---|---|
 | Baseline, before any change | 214 passed in 25.02s |
 | After adding `tests/test_aspect_discover.py` | 217 passed in 59.50s |
-| Final, after `tests/test_scripts.py` and `tests/test_agreement.py` | **246 passed in 106.17s** |
+| Final, after `tests/test_scripts.py` and `tests/test_agreement.py` | **246 passed in 62.12s** (idle machine); 106.17s when a model evaluation ran alongside |
 
 `grep -rhE '^\s*def test_' tests/ | wc -l` gives 200 function definitions.
 The gap to 214 is `@pytest.mark.parametrize` in

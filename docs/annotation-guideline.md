@@ -56,9 +56,44 @@ on it; label independently, then it's fine to glance at it afterward.
 
 Before splitting up the full labeling workload, two annotators should
 independently label the same ~150-row sample. Compute Cohen's κ
-(`train/agreement.py`, once labeling starts). **Target κ ≥ 0.6.** Below that,
+(`train/agreement.py`). **Target κ ≥ 0.6.** Below that,
 this guideline is ambiguous somewhere — find the disagreements, tighten the
 guideline, and re-label that sample before dividing up the rest.
+
+```bash
+# two annotators' sheets, joined on (sentence_id, aspect)
+.venv-plp/bin/python3 -m train.agreement --a alice.csv --b bob.csv
+
+# where you disagreed, so you can argue about specific rows
+.venv-plp/bin/python3 -m train.agreement --a alice.csv --b bob.csv --show-disagreements 20
+```
+
+**Watch the gap between raw agreement and κ, not just κ.** This corpus is
+heavily neutral, and two annotators who both default to `neutral` will agree
+most of the time while sharing no judgement at all about the hard cases. κ
+subtracts that. If raw agreement is 0.90 and κ is 0.46, the distribution is
+doing the work, not you.
+
+### A worked example from this project's own data
+
+Running the same tool over the two *model* opinions already in
+`candidates.csv` — the local model's `llm_prelabel` against base FinBERT's
+`base_finbert_label`, 997 rows:
+
+| | |
+|---|---|
+| Observed agreement | 0.462 |
+| Cohen's κ | 0.215 (fair) |
+
+They disagree more than half the time. The pattern is one-directional and
+explains itself: the local model called 208 sentences `positive` and 135
+`negative` that FinBERT called `neutral`. It was prompted with this
+guideline's rule that a factual statement with clear valence is not neutral;
+FinBERT was not. So the disagreement is substantially by design.
+
+Two things follow. The pre-labels are *not* just a copy of the baseline, so
+correcting them is real work rather than rubber-stamping. And neither column
+is ground truth — that is what you are creating.
 
 ## The `test` split is frozen
 

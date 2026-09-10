@@ -126,4 +126,13 @@ DBS, OCBC, UOB together: >S$180B combined market cap, ~half of the Straits Times
 ## 8. AI Usage Declaration (running log — needed for report §, per AI Usage Declaration slide)
  
 Claude has been used for: proposal ideation and comparison across multiple theme options, technical proposal drafting (business problem framing, approach, risk/limitation/assumption sections), data-source research and live verification (API access status, rate limits), Python script drafting for data collection (NewsAPI/Alpha Vantage/Reddit pulls), and this context-consolidation document.
+
+**2026-09-11 — Claude Code (Opus 5), unattended session.** Documentation refresh, functional and technical specifications, the `learning/` study folder, service start/stop scripts, `train/agreement.py`, and re-runs of aspect discovery and the taxonomy comparison on the full corpus.
+
+Worth stating plainly in the report, because it cuts both ways:
+
+- *What it did well.* It found four real defects that human review had missed: `ingest/earnings.py` called `text.split("")`, an empty separator that raises `ValueError` on every PDF page while `pull()` swallowed the exception, so the earnings source silently produced nothing; `aspects/discover.py` bound one SQL parameter per sentence and had been dying on SQLite's 32,766-parameter limit since the corpus grew past it; `aspects/compare_taxonomies.py` measured at a hardcoded similarity floor of 0.35 while the pipeline had moved to 0.65, so the tool meant to inform the taxonomy decision was describing a threshold nothing used; and `docs/STATUS.md`'s by-source document counts summed to 18,815 against its own stated total of 21,924.
+- *What had to be constrained.* The session ran under an explicit rule that every number trace to a command run in that session and every external fact to a fetched source, with the results recorded in `docs/verification-ledger.md`. That rule caught the model's own errors twice: it drew a confident conclusion from the taxonomy table before checking which floor the tool used (wrong floor, wrong conclusion), and it wrote a test asserting Cohen's κ below 0.1 for a case where κ is arithmetically 0.46. Both were caught by verifying rather than by review.
+- *The honest reading.* Model-written text about a codebase is plausible by construction and unreliable without checking. The verification ledger, not the fluency of the prose, is what makes this documentation trustworthy.
+
 **Keep updating this section as work continues — needed verbatim-ish for the report's GenAI declaration.**

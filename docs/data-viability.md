@@ -91,6 +91,16 @@ re-run against this complete corpus; `sentiment_index` reflects it.
 
 ## Aspect discovery + similarity-floor calibration (added later same day)
 
+> **Superseded 2026-09-11.** Both findings below were measured on 2,888
+> sentences and have been re-run on the full 36,884-sentence corpus. The
+> headline conclusion has changed: analyst-style aspects *do* now emerge once
+> earnings text is present. See
+> [evidence/aspect-discovery-2026-09-11.md](evidence/aspect-discovery-2026-09-11.md)
+> and [evidence/taxonomy-comparison-2026-09-11.md](evidence/taxonomy-comparison-2026-09-11.md).
+> The 0.65 floor's measured effect has also moved (1.80/4 and 37.3% `other`,
+> not 2.3/4 and ~31%). Kept as written because the sequence is part of the
+> methodology story.
+
 `python -m aspects.discover` (2,888 sentences) found 9 real clusters (52%
 noise), but they split along a coarser axis than the proposal's 4 aspects —
 "consumer banking service" vs. "investment/stock discussion" — rather than
@@ -205,12 +215,23 @@ public feed. The news-derived analyst-tag proxy above is the practical
 substitute; it should be disclosed as a proxy, not presented as equivalent to
 full analyst reports, per the plan's disclosure requirement.
 
-## Earnings PDFs — not yet started
+## Earnings PDFs — resolved (2026-09-11)
 
-Still a manual step: download results announcements / IR presentations for
-DBS/OCBC/UOB from each bank's investor-relations site into
-`data/earnings_pdfs/<BANK>/*.pdf`, then run `python -m ingest.earnings`. Not
-done in this pass — needs a human to go get the PDFs (see MVP plan Phase 1b).
+This section recorded earnings ingestion as a manual step needing a human to
+download PDFs. It is fully automated now and has been since 2026-09-07;
+kept here because the sequence matters to the story.
+
+`ingest/earnings_fetch.py` pulls DBS's and OCBC's PDFs directly from their IR
+sites, and `ingest/uob_wayback_fetch.py` pulls UOB's from the Wayback Machine
+because UOB's own site is WAF-blocked. 178 documents and 12,254 sentences are
+now in the corpus. See [RUNBOOK.md](RUNBOOK.md) for the commands.
+
+One caveat found later, on 2026-09-11: `extract_prose` had been calling
+`text.split("")`, an empty separator that raises `ValueError` on every page of
+every PDF. `pull()` catches per-file exceptions and continues, so the earnings
+source silently produced zero new documents while still exiting successfully.
+The corpus already held earnings sentences from an earlier working run, so
+nothing downstream looked wrong. Fixed, with a regression test.
 
 ## Volume gate check (Phase 0 hard gate: ≥300 Reddit items/bank/12mo) — PASSED
 
@@ -237,8 +258,10 @@ labeling pool runs short for OCBC specifically.
 
 ## What this means for the pipeline as currently configured
 
-- **Three live sources**: NewsAPI, Arctic Shift (Reddit), earnings (pending
-  manual PDF collection). Alpha Vantage confirmed dead, dropped.
+- **Three live sources**: NewsAPI, Arctic Shift (Reddit), earnings (fully
+  automated since 2026-09-07, including UOB via the Wayback Machine). Alpha
+  Vantage confirmed dead, dropped. Yahoo Finance analyst consensus added as a
+  fourth, with its unofficial-API caveat disclosed.
 - **Analyst consensus**: proxy built, needs a volume check before being
   trusted as "working."
 - All findings above are backed by a live, reproducible run on 2026-09-06 —

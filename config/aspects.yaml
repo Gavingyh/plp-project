@@ -1,8 +1,24 @@
 # Frozen aspect taxonomy — MVP plan Phase 3.
 #
 # STATUS: seeded from the proposal's a-priori aspects, NOT yet validated
-# against real cluster centroids. `python -m aspects.discover` HAS been run
-# on the live corpus (2,888 sentences, 2026-09-06) and found 9 real clusters
+# against real cluster centroids.
+#
+# UPDATED 2026-09-11: discovery has been re-run on the full corpus (36,884
+# sentences) and the picture below has changed in one important way. With
+# earnings text present, genuine analyst-style clusters DO emerge — leverage
+# ratio, Basel III / CET-1, fee income by line, return on equity — which the
+# Reddit-only corpus could never produce. What has NOT changed is that they
+# do not correspond to these four aspects: the run yields 281 clusters with a
+# median size of 23 and 67% noise, finer than these labels and cutting across
+# them. Separately, these four centroids are the least distinct of three
+# candidates measured (0.1125 mean pairwise cosine distance vs 0.1695 and
+# 0.2222), and that is a property of the seed terms which no threshold change
+# can fix. See docs/evidence/aspect-discovery-2026-09-11.md and
+# docs/evidence/taxonomy-comparison-2026-09-11.md. The DECISION NEEDED below
+# still stands and is now better evidenced.
+#
+# The original 2026-09-06 finding, on 2,888 Reddit-only sentences, follows.
+# `python -m aspects.discover` found 9 real clusters
 # (52% noise) — but they do NOT cleanly correspond to these 4 aspects. They
 # split along a coarser axis instead:
 #   - "consumer banking service" (accounts, transfers, scam calls, cashback/

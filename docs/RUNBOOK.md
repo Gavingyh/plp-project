@@ -349,12 +349,60 @@ defeats that measurement.
 The `split=test` rows are randomly sampled and must stay untouched by any
 model-assisted process — that is what keeps the eventual evaluation honest.
 
-Then:
+### Label the test split from the blind sheet, not from candidates.csv
+
+The pre-labelling run above reached the test split before anyone noticed it
+shouldn't have: 199 of the 200 `test` rows carry an `llm_prelabel`, and every
+row carries `base_finbert_label` — base FinBERT being one of the two models
+the test set exists to compare. Labelling next to either column measures
+agreement with a model rather than establishing ground truth.
+
+```bash
+.venv-plp/bin/python3 -m preprocess.export_blind_test               # write the blind sheet
+.venv-plp/bin/python3 -m preprocess.export_blind_test --check-leakage  # what's withheld, and why
+.venv-plp/bin/python3 -m preprocess.export_blind_test --merge       # merge the filled sheet back
+```
+
+`data/labeled/test_blind.csv` carries the sentence, its aspect and its
+provenance and nothing else. Fill in `label`, and `flag` for rows that
+shouldn't be scored at all — expect some, since a known limitation is that
+sentences mentioning a bank incidentally still enter the corpus.
+
+### Check agreement before splitting up the work
+
+Two annotators label the same ~150 rows independently, then:
+
+```bash
+.venv-plp/bin/python3 -m train.agreement --a alice.csv --b bob.csv
+.venv-plp/bin/python3 -m train.agreement --a alice.csv --b bob.csv --show-disagreements 20
+```
+
+Target is Cohen's κ ≥ 0.6. Below that, the guideline is ambiguous somewhere
+rather than an annotator being careless — find the disagreements, tighten the
+guideline, re-label the sample. Watch the gap between raw agreement and κ:
+this corpus is 87% neutral under base FinBERT, so two annotators who both
+default to `neutral` will agree ~90% of the time while sharing no judgement
+at all. The tool prints both and warns when the gap is large.
+
+The same tool compares any two label columns, which is how the
+model-vs-model figure in [annotation-guideline.md](annotation-guideline.md)
+was produced:
+
+```bash
+.venv-plp/bin/python3 -m train.agreement --file data/labeled/candidates.csv \
+    --col-a llm_prelabel --col-b base_finbert_label
+```
+
+### Then fine-tune
 
 ```bash
 .venv-plp/bin/python3 -m train.finetune --seed 42
 .venv-plp/bin/python3 -m train.evaluate --model-dir models/finbert-absa/seed_42/final
 ```
+
+Neither runs until `label` is filled in. Report mean and standard deviation
+across at least three seeds — a single run's F1 can be seed noise at this
+data size.
 
 ---
 

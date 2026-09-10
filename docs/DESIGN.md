@@ -8,23 +8,18 @@ Why this system is built the way it is. For how to run it, see
 
 ## Before you trust any number
 
-Four things a reader could otherwise take for findings when they are not:
+**[STATUS.md](STATUS.md) is the single source of truth for these caveats.**
+It is kept current against the database; this page explains design reasoning
+and will drift. The short version, as of 2026-09-11:
 
-1. **The blended cross-bank comparison is currently invalid.** Earnings
-   material exists for DBS and OCBC but almost none for UOB (its IR site
-   blocks automated access). Earnings text is management describing its own
-   results and scores far more positive than any other source, so the
-   blended gap between banks reflects coverage, not sentiment. Use the
-   Reddit-only rows for cross-bank comparison until UOB's earnings PDFs are
-   added. Detail in [STATUS.md](STATUS.md).
-2. **There is no fine-tuned model.** All sentiment scores come from base
-   FinBERT applied zero-shot. The fine-tuned aspect classifier the project
-   proposal calls for requires labelled data that does not exist yet.
-3. **The GPT and Gemini chatbot backends have never been run against their
-   real APIs.** No keys were available. They are written to documented
-   contracts; treat the first successful response as their verification.
-4. **Local chatbot models fabricate citations.** A code-level check flags
-   this (`⚠️ VERIFICATION WARNING`), but the check is a detector, not a fix.
+- Read blended cross-bank figures next to the per-source breakdown. All three
+  banks now have earnings coverage, but DBS carries roughly six times the
+  earnings volume of the other two.
+- There is no fine-tuned model. Every score is base FinBERT, zero-shot.
+- The GPT and Gemini backends have never been run against their real APIs.
+- Local chatbot models fabricate citations. The code-level check is a
+  detector, not a fix.
+- Aspect assignment is not validated, and the taxonomy decision is open.
 
 ---
 
@@ -150,6 +145,15 @@ At 0.35 even a deliberately coarse two-aspect taxonomy matched *both*
 aspects on essentially every sentence. 0.65 is a calibration point, not a
 final answer — re-sweep when the corpus or taxonomy changes materially.
 
+**Re-swept 2026-09-11** on the full 36,884-sentence corpus, which is the
+material change this note anticipated. At 0.65 the proposal taxonomy now
+matches 1.80 of 4 aspects per sentence and sends 37.3% of the corpus to
+`other`; the sweep from 0.35 to 0.80 shows no floor at which it both
+discriminates and retains the corpus. The comparison tool had itself been
+measuring at a hardcoded 0.35 while this config said 0.65, so its earlier
+output described a threshold the pipeline had stopped using. Full results:
+[evidence/taxonomy-comparison-2026-09-11.md](evidence/taxonomy-comparison-2026-09-11.md).
+
 ### 6. Earnings source weight 3.0 → 1.0, and the index gained a source dimension
 
 The 3.0 weight was set when earnings was assumed to be a handful of
@@ -256,5 +260,11 @@ could mislead someone.
   ticker formats).
 - Annual reports and financial-statement PDFs are not ingested; they are
   near-entirely tables, which the prose extractor would strip to nothing.
-- `get_trend` compares two discrete windows (7d vs 30d) rather than
-  producing a continuous time series.
+- `get_trend`'s `direction` is still computed from two discrete windows
+  (7d vs 30d). A continuous series now exists alongside it —
+  `compute_time_series` buckets by week, month or quarter and is exposed at
+  `GET /sentiment/series`, on the dashboard, and as up to 12 monthly points
+  inside `get_trend`. It deliberately reuses the stored index's own
+  `_summarize`, so a chart cannot quietly disagree with the headline number,
+  and returns thin buckets marked `sufficient=false` rather than dropping
+  them, so a gap in a line means missing data rather than neutral sentiment.

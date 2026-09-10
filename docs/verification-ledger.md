@@ -368,6 +368,43 @@ Listed so a reader knows which statements this run did *not* re-check.
 - The claim that GPT and Gemini backends have never been run against their
   real APIs. Still true; no keys are present in the environment.
 
+## Summary
+
+| document | what was checked | outcome |
+|---|---|---|
+| `docs/STATUS.md` | Corpus counts, index scores, test count, eval rates, aspect assignment | 4 corrections: by-source document counts, test count, fabrication rate as a range, assignment upgraded from "unvalidated" to measured failure |
+| `docs/RUNBOOK.md` | Test count and runtime, every command block | 2 corrections: runtime was "~2 minutes" against a measured 25s, then the count itself |
+| `docs/DESIGN.md` | Trust caveats, decision 5, scope limits | 3 corrections: stale caveats now defer to STATUS, floor re-swept, time-series limit updated |
+| `docs/data-viability.md` | Earnings status, aspect discovery section | 2 sections marked superseded with dates rather than deleted |
+| `config/aspects.yaml` | Header's discovery claim | 1 correction: analyst-style clusters do now emerge |
+| `API_KEYS.md`, `.env.example` | Which credentials are needed; placeholder discipline | Rewritten; 2 real keys replaced with placeholders |
+| `docs/spec/*` | Schema, endpoints, constants, versions | 1 correction after live testing: unknown bucket returns 422, not 400 |
+| `learning/` (19 files) | Every repo claim to file:line; every figure to a query | All 19 carry an explicit "Not verified" section |
+| `.project-context/course-content/course-context.md` | FinBERT benchmark marked "safe to cite" | **Withdrawn.** Not in the paper, not traceable anywhere |
+
+Counts for this run:
+
+| | |
+|---|---|
+| Documents corrected | 9 |
+| Factual corrections made | 14 |
+| Code defects found and fixed | 5 |
+| Claims withdrawn as untraceable | 1 |
+| Files carrying an explicit "Not verified" section | 19 |
+| Commands executed to produce or check a figure | ~60 |
+
+The single most important entry is the withdrawn FinBERT benchmark, because it
+was labelled *verified, safe to cite in the report* and would have gone into a
+graded submission as fact.
+
+Two of this run's own errors were caught by the same protocol, which is worth
+recording as evidence that it does work: a confident conclusion drawn from the
+taxonomy table before checking which floor the tool used, and a test asserting
+Cohen's κ below 0.1 for a case where κ is arithmetically 0.46. Neither was
+caught by review; both were caught by running the thing.
+
+---
+
 ## Claims marked "not verified" in the documents
 
 - The FinBERT "88.2% vs 62.1% for lexicon-only" benchmark quoted in

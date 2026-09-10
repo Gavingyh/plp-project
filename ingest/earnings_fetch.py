@@ -103,6 +103,14 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
     sentiment. Approximate-but-right beats precise-and-wrong here; the day of
     month is nominal, the quarter is what actually matters for windowing.
     """
+    # UOB's IR naming: "ceo-presentation-2q-2021.pdf" — lowercase q, four-digit
+    # year. Checked BEFORE the two-digit form below, which would otherwise read
+    # the "20" of "2021" as the year.
+    m = re.search(r"([1-4])[qQ][-_ ]?(\d{4})", filename)
+    if m:
+        quarter, year = int(m.group(1)), int(m.group(2))
+        month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
+        return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
     # 1Q26 / 2Q26 / 3Q26 / 4Q26
     m = re.search(r"([1-4])Q(\d{2})", filename)
     if m:

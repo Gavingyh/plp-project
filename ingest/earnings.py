@@ -57,7 +57,7 @@ def extract_prose(pdf_path: str) -> list[str]:
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
-            for line in text.split(""):
+            for line in text.split("\n"):
                 if _is_prose(line):
                     paragraphs.append(line.strip())
     return paragraphs

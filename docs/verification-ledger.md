@@ -368,6 +368,37 @@ Listed so a reader knows which statements this run did *not* re-check.
 - The claim that GPT and Gemini backends have never been run against their
   real APIs. Still true; no keys are present in the environment.
 
+## Command verification
+
+Every fenced command block in README, RUNBOOK, the specs and the learning
+exercises was checked. What was actually executed:
+
+| command | how checked |
+|---|---|
+| `pytest tests/ -q` | Run in full, four times |
+| `scripts/start.sh` / `stop.sh` / `status.sh` | Full lifecycle for both services on free ports, plus the foreign-port refusal |
+| All 12 API endpoints | Live instance on port 8021, plus three validation cases |
+| Every `python -m` entry point | `--help` on each; `ingest.yahoo_analyst` has no argparse and ran (safe, idempotent, added one daily snapshot per bank) |
+| `aspects.discover` | Full run on 36,884 sentences |
+| `aspects.compare_taxonomies --sweep` | Full run |
+| `chatbot.run_eval --tag ...` | Full runs for qwen3:4b and llama3.1:8b |
+| `train.agreement --file ... --col-a ... --col-b ...` | Full run over 997 rows |
+| `preprocess.export_blind_test --check-leakage` | Run; reports 0 sentences in both splits |
+| Learning exercises | The SQL and Python in each was executed or its query shape verified against the live schema |
+
+**Deliberately not run:** the five pipeline steps (`run_daily_batch.py`,
+`preprocess.pipeline`, `aspects.assign`, `sentiment.score`,
+`aggregate.index`). They take about an hour and would change the database
+mid-documentation, invalidating figures already written. Every corpus number
+in these documents therefore comes from one consistent snapshot taken at the
+start of the run. Their expected timings in RUNBOOK are carried from earlier
+measurements and were **not re-measured**.
+
+`shellcheck` is not installed on this machine; `bash -n` was used instead and
+is enforced by `tests/test_scripts.py`.
+
+---
+
 ## Summary
 
 | document | what was checked | outcome |

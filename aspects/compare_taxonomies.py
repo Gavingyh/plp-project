@@ -31,13 +31,25 @@ Metrics reported per candidate:
   - avg_top_similarity: mean best-match similarity score — how confidently
     sentences fit their top aspect.
 
+THE FLOOR MATTERS AS MUCH AS THE TAXONOMY. Every metric except centroid
+separation depends on the similarity floor, so this reads the live floor from
+config/aspects.yaml by default rather than carrying its own. It previously
+hardcoded 0.35 while the config had been recalibrated to 0.65, which made
+every candidate look equally undiscriminating and quietly reproduced the
+original "0.35 separates nothing" result as though it were a new finding.
+
 USAGE:
-  python -m aspects.compare_taxonomies
+  python -m aspects.compare_taxonomies              # at the configured floor
+  python -m aspects.compare_taxonomies --sweep      # across a range of floors
+  python -m aspects.compare_taxonomies --floor 0.7  # at one specific floor
 """
 
+import argparse
 import itertools
+import os
 
 import numpy as np
+import yaml
 
 from config.logging_config import get_logger, setup_logging
 from aspects.embed import embed_sentences
@@ -45,7 +57,23 @@ from aspects.embed_store import load_for_search
 
 logger = get_logger(__name__)
 
-SIMILARITY_FLOOR = 0.35
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_PATH = os.path.join(BASE_DIR, "config", "aspects.yaml")
+
+# The floor this comparison is measured at MUST default to the one the
+# pipeline actually uses, or the table silently answers a different question
+# than the reader thinks. This was hardcoded to 0.35 while
+# config/aspects.yaml had been recalibrated to 0.65, so every candidate
+# matched nearly every aspect and candidate A looked no worse than it had
+# before the recalibration - reproducing the known "0.35 does not
+# discriminate" result and presenting it as a fresh finding.
+DEFAULT_SWEEP = (0.35, 0.50, 0.60, 0.65, 0.70, 0.75, 0.80)
+
+
+def configured_floor() -> float:
+    """The floor aspects/assign.py will really use, read from the same file."""
+    with open(CONFIG_PATH) as f:
+        return float(yaml.safe_load(f)["similarity_floor"])
 
 CANDIDATES = {
     "A_proposal_aligned": {
@@ -108,58 +136,88 @@ def _cosine(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
 
 
-def evaluate_candidate(name: str, seed_dict: dict, sentence_vectors: np.ndarray) -> dict:
+def _unit(m: np.ndarray) -> np.ndarray:
+    return m / (np.linalg.norm(m, axis=1, keepdims=True) + 1e-9)
+
+
+def evaluate_candidate(name: str, seed_dict: dict, sentence_vectors: np.ndarray,
+                        floors: tuple[float, ...]) -> list[dict]:
+    """One row per floor. Similarities are computed once and thresholded
+    repeatedly - the floor changes which matches count, not the geometry, so
+    re-embedding per floor would only make a sweep slow enough to skip."""
     centroids = _build_centroids(seed_dict)
+    names = list(centroids)
 
     # Centroid separation: mean pairwise cosine distance (1 - similarity) across all aspect pairs.
     pairs = list(itertools.combinations(centroids.values(), 2))
     separations = [1 - _cosine(a, b) for a, b in pairs] if pairs else [0.0]
     avg_separation = float(np.mean(separations))
 
-    n_matched_per_sentence = []
-    top_similarities = []
-    n_other = 0
-    for vec in sentence_vectors:
-        sims = {aspect: _cosine(vec, c) for aspect, c in centroids.items()}
-        matched = [a for a, s in sims.items() if s >= SIMILARITY_FLOOR]
-        top_similarities.append(max(sims.values()))
-        if matched:
-            n_matched_per_sentence.append(len(matched))
-        else:
-            n_other += 1
-            n_matched_per_sentence.append(0)
+    sims = _unit(sentence_vectors) @ _unit(np.stack([centroids[a] for a in names])).T
+    top_similarities = sims.max(axis=1)
 
-    return {
-        "candidate": name,
-        "n_aspects": len(centroids),
-        "avg_aspects_per_sentence": round(float(np.mean(n_matched_per_sentence)), 2),
-        "pct_other": round(100 * n_other / len(sentence_vectors), 1),
-        "avg_centroid_separation": round(avg_separation, 4),
-        "avg_top_similarity": round(float(np.mean(top_similarities)), 4),
-    }
+    rows = []
+    for floor in floors:
+        matched = (sims >= floor).sum(axis=1)
+        rows.append({
+            "candidate": name,
+            "floor": floor,
+            "n_aspects": len(centroids),
+            "avg_aspects_per_sentence": round(float(matched.mean()), 2),
+            "pct_other": round(100 * float((matched == 0).mean()), 1),
+            "avg_centroid_separation": round(avg_separation, 4),
+            "avg_top_similarity": round(float(top_similarities.mean()), 4),
+        })
+    return rows
 
 
-def run():
+def _print_table(rows: list[dict], show_floor: bool) -> None:
+    head = f"{'candidate':26s} {'#asp':>5s}"
+    if show_floor:
+        head += f" {'floor':>6s}"
+    head += f" {'avg/sent':>9s} {'%other':>7s} {'separation':>11s} {'top_sim':>8s}"
+    print(head)
+    print("-" * len(head))
+    last = None
+    for r in rows:
+        if show_floor and last is not None and r["candidate"] != last:
+            print()
+        last = r["candidate"]
+        line = f"{r['candidate']:26s} {r['n_aspects']:5d}"
+        if show_floor:
+            line += f" {r['floor']:6.2f}"
+        line += (f" {r['avg_aspects_per_sentence']:9.2f} {r['pct_other']:6.1f}%"
+                 f" {r['avg_centroid_separation']:11.4f} {r['avg_top_similarity']:8.4f}")
+        print(line)
+
+
+def run(floors: tuple[float, ...] | None = None, sweep: bool = False):
     sentence_ids, vectors = load_for_search()
     if len(sentence_ids) == 0:
         print("No embedded sentences found — run `python -m aspects.embed_store` first.")
         return
 
-    logger.info("Comparing %d candidate taxonomies against %d sentences.",
-                len(CANDIDATES), len(vectors))
-    results = [evaluate_candidate(name, seeds, vectors) for name, seeds in CANDIDATES.items()]
+    live = configured_floor()
+    floors = floors or (DEFAULT_SWEEP if sweep else (live,))
 
-    header = f"{'candidate':26s} {'#asp':>5s} {'avg/sent':>9s} {'%other':>7s} {'separation':>11s} {'top_sim':>8s}"
-    print(header)
-    print("-" * len(header))
-    for r in results:
-        print(f"{r['candidate']:26s} {r['n_aspects']:5d} {r['avg_aspects_per_sentence']:9.2f} "
-              f"{r['pct_other']:6.1f}% {r['avg_centroid_separation']:11.4f} {r['avg_top_similarity']:8.4f}")
+    logger.info("Comparing %d candidate taxonomies against %d sentences at floor(s) %s "
+                "(config/aspects.yaml similarity_floor = %.2f).",
+                len(CANDIDATES), len(vectors), ", ".join(f"{f:.2f}" for f in floors), live)
 
+    rows = []
+    for name, seeds in CANDIDATES.items():
+        rows.extend(evaluate_candidate(name, seeds, vectors, floors))
+
+    _print_table(rows, show_floor=len(floors) > 1)
+
+    print(f"\nMeasured at the floor in config/aspects.yaml ({live:.2f}) unless --floor/--sweep "
+          f"says otherwise.")
     print("\nHow to read this:")
     print("  - avg_aspects_per_sentence closer to 1 = more discriminating (candidate A's known")
     print("    problem, quantified here — most sentences matching ~4 of 5 aspects near-equally).")
     print("  - avg_centroid_separation higher = the aspects are more distinct from each other.")
+    print("    It does NOT move with the floor: it describes the taxonomy's geometry, so it is")
+    print("    the one column a floor change cannot flatter.")
     print("  - pct_other very high or very low are both worth a second look: too high means the")
     print("    taxonomy doesn't fit the corpus; too low (~0%) means the floor never triggers.")
     print("\nThis is decision support, not a decision — see config/aspects.yaml's header comment")
@@ -168,4 +226,11 @@ def run():
 
 if __name__ == "__main__":
     setup_logging()
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--floor", type=float, action="append", dest="floors",
+                        help="evaluate at this floor (repeatable); default is "
+                             "config/aspects.yaml's similarity_floor")
+    parser.add_argument("--sweep", action="store_true",
+                        help=f"evaluate across {DEFAULT_SWEEP}")
+    args = parser.parse_args()
+    run(floors=tuple(args.floors) if args.floors else None, sweep=args.sweep)

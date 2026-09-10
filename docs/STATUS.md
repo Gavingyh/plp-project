@@ -48,7 +48,7 @@ By bank: DBS 20,907 · UOB 10,601 · OCBC 5,376 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase: 9,270 lines of Python (6,542 excluding tests), 217 tests.
+Codebase: 9,270 lines of Python (6,542 excluding tests), 229 tests.
 
 Every figure on this page was re-taken from `data/plp.db` on 2026-09-11 and
 is recorded with its query in [verification-ledger.md](verification-ledger.md).
@@ -80,7 +80,7 @@ chatbot with four pluggable model backends and RAG evidence retrieval.
 Suggested starter questions are generated from the index rather than
 hardcoded, so the UI never offers a question the data cannot answer.
 
-**Engineering.** 217 tests (external APIs mocked with captured payloads),
+**Engineering.** 229 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the dashboard and API.
 
@@ -88,7 +88,7 @@ start/stop/status scripts for the dashboard and API.
 
 ## Chatbot evaluation
 
-A 23-question gold set (`chatbot/eval_gold_set.py`) run against four local
+A 23-question gold set (`chatbot/eval_gold_set.py`) run against five local
 models via `chatbot/run_eval.py`. Tool selection, advice-declining behaviour
 and citation fabrication are checked automatically; whether a stated number
 is correct is not (see the note at the end of this section).
@@ -97,10 +97,11 @@ is correct is not (see the note at the end of this section).
 |---|---|---|---|---|---|
 | `llama3.2:3b` (default) | 3B | 0 | 12/16 | 3/7 | **10–11/23 (43–48%)** |
 | `phi4-mini` | 3.8B | 0 | 0/16 | 1/7 | 19/23 (83%) |
-| `gemma3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 — *see below* |
+| `gemma3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 — *artifact, see below* |
+| `qwen3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 — *artifact, see below* |
 | `llama3.1:8b` | 8B | 3 | 12/16 | 3/7 | **3/23 (13%)** |
 
-Five things worth carrying into the report:
+Six things worth carrying into the report:
 
 **The default model's fabrication rate is a range because it was run twice.**
 11/23 on 2026-09-07 and 10/23 on 2026-09-10, same model, same gold set. That
@@ -119,10 +120,23 @@ run-to-run noise above. Tool selection (12/16) and advice-declining behaviour
 that scale relieves, while the behavioural failures are design problems that a
 bigger model does not touch.
 
-**gemma3:4b's 0% is an artifact, not a result.** It has no Ollama
-tool-calling support: all 23 questions failed with HTTP 400 and every answer
-was empty. There were no citations to fabricate. A fabrication rate is only
-meaningful alongside its error count, which is why the table carries both.
+**Two models score 0% fabrication and neither result means anything.**
+`gemma3:4b` has no Ollama tool-calling support, so all 23 questions failed
+with HTTP 400. `qwen3:4b` (added 2026-09-11) failed all 23 differently: every
+call exceeded the 120-second read timeout, because it emits a long hidden
+reasoning chain before answering and the agent loop needs several calls per
+question. Both produced 23 empty answers, so there were no citations to
+fabricate. **A fabrication rate is only meaningful alongside its error
+count**, which is why the table carries both — read either 0% as "produced no
+output", not "stayed grounded".
+
+The qwen result is consistent with what `train/llm_prelabel.py` already
+records: on a far simpler single-turn labelling task the same model took
+65–97 seconds per call, against 3–5 seconds for `llama3.2:3b`. It is not
+viable for an agent loop at any reasonable timeout. One caveat on this
+particular run: it shared the machine with other work, which will have made
+the timeouts worse, so treat "unusably slow here" rather than a specific
+latency as the finding.
 
 **phi4-mini is the worst case and the most instructive one.** It called a
 tool in 0 of 16 questions yet fabricated citations in 83% of answers — it

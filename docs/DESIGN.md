@@ -109,9 +109,16 @@ are brokerage IP behind client entitlements and are not on SGX at all. Its
 API also returns 403 behind a WAF.
 
 DBS and OCBC publish the same earnings material openly on their own IR
-sites — plain HTTP, no bot protection, no ToS grey area. UOB sits behind a
-WAF and is deliberately left as a manual download rather than escalating to
-fingerprint-spoofing tools to defeat it.
+sites — plain HTTP, no bot protection, no ToS grey area. UOB sits behind an
+F5 WAF that answers scripted requests with a challenge stub.
+
+The choice there was deliberate: rather than escalate to fingerprint-spoofing
+tools to defeat the WAF, the same PDFs are fetched from the Wayback Machine,
+which archived them at their original UOB URLs and is not behind that WAF
+(`ingest/uob_wayback_fetch.py`). The bytes are UOB's own published documents;
+only the transport differs. This respects the signal the WAF is sending while
+still closing a coverage gap that had invalidated every cross-bank
+comparison in the project — UOB went from 4 earnings sentences to 1,600.
 
 This also produced the closest thing the project has to genuine analyst
 input: DBS publishes a quarterly **analyst call transcript**, in which named

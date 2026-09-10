@@ -51,12 +51,21 @@ The apparent "DBS and OCBC lead UOB" gap in the blended headline is an
 artifact of earnings coverage, not a sentiment finding. Retail sentiment is
 essentially identical across all three.
 
-**STILL OPEN:** the weight fix reduced the distortion (DBS's blended score
-fell from +0.101 to +0.056) but cannot remove it, because the root cause is
-coverage asymmetry rather than weighting. **Until UOB's earnings PDFs are
-downloaded by hand into `data/earnings_pdfs/UOB/`, the blended cross-bank
-comparison should not be used or reported.** The Reddit-only row is the
-defensible cross-bank comparison today.
+**RESOLVED (Sep 2026):** the weight fix reduced the distortion (DBS's blended
+score fell from +0.101 to +0.056) but could not remove it, because the root
+cause was coverage asymmetry rather than weighting. UOB's earnings PDFs have
+since been fetched from the Wayback Machine — UOB's IR site is WAF-blocked,
+the archive is not — giving UOB 1,600 earnings sentences against 4 before.
+
+The effect was immediate and is worth reporting: UOB's blended all-time score
+moved from **-0.011 to +0.020** purely from closing the coverage gap, with no
+change to the scoring method. Earnings-only scores are now DBS +0.168,
+OCBC +0.206, UOB +0.229.
+
+The blended comparison is usable now. The residual caveat is volume, not
+absence: DBS carries ~6x the earnings sentences of either other bank because
+it publishes long analyst-call transcripts, so blended figures should still
+be read next to the per-source breakdown.
 
 ## Full backfill complete (2026-09-07)
 

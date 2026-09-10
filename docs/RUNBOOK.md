@@ -116,10 +116,29 @@ appears in the logs; the log file also captures DEBUG detail
 .venv-plp/bin/python3 -m ingest.yahoo_analyst
 ```
 
-**UOB earnings must be downloaded by hand.** Its IR site blocks automated
-access. Save its quarterly results PDFs into `data/earnings_pdfs/UOB/` and
-`ingest.earnings` will pick them up with the others. This matters — see the
-coverage caveat in [STATUS.md](STATUS.md).
+### UOB earnings — fetched from the Wayback Machine
+
+UOB's IR site sits behind an F5 WAF that answers any scripted request with a
+199-byte challenge stub (`Request Redirected` / `TS.request.ID`), so
+`ingest.earnings_fetch` cannot reach it the way it reaches DBS and OCBC.
+
+The Wayback Machine holds captures of the same PDFs at their original UOB
+URLs and is not behind that WAF, so fetch them from there instead:
+
+```bash
+.venv-plp/bin/python3 -m ingest.uob_wayback_fetch --dry-run   # preview
+.venv-plp/bin/python3 -m ingest.uob_wayback_fetch             # ~67 PDFs, 2020-2025
+.venv-plp/bin/python3 -m ingest.earnings                      # extract prose
+```
+
+The bytes are UOB's own published PDFs; only the transport differs. Two
+limits are worth knowing: archive coverage thins out for the most recent
+quarters (the dry run prints per-year counts), and a capture is occasionally
+the WAF stub rather than the document — those are detected by magic bytes and
+discarded rather than saved as unreadable `.pdf` files.
+
+archive.org is a donated public service and rate-limits under load; the
+fetcher backs off and retries, but avoid re-running it in a loop.
 
 ### Historical Reddit backfill
 
@@ -145,9 +164,32 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m streamlit run dashboard/app.py
 # REST API (docs at http://localhost:8000/docs)
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m uvicorn api.main:app --port 8000
 
-# Chatbot
+# Chatbot (also available as the dashboard's Chat tab)
 CHATBOT_BACKEND=ollama .venv-plp/bin/python3 -m chatbot.agent "How does the market feel about DBS's dividend policy?"
 ```
+
+### Suggested questions
+
+`GET /suggestions?limit=6` returns starter questions for a chat UI to render
+as clickable prompts:
+
+```bash
+curl 'http://localhost:8000/suggestions?limit=6'
+```
+
+```json
+{"suggestions": [
+  {"question": "What is the overall sentiment on DBS?", "category": "overall"},
+  {"question": "Compare DBS, OCBC and UOB on dividend policy.", "category": "compare"}
+]}
+```
+
+The questions are generated from the sentiment index, not hardcoded, so a
+bank or aspect without enough data is never suggested and a clicked
+suggestion won't dead-end on "insufficient data". Categories are `overall`,
+`aspect`, `compare`, `consensus`, `trend`, `evidence` — useful if the
+frontend wants to group or icon them. The Chat tab in the Streamlit
+dashboard renders the same list as buttons.
 
 ### Chatbot backends
 
@@ -174,7 +216,7 @@ The answer goes to stdout and diagnostics to stderr, so:
 
 ```bash
 .venv-plp/bin/python3 -m chatbot.run_eval --limit 3   # smoke test
-.venv-plp/bin/python3 -m chatbot.run_eval             # full 21-question gold set
+.venv-plp/bin/python3 -m chatbot.run_eval             # full 23-question gold set
 ```
 
 Runs `chatbot/eval_gold_set.py` against the chatbot and writes:
@@ -215,7 +257,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-144 tests, ~30 seconds. No network calls — external APIs are mocked with
+214 tests, ~2 minutes. No network calls — external APIs are mocked with
 captured real payloads, so a provider changing its response shape surfaces as
 a failing test rather than a silent production break.
 

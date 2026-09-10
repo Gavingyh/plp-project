@@ -1,0 +1,11 @@
+total sentences: 36884
+
+flagged by heuristic:
+  few_real_words      874  (2.4%)  by source: {'arctic_shift': 605, 'earnings': 269}
+  mostly_numeric       79  (0.2%)  by source: {'arctic_shift': 4, 'earnings': 75}
+  char_spaced          29  (0.1%)  by source: {'earnings': 29}
+  table_fragment       20  (0.1%)  by source: {'arctic_shift': 20}
+
+any heuristic: 953 (2.6%)
+earnings sentences: 12254, flagged: 326 (2.7%)
+reddit sentences:   24591, flagged: 627 (2.5%)

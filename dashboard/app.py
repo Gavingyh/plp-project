@@ -78,6 +78,13 @@ def load_source_breakdown(window: str = "all_time") -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
+def load_time_series(bank: str, aspect: str, bucket: str) -> pd.DataFrame:
+    from aggregate.index import compute_time_series
+    return pd.DataFrame(compute_time_series(bank, None if aspect == "ALL" else aspect,
+                                            bucket=bucket))
+
+
+@st.cache_data(ttl=300)
 def load_analyst_consensus() -> pd.DataFrame:
     conn = get_connection()
     try:
@@ -116,7 +123,8 @@ if df_all.empty:
 # all-time snapshot; Time Series is the one view that shows all three.
 df = df_all[df_all.window == "all_time"]
 
-tab1, tab2, tab3, tab4 = st.tabs(["Overview", "Aspect Heatmap", "Time Series", "Evidence"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Overview", "Aspect Heatmap", "Time Series", "Evidence", "Chat"])
 
 with tab1:
     st.subheader("Overall sentiment by bank (all-time)")
@@ -204,11 +212,12 @@ with tab2:
     disclosure_footer()
 
 with tab3:
-    st.subheader("Sentiment by window: 7d vs 30d vs all-time")
+    st.subheader("Sentiment over time")
     st.caption(
-        "Not a continuous time series yet — three discrete rolling windows "
-        "(aggregate/index.py). A day-by-day series is a documented next step; "
-        "this at least shows real recent-vs-baseline movement rather than a stub."
+        "A continuous series computed with the same weighting and shrinkage as "
+        "the stored index, so it cannot disagree with the headline numbers. "
+        "Thin buckets are dropped rather than interpolated — a gap in the line "
+        "means there was not enough data that period, not neutral sentiment."
     )
     c1, c2 = st.columns(2)
     with c1:
@@ -232,8 +241,26 @@ with tab3:
                 else:
                     st.metric(r["window"], f"{r['score']:+.3f}", help=f"n={int(r['n'])}")
                     st.caption(f"n={int(r['n'])}")
-        if len(window_df) >= 2 and (window_df["n"] >= 5).sum() >= 2:
-            st.line_chart(window_df.set_index("window")["score"])
+    st.divider()
+
+    bucket = st.radio("Bucket", ["month", "quarter", "week"], horizontal=True,
+                      key="ts_bucket")
+    series = load_time_series(ts_bank, ts_aspect, bucket)
+    if series.empty:
+        st.info("Not enough data to plot a series for this selection.")
+    else:
+        plotted = series[series.sufficient]
+        if plotted.empty:
+            st.info("Every bucket in this selection is below the volume floor.")
+        else:
+            st.line_chart(plotted.set_index("period")["score"])
+            thin = int((~series.sufficient).sum())
+            if thin:
+                st.caption(f"{thin} thin bucket(s) omitted from the line.")
+            with st.expander("Underlying counts"):
+                st.dataframe(
+                    series[["period", "score", "n", "pos_n", "neu_n", "neg_n", "sufficient"]],
+                    use_container_width=True, hide_index=True)
     disclosure_footer()
 
 with tab4:
@@ -254,4 +281,63 @@ with tab4:
             st.markdown(f"**[{row['source']}]**{label} {row['text']}")
             st.caption(f"{row['published_at']} · [source]({row['url']})")
             st.divider()
+    disclosure_footer()
+
+
+with tab5:
+    st.subheader("Ask about the data")
+
+    # Imported lazily: chatbot.agent pulls in the model backends and the
+    # embedding store, which would slow every dashboard start even for
+    # someone who never opens this tab.
+    from chatbot.agent import ask as chatbot_ask
+    from chatbot.suggestions import get_suggestions
+
+    st.caption(
+        "Answers come from the sentiment index in this dashboard, not from the "
+        "model's own knowledge. A local model may still cite evidence it never "
+        "retrieved - answers flagged with a verification warning should not be "
+        "trusted. The chatbot does not give investment advice."
+    )
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    for role, content in st.session_state.chat_history:
+        with st.chat_message(role):
+            st.markdown(content)
+
+    # Suggestions are generated from what the index actually holds, so a
+    # clicked suggestion won't dead-end on "insufficient data".
+    pending = None
+    st.markdown("**Try one of these:**")
+    suggestions = get_suggestions(limit=6)
+    for row_start in range(0, len(suggestions), 2):
+        for col, item in zip(st.columns(2), suggestions[row_start:row_start + 2]):
+            if col.button(item["question"], key=f"sugg-{row_start}-{item['question']}",
+                          use_container_width=True):
+                pending = item["question"]
+
+    typed = st.chat_input("Or ask your own question")
+    question = pending or typed
+
+    if question:
+        st.session_state.chat_history.append(("user", question))
+        with st.chat_message("user"):
+            st.markdown(question)
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking - a local model can take a minute..."):
+                try:
+                    answer = chatbot_ask(question, verbose=False)
+                except Exception as exc:  # backend unreachable, bad key, etc.
+                    answer = (f"The chatbot backend could not be reached: `{exc}`\n\n"
+                              "If you are using the local backend, check that "
+                              "`ollama serve` is running.")
+            st.markdown(answer)
+        st.session_state.chat_history.append(("assistant", answer))
+
+    if st.session_state.chat_history and st.button("Clear conversation"):
+        st.session_state.chat_history = []
+        st.rerun()
+
     disclosure_footer()

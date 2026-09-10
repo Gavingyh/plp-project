@@ -33,8 +33,29 @@ from chatbot.eval_gold_set import GOLD_SET, looks_like_advice_decline, looks_lik
 from config.logging_config import get_logger, setup_logging
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RESULTS_PATH = os.path.join(BASE_DIR, "data", "eval", "chatbot_eval_results.jsonl")
-SUMMARY_PATH = os.path.join(BASE_DIR, "data", "eval", "chatbot_eval_summary.md")
+EVAL_DIR = os.path.join(BASE_DIR, "data", "eval")
+RESULTS_PATH = os.path.join(EVAL_DIR, "chatbot_eval_results.jsonl")
+SUMMARY_PATH = os.path.join(EVAL_DIR, "chatbot_eval_summary.md")
+
+
+def _output_paths(tag: str | None) -> tuple[str, str]:
+    """Per-run output paths. A tag keeps one model's results from overwriting
+    another's, which is what makes comparing backends possible at all."""
+    if not tag:
+        return RESULTS_PATH, SUMMARY_PATH
+    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in tag)
+    return (os.path.join(EVAL_DIR, f"chatbot_eval_results_{safe}.jsonl"),
+            os.path.join(EVAL_DIR, f"chatbot_eval_summary_{safe}.md"))
+
+
+def _describe_model(backend_name: str | None) -> str:
+    """Which model actually answered - 'auto-detected' isn't reproducible."""
+    try:
+        from chatbot.backends import get_backend
+        backend = get_backend(backend_name)
+        return f"{type(backend).__name__} / {getattr(backend, 'model', 'unknown')}"
+    except Exception:
+        return backend_name or "auto-detected"
 
 logger = get_logger(__name__)
 
@@ -75,9 +96,13 @@ def _check_behavior(item: dict, answer: str) -> dict:
     return {"applicable": False}
 
 
-def run(backend_name: str | None = None, limit: int | None = None) -> dict:
+def run(backend_name: str | None = None, limit: int | None = None,
+        tag: str | None = None) -> dict:
     items = GOLD_SET[:limit] if limit else GOLD_SET
-    os.makedirs(os.path.dirname(RESULTS_PATH), exist_ok=True)
+    results_path, summary_path = _output_paths(tag)
+    os.makedirs(EVAL_DIR, exist_ok=True)
+    model_desc = _describe_model(backend_name)
+    logger.info("evaluating with %s", model_desc)
 
     results = []
     for item in items:
@@ -103,19 +128,24 @@ def run(backend_name: str | None = None, limit: int | None = None) -> dict:
             "behavior_check": behavior_check,
         })
 
-    with open(RESULTS_PATH, "w") as f:
+    with open(results_path, "w") as f:
         for r in results:
             f.write(json.dumps(r, default=str) + "\n")
 
-    summary = _summarize(results, backend_name)
-    with open(SUMMARY_PATH, "w") as f:
+    summary = _summarize(results, model_desc)
+    with open(summary_path, "w") as f:
         f.write(summary)
-    logger.info("results: %s", RESULTS_PATH)
-    logger.info("summary: %s", SUMMARY_PATH)
-    return {"n": len(results), "results_path": RESULTS_PATH, "summary_path": SUMMARY_PATH}
+    logger.info("results: %s", results_path)
+    logger.info("summary: %s", summary_path)
+
+    n_fab = sum(1 for r in results if r["citation_fabricated"])
+    return {"n": len(results), "model": model_desc,
+            "results_path": results_path, "summary_path": summary_path,
+            "n_fabricated": n_fab,
+            "fabrication_rate": round(n_fab / len(results), 3) if results else 0.0}
 
 
-def _summarize(results: list[dict], backend_name: str | None) -> str:
+def _summarize(results: list[dict], model_desc: str | None) -> str:
     n = len(results)
     n_errors = sum(1 for r in results if r["error"])
     n_fabricated = sum(1 for r in results if r["citation_fabricated"])
@@ -129,7 +159,7 @@ def _summarize(results: list[dict], backend_name: str | None) -> str:
     lines = [
         f"# Chatbot evaluation summary",
         f"",
-        f"Backend: `{backend_name or 'auto-detected'}`  ",
+        f"Model: `{model_desc or 'auto-detected'}`  ",
         f"Run at: {datetime.now(timezone.utc).isoformat()}  ",
         f"Questions: {n}  ",
         f"Errors (backend/network failures): {n_errors}",
@@ -170,7 +200,7 @@ def _summarize(results: list[dict], backend_name: str | None) -> str:
         "## Not automated — read the full transcript for these",
         "",
         "Whether stated numbers are correct, and whether cited evidence is "
-        "actually relevant to the question. See `data/eval/chatbot_eval_results.jsonl` "
+        "actually relevant to the question. See the results `.jsonl` beside this file "
         "for the full transcript, including every tool call and its raw result "
         "alongside the model's final answer.",
     ]
@@ -182,5 +212,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend", default=None)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--tag", default=None,
+                        help="suffix for the output files, so one run doesn't "
+                             "overwrite another (e.g. the model name)")
     args = parser.parse_args()
-    print(run(backend_name=args.backend, limit=args.limit))
+    print(run(backend_name=args.backend, limit=args.limit, tag=args.tag))

@@ -29,7 +29,10 @@ USAGE:
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+from config.logging_config import get_logger, setup_logging
 from ingest.db import get_connection, init_db, now_iso
+
+logger = get_logger(__name__)
 
 MODEL_NAME = "ProsusAI/finbert"
 MODEL_VERSION = "finbert-base-zeroshot-v1"  # bump when the fine-tuned model replaces this

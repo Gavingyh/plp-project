@@ -20,6 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from chatbot.agent import ask as chatbot_ask
+from aggregate.index import compute_time_series
+from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
 from chatbot.tools import (compare_banks, get_analyst_consensus, get_coverage,
                             get_sentiment, get_trend, search_evidence)
@@ -134,6 +136,41 @@ def evidence(query: str, bank: str | None = None, aspect: str | None = None,
 @app.get("/analyst-consensus")
 def analyst_consensus(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$")):
     return get_analyst_consensus(bank)
+
+
+@app.get("/sentiment/series")
+def sentiment_series(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
+                     aspect: str | None = None,
+                     bucket: str = Query("month", pattern="^(week|month|quarter)$"),
+                     source: str = "ALL",
+                     min_n: int = Query(5, ge=1)):
+    """Continuous sentiment series for charting.
+
+    /sentiment/trend answers "up or down" from two fixed windows; this returns
+    the whole shape. Buckets below min_n come back with sufficient=false
+    rather than being dropped, so a chart can show a gap instead of
+    interpolating across data that isn't there.
+    """
+    try:
+        return {"bank": bank, "aspect": aspect or "ALL", "bucket": bucket,
+                "source": source,
+                "series": compute_time_series(bank, aspect, bucket=bucket,
+                                              source=source, min_n=min_n)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/suggestions")
+def suggestions(limit: int = Query(6, ge=1, le=20)):
+    """Starter questions for a chat UI to show as clickable prompts.
+
+    Every question returned is one the current data can answer - they are
+    generated from the sentiment index rather than hardcoded, so a bank or
+    aspect with too little data never gets suggested. Advice-seeking and
+    out-of-scope questions are excluded by design; the chatbot declines
+    those, so offering them would be misleading.
+    """
+    return {"suggestions": get_suggestions(limit=limit)}
 
 
 class ChatRequest(BaseModel):

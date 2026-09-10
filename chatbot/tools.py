@@ -15,6 +15,7 @@ import os
 
 import yaml
 
+from aggregate.index import compute_time_series
 from ingest.db import get_connection
 from chatbot.retrieval import search_evidence as _search_evidence
 
@@ -118,9 +119,24 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
 
     delta = round(recent["score"] - baseline["score"], 4)
     direction = "improving" if delta > 0.02 else "declining" if delta < -0.02 else "stable"
+
+    # A two-point comparison can only say "up" or "down". The monthly series
+    # gives the shape behind that. Capped at 12 points and trimmed to
+    # period/score/n on purpose: this goes into the model's context, and a
+    # long table of numbers is more surface to misquote, not more insight.
+    try:
+        series = [{"period": p["period"], "score": p["score"], "n": p["n"]}
+                  for p in compute_time_series(bank, aspect, bucket="month")
+                  if p["sufficient"]][-12:]
+    except Exception:
+        series = []
+
     return {"bank": bank, "aspect": aspect or "ALL", "trend_available": True,
             "direction": direction, "delta_7d_vs_30d": delta,
-            "recent_7d": recent, "baseline_30d": baseline}
+            "recent_7d": recent, "baseline_30d": baseline,
+            "monthly_series": series,
+            "series_note": "monthly, same weighting and shrinkage as the index; "
+                           "thin months omitted" if series else "no monthly series available"}
 
 
 def get_coverage(bank: str | None = None, aspect: str | None = None) -> dict:

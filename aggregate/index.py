@@ -114,6 +114,74 @@ def _summarize(items):
     return round(shrunk, 4), n, pos, neu, neg, round(conf_mean, 4)
 
 
+# Bucket expressions for the continuous series. published_at is an ISO
+# string, so plain substring/strftime work without parsing every row.
+_BUCKET_SQL = {
+    "month": "substr(sa.published_at, 1, 7)",              # YYYY-MM
+    "week": "strftime('%Y-W%W', sa.published_at)",
+    "quarter": "substr(sa.published_at, 1, 4) || '-Q' || "
+               "((CAST(substr(sa.published_at, 6, 2) AS INTEGER) + 2) / 3)",
+}
+
+
+def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "month",
+                        source: str = SOURCE_ALL, min_n: int = 5) -> list[dict]:
+    """Sentiment per time bucket, as a continuous series.
+
+    The stored index holds three fixed windows (7d/30d/all_time), which is
+    enough to say "up or down" and not enough to plot anything. This computes
+    the same statistic over arbitrary buckets instead.
+
+    Scoring goes through _summarize, the identical weighting and shrinkage the
+    stored index uses. That is the point: a chart computed a slightly
+    different way would quietly disagree with the headline number and there
+    would be no way to tell which was right.
+
+    Buckets below min_n are returned with sufficient=False rather than
+    dropped, so a thin stretch shows up as a gap in the chart instead of
+    silently interpolating over data that isn't there.
+    """
+    if bucket not in _BUCKET_SQL:
+        raise ValueError(f"bucket must be one of {sorted(_BUCKET_SQL)}, got {bucket!r}")
+
+    where = ["sa.bank = ?", "sa.published_at IS NOT NULL"]
+    params: list = [bank]
+    if aspect and aspect != "ALL":
+        where.append("ase.aspect = ?")
+        params.append(aspect)
+    if source and source != SOURCE_ALL:
+        where.append("sa.source = ?")
+        params.append(source)
+
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            f"SELECT {_BUCKET_SQL[bucket]} AS period, ase.label, ase.confidence, sa.source "
+            f"FROM aspect_sentiment ase "
+            f"JOIN sentences sa ON sa.sentence_id = ase.sentence_id "
+            f"WHERE {' AND '.join(where)} "
+            f"ORDER BY period",
+            params,
+        ).fetchall()
+    finally:
+        conn.close()
+
+    buckets: dict[str, list] = {}
+    for period, label, confidence, row_source in rows:
+        if period is None or label not in _LABEL_SCORE:
+            continue
+        weight = _SOURCE_WEIGHT.get(row_source, 1.0)
+        buckets.setdefault(period, []).append((label, confidence, weight))
+
+    series = []
+    for period in sorted(buckets):
+        score, n, pos, neu, neg, conf = _summarize(buckets[period])
+        series.append({"period": period, "score": score, "n": n,
+                       "pos_n": pos, "neu_n": neu, "neg_n": neg,
+                       "confidence_mean": conf, "sufficient": n >= min_n})
+    return series
+
+
 def _compute_rows_for_window(all_rows, window_name: str, days: int | None):
     cutoff = None
     if days is not None:

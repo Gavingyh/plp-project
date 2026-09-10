@@ -276,8 +276,12 @@ is open for local frontend development.
 | POST | `/chat` | `{message, backend?}` | Chatbot answer |
 
 `*` marks required. Validation is by regex on the query parameter, so a bad
-`bank` or `window` returns HTTP 422 from FastAPI. An unknown `bucket` returns
-400 from the handler. Covered by `tests/test_api.py`.
+`bank`, `window` or `bucket` returns **HTTP 422** from FastAPI before the
+handler runs — verified against a live instance on 2026-09-11. The handler's
+own `ValueError` to 400 path on `/sentiment/series` is therefore unreachable
+through the API, since the regex admits only the three valid buckets; it still
+guards `compute_time_series` when called directly from Python. Covered by
+`tests/test_api.py`.
 
 ### Chatbot tools
 

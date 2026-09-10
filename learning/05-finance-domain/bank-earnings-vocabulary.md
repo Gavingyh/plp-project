@@ -299,7 +299,10 @@ assignment, or does it just shrink the corpus without fixing anything?
 **Not verified**
 
 - The precise Basel III definitions of CET-1, RWA and the leverage ratio are
-  given here in working terms rather than regulatory ones. Anyone quoting
+  given here in working terms rather than regulatory ones. The same applies to
+  the "90+ days overdue" NPL convention: it is the common threshold, it varies
+  by jurisdiction and by exposure class, and **it was not checked against MAS
+  rules or each bank's stated policy.** Anyone quoting
   these in the report should cite the Basel Committee framework or MAS Notice
   637 directly rather than this file.
 - Which specific allowance categories each bank uses, and whether their

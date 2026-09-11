@@ -119,7 +119,7 @@ more favourably; DBS publishes more words.
 
 Ten times the positive rate. There is no conspiracy here — it is what the
 documents are for. A results release exists to present performance
-advantageously to investors. Even genuinely bad quarters are framed with
+advantageously to investors. Even bad quarters are framed with
 "resilient", "disciplined", "well-positioned".
 
 That is a **holder effect** in the opinion-quintuple sense: management
@@ -131,8 +131,8 @@ Analyst questions in a transcript are not promotional — an analyst asking
 "why did credit costs rise more than guided?" is adversarial text sitting
 inside a document labelled `earnings`. The corpus cannot distinguish the
 question from the answer, so both are scored as the same source with the same
-weight. Splitting transcripts into questions and answers would be a genuinely
-interesting refinement and has not been done.
+weight. Splitting transcripts into questions and answers would be an obvious
+refinement and has not been done.
 
 ### Why the analyst-report stream failed, and what replaced it
 
@@ -146,7 +146,7 @@ The proposal's fourth stream was analyst consensus reports. What was tried:
 | Fetching full article text to test the proxy | Straits Times and CNA both refused simple fetches |
 | **Yahoo `quoteSummary`** | **Works** — real consensus for all three banks |
 
-The proxy result is worth keeping rather than deleting. It tagged documents
+Keep the proxy result rather than deleting it. It tagged documents
 naming a broker *and* using rating language, and matched nothing across 172
 news documents. Two explanations were never distinguished: NewsAPI's free-tier
 title-plus-description snippets may be too short to carry "Maintains BUY"
@@ -174,18 +174,17 @@ and it may change without notice.
 
 ## 5. Evaluate
 
-**Was Yahoo consensus a reasonable substitute?** Yes, given the alternatives
-were paywalled or bot-protected. It is real, structured, and covers all three
+**Yahoo consensus was a reasonable substitute**, given the alternatives were
+paywalled or bot-protected. It is real, structured, and covers all three
 banks. It is also a *different kind of data* from everything else in the
 system — numeric aggregates rather than text — so it sits outside the
 sentiment pipeline entirely and appears only as a dashboard panel and a
 chatbot tool.
 
-That is worth being clear about in the report: the fourth stream does not feed
+Be clear about this in the report: the fourth stream does not feed
 the sentiment index at all. The system has three text sources, not four.
 
-**Was ingesting earnings text right?** Yes, and it is the project's most
-consequential data decision. It closed the vocabulary gap that made
+**Ingesting earnings text is the project's most consequential data decision.** It closed the vocabulary gap that made
 analyst-style aspects impossible, and it is the reason the 2026-09-11
 clustering run finds leverage-ratio and Basel III clusters that a Reddit-only
 corpus could never produce.

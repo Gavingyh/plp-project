@@ -81,7 +81,7 @@ after comparison possible on the same rows.
 
 ### What `ProsusAI/finbert` actually is
 
-Worth being precise, because the report will cite it.
+Be precise here, because the report will cite it.
 
 Araci (2019) describes further pre-training BERT on **TRC2-financial**, a
 corpus of Reuters financial news, then fine-tuning on **Financial
@@ -158,7 +158,7 @@ criticism.
 
 ## 5. Evaluate
 
-**Was FinBERT the right choice?** For the constraints, yes. It matches the
+**FinBERT was right for the constraints.** It matches the
 domain, satisfies the DNN requirement, runs on a laptop, and its two jobs map
 cleanly onto the two text-mining tasks the rubric wants.
 

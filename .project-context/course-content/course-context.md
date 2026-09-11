@@ -93,7 +93,7 @@ What the primary source actually reports. Araci (2019), *FinBERT: Financial Sent
 
 Two things to be careful about when citing this. **There is no Loughran-McDonald lexicon baseline in that table at all** — the comparisons are against LSTM, ELMo, ULMFit and three prior published systems, so the "vs. lexicon-only" framing has no basis in this paper. And the two accuracy columns measure different things: 0.97 is on the subset where all annotators agreed, which is the easy subset, so quoting it as FinBERT's accuracy overstates it. Quote 0.86, or quote both and say which is which.
 
-Also worth knowing for the reference list: arXiv:1908.10063 is a University of Amsterdam MSc thesis posted to arXiv (25 June 2019), not a peer-reviewed conference paper. Cite it as such.
+For the reference list: arXiv:1908.10063 is a University of Amsterdam MSc thesis posted to arXiv (25 June 2019), not a peer-reviewed conference paper. Cite it as such.
 
 If the report wants a lexicon comparison, find one and cite it directly. One example located but **not verified in detail**: "Sentiment trading with large language models" (arXiv:2412.19245) reports FinBERT at 72.2% against the Loughran-McDonald dictionary at 50.1% on its own task — different dataset, different setup, not interchangeable with the table above.
  

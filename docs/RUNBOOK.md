@@ -132,7 +132,7 @@ URLs and is not behind that WAF, so fetch them from there instead:
 ```
 
 The bytes are UOB's own published PDFs; only the transport differs. Two
-limits are worth knowing: archive coverage thins out for the most recent
+limits matter: archive coverage thins out for the most recent
 quarters (the dry run prints per-year counts), and a capture is occasionally
 the WAF stub rather than the document — those are detected by magic bytes and
 discarded rather than saved as unreadable `.pdf` files.

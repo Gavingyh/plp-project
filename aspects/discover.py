@@ -1,5 +1,5 @@
 """
-Phase 3 aspect discovery — run ONCE offline to derive the aspect taxonomy,
+Aspect discovery — run ONCE offline to derive the aspect taxonomy,
 then freeze it into config/aspects.yaml. This is the unsupervised text-mining
 deliverable: letting the data propose the aspect set rather than assuming it.
 

@@ -38,7 +38,7 @@ def resolve_bank(text: str, fallback: str | None = None) -> str | None:
     """Single bank if exactly one is named; 'MULTI' if more than one; fallback otherwise.
 
     Document-level attribution only — sentence-level re-attribution happens in
-    preprocess/ (Phase 2), since a MULTI document usually has each bank named
+    preprocess/, since a MULTI document usually has each bank named
     in a different sentence.
     """
     found = detect_banks(text)

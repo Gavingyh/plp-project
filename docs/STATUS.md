@@ -103,7 +103,7 @@ Two models were run twice; those rows show both runs.
 | `qwen3:4b` | 4B | 23 | 0/16 | 0/7 | 0/23 — *artifact, see below* |
 | `llama3.1:8b` | 8B | 3 / 8 | 12/16 / 7/16 — *see the confound below* | 3/7 | **3/23 (13%), both runs** |
 
-Seven things worth carrying into the report:
+Seven findings for the report:
 
 **The default model's fabrication rate is a range because it was run twice.**
 11/23 on 2026-09-07 and 10/23 on 2026-09-10, same model, same gold set. That
@@ -214,7 +214,7 @@ the baseline's favour.
 `preprocess/export_blind_test.py` is the repair: it writes
 `data/labeled/test_blind.csv` carrying the sentence, its aspect and its
 provenance and nothing else, and merges the filled sheet back afterwards.
-What this does and does not fix is worth being precise about. It does prevent
+Be precise about what this does and does not fix. It does prevent
 the leak for anyone who labels from the blind sheet, which is nobody so far
 since zero rows are labelled. It does not undo the model's exposure to those
 rows, and it cannot help if someone opens `candidates.csv` and labels the
@@ -240,7 +240,7 @@ than the base-FinBERT distribution over the whole corpus (87% neutral) and is
 a consequence of the deliberate non-neutral oversampling in the `train_dev`
 sampler. Human labels may not follow it.
 
-Running pre-labelling for real surfaced something worth knowing before
+Running pre-labelling for real surfaced something to know before
 correcting: some candidates are off-topic for the aspect they were assigned
 (a product description assigned to `management_guidance`, for instance) —
 exactly the "incidental mentions" case `docs/annotation-guideline.md`
@@ -286,8 +286,8 @@ anticipated appear unprompted: leverage ratio against the regulatory minimum,
 final Basel III reforms and their CET-1 effect, fee income by line, return on
 equity and return on tangible equity. None of these existed in the
 Reddit-only run. **This is the clearest evidence the project has that
-ingesting earnings material closed a real vocabulary gap rather than merely
-adding volume.**
+ingesting earnings material closed a real vocabulary gap, and did not simply
+add volume.**
 
 It does not settle the taxonomy. The run produced 281 clusters with a median
 size of 23 and 67% of the corpus left as noise, which is a topic list rather

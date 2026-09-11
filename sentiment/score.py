@@ -1,26 +1,26 @@
 """
-Sentiment scoring — see docs/DESIGN.md./6.
+Sentiment scoring. See docs/DESIGN.md for the reasoning behind the index this
+feeds.
 
-STATUS: this uses BASE FinBERT's own classification head
-(ProsusAI/finbert, whole-sentence 3-class positive/neutral/negative),
-NOT the fine-tuned aspect-conditioned classifier the plan specifies for
-Phase 5. That model doesn't exist yet because it needs ~1,000 human-labeled
-examples (Phase 4), which is human-annotation-bound work this pipeline
-cannot do on its own.
+STATUS: this uses BASE FinBERT's own classification head (ProsusAI/finbert,
+whole-sentence 3-class positive/neutral/negative), NOT the fine-tuned
+aspect-conditioned classifier the proposal calls for. That model does not
+exist yet: it needs ~1,000 human-labelled examples, and nobody has labelled
+any (docs/STATUS.md).
 
-This is deliberately exactly the plan's own "baseline #1" (base FinBERT,
-zero-shot) — see Phase 5, "Baselines — required, not optional". Using it here
-means the full pipeline (ingestion -> sentences -> aspects -> SCORING ->
-index -> dashboard -> chatbot) is genuinely runnable end-to-end today. Once
-Phase 4/5 produce a fine-tuned model, swap it in here (same output contract:
-sentence_id, aspect, label, confidence, model_version) and the baseline
-comparison the plan requires falls out for free — you'll have both sets of
-scores in the same table, distinguished by model_version.
+Base FinBERT zero-shot is also the first of the three baselines
+train/evaluate.py compares a fine-tuned model against, so running it here is
+not a stopgap that gets thrown away. It means the full pipeline (ingestion ->
+sentences -> aspects -> SCORING -> index -> dashboard -> chatbot) runs
+end-to-end today, and when a fine-tuned model arrives you swap it in behind
+the same output contract (sentence_id, aspect, label, confidence,
+model_version). Both sets of scores then sit in the same table distinguished
+by model_version, and the before/after comparison falls out for free.
 
-Whole-sentence sentiment is attributed to whichever aspect(s) Phase 3 assigned
-the sentence to — a simplification pending the true sentence+aspect-pair NLI
-formulation in Phase 5, which needs the fine-tuned model to condition on the
-aspect at all.
+Whole-sentence sentiment is attributed to whichever aspect(s) the sentence was
+assigned. That is a simplification: the real formulation feeds the
+(sentence, aspect) pair to the model so it can condition on the aspect, which
+only a fine-tuned model can do.
 
 USAGE:
   python -m sentiment.score

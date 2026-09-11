@@ -1,5 +1,5 @@
 """
-Phase 3 aspect assignment: deterministic nearest-centroid assignment against
+Aspect assignment: deterministic nearest-centroid assignment against
 the FROZEN taxonomy in config/aspects.yaml. Runs every batch — unlike
 discover.py's clustering, this does NOT change the taxonomy, only which
 bucket each sentence falls into. See docs/DESIGN.md, "The key

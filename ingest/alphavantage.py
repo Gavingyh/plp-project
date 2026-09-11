@@ -3,7 +3,7 @@ Alpha Vantage NEWS_SENTIMENT ingestion (free tier: 25 req/day).
 
 Per docs/DESIGN.md (finding (b)): Alpha Vantage's news coverage is overwhelmingly
 US-listed tickers, and SGX listings (D05.SI / O39.SI / U11.SI) are generally not
-indexed. This adapter exists so the team can *prove* that empirically (Phase 0)
+indexed. This adapter exists so the team can *prove* that empirically
 rather than assume it — if it returns zero rows across all three tickers, that
 confirms the finding and Alpha Vantage is dropped from the pipeline.
 

@@ -162,16 +162,15 @@ actual job is scoring text that has not been written yet.
 
 ## 5. Evaluate
 
-**Was the sampling design right?** Yes, and it is the strongest piece of
-methodological thinking in the project. It was documented in
+**The sampling design is the strongest piece of methodological thinking in the
+project.** It was documented in
 `preprocess/export_candidates.py` before the data was exported, with the trap
 spelled out explicitly.
 
 **And it was undermined anyway.** The design was right; the operational
 discipline slipped, because the pre-labelling script had no notion that the
-test split was special. The lesson generalises: *a methodological safeguard
-that lives only in a docstring will eventually be walked past by a script that
-never read it.* The blind export enforces in code what the docstring asked
+test split was special. *A methodological safeguard that lives only in a
+docstring will eventually be walked past by a script that never read it.* The blind export enforces in code what the docstring asked
 for, which is the same move the chatbot made with citation verification.
 
 **What 200 test rows can support.** Not much per class. If the labels split

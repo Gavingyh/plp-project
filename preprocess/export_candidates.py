@@ -9,7 +9,7 @@ between a valid and an inflated evaluation:
     base FinBERT calls non-neutral, to avoid a 60-70% neutral training set
     starving the positive/negative classes.
   - TEST split: sampled PURELY AT RANDOM, independent of any model
-    screening, and frozen once exported. All headline metrics (Phase 5) are
+    screening, and frozen once exported. All headline metrics are
     reported on this set. This cannot be retrofitted after the fact — if the
     test set is drawn from model-screened candidates, the fine-tuned model's
     reported F1 is inflated relative to the base-model baseline it's meant to

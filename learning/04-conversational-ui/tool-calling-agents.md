@@ -184,11 +184,11 @@ model sizes failing identically.
 
 ## 5. Evaluate
 
-**Was the plain loop right?** Yes, on the report-explainability criterion, and
+**The plain loop was right on the report-explainability criterion**, and
 the code is genuinely readable. The cost is real but small: four backends were
 written by hand, and each is a place a provider change could break something.
 
-**Was per-backend loops right?** Yes for two shapes. It is starting to strain
+**Per-backend loops were right for two shapes.** It is starting to strain
 at four, since `openai` and `gemini` were written to documented contracts and
 have never received a real response. If a fifth arrived, the balance would
 shift toward a shared loop with adapters.

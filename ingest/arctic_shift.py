@@ -4,7 +4,7 @@ replacing reddit_pull.py / PRAW because Reddit has not approved this project's A
 application.
 
 Design decisions here are backed by live testing against the real API
-(see .project-context/plan/mvp-implementation-plan.md, Phase 1c), not assumption:
+(see .project-context/plan/mvp-implementation-plan.md), not assumption:
 
   - Keyword search (`&query=...`) times out (HTTP 422) on active subreddits.
     So: harvest whole subreddits by date window, filter for bank mentions locally.

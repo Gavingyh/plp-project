@@ -139,7 +139,7 @@ key, one snapshot per bank per day, carrying analyst counts, the rating
 distribution, `recommendation_mean` on Yahoo's 1.0 (strong buy) to 5.0 (strong
 sell) scale, and price target statistics.
 
-### Invariants worth knowing before changing anything
+### Invariants to know before changing anything
 
 - **Idempotency.** `doc_id` is deterministic and inserts use
   `INSERT OR IGNORE`. Re-running any adapter is a no-op.

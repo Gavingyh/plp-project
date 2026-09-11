@@ -144,8 +144,8 @@ It was wrong. Breaking the matches down by word:
 | everything else | ~13 |
 
 Substring matching on a three-letter abbreviation finds "**mi*nim*um**".
-With a word boundary (`\bNIM\b`) the true count is 4. The lesson generalises:
-short financial abbreviations (NIM, NPL, ROE, CET1) are dangerous as
+With a word boundary (`\bNIM\b`) the true count is 4. Short financial
+abbreviations (NIM, NPL, ROE, CET1) are dangerous as
 substrings, and any frequency claim built on `LIKE '%term%'` needs checking
 before it goes in a report.
 
@@ -168,8 +168,9 @@ evidence says otherwise.
 
 ## 5. Evaluate
 
-**Was the proposal's four-aspect taxonomy a reasonable choice?** For earnings
-text, clearly yes: all four vocabularies are richly present. For Reddit, no.
+**The proposal's four-aspect taxonomy was reasonable for earnings text and not
+for Reddit.** All four vocabularies are richly present in earnings material and
+nearly absent from Reddit.
 The taxonomy was chosen before anyone measured which words appear where, which
 is a defensible thing to do at proposal time and an indefensible thing to
 leave unchecked afterwards.

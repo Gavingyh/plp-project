@@ -49,7 +49,7 @@ while trying to preserve local neighbourhood structure. Settings used here
 | `metric` | cosine | Right choice for text embeddings, where direction matters and magnitude does not |
 | `random_state` | 42 | Reproducible, at the cost of single-threaded execution |
 
-`min_dist=0.0` is worth noting: for *visualisation* you would use something
+Note `min_dist=0.0`: for *visualisation* you would use something
 like 0.1 so points spread out and are legible, but for *clustering* you want
 them packed so density differences are stark.
 
@@ -129,7 +129,7 @@ With earnings text present, clusters like these emerge unprompted:
 | 19 | 17 | Return on equity and return on tangible equity |
 
 This is the strongest evidence the project has that ingesting earnings
-material closed a genuine vocabulary gap rather than merely adding volume. It
+material brought in vocabulary the corpus lacked entirely, not just bulk. It
 also does not rescue the taxonomy: these are *finer* than `asset_quality` or
 `management_guidance` and cut across them.
 
@@ -168,8 +168,8 @@ a clean partition would be.
 
 ## 5. Evaluate
 
-**Was UMAP plus HDBSCAN the right choice?** Yes, for the reason above, and the
-implementation has a real flaw: leaving `min_cluster_size` at its default
+**UMAP plus HDBSCAN was the right choice, and this run under-configured it.**
+The implementation has a real flaw: leaving `min_cluster_size` at its default
 while the corpus grew thirteen-fold makes the 281-cluster, 67%-noise result
 hard to interpret. The tooling is right and this particular run is
 under-configured.
@@ -193,8 +193,8 @@ a floor rather than clustering.
 
 **The honest position for the report.** Aspect discovery ran, it produced real
 structure that only appeared once earnings text was ingested, and it did not
-produce the proposal's four aspects. Reporting that clearly is worth more than
-tuning the parameters until the clusters flatter the taxonomy.
+produce the proposal's four aspects. Report that clearly rather than tuning
+the parameters until the clusters flatter the taxonomy.
 
 ---
 

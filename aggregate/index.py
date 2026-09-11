@@ -1,8 +1,8 @@
 """
-Phase 6: aggregate per-sentence sentiment into the per-bank, per-aspect index
+Aggregate per-sentence sentiment into the per-bank, per-aspect index
 the dashboard and chatbot read.
 
-Key MVP-plan requirements implemented here (Phase 6, step 2):
+Two requirements this implements, both from the original plan:
   - shrinkage toward neutral at low volume: score * n/(n+k), k=5 — without
     this, one Reddit comment can swing the index to +/-1.0 on a single data
     point.

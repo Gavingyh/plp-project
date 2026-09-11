@@ -60,7 +60,7 @@ A shared cleaner would either under-clean Reddit or over-clean news.
 | News | NewsAPI's `[+1234 chars]` truncation marker, wire datelines like `(Reuters) - `, URLs |
 | Earnings | Non-prose lines filtered during PDF extraction |
 
-Bot detection is worth noting: comments containing "i am a bot", "this action
+Note the bot detection: comments containing "i am a bot", "this action
 was performed automatically" or "contact the moderators of this subreddit" are
 dropped entirely. Machine-generated text is not opinion, and scoring it would
 add noise with a systematic bias.
@@ -140,8 +140,8 @@ short comments.
 **Why this looks worse than it is.** In the clustering output these artifacts
 form their own tight clusters and appear to dominate, because clustering
 gathers similar things and near-identical junk is highly similar. Measuring
-prevalence directly gives 2.6%. The lesson: never judge corpus quality from
-cluster samples.
+prevalence directly gives 2.6%. Never judge corpus quality from cluster
+samples.
 
 ### Comparing three segmentation approaches
 
@@ -165,7 +165,7 @@ warns you.
 
 ## 5. Evaluate
 
-**Was this the right preprocessing design?** Broadly yes. Per-source cleaning
+**The preprocessing design is broadly right.** Per-source cleaning
 is clearly correct given the register mix, per-sentence attribution is backed
 by an observed failure, and deduplication by normalised hash is cheap and
 effective.
@@ -178,7 +178,7 @@ all** for months: `text.split("")` raises `ValueError` on every page, and
 no-op. The corpus already held earnings sentences from an earlier working run,
 so nothing downstream looked wrong.
 
-That is a preprocessing lesson worth more than the extraction quality itself:
+What that teaches matters more than the extraction quality itself:
 **a step whose failure mode is "silently produces nothing" needs a test that
 asserts it produces something.**
 

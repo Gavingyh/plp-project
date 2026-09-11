@@ -458,8 +458,8 @@ The single most important entry is the withdrawn FinBERT benchmark, because it
 was labelled *verified, safe to cite in the report* and would have gone into a
 graded submission as fact.
 
-Two of this run's own errors were caught by the same protocol, which is worth
-recording as evidence that it does work: a confident conclusion drawn from the
+Two of this run's own errors were caught by the same protocol, which is the
+evidence that it does work: a confident conclusion drawn from the
 taxonomy table before checking which floor the tool used, and a test asserting
 Cohen's κ below 0.1 for a case where κ is arithmetically 0.46. Neither was
 caught by review; both were caught by running the thing.

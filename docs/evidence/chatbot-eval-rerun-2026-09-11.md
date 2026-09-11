@@ -25,7 +25,7 @@ useful than the answer.
 
 Two metrics identical, two apparently collapsed. Taken at face value this
 would read as a model that got substantially worse at choosing tools, which
-is not a thing that happens to a fixed set of weights.
+fixed weights cannot do.
 
 ## Every rerun error is a timeout
 
@@ -79,7 +79,7 @@ stated.** Any row with a non-zero error count has a tool-selection score
 depressed by exactly those errors. Concretely:
 
 - `llama3.2:3b` (0 errors) — 12/16 is a clean measurement.
-- `phi4-mini` (0 errors) — 0/16 is a clean and genuinely damning measurement.
+- `phi4-mini` (0 errors) — 0/16 is a clean and damning measurement.
   It answered every question and called nothing.
 - `gemma3:4b`, `qwen3:4b` (23 errors each) — 0/16 measures nothing at all.
 - `llama3.1:8b` (3 or 8 errors) — **the reported figure is not comparable to
@@ -92,7 +92,7 @@ is the kind a report gets marked down for.
 
 ## What is stable across both runs
 
-Worth noting, because it is the useful half:
+The useful half:
 
 - **Citation fabrication: 3/23 in both runs.** Identical. Against
   `llama3.2:3b`'s 10–11/23 across its two runs, the gap between the two models

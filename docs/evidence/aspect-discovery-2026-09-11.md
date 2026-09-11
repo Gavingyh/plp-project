@@ -116,7 +116,7 @@ flag terse but genuine sentences.
 
 The practical reading is that extraction quality is a real but second-order
 problem. It is not distorting the sentiment index at 2.6% prevalence, and it
-is worth a cleanup pass before anyone reports cluster listings in the report,
+deserves a cleanup pass before anyone reports cluster listings in the report,
 because a reader shown cluster 0 will reasonably doubt the whole corpus.
 
 ---

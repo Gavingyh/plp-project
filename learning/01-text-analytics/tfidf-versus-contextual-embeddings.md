@@ -96,7 +96,7 @@ textbook domain-specific stopword list, which module 1 covers directly.
 
 **As a baseline.** `train/evaluate.py` includes TF-IDF plus logistic
 regression precisely because it is the pre-transformer approach. If fine-tuned
-FinBERT cannot beat it, that is worth knowing, and it is a cheap and honest
+FinBERT cannot beat it, that tells you something, and it is a cheap and honest
 comparison.
 
 ### Where embeddings earn their place, and where they fail
@@ -142,17 +142,17 @@ That trade-off has never been measured here. FinBERT was chosen for both jobs
 because it satisfies the DNN requirement and gives one model to explain and
 one cache to maintain. It is entirely possible that Sentence-BERT would assign
 aspects better, and given the assignment failure above, testing that would be
-a genuinely useful experiment.
+a useful experiment.
 
 ---
 
 ## 5. Evaluate
 
-**Was the division right?** Yes. Using TF-IDF where interpretability is the
+**The division of labour is right.** Using TF-IDF where interpretability is the
 requirement and embeddings where semantic similarity is, is exactly right, and
 it is the kind of choice that reads as deliberate rather than defaulted.
 
-**Was mean-pooled FinBERT right for assignment?** Less clearly. The reasoning
+**Mean-pooled FinBERT for assignment is less clearly right.** The reasoning
 was sound — financial domain knowledge, one model, satisfies the DNN
 requirement — and the outcome is a taxonomy whose centroids barely separate
 and Reddit assignments that are demonstrably wrong. Some of that is the

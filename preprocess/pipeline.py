@@ -1,5 +1,5 @@
 """
-Phase 2 pipeline: documents -> sentences.
+Preprocessing: documents -> sentences.
 
 Reads documents not yet processed (doc_id not already represented in
 `sentences`), cleans per-source, segments into sentences, resolves bank
@@ -7,8 +7,8 @@ attribution per sentence, drops near-duplicates (normalized-text hash) and
 sub-length fragments, and writes the result into the `sentences` table.
 
 This is the "unit of analysis is the sentence" step — see docs/DESIGN.md,
-Architecture at a glance. Aspect assignment (Phase 3), sentiment scoring
-(Phase 5), the index (Phase 6), and the chatbot's evidence citations (Phase 8)
+Architecture at a glance. Aspect assignment, sentiment scoring,
+the index, and the chatbot's evidence citations
 all key off sentence_id from here.
 
 USAGE:
@@ -52,7 +52,7 @@ def _sentence_id(doc_id: str, start: int, end: int) -> str:
 # ("Calling you for $8 transaction is a red flag itself.") as if they were
 # about the bank. For those sources we require an explicit in-sentence
 # mention. This is the "keyword-plus-length heuristic, known precision
-# limitation" docs/DESIGN.md notes for the relevance filter (Phase 2, step 4).
+# limitation" docs/DESIGN.md notes for the relevance filter.
 _INHERIT_DOC_BANK_SOURCES = {"newsapi", "alphavantage", "earnings"}
 
 

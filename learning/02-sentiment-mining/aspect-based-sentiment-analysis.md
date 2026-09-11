@@ -95,8 +95,7 @@ Module 2 lists five approaches. Assessed against this corpus:
 | Deep learning (LSTM, transformers) | Learned extraction | Same labelling problem |
 | LLM prompting | Ask a model zero-shot | Viable and used for *pre-labelling sentiment*. Not used for aspects because assignment must be deterministic and cheap over 36,884 sentences every batch |
 
-**Centroid assignment is not on that list**, and that is worth saying plainly
-in the report. It is closest to the "aspect grouping" family the module covers
+**Centroid assignment is not on that list**, and the report should say so. It is closest to the "aspect grouping" family the module covers
 separately — mapping text to predefined categories by similarity — and it was
 chosen because it handles implicit aspects, needs no labels, and is
 deterministic.
@@ -194,12 +193,12 @@ testing it against one you know is wrong.
 
 ## 5. Evaluate
 
-**Was centroid assignment the right approach?** For the constraints, yes. It
+**Centroid assignment was right for the constraints.** It
 handles implicit aspects, needs no labels, runs deterministically over the
 whole corpus every batch, and produces stable categories. The alternatives all
 founder on the same rock: no labelled aspect spans exist and none are planned.
 
-**Is the current taxonomy defensible?** Not on the evidence. The four
+**The current taxonomy is not defensible on the evidence.** The four
 proposal aspects have the worst centroid separation of three candidates
 tested, no floor gives them a usable operating point, and their vocabulary
 appears in one source only. The tooling to decide this exists and has been
@@ -288,7 +287,7 @@ as unvalidated with no number attached.
 3. Because separation is computed from the seed-term embeddings themselves,
    independently of any threshold. The floor decides how close a sentence must
    be to count as a match; it cannot move the centroids further apart.
-4. Because sentences genuinely are. "NIM held up but provisions rose" is about
+4. Because sentences are. "NIM held up but provisions rose" is about
    two aspects, and forcing a single label would discard half the information.
    The corpus averages 2.17 aspects per scored sentence.
 5. That the floor was not discriminating between anything, for any taxonomy —

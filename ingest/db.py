@@ -2,7 +2,7 @@
 Shared SQLite storage for the ingestion pipeline.
 
 Single `documents` table, schema per docs/DESIGN.md (.project-context/plan/mvp-implementation-plan.md,
-Phase 1a). `doc_id` is a deterministic hash of (source, native id or URL), so re-running
+ingestion). `doc_id` is a deterministic hash of (source, native id or URL), so re-running
 any ingest adapter is idempotent: INSERT OR IGNORE means a duplicate doc_id is silently
 skipped rather than creating a second row or overwriting the first.
 """
@@ -34,7 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_bank ON documents(bank);
 CREATE INDEX IF NOT EXISTS idx_documents_source ON documents(source);
 CREATE INDEX IF NOT EXISTS idx_documents_published_at ON documents(published_at);
 
--- Phase 2 (preprocess/): the sentence is the unit of analysis for everything
+-- preprocess/: the sentence is the unit of analysis for everything
 -- downstream — aspect assignment, sentiment labels, the index, and the
 -- chatbot's evidence citations all key off sentence_id. See docs/DESIGN.md,
 -- "Architecture at a glance".

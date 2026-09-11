@@ -8,7 +8,7 @@ Prerequisites: none. A good first file to read.
 ## 1. Why it matters here (Understand)
 
 CRISP-DM is the process framework module 1 teaches for text mining projects.
-It is worth knowing for the exam, and it is worth more here as a lens: mapping
+Useful for the exam, and more useful here as a lens: mapping
 this project onto its six phases shows immediately which phases were done
 well, which were skipped, and which had to be repeated because an assumption
 turned out to be wrong.
@@ -95,7 +95,7 @@ Adding earnings data is the cleanest example of CRISP-DM's backward arrows.
 | Phase 3 again | 66 UOB PDFs fetched, 1,600 sentences |
 
 **Adding a data source made a metric worse before it made it better.** That is
-worth stating plainly in the report: more data is not automatically better if
+state that plainly in the report: more data is not automatically better if
 it arrives unevenly.
 
 ### The phase this project is weakest on
@@ -134,7 +134,7 @@ implying that a macro-F1 score answers it.
 
 ## 5. Evaluate
 
-**Was CRISP-DM followed?** Substantially, and mostly implicitly — the phases
+**CRISP-DM was followed substantially, and mostly implicitly.** The phases
 map cleanly onto what happened without the team having narrated them that way.
 Phase 2 in particular was done unusually well: `docs/data-viability.md`
 records live tests of every candidate source with the negative results kept,

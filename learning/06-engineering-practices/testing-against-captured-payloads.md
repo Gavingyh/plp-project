@@ -133,7 +133,7 @@ the tests themselves — they run in about one second. It is `umap` and
 `hdbscan` importing, which triggers numba compilation.
 
 That is a real trade. Thirty-five seconds on every run, forever, to guard one
-bug class. It is worth it here because the bug it guards made a tool silently
+bug class. It pays here because the bug it guards made a tool silently
 unrunnable for days, and because a minute is still fast enough that nobody
 skips the suite. At five minutes the calculus would change and the test would
 belong behind a marker.
@@ -162,11 +162,11 @@ of this lifespan that is an acceptable gap worth naming.
 
 ## 5. Evaluate
 
-**Is the testing approach right?** Yes. No-network is correct for this project
+**The testing approach is right.** No-network is correct for this project
 — determinism, rate limits, and courtesy to a donated archive all point the
 same way — and captured payloads are the right fidelity compromise.
 
-**Is 246 tests enough?** For the code paths that exist, roughly. The
+**246 tests covers the code paths that exist, roughly.** The
 significant gaps are not code paths but *properties nobody asserts*:
 
 - Segmentation correctness has no gold set.

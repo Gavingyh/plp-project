@@ -149,15 +149,15 @@ weakest of the four accepted rows and the report should not skip past it.
 
 ## 5. Evaluate
 
-**Were these the right calls?** For an academic project with disclosure, yes,
-and the reasoning is more defensible than the outcomes. The line drawn —
+**For an academic project with disclosure these were the right calls**, and the
+reasoning is more defensible than the outcomes. The line drawn —
 *use public archives, do not circumvent active controls* — is coherent,
 applied consistently, and was applied before the fact.
 
 **What the project got right procedurally.** Every decision is documented at
 the point of use, with the reasoning and the residual concern. The Yahoo
 module warns against mislabelling its own output. That is unusual and it is
-what makes the decisions inspectable rather than merely defensible.
+what makes the decisions inspectable, not just defensible.
 
 **Where it is weakest.** The Reddit route. "Our API application was declined,
 so we used an archive of the same content" needs a better answer than the

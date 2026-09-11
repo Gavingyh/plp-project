@@ -96,7 +96,7 @@ invokes `python -m ingest.arctic_shift` as a **separate process per
 month-sized chunk**, and each chunk's own `__main__` commits immediately. An
 interruption now loses at most one month.
 
-*The lesson:* a long job's commit boundary is a design decision, not an
+*Take from this:* a long job's commit boundary is a design decision, not an
 implementation detail. Ask where the durable write happens before leaving
 anything running overnight.
 
@@ -114,7 +114,7 @@ fails immediately with a clear diagnosis. And the documented instruction
 everywhere became: invoke `.venv-plp/bin/python3` by absolute path, never rely
 on shell activation.
 
-*The lesson:* a job that fails 79 times identically has an environment
+*Take from this:* a job that fails 79 times identically has an environment
 problem, and the cheapest possible guard — assert your assumptions in the
 first five lines — would have turned eight wasted hours into one clear error.
 `scripts/start.sh` inherits the same check for the same reason.
@@ -127,8 +127,8 @@ progress file *immediately*, with `flush()` and `os.fsync()` so a hard kill
 does not lose the buffer, and re-running skips every (sentence_id, aspect)
 pair already recorded.
 
-*The lesson:* `fsync` is the difference between surviving a clean exit and
-surviving a `kill -9`. For a job measured in hours, that distinction is worth
+*Take from this:* `fsync` is the difference between surviving a clean exit and
+surviving a `kill -9`. For a job measured in hours, that distinction repays
 the cost.
 
 ### Comparing four durability designs
@@ -156,19 +156,18 @@ keeps the **old** version silently.
 
 That is the correct trade for this project: stability matters more than
 freshness for a research corpus, and a changing corpus would make results
-irreproducible. It is worth knowing the choice was made, because it is
+irreproducible. Know that the choice was made, because it is
 invisible in the code — nothing says "we prefer stale".
 
 ---
 
 ## 5. Evaluate
 
-**Was idempotent ingestion the right foundation?** Unarguably. The proposal's
+**Idempotent ingestion was unarguably the right foundation.** The proposal's
 batch-recompute model requires it, and the alternative is a corpus whose size
 depends on operator behaviour.
 
-**Was the chunked-process design right?** Yes, and it is a good example of
-fixing a problem at the right level. The tempting fix — make `pull()` commit
+**The chunked-process design fixes the problem at the right level.** The tempting fix — make `pull()` commit
 periodically — would have worked and would have required understanding and
 modifying the accumulation logic. Running each chunk as a separate process
 that already commits correctly reuses existing, tested behaviour and gets
@@ -233,7 +232,7 @@ cat data/.backfill_progress.txt
 **Expected outcome.** The marker file should not contain the interrupted
 chunk, and re-running should skip completed chunks and redo only the
 interrupted one. If a partially-completed chunk *is* marked done, you have
-found a real bug and it is worth a commit.
+found a real bug and it deserves a commit.
 
 ---
 

@@ -1,7 +1,7 @@
 """
 Persisted cache of per-sentence FinBERT embeddings, shared by:
-  - Phase 3 aspect discovery/assignment (aspects/discover.py, aspects/assign.py)
-  - Phase 8 chatbot evidence retrieval (chatbot/retrieval.py — the RAG piece)
+  - aspect discovery and assignment (aspects/discover.py, aspects/assign.py)
+  - chatbot evidence retrieval (chatbot/retrieval.py — the RAG piece)
 
 One embedding space for both consumers rather than computing FinBERT vectors
 twice. Incremental: only embeds sentences not already in the cache, so

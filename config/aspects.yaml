@@ -1,4 +1,4 @@
-# Frozen aspect taxonomy — MVP plan Phase 3.
+# Frozen aspect taxonomy.
 #
 # STATUS: seeded from the proposal's a-priori aspects, NOT yet validated
 # against real cluster centroids.
@@ -31,7 +31,7 @@
 # not equity-analyst-oriented, so granular analyst-style aspects are sparse
 # in Reddit chat. They should show up once earnings-release text is ingested
 # (`python -m ingest.earnings` — still pending a human downloading the PDFs,
-# see MVP plan Phase 1b) — that's where NIM/asset-quality/guidance language
+# see ingest/earnings_fetch.py) — that's where NIM/asset-quality/guidance language
 # actually lives. Until then, treat aspect-level breakdowns from this seeded
 # taxonomy as provisional (assign.py's floor is currently too permissive —
 # most sentences match ~4 of 5 aspects near-equally, see docs/data-viability.md).

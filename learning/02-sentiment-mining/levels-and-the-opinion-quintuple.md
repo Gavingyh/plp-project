@@ -10,7 +10,7 @@ Prerequisites: none
 The single most consequential decision in this system is that **the sentence,
 not the document, is the unit of analysis**. Everything downstream keys off
 `sentence_id`. That choice comes directly from the theory in this topic, and
-being able to justify it is worth a paragraph in the report.
+being able to justify it earns a paragraph in the report.
 
 The opinion quintuple is also the cleanest way to explain what the database
 schema is for. Each column exists because the quintuple says an opinion has
@@ -114,8 +114,8 @@ a schema one.
 | Extract aspect terms from the sentence | Sequence labelling (IOB tags) to find explicit aspect mentions | Needs labelled training data the project does not have, and only finds *explicit* aspects |
 | Treat the document's topic as the aspect | Inherit from the article or thread | Same failure as document-level sentiment: a thread covers several aspects |
 
-The second is what module 2 teaches as aspect term extraction, and it is worth
-naming in the report as the road not taken. Its fatal limitation here is
+The second is what module 2 teaches as aspect term extraction, and the report
+should name it as the road not taken. Its fatal limitation here is
 implicit aspects: "they're paying out too much of their earnings" is about
 dividend policy and contains no aspect term to extract.
 
@@ -123,8 +123,7 @@ dividend policy and contains no aspect term to extract.
 
 ## 5. Evaluate
 
-**Was sentence-level the right unit?** Yes, and it is the least contestable
-decision in the project. Aspect-based sentiment is impossible without it.
+**Sentence-level is the least contestable decision in the project.** Aspect-based sentiment is impossible without it.
 
 **The cost is real though.** Sentence-level analysis loses cross-sentence
 context. "DBS reported record profit. That won't last." Sentence two is

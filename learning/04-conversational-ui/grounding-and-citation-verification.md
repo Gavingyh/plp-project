@@ -105,7 +105,7 @@ Four things follow, and they pull in different directions.
 43–48% down to 13%. Tool selection (12/16) and advice-declining (3/7) are
 *identical* across the two. So fabrication behaves like a capability limit
 that scale relieves, while the behavioural failures look like design problems
-a bigger model does not touch. That distinction is worth the report's space:
+a bigger model does not touch. That distinction earns space in the report:
 it tells you which problems to solve with a model swap and which need a
 redesign.
 
@@ -169,12 +169,12 @@ fabricated citation stops being possible rather than merely being detected.
 
 ## 5. Evaluate
 
-**Was code-level enforcement the right call?** Yes, and the evidence is
-unusually direct. `phi4-mini` fabricated in 83% of answers while calling zero
+**Code-level enforcement was the right call, and the evidence is unusually
+direct.** `phi4-mini` fabricated in 83% of answers while calling zero
 tools, under a prompt that explicitly forbade exactly that. No amount of
 prompt tightening addresses a model that ignores the prompt.
 
-**What the evaluation does not show.** Three limits worth stating plainly:
+**What the evaluation does not show.** Three limits, stated plainly:
 
 1. **Numerical fidelity is unmeasured.** Whether a number the model states
    matches what the tool returned is not automated. That was a deliberate
@@ -196,7 +196,7 @@ deployed rather than graded.
 
 **When detection beats prevention.** Constrained generation costs fluency: the
 answer reads more like a form. For a system whose users are non-experts being
-handed financial information, that trade is worth making. For an internal
+handed financial information, make that trade. For an internal
 tool used by people who can sanity-check the output, detection may be enough.
 
 ---
@@ -248,7 +248,7 @@ default model state a number that no tool produced and that cannot be derived
 from one?**
 
 Write the number and your triage method into the report. It is a
-human-verified result, which is worth more than another automated proxy, and
+human-verified result, which beats another automated proxy, and
 it fills the one gap `docs/STATUS.md` explicitly flags as outstanding human
 work.
 

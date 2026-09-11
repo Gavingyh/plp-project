@@ -136,7 +136,7 @@ at face value reaches the opposite of the truth.
 - **Default local model.** `llama3.1:8b` fabricates citations at 13% against
   `llama3.2:3b`'s 43–48%, at the cost of being noticeably slower — slow enough
   that it timed out on 8 of 23 questions when the machine was busy. Decide
-  whether that trade is worth it for a demo, and if you switch, raise the
+  whether that trade suits a demo, and if you switch, raise the
   120-second Ollama read timeout.
 - **Advice-declining.** 3 of 7 gold-set questions at best, on every model
   tested. A prompt and design problem, not a model choice, and the most
@@ -211,7 +211,7 @@ learning-material work on branch `overnight/handoff-docs`. Nothing was pushed.
   file.
 - **Tests:** 214 → 246, all passing in 62 seconds on an idle machine.
 
-### Corrections worth knowing about
+### Corrections
 
 - STATUS's by-source document counts read 18,620 / 177 / 18 and summed to
   18,815 against its own stated total of 21,924. True figures are 21,726 /

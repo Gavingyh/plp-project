@@ -41,7 +41,7 @@ logger = get_logger(__name__)
 
 # Common SG/regional brokerage and research-house names that show up when
 # local media reports an analyst call. Not exhaustive — extend as false
-# negatives turn up during Phase 4 labeling review.
+# negatives turn up during labelling review.
 _BROKERS = [
     "DBS Group Research", "UOB Kay Hian", "OCBC Investment Research",
     "CGS International", "CGS-CIMB", "Maybank", "RHB", "Phillip Securities",

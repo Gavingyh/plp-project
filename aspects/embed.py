@@ -1,5 +1,5 @@
 """
-FinBERT sentence embeddings for aspect discovery (Phase 3, "Job 1" from the
+FinBERT sentence embeddings for aspect discovery ("Job 1" from the
 proposal — no fine-tuning needed for this part, just measuring similarity).
 
 Mean-pooled over token embeddings, NOT the CLS token — BERT-family CLS vectors

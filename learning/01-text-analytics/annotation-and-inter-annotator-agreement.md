@@ -117,7 +117,7 @@ addresses this directly: label independently first if you want to measure how
 often the model was right, because anchoring on its suggestion before forming
 your own view defeats that measurement.
 
-**How much does the pre-label actually add?** Running `train/agreement.py`
+**How much the pre-label adds.** Running `train/agreement.py`
 over the two model opinions already in `candidates.csv`:
 
 | | value |
@@ -137,7 +137,7 @@ things follow: the pre-labels are not a copy of the baseline, so correcting
 them is real work rather than rubber-stamping — and neither column is ground
 truth, which is what the annotators are creating.
 
-### A model-choice finding worth carrying
+### A model-choice finding
 
 `llm_prelabel.py` documents testing two models on the same case, a rising NPL
 ratio, which the guideline's own worked example labels negative:
@@ -176,12 +176,12 @@ than left as an unexplained divergence from the plan.
 
 ## 5. Evaluate
 
-**Is the guideline good?** Yes, on the criterion that matters: it decides the
+**The guideline is good on the criterion that matters:** it decides the
 hard cases in advance rather than leaving them to each annotator. The
 factual-valence rule alone will prevent a large fraction of potential
 disagreement, because it is the case that arises most in earnings text.
 
-**Is the κ ≥ 0.6 target right?** It is the lower end of "substantial" and is
+**The κ ≥ 0.6 target sits at the lower end** of "substantial" and is
 defensible for a subjective three-class task. Module 1 notes 0.8 is commonly
 cited as a good threshold, so 0.6 is a pragmatic floor rather than an
 ambitious one. The report should state it as the project's chosen threshold,

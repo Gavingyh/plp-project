@@ -142,14 +142,14 @@ The choice between rows 2 and 4 is the interesting one and is discussed in
 
 ## 5. Evaluate
 
-**Was the three-bank scope right?** Yes. They are similar enough to compare
+**The three-bank scope was right.** They are similar enough to compare
 and distinct enough that comparison is meaningful, they dominate the local
 index, and they are discussed together constantly, which gives the entity
 detection something real to do. A single-bank scope would have removed the
 comparison basis entirely.
 
-**Was "analyst consensus" a realistic fourth stream?** No, and the project
-context flagged this as an unresolved risk in advance without resolving it.
+**"Analyst consensus" was never a realistic fourth stream.** The project
+context flagged it as an unresolved risk in advance without resolving it.
 What was delivered is consensus aggregates from an unofficial endpoint, plus
 DBS transcripts that arrived by accident. The report should say the stream was
 substituted rather than delivered.

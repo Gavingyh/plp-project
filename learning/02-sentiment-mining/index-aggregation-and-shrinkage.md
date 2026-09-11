@@ -143,8 +143,7 @@ Dropping the earnings weight from 3.0 to 1.0 moved DBS's blended score from
 +0.101 to +0.056. It reduced the distortion and could not remove it, because
 the cause is **coverage asymmetry, not weighting**. Weights scale each
 source's contribution; they cannot conjure earnings text for a bank that
-published less of it. That is a genuinely useful lesson: a mixing parameter
-cannot repair a sampling problem.
+published less of it. A mixing parameter cannot repair a sampling problem.
 
 The eventual fix was structural. Adding a `source` dimension to
 `sentiment_index` means every blended row sits beside its components, so the
@@ -179,11 +178,11 @@ answer.
 
 ## 5. Evaluate
 
-**Was shrinkage the right call?** Yes. It is cheap, it is explainable in one
+**Shrinkage was the right call.** It is cheap, it is explainable in one
 line of arithmetic, and it eliminates the single most likely way this
 dashboard could produce a dramatic and meaningless number.
 
-**Was keeping the blend right?** Defensible, now that composition is visible.
+**Keeping the blend is defensible now that composition is visible.**
 The proposal specifies a blended index, and per-source rows let any reader
 reconstruct what went into it. The alternative — refusing to blend — would
 have meant not delivering what was proposed.

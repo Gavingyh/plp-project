@@ -92,8 +92,8 @@ build, harder to keep consistent with SQLite, and less accurate.** The only
 thing it would add is a more impressive-sounding architecture.
 
 The threshold where this reverses is somewhere in the millions of vectors, or
-wherever the matrix stops fitting comfortably in memory. It is worth stating
-that boundary in the report rather than implying brute force is always fine.
+wherever the matrix stops fitting comfortably in memory. State that boundary
+in the report rather than implying brute force is always fine.
 
 ### What the lexical boost actually buys
 
@@ -133,13 +133,13 @@ at the cost of a second model and a second cache.
 
 ## 5. Evaluate
 
-**Was hybrid retrieval the right design?** Yes. The SQL pre-filter is
+**Hybrid retrieval was the right design.** The SQL pre-filter is
 straightforwardly correct: structured constraints belong in a database, not in
 an embedding space. The lexical boost addresses a real, documented failure
 mode of pure vector search.
 
-**Was avoiding a vector database right?** Yes, and the reasoning generalises
-better than the decision itself: choose infrastructure for the scale you have,
+**Avoiding a vector database was right, and the reasoning generalises better
+than the decision itself:** choose infrastructure for the scale you have,
 and say what would change your mind. Reaching for FAISS at 36,000 vectors
 would have added a component to the architecture diagram, a dependency, a
 consistency problem, and approximation error, in exchange for nothing.

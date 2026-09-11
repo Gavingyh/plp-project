@@ -123,7 +123,7 @@ Every figure drawn from this project traces to
 external claim carries its source URL and access date in the file's Sources
 section.
 
-One correction found while writing this folder is worth flagging here, because
+One correction found while writing this folder belongs here, because
 it was about to go into the report as fact. The project context recorded
 "FinBERT benchmarks at ~88.2% accuracy vs ~62.1% for lexicon-only scoring" and
 marked it *verified, safe to cite*. It is neither. The FinBERT paper reports

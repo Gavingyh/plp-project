@@ -1,4 +1,4 @@
-# Data Viability Report — Phase 0
+# Data Viability Report
 
 Findings from running the actual pipeline against live data (2026-09-06),
 answering the unknowns flagged in the MVP plan before building further on them.
@@ -57,7 +57,7 @@ cause was coverage asymmetry rather than weighting. UOB's earnings PDFs have
 since been fetched from the Wayback Machine — UOB's IR site is WAF-blocked,
 the archive is not — giving UOB 1,600 earnings sentences against 4 before.
 
-The effect was immediate and is worth reporting: UOB's blended all-time score
+The effect was immediate and belongs in the report: UOB's blended all-time score
 moved from **-0.011 to +0.020** purely from closing the coverage gap, with no
 change to the scoring method. Earnings-only scores are now DBS +0.168,
 OCBC +0.206, UOB +0.229.
@@ -84,8 +84,8 @@ Python interpreter and produced zero data). Final corpus:
 
 OCBC is still the thinnest bank by a wide margin (~3.1x behind DBS by
 sentence count now, similar ratio to the original 12-month sample) but its
-absolute volume (3,815 sentences) is now easily enough to support Phase 4
-labeling's per-class minimums even after a three-way split. The full
+absolute volume (3,815 sentences) is now easily enough to support the
+labelling per-class minimums even after a three-way split. The full
 downstream pipeline (preprocess -> assign -> score -> aggregate) has been
 re-run against this complete corpus; `sentiment_index` reflects it.
 
@@ -142,8 +142,8 @@ Two separate issues, tested live:
   single run, against a ~1-month lookback window (free tier).
 - DBS `totalResults` reported 349 vs. 99 pulled — capped by `pageSize=100`
   and single-page fetch; a paginated pull would recover more of DBS's volume
-  specifically, worth doing before Phase 4 labeling export if DBS ever looks
-  thin relative to its actual coverage.
+  specifically, and doing it before the labelling export would help if DBS ever
+  looks thin relative to its actual coverage.
 - `content` field truncation confirmed as expected — usable text is title +
   description only.
 
@@ -233,7 +233,7 @@ source silently produced zero new documents while still exiting successfully.
 The corpus already held earnings sentences from an earlier working run, so
 nothing downstream looked wrong. Fixed, with a regression test.
 
-## Volume gate check (Phase 0 hard gate: ≥300 Reddit items/bank/12mo) — PASSED
+## Volume gate check (≥300 Reddit items per bank per 12 months) — PASSED
 
 Post-preprocessing sentence counts by bank, 2,453 documents processed into
 3,038 sentences total (2026-09-06 run):
@@ -250,7 +250,7 @@ anticipated). The DBS skew is real and large (~4.4x OCBC by sentence count)
 — consistent with the plan's anticipated Reddit DBS-dominance and worth
 stating plainly in the report rather than smoothing over, since it means the
 three banks' eventual sentiment indices rest on very different sample sizes.
-Worth revisiting before Phase 4 labeling: OCBC's 430 sentences need to
+Revisit this before the labelling export: OCBC's 430 sentences need to
 comfortably cover 200-300 examples *per sentiment class* once split three
 ways across positive/neutral/negative — thin, not failing, but the first
 place to add more source volume (extra subreddits, deeper history) if the

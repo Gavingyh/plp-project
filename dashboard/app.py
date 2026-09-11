@@ -104,7 +104,7 @@ def disclosure_footer():
         f"Last refreshed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. "
         "See docs/ for known data limitations (Reddit skews toward DBS, ~1-month news "
         "window, analyst view is a news-derived proxy, sentiment model is currently base "
-        "FinBERT pending Phase 5 fine-tuning)."
+        "FinBERT; the fine-tuned model does not exist yet)."
     )
 
 

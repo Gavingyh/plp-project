@@ -48,7 +48,7 @@ By bank: DBS 20,907 · UOB 10,601 · OCBC 5,376 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase: 9,270 lines of Python (6,542 excluding tests), 246 tests.
+Codebase: 9,270 lines of Python (6,542 excluding tests), 251 tests.
 
 Every figure on this page was re-taken from `data/plp.db` on 2026-09-11 and
 is recorded with its query in [verification-ledger.md](verification-ledger.md).
@@ -80,7 +80,7 @@ chatbot with four pluggable model backends and RAG evidence retrieval.
 Suggested starter questions are generated from the index rather than
 hardcoded, so the UI never offers a question the data cannot answer.
 
-**Engineering.** 246 tests (external APIs mocked with captured payloads),
+**Engineering.** 251 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the dashboard and API.
 

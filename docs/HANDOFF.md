@@ -209,7 +209,7 @@ learning-material work on branch `overnight/handoff-docs`. Nothing was pushed.
 - **New:** functional and technical specifications, 19 learning topics,
   `scripts/start.sh`/`stop.sh`/`status.sh`, `train/agreement.py`, and this
   file.
-- **Tests:** 214 → 246, all passing in 62 seconds on an idle machine.
+- **Tests:** 214 → 251, all passing in 62 seconds on an idle machine.
 
 ### Corrections
 
@@ -253,6 +253,23 @@ error counts in exactly the way fabrication rates are**, and only the
 fabrication case was documented. Corrected in STATUS; do not compare that
 column across models with different error counts. Detail in
 [evidence/chatbot-eval-rerun-2026-09-11.md](evidence/chatbot-eval-rerun-2026-09-11.md).
+
+### A bug the health check could not see
+
+The Aspect Heatmap tab and the Overview page's per-source table had **never
+rendered**. Both call pandas' `Styler.background_gradient`, which needs
+matplotlib, and matplotlib was absent from `requirements.txt` from the first
+commit. pandas defers that import until the Styler is rendered, inside
+`st.dataframe`, so nothing failed at import time and `scripts/start.sh`
+reported the dashboard healthy throughout — `/_stcore/health` answers for the
+server, not for any page.
+
+Fixed: matplotlib is declared, the tables fall back to a plain rounded view if
+it ever goes missing again, and `tests/test_dashboard_styling.py` forces
+`Styler._compute()`, which is the only thing that reproduces the failure.
+
+**Open every tab after starting the dashboard.** A health check cannot tell
+you a page renders.
 
 ### Runnable overnight next time
 

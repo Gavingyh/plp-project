@@ -183,7 +183,10 @@ What the scripts do that the raw commands below don't:
   on the same machine will already be there.
 - **Wait for a real health check** before reporting success — `/health` for
   the API, `/_stcore/health` for the dashboard — so a green message means the
-  service answers, not merely that a process exists.
+  service answers, not merely that a process exists. Note the limit: the
+  dashboard's endpoint reports that the Streamlit *server* is up, not that any
+  page renders. It reported healthy for months while two tables crashed on a
+  missing matplotlib. Open the page after starting it.
 - **Fail fast on the wrong interpreter**, with the same check
   `scripts/overnight_backfill.py` uses, instead of failing per-request later.
 - **Set `HF_HUB_OFFLINE=1`** and load `.env`.
@@ -304,7 +307,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-246 tests. No network calls — external APIs are mocked with captured real
+251 tests. No network calls — external APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
 
@@ -415,5 +418,7 @@ data size.
 | Step hangs, near-zero CPU | HuggingFace metadata check | `HF_HUB_OFFLINE=1` |
 | `Could not reach Ollama` | Ollama not running | `ollama serve` |
 | Dashboard: "No sentiment data yet" | pipeline not run | run steps 1–5 above |
+| Dashboard tab crashes with `Styler.background_gradient requires matplotlib` | dependencies not current | `.venv-plp/bin/python3 -m pip install -r requirements.txt` |
+| Dashboard log shows `No module named 'torchvision'` | Streamlit's file watcher walking `transformers`, which lazily imports vision models this project never uses | Harmless noise; ignore it |
 | Chatbot answer has a verification warning | model fabricated citations | don't trust it; try a hosted backend |
 | `pip: bad interpreter` | venv was created under an older directory name | use `.venv-plp/bin/python3 -m pip` |

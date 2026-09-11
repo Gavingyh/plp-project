@@ -1,10 +1,10 @@
 """
 Streamlit dashboard — see docs/DESIGN.md.
 
-Four views only, per plan scoping: bank overview, aspect heatmap, time series,
-evidence drill-down. Every view carries the plan's required disclosures:
-sample size (n), last-refresh timestamp, and a not-financial-advice notice —
-these are the trust anchors the plan calls out, not decoration.
+Five tabs: bank overview, aspect heatmap, time series, evidence drill-down and
+chat. Every view carries the disclosures the design calls for — sample size
+(n), last-refresh timestamp, and a not-financial-advice notice. Those are the
+trust anchors, not decoration.
 
 USAGE:
   streamlit run dashboard/app.py
@@ -26,6 +26,32 @@ setup_logging()
 logger = get_logger(__name__)
 
 BANKS = ["DBS", "OCBC", "UOB"]
+
+# pandas' Styler.background_gradient needs matplotlib, and it does not import it
+# until the Styler is RENDERED — inside st.dataframe, not where the Styler is
+# built. So a missing matplotlib produced a dashboard that started cleanly,
+# answered its health check, and then crashed on the heatmap tables. It was
+# absent from requirements.txt from the first commit, so those two tables had
+# never once rendered.
+#
+# matplotlib is a declared dependency now. This guard exists so that if it goes
+# missing again the tables lose their colour scale instead of taking down the
+# page, and so the degradation is visible rather than silent.
+try:
+    import matplotlib  # noqa: F401
+    HAS_MATPLOTLIB = True
+except ImportError:  # pragma: no cover - exercised by tests/test_dashboard_styling.py
+    HAS_MATPLOTLIB = False
+
+
+def heatmap_table(frame: pd.DataFrame):
+    """A red-yellow-green graded table, or a plain rounded one without matplotlib.
+
+    Returns something st.dataframe can render either way.
+    """
+    if HAS_MATPLOTLIB:
+        return frame.style.background_gradient(cmap="RdYlGn", vmin=-1, vmax=1).format("{:.3f}")
+    return frame.round(3)
 
 st.set_page_config(page_title="SG Bank Sentiment Dashboard", layout="wide")
 
@@ -102,9 +128,10 @@ def disclosure_footer():
     st.caption(
         f"Not financial advice — sentiment is an indicator, not a recommendation. "
         f"Last refreshed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. "
-        "See docs/ for known data limitations (Reddit skews toward DBS, ~1-month news "
-        "window, analyst view is a news-derived proxy, sentiment model is currently base "
-        "FinBERT; the fine-tuned model does not exist yet)."
+        "See docs/STATUS.md for known limitations (Reddit skews toward DBS, "
+        "~1-month news window, analyst figures are Yahoo consensus aggregates "
+        "rather than analyst reports, and the sentiment model is base FinBERT "
+        "applied zero-shot; the fine-tuned model does not exist yet)."
     )
 
 
@@ -143,12 +170,12 @@ with tab1:
     st.subheader("What the blended score is made of")
     st.caption(
         "The headline numbers above blend every source. These are the same "
-        "scores split by source — worth checking before comparing banks, "
-        "because coverage is currently very unequal: earnings material is "
-        "management describing its own results (measurably far more positive "
-        "than retail chatter), and UOB has almost none of it because its IR "
-        "site blocks automated access. A cross-bank gap may reflect that, not "
-        "real sentiment."
+        "scores split by source. Check them before comparing banks, because "
+        "coverage is very unequal: earnings material is management describing "
+        "its own results and scores far more positive than retail chatter, and "
+        "DBS contributes about six times as much of it as the other two "
+        "because it publishes analyst-call transcripts. A cross-bank gap in "
+        "the blended number may reflect that rather than real sentiment."
     )
     breakdown_df = load_source_breakdown()
     if breakdown_df.empty:
@@ -156,10 +183,9 @@ with tab1:
     else:
         pivot_src = breakdown_df.pivot(index="source", columns="bank", values="score")
         pivot_src_n = breakdown_df.pivot(index="source", columns="bank", values="n")
-        st.dataframe(
-            pivot_src.style.background_gradient(cmap="RdYlGn", vmin=-1, vmax=1).format("{:.3f}"),
-            use_container_width=True,
-        )
+        st.dataframe(heatmap_table(pivot_src), use_container_width=True)
+        if not HAS_MATPLOTLIB:
+            st.caption("Colour scale unavailable: matplotlib is not installed.")
         st.caption("Sentence count (n) behind each cell:")
         st.dataframe(pivot_src_n.fillna(0).astype(int), use_container_width=True)
 
@@ -203,10 +229,9 @@ with tab2:
     else:
         pivot_score = aspect_df.pivot(index="aspect", columns="bank", values="score")
         pivot_n = aspect_df.pivot(index="aspect", columns="bank", values="n")
-        st.dataframe(
-            pivot_score.style.background_gradient(cmap="RdYlGn", vmin=-1, vmax=1).format("{:.3f}"),
-            use_container_width=True,
-        )
+        st.dataframe(heatmap_table(pivot_score), use_container_width=True)
+        if not HAS_MATPLOTLIB:
+            st.caption("Colour scale unavailable: matplotlib is not installed.")
         st.caption("Sample size (n) per cell:")
         st.dataframe(pivot_n.astype(int), use_container_width=True)
     disclosure_footer()

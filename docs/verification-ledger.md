@@ -24,7 +24,7 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 |---|---|
 | Baseline, before any change | 214 passed in 25.02s |
 | After adding `tests/test_aspect_discover.py` | 217 passed in 59.50s |
-| Final, after `tests/test_scripts.py` and `tests/test_agreement.py` | **246 passed in 62.12s** (idle machine); 106.17s when a model evaluation ran alongside |
+| Final, after `tests/test_scripts.py` and `tests/test_agreement.py` | **251 passed in 62.12s** (idle machine); 106.17s when a model evaluation ran alongside |
 
 `grep -rhE '^\s*def test_' tests/ | wc -l` gives 200 function definitions.
 The gap to 214 is `@pytest.mark.parametrize` in
@@ -397,6 +397,61 @@ there, with the table now showing both runs for this model.
 work in this session, which is the most likely cause of the extra timeouts.
 That is this session's doing, not the model's. The confound it revealed holds
 regardless of cause.
+
+## 18. A dashboard bug the health check could not see
+
+Reported by the user on 2026-09-11 as a live crash:
+
+```
+pandas/io/formats/style.py, in _background_gradient
+    import_optional_dependency("matplotlib",
+        extra="Styler.background_gradient requires matplotlib.")
+ImportError
+```
+
+Verified:
+
+```bash
+.venv-plp/bin/python3 -c "import matplotlib"     # ModuleNotFoundError
+grep -i matplotlib requirements.txt              # absent
+git log -S"background_gradient" -- dashboard/app.py   # present since 0acb31d
+git log -S"matplotlib" -- requirements.txt       # never added
+```
+
+So the Aspect Heatmap tab and the Overview per-source table had **never
+rendered**, since the dashboard's first commit.
+
+Why nothing caught it, confirmed by experiment:
+
+```python
+s = df.style.background_gradient(cmap="RdYlGn", vmin=-1, vmax=1)  # succeeds
+s._compute()   # ImportError — this is what st.dataframe calls
+```
+
+The Styler is lazy, so the failure occurs at render, not at construction. A
+try/except at the call site would not have caught it, and neither would an
+import check on the module.
+
+**This run's own `scripts/start.sh` smoke test gave a false green.** It polled
+`/_stcore/health`, got 200, and reported the dashboard healthy. That endpoint
+answers for the Streamlit server, not for any page. Recorded in RUNBOOK and
+HANDOFF.
+
+After installing matplotlib 3.11.1, both real pivots were rendered end to end
+against `data/plp.db`:
+
+| table | shape | result |
+|---|---|---|
+| per-source (Overview) | 3x3 | renders, 2,099 bytes of HTML |
+| aspect heatmap (tab 2) | 5x3 | renders, 2,907 bytes of HTML |
+
+`tests/test_dashboard_styling.py` now forces `_compute()`. Suite: 246 -> 251.
+
+Separately, `data/logs/dashboard.log` shows repeated
+`ModuleNotFoundError: No module named 'torchvision'` from Streamlit's file
+watcher walking `transformers`, which lazily imports vision model processors
+(aria, beit) the project never uses. Noise, not a fault; documented in
+RUNBOOK's troubleshooting table.
 
 ## Command verification
 

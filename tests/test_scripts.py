@@ -51,14 +51,25 @@ def test_unknown_target_is_rejected(script):
     assert "unknown target" in result.stderr.lower()
 
 
-def test_stop_is_a_noop_when_nothing_is_running(tmp_path):
+def test_stop_is_idempotent():
     """stop.sh must succeed and say so when there is nothing to stop, so it is
-    safe to call unconditionally in a teardown."""
-    result = subprocess.run([os.path.join(SCRIPTS_DIR, "stop.sh"), "api"],
-                            capture_output=True, text=True, cwd=BASE_DIR,
-                            env={**os.environ, "PLP_API_PORT": "8009"})
-    assert result.returncode == 0
-    assert "not running" in result.stdout.lower()
+    safe to call unconditionally in a teardown.
+
+    Deliberately asserts on the SECOND call rather than the first. The first
+    may legitimately stop a service a developer happens to have running, and a
+    test that assumed otherwise failed spuriously exactly once for that reason.
+    Running it twice tests the contract without depending on machine state.
+    """
+    env = {**os.environ, "PLP_API_PORT": "8009"}
+    first = subprocess.run([os.path.join(SCRIPTS_DIR, "stop.sh"), "api"],
+                           capture_output=True, text=True, cwd=BASE_DIR, env=env)
+    assert first.returncode == 0, first.stderr
+
+    second = subprocess.run([os.path.join(SCRIPTS_DIR, "stop.sh"), "api"],
+                            capture_output=True, text=True, cwd=BASE_DIR, env=env)
+    assert second.returncode == 0, second.stderr
+    assert "not running" in second.stdout.lower()
+    assert not os.path.exists(os.path.join(BASE_DIR, "data", "run", "api.pid"))
 
 
 def test_start_refuses_a_port_it_does_not_own():

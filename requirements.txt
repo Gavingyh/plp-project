@@ -4,7 +4,7 @@ python-dotenv>=1.0.0
 pdfplumber>=0.11.0
 pyyaml>=6.0.0
 
-# Phase 3/5/6 — embeddings, clustering, sentiment scoring
+# Embeddings, clustering, sentiment scoring
 torch>=2.9.0
 transformers>=5.0.0
 accelerate>=1.1.0
@@ -12,21 +12,26 @@ scikit-learn>=1.7.0
 umap-learn>=0.5.0
 hdbscan>=0.8.0
 
-# Phase 2 — sentence segmentation
+# Sentence segmentation
 spacy>=3.8.0
 # after installing, also run: python -m spacy download en_core_web_sm
 
-# Phase 7 — dashboard
+# Dashboard
 streamlit>=1.40.0
+# Required by pandas Styler.background_gradient, which the dashboard's heatmaps
+# use. pandas defers the matplotlib import until the Styler is rendered, so
+# without this the dashboard starts fine and then crashes on the Aspect Heatmap
+# and per-source tables.
+matplotlib>=3.8.0
 
-# Phase 8 — chatbot (frontier backend; not required for the local Ollama backend)
+# Chatbot (frontier backend; not required for the local Ollama backend)
 anthropic>=0.40.0
 
 # Minimal API (api/) — a frontend other than the Streamlit dashboard consumes this
 fastapi>=0.115.0
 uvicorn>=0.30.0
 
-# Phase 5 evaluation — lexicon baseline
+# Evaluation — lexicon baseline
 vaderSentiment>=3.3.2
 
 # tests

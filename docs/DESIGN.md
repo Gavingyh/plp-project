@@ -110,7 +110,7 @@ F5 WAF that answers scripted requests with a challenge stub.
 The choice there was deliberate: rather than escalate to fingerprint-spoofing
 tools to defeat the WAF, the same PDFs are fetched from the Wayback Machine,
 which archived them at their original UOB URLs and is not behind that WAF
-(`ingest/uob_wayback_fetch.py`). The bytes are UOB's own published documents;
+(`ingest/earnings_fetch_uob.py`). The bytes are UOB's own published documents;
 only the transport differs. This respects the signal the WAF is sending while
 still closing a coverage gap that had invalidated every cross-bank
 comparison in the project — UOB went from 4 earnings sentences to 1,600.

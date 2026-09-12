@@ -1,19 +1,27 @@
 """
-Quarterly earnings release ingestion, see docs/DESIGN.md.
+Earnings PDFs -> documents. The second stage of earnings ingestion.
 
-There is no free API for SGX company announcements worth building against.
-This is a ONE-TIME MANUAL CORPUS: a team member downloads results announcements
-/ investor presentations from each bank's investor-relations site and drops the
-PDFs into data/earnings_pdfs/<BANK>/*.pdf. This script extracts text, discards
-numeric tables (FinBERT scores them as noise), and ingests the prose sections.
+The earnings pipeline is three modules, and this is the last of them:
 
-This corpus is static — run it once after PDFs are added, not part of the
-daily batch.
+    earnings_fetch_ir.py    downloads DBS's and OCBC's PDFs from their own
+                            investor-relations sites
+    earnings_fetch_uob.py   downloads UOB's from the Wayback Machine, because
+                            UOB's IR site is WAF-blocked
+    earnings_extract.py     THIS FILE — reads whatever is in
+                            data/earnings_pdfs/<BANK>/, extracts prose,
+                            discards numeric tables (FinBERT scores them as
+                            noise), and upserts into `documents`
+
+It does not care which fetcher produced a PDF, or whether a human put it there
+by hand. Run it after either fetcher, or after dropping files in yourself.
+
+Not part of the daily batch: the corpus only changes when a bank publishes,
+which is twice a year plus business updates.
 
 REQUIRES: pip install pdfplumber
 
 USAGE:
-  python -m ingest.earnings
+  python -m ingest.earnings_extract
 """
 
 import os
@@ -22,7 +30,6 @@ from datetime import datetime
 
 from ingest.base import BANKS
 from ingest.db import make_doc_id, now_iso, upsert_documents
-from ingest.earnings_fetch import _quarter_to_announcement_date
 
 from config.logging_config import get_logger, setup_logging
 
@@ -36,6 +43,49 @@ PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
 # statement table row, not prose — drop it (see docs/DESIGN.md).
 _NUMERIC_LINE = re.compile(r"^[\d\s.,()%$SGDsgd/-]{10,}$")
 _MIN_PROSE_LEN = 40
+
+
+# Filename -> announcement date. Lives here, with extraction, because that is
+# the only place it is used and because it parses BOTH fetchers' naming
+# conventions. It previously sat in the DBS/OCBC fetcher, which never called
+# it, while handling UOB's format.
+def _quarter_to_announcement_date(filename: str) -> str | None:
+    """Maps a reporting period in the filename to the approximate date those
+    results were announced, e.g. "2Q26_analyst_transcript.pdf" -> 2026-08-01.
+
+    WHY THIS MATTERS: without it every earnings document gets stamped with
+    ingestion time, which would drop the entire back-catalogue into the
+    dashboard's 7d/30d rolling windows at once and badly distort recent
+    sentiment. Approximate-but-right beats precise-and-wrong here; the day of
+    month is nominal, the quarter is what actually matters for windowing.
+    """
+    # UOB's IR naming: "ceo-presentation-2q-2021.pdf" — lowercase q, four-digit
+    # year. Checked BEFORE the two-digit form below, which would otherwise read
+    # the "20" of "2021" as the year.
+    m = re.search(r"([1-4])[qQ][-_ ]?(\d{4})", filename)
+    if m:
+        quarter, year = int(m.group(1)), int(m.group(2))
+        month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
+        return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
+    # 1Q26 / 2Q26 / 3Q26 / 4Q26
+    m = re.search(r"([1-4])Q(\d{2})", filename)
+    if m:
+        quarter, yy = int(m.group(1)), int(m.group(2))
+        year = 2000 + yy
+        month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
+        return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
+    # 1H26 (half-year, reported with Q2) / 2H26 (reported with Q4)
+    m = re.search(r"([12])H(\d{2})", filename)
+    if m:
+        half, yy = int(m.group(1)), int(m.group(2))
+        year = 2000 + yy
+        return (f"{year:04d}-08-01T00:00:00+00:00" if half == 1
+                else f"{year + 1:04d}-02-01T00:00:00+00:00")
+    # FY25 — full-year results, announced early the following year
+    m = re.search(r"FY(\d{2})", filename)
+    if m:
+        return f"{2000 + int(m.group(1)) + 1:04d}-02-01T00:00:00+00:00"
+    return None
 
 
 def _is_prose(line: str) -> bool:

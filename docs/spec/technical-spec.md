@@ -19,7 +19,7 @@ Rather than redraw it, here is one sentence's journey through the system, with
 `sentence_id` as the thread that ties it together.
 
 A DBS analyst-call transcript PDF is downloaded to
-`data/earnings_pdfs/DBS/`. `ingest.earnings` extracts prose lines from it,
+`data/earnings_pdfs/DBS/`. `ingest.earnings_extract` extracts prose lines from it,
 skipping table rows and headers, and writes one `documents` row with a
 `doc_id` hashed deterministically from source plus native identifier, so
 re-running inserts nothing new. `preprocess.pipeline` picks up that document
@@ -51,7 +51,7 @@ criticise an app in consecutive sentences.
 
 | module | responsibility | entry points |
 |---|---|---|
-| `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection | `arctic_shift`, `newsapi`, `earnings`, `earnings_fetch`, `uob_wayback_fetch`, `yahoo_analyst`, `analyst_tag`, `alphavantage` |
+| `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection | `arctic_shift`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
 | `preprocess/` | Documents to sentences; labelling exports | `pipeline`, `export_candidates`, `export_blind_test` |
 | `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison | `assign`, `discover`, `compare_taxonomies`, `embed_store` |
 | `sentiment/` | Aspect-conditioned sentiment classification | `score` |

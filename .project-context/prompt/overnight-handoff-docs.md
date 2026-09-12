@@ -101,8 +101,8 @@ Re-verify anything you rely on, but do not re-derive it from scratch.
   (`aggregate/index.py`, `api/main.py`, `chatbot/run_eval.py`,
   `chatbot/tools.py`, `dashboard/app.py`, `docs/DESIGN.md`,
   `docs/RUNBOOK.md`, `docs/STATUS.md`, `docs/data-viability.md`,
-  `ingest/earnings.py`, `ingest/earnings_fetch.py`, `sentiment/score.py`)
-  and 9 untracked (`chatbot/suggestions.py`, `ingest/uob_wayback_fetch.py`,
+  `ingest/earnings_extract.py`, `ingest/earnings_fetch_ir.py`, `sentiment/score.py`)
+  and 9 untracked (`chatbot/suggestions.py`, `ingest/earnings_fetch_uob.py`,
   `preprocess/export_blind_test.py`, `scripts/compare_chatbot_models.sh`,
   five `tests/test_*.py`). Plus an empty untracked directory
   `docs/implementation-plan/` (delete it).
@@ -115,9 +115,9 @@ Re-verify anything you rely on, but do not re-derive it from scratch.
   (`preprocess/export_blind_test.py`, `data/labeled/test_blind.csv`, a
   "leakage repair" backup `candidates.csv.pre-leakage-repair.bak`);
   `--tag` on `chatbot/run_eval.py`; UOB filename date parsing in
-  `ingest/earnings_fetch.py`; a fix in `ingest/earnings.py` changing
+  `ingest/earnings_fetch_ir.py`; a fix in `ingest/earnings_extract.py` changing
   `text.split("")` to `text.split("\n")` (check `git show
-  HEAD:ingest/earnings.py` and `tests/test_earnings_extract.py` before
+  HEAD:ingest/earnings_extract.py` and `tests/test_earnings_extract.py` before
   describing what was broken).
 - Tests: `grep -c 'def test_'` gives 200 functions across `tests/`;
   `docs/RUNBOOK.md` says 214. Run pytest to get the real collected count.

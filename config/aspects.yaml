@@ -30,8 +30,8 @@
 # This is expected, not a bug: r/singaporefi is personal-finance-oriented,
 # not equity-analyst-oriented, so granular analyst-style aspects are sparse
 # in Reddit chat. They should show up once earnings-release text is ingested
-# (`python -m ingest.earnings` — still pending a human downloading the PDFs,
-# see ingest/earnings_fetch.py) — that's where NIM/asset-quality/guidance language
+# (`python -m ingest.earnings_extract` — still pending a human downloading the PDFs,
+# see ingest/earnings_fetch_ir.py) — that's where NIM/asset-quality/guidance language
 # actually lives. Until then, treat aspect-level breakdowns from this seeded
 # taxonomy as provisional (assign.py's floor is currently too permissive —
 # most sentences match ~4 of 5 aspects near-equally, see docs/data-viability.md).

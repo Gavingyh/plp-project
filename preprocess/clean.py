@@ -40,7 +40,7 @@ def clean_reddit(text: str) -> str | None:
 
 
 def clean_earnings(text: str) -> str:
-    # Numeric-table filtering already happened at extraction time (ingest/earnings.py).
+    # Numeric-table filtering already happened at extraction time (ingest/earnings_extract.py).
     return _WHITESPACE.sub(" ", text).strip()
 
 

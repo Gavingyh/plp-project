@@ -64,7 +64,7 @@ handshake that exists specifically to slow automated access.
 
 | decision | where | disclosed in |
 |---|---|---|
-| UOB via Wayback rather than defeating the WAF | `ingest/uob_wayback_fetch.py` | `docs/DESIGN.md` decision 3, RUNBOOK |
+| UOB via Wayback rather than defeating the WAF | `ingest/earnings_fetch_uob.py` | `docs/DESIGN.md` decision 3, RUNBOOK |
 | Yahoo consensus as an unofficial API | `ingest/yahoo_analyst.py` | Module docstring, dashboard, API response |
 | Reddit via Arctic Shift after the API was declined | `ingest/arctic_shift.py` | `docs/DESIGN.md` decision 2 |
 | SGX and sginvestors.io not scraped | — | `docs/data-viability.md` |
@@ -194,7 +194,7 @@ curl -s -o /dev/null -w "wayback status %{http_code}\n" \
   "http://archive.org/wayback/available?url=uobgroup.com"
 
 # And what the project's own dry run reports
-.venv-plp/bin/python3 -m ingest.uob_wayback_fetch --dry-run 2>&1 | tail -20
+.venv-plp/bin/python3 -m ingest.earnings_fetch_uob --dry-run 2>&1 | tail -20
 ```
 
 Be considerate: run each once, not in a loop.
@@ -254,7 +254,7 @@ point of the exercise.
 
 **Repository**
 
-- `ingest/uob_wayback_fetch.py` — the WAF signature and the archive rationale
+- `ingest/earnings_fetch_uob.py` — the WAF signature and the archive rationale
 - `ingest/yahoo_analyst.py` — the unofficial-API caveat and the naming warning
 - `ingest/arctic_shift.py` — why PRAW was unavailable
 - `ingest/base.py` — `request_with_retries`, the backoff
@@ -265,7 +265,7 @@ point of the exercise.
 **Measured in this repository**
 
 - The 199-byte challenge stub, `Request Redirected` and `TS.request.ID`
-  markers, recorded in `ingest/uob_wayback_fetch.py` and `docs/RUNBOOK.md`
+  markers, recorded in `ingest/earnings_fetch_uob.py` and `docs/RUNBOOK.md`
   from live testing on 2026-09-10. **Not re-tested during this pass** — the
   exercise in section 6 re-checks it.
 

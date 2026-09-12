@@ -71,7 +71,7 @@ of 2.19 is between "buy" and "hold", nearer buy.
 | Chatbot tool | `chatbot/tools.py`, `get_analyst_consensus` |
 | API endpoint | `api/main.py`, `/analyst-consensus` |
 | The news-derived proxy that found nothing | `ingest/analyst_tag.py` |
-| PDF fetchers | `ingest/earnings_fetch.py`, `ingest/uob_wayback_fetch.py` |
+| PDF fetchers | `ingest/earnings_fetch_ir.py`, `ingest/earnings_fetch_uob.py` |
 | Reasoning | `docs/DESIGN.md` decisions 3 and 7 |
 
 ---

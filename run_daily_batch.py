@@ -6,7 +6,7 @@ live/streaming pipeline (a deliberate scope decision; see docs/DESIGN.md).
 Pulls NewsAPI + Alpha Vantage (last day or so of news) and Arctic Shift
 (incremental Reddit pull since the last run), upserts into data/plp.db.
 Earnings PDFs are NOT part of this — that corpus is static, run
-`python -m ingest.earnings` once after adding PDFs.
+`python -m ingest.earnings_extract` once after adding PDFs.
 
 USAGE:
   python run_daily_batch.py                  # incremental: Reddit since 7 days ago

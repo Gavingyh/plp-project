@@ -260,7 +260,7 @@ scripted requests with a challenge stub, so the direct fetch used for DBS and
 OCBC could not reach it.
 
 Resolved by fetching the same PDFs from the Wayback Machine, which is not
-behind that WAF (`ingest/uob_wayback_fetch.py`): 66 quarterly documents,
+behind that WAF (`ingest/earnings_fetch_uob.py`): 66 quarterly documents,
 2020–2025, giving UOB 1,600 earnings sentences. UOB's blended all-time score
 moved from -0.011 to +0.020 as a direct result — a clean illustration of how
 much a coverage gap had been distorting the comparison.
@@ -422,7 +422,7 @@ Roughly in order of value.
    viable and can run free on the local Ollama model.
 2. ~~**Add UOB earnings.**~~ Done — 66 quarterly PDFs (2020–2025) fetched
    from the Wayback Machine, which is not behind the WAF that blocks UOB's
-   IR site. See `ingest/uob_wayback_fetch.py`.
+   IR site. See `ingest/earnings_fetch_uob.py`.
 3. **Settle the aspect taxonomy.** Re-run discovery on the enriched corpus,
    review with the supervisor, freeze the decision.
 4. **Fix advice-declining, and switch the default local model.** The

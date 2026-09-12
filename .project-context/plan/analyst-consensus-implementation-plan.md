@@ -14,7 +14,7 @@ Execute tasks **in order**. Each task has a verification step. **Do not start a 
 
 - `ingest/db.py` — SQLite connection + schema. Tables: `documents`, `sentences`, `sentence_aspects`, `aspect_sentiment`, `sentiment_index`.
 - `ingest/base.py` — `BANKS` dict, `detect_banks()`, `resolve_bank()`, `request_with_retries()`.
-- `ingest/newsapi.py`, `ingest/arctic_shift.py`, `ingest/earnings.py`, `ingest/analyst_tag.py` — existing ingest adapters.
+- `ingest/newsapi.py`, `ingest/arctic_shift.py`, `ingest/earnings_extract.py`, `ingest/analyst_tag.py` — existing ingest adapters.
 - `run_daily_batch.py` — the batch entrypoint.
 - `chatbot/tools.py` — chatbot tool functions + `TOOL_SCHEMAS` + `TOOL_FUNCTIONS`.
 - `dashboard/app.py` — Streamlit dashboard.

@@ -73,8 +73,8 @@ So a bank's financial year produces:
 |---|---|
 | Bank names, aliases, ticker mapping, detection | `ingest/base.py` |
 | Yahoo symbols and the consensus fetch | `ingest/yahoo_analyst.py` |
-| DBS and OCBC IR fetchers, filename date parsing | `ingest/earnings_fetch.py` |
-| UOB via the Wayback Machine | `ingest/uob_wayback_fetch.py` |
+| DBS and OCBC IR fetchers, filename date parsing | `ingest/earnings_fetch_ir.py` |
+| UOB via the Wayback Machine | `ingest/earnings_fetch_uob.py` |
 | Downloaded PDFs | `data/earnings_pdfs/<BANK>/` |
 | Why SGX was rejected as a source | `docs/DESIGN.md` decision 3 |
 
@@ -112,7 +112,7 @@ document share one numbering scheme: the half-year and full-year files are
 statutory results, the 1Q and 3Q files are voluntary business updates. UOB and
 DBS use `1q-2021` and `1Q23` style markers throughout.
 
-This has a direct effect on the data. `ingest/earnings_fetch.py` maps a
+This has a direct effect on the data. `ingest/earnings_fetch_ir.py` maps a
 filename's quarter to a nominal announcement date — `2Q26` becomes
 2026-08-01 — because without it every historical document would carry
 ingestion time and the entire back-catalogue would land inside the dashboard's
@@ -233,7 +233,7 @@ fix.)
 3. Why does DBS have roughly six times the earnings sentences of the other two
    banks?
 4. Why are third-party analyst reports absent from SGX?
-5. Why does `ingest/earnings_fetch.py` parse a date out of the filename rather
+5. Why does `ingest/earnings_fetch_ir.py` parse a date out of the filename rather
    than using ingestion time?
 
 <details>
@@ -268,8 +268,8 @@ fix.)
 
 - `ingest/base.py` — bank aliases and ticker mapping
 - `ingest/yahoo_analyst.py` — Yahoo symbols and the unofficial-API caveat
-- `ingest/earnings_fetch.py` — filename date parsing and its rationale
-- `ingest/uob_wayback_fetch.py` — the WAF and the archive route
+- `ingest/earnings_fetch_ir.py` — filename date parsing and its rationale
+- `ingest/earnings_fetch_uob.py` — the WAF and the archive route
 - `docs/DESIGN.md` decision 3 — why not SGX
 - `docs/data-viability.md` — Alpha Vantage and SGX access tests
 

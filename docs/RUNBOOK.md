@@ -104,13 +104,25 @@ appears in the logs; the log file also captures DEBUG detail
 
 ## One-off ingestion tasks
 
+Earnings ingestion is three modules: two fetchers that put PDFs on disk, and
+one extractor that reads whatever is there.
+
+| module | does what |
+|---|---|
+| `ingest.earnings_fetch_ir` | Downloads DBS's and OCBC's PDFs from their IR sites |
+| `ingest.earnings_fetch_uob` | Downloads UOB's from the Wayback Machine, because its IR site is WAF-blocked |
+| `ingest.earnings_extract` | Turns everything in `data/earnings_pdfs/<BANK>/` into `documents` |
+
+The extractor does not care which fetcher produced a file, or whether you put
+it there by hand. Run it after either.
+
 ```bash
 # Download earnings PDFs from DBS and OCBC IR sites (~116 files, several minutes)
-.venv-plp/bin/python3 -m ingest.earnings_fetch --dry-run   # preview first
-.venv-plp/bin/python3 -m ingest.earnings_fetch
+.venv-plp/bin/python3 -m ingest.earnings_fetch_ir --dry-run   # preview first
+.venv-plp/bin/python3 -m ingest.earnings_fetch_ir
 
 # Extract prose from downloaded PDFs into the documents table
-.venv-plp/bin/python3 -m ingest.earnings
+.venv-plp/bin/python3 -m ingest.earnings_extract
 
 # Analyst consensus (fast, safe to re-run daily)
 .venv-plp/bin/python3 -m ingest.yahoo_analyst
@@ -120,15 +132,15 @@ appears in the logs; the log file also captures DEBUG detail
 
 UOB's IR site sits behind an F5 WAF that answers any scripted request with a
 199-byte challenge stub (`Request Redirected` / `TS.request.ID`), so
-`ingest.earnings_fetch` cannot reach it the way it reaches DBS and OCBC.
+`ingest.earnings_fetch_ir` cannot reach it the way it reaches DBS and OCBC.
 
 The Wayback Machine holds captures of the same PDFs at their original UOB
 URLs and is not behind that WAF, so fetch them from there instead:
 
 ```bash
-.venv-plp/bin/python3 -m ingest.uob_wayback_fetch --dry-run   # preview
-.venv-plp/bin/python3 -m ingest.uob_wayback_fetch             # ~67 PDFs, 2020-2025
-.venv-plp/bin/python3 -m ingest.earnings                      # extract prose
+.venv-plp/bin/python3 -m ingest.earnings_fetch_uob --dry-run   # preview
+.venv-plp/bin/python3 -m ingest.earnings_fetch_uob             # ~67 PDFs, 2020-2025
+.venv-plp/bin/python3 -m ingest.earnings_extract                # extract prose
 ```
 
 The bytes are UOB's own published PDFs; only the transport differs. Two

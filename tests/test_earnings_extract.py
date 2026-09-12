@@ -1,5 +1,5 @@
 """
-Tests for ingest/earnings.py prose extraction.
+Tests for ingest/earnings_extract.py prose extraction.
 
 These exist because of a real, total-breakage bug that shipped unnoticed:
 `extract_prose` called `text.split("")` - an empty separator, which raises
@@ -12,9 +12,11 @@ The lesson driving these tests: a function whose failure mode is "silently
 returns nothing" needs a test that asserts it returns something.
 """
 
+import pytest
 from unittest.mock import MagicMock, patch
 
-from ingest.earnings import _is_prose, extract_prose
+from ingest.earnings_extract import (_is_prose, _quarter_to_announcement_date,
+                                     extract_prose)
 
 
 def _pdf_with_pages(*page_texts):
@@ -82,3 +84,34 @@ def test_is_prose_rejects_number_heavy_lines():
 def test_is_prose_accepts_a_real_sentence():
     assert _is_prose(
         "Net interest margin improved to 1.58% on the back of higher rates") is True
+
+
+# ---------------------------------------------------------------------------
+# Period -> announcement date
+#
+# Lives here because the function does, and it does because extraction is its
+# only caller. It parses BOTH fetchers' naming conventions: DBS and OCBC use
+# "2Q26"/"1H26"/"FY25", UOB uses "2q-2021".
+#
+# Without it every earnings document would be stamped with ingestion time,
+# dropping the whole back-catalogue into the dashboard's 7d/30d rolling
+# windows at once.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("filename,expected_prefix", [
+    ("2Q26_analyst_transcript.pdf", "2026-08"),
+    ("1Q23_CEO_presentation.pdf", "2023-05"),
+    ("3Q24_media_transcript.pdf", "2024-11"),
+    ("4Q25_press_statement.pdf", "2026-02"),      # Q4 reported early the NEXT year
+    ("OCBC 1H26 CEO Presentation.pdf", "2026-08"),
+    ("OCBC FY25 Results Presentation.pdf", "2026-02"),  # FY reported the next year
+    ("ceo-presentation-2q-2021.pdf", "2021-08"),  # UOB's lowercase, four-digit form
+    ("cfo-presentation-1q-2023.pdf", "2023-05"),
+])
+def test_period_parsed_to_announcement_date(filename, expected_prefix):
+    assert _quarter_to_announcement_date(filename).startswith(expected_prefix)
+
+
+def test_unrecognised_filename_returns_none():
+    # Caller falls back to ingestion time only in this case.
+    assert _quarter_to_announcement_date("some_random_document.pdf") is None

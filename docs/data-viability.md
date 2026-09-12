@@ -6,7 +6,7 @@ answering the unknowns flagged in the MVP plan before building further on them.
 ## Earnings ingestion + the cross-bank comparability problem (2026-09-07)
 
 Earnings PDFs are now ingested automatically from DBS's and OCBC's own IR
-sites (`ingest/earnings_fetch.py`) — 116 PDFs, 115 documents, 10,658
+sites (`ingest/earnings_fetch_ir.py`) — 116 PDFs, 115 documents, 10,658
 sentences. This closed the vocabulary gap that had crippled the aspect
 taxonomy: "net interest margin" appears in 298 earnings sentences vs **0**
 in the entire Reddit corpus; "asset quality" 128 vs 0; "non-performing"
@@ -221,8 +221,8 @@ This section recorded earnings ingestion as a manual step needing a human to
 download PDFs. It is fully automated now and has been since 2026-09-07;
 kept here because the sequence matters to the story.
 
-`ingest/earnings_fetch.py` pulls DBS's and OCBC's PDFs directly from their IR
-sites, and `ingest/uob_wayback_fetch.py` pulls UOB's from the Wayback Machine
+`ingest/earnings_fetch_ir.py` pulls DBS's and OCBC's PDFs directly from their IR
+sites, and `ingest/earnings_fetch_uob.py` pulls UOB's from the Wayback Machine
 because UOB's own site is WAF-blocked. 178 documents and 12,254 sentences are
 now in the corpus. See [RUNBOOK.md](RUNBOOK.md) for the commands.
 

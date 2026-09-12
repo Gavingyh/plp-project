@@ -186,7 +186,7 @@ learning-material work on branch `overnight/handoff-docs`. Nothing was pushed.
   series plus suggestions plus the dashboard Chat tab, and the blind test
   export.
 - **Four real defects found and fixed**, each with a regression test:
-  - `ingest/earnings.py` called `text.split("")`, an empty separator that
+  - `ingest/earnings_extract.py` called `text.split("")`, an empty separator that
     raises `ValueError` on every PDF page while the caller swallowed the
     exception, so the earnings source silently produced nothing.
   - `aspects/discover.py` bound one SQL parameter per sentence and had been

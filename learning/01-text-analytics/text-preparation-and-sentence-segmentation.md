@@ -87,7 +87,7 @@ still produces fragments occasionally, even with the abbreviation exceptions.
 | spaCy segmentation, abbreviation exceptions, 15-char floor | `preprocess/segment.py` |
 | Per-source cleaners, bot detection | `preprocess/clean.py` |
 | Orchestration, bank attribution, `norm_hash`, 4-word floor | `preprocess/pipeline.py` |
-| PDF prose extraction and its `_is_prose` filter | `ingest/earnings.py` |
+| PDF prose extraction and its `_is_prose` filter | `ingest/earnings_extract.py` |
 | Bank name detection | `ingest/base.py` |
 
 The model is loaded with `disable=["ner", "lemmatizer", "tagger"]`. Only the
@@ -276,7 +276,7 @@ sentence on whether the automated 2.6% is a floor or a fair estimate.
 - `preprocess/segment.py` — spaCy, the abbreviation list, the 15-char floor
 - `preprocess/clean.py` — per-source cleaners, bot markers
 - `preprocess/pipeline.py` — attribution, `norm_hash`, the 4-word floor
-- `ingest/earnings.py` — `_is_prose` and the `split("")` regression
+- `ingest/earnings_extract.py` — `_is_prose` and the `split("")` regression
 - `tests/test_earnings_extract.py` — the test written for that regression
 - `docs/DESIGN.md` — "Per-sentence bank attribution"
 - `docs/evidence/extraction-quality-2026-09-11.txt` — the 2.6% measurement

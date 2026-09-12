@@ -28,8 +28,8 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 
 `grep -rhE '^\s*def test_' tests/ | wc -l` gives 200 function definitions.
 The gap to 214 is `@pytest.mark.parametrize` in
-`tests/test_earnings_fetch.py`, `tests/test_logging_config.py` and
-`tests/test_uob_wayback_fetch.py`, confirmed with
+`tests/test_earnings_fetch_ir.py`, `tests/test_logging_config.py` and
+`tests/test_earnings_fetch_uob.py`, confirmed with
 `pytest --collect-only -q` (214 collected).
 
 **Correction to `docs/RUNBOOK.md`:** it claimed "214 tests, ~2 minutes". The
@@ -135,10 +135,10 @@ Capacity ceiling is therefore about 4.4 TB against a current 83 MB file. The
 storage limit. Recorded because it prompted a real question about whether to
 change database, and the answer rests on these numbers.
 
-## 5. `ingest/earnings.py` prose extraction
+## 5. `ingest/earnings_extract.py` prose extraction
 
 ```bash
-git show HEAD:ingest/earnings.py | sed -n '60p' | od -c
+git show HEAD:ingest/earnings_extract.py | sed -n '60p' | od -c
 #   f o r   l i n e   i n   t e x t . s p l i t ( " " ) :
 .venv-plp/bin/python3 -c "'a\nb'.split('')"
 # ValueError: empty separator
@@ -452,6 +452,48 @@ Separately, `data/logs/dashboard.log` shows repeated
 watcher walking `transformers`, which lazily imports vision model processors
 (aria, beit) the project never uses. Noise, not a fault; documented in
 RUNBOOK's troubleshooting table.
+
+## 19. Renaming the earnings modules
+
+`ingest/` mixed three naming conventions, and the earnings group was the worst
+of it: two of its three files sounded like the same thing while doing
+different stages, and the third was named after its transport rather than its
+job.
+
+| before | after | why |
+|---|---|---|
+| `earnings.py` | `earnings_extract.py` | It is the extract stage, not "earnings" in general |
+| `earnings_fetch.py` | `earnings_fetch_ir.py` | Fetches from the banks' IR sites (DBS, OCBC) |
+| `uob_wayback_fetch.py` | `earnings_fetch_uob.py` | Same job as its sibling, for one bank. Wayback is the transport, explained in the docstring |
+
+Tests renamed to match. `tests/test_earnings_extract.py` already carried the
+right name, which is some evidence the scheme is the natural one.
+
+**A coupling the rename exposed.** `_quarter_to_announcement_date` lived in
+the DBS/OCBC fetcher, which never called it, while handling UOB's `2q-2021`
+filename format, and was imported only by the extractor. Moved to
+`earnings_extract.py` where its single caller is, along with its tests, which
+gained two UOB-format cases they never had. Neither fetcher now imports the
+other.
+
+**Two stale claims fixed while renaming.** The IR fetcher's docstring and its
+runtime log both said UOB's PDFs "should be downloaded by hand" — untrue since
+`earnings_fetch_uob.py` was written. The extractor's docstring described a
+"ONE-TIME MANUAL CORPUS" that a team member downloads, from before either
+fetcher existed.
+
+**A find-and-replace collision, caught by the tests.** Applying the renames in
+sequence turned `ingest.earnings_fetch_uob` into
+`ingest.earnings_fetch_ir_uob`, because the `earnings_fetch` -> `_ir` rule
+matched the prefix of a string an earlier rule had just created. 12 instances
+across 4 files; caught immediately by a collection error and repaired. Worth
+recording as the hazard of ordered string substitution over a shared prefix.
+
+Verified: 253 tests pass (up from 251, from the two added UOB filename cases),
+all three modules respond to `-m`, all 96 relative documentation links
+resolve, and the database is unchanged at 21,924 documents and 178 earnings
+documents after an accidental run of the extractor, which is what its
+idempotency is for.
 
 ## Command verification
 

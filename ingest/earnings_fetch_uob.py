@@ -1,8 +1,12 @@
 """
-Fetch UOB's quarterly results PDFs from the Wayback Machine.
+Downloads UOB's quarterly earnings PDFs from the Wayback Machine.
 
-WHY THIS EXISTS: DBS and OCBC publish their IR PDFs over plain HTTP and
-ingest/earnings_fetch.py downloads them directly. UOB sits behind an F5 WAF
+Stage one of three, for one bank. Its sibling ingest/earnings_fetch_ir.py does
+the same job for DBS and OCBC, and ingest/earnings_extract.py then turns
+whatever landed in data/earnings_pdfs/<BANK>/ into `documents`.
+
+WHY A SEPARATE FETCHER: DBS and OCBC publish their IR PDFs over plain HTTP and
+ingest/earnings_fetch_ir.py downloads them directly. UOB sits behind an F5 WAF
 that answers any scripted request with a redirect to a challenge page
 ("Request Redirected" / TS.request.ID), so the same approach returns a
 199-byte stub instead of a listing. That left UOB with 4 earnings sentences
@@ -23,8 +27,8 @@ LIMITS worth knowing before relying on this:
     magic bytes and anything that is not a real PDF is discarded.
 
 USAGE:
-  python -m ingest.uob_wayback_fetch --dry-run      # list what would be fetched
-  python -m ingest.uob_wayback_fetch                # download into data/earnings_pdfs/UOB/
+  python -m ingest.earnings_fetch_uob --dry-run      # list what would be fetched
+  python -m ingest.earnings_fetch_uob                # download into data/earnings_pdfs/UOB/
 """
 
 import argparse
@@ -46,13 +50,13 @@ CDX_URL = "http://web.archive.org/cdx/search/cdx"
 UOB_PDF_PREFIX = "uobgroup.com/investor-relations/assets/pdfs/investor/financial*"
 
 # Prose-rich documents, using UOB's own naming. Deliberately mirrors the
-# intent of _KEEP_PATTERNS in earnings_fetch.py: management commentary and
+# intent of _KEEP_PATTERNS in earnings_fetch_ir.py: management commentary and
 # press releases, not statement tables.
 _KEEP = re.compile(r"ceo-presentation|cfo-presentation|ceo-slides|cfo-slides|"
                    r"newsrelease|news-release|performance-highlights|financial-updates",
                    re.IGNORECASE)
 
-# Numeric or regulatory documents. ingest/earnings.py drops lines that are
+# Numeric or regulatory documents. ingest/earnings_extract.py drops lines that are
 # >40% digits, so these would survive download only to be stripped to nothing.
 _SKIP = re.compile(r"pillar-?3|regulatory-disclosures|selected-f|corp-factsheet|"
                    r"condensed-financial|interim-financial|key-fea|gp-financial|"

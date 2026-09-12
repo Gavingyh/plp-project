@@ -1,5 +1,5 @@
 """
-Tests for ingest/earnings_fetch.py — discovering and downloading earnings
+Tests for ingest/earnings_fetch_ir.py — discovering and downloading earnings
 PDFs from DBS's and OCBC's investor-relations sites.
 
 The listing-page HTML fixtures below are trimmed copies of real markup
@@ -12,7 +12,7 @@ No network calls — requests.get is mocked throughout.
 
 import pytest
 
-from ingest.earnings_fetch import (SOURCES, _quarter_to_announcement_date, discover, fetch)
+from ingest.earnings_fetch_ir import SOURCES, discover, fetch
 
 # Trimmed from the real DBS quarterly-financials page.
 _DBS_LISTING_HTML = """
@@ -44,28 +44,6 @@ class _FakeResponse:
 
 
 # ---------------------------------------------------------------------------
-# Period -> announcement date (guards against dumping the back-catalogue into
-# the dashboard's 7d/30d rolling windows)
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("filename,expected_prefix", [
-    ("2Q26_analyst_transcript.pdf", "2026-08"),
-    ("1Q23_CEO_presentation.pdf", "2023-05"),
-    ("3Q24_media_transcript.pdf", "2024-11"),
-    ("4Q25_press_statement.pdf", "2026-02"),      # Q4 reported early the NEXT year
-    ("OCBC 1H26 CEO Presentation.pdf", "2026-08"),
-    ("OCBC FY25 Results Presentation.pdf", "2026-02"),  # FY reported the next year
-])
-def test_period_parsed_to_announcement_date(filename, expected_prefix):
-    assert _quarter_to_announcement_date(filename).startswith(expected_prefix)
-
-
-def test_unrecognised_filename_returns_none():
-    # Caller falls back to ingestion time only in this case.
-    assert _quarter_to_announcement_date("some_random_document.pdf") is None
-
-
-# ---------------------------------------------------------------------------
 # Discovery + filtering
 # ---------------------------------------------------------------------------
 
@@ -77,7 +55,7 @@ def test_discover_dbs_keeps_prose_docs_and_drops_tables(monkeypatch):
     assert any("analyst_transcript" in n for n in names)
     assert any("CEO_presentation" in n for n in names)
     # Basel Pillar 3 disclosures, financial statements and annual reports are
-    # near-pure tables/boilerplate — ingest/earnings.py would strip them to
+    # near-pure tables/boilerplate — ingest/earnings_extract.py would strip them to
     # nothing, so they must not be downloaded at all.
     assert not any("other_regulatory_disclosures" in n for n in names)
     assert not any("Bank Group FS" in n for n in names)
@@ -118,7 +96,7 @@ def test_all_configured_sources_have_required_keys():
 # ---------------------------------------------------------------------------
 
 def test_fetch_skips_already_downloaded_files(monkeypatch, tmp_path):
-    monkeypatch.setattr("ingest.earnings_fetch.PDF_DIR", str(tmp_path))
+    monkeypatch.setattr("ingest.earnings_fetch_ir.PDF_DIR", str(tmp_path))
     monkeypatch.setattr("requests.get", lambda *a, **kw: _FakeResponse(text=_DBS_LISTING_HTML))
 
     targets = discover("DBS", since_year=2023)
@@ -133,8 +111,8 @@ def test_fetch_skips_already_downloaded_files(monkeypatch, tmp_path):
 
 
 def test_fetch_rejects_non_pdf_response(monkeypatch, tmp_path):
-    monkeypatch.setattr("ingest.earnings_fetch.PDF_DIR", str(tmp_path))
-    monkeypatch.setattr("ingest.earnings_fetch._POLITE_DELAY_SECONDS", 0)
+    monkeypatch.setattr("ingest.earnings_fetch_ir.PDF_DIR", str(tmp_path))
+    monkeypatch.setattr("ingest.earnings_fetch_ir._POLITE_DELAY_SECONDS", 0)
 
     def fake_get(url, **kw):
         if url.endswith(".pdf"):
@@ -150,8 +128,8 @@ def test_fetch_rejects_non_pdf_response(monkeypatch, tmp_path):
 
 
 def test_fetch_saves_valid_pdfs(monkeypatch, tmp_path):
-    monkeypatch.setattr("ingest.earnings_fetch.PDF_DIR", str(tmp_path))
-    monkeypatch.setattr("ingest.earnings_fetch._POLITE_DELAY_SECONDS", 0)
+    monkeypatch.setattr("ingest.earnings_fetch_ir.PDF_DIR", str(tmp_path))
+    monkeypatch.setattr("ingest.earnings_fetch_ir._POLITE_DELAY_SECONDS", 0)
 
     def fake_get(url, **kw):
         if url.endswith(".pdf"):
@@ -167,7 +145,7 @@ def test_fetch_saves_valid_pdfs(monkeypatch, tmp_path):
 
 
 def test_fetch_listing_page_failure_is_reported_not_raised(monkeypatch, tmp_path):
-    monkeypatch.setattr("ingest.earnings_fetch.PDF_DIR", str(tmp_path))
+    monkeypatch.setattr("ingest.earnings_fetch_ir.PDF_DIR", str(tmp_path))
 
     def boom(*a, **kw):
         raise ConnectionError("network down")

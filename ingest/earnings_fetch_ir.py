@@ -1,7 +1,10 @@
 """
-Downloads quarterly earnings PDFs from DBS's and OCBC's own investor-relations
-sites into data/earnings_pdfs/<BANK>/, where ingest/earnings.py then extracts
-and ingests the prose.
+Downloads DBS's and OCBC's quarterly earnings PDFs from their own
+investor-relations sites into data/earnings_pdfs/<BANK>/.
+
+Stage one of three. Its sibling ingest/earnings_fetch_uob.py does the same job
+for UOB, and ingest/earnings_extract.py then turns whatever landed in those
+directories into `documents`.
 
 WHY THESE SOURCES, NOT SGX: SGX doesn't host what this project needs. SGXNet
 carries company announcements (which is what "earnings from SGX" would
@@ -13,11 +16,11 @@ at all (confirmed: plain requests, HTTP 200, real content). So this
 fetcher needs no browser automation, no stealth/anti-detection tooling, and
 no ToS grey area — it reads openly published pages the way any reader would.
 
-UOB IS NOT INCLUDED: uobgroup.com redirects to a WAF challenge page for
-non-browser clients (confirmed against the live site). Rather than escalate to fingerprint-
-spoofing to defeat that, UOB's PDFs should be downloaded by hand into
-data/earnings_pdfs/UOB/ — it's a handful of files per year. run() says so
-explicitly rather than failing silently.
+UOB IS NOT HERE, IT HAS ITS OWN FETCHER: uobgroup.com redirects non-browser
+clients to a WAF challenge page (confirmed against the live site). Rather than
+escalate to fingerprint-spoofing to defeat that, UOB's PDFs come from the
+Wayback Machine instead — see ingest/earnings_fetch_uob.py. Same documents,
+different transport. run() says so explicitly rather than failing silently.
 
 BONUS FIND — the analyst transcripts: DBS publishes `*_analyst_transcript.pdf`
 every quarter: the edited transcript of its analyst call, with named
@@ -29,9 +32,9 @@ scraping SGX would have produced, and it fills the gap Reddit can't
 (r/singaporefi discusses banking products, not net interest margin).
 
 USAGE:
-  python -m ingest.earnings_fetch                 # 2023+ (default)
-  python -m ingest.earnings_fetch --since-year 2020
-  python -m ingest.earnings_fetch --dry-run       # list what it would fetch
+  python -m ingest.earnings_fetch_ir                 # 2023+ (default)
+  python -m ingest.earnings_fetch_ir --since-year 2020
+  python -m ingest.earnings_fetch_ir --dry-run       # list what it would fetch
 """
 
 import argparse
@@ -81,7 +84,7 @@ _KEEP_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
-# Financial-statement PDFs are almost entirely numeric tables; ingest/earnings.py
+# Financial-statement PDFs are almost entirely numeric tables; ingest/earnings_extract.py
 # would strip them to nearly nothing anyway (it drops lines >40% digits), so
 # downloading them is wasted bandwidth and wasted extraction time. Basel Pillar 3
 # "other regulatory disclosures" are the same. Annual reports are 200+ pages of
@@ -91,45 +94,6 @@ _SKIP_PATTERNS = re.compile(
     r"Annual Report|notice-of-agm|letter-to-shareholders",
     re.IGNORECASE,
 )
-
-
-def _quarter_to_announcement_date(filename: str) -> str | None:
-    """Maps a reporting period in the filename to the approximate date those
-    results were announced, e.g. "2Q26_analyst_transcript.pdf" -> 2026-08-01.
-
-    WHY THIS MATTERS: without it every earnings document gets stamped with
-    ingestion time, which would drop the entire back-catalogue into the
-    dashboard's 7d/30d rolling windows at once and badly distort recent
-    sentiment. Approximate-but-right beats precise-and-wrong here; the day of
-    month is nominal, the quarter is what actually matters for windowing.
-    """
-    # UOB's IR naming: "ceo-presentation-2q-2021.pdf" — lowercase q, four-digit
-    # year. Checked BEFORE the two-digit form below, which would otherwise read
-    # the "20" of "2021" as the year.
-    m = re.search(r"([1-4])[qQ][-_ ]?(\d{4})", filename)
-    if m:
-        quarter, year = int(m.group(1)), int(m.group(2))
-        month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
-        return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
-    # 1Q26 / 2Q26 / 3Q26 / 4Q26
-    m = re.search(r"([1-4])Q(\d{2})", filename)
-    if m:
-        quarter, yy = int(m.group(1)), int(m.group(2))
-        year = 2000 + yy
-        month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
-        return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
-    # 1H26 (half-year, reported with Q2) / 2H26 (reported with Q4)
-    m = re.search(r"([12])H(\d{2})", filename)
-    if m:
-        half, yy = int(m.group(1)), int(m.group(2))
-        year = 2000 + yy
-        return (f"{year:04d}-08-01T00:00:00+00:00" if half == 1
-                else f"{year + 1:04d}-02-01T00:00:00+00:00")
-    # FY25 — full-year results, announced early the following year
-    m = re.search(r"FY(\d{2})", filename)
-    if m:
-        return f"{2000 + int(m.group(1)) + 1:04d}-02-01T00:00:00+00:00"
-    return None
 
 
 def discover(bank: str, since_year: int) -> list[tuple[str, str]]:
@@ -203,10 +167,11 @@ def run(since_year: int = 2023, dry_run: bool = False) -> dict:
         all_stats[bank] = fetch(bank, since_year=since_year, dry_run=dry_run)
 
     logger.info("--- UOB ---")
-    logger.warning("UOB: SKIPPED — uobgroup.com sits behind a WAF that rejects "
-          "non-browser clients. Download UOB's results PDFs by hand into "
-          f"{os.path.join(PDF_DIR, 'UOB')}/ (a handful per year) and "
-          "`python -m ingest.earnings` will pick them up with the other two.")
+    logger.info("UOB: not handled here — uobgroup.com sits behind a WAF that "
+                "rejects non-browser clients. Run "
+                "`python -m ingest.earnings_fetch_uob` instead; it fetches the "
+                "same PDFs from the Wayback Machine into "
+                f"{os.path.join(PDF_DIR, 'UOB')}/.")
     return all_stats
 
 
@@ -223,4 +188,4 @@ if __name__ == "__main__":
         logger.info(f"  {bank:6s} discovered={s['discovered']:3d} downloaded={s['downloaded']:3d} "
               f"already_present={s['already_present']:3d} failed={s['failed']:3d}")
     logger.info(f"{'=' * 50}")
-    logger.info("Next: python -m ingest.earnings   (extracts prose and ingests into documents)")
+    logger.info("Next: python -m ingest.earnings_extract   (extracts prose and ingests into documents)")

@@ -1,0 +1,2825 @@
+INFO    __main__                     Updating embedding cache for any un-embedded sentences...
+INFO    __main__                     Embedding cache: {'already_cached': 36884, 'newly_embedded': 0, 'pruned_stale': 0, 'total': 36884}
+INFO    __main__                     Reducing 36884 x 768 embeddings with UMAP...
+/Users/gavin/Projects/plp-project/.venv-plp/lib/python3.14/site-packages/umap/umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+  warn(
+INFO    __main__                     Clustering with HDBSCAN (min_cluster_size=10)...
+
+======================================================================
+Found 281 clusters, 24814 noise points (67% of sentences)
+======================================================================
+
+--- Cluster 0 (n=31) ---
+  Bank mix: {'DBS': 3, 'OCBC': 3, 'UOB': 25}
+  Top terms: ta, te, 17, ts, tio, ia, ia te, ro
+  Sample sentences:
+    - Travailler en tant que noir à DBS Singapour.
+    - J’ai postulé pour le graduate programme chez DBS et j’ai passé le test en ligne.
+    - Ma question c’est est-ce qu’il y a des noirs qui travaillent déjà chez DBS ou qui ont déjà été pris pour ce pr
+    - I p r h ef a o s r e m
+    - First Quarter 2026 Results Press Release Strong Funding, Liquidity and Capital Position % ∆ in c o n s ta n t 
+
+--- Cluster 1 (n=29) ---
+  Bank mix: {'DBS': 1, 'UOB': 28}
+  Top terms: ended, quarter ended, quarter, 31, ended 31, privateandconfidential, 30, ended 30
+  Sample sentences:
+    - Total the real estate NPL in the fourth quarter.
+    - For the Financial Year / Fourth Quarter Ended 31 December 2024 Private and Confidential.
+    - Deputy Chairman and Chief Executive Officer For the First Quarter Ended 31 March 2022 PrivateandConfidential.
+    - Wee Ee Cheong, Deputy Chairman and Chief Executive Officer For the first quarter ended 31 March 2023
+    - Deputy Chairman and Chief Executive Officer For the First Quarter Ended 31 March 2021 PrivateandConfidential.
+
+--- Cluster 2 (n=34) ---
+  Bank mix: {'UOB': 34}
+  Top terms: year, year year, year growth, growth, ytd, growth ytd, 22, feb
+  Sample sentences:
+    - Represents year-on-year growth for 2024 2.
+    - Cross-border income Assets under management of Group Wholesale management franchise3, 1 Year-on-year growth as
+    - 2 Year-on-year growth as at end-Mar 2021.
+    - Year on year growth for YTD Aug ’21.
+    - Year on year growth in 9M21.
+
+--- Cluster 3 (n=15) ---
+  Bank mix: {'DBS': 4, 'OCBC': 5, 'UOB': 6}
+  Top terms: 000, fund, fixed, reit, 360, ocbc 360, year, mpd
+  Sample sentences:
+    - | 23,000 | | 2 | DBS | 8000 | | 3 | Standard Chartered<br>Personal Loan | 3000 | \## Fixed Expenses | S/N | Ac
+    - Average annual expenses = \~SGD32k Average annual take home pay = \~SGD67k Assumed inflation rate = 1.5% |Hold
+    - We checked with the bank (OCBC) and they offered two options with no repricing fee: |Year|MBR loan|SORA loan| 
+    - |16% Schroder ISF Global Climate Change Fund||8.51% Schroder ISF Global Climate Change Fund| |7% Dimensional P
+    - |6% PIMCO GIS Climate Bond Fund||9.36% Dimensional Global Short Fixed Income Fund & Dimensional Global Core Fi
+
+--- Cluster 4 (n=16) ---
+  Bank mix: {'DBS': 16}
+  Top terms: year, quarter, quarter quarter, performance, year year, quarter year, year performance, second
+  Sample sentences:
+    - DBS year on year guy
+    - Fourth quarter year-on-year performance.
+    - The underlying cost-income ratio in the fourth quarter.
+    - Third quarter year-on-year performance.
+    - Third-quarter quarter-on-quarter performance.
+
+--- Cluster 5 (n=11) ---
+  Bank mix: {'OCBC': 11}
+  Top terms: 23, 24, mar, 22, jun, dec, sep, 23 dec
+  Sample sentences:
+    - Sep 23 Dec 23 Mar 24 Proforma Mar 24 0.9ppt Mar 23 Jun 23
+    - Sep 23 Dec 23 Mar 24 Mar 23 Jun 23
+    - Sep 23 Dec 23 Mar 24 Jun 24 Pro forma Jun 23
+    - Sep 23 Dec 23 Mar 24 Jun 24 Jun 23
+    - Sep 23 Dec 23 Mar 24 Jun 24 Disclaimer:
+
+--- Cluster 6 (n=27) ---
+  Bank mix: {'UOB': 4, 'DBS': 16, 'OCBC': 7}
+  Top terms: best, world, global, world best, asia, digital, ratings, awards
+  Sample sentences:
+    - UoB gave me a local credit rating of un rateable.
+    - DBS was supposedly the “world’s best digital bank” in 2021.
+    - The Bank of China has been given an “A” credit rating by Fitch with stable outlook which is 2 notches below th
+    - 1754608752509 (1125×1321) DBS conferred three global awards, including the most prestigious ‘World’s Best Bank
+    - The bank's "AA-" and "Aa1" credit ratings are among Recognised for its global leadership, DBS has been named “
+
+--- Cluster 7 (n=14) ---
+  Bank mix: {'OCBC': 7, 'UOB': 4, 'DBS': 3}
+  Top terms: savings, rate, account, savings account, bonus, bonus savings, cut, ocbc bonus
+  Sample sentences:
+    - OCBC 360: savings account, rate will fluctuate back to lower rate after FED lower down their rates, expecting 
+    - Uob slightly higher interest and card fee easier to waive.
+    - OCBC Premier Dividend+ account interest reduction (3.7% to 3.3%} and minimum monthly deposit increase ($2k to 
+    - OCBC already nerfed their dividend+ from 3.7% to 3.3% (starting 1 Apr)
+    - UOB Absolute Cashback lowering cashback from 1.7% to 0.3% for some MCCs, from 6 May 2024.
+
+--- Cluster 8 (n=26) ---
+  Bank mix: {'DBS': 25, 'UOB': 1}
+  Top terms: briefing, quarter, dbs quarter, results, second, second quarter, dbs second, 2025
+  Sample sentences:
+    - HYDERABAD, India, Aug. 6, 2026 /PRNewswire/ --
+    - Email: nicholasteh@dbs.com DBS/Fourth-quarter 2025 results Page 8 of 8 DBS Group Holdings Ltd Tel: 65.6878 888
+    - Edited transcript of DBS third-quarter 2023 results media briefing, 6 November 2023
+    - Edna Koh Good morning and welcome to DBS’s third-quarter financial results briefing.
+    - Edited transcript of DBS fourth-quarter 2025 media briefing, 9 February 2026 Edna Koh Welcome to DBS's fourth-
+
+--- Cluster 9 (n=16) ---
+  Bank mix: {'UOB': 2, 'DBS': 14}
+  Top terms: quarter, buy, buy sell, sell, nicholas, nicholas teh, teh, teh welcome
+  Sample sentences:
+    - UOB one interest dropping to 1.9 p.a. max, thoughts on next steps.
+    - UOB MAP 2026 Career Progression.
+    - Edited transcript for DBS third-quarter 2023 results briefing for buy and sell sides, 6 Nicholas Teh Welcome t
+    - Edited transcript of DBS first-quarter 2026 analyst call, 30 April 2026 Nicholas Teh Welcome to the call.
+    - Edited transcript for DBS fourth-quarter 2023 results briefing for buy and sell sides, 7 Nicholas Teh Welcome 
+
+--- Cluster 10 (n=17) ---
+  Bank mix: {'DBS': 14, 'UOB': 3}
+  Top terms: minimum, regulatory minimum, ratio, regulatory, leverage, leverage ratio, ratio twice, twice
+  Sample sentences:
+    - The leverage ratio was at 6.2%, more than twice the regulatory minimum of 3%.
+    - The leverage ratio of 6.4% was twice the regulatory minimum of 3%.
+    - The leverage ratio of 6.5% was more than twice the regulatory minimum of 3%.
+    - On a fully-phased in basis, the pro-forma ratio The leverage ratio was 6.2%, more than twice the regulatory mi
+    - The leverage ratio was at 6.5%, more than twice the regulatory minimum of 3%.
+
+--- Cluster 11 (n=117) ---
+  Bank mix: {'DBS': 11, 'UOB': 90, 'OCBC': 16}
+  Top terms: exposure, loans, total, individuals, risks, non, credit, credit risks
+  Sample sentences:
+    - DBS Treasures non-citizen / non-resident.
+    - Financials: • Total net worth: \~550k • CPF: \~230k (BTO payments not started yet) • Investments: \~170k • \~6
+    - Since the loan's EIR is 6.5%, UOB One is 3.85%, total money lost due to the loan is ~2.7% per annum.
+    - Also their exposure to Greater China is at least 12%, which is the same exposure percentage as DBS.
+    - These losses were tied to several "Lehman-linked" structured products sold by local banks and financial instit
+
+--- Cluster 12 (n=17) ---
+  Bank mix: {'DBS': 16, 'OCBC': 1}
+  Top terms: fees, higher, fees higher, banking, investment, investment banking, transaction, service
+  Sample sentences:
+    - Investment banking, transaction services and card fees were also higher.
+    - Investment banking and loan-related fees were also higher.
+    - Loan-related fees and transaction service fees were also higher.
+    - Transaction services fees were slightly lower.
+    - Card, transaction service and investment banking fees were also higher.
+
+--- Cluster 13 (n=31) ---
+  Bank mix: {'DBS': 3, 'OCBC': 24, 'UOB': 4}
+  Top terms: iii, basel iii, final, final basel, basel, effect, 2024, iii reforms
+  Sample sentences:
+    - We guided previously that under Basel IV, which will come into effect on 1 July 2024, our CET-1 will go up by 
+    - Final Basel III reforms took effect in Singapore on 1 July 2024.
+    - The operational risk charge MAS imposed was effective May 5th.
+    - 1/ Computed based on MAS’ final Basel III reform rules with effect from 1 July 2024.
+    - 2/ Assumed the position at period end was subject to the full application of final Basel III reforms, which wi
+
+--- Cluster 14 (n=15) ---
+  Bank mix: {'DBS': 1, 'UOB': 14}
+  Top terms: 2021, financial, financial statistics, note, note financial, statistics, end, 30
+  Sample sentences:
+    - Non-Performing Assets and Loss Allowance Coverage 17 Unrealised Property Valuation Surplus 21 Unaudited Consol
+    - From launch to Sep 2021.
+    - Note: Financial statistics as at 30 September 2021 1.
+    - 4 Note: Financial statistics as at 30 September 2022 1.
+    - 2. Estimates as of Sep-23.
+
+--- Cluster 15 (n=34) ---
+  Bank mix: {'DBS': 3, 'OCBC': 11, 'UOB': 20}
+  Top terms: income, growth, group, chief, chief executive, executive, executive officer, officer
+  Sample sentences:
+    - Strong first quarter, with record total income and fees, and ROE at 17% Capitalised on hedging opportunities, 
+    - Record total income and profit before tax Record group net interest income despite severe rate headwinds Nimbl
+    - Group NII resilience testament to proactive hedging and strength of deposit franchise Fixed-rate assets around
+    - Helen Wong, Group Chief Executive Officer Record profit for FY24, the third year in a row Unique Banking, Weal
+    - Robust performance driven by firm execution of strategic priorities • Distinct and integrated group franchise 
+
+--- Cluster 16 (n=26) ---
+  Bank mix: {'DBS': 26}
+  Top terms: multiplier, dbs multiplier, account, multiplier account, check, check dbs, acct, spending
+  Sample sentences:
+    - 3 questions about DBS Multiplier Acct.
+    - Advice on DBS multiplier.
+    - DBS Multiplier: This is fully dynamic.
+    - Currently dbs multiplier for me 2.
+    - Hi, what insurance is $5/mo that qualifies for DBS Multiplier?
+
+--- Cluster 17 (n=30) ---
+  Bank mix: {'DBS': 26, 'OCBC': 2, 'UOB': 2}
+  Top terms: group, branch, limited, dbs group, group holdings, holdings, dbs bank, subsidiaries
+  Sample sentences:
+    - DBS Group Holdings Ltd (SGX: D05) •
+    - Oversea-Chinese Banking Corporation Limited (SGX: O39) •
+    - United Overseas Bank Limited (SGX: U11) •
+    - Secondly, how is Shenzhen Rural Commercial Bank (SZRCB)
+    - The Transfer Books and Register of Members of DBSH will be closed from 5.00 p.m. on 8 April 2024 (Monday) up t
+
+--- Cluster 18 (n=27) ---
+  Bank mix: {'OCBC': 8, 'DBS': 19}
+  Top terms: ratio, basis, fully, fully phased, phased, 15, phased basis, transitional
+  Sample sentences:
+    - OCBC accounted for 26.4% of the projected upside in the bottom-up target, followed by Singtel at 11% and Jardi
+    - The reported Common Equity Tier-1 ratio was 16.9% based on transitional arrangements, while the pro-forma rati
+    - The reported Common Equity Tier-1 ratio was 17.0% based on transitional arrangements, while the pro-forma rati
+    - With the implementation of final Basel III reforms on 1 July 2024, the reported Common Equity Tier-1 ratio was
+    - The reported Common Equity Tier-1 ratio was 17.4% based on transitional arrangements, while the pro-forma rati
+
+--- Cluster 19 (n=17) ---
+  Bank mix: {'DBS': 17}
+  Top terms: equity, return, 18, equity 18, return equity, tangible, tangible equity, return tangible
+  Sample sentences:
+    - Return on equity was 17.0%, while return on tangible equity was 18.7%.
+    - Return on equity was 16.2% and return on tangible equity was 17.8%.
+    - Return on equity was 18.2%.
+    - Return on equity was at 18.8%.
+    - Return on equity was 19%.
+
+--- Cluster 20 (n=14) ---
+  Bank mix: {'DBS': 7, 'OCBC': 1, 'UOB': 6}
+  Top terms: presentation, disclaimer, information, date, activities, activities current, background, background information
+  Sample sentences:
+    - Refer to the full disclaimer in the Trading Update for the quarter ended.
+    - Further details can be found in a separate announcement.
+    - Refer to the full disclaimer in the Press Statement for the quarter ended.
+    - The unaudited condensed interim financial information has been prepared in accordance with SFRS(I) 1-34 Interi
+    - rationale and calculation basis of post-model adjustments.
+
+--- Cluster 21 (n=14) ---
+  Bank mix: {'DBS': 14}
+  Top terms: financial, financial results, results, board, board directors, company, company reports, dbs group
+  Sample sentences:
+    - The Board of Directors of DBS Group Holdings Ltd (“DBSH” or “the Company”) reports the Trading Update for the 
+    - The Board of Directors of DBS Group Holdings Ltd (“DBSH” or “the Company”) reports the Trading Update for the 
+    - The Board of Directors of DBS Group Holdings Ltd (“DBSH” or “the Company”) reports the following: Financial Re
+    - The Board of Directors of DBS Group Holdings Ltd (“DBSH” or “the Company”) reports the Trading Update for the 
+    - The Board of Directors of DBS Group Holdings Ltd (“DBSH” or “the Company”) reports the Trading Update for the 
+
+--- Cluster 22 (n=15) ---
+  Bank mix: {'DBS': 12, 'UOB': 3}
+  Top terms: financial, applied, ended, year, year ended, ended 31, 31, 31 december
+  Sample sentences:
+    - The accounting policies and methods of computation applied for the current financial periods are consistent wi
+    - The interim financial information is to be read in conjunction with the financial statements as at and for the
+    - The interim financial information is to be read in conjunction with the financial statements as at and for the
+    - The accounting policies and methods of computation applied for the current financial periods are consistent wi
+    - The accounting policies and methods of computation applied for the current financial periods are consistent wi
+
+--- Cluster 23 (n=32) ---
+  Bank mix: {'DBS': 14, 'OCBC': 18}
+  Top terms: financial, group, sfrs, 17, sfrs 17, restated, results, comparative
+  Sample sentences:
+    - Independent Auditor’s Report DBS GROUP HOLDINGS LTD AND ITS SUBSIDIARIES DBS Group Holdings Ltd (“DBSH”) prepa
+    - (the “Company”) and its subsidiaries (the “Group”) and the balance sheet of the Company are Singapore Financia
+    - Confirmation of Directors and Executive Officers’ undertakings pursuant to Listing Rule 720(1) 29 DBS GROUP HO
+    - All results are prepared in the Hong Kong dollar against the Singapore dollar accordance with Singapore Financ
+    - All results are prepared in accordance with Singapore Financial Reporting Standards (International).
+
+--- Cluster 24 (n=19) ---
+  Bank mix: {'DBS': 19}
+  Top terms: billion, allowance, reserves, allowance reserves, general, total, general allowance, stood
+  Sample sentences:
+    - Total allowance reserves stood at $6.63 billion, with $2.72 billion in specific allowance reserves and $3.91 b
+    - As at 30th September 2023, modelled overlays stood at $2.2 billion out of the total general allowance reserves
+    - As of end-December, total allowance reserves stood at $6.28 billion, comprising $2.42 billion in specific allo
+    - Total allowance reserves stood at $6.53 billion, with $2.60 billion in specific allowance reserves and $3.93 b
+    - Of the total RWA growth, $7 billion came from credit risk, $0.8 billion from market risk and $1.5 billion from
+
+--- Cluster 25 (n=95) ---
+  Bank mix: {'DBS': 70, 'UOB': 3, 'OCBC': 22}
+  Top terms: allowances, million, basis, basis points, points, loans, specific, specific allowances
+  Sample sentences:
+    - Specific allowances were SGD 157 million or 14 basis points of loans.
+    - General allowances of SGD 206 million were written back, including the release of allowances previously set as
+    - For the full year, specific allowances amounted to SGD 854 million or 19 basis points of loans, and general al
+    - General allowances of SGD 22 million were taken.
+    - For first-quarter 2024, $56 million was reclassified, and the impact to 1Q24 Group NIM was +1.6 basis points.
+
+--- Cluster 26 (n=48) ---
+  Bank mix: {'DBS': 35, 'OCBC': 4, 'UOB': 9}
+  Top terms: ratio, stable, income, income ratio, cost, cost income, ratio stable, npl ratio
+  Sample sentences:
+    - The cost-income ratio was 39%.
+    - The NPL ratio was stable at 1.0%.
+    - The cost-income ratio was unchanged at 40%.
+    - The cost-income ratio was stable.
+    - The cost-income ratio of 37% was little changed.
+
+--- Cluster 27 (n=11) ---
+  Bank mix: {'DBS': 11}
+  Top terms: consolidation, eliminated, eliminated consolidation, transactions, transactions eliminated, attributed, attributed business, business
+  Sample sentences:
+    - DBS Vickers is a wholly owned subsidiary of the DBS Bank that has a limited liability incase of a unforeseen e
+    - In the event the Guarantor dies, becomes insane or suffers from any other disability or has bankruptcy proceed
+    - 8. EVENTS OF DEFAULT 8.1 DBS Bank may at any time after the occurrence of any of the following events terminat
+    - A bank files a charge to give notice that it has provided a loan against a particular property, so that the pu
+    - The borrow is currently not in default status.
+
+--- Cluster 28 (n=15) ---
+  Bank mix: {'DBS': 9, 'OCBC': 6}
+  Top terms: holding, group, management, reporting, credit, information, allowances, segment
+  Sample sentences:
+    - The products and services the Group’s internal management reporting, which available to customers include curr
+    - The Group's financial reporting process is dependent on its Information Technology (“IT”) systems.
+    - These controls included: allowances for loans and advances to  oversight of credit risk by the Group Credit R
+    - Specific allowances refer to  timely identification of impairment events; loss allowances for credit-impaired
+    - These included the Financial instruments held by the Group controls over: at fair value include derivative ass
+
+--- Cluster 29 (n=28) ---
+  Bank mix: {'DBS': 11, 'OCBC': 17}
+  Top terms: business, statements, future, 25, current, environment, growth, activities
+  Sample sentences:
+    - Depending on how the rep/agent behaves, escalate the case, discuss potential legal avenues and potential revie
+    - DBS valuation and performance over years.
+    - Forward-looking statements (“Forward-Looking Statements”), including statements made orally by DBS’ management
+    - These Forward-Looking Statements are statements regarding the DBS Group’s intentions, beliefs or current expec
+    - For more information, please Forward-looking statements (“Forward-Looking Statements”), including statements m
+
+--- Cluster 30 (n=12) ---
+  Bank mix: {'DBS': 3, 'UOB': 9}
+  Top terms: ratio, capital, remained, common, common equity, equity, equity tier, tier
+  Sample sentences:
+    - NPL ratios are healthy at 0.9% and CET-1 ratio is Aakash Rawat
+    - Capital was healthy with CET-1 ratio at 14.7%.
+    - Allowance coverage was at 129% and 227% after considering Capital was healthy with CET-1 ratio at 14.8%.
+    - As at 30 June 2022, the Group's Common Equity Tier 1 Capital Adequacy Ratio remained healthy at 13.1%.
+    - As at 31 December 2021, the Group's Common Equity Tier 1 Capital Adequacy Ratio remained strong at 13.5%.
+
+--- Cluster 31 (n=33) ---
+  Bank mix: {'DBS': 29, 'OCBC': 1, 'UOB': 3}
+  Top terms: allowance coverage, considering collateral, allowance, considering, collateral, coverage, coverage stood, stood
+  Sample sentences:
+    - Allowance coverage was high at 125% and 216% after considering collateral.
+    - Allowance coverage stood at 125% and at 216% after considering collateral.
+    - Allowance coverage stood at 125% and at 223% after considering collateral.
+    - Allowance coverage at 137% and 236% after considering collateral 
+    - Allowance coverage stood at 130% and at 197% after considering collateral.
+
+--- Cluster 32 (n=34) ---
+  Bank mix: {'DBS': 11, 'OCBC': 10, 'UOB': 13}
+  Top terms: ratio, quality, asset, asset quality, npl ratio, npl, resilient, remained
+  Sample sentences:
+    - Asset quality was resilient, with the NPL ratio stable at 1.0% and specific allowances at 14 basis points of l
+    - Asset quality remained resilient with NPL ratio at 1.1% and specific allowances at 10 basis points of loans.
+    - Asset quality was resilient with the NPL ratio at 1.1% and specific allowances at 10 basis points of loans.
+    - Asset quality continued to be resilient with the non-performing loan ratio at 1.0% and specific allowances at 
+    - Capital remained healthy with CET1 at 14.1%.
+
+--- Cluster 33 (n=37) ---
+  Bank mix: {'DBS': 37}
+  Top terms: financial, group, audit, assessed, credit, valuation, ecl, stage
+  Sample sentences:
+    - Our Entities (“ACRA Code”) together with the ethical requirements that are relevant to our audit of INDEPENDEN
+    - Where the work was performed by component INDEPENDENT AUDITOR’S REPORT TO THE MEMBERS OF INDEPENDENT AUDITOR’S
+    - On balancing the portfolio, in the statement of comprehensive income of our performance summary, you can see t
+    - We determined the overall Group materiality based  Full scope audit procedures were performed over the Singap
+    -  Specific allowances for loans and advances to  General allowances for credit losses (Stage 1 and 2  Valuat
+
+--- Cluster 34 (n=17) ---
+  Bank mix: {'DBS': 15, 'UOB': 2}
+  Top terms: ratio, regulatory, regulatory requirements, requirements, coverage, coverage ratio, funding, funding ratio
+  Sample sentences:
+    - The liquidity coverage ratio of 151% and net stable funding ratio of 117% were both well above regulatory requ
+    - The liquidity coverage ratio of 144% and net stable funding ratio of 116% were both well above regulatory requ
+    - The Group’s Liquidity Coverage Ratio was 155% and Net Stable Funding Ratio was 117%, both comfortably above re
+    - LCR of 144% and NSFR of 116% remained well above regulatory requirements.
+    - The liquidity coverage ratio of 144% and the net stable funding ratio of 115% were both well above regulatory 
+
+--- Cluster 35 (n=23) ---
+  Bank mix: {'DBS': 10, 'OCBC': 1, 'UOB': 12}
+  Top terms: liquidity, ratio, funding, positions, coverage, remained, regulatory, ample
+  Sample sentences:
+    - Allowance coverage stood at 130% and at 197% after considering Liquidity remained ample with liquidity coverag
+    - Liquidity was ample with LCR of 138% and NSFR of 117%, well above regulatory requirements.
+    - Allowance coverage stood at 129% and at 227% Liquidity continued to be ample.
+    - The liquidity coverage ratio of 148% and the net stable funding ratio of 116% were both well above regulatory 
+    - Liquidity remained ample, with LCR and NSFR
+
+--- Cluster 36 (n=29) ---
+  Bank mix: {'DBS': 29}
+  Top terms: million, basis, basis points, points, allowances, specific, specific allowances, loans
+  Sample sentences:
+    - Specific allowances were 19% lower at SGD 113 million or 10 basis points of loans.
+    - Specific allowances remained low at 10 basis points of loans, similar to recent quarters.
+    - Specific allowances remained low at $115 million or 10 basis points of loans, in General allowances.
+    - Specific allowances remained low at $139 million or 11 basis points of loans.
+    - Specific allowances remained low at $169 million or 15 basis points of loans, while $45 million of general all
+
+--- Cluster 37 (n=31) ---
+  Bank mix: {'DBS': 7, 'OCBC': 20, 'UOB': 4}
+  Top terms: ratio, quarter, loans, deposits, deposits ratio, loans deposits, compared, year
+  Sample sentences:
+    - The NPL ratio was unchanged from the previous quarter at 1.1%.
+    - The year-ago base was low because of Credit Suisse and SVB.
+    - The NPL ratio was stable at 1.1% and NPA formation was lower than in recent quarters.
+    - It was minus 11% year-on-year in the first quarter and plus 12% in the second quarter.
+    - The cost-income ratio was slightly below 40%.
+
+--- Cluster 38 (n=14) ---
+  Bank mix: {'DBS': 4, 'OCBC': 3, 'UOB': 7}
+  Top terms: acquisition, acquisition citigroup, citigroup, citigroup malaysia, excluded, excluded expenses, expenses, expenses related
+  Sample sentences:
+    - We also saw record wealth net new money, which is structural, and record AUM.
+    - For the full year, commercial book non-interest income rose 12% from a rebound in fees and record The commerci
+    - Also, the increase in the performance summary is half-on-half data.
+    - Slide 9 shows the year-on-year percentage changes for total net fee income, as well as for the two major drive
+    - Profit from insurance from subsidiary Great Eastern Holdings (“GEH”) was S$238 million.
+
+--- Cluster 39 (n=30) ---
+  Bank mix: {'OCBC': 5, 'DBS': 23, 'UOB': 2}
+  Top terms: presentation, statements, nationality, information, investors, future, subject, disclaimer
+  Sample sentences:
+    - suggest you google it my friend.. fees are stated on the ocbc website.
+    - Disclaimer: The information contained in this document is intended only for use during the presentation and sh
+    - To be carried out at management’s discretion and subject to market conditions 
+    - Forward-Looking Statements that reference past trends or activities should not be taken as a representation th
+    - Past performance should not be taken as an indication or guarantee of future results, and no representation or
+
+--- Cluster 40 (n=56) ---
+  Bank mix: {'OCBC': 4, 'DBS': 52}
+  Top terms: audit, statements, financial, financial statements, group, report, auditor, matters
+  Sample sentences:
+    - I’ll contact OCBC’s compliance department to request an investigation into the RM’s sales process and conduct.
+    - Such Forward- Looking Statements are not guarantees of future performance as actual events are difficult to pr
+    - No guarantees of actual performance are made, and no undue reliance should be placed given that there are sign
+    - Actual results may differ from those included in these statements due to a variety of factors.
+    - Conclude on the appropriateness of management’s use of the going concern basis of gnificant doubt on the Group
+
+--- Cluster 41 (n=23) ---
+  Bank mix: {'DBS': 22, 'UOB': 1}
+  Top terms: sgd, quarter, income, rose, 65, results, dbs group, group
+  Sample sentences:
+    - Fee income and treasury customer sales reached new highs, led DBS/Fourth-quarter 2025 results Page 1 of 8 DBS 
+    - This brings the total dividend for the year to SGD 3.06 per DBS/Fourth-quarter 2025 results Page 2 of 8 DBS Gr
+    - Transaction service and loan-related fees also reached record levels, while DBS/Fourth-quarter 2025 results Pa
+    - The Board declared a dividend of SGD 54 cents per share for the first quarter over the enlarged DBS CEO Piyush
+    - The cost-income ratio was 40% and profit before allowances rose DBS/Second-quarter 2024 results Page 1 of 6 DB
+
+--- Cluster 42 (n=22) ---
+  Bank mix: {'DBS': 22}
+  Top terms: changed, little, little changed, income, income little, million, billion, loans
+  Sample sentences:
+    - Commercial book net interest income of SGD 3.48 billion was also little changed on a day-adjusted basis.
+    - Markets Trading income was little changed at SGD 433 million.
+    - Group NII little changed on day-adjusted basis 
+    - Group net interest income little changed day-
+    - Trade loans and consumer loans were little changed.
+
+--- Cluster 43 (n=13) ---
+  Bank mix: {'DBS': 4, 'UOB': 9}
+  Top terms: billion, net, profit, expenses, expenses net, net profit, including, integration
+  Sample sentences:
+    - FULL-YEAR PROFIT BEFORE TAX AT RECORD SGD 13.1 BILLION; NET PROFIT AT SGD 11.0 BILLION WITH ROE
+    - Taking this one-time item into account, first-half net profit amounted to $5.20 Total allowance reserves amoun
+    - Including the charge, net profit was $2.63 billion.
+    - previous quarter at $2.37 billion.
+    - Net profit excluding one-off expenses was also at $1.5 billion, as Citi integration costs tapered off.
+
+--- Cluster 44 (n=16) ---
+  Bank mix: {'UOB': 16}
+  Top terms: ldr, ratio, currency, currency lcr, deposit, deposit ratio, lcr, lcr loan
+  Sample sentences:
+    - All-currency LCR (%) Loan/Deposit Ratio (LDR) (%) Leverage ratio (%) 7
+    - USD LDR (%) 7 2.3 6 4.2 6 0.0 6 0.7 6 2.9 All-currency LCR (%) Loan/Deposit Ratio (LDR) (%) L e v e r a g e r 
+    - USD LDR (%) 6 0.4 6 1.6 6 6.3 7 2.3 6 4.2 All-currency LCR (%) Loan/Deposit Ratio (LDR) (%) (1) MAS granted th
+    - USD LDR (%) 6 4.2 6 0.0 6 0.7 6 2.9 6 0.7 All-currency LCR (%) Loan/Deposit Ratio (LDR) (%) Leverage ratio (%)
+    - Group, providing CASA by Segment (%) 45.1 remained resilient 85.4 85.4 85.8 86.7 85.4 USD LDR (%) 6 1.2 6 2.7 
+
+--- Cluster 45 (n=24) ---
+  Bank mix: {'DBS': 19, 'OCBC': 3, 'UOB': 2}
+  Top terms: dividend, dbsh, dividend scheme, scheme, scrip, scrip dividend, interim, interim dividend
+  Sample sentences:
+    - Nerfed: Amaze Transactions to be Excluded From DBS Rewards From 1st June.
+    - Amaze Transactions to be Excluded From DBS Rewards From 1st June.
+    - Any excess amount that would not be eligible for bonus cashback, would be charged to hsbc revolution or dbs wo
+    - The last dividend distribution in May the dividend was credited on the same day to my SRS and DBS accounts.
+    - The DBSH Scrip Dividend Scheme will not be applied to the 1Q26 Interim Dividend and Capital The DBSH ordinary 
+
+--- Cluster 46 (n=196) ---
+  Bank mix: {'DBS': 81, 'OCBC': 27, 'UOB': 88}
+  Top terms: income, profit, net, yoy, qoq, billion, record, growth
+  Sample sentences:
+    - DBS raises STI year-end target to 5,850 after earnings lift.
+    - DBS Group Research has raised its year-end target for the Straits Times Index (STI) to 5,850 and introduced a 
+    - DBS breaks new barrier at S$52.75 as STI soars to new high of 4,346.68 points.
+    - DBS hits new high at S$53.24, driving STI to all-time peak of 4,367.51 points.
+    - DBS shares soar more than 3% to hit a record high, after posting earnings that beat forecasts.
+
+--- Cluster 47 (n=24) ---
+  Bank mix: {'DBS': 1, 'OCBC': 15, 'UOB': 8}
+  Top terms: billion, net, year, profit, quarter, net profit, 2023, 2024
+  Sample sentences:
+    - Net DBS GROUP HOLDINGS LTD AND ITS SUBSIDIARIES South and Southeast Asia Rest of the World Second-half net pro
+    - Third Quarter 2025 Results Press Release OCBC Group Third Quarter 2025 Net Profit Rose 9% above the Previous Q
+    - Second quarter net profit up 22% from a year ago Interim dividend of 47 cents declared, up 15% from 41 cents a
+    - Annualised earnings per share was higher at S$1.86, For the first half of 2026, the Board has declared an inte
+    - Fourth quarter net profit up 12% from a year ago to S$1.62 billion 2023 full year dividend raised to 82 cents,
+
+--- Cluster 48 (n=12) ---
+  Bank mix: {'OCBC': 1, 'UOB': 11}
+  Top terms: payout, 304, at60, dividendfor2020isinlinewithmonetaryauthorityofsingapore, dividendfor2020isinlinewithmonetaryauthorityofsingapore scallforbankstocapthetotaldividendspershare, dps, dps at60, financial
+  Sample sentences:
+    - 1/Insuranceresultsfor3Q22and4Q22arenotrestatedandarereportedbasedonpreviousSFRS(I)4. 1H23 allowances higher Yo
+    - Payout amount ($m) 1,304 2,011 2,263 1,424 ^Dividendfor2020isinlinewithMonetaryAuthorityofSingapore’scallforba
+    - performingloan(NPL)ratiounchangedat1.6%.
+    - The average all-currency liquidity coverage ratio (LCR) and net stable funding ratio 85.2 85.6 83.3 83.5 82.3 
+    - ( 36) Add: Assoc & JV 69 99 ( 30) 18 23 ( 22) 29 ( 38) Netprofitsurged12%toS$3.42billionin9M22onstrongnetinter
+
+--- Cluster 49 (n=21) ---
+  Bank mix: {'OCBC': 4, 'UOB': 17}
+  Top terms: quarter, global, totalallowancedeclined23, totalallowancedeclined23 mainlyon, withtotalcreditcostsonloansimprovingto19basispoints, aside, 193500026z, 193500026z quarter
+  Sample sentences:
+    - 1/Insuranceresultsfor3Q22and4Q22arenotrestatedandarereportedbasedonpreviousSFRS(I)4. 1H23 fee income lower YoY
+    - 2/ InJuly2020,theMAScalledonlocally-incorporatedbanksheadquarteredinSingaporetocaptotaldividendspershareforFY2
+    - 1/Insuranceresultsfor4Q22arenotrestatedandarereportedbasedonpreviousSFRS(I)4.
+    - 1/ InJuly2020,theMAScalledonlocally-incorporatedbanksheadquarteredinSingaporetocaptotaldividendspershareforFY2
+    - This,coupledwithrobustperformancefrom tradingandliquiditymanagementactivities,boostedtradingandinvestmentincom
+
+--- Cluster 50 (n=20) ---
+  Bank mix: {'DBS': 20}
+  Top terms: higher, income, total, total income, income higher, expenses, billion, expenses higher
+  Sample sentences:
+    - Deposits were 3% higher.
+    - Total income was 9% higher at reflects its management structure.
+    - Total income was 10% higher.
+    - Total income was 1% higher at $1.64 billion.
+    - Expenses were 15% higher at $137 million.
+
+--- Cluster 51 (n=25) ---
+  Bank mix: {'DBS': 24, 'OCBC': 1}
+  Top terms: expenses, billion, expenses increased, increased, rose, expenses rose, million, income
+  Sample sentences:
+    - Expenses rose 6% or $107 million.
+    - Expenses rose 10% to $2.08 billion and the cost-income ratio was little changed at 37%.
+    - Expenses grew 17% to $2.36 billion.
+    - Expenses increased 16% to $4.41 billion.
+    - Expenses rose 12% to $2.48 billion.
+
+--- Cluster 52 (n=19) ---
+  Bank mix: {'DBS': 2, 'UOB': 17}
+  Top terms: allowance, 379, 379 379, rlar, specific, specific allowance, loans, reserve
+  Sample sentences:
+    - Average balance Average A v e r a g e Average A v e r a g e Average A v e r a g e sheet balance Interest rate 
+    - A v e r a g e Average A v e r a g e sheet balance Interest rate balance Interest rate balance Interest rate ($
+    - Specific allowance on loans ($m) ▪ Strong NPA coverage at 1,664 1,692 1,693 1,588 1,627 NPA coverage (%) (2) 1
+    - Impairment charge ($m) Allowance for impaired assets ($m) Notes: (1) Regulatory loss allowance reserve (RLAR) 
+    - Specific allowance on loans ($m) performing loans at 1.0% 379 379 379 379 379 • NPA coverage stable at 2,912 2
+
+--- Cluster 53 (n=16) ---
+  Bank mix: {'OCBC': 2, 'DBS': 3, 'UOB': 11}
+  Top terms: ratio, casa, capital, 24, capital securities, debt, debt issuances, interbank
+  Sample sentences:
+    - OCBC Precious Metals Account (min 0.01oz) 2.
+    - Qtr % 9 Mths 9 Mths % – reported earnings 4.12 4.21 3.98 4.07 4.09 USD/SGD exchange rate was 1.2894 as of 30 S
+    - Net interest margin – Commercial book1 2.80 2.75 2.78 Total allowances/ unsecured NPA 227 224 226 Common Equit
+    - Capital Conservation Buffer 2.5 2.5 2.5 2.5 Countercyclical Capital Buffer 0.3 0.2 0.2 0.2 1 Includes minimum 
+    - 78.8 79.7 81% funding base, with customer All-ccy LCR (%) NSFR (%) CET1 CAR (%) liquidity and capital position
+
+--- Cluster 54 (n=11) ---
+  Bank mix: {'UOB': 2, 'DBS': 9}
+  Top terms: shares, securities, dividend, net, pursuant, fully, value, transactions
+  Sample sentences:
+    - Announcement: With effect from 1 December 2022, salary credit transactions made via PayNow reflected as “PAYNO
+    - While the swaps are fair valued to other comprehensive income (OCI), the underlying banking book assets are ac
+    - Shares transferred pursuant to DBSH Share (b) The weighted average number of Issued Ordinary shares net of Tre
+    - 2 Refers to fair value through other comprehensive income The bank and corporate securities classified as Leve
+    - And they are structured as triple-net leases, where variable costs are fully Melissa Kuang
+
+--- Cluster 55 (n=11) ---
+  Bank mix: {'DBS': 11}
+  Top terms: shares, issued, ordinary, ordinary shares, bonus, period, share, balance
+  Sample sentences:
+    - The movement in the number of issued and fully paid-up ordinary shares of the Company is as follows: Balance a
+    - The movement in the number of issued and fully paid-up ordinary shares of the Company is as follows: Balance a
+    - Shares transferred pursuant to DBSH Share Plan/ DBSH Balance at end of period (8,597,816) (
+    - 14,115,246) Issued Ordinary shares net of Treasury shares 2,579,019,809 2,573,502,379 (b) The weighted average
+    - Cash and cash equivalents at beginning of period 46,382 47,352 Cash and cash equivalents at end of period 32,6
+
+--- Cluster 56 (n=29) ---
+  Bank mix: {'DBS': 3, 'OCBC': 19, 'UOB': 7}
+  Top terms: loans, allowances, costs, credit, credit costs, allowances loans, basis, annualised
+  Sample sentences:
+    - DBS multiplier interest is yearly return, divided into monthly payments.
+    - Half % Year Year % 2 Measured based on full-time equivalent.
+    - Half % Year Year % USD/SGD exchange rate was 1.2840 as of 31 Dec 2025 (30 Jun 2025: 1.2746; 31 Dec 2024 1.3604
+    - 3Q24 2Q25 1/ Credit costs refer to allowances for loans as a percentage of average loans, on annualised basis.
+    - Corporate/ Commercial Banking and Others Net recoveries/ upgrades (120) (114) (205) formation benign 1Q26 allo
+
+--- Cluster 57 (n=10) ---
+  Bank mix: {'DBS': 8, 'OCBC': 2}
+  Top terms: equity, net, fair, fair value, value, loans, return, 2nd
+  Sample sentences:
+    - The comparative amounts of $59 million for fourth-quarter 2023 and $59 million for first-quarter 2023 continue
+    - Excludes customer sales income, which is reflected in the Consumer Banking/Wealth Management and Institutional
+    - The comparative amount of $178 million for the first nine months of 2023 continued to be classified as Markets
+    - The comparative amounts of $119 million for first-half 2023 and $118 million for second-half 2023 continued to
+    - The comparative amount of $60 million for second-quarter 2023 continued to be classified as Markets Trading no
+
+--- Cluster 58 (n=51) ---
+  Bank mix: {'DBS': 17, 'UOB': 19, 'OCBC': 15}
+  Top terms: non, assets, income, loans, equity, net, non performing, performing
+  Sample sentences:
+    - DBS Total Unbilled credit card transactions.
+    - UOB credit card fees.
+    - Regarding DBS account and Tax.
+    - The commercial book non-interest income accounts for the majority of Group non- interest income and is highlig
+    - Commercial book non-interest income.
+
+--- Cluster 59 (n=24) ---
+  Bank mix: {'DBS': 3, 'OCBC': 12, 'UOB': 9}
+  Top terms: income, 25, 15, profit, net, dec, operating, 15 15
+  Sample sentences:
+    - Total income stable at $4.69bn Cash / SFS 2,082 2,131 (2) customer income offset by lower net Investment banki
+    - Group net interest income marginally higher from of which: Net interest income 3,593 0 
+    - Total income up 6% to $3.52b led by Constant-FX change YoY%: Impact on earnings: positive FY24 Net Net interes
+    - 48.9% 49.8% 50.3% 50.7% 50.2% funding resilience amid Robust liquidity and funding profile to support growth C
+    - As % of Group income highs; AUM growth driven Customer Loans (S$b) Customer Deposits (S$b) and CASA ratio mone
+
+--- Cluster 60 (n=30) ---
+  Bank mix: {'DBS': 24, 'OCBC': 4, 'UOB': 2}
+  Top terms: net, income, profit, markets, expenses, trading, record, treasury
+  Sample sentences:
+    - Markets trading income highest in ten quarters Allowances 130 (40) 
+    - Expenses up 10%, Citi Taiwan accounts for 3%pt 3Q23 net Net Fee Treasury Markets Expenses GP SP Tax and 3Q24 n
+    - 2Q24 net Net Fee Treasury Markets Expenses GP SP Tax and 3Q24 net profit interest income customer trading othe
+    - -441 -516 -142 -175 -199 Loans up 1% QoQ, 2% over 9M in constant-currency terms Deposits up 2% QoQ in constant
+    - Fee income 8% lower as wealth management and loan-related fees ease from record levels; treasury 1Q25 net Net 
+
+--- Cluster 61 (n=21) ---
+  Bank mix: {'DBS': 10, 'OCBC': 9, 'UOB': 2}
+  Top terms: income, group, profit, net, fee, half, 14, billion
+  Sample sentences:
+    - Sensex closed 286.98 pts or 0.37% higher at 77,656.09, and Nifty 50 gained 115.50 pts or 0.48% to 24,334.55
+    - Record fee income led by wealth management; Profit before allowances 3,504 11 
+    - Fee and commission income 2,117 1,758 20 2,007 5 4,124 3,697 12 2 Includes trade & remittances, guarantees and
+    - Half 1st Half % chg 2nd Half % chg Net trading income 1,434 1,060 35 1,253 14 Net income from investment secur
+    - DBS GROUP HOLDINGS LTD AND ITS SUBSIDIARIES ($m) 2nd Half 2nd Half % 1st Half % Year Year % Fee and commission
+
+--- Cluster 62 (n=16) ---
+  Bank mix: {'DBS': 2, 'OCBC': 10, 'UOB': 4}
+  Top terms: total, ratio, 14, 32, income, 28, net, return
+  Sample sentences:
+    - Net interest margin – Commercial Book 2.83 2.82 2.83 2.81 2.77 Cost/ income ratio 39.1 39.3 39.6 38.7 38.6 Ret
+    - Net interest margin – Commercial Book1 2.82 2.30 2.81 2.77 1.94 Cost/ income ratio 39.3 40.6 38.3 38.6 43.0 Re
+    - Total capital adequacy ratio 19.4 19.8 19.4 19.8 19.6 Singapore dollar liquidity coverage ratio 284 315 307 33
+    - Agriculture, mining and quarrying 5 0.1 5 0.1 32 0.5 Building and construction 1,589 1.6 1,738 1.8 1,302 1.4 G
+    - Non-interest income to total income 28.6 31.9 24.8 21.3 28.4 26.6 26.0 30.5 NPL ratio 1.0 1.2 1.0 1.2 1.0 1.0 
+
+--- Cluster 63 (n=25) ---
+  Bank mix: {'DBS': 20, 'OCBC': 5}
+  Top terms: level, level level, 24, financial, 31, loans, 392, assets
+  Sample sentences:
+    - Total allowances rose from $3 ago to a write-back of $3 million. million to $84 million due mainly to higher s
+    - 2,357 4,412 Senior medium term notes1 9,541 8,783 6,592 Negotiable certificates of deposit1 6,037 6,751 5,910 
+    - Dec 30 Jun 31 Dec 31 Dec 30 Jun 31 Dec Cash and balances with central banks 50,213 43,294 54,170 - - - Governm
+    - In $ millions Level 1 Level 2 Level 3 Total Level 1 Level 2 Level 3 Total - Other financial assets 368 28,955 
+    - Expenses declined 8%, while total DBS GROUP HOLDINGS LTD AND ITS SUBSIDIARIES Consumer Banking/Wealth Manageme
+
+--- Cluster 64 (n=47) ---
+  Bank mix: {'OCBC': 43, 'UOB': 2, 'DBS': 2}
+  Top terms: ratio, 15, 1ppt, casa, 3ppt, total, non, non performing
+  Sample sentences:
+    - OCBC Bonus+ 1.4% -> 1.1%.
+    - Effectively 1.7% (from UOB) + 0.6%\~1.2% (depending on Grab rewards tier).
+    - Scenario 1: If you missed 1 month of min spend, you will get (4.65\11 + 4.05)/12 = 4.6% for OCBC 360, (5.05\11
+    - 80% QQQ SPY TQQQ, 20% DBS
+    - Metric VWRA (USD Acc ETF) DBS (SGD stock) 5-Year Total Return (Annualised) ~8.5% ~10.2% 5-Year Volatility ~14.
+
+--- Cluster 65 (n=18) ---
+  Bank mix: {'DBS': 11, 'OCBC': 7}
+  Top terms: based, broad, broad based, growth, growth broad, loans, year, fees
+  Sample sentences:
+    - Non-interest income growth was broad-based.
+    - The growth was broad- based.
+    - consolidation of Citi Taiwan also contributed to the growth in wealth management and card fees.
+    - We had income growth of 9%, which was broad-based.
+    - The deposit growth was broad-based.
+
+--- Cluster 66 (n=37) ---
+  Bank mix: {'DBS': 14, 'OCBC': 20, 'UOB': 3}
+  Top terms: banking, income, management, private, premier, group, wealth, insurance
+  Sample sentences:
+    - Wealth management fees grew 45% to SGD 536 million from a continued strengthening of market sentiment and from
+    - On wealth management, both banca and non-banca grew about 20%.
+    - This gain was more branch and DBS Securities (China) Co., Ltd.
+    - Consumer Banking/ Wealth Management provides individual customers with a diverse range of banking DBS GROUP HO
+    - Assets under management reached a new high of $432 billion, with the proportion in investments Commercial book
+
+--- Cluster 67 (n=15) ---
+  Bank mix: {'DBS': 15}
+  Top terms: equity, assets, million, capital, share, reserves, net, securities
+  Sample sentences:
+    - Transfer of treasury shares 110 - - - 110 Draw-down of reserves upon vesting of - - (124) - (124) Cost of shar
+    - Other comprehensive income - - (25) - (25) 1 Includes distributions of $42 million paid on capital securities 
+    - In $ millions Capital instruments reserves reserves funds interests equity Purchase of treasury shares (10) - 
+    - Other comprehensive income - - (79) - (79) 1 Includes distributions of $42 million paid on capital securities 
+    - 11,897) Bank and corporate securities (4,489) (1,518) Loans and advances to customers (1,522) (15,412) Other a
+
+--- Cluster 68 (n=28) ---
+  Bank mix: {'DBS': 28}
+  Top terms: increase, citi, citi taiwan, taiwan, percentage, percentage points, points, points increase
+  Sample sentences:
+    - Expenses increase 10%, with Citi Taiwan accounting for 3%pt.
+    - Expenses rose 10%, with Citi Taiwan accounting for five percentage points of the increase.
+    - Expenses increased 12% from a year ago to SGD 2.17 billion, with Citi Taiwan accounting for five percentage po
+    - Excluding non-recurring Expenses were 11% higher than a year ago at SGD 4.25 billion, with Citi Taiwan account
+    - Citi Taiwan contributed four percentage points to the increase.
+
+--- Cluster 69 (n=23) ---
+  Bank mix: {'DBS': 4, 'OCBC': 1, 'UOB': 18}
+  Top terms: income, related, net, expenses, npas, total, customer, 48
+  Sample sentences:
+    - time, rising 2% from the previous quarter and 35% from DBS GROUP HOLDINGS LTD AND ITS SUBSIDIARIES In $m 1st H
+    - 452 527 452 493 527 6 16 Comprising Treasures, Treasures Private Client and Private Bank 3Q24 and 9M24 growth 
+    - Other borrowings 60 (257) (197) 6 (131) (125) Net impact on net interest income 533 (787) (254) 288 (266) 22 D
+    - Total allowances were 20% higher with an increase in DBS GROUP HOLDINGS LTD AND ITS SUBSIDIARIES In $m 2nd Hal
+    - At start of period 3,275 3,040 2,901 3,486 2,901 ■ NPL ratio improved YoY Corporate/ Commercial Banking and Ot
+
+--- Cluster 70 (n=190) ---
+  Bank mix: {'UOB': 28, 'DBS': 93, 'OCBC': 69}
+  Top terms: income, net, assets, profit, nm, allowances, non, net income
+  Sample sentences:
+    - UOB credit card maxed $6100 DCS Readycash: 1287, 1169, 1169, 569, 436, 170 GXS FlexiLoan: 115, 115, 192, 378, 
+    - Commercial book total income 5,559 5,542 0 5,177 7 Net interest income 3,475 3,719 (7) 3,592 (3) Net fee and c
+    - Commercial book total income1 5,311 4,667 14 4,894 9 Net interest income 3,647 3,384 8 3,637 0 Net fee and com
+    - 97) Upgrades, settlements and recoveries (413) (391) (308) (491) (208) (236) (213) Write-offs (81) (197) (35) 
+    - one-time items 5,200 3,616 44 One-time item in 1H23 for Citi Taiwan integration costs Net fee and commission i
+
+--- Cluster 71 (n=24) ---
+  Bank mix: {'OCBC': 23, 'UOB': 1}
+  Top terms: million, income, allowances, fy24, 2q23, loans, assets, 2q24
+  Sample sentences:
+    - +4ppt Allowances (S$ million) 9M25 9M24 3Q25 3Q24 2Q25 Credit costs (bps) 1/ 9M25 9M24 3Q25
+    - S$ million Jun 2026 Jun 2025 Mar 2026 YoY QoQ Non-performing assets (NPAs) 3,132 3,009 3,120 +4% – Non-perform
+    - S$ million loans S$ million loans S$ million loans
+    - WM Income (S$m)1/ WM AUM (S$b) FY23 FY24 Dec 23
+    - 4Q23 3Q24 4Q24 FY23 FY24 QQooQQ
+
+--- Cluster 72 (n=53) ---
+  Bank mix: {'DBS': 20, 'OCBC': 19, 'UOB': 14}
+  Top terms: income, improved, ratio, cost, ratio improved, cost income, income ratio, year
+  Sample sentences:
+    - With total income growing 27%, there was positive jaw of 13 percentage points which resulted in cost to income
+    - The NPL ratio rose slightly from the previous quarter to 1.2%.
+    - Overall, deposit costs have been better than anticipated.
+    - The CET-1 ratio rose 0.1 percentage points from the previous quarter to 14.8%.
+    - The cost-income ratio improved two percentage points from a year ago to 37%.
+
+--- Cluster 73 (n=13) ---
+  Bank mix: {'DBS': 12, 'UOB': 1}
+  Top terms: growth, hedging, rates, lower, lower rates, balance, balance sheet, sheet
+  Sample sentences:
+    - These more than offset the impact of lower interest rates and a stronger Singapore dollar.
+    - Rate pressures were mitigated by hedging and balance sheet growth.
+    - Group net interest income was modestly higher, with proactive hedging and record deposit growth offsetting pre
+    - Group net interest income was little changed as strong deposit growth and proactive balance sheet hedging miti
+    - The resilience in net interest income reflects the combined effects of balance sheet growth and of hedging.
+
+--- Cluster 74 (n=14) ---
+  Bank mix: {'DBS': 1, 'OCBC': 13}
+  Top terms: million, allowances, compared, total, total allowances, higher, year, million compared
+  Sample sentences:
+    - Commercial book other non-interest income of SGD 548 million was stable compared to the previous quarter, whic
+    - Allowances for impaired assets were S$333 million, up from S$216 million in the previous year.
+    - Total allowances of S$216 million, which mostly comprised allowances for non-impaired assets, were 8% higher a
+    - Total allowances of S$110 million were higher as compared to S$44 million for 1Q22, mainly due to higher allow
+    - Total allowances were S$184 million, as compared to S$154 million in 3Q22, largely attributable to higher allo
+
+--- Cluster 75 (n=78) ---
+  Bank mix: {'DBS': 61, 'OCBC': 16, 'UOB': 1}
+  Top terms: expenses, higher, costs, staff costs, staff, higher staff, rose, led
+  Sample sentences:
+    - Expenses increased 4% to SGD 9.25 billion led by higher staff costs.
+    - Expenses rose 12% or $213 million to $2.04 billion from higher staff costs and the consolidation of Citi Taiwa
+    - Expenses rose 14% or $724 million to $5.85 billion due to higher staff costs.
+    - For the third quarter, expenses grew 6% to $2.04 billion from the previous quarter driven by higher staff cost
+    - Expenses increased 4% or $354 million to $9.25 billion led by staff costs.
+
+--- Cluster 76 (n=97) ---
+  Bank mix: {'DBS': 84, 'OCBC': 12, 'UOB': 1}
+  Top terms: quarter, year, previous, expenses, compared, net, income, half
+  Sample sentences:
+    - Compared to the previous quarter, net profit was 24% higher.
+    - Compared to the previous year, expenses were 12% higher while underlying expenses grew 10%.
+    - Cost-income ratio For the nine months, expenses grew 14% due to higher staff cost while the cost-income ratio 
+    - Commercial book other non-interest income grew 44% led by an increase in treasury customer Markets trading inc
+    - Compared to the previous half, expenses were little changed.
+
+--- Cluster 77 (n=33) ---
+  Bank mix: {'DBS': 2, 'OCBC': 30, 'UOB': 1}
+  Top terms: million, share, associates, results, results associates, share results, year, ago
+  Sample sentences:
+    - Non-performing assets rose 3% from the previous quarter to SGD 5.22 billion with the NPL ratio unchanged at 1.
+    - Total allowances amounted to $458 million, 62% higher than a year ago and 35% above the previous half.
+    - • Net trading income was S$518 million, up 38% from the previous quarter.
+    - Share of results of associates was S$279 million, an increase of 11% from a year ago.
+    - Share of results of associates grew 19% to S$637 million.
+
+--- Cluster 78 (n=117) ---
+  Bank mix: {'DBS': 65, 'OCBC': 26, 'UOB': 26}
+  Top terms: banking, income, products, customers, services, management, wealth, investment
+  Sample sentences:
+    - Equities (growth layer) - mainly DBS + global tech exposure.
+    - DBS Home Equity Income Loan for seniors with private properties.
+    - OCBC 360 account with credit card spending and investment/insurance.
+    - All DBS ILP are a mix of insurance and investment.
+    - 2. Investment knowledge: UOB Wealth Banking falls under the segment together with Mass Banking.
+
+--- Cluster 79 (n=24) ---
+  Bank mix: {'DBS': 14, 'OCBC': 4, 'UOB': 6}
+  Top terms: lower, fees, income, net, wealth, higher, related, loan
+  Sample sentences:
+    - The other half was due to a decline in Treasury Markets assets which reduced the drag on Group net interest ma
+    - declined 37% mainly due to lower contributions from interest rate and credit, partially offset by higher Other
+    - Similar to the previous three quarters, higher commercial book income was moderated by lower Treasury Markets 
+    - General allowances were also lower Net interest income.
+    - It was 8% lower as wealth management and loan-related fees eased from record levels.
+
+--- Cluster 80 (n=23) ---
+  Bank mix: {'DBS': 23}
+  Top terms: billion, income, total, total income, grew, income grew, rose, income rose
+  Sample sentences:
+    - Markets trading income rose 49% to $1.37 billion.
+    - Total income rose 24% to $4.69 billion.
+    - Total income grew 35% to $8.96 billion.
+    - Total income increased 13% to $6.68 billion.
+    - Total income grew 48% to $4.27 billion.
+
+--- Cluster 81 (n=35) ---
+  Bank mix: {'DBS': 35}
+  Top terms: million, income, rose, management, wealth, wealth management, fee, fee income
+  Sample sentences:
+    - Loan-related fees rose 12% to $137 million.
+    - Fee income rose 18% or $730 million to a record $4.90 billion, led by wealth management.
+    - Fee income rose 14% or $131 million to $1.10 billion led by wealth management.
+    - Net fee income rose 22% to $993 million led by wealth management.
+    - We also saw wealth management segment income reach a record $5.7 billion.
+
+--- Cluster 82 (n=16) ---
+  Bank mix: {'DBS': 13, 'OCBC': 1, 'UOB': 2}
+  Top terms: net, basis, decline, decline net, growth, income, offset, offset basis
+  Sample sentences:
+    - Commercial book net interest income rose 2% as a nine-basis-point decline in net interest margin was more than
+    - Compared to a year ago, Group net interest income was 5% higher as growth in loans and deposits was partially 
+    - billion, boosted by a 100-basis-point improvement in net interest margin to 2.75% on the back of higher intere
+    - Group net interest income rose 2% to SGD 10.9 billion despite a 9-basis-point compression in net interest marg
+    - Net interest income rose 1% as balance sheet growth more than offset a six-basis-points decline in net interes
+
+--- Cluster 83 (n=21) ---
+  Bank mix: {'OCBC': 21}
+  Top terms: year, billion, loans, ago, year ago, 30, total, customer
+  Sample sentences:
+    - Total NPAs were S$2.99 billion as at 30 September 2025, 7% above the previous year.
+    - Customer loans were S$327 billion as at 30 September 2025, up 7% year-on-year and 1% quarter-on- •
+    - • Sustainable financing loans increased 17% from a year ago to S$55.0 billion, and accounted for 17% of total 
+    - Total NPAs as at 30 June 2026 were S$3.13 billion, up 4% from a year ago.
+    - As at 30 June 2026, customer loans were S$364 billion, up 11% from a year ago and 5% from the previous quarter
+
+--- Cluster 84 (n=99) ---
+  Bank mix: {'DBS': 95, 'OCBC': 4}
+  Top terms: billion, loans, sgd, currency, constant, deposits, terms, constant currency
+  Sample sentences:
+    - Loans rose 2% or SGD 8 billion in constant-currency terms to SGD 453 billion.
+    - Non-trade corporate loans increased 2% or SGD 5 billion from broad-based growth across the region and a range 
+    - Loans grew 6% or SGD 25 billion in constant-currency terms, led by corporate loans, while deposits were 12% or
+    - Loans expanded SGD 24 billion or 6% in constant-currency terms to SGD 445 billion, led by broad-based growth i
+    - Deposits grew SGD 64 billion or 12% in constant-currency terms to SGD 610 billion, the largest absolute increa
+
+--- Cluster 85 (n=11) ---
+  Bank mix: {'DBS': 11}
+  Top terms: npa, offset, write, formation, new, offs, repayments, write offs
+  Sample sentences:
+    - NPA falls 8% as repayments, upgrades and write-offs more than offset new NPA formation.
+    - Non-performing assets declined 8% from the previous quarter to SGD 4.68 billion as repayments, upgrades and wr
+    - New NPA formation was below the recent quarterly average and was more than offset by repayments and write-offs
+    - Non-performing assets fell 3% from the previous quarter to $4.86 billion driven by lower new NPA formation and
+    - This was offset by general allowance write-
+
+--- Cluster 86 (n=55) ---
+  Bank mix: {'DBS': 51, 'OCBC': 3, 'UOB': 1}
+  Top terms: allowances, million, income, total, higher, rose, total allowances, increased
+  Sample sentences:
+    - The cost-income ratio was little changed Specific allowances rose from a low base to $197 million or 18 basis 
+    - Specific allowances rose $112 million to $373 million or 11 basis points of loans, while $75 million of genera
+    - It comprises net fee income and other non-interest For the third quarter, commercial book non-interest income 
+    - Total allowances were 53% higher as an increase in specific allowances, Second-half net profit grew 10% from a
+    - Card fees grew interest margin in the third quarter.
+
+--- Cluster 87 (n=21) ---
+  Bank mix: {'DBS': 10, 'OCBC': 2, 'UOB': 9}
+  Top terms: net, income, margin, lower, net income, net margin, quarter, rates
+  Sample sentences:
+    - Commercial book net interest income declined 7% as net Commercial book net fee income grew 16%, led by higher 
+    - Commercial book net interest income falls 4%; impact of lower rates mitigated by hedging and 
+    - Commercial book net interest income declines 3%; impact of lower rates mitigated by hedging and 
+    - A 19-basis-point decline in net interest margin to 2.61% from lower interest rates, softened by balance sheet 
+    - return on equity, but modestly reduced net interest margin.
+
+--- Cluster 88 (n=508) ---
+  Bank mix: {'DBS': 334, 'UOB': 87, 'OCBC': 87}
+  Top terms: income, million, lower, net, billion, quarter, fell, declined
+  Sample sentences:
+    - In 2008 during the Global Financial Crisis, DBS Group Holdings suffered a severe share price drop of roughly 5
+    - Eg. DBS claims 4k jobs will be cut due to AI.
+    - UOB Stash also, drop from 2% to 1.5%.
+    - At the moment, UOB's profit is approximately 15.8% down on yoy basis.
+    - DBS literally just fell 3% within 3 days.
+
+--- Cluster 89 (n=10) ---
+  Bank mix: {'DBS': 9, 'UOB': 1}
+  Top terms: income, previous, previous half, non, customer, rose, year, treasury
+  Sample sentences:
+    - Total income rose 27% to $15.2 billion as higher commercial book net interest margin and non- interest income 
+    - The increases were moderated by a 38% decline in investment banking fees due to slower capital market activiti
+    - Treasury customer sales to wealth and corporate clients grew 14% to a new high, but the increase was offset by
+    - the previous quarter, net fee income rose 3% as a higher contribution from Citi Taiwan more than offset the im
+    - Although deposit costs also increased, previous half.
+
+--- Cluster 90 (n=75) ---
+  Bank mix: {'DBS': 50, 'OCBC': 16, 'UOB': 9}
+  Top terms: income, offset, net, lower, net income, higher, growth, offset lower
+  Sample sentences:
+    - Net interest income was little changed on a day-adjusted basis, as rate pressures were offset by hedging and b
+    - Group net interest income was little changed on a day-adjusted basis at SGD 3.49 billion as the impact of lowe
+    - This more than offset lower deposit income from the decline in interest rates.
+    - Underlying non-performing assets were little changed with new non-performing asset formation in line with rece
+    - The Common Equity Tier-1 ratio of 14.1% was unchanged from the previous quarter as the impact of Citi Taiwan i
+
+--- Cluster 91 (n=55) ---
+  Bank mix: {'DBS': 46, 'OCBC': 7, 'UOB': 2}
+  Top terms: billion, income, rose, net, sgd, profit, income rose, new
+  Sample sentences:
+    - The Commercial book net fee income rose 35% to SGD 1.48 billion.
+    - The cost-income Profit before allowances rose 23% to SGD 3.65 billion.
+    - For the nine months, net profit grew 35% to a new high of $7.89 billion with ROE at a record 18.6%.
+    - For the nine months, net profit rose 35% to a new high of $7.89 billion, Commercial book total income rose 33%
+    - Profit before allowances rose 14% from a year ago.
+
+--- Cluster 92 (n=49) ---
+  Bank mix: {'DBS': 47, 'UOB': 2}
+  Top terms: billion, year, quarter, net, rose, ago, year ago, income
+  Sample sentences:
+    - Non-performing assets rose 6% or $313 million from the previous quarter to $5.30 billion.
+    - The cost-income ratio was unchanged at 40%, and profit before allowances rose 2% or $249 million to a new high
+    - Compared to a year ago, net profit rose 15% to $2.96 billion as total Commercial book total income rose 14% or
+    - Non-performing assets rose 3% from the previous quarter to $5.22 billion.
+    - Commercial Book net interest income was $3.64 billion, Commercial book net fee income grew 19% to $1.71 7% hig
+
+--- Cluster 93 (n=30) ---
+  Bank mix: {'DBS': 30}
+  Top terms: treasury, customer, treasury customer, sales, customer sales, million, income, non
+  Sample sentences:
+    - Commercial book other non-interest income rose 10%, driven by record treasury customer sales.
+    - Net fee income was up 2% or $20 million while other non-interest income rose 8% or $35 million from an increas
+    - Treasury customer sales and other non-interest income grew 44% or $189 million, led by an increase in treasury
+    - Treasury customer sales and other non-interest income rose 59% or $231 million due to record treasury customer
+    - $889 million from higher treasury customer sales.
+
+--- Cluster 94 (n=27) ---
+  Bank mix: {'DBS': 25, 'OCBC': 2}
+  Top terms: net, billion, income, basis, net income, margin, net margin, basis points
+  Sample sentences:
+    - Compared to a year ago, third-quarter commercial book total income Net interest income rose 23% or $695 millio
+    - Compared to the previous quarter, commercial book net interest income rose 3% or $103 million from an increase
+    - Net interest income rose 46% or $3.34 billion to $10.6 billion from an 83 basis-point expansion in net interes
+    - Commercial book net interest income rose 3% to $3.68 billion compared to the previous quarter as net interest 
+    - Compared to a year ago, commercial book net interest income rose 23% and net interest margin expanded 52 basis
+
+--- Cluster 95 (n=11) ---
+  Bank mix: {'DBS': 11}
+  Top terms: income, sales, fees, investment, bancassurance, investment product, product, grew
+  Sample sentences:
+    - Non-interest income grew 26% to $1.42 billion driven by higher fees from investment product sales, bancassuran
+    - Non-interest income grew 16% to $2.76 billion on higher fee income from investment product sales, bancassuranc
+    - Commercial book other non-interest income grew 4%, with the increase also driven by wealth Markets trading inc
+    - Expenses higher sales of equity derivative, foreign exchange, rose 13% to $1.20 billion, while total allowance
+    - Non-interest income grew 11% to $1.49 billion from fully incorporated into Consumer Banking/ Wealth higher tre
+
+--- Cluster 96 (n=25) ---
+  Bank mix: {'DBS': 20, 'OCBC': 2, 'UOB': 3}
+  Top terms: growth, wealth, management, wealth management, fees, management fees, led, income
+  Sample sentences:
+    - The increase was led by wealth management fees, which reached a record SGD 907 million driven by higher invest
+    - The increase was broad-based and led by wealth management fees, which rose 29% to a new high of SGD 2.81 billi
+    - Full-year Consumer Banking / Wealth Management income rose 4% to SGD 10.5 billion from strong growth in invest
+    - The total income growth of 16% reflects a solid increase not just on NIM but also fee activity.
+    - Growth was broad-based and led by wealth management, which increased 29% to a new high.
+
+--- Cluster 97 (n=14) ---
+  Bank mix: {'DBS': 10, 'OCBC': 1, 'UOB': 3}
+  Top terms: fees, income, billion, higher, net, million, wealth, sales
+  Sample sentences:
+    - These increases were partially offset by Commercial book other non-interest income rose 24% to SGD 602 million
+    - Commercial book total income increased 9% led by growth in fee income and treasury customer sales while net in
+    - Total income rose 22% to $9.36 billion, driven by individual customers with a diverse range of banking and str
+    - Additionally, income was 19% higher due to increased net trading income and gains from investment securities.
+    - increase was led by wealth management fees, which rose 33% to a new high of $1.83 billion on higher investment
+
+--- Cluster 98 (n=22) ---
+  Bank mix: {'DBS': 11, 'OCBC': 3, 'UOB': 8}
+  Top terms: net, income, net income, growth, billion, increased, rose, margin
+  Sample sentences:
+    - Within this, commercial book net interest income rose 1% or $34 million, as deposit growth momentum was sustai
+    - Net interest income grew 24% to $3.27 billion boosted by net interest margin expansion and growth in loans and
+    - Net interest income grew 12% from a higher net interest margin and growth in loans and deposits.
+    - Net interest income rose 45% to $6.20 billion from a higher net interest margin and growth in loan and deposit
+    - Income from loans and deposits rose 9% to $3.12 billion due to higher volumes and an improved net interest mar
+
+--- Cluster 99 (n=25) ---
+  Bank mix: {'UOB': 14, 'DBS': 11}
+  Top terms: net, basis, margin, net margin, points, basis points, higher, income
+  Sample sentences:
+    - Happy that UOB upped the interest rate.
+    - Net interest margin expanded by a faster three basis points to 2.19%.
+    - Net interest margin rose eight basis points from higher interest rates.
+    - Net interest margin increased five basis points to 2.80% from higher interest rates.
+    - Net interest income grew 8%, lifted by higher net interest margin which rose eight basis points to 2.77% from 
+
+--- Cluster 100 (n=57) ---
+  Bank mix: {'DBS': 38, 'OCBC': 9, 'UOB': 10}
+  Top terms: income, customer, treasury, sales, customer sales, treasury customer, new, fee
+  Sample sentences:
+    - Deposit growth momentum was strong, while markets trading income rose.
+    - Fee income and treasury customer sales reached new highs, led by wealth management, while deposit growth was t
+    - Fee income and treasury customer sales both grew double digits and reached new highs, led by wealth management
+    - Fee income and treasury customer sales reached new highs led by wealth management, while deposit growth was th
+    - Commercial book net interest income rose from balance sheet growth and a slightly higher net interest margin, 
+
+--- Cluster 101 (n=18) ---
+  Bank mix: {'DBS': 4, 'OCBC': 5, 'UOB': 9}
+  Top terms: new, net, billion, high, year, inflows, money, money inflows
+  Sample sentences:
+    - DBS Group announced a robust nine percent increase in net profit for the second quarter, bolstered by a remark
+    - Our Commercial book NIM is up 104 basis points over the past year and is a better reflection of our franchise.
+    - Assets under management rose 23% to a new high of $365 billion, underpinned by strong net new money inflows an
+    - Tan Su Shan Our total wealth AUM has grown nicely and now stands at $432 billion, up by $6 billion from the pr
+    - Banking wealth management AUM grew 8% from a quarter ago to a record high of S$336 billion, supported by net n
+
+--- Cluster 102 (n=66) ---
+  Bank mix: {'DBS': 6, 'UOB': 43, 'OCBC': 17}
+  Top terms: customers, digital, region, group, year, wealth, banking, growth
+  Sample sentences:
+    - DBS announces COVID-19 relief efforts to help India worth INR 10 crore
+    - UOB One high interest bank account, S$500 minimum credit card spend met by above UOB cards PLANNED AIR MILES F
+    - Over and above periodic share buybacks for vesting employee share plans Programme will reduce fully phased-in 
+    - Well-entrenched wealth continuum; pathway to >S$1tn overall • Leading IBG product franchises and sector expert
+    - First bank-backed digital exchange in 24x7 real-time liquidity Capability to list range of • Institutional-gra
+
+--- Cluster 103 (n=22) ---
+  Bank mix: {'OCBC': 3, 'DBS': 6, 'UOB': 13}
+  Top terms: vs, vs uob, uob vs, citi, rewards, hsbc, card, ppv
+  Sample sentences:
+    - OCBC stock vs other banks.
+    - DBS networth vs deposit.
+    - OCBC Rewards vs Citi Rewards.
+    - DBS vs Standard Chartered for Non-Resident Investor.
+    - Citibank IBKR vs DBS IBSG for the deposit.
+
+--- Cluster 104 (n=11) ---
+  Bank mix: {'DBS': 2, 'UOB': 8, 'OCBC': 1}
+  Top terms: account, spend, uob account, count, does, minimum, count uob, hi
+  Sample sentences:
+    - “Hi I cant receive salary to DBS acct, can you credit to diff bank?”
+    - Does it also count towards the minimum spending for cards like the UOB One account?
+    - Does UOB Krisflyer spend count towards UOB One account criteria?
+    - Never heard of the need to place deposit to get miles unless its UOB KF Debit?
+    - What is the amount of $$ need to deposit with UOB stash & one account to hit mid tier saving interest ?
+
+--- Cluster 105 (n=15) ---
+  Bank mix: {'UOB': 11, 'DBS': 3, 'OCBC': 1}
+  Top terms: sgd, amex, grab, ibkr, grab revolut, revolut, uob amex, cdc
+  Sample sentences:
+    - UOB absolute - > Grab - > Revolut - > CDC.
+    - U can do uob > grab > revolut > cdc
+    - DBS sgd -> IBKR exch sgd.usd -> IBKR to trade -> IBKR to sell -> IBKR exch usd.sgd -> DBS sgd
+    - UOB Amex -> Grab -> Revolut -> Bank Account -> UOB Amex.
+    - Uob absolute -> Gpmc -> AXS -> iras
+
+--- Cluster 106 (n=13) ---
+  Bank mix: {'DBS': 12, 'UOB': 1}
+  Top terms: shares, dividend, dbsh, dbsh ordinary, ex, ex dividend, ordinary, ordinary shares
+  Sample sentences:
+    - Latest DBS dividend payment was due on 17th
+    - Mine took 1 day bro and after the approval date it will be reflected in UOB Tmrw.
+    - DBS bonus shares april 2024.
+    - The DBSH ordinary shares will be quoted ex-dividend on 9 May 2024 (Thursday).
+    - The DBSH ordinary shares will be quoted ex-dividend on 5 April 2024 (Friday).
+
+--- Cluster 107 (n=12) ---
+  Bank mix: {'OCBC': 3, 'DBS': 7, 'UOB': 2}
+  Top terms: date, auction, auction date, day, day auction, days, repricing, 30pm
+  Sample sentences:
+    - OCBC (153 Days) Promotion April.
+    - My official DBS repricing window started around November 2025.
+    - For DBS, deadline is 9PM on the business day before auction date.
+    - Opens around announcement date, then closes a day before auction date (for DBS)
+    - Amex card payment cutoff overweekend is today 14 Jan before 4.30pm and for UOB its 12.30pm.
+
+--- Cluster 108 (n=41) ---
+  Bank mix: {'DBS': 31, 'OCBC': 4, 'UOB': 6}
+  Top terms: dividend, interim, interim dividend, date, 2024, 2025, monday, end
+  Sample sentences:
+    - The maximum amount of time DBS has taken to recover from a drawdown is 986 trading days from 2007-05-23 to 201
+    - For OCBC, the regular very low rate interest is deposited on the 1st of the month.
+    - UOB one bonus Interest is only paid on the 2nd working day of each month if you qualify while the basic intere
+    - Huh my loan with uob fixed rate expires july 2024.
+    - April's SSB's closing date (through DBS) is March 24.
+
+--- Cluster 109 (n=25) ---
+  Bank mix: {'DBS': 25}
+  Top terms: second, china, data, second data, fourth, business, democratisation, digitalisation
+  Sample sentences:
+    - The first is business mix.
+    - A second portfolio to watch is the unsecured consumer exposure.
+    - The first set of actions is on governance.
+    - The fourth set of actions is on incident management.
+    - The second is SME.
+
+--- Cluster 110 (n=14) ---
+  Bank mix: {'DBS': 14}
+  Top terms: dividend, based, price, share, dividend yield, yield, closing, cents
+  Sample sentences:
+    - Currently my DBS dividend yield based off my averaged out cost is about 8%.
+    - When tracking my portfolio performance, do I based my DBS shares’ return as 6.5% (based on my purchase price),
+    - Dbs stock price now is 45sgd with 0.57 dividend per share which is 5.13% over the year. .
+    - Based on last Friday's closing share price and assuming that dividends are held at 48 cents per quarter, the a
+    - Based on Tuesday’s closing share price and assuming that dividends are held at 54 cents per quarter, the annua
+
+--- Cluster 111 (n=13) ---
+  Bank mix: {'DBS': 10, 'UOB': 1, 'OCBC': 2}
+  Top terms: debt, happens, happens ocbc, mortgage, mortgage dbs, unless, chance, estate
+  Sample sentences:
+    - In your case, you mentioned you are currently under DBS, and you’re repricing to another mortgage under DBS.
+    - ~~I also do not believe US estate tax applies as SRS investments are held by a foreign intermediary, in my cas
+    - There is absolutely no chance of the SDIC insurance being triggered by DBS.
+    - Brokerages like Tiger use a custodial bank (in the case of Tiger, it’s DBS), so if something goes wrong the un
+    - This means there’s a realistic chance the debt has already been sold to Collectius, and is not currently held 
+
+--- Cluster 112 (n=25) ---
+  Bank mix: {'DBS': 14, 'OCBC': 6, 'UOB': 5}
+  Top terms: like, like ocbc, app, use, really, actually, actually got, good
+  Sample sentences:
+    - I actually got some in DBS as well already.
+    - Ocbc app is fine for me.
+    - For me it's more picking companies that I really like (eg lendlease on Somerset313, I use Dbs myself and I thi
+    - I like ocbc frank
+    - plus I really like the idea of having my own UOB kayhian ac.
+
+--- Cluster 113 (n=13) ---
+  Bank mix: {'OCBC': 4, 'DBS': 1, 'UOB': 8}
+  Top terms: sure, sure uob, happened, happened ocbc, sure ocbc, sure dbs, sure happened, krisflyer
+  Sample sentences:
+    - im not from the OCBC Team looking for feedback
+    - Not sure about DBS
+    - Not sure if UOB offers EUR time deposits.
+    - Uob works for me not sure on stand chart side
+    - Not sure about OCBC
+
+--- Cluster 114 (n=16) ---
+  Bank mix: {'DBS': 13, 'UOB': 2, 'OCBC': 1}
+  Top terms: customer, sales, driven, treasury, income, book, commercial, commercial book
+  Sample sentences:
+    - DBS exposure is to large companies.
+    - UOB is more exposed to SME and smaller borrowers.
+    - Actually a significant amount of DBS returns come from dividends.
+    - Your dividends yield from OCBC very much depends on dividends declared out of profits generated by the bank.
+    - Not to mention uob is made up of so many components such as personal and corporate banking.
+
+--- Cluster 115 (n=11) ---
+  Bank mix: {'UOB': 5, 'DBS': 6}
+  Top terms: account, using, ve, good, rates, used, better, savings
+  Sample sentences:
+    - I've been using it for 3 years as a separate savings account because their interest rates are better than my U
+    - I used Wise to receive my US stimulus check before transferring it to my DBS account and I found it to be quit
+    - I used the DBS Multiplier account with multicurrency and I found that the exchange rate was almost as good as 
+    - Hi Guys, I have been doing Fd of my salary in Dbs as they are giving good interests.
+    - new to IBKR and wanting to park money inside that has better rates than UOB until I’m ready to get in stocks 😂
+
+--- Cluster 116 (n=10) ---
+  Bank mix: {'DBS': 3, 'UOB': 2, 'OCBC': 5}
+  Top terms: account, monthly, funds, 360, ocbc 360, savings, dividend, ocbc dividend
+  Sample sentences:
+    - Daily spending in DBS for paynow/lah as liquid funds (500) 3.
+    - Savings account with no monthly charges and fall below charges: DBS My Account, CIMB FastSaver (need 1k to sta
+    - Current savings (emergency funds) are parked into UOB One with max interest, excess parked into OCBC360 2.
+    - 150dollars monthly average from ocbc, dividend and roboinvest credits, great eastern dividends.
+    - 3k monthly deposit for OCBC
+
+--- Cluster 117 (n=23) ---
+  Bank mix: {'UOB': 19, 'DBS': 3, 'OCBC': 1}
+  Top terms: tmrw, uob tmrw, stash, uob stash, follow, mab, mab uob, maxed
+  Sample sentences:
+    - U nv see the UOB ad? 最重要的是诚信.
+    - Singapore Mint or UOB?
+    - Gold - ETF or UOB Gold account?.
+    - DBS n POSB sucks!
+    - Especially UOB one and stash saving?
+
+--- Cluster 118 (n=10) ---
+  Bank mix: {'DBS': 5, 'UOB': 4, 'OCBC': 1}
+  Top terms: currently, funds, 130k, 130k uob, right, uob right, accounts, accounts enjoying
+  Sample sentences:
+    - Currently have around 3k in SPY, 4.1k in equity funds where they distribute at least 6-7% dividends monthly, a
+    - I own STI ETF via DBS regular saving plan and i think they pay about 4% dividend per annum.
+    - (I think 4-6k gained from investing in rando funds that DBS provides, combined with FD) (No property owned)
+    - and I currently have our own UOB One accounts which we are enjoying the 5% interest for.
+    - Combined we have 150k in the bank (in UOB one account), and 25k with a financial advisor with an AXA Pulsar pl
+
+--- Cluster 119 (n=24) ---
+  Bank mix: {'DBS': 7, 'OCBC': 13, 'UOB': 4}
+  Top terms: 360, ocbc 360, salary, fee, 360 salary, annual, fee waiver, waiver
+  Sample sentences:
+    - Cant waive dbs credit card annual fee.
+    - DBS annual fee waiver.
+    - OCBC account manager role salary.
+    - OCBC 360 Insure bonus.
+    - OCBC 360 interest rate nerf.
+
+--- Cluster 120 (n=41) ---
+  Bank mix: {'UOB': 18, 'DBS': 14, 'OCBC': 9}
+  Top terms: app, account, just, use, time, does, card, like
+  Sample sentences:
+    - The rewards tab in the UOB TMRW app doesn’t seem to have that function.
+    - If it is not incepted yet you can request with both Prudential/the UOB banker who sold you the policy to not t
+    - Just get 1 uob one card and be done with it.
+    - do you know that the dbs app can block online and overseas transactions?
+    - If you want to cancel it, maybe you can try calling the DBS Vickers hotline.
+
+--- Cluster 121 (n=17) ---
+  Bank mix: {'OCBC': 7, 'UOB': 9, 'DBS': 1}
+  Top terms: rates, 360, ocbc 360, rate, cut, reduces, reduces rates, drops
+  Sample sentences:
+    - Ocbc 360 revised rates.
+    - Does UOB ONE Account just drop their bonus interest rate?
+    - Savings accounts are starting to cut their interest rates (UOB and SC will do so from 1 May onwards, already a
+    - Wondering if DBS will lower the deposit rate for FHR9 based on US movements.
+    - Is ocbc 360 interest cut?
+
+--- Cluster 122 (n=12) ---
+  Bank mix: {'DBS': 12}
+  Top terms: depends, rates, term, rate, short, focus, policy, depends happens
+  Sample sentences:
+    - It depends on where your DBS funds stand now.
+    - Your thinking about DBS is all about short term movements.
+    - You can review why you buy DBS in the first place and whether the reasons for holding DBS is still there.
+    - But it all depends on what happens to rates.
+    - Beyond that, it is also a management choice of how much to lock in and how much to let float.
+
+--- Cluster 123 (n=10) ---
+  Bank mix: {'UOB': 7, 'OCBC': 3}
+  Top terms: recommend, card, recommend uob, recommended, recommended uob, suggest, strongly, strongly recommend
+  Sample sentences:
+    - As for debit card I would recommend UOB One card.
+    - I too strongly recommend UOB.
+    - I personally would recommend OCBC.
+    - I would recommend the uob evol credit card instead.
+    - Many recommended UOB one
+
+--- Cluster 124 (n=11) ---
+  Bank mix: {'DBS': 9, 'OCBC': 2}
+  Top terms: just, cap, cap tier, dbs cap, flqa, flqa hold, hold, hold dbs
+  Sample sentences:
+    - Plus, ILPs are complex products while DBS is just one counter.
+    - Nope, DBS role wasn’t sales, it was L2 support.
+    - Exactly the point, OCBC is not a portfolio, it is just a small basket.
+    - It’s definitely a profit-making scheme from DBS, and not meant to be any form of ‘social good’.
+    - It’s not a remit but a regular transfer as it’s DBS to DBS.
+
+--- Cluster 125 (n=55) ---
+  Bank mix: {'DBS': 49, 'UOB': 3, 'OCBC': 3}
+  Top terms: charge, fee, fees, usd, account, ibkr, sgd, charges
+  Sample sentences:
+    - Does anyone know if there are fees on transferring USD to IBKR (noting they use a DBS account here)?
+    - Will there be wire charges from DBS to IBKR ?
+    - If I use wire, would DBS charge a fee for it?
+    - Or are there any high yield baskets provided by DBS etc to accredited investors?
+    - Does DBS charge a fee for SGD incoming wire?
+
+--- Cluster 126 (n=21) ---
+  Bank mix: {'UOB': 8, 'DBS': 12, 'OCBC': 1}
+  Top terms: long, does, long does, ibkr, transfer, card, money, usd
+  Sample sentences:
+    - How long does it take for UOB to pay Trust CC?.
+    - How do you get the money to your DBS account from Binance?
+    - How long does it take to transfer securities from DBS Vickers to IBKR?.
+    - How long does it take to wire USD from IBKR to DBS MCA?.
+    - How do you send to CDC via dbs remit?
+
+--- Cluster 127 (n=41) ---
+  Bank mix: {'DBS': 37, 'OCBC': 2, 'UOB': 2}
+  Top terms: thank, edna, edna koh, koh, koh thank, piyush, joining, thank joining
+  Sample sentences:
+    - shareholders of DBS thank you for your contribution
+    - Good to see you again DBS comrade!
+    - as a shareholder thank you for using OCBC.
+    - Hi, thanks for letting us know of your experience in enabling transactions on our app with DBS.
+    - Thanks for sharing your approach and the DBS Treasures tip!
+
+--- Cluster 128 (n=108) ---
+  Bank mix: {'UOB': 27, 'DBS': 60, 'OCBC': 21}
+  Top terms: don, think, don think, know, doesn, sure, just, like
+  Sample sentences:
+    - Don't think Uob ppv has promos often, if ever.
+    - I wouldn’t buy DBS at these levels either.
+    - Pls dont ask me why never contact DBS.
+    - but I don’t see the holdings in DBS Vickers side.
+    - I can't tell which has lower fees and DBS also does not have a routing number.
+
+--- Cluster 129 (n=24) ---
+  Bank mix: {'UOB': 5, 'OCBC': 8, 'DBS': 11}
+  Top terms: like, 88, lowest, 82, 55, low, ssb, rates
+  Sample sentences:
+    - Last time SSB 3.2%, people were stating it’s lower than 3.88% offered by Trust, GXS, 4% by UOB etc.
+    - wah means SSB if i do over a 3 year period is estimated 1.52% which is 0.12% more than what im currently drawi
+    - And I thought DBS 0.82% was crazy high lol
+    - Better than p2p for sure, today dbs gave me 1.3416 and the lowest on binance is 1.364
+    - My mortgage broker says the lowest rate is 1% OCBC, which moves to 1.6% in the 3rd year.
+
+--- Cluster 130 (n=24) ---
+  Bank mix: {'DBS': 23, 'UOB': 1}
+  Top terms: dbs woman, woman, world, woman world, card, world card, woman card, women
+  Sample sentences:
+    - Dbs woman's world for online shopping
+    - DBS Woman's World lmao
+    - Dbs woman's world.
+    - dbs points for pairing the dbs woman's world with the amaze card?
+    - Get amaze card, get DBS Woman world CC.
+
+--- Cluster 131 (n=16) ---
+  Bank mix: {'DBS': 8, 'UOB': 5, 'OCBC': 3}
+  Top terms: amaze, work, account, doesn, doesn work, like, cards, uob cards
+  Sample sentences:
+    - DBS CPF IS not reflecting money properly.
+    - Seems like UOB TMRW app does not have such options.
+    - Inconveniently, many stock apps have US symbols but not UK ones, including DBS NAV Planner and such.
+    - Anything but OCBC, which treats its customers like cows to be milked.
+    - Also, DBS LF is a Visa, so it doesn't work with amaze anyway.
+
+--- Cluster 132 (n=22) ---
+  Bank mix: {'UOB': 4, 'DBS': 17, 'OCBC': 1}
+  Top terms: account, transfer, usd, dbs account, deposit, money, ibkr, transfer money
+  Sample sentences:
+    - So I can just transfer money from UOB and select Salary Payment?
+    - If I have USD cash could I deposit these into my DBS account and then transfer over to IBKR without any fees?
+    - Im planning to deposit a final amount via DBS MCA to binance to purchase a final chunk of crypto that is only 
+    - But is there a way for me to withdraw USD (via FIAT) in Huobi, and send into a USD account (idk what banks pro
+    - Can my normal DBS multiplier account receive USD?
+
+--- Cluster 133 (n=96) ---
+  Bank mix: {'DBS': 80, 'OCBC': 8, 'UOB': 8}
+  Top terms: ibkr, usd, transfer, usd dbs, sgd, dbs ibkr, account, transfer usd
+  Sample sentences:
+    - IBKR DBS USD transfer.
+    - Once for E-Trade to DBS and 2nd time from DBS to IBKR?
+    - Moomoo USD to DBS USD (no fee), then to IBKR USD
+    - Yes I convert USD back to SGD using IBKR before transferring SGD back to DBS
+    - Option A: convert direct in IBKR and withdraw to OCBC.
+
+--- Cluster 134 (n=26) ---
+  Bank mix: {'DBS': 25, 'UOB': 1}
+  Top terms: usd, transfer, transfer usd, ibkr, convert, usd dbs, sgd, account
+  Sample sentences:
+    - That means I have to transfer the USD from E*Trade to DBS, then DBS to IBKR ?
+    - Would it be cheaper to offramp the USD to DBS multicurrency account and then convert it to SGD from there?
+    - would it be better to buy BTC thru BTC-USD then sell BTC to sgd then transfer that to DBS?
+    - So I need to convert and keep usd in dbs account first is it?
+    - I can either wire transfer in SGD, and convert it to USD through IBKR, or I can use DBS overseas remittance to
+
+--- Cluster 135 (n=16) ---
+  Bank mix: {'UOB': 5, 'OCBC': 2, 'DBS': 9}
+  Top terms: option, best, like, action, ocbc option, option expedite, nice, nice uob
+  Sample sentences:
+    - I'm currently leaning towards the UOB option and would like to know if that's a viable option, or if there are
+    - OCBC seems to have an option to expedite it.
+    - I'm not sure there are any tangible benefits to joining DBS Treasures though.
+    - Are there any more avenues which I can use to get OCBC bank to actually take action?
+    - I would like to know which is at this moment the best credit (preferably cashback) that I can do, be it DBS or
+
+--- Cluster 136 (n=12) ---
+  Bank mix: {'DBS': 11, 'UOB': 1}
+  Top terms: just, example, like, customers, case, buying, buying dbs, like dbs
+  Sample sentences:
+    - These investment link plan, especially the one under Manulife and DBS, you're basically investing through big,
+    - Because most Singaporeans just want to do what is comfortable for them and that is buying DBS or Singtel.
+    - If that’s the case, I would recommend SYFE or rather any other robo investor like DBS where you just put money
+    - DBS likes to invent these products, slap some fancy marketing on them, then push them to unsophisticated retai
+    - I heard about this feature from DBS IDEAL Team but the bank mentioned it's more geared towards large corporate
+
+--- Cluster 137 (n=25) ---
+  Bank mix: {'DBS': 12, 'UOB': 8, 'OCBC': 5}
+  Top terms: don, account, don dbs, don uob, dbs account, don ocbc, card, savings
+  Sample sentences:
+    - 3. Im not a dbs premier banking customer.
+    - Er I'm not the DBS siao person in this sub bro.
+    - I don’t use UOB for a reason.
+    - *Note : i don't have dbs creditcard.
+    - I don't have a problem with calling uob.
+
+--- Cluster 138 (n=40) ---
+  Bank mix: {'DBS': 36, 'UOB': 4}
+  Top terms: transfer, account, way, ibkr, possible, managed, best, does
+  Sample sentences:
+    - Hi, may I know if it's possible to transfer mutual funds from dbs/Citi to moomoo?
+    - Best way to transfer money from DBS to a US Charles Schwab checking account?.
+    - Possible to have multiple Joint accounts with DBS/POSB?.
+    - when the norm here becomes DCA into DBS via IBKR then it's time to sell
+    - I would like to know if it's possible to transfer stocks from dbs vickers to interactive broker
+
+--- Cluster 139 (n=14) ---
+  Bank mix: {'UOB': 3, 'DBS': 11}
+  Top terms: fund, fees, fee, dividend, funds, pay, trust, trailer
+  Sample sentences:
+    - Some banks do break the spend out for you, UOB for example lists supplementary spend as its own line item on t
+    - My method as of now is to call DBS FA and they charge 0.5% sales charges , rest is funds fee which has nothing
+    - Some of the fees charged by the funds every year goes to DBS/Endowus, endowus refunds those back to you, DBS k
+    - It’s offered only by the big bank brokerages (eg DBS) and at a higher fee (this is because CDP clearing involv
+    - Purchased a DBS Bond Fund, after every dividend payment, the price of the fund drops.
+
+--- Cluster 140 (n=11) ---
+  Bank mix: {'DBS': 8, 'OCBC': 2, 'UOB': 1}
+  Top terms: account, insurance, don, dbs account, transfer, brokers, gold, dbs share
+  Sample sentences:
+    - So if you send USD from your own DBS account to Moomoo’s DBS account, it’s free because it’s not a real wire t
+    - Many brokers use DBS so there won’t be any fee to transfer USD to those brokers.
+    - The more traditional method is to buy a SGD denominated bond of a company you know won't bankrupt (e.g. DBS) t
+    - If you have insurance and you get it paid through DBS, that's insurance.
+    - You don't really need to move your existing stocks out from DBS Vickers into your IBKR account, unless they ar
+
+--- Cluster 141 (n=15) ---
+  Bank mix: {'DBS': 3, 'OCBC': 7, 'UOB': 5}
+  Top terms: using, need, money, don, doing, don need, ibkr, like
+  Sample sentences:
+    - Do you guys buy local stocks using local brokers (like DBS Vickers for instance) with CDP-linkage or do you ju
+    - Just skip that and get the OCBC infinity card then....
+    - If you have a choice, then there's absolutely no reason to use UOB KayHian over IBKR.
+    - In that case what you can consider is using other stuff like posb invest saver, or ocbc bcip.
+    - Investors can invest in it conveniently via the local banks(DBS etc.) or the respective brokers that deal with
+
+--- Cluster 142 (n=15) ---
+  Bank mix: {'DBS': 15}
+  Top terms: money, investments, market, deposits, start, past, make, equity
+  Sample sentences:
+    - Dbs needs to actually do more rebalancing work on their portfolios instead of churning out unsubstantiated art
+    - The capacity freed up can then be redeployed into growth areas.
+    - A lot of the net new money comes as fixed deposits, and when market conditions improve, customers put the mone
+    - First, when do you expect to deliver the remaining tech remediation so that MAS can remove the additional capi
+    - For private banking clients, it is common practice to pay high interest rates in the hope that the deposits wi
+
+--- Cluster 143 (n=32) ---
+  Bank mix: {'UOB': 9, 'DBS': 19, 'OCBC': 4}
+  Top terms: good, option, choice, good option, better, good choice, dbs multiplier, multiplier
+  Sample sentences:
+    - Is ST Engineering a good choice for fresh grad over UOB?.
+    - 1) Is Poems sg a good site to buy DBS Stocks?
+    - Is UOB stash a good option?
+    - 2.Is frank by ocbc the best for students and young adults?As
+    - No need diversify, all in DBS.
+
+--- Cluster 144 (n=21) ---
+  Bank mix: {'UOB': 2, 'DBS': 17, 'OCBC': 2}
+  Top terms: like, like dbs, invest, diversify, stocks, bit, using, local
+  Sample sentences:
+    - Curious to hear what others think - would you buy UOB at this point, or just stick with the outperformers?
+    - 2. Should i diversify to divided local stock like dbs from that pool?
+    - Should I invest in VWRA or DBS for maximum returns in the next 5 years?.
+    - There would be a point to using it for individual stocks especially high price ones like DBS.
+    - Maybe he's diversifying out of memecoins into VWRA (since OCBC seems to have LSE support too).
+
+--- Cluster 145 (n=66) ---
+  Bank mix: {'DBS': 38, 'UOB': 19, 'OCBC': 9}
+  Top terms: fees, want, like, use, just, money, ibkr, savings
+  Sample sentences:
+    - Hmm from this reply, then the thing you should do with your dividends is to rebuy DBS stocks no?
+    - You'll be better off putting all your money in dbs stocks, so u benefit from the ppl who buy into the digiport
+    - So if you can’t afford ~$5000 for one lot of DBS, you need to fund other solutions, either brokers that allow 
+    - Bank platforms like DBS are great for simplicity, but you pay a premium in fees and get fewer product choices.
+    - So if you're investing only $50 then DBS is more worth it.
+
+--- Cluster 146 (n=30) ---
+  Bank mix: {'DBS': 21, 'UOB': 7, 'OCBC': 2}
+  Top terms: happened, happening, problem, happened dbs, explain, wrong, happening dbs, banking
+  Sample sentences:
+    - what if this turns out like DBS?
+    - Can someone explain what's happening to dbs?.
+    - Is UOB online banking down?.
+    - so what exactly happened with DBS?
+    - May be the API from the UOB is wrong ????
+
+--- Cluster 147 (n=18) ---
+  Bank mix: {'UOB': 16, 'OCBC': 2}
+  Top terms: card, credit, credit card, lady, citi, visa, getting, uob lady
+  Sample sentences:
+    - So far I have zoomed into two cards: Citi Cashback Plus UOB Absolute Cashback (Amex)
+    - I was thinking to Use AMEX truecashback or UOB amex to top up Revolut debit card (in ur case wise card).
+    - Are you thinking of the OCBC Premier Visa Infinite credit card?
+    - For credit cards, I decided to go with UOB one credit card if I decided to go with the UOB one account, SCB sm
+    - I recommend getting UOB Lady's credit card and UOB Visa Signature card.
+
+--- Cluster 148 (n=24) ---
+  Bank mix: {'DBS': 5, 'OCBC': 6, 'UOB': 13}
+  Top terms: com, email, investor, investor relations, relations, uobgroup, uobgroup com, communications
+  Sample sentences:
+    - Read more at straitstimes.com.
+    - [advice needed] OCBC Premierlife.
+    - Hi there, Came across this post while searching if the same email ([SalesAcq@ocbc.com](mailto:SalesAcq@ocbc.co
+    - For more Group Strategic Marketing & Communications Investor Relations Email: ednakoh@dbs.com
+    - Email: michaelsia@dbs.com
+
+--- Cluster 149 (n=28) ---
+  Bank mix: {'UOB': 13, 'DBS': 9, 'OCBC': 6}
+  Top terms: month, account, cash, cashback, currently, expenses, spending, savings
+  Sample sentences:
+    - OA: 27K SA/MA: Both at 9k \*will received a top up of 10K in my OA in Jan 2027 Cash savings for school: 20K Em
+    - uob will still recover the loan, just when, and the adminstrative costs incurred to close out the loan monies
+    - 0.35\*40 =14k 40k-20k =20 K I can invest 14k but because I already spent 6k, I’m left with 14-6=8 k which is e
+    - My current portfolio (around 10k) are as follows: - 50% in SGX holdings, CLR, G3B, MBH, GRN, O39 - 50% in Endo
+    - salary - 3500 before CPF, 2800 take home monthly expenditure - $300-400 (i pay my parents 350 per month, but i
+
+--- Cluster 150 (n=21) ---
+  Bank mix: {'DBS': 17, 'OCBC': 2, 'UOB': 2}
+  Top terms: digiportfolio, dbs digiportfolio, thoughts, account, thoughts dbs, currency, currency account, multi
+  Sample sentences:
+    - Anyone know SWIFT Code for DBS Multi-currency Account?.
+    - DBS Digiportfolio - worth it?.
+    - Opinion of OCBC illip2 plan?.
+    - What do you mean moomoo usd account is dbs multi currency account?
+    - Like umm DBS multi-currency account?
+
+--- Cluster 151 (n=42) ---
+  Bank mix: {'DBS': 41, 'UOB': 1}
+  Top terms: just, buy, instead, worth, dbs instead, vwra, compare, compare dbs
+  Sample sentences:
+    - Is it worth it to buy DBS shares / ES3 now ?
+    - Is it worth keeping money with DBS Treasures/DBS Wealth Management?
+    - Which goondu told you DBS Vickers is the best way to buy STI ETF?
+    - Is it ok to invest with dbs.
+    - Like wouldn’t it just be better for everyone if DBS went up?
+
+--- Cluster 152 (n=37) ---
+  Bank mix: {'OCBC': 37}
+  Top terms: 360, ocbc 360, 365, ocbc 365, ocbc premier, premier, instead, better
+  Sample sentences:
+    - Why not FOMO into OCBC?
+    - Anyone tried OCBC WoW?.
+    - Is this only OCBC?
+    - So you're saying go to ocbc?
+    - Is it OCBC premier?
+
+--- Cluster 153 (n=53) ---
+  Bank mix: {'OCBC': 13, 'DBS': 27, 'UOB': 13}
+  Top terms: singtel, like, etf, buy, keppel, tech, portfolio, tech etf
+  Sample sentences:
+    - OCBC 335%, Google 270% are two other examples.
+    - My SG picks, \~30% of portfolio consists of CDG, CLI, DBS, FLCT, Genting Sing, Haw Par, SGX, ThaiBev, Valuetro
+    - (NVDA,AMD,AAPL,VWRA,DBS is the bulk)
+    - YZJ Financial, CSE Global, ISOTeam, Centurion, IFast, ST Engineering, Keppel, SembCorp, Frencken, Micromechani
+    - DBS, Valuemax, Food Empire, ST Engineering, SATS, SIA
+
+--- Cluster 154 (n=13) ---
+  Bank mix: {'UOB': 13}
+  Top terms: ppv, uob ppv, card, miles, absolute, uob absolute, ladies, grabpay
+  Sample sentences:
+    - Bonus miles for UOB PPV with Atome.
+    - Just get UOB VS plus PPV plus womens card.
+    - AMEX or UOB card to top up tour GrabPay wallet 2.
+    - UOB Absolute sign up reward.
+    - 100% UOB PPV - pools with the miles with ladies.
+
+--- Cluster 155 (n=231) ---
+  Bank mix: {'UOB': 163, 'DBS': 41, 'OCBC': 27}
+  Top terms: card, credit, credit card, account, uob card, uob account, visa, cashback
+  Sample sentences:
+    - UOB Future Banker Programme.
+    - UOB Future Bankers Programme.
+    - DBS LIVE STUDENT CREDIT CARD.
+    - Currently just using.1 care uob one for everything
+    - UOB PRVI Miles 4.
+
+--- Cluster 156 (n=17) ---
+  Bank mix: {'UOB': 17}
+  Top terms: use, use uob, krisflyer, uob krisflyer, just, just use, card, evol
+  Sample sentences:
+    - Why specifically UOB EVOL?
+    - How about obc 365 If not just use uob one
+    - Why not just use UOB ONE or T bills instead?
+    - Why uob evol instead of uob one?
+    - Why not use UOB One?
+
+--- Cluster 157 (n=35) ---
+  Bank mix: {'DBS': 31, 'UOB': 4}
+  Top terms: rate, exit, nim, know, exit nim, ds, hi, difference
+  Sample sentences:
+    - DBS kids account - for spending How many bank accs did you have, what acc are they, and what are they used for
+    - DBS role is sales?
+    - What is the difference between dbs fx rate versus xe.com rate?
+    - hi does anyone know the difference between this 2 dbs accounts?
+    - How competitive is DBS rate?
+
+--- Cluster 158 (n=12) ---
+  Bank mix: {'DBS': 12}
+  Top terms: buy, people, buy dbs, just, just buy, people buy, open, open dbs
+  Sample sentences:
+    - Hi how do you buy odd lots of DBS?
+    - Why do people invest in ILPs when they can just buy DBS.
+    - how do you buy $500 worth of DBS?
+    - My humble suggestions: Why do people get a degree when they can just buy DBS?
+    - Why do people buy a car when they can just buy DBS?
+
+--- Cluster 159 (n=40) ---
+  Bank mix: {'DBS': 17, 'UOB': 19, 'OCBC': 4}
+  Top terms: account, dbs account, uob account, did, bank account, using, currency, multi
+  Sample sentences:
+    - Did you qualify for Dbs treasures
+    - Do you have investments with DBS?
+    - Do you use the DBS crypto exchange?
+    - Are you using dbs ?
+    - Did u also have a UOB account prior to applying?
+
+--- Cluster 160 (n=33) ---
+  Bank mix: {'DBS': 20, 'OCBC': 11, 'UOB': 2}
+  Top terms: work, does, does work, app, dbs app, work uob, shld, like
+  Sample sentences:
+    - Do u regret not buying dbs shares ?.
+    - You mean DBS stocks?
+    - Cheaper may be is dbs vicker?
+    - Is there a DBS ut?
+    - When OP says 100k dbs isit stock or hysa?
+
+--- Cluster 161 (n=11) ---
+  Bank mix: {'DBS': 6, 'OCBC': 2, 'UOB': 3}
+  Top terms: account, rate, insurance, know, going, aum, yen, usd
+  Sample sentences:
+    - Hey I know this is an old post, but in case you're still around - if I have around 50k USD lying in my DBS Mul
+    - Dbs ibanking has a toggle mode between usd and sgd account which I didn’t even realize till the day I was ok O
+    - I know there's SSB & insurance linked savings accounts too (e.g. those in the very helpful list) but I'm disin
+    - If I am to use Yen in near future, lets say, 1-2 years down the road due to travel, does it makes sense to buy
+    - Was originally going to move the funds over to ETFs (IBKR), but with the UOB one account recent interest hike 
+
+--- Cluster 162 (n=18) ---
+  Bank mix: {'OCBC': 3, 'UOB': 7, 'DBS': 8}
+  Top terms: 100k, year, like, vs, big, think, jump, lock
+  Sample sentences:
+    - i also having abit of doubts about OCBC RM intentions lol buy SGOV bonds then 1 month later the value jumped w
+    - Take note that you needa spend $1k/mth on the UOB VS tho.
+    - Other robos have lower fees, but it looks like DBS offers a 6-month fee rebate till end of Jan.
+    - Cos I’m doing rsp w OCBC, apr onwards will be more expensive for me liao, so sell off in March lor
+    - For places with lock-in period, DBS savvy endowment 6 which gives 1.05% pa. 1 year lock in, chose this last ye
+
+--- Cluster 163 (n=52) ---
+  Bank mix: {'DBS': 29, 'OCBC': 23}
+  Top terms: using, use, using dbs, use ocbc, using ocbc, altitude, dbs altitude, dbs vickers
+  Sample sentences:
+    - I use DBS for reference
+    - I'm currently using DBS Vickers.
+    - More like Blade Runner used DBS font 🤣
+    - Ocbc is using classical value strategy.
+    - Something like dbs altitude.
+
+--- Cluster 164 (n=12) ---
+  Bank mix: {'UOB': 11, 'DBS': 1}
+  Top terms: endowus, account, held, held uob, funds, uob account, hian, kay
+  Sample sentences:
+    - Endowus puts your money in UOB’s custody using their broker, under your name.
+    - same for Endowus which keeps it under your name with UOB Kay Hian
+    - Do note that your investment in endowus is being held with uob in an account under your name.
+    - The funds are held in UOB under your name.
+    - Funds custodian are under UOB KAY HIAN under your legal name.
+
+--- Cluster 165 (n=91) ---
+  Bank mix: {'UOB': 76, 'DBS': 7, 'OCBC': 8}
+  Top terms: gold, buy, gold uob, physical, physical gold, bullionstar, buy uob, buy gold
+  Sample sentences:
+    - No you should buy UOB because more choo bee.
+    - If you have DBS, can consider cashline.
+    - When you have big purchase, then sign up for Citibank / OCBC kind of cards.
+    - UOB also sells physical gold.
+    - UOB sells physical gold but only at Raffles place.
+
+--- Cluster 166 (n=31) ---
+  Bank mix: {'DBS': 20, 'UOB': 9, 'OCBC': 2}
+  Top terms: fee, charge, annual, card, account, charged, annual fee, credit
+  Sample sentences:
+    - But if you are trying to sell thru DBS Vickers you will be limited by the Sell Limit on your account.
+    - If you go to UOB to close account at branch, branch staff require you settle the outstanding amount before the
+    - So if you wish to open any new account with UOB again, you are required to pay off this outstanding before you
+    - If the annual fee is subsequently waived, the 5,000 DBS Points credited will be reversed within 3 working days
+    - If you are not a DBS Treasures Client and have already paid the annual fee just keep the card until the next a
+
+--- Cluster 167 (n=11) ---
+  Bank mix: {'DBS': 11}
+  Top terms: like, like dbs, sia, dbs reits, reits, listed, 45, dbs 45
+  Sample sentences:
+    - Like DBS < $45, etc.
+    - (Mostly referring to mid-tier investment banking like DBS Treasures or Citibank etc)
+    - To be clear, DBS for NYSE, NASDAQ, LSE, etcetera.
+    - Cspx or voo or vwra or vti or tsla or even dbs/sia/jardine.
+    - Many value traps except DBS and REITs.
+
+--- Cluster 168 (n=52) ---
+  Bank mix: {'DBS': 10, 'UOB': 32, 'OCBC': 10}
+  Top terms: minimum, account, based, 000, requires, 500, credit, 100
+  Sample sentences:
+    - For DBS multiplier, in order to qualify for the "Investment" category, the official FAQ states that a minimum 
+    - 10,000 bonus miles (5,000 DBS Points) will be credited to your account when the annual fee of S$196.20 (inclus
+    - DBS Vickers Cash Upfront charges 0.12% or minimum $10 and your shares will be in your CDP account.
+    - Take UOB as example: S$2 per 1000 shares / units or part thereof, subject to a maximum of S$20per transaction.
+    - OCBC BCIP charges 0.88% for both buy and sell if you are below 30.
+
+--- Cluster 169 (n=25) ---
+  Bank mix: {'DBS': 19, 'UOB': 2, 'OCBC': 4}
+  Top terms: don, use, use dbs, don use, buy, don buy, buy dbs, bother
+  Sample sentences:
+    - Don't use DBS as your SRS bank.
+    - Don't use DBS as the broker!
+    - Please don't compare with DBS or other equities.
+    - there is no point blaming DBS
+    - First of all, don’t use DBS Vickers for foreign stock.
+
+--- Cluster 170 (n=28) ---
+  Bank mix: {'OCBC': 5, 'UOB': 10, 'DBS': 13}
+  Top terms: account, money, dbs account, salary, transfer, credited, use, uob account
+  Sample sentences:
+    - Regarding whether the invest bonus itself is worth it - this depends on how much you keep in your OCBC 360 acc
+    - Thus, you should not use the UOB Absolute Cashback outside Singapore.
+    - DBS takes the total salary credited into any bank account under your name as the salary criteria for Multiplie
+    - This gets your money in and sitting in a DBS account.
+    - Here's my 2 cents, open a regular dbs savings account (if they still have the same rules, you don't even need 
+
+--- Cluster 171 (n=140) ---
+  Bank mix: {'DBS': 87, 'OCBC': 28, 'UOB': 25}
+  Top terms: account, fees, fee, transfer, ibkr, dbs account, usd, free
+  Sample sentences:
+    - Deposit from DBS to IBKR is free of charge.
+    - However, ibkr uses DBS as their bank and there are no fees to transfer USD to ibkr DBS account.
+    - Receiving OTP from DBS without requesting.
+    - Atleast DBS includes their own fees along with the fund manager fees.
+    - Direct transfer from CDP to my DBS without auto currency conversion.
+
+--- Cluster 172 (n=13) ---
+  Bank mix: {'DBS': 13}
+  Top terms: usd, free, ibkr, usd dbs, ibkr free, dbs ibkr, transfer, transferring
+  Sample sentences:
+    - Transferring USD out from DBS using DBS Remit is free.
+    - Transferring USD from DBS to IBKR SG is free.
+    - 3. Transfer the USD/HKD to IBKR for free using DBS Remit.
+    - DBS and SCB usd remittance is free.
+    - Transferring USD between DBS/POSB MCAs is free.
+
+--- Cluster 173 (n=299) ---
+  Bank mix: {'DBS': 203, 'OCBC': 31, 'UOB': 65}
+  Top terms: account, usd, transfer, use, card, currency, multi, dbs account
+  Sample sentences:
+    - If you have a DBS multicurrency account, then the second transfer from DBF to IBKR SG is free.
+    - If IBKR is using DBS, you should be able to do a local transfer from your multicurrency account.
+    - Use DBS multi-currency account to move the USD without fees.
+    - use dbs multi currency acc and make sure ur currency is set to usd before the transfer! :)
+    - Customers are also able to conveniently check their eligible transactions and how much interest they have earn
+
+--- Cluster 174 (n=11) ---
+  Bank mix: {'UOB': 9, 'DBS': 2}
+  Top terms: account, stash, stash account, uob stash, question, card, credit, credit card
+  Sample sentences:
+    - Question about UOB money lock feature on Stash Account.
+    - if lazy then mmf or uob stash account.
+    - I just checked UOB Stash account.
+    - Regarding UOB stash account:
+    - "Loophole" on Uob one savings account.
+
+--- Cluster 175 (n=12) ---
+  Bank mix: {'UOB': 8, 'DBS': 1, 'OCBC': 3}
+  Top terms: 100k, account, 360, ocbc 360, consider, stash, uob stash, 150k
+  Sample sentences:
+    - Ssb interest still higher than tbill and mari Depending on how much you have also can consider uob stash
+    - Then compate UOB Tmrw app versus the other two.
+    - Well uob one would give close to 5% pa if you have 100k balances.
+    - But if you have some spare USD that you keep for trading US stocks, DBS is offering 5+% for 1m FD.
+    - If you have > 100k then do OCBC 360 account with 3.5% easily achievable.
+
+--- Cluster 176 (n=15) ---
+  Bank mix: {'DBS': 4, 'UOB': 10, 'OCBC': 1}
+  Top terms: 100k, cashback, ssb, spending, cash, like, 100k uob, account
+  Sample sentences:
+    - For $200/month, you should probably also consider something like DBS/POSB Invest-Saver, where you can get some
+    - Honestly wonder if it makes sense to get cashback for the basic recurring spend to take advantage of the highe
+    - LeoSG offers a pretty good perspective that I didn’t mention: Yes UOB One Account gives E.I.R of 5% per annum 
+    - You can have both really since HYSA has a cap (e.g. OCBC around $100K) and so does SSB ($200K)
+    - First 100k...uob one 5 percent If u have a spouse, the next 100k park in for her to get the 5 oercent That gua
+
+--- Cluster 177 (n=17) ---
+  Bank mix: {'UOB': 10, 'OCBC': 6, 'DBS': 1}
+  Top terms: account, 360, ocbc 360, question, 360 account, uob account, opening, account opening
+  Sample sentences:
+    - UOB home loan repricing rate.
+    - Uob Kay Hian stock price.
+    - [Help] UOB One Account interest calculation.
+    - UOB One Account question.
+    - question on OCBC 360.
+
+--- Cluster 178 (n=11) ---
+  Bank mix: {'UOB': 7, 'DBS': 2, 'OCBC': 2}
+  Top terms: don, card, just, sure, like, travel, year, ve
+  Sample sentences:
+    - I was considering UOB PPV as well, but since I’m just starting out, i don’t want to stress about the min spend
+    - I’m using a DBS bank account, not sure if I want to open multiple accounts just for a credit card as I haven’t
+    - I don't travel much, with twice a year big ticket on flight/hotel, I am not sure if dbs will let me waive.
+    - Hey, I'm just wondering if anyone has received back their tbills payout from ocbc.
+    - Since I'm not a big spender, I don't think I'll be able to clock much miles within 2 years for UOB Lady's.
+
+--- Cluster 179 (n=16) ---
+  Bank mix: {'DBS': 14, 'UOB': 2}
+  Top terms: good, growing, just, overvalued, fact, stocks, dividends, getting
+  Sample sentences:
+    - The commenters and I personally feel DBS is getting us to spend more by masking the total unbilled.
+    - Neither suggests that DBS is overvalued at the moment.
+    - That’s an insane jump in gains for anyone interested, let alone the fact dbs has good dividends.
+    - So now, people realise dbs can actually be a good investment unlike before where sg banks are just for the div
+    - Just as the Mag7 growing cap became self feeding, DBS is starting to float up as a significant holding in ETFs
+
+--- Cluster 180 (n=23) ---
+  Bank mix: {'DBS': 17, 'UOB': 3, 'OCBC': 3}
+  Top terms: check, best, check dbs, directly, best check, let, dbs directly, best dbs
+  Sample sentences:
+    - You need to talk to DBS or whichever bank you are considering.
+    - Suggest you call DBS and speak to their onboarding team first.
+    - You may wish to check with DBS directly, of course.
+    - Best to check directly with DBS.
+    - Best to call DBS for clarification.
+
+--- Cluster 181 (n=18) ---
+  Bank mix: {'UOB': 9, 'DBS': 5, 'OCBC': 4}
+  Top terms: month, cashback, hit, 500, price, need, china, slows
+  Sample sentences:
+    - Find out how much of the UOB One and Idle Cash, you won’t be touching for the next 10 years.
+    - My primary card is UOB One, but you have to hit the monthly minimum consistently since the cashback is by quar
+    - (edit: DBS more worth if you convert smaller amounts under $500ish at a time) remember to change from fixed to
+    - With a tiny caveat that you’re only credited in your next cycle with UOB Abs.
+    - if its only 1k youre losing less than 5 bucks so just save yourself the hassle and convert through dbs
+
+--- Cluster 182 (n=20) ---
+  Bank mix: {'DBS': 9, 'OCBC': 4, 'UOB': 7}
+  Top terms: account, card, cash, 2012, defaulted, credit, withdraw, credit card
+  Sample sentences:
+    - I just checked my statement and realized that DBS charged me $8350 for DBS points or miles that I never subscr
+    - I have a defaulted personal loan of 5k with dbs since 2012.
+    - I do remember paying my Maybank credit card bills from OCBC, but that was in 2019.
+    - Yeah, less than 4 weeks after my mortgage was finalized, DBS temporarily scraped the 5-year fixed rate scheme.
+    - I used my DBS Union Pay debit card to withdraw cash from the ATM in 7-11.
+
+--- Cluster 183 (n=10) ---
+  Bank mix: {'DBS': 2, 'UOB': 8}
+  Top terms: stash, account, uob stash, called, stash uob, called uob, literally, account called
+  Sample sentences:
+    - This is your DBS "wealth tax".
+    - Paynow with description "PAYNOW SALA" works for UOB ONE account even if it's coming from PERSONAL banking acco
+    - I think he meant UOB One, not Stash.
+    - He’s talking about the UOB stash account not UOB one account
+    - There is literally an account called UOB Stash
+
+--- Cluster 184 (n=15) ---
+  Bank mix: {'DBS': 8, 'OCBC': 2, 'UOB': 5}
+  Top terms: com, www, instruments, mas, mas notice, notice, disclosure, capital
+  Sample sentences:
+    - The weighted average number of ordinary shares used for per share data computation have been adjusted retrospe
+    - On RWA, the Pillar 3 disclosure is posted on our website.
+    - The Group’s combined Pillar 3, Liquidity Coverage Ratio and Net Stable Funding Ratio disclosures document and 
+    - The weighted average number of ordinary shares used for per share data computation have been adjusted retrospe
+    - The weighted average number of ordinary shares used for per share data computation have been adjusted retrospe
+
+--- Cluster 185 (n=16) ---
+  Bank mix: {'DBS': 12, 'UOB': 4}
+  Top terms: check, dbs check, ask, dbs ask, hotline, just, dbs tomorrow, tomorrow
+  Sample sentences:
+    - Call DBS / POSB for the balance.
+    - Call DBS to check
+    - Check with DBS before u fly in
+    - Will call dbs tomorrow
+    - You can call DBS to check.
+
+--- Cluster 186 (n=11) ---
+  Bank mix: {'DBS': 9, 'UOB': 1, 'OCBC': 1}
+  Top terms: working, working dbs, hi, dbs bank, guy, guy dbs, submitted, submitted dbs
+  Sample sentences:
+    - Hi folks, All my banking is with DBS Bank.
+    - Submitted everything to DBS.
+    - Hi, this is Pet10003, your average DBS millionaire uncle.
+    - Hi this is Pet1003, your favorite DBS uncle.
+    - yeah I work in UOB plaza and it’s insane
+
+--- Cluster 187 (n=12) ---
+  Bank mix: {'DBS': 11, 'UOB': 1}
+  Top terms: account, dbs multiplier, multiplier, currency, currency account, multi, multi currency, account multi
+  Sample sentences:
+    - 3, I use Binance + DBS Remit.
+    - (aka DBS Multicurrency account).
+    - DBS My Account is a multicurrency account which can hold USD.
+    - The DBS multiplier account is a multi-currency account.
+    - 2. UOB Current is a chequeing account.
+
+--- Cluster 188 (n=207) ---
+  Bank mix: {'DBS': 139, 'UOB': 46, 'OCBC': 22}
+  Top terms: custodian, account, endowus, hian, kay, kay hian, uob kay, ibkr
+  Sample sentences:
+    - Majority of dbs earnings is still in singapore.
+    - My biggest holding is DBS (20%), followed by crowdstrike(11%)
+    - DBS Tele-Advisory Appointment and investment in Fidelity Intl Fund.
+    - I’m generating 4.1% at DBS multiplier and invested in isac.
+    - EndowUs partners with UOB Kay Hian as custodian.
+
+--- Cluster 189 (n=44) ---
+  Bank mix: {'DBS': 27, 'UOB': 4, 'OCBC': 13}
+  Top terms: account, dbs account, account dbs, bank account, linked, currently, currency, currency account
+  Sample sentences:
+    - I currently have an account with DBS.
+    - I have a DBS account.
+    - Also joint account with my wife is with UOB too.
+    - 1. I have DBS bank account.
+    - I have DBS and SC bank accounts if that matters.
+
+--- Cluster 190 (n=59) ---
+  Bank mix: {'DBS': 4, 'UOB': 54, 'OCBC': 1}
+  Top terms: card, account, uob account, using, using uob, uob card, credit, use
+  Sample sentences:
+    - Another card I have is the DBS Visa Platinum CC.
+    - I'm currently using UOB one CC
+    - My previous UOB debit card also has the same issue.
+    - I have both UOB One and UOB Stash.
+    - My research points to UOB prvi miles.
+
+--- Cluster 191 (n=12) ---
+  Bank mix: {'OCBC': 3, 'DBS': 6, 'UOB': 3}
+  Top terms: just, number, request, verify, email, email dbs, website, waiver
+  Sample sentences:
+    - Just fill in the form on the OCBC website and someone from the Premier team will contact you.
+    - Email dbs to request refund and wait for their reply.
+    - Just use that number and make sure it matches when she applied via dbs
+    - Just call UOB to reconfirm and change accordingly.
+    - To add your comment on waiver, DBS uses chatbot and give immediate waiver.
+
+--- Cluster 192 (n=98) ---
+  Bank mix: {'OCBC': 26, 'UOB': 26, 'DBS': 46}
+  Top terms: app, account, check, website, use, online, using, open
+  Sample sentences:
+    - Anybody using OCBC 360 can advise?.
+    - Or just search though the official UOB Page.
+    - Step 2: Register your mobile number for PayNow via UOB TMRW app or UOB Personal Internet Banking.
+    - Everyone has wealth planning manager, you can check via Dbs app.
+    - You can see it in your DBS banking app, under the CPFIA.
+
+--- Cluster 193 (n=21) ---
+  Bank mix: {'DBS': 6, 'UOB': 11, 'OCBC': 4}
+  Top terms: website, uob website, check, read, ocbc website, review, review uob, example
+  Sample sentences:
+    - Just look up "DBS private bank fee schedule".
+    - Just add Ur dbs account lor.
+    - Where to view your cashback received from UOB absolute Card?.
+    - You can check OCBC Frank credit card website to read the latest T&Cs
+    - Ie can see CDP balance in DBS app?
+
+--- Cluster 194 (n=15) ---
+  Bank mix: {'UOB': 10, 'DBS': 4, 'OCBC': 1}
+  Top terms: account, rate, credit, uob account, currently, card, getting, saving
+  Sample sentences:
+    - Hi all, I am currently just starting my journey on learning about finances and decided to start by opening upg
+    - I'm about to matriculate and have been thinking of applying for a student credit card (namely, DBS Live Fresh 
+    - Here in SG, I decided to open UOB One Account to take advantage of the high interest rate.
+    - I've made a similar post, I spend about $700/month as well, compared against a few other cards and eventually 
+    - I used my HSBC revo card for almost all transactions, but recently, my expense is starting to increase and go 
+
+--- Cluster 195 (n=25) ---
+  Bank mix: {'UOB': 9, 'OCBC': 6, 'DBS': 10}
+  Top terms: account, month, use, card, spending, don, money, spend
+  Sample sentences:
+    - im looking to put my debit card aside and replacing it with a credit card but the UOB one credit card might no
+    - I have an ocbc multicurrency account with usd inside, but when I try to deposit overseas transfer to my ibkr c
+    - I always go to DBS' DigiBot to have my annual fees waived every year when they bill me for it, and every singl
+    - When I withdraw cash overseas with DBS multi-currency account I believe there is a $7 flat fee which is fine i
+    - I've been trying to track my monthly spend on my UOB one
+
+--- Cluster 196 (n=20) ---
+  Bank mix: {'OCBC': 7, 'UOB': 12, 'DBS': 1}
+  Top terms: hit, 500, spend, monthly, salary, hit 500, spending, 360
+  Sample sentences:
+    - Unemployed — what to do with $150k in OCBC 360 now that I can’t hit salary credit tiers?.
+    - On average (excluding insurance), I don’t hit $500 and that’s one reason why I wouldn’t want to take UOB One -
+    - But what’s the point of using the UOB One savings if I can’t hit the $500 spending?
+    - I'm looking at uob one to put my salary in, but spendings is around 300-500 and doesn't always meet the cap.
+    - I’ve tried - restarting my phone - redownloading the app - turning wrist detection off (read somewhere this mi
+
+--- Cluster 197 (n=13) ---
+  Bank mix: {'DBS': 13}
+  Top terms: fd, like, 70, assuming, sgd, dbs like, like 70, better
+  Sample sentences:
+    - Not another one Bro DBS YTD 23.5%, your “too strong” make it sound like YTD 100%?
+    - 1.6% DBS FD would be better.
+    - Exactly, assuming DBS spread at 0.2% converting 1000 would cost $2 already
+    - Assume DBS charges you 4.2% , that will be around 54 SGD.
+    - If you're ok with 18 months and above for SGD FD, why not consider DBS @ 3.2%?
+
+--- Cluster 198 (n=18) ---
+  Bank mix: {'DBS': 16, 'UOB': 1, 'OCBC': 1}
+  Top terms: dividends, year, dividend, shares, million, quarter, month, stock
+  Sample sentences:
+    - $1 mil in DBS years ago could and probably means multi million now and 6-digits dividends.
+    - 1 million in DBS stock will pay you 75k in dividends (2024) and your share of earnings is 110k.
+    - DBS shares will give you pretty close to 5% dividend a year.
+    - With 700k in dbs bank stock, your share of earnings is more than 80k a year, of which almost 60k dividends wil
+    - Would you be better off buying a 10m semiD with a 5m mortgage while renting the house out for 15k a month and 
+
+--- Cluster 199 (n=61) ---
+  Bank mix: {'DBS': 41, 'OCBC': 7, 'UOB': 13}
+  Top terms: think, just, money, better, like, don, risk, dividend
+  Sample sentences:
+    - So hanging onto the DBS Live Fresh Card cos it was your first one isn't doing much for you.
+    - That's true of DBS Altitude and most of the other cards that come up for this, so switching cards alone doesn'
+    - If you really did have a credit account closed without paying OCBC back, then maybe you rightfully deserve thi
+    - In this scenario, you were simply a contributor to the RM's annual bonus and DBS' share price.
+    - Apparently given that the custodian is UOB KayHian, if Endowus does go under, you're not forced to liquidate y
+
+--- Cluster 200 (n=15) ---
+  Bank mix: {'DBS': 7, 'OCBC': 6, 'UOB': 2}
+  Top terms: tensions, geopolitical, environment, volatility, trade, risks, geopolitical tensions, rate
+  Sample sentences:
+    - Recent escalations in trade tensions have heightened macroeconomic risks and market volatility.
+    - The recent escalation in trade tensions have heightened macroeconomic risks and market volatility.
+    - We have been stress testing for interest rate uncertainty, volatility and generally weaker sentiment.
+    - Macro conditions remain quite volatile.
+    - The macro environment is quite uncertain.
+
+--- Cluster 201 (n=44) ---
+  Bank mix: {'OCBC': 10, 'UOB': 21, 'DBS': 13}
+  Top terms: just, account, got, card, 100k, currently, 360, ocbc 360
+  Sample sentences:
+    - She told me that she wants to recommend me premier banking but the savings in my OCBC 360 is very far off from
+    - I also have a UOB Lady’s card which I never use Also thinking of getting a credit card but overwhelmed by all 
+    - A few months I’ve just invested more than just recycling during their campaigns (around additional 0.5%-0.75% 
+    - 30 this year, have been working FT for 3 years now in education I have 60k in investments, mostly VWRA and DBS
+    - Even if their commission is 100% (which it isn’t), its only $14.4k sia, not enough for COE also hahaha Recentl
+
+--- Cluster 202 (n=12) ---
+  Bank mix: {'DBS': 7, 'UOB': 3, 'OCBC': 2}
+  Top terms: account, funds, dbs account, withdrawal, transfer, card, payment, usd
+  Sample sentences:
+    - I just withdrew USD from SYFE to my DBS multiplier account and there was no fee at all although there was a wa
+    - I cancelled a UOB card before thinking that the annual fee will be auto waived after cancellation.
+    - Depositing was fine, no fees etc., but upon withdrawing, my DBS account only received SGD 0.94.
+    - However when I tried withdrawing USD to my DBS account today, I realized that only the 2.5k USD initial amount
+    - I have setup the automatic giro payment on my app and my money has been deducted accordingly but DBS still cal
+
+--- Cluster 203 (n=33) ---
+  Bank mix: {'DBS': 6, 'UOB': 15, 'OCBC': 12}
+  Top terms: applied, rejected, got, got rejected, card, recently, credit, tried
+  Sample sentences:
+    - I tried applying with other banks, such as DBS, etc, and all was rejected for the same reason.
+    - I recently applied for a UOB One credit card and was rejected.
+    - I also applied for an OCBC credit card and meet the eligibility criteria stated on their site, but the applica
+    - - around 12 months ago after a year here I applied to UoB (my salary Bank) and got rejected twice (once was an
+    - I recently applied for the UOB One Card but got rejected(reason not given)
+
+--- Cluster 204 (n=14) ---
+  Bank mix: {'DBS': 8, 'UOB': 4, 'OCBC': 2}
+  Top terms: high, 150k, sgd, account, uob 150k, rate, 20, best
+  Sample sentences:
+    - Hi this is Pet1003, On January 29, we saw DBS hit an ATH of 60 and then went down from there to a low of 53.5 
+    - DBS running up so high is evidence that "the large in the market is not even attractive" is definitely not tru
+    - From their CFO slides: Record wealth fees underpinned 2Q26 performance, while loan related fees softened Maybe
+    - Yen is on 2 decade low against USD and SGD, nearly 20% down, but I don't have faith in investing in Tokyo exch
+    - but want tenors of approx. <=3m. G3 FX risk is also OK (USD rates seem best), although I’ve had a poor experie
+
+--- Cluster 205 (n=18) ---
+  Bank mix: {'DBS': 11, 'UOB': 6, 'OCBC': 1}
+  Top terms: rate, really, usd, sure, dbs multiplier, multiplier, optimal, rate getting
+  Sample sentences:
+    - I seen enough of them, some tech fund listed by dbs can even go sideways for the past decade even though qqq h
+    - In fact UOB was too low even before the nerf
+    - DBS has been both growth and dividends for a while now Try to imagine a time-line where DBS collapses without 
+    - This one I am not sure however UOB has to buck up on AUM fee
+    - There's the DBS multiper trick...
+
+--- Cluster 206 (n=97) ---
+  Bank mix: {'DBS': 97}
+  Top terms: provide, quarter, rawat, second, question, outlook, hong, year
+  Sample sentences:
+    - Do you agree with what DBS says, and do you have any opinion on the asset allocation?
+    - My next question is on the guidance for flattish net interest income in 2024.
+    - it Aakash Rawat What was the net new money in the third quarter?
+    - I have two questions on guidance, first on the 2024 net profit, is it on the core net profit excluding one-tim
+    - Where do you think it will be in terms of your overall asset portfolio in about three years?
+
+--- Cluster 207 (n=29) ---
+  Bank mix: {'DBS': 29}
+  Top terms: question, second, final, final question, dividends, second question, question dividends, capital
+  Sample sentences:
+    - Finally, I want to talk about 2024.
+    - My question is on IBG.
+    - The second question is on wealth management fees.
+    - The last question is on Hong Kong CRE.
+    - Harsh Modi Final question is on buyback.
+
+--- Cluster 208 (n=36) ---
+  Bank mix: {'DBS': 36}
+  Top terms: questions, shan, su, su shan, couple, couple questions, question, question su
+  Sample sentences:
+    - Let me stop here and take questions.
+    - I have three questions.
+    - I have a couple of questions.
+    - Tan Su Shan No.
+    - Tan Su Shan I will start, and then Tse Koon can add on.
+
+--- Cluster 209 (n=35) ---
+  Bank mix: {'DBS': 35}
+  Top terms: tan, questions, citi, hong, yong, yong hong, hong citi, tan yong
+  Sample sentences:
+    - Tan Yong Hong (Citi) I have three broad questions.
+    - Russell Pereira (The Asian Banker)
+    - We can go straight to Q&A. Jayden Vantakaris (Macquarie) I have three questions.
+    - Melissa Kuang (Goldman Sachs)
+    - Harsh Modi (JP Morgan)
+
+--- Cluster 210 (n=92) ---
+  Bank mix: {'DBS': 65, 'OCBC': 16, 'UOB': 11}
+  Top terms: charges, fee, charge, rate, 10, dbs charges, usd, charged
+  Sample sentences:
+    - Since the cash upfront tier does not exist for selling, DBS Vickers would charge 0.18% of the trade value with
+    - Currently, I being charged of total of USD17 from Etrade -> DBS.
+    - Outgoing from E"tradw charged USD10 and DBS charged USD7.
+    - OCBC’s offer was a floating rate of 1.7% for 2 years (including spread) and subsequent years is ~ 2%.
+    - For example uob has $2 per counter per quarter service charge.
+
+--- Cluster 211 (n=17) ---
+  Bank mix: {'DBS': 17}
+  Top terms: wealth, important, components, structural, management, wealth management, markets, things
+  Sample sentences:
+    - The structural tailwind I talked about earlier was wealth creation.
+    - There are two components to that sensitivity.
+    - But that is not a use of liquidity.
+    - It is a structural flow.
+    - You should think about the NII as having three components.
+
+--- Cluster 212 (n=57) ---
+  Bank mix: {'DBS': 57}
+  Top terms: gupta, piyush, piyush gupta, early, think, answer, yes, gupta yes
+  Sample sentences:
+    - Piyush Gupta The short answer is no.
+    - Piyush Gupta Yes, they are all covered.
+    - Piyush Gupta Our target
+    - It is premature to talk about that now and we will look at it at year-end.
+    - You are right that this was a subjective assessment.
+
+--- Cluster 213 (n=16) ---
+  Bank mix: {'DBS': 14, 'OCBC': 1, 'UOB': 1}
+  Top terms: usd, account, ve, fees, fee, usd dbs, dbs multiplier, multiplier
+  Sample sentences:
+    - And DBS didn't charge me for remittance fees, I know for sure because I always transfer $XX to my DBS account 
+    - I've tried and am able to withdraw USD from Syfe to my DBS MC, but couldn't put it back in (at least not direc
+    - I have some USD lying around in my DBS multi-currency account (through a transfer, wasn't an investment).
+    - The first withdrawal for ibkr each month should be free, i withdrew 6 figures before to dbs bank and got the w
+    - No I had transfer some of my USD from DBS to IB SG, no charges incurred so far.
+
+--- Cluster 214 (n=50) ---
+  Bank mix: {'DBS': 28, 'OCBC': 13, 'UOB': 9}
+  Top terms: account, usd, transfer, currency, multi, currency account, multi currency, dbs multi
+  Sample sentences:
+    - I transferred USD to my Charles Schwab account using DBS before.
+    - Initially, we opened a joint bank account under OCBC and just did monthly transfers after we get our salary.
+    - I only have had one credit card to pay my university sch fee, from UOB.
+    - I fulfil the income requirements and the bank knows this since my salary is deposited into OCBC and has been f
+    - This morning I made a FAST transfer from my OCBC account to my SCB account.
+
+--- Cluster 215 (n=24) ---
+  Bank mix: {'OCBC': 7, 'DBS': 7, 'UOB': 10}
+  Top terms: card, use, cashback, pay, expenses, spending, account, monthly
+  Sample sentences:
+    - I only have OCBC 365 credit card for cashback for around $700 monthly spending with a few hundred work expense
+    - The money that t-bills returns to my DBS multiplier account is marked as salary and by using PayNOW every mont
+    - Cos I prefer to pay less than what UOB charges
+    - I personally opted for OCBC’s 365 Visa Signature as they give elevated cashback for most of my spending when I
+    - I spend about $500-600 on food and around $300 on transport (mainly private hire taxis) Can’t decide between c
+
+--- Cluster 216 (n=14) ---
+  Bank mix: {'OCBC': 5, 'DBS': 7, 'UOB': 2}
+  Top terms: salary, card, credit, just, income, dbs multiplier, multiplier, spend
+  Sample sentences:
+    - I end up with 5 accounts since I last reviewed my financials about 3 years ago: - OCBC 360 (legacy from the ol
+    - dbs yuu (my primary card past 5 months) trust (got it 1 year ago, haven’t used for 5 months)
+    - im just a fresh grad who just received my first 2 paychecks (i only have <10k with dbs if ur wondering)
+    - Based on my 2021 employmenet income on IRAS, its 28K but my monthly gross salary is 2.5K & I’m not sure how I 
+    - Me and my partner are jobless for abt 1yr now and we moved partly to dbs just to enjoy their loan facilities w
+
+--- Cluster 217 (n=14) ---
+  Bank mix: {'DBS': 6, 'OCBC': 2, 'UOB': 6}
+  Top terms: account, savings, salary, thinking, high, baskets, different, different baskets
+  Sample sentences:
+    - Hi all, i was previously able to transfer funds from my POSB/DBS account to my HYSAs via non-FAST transfer to 
+    - Currently have no urgent need for my emergency fund and wish to set it aside to grow rather than rot in the lo
+    - Since I already have an emergency fund set up in my dbs account, I'm thinking about putting the 22k in VWRA as
+    - Yes, I've actually set aside my tuition fees already in a DBS savings bank account already so the funds should
+    - Asking as I'm self employed and have no salary crediting so I was thinking of using monthly GIRO top-up to CPF
+
+--- Cluster 218 (n=13) ---
+  Bank mix: {'DBS': 3, 'UOB': 7, 'OCBC': 3}
+  Top terms: account, savings, uob account, maxed, currently, hi, savings account, account earns
+  Sample sentences:
+    - Hi, I’m currently an NSF and have saved around $10k, which is just sitting in my DBS account.
+    - I also put 75k in a uob one account (hurdle account to get interest from credit card spending).
+    - Hi all, I'm in my early twenties and in uni currently, with 6 months emergency cash in a normal OCBC Frank acc
+    - I have another $100k in my OCBC account and I'm on tier 2 (credit sal + save).
+    - For now I’m putting my extra money in SSB and T-bills since I maxed out UOB one account already.
+
+--- Cluster 219 (n=107) ---
+  Bank mix: {'DBS': 34, 'UOB': 45, 'OCBC': 28}
+  Top terms: account, uob account, savings, currently, salary, cash, savings account, dbs account
+  Sample sentences:
+    - I have source of USD, which I can remit/transfer to my DBS MC account.
+    - I have a UOB SRS account, which I do monthly top ups from my UOB account every month.
+    - I have almost 100k in an OCBC 360 account, and about 200k in a lousy FD.
+    - Hi everyone, I have 25k USD on my DBS account that I only invest into fixed term deposit (3%) for 3 months.
+    - My salary is currently already being credited into OCBC 360.
+
+--- Cluster 220 (n=16) ---
+  Bank mix: {'OCBC': 5, 'UOB': 4, 'DBS': 7}
+  Top terms: years, ocbc 2019, year, bought, just, started, shares, funds
+  Sample sentences:
+    - Recently just stopped and diverted funds to OCBC (which i had 115 shares in the past) and C38U REITS to divers
+    - Maxed out my UOB One and already DCAing a decent amount into VWRA and VWO.
+    - Basically it was just putting $100k with me to kick start UOB’s HYSA during the glory days of 5% interest.
+    - Emptied 6 figures in my DBS multiplayer a few years back & bought in, no regrets!
+    - I only placed $5000 per years for 5 years with OCBC and under their promotion I got higher interest rates with
+
+--- Cluster 221 (n=28) ---
+  Bank mix: {'DBS': 23, 'UOB': 4, 'OCBC': 1}
+  Top terms: years, undervalued, 500, outperformed, past, dbs outperformed, 10, 10 years
+  Sample sentences:
+    - Correction - DBS beat both S&P 500 and FTSE All World (VWRA) across almost every time period for the last 20 y
+    - DBS is not doing exceptionally well in comparison.
+    - DBS keeps going up this week bro 😎
+    - DBS has had higher returns than the S&P 500 but it has deeper drawdowns.
+    - DBS totally crushed S&P 500 in performance (in fact, 2x in 20 years) and risk adjusted.
+
+--- Cluster 222 (n=22) ---
+  Bank mix: {'UOB': 18, 'OCBC': 2, 'DBS': 2}
+  Top terms: cashback, hit, spend, account, uob account, currently, spending, cashplus
+  Sample sentences:
+    - UOB One spending cashback.
+    - No foreign charges from bank, and you get 1.7% cashback from uob when u top up grabpay
+    - Spend mostly on UOB one credit till hit 500sgd and stop to get 3.33% cashback.
+    - UOB Absolute Amex - get 1.7% cashback on other spend when the Evol and One have hit thresholds 4.
+    - Then I got OCBC Titanium, offering 4 mpd for electronics, furniture and department store purchases, capped at 
+
+--- Cluster 223 (n=15) ---
+  Bank mix: {'UOB': 12, 'DBS': 3}
+  Top terms: card, account, uob card, minimum, 500, credit, hit, loan
+  Sample sentences:
+    - Lady's Card can also be used to hit the minimum spend for UOB ONE HYSA
+    - UOB One to get higher interest on UOB One account, after spending the minimum on UOB One, spend the rest using
+    - Not answering any of your questions but a tip is to take the DBS tuition fee loan before you commence uni so t
+    - If so then stick to a UOB card to meet the bonus interest and cashback:
+    - Given the 1 year point expiry on DBS woman's cards, all online payments up to 2k (after considering the $5 blo
+
+--- Cluster 224 (n=33) ---
+  Bank mix: {'DBS': 28, 'UOB': 2, 'OCBC': 3}
+  Top terms: best, dbs best, better, yes, believe, think, dbs imo, dbs vantage
+  Sample sentences:
+    - For me i think there are much better opportunities outside of DBS
+    - so that's the advantage of UOB AM Invest platform).
+    - As a starter stock, DBS is just fine.
+    - But yes, as a stock pick, DBS beats Berkshire.
+    - DBS is best for sg markets.
+
+--- Cluster 225 (n=18) ---
+  Bank mix: {'DBS': 7, 'UOB': 11}
+  Top terms: better, card, cheaper, slightly, better uob, dbs multiplier, multiplier, think
+  Sample sentences:
+    - DBS Multiplier: Cheapest Insurance.
+    - Still cheaper than UOB plaza la.
+    - USD denominated funds are paying 4-5% or more right now, better than fixed deposits of any length at DBS
+    - I think uob one account gives better flexibility with 5% ear for first 100k
+    - DBS is slightly more expensive (around 0.6%) but faster.
+
+--- Cluster 226 (n=293) ---
+  Bank mix: {'DBS': 168, 'UOB': 82, 'OCBC': 43}
+  Top terms: better, good, rates, higher, rate, card, pretty, quite
+  Sample sentences:
+    - For selling, DBS vickers is better.
+    - Because you believe DBS is better than index funds.
+    - This DBS bandwagon is actually great because there are some blue chip REITs going for 6+% forward yield now.
+    - Quite a bullish call from DBS.
+    - Been DCAing into DBS for about 18 months now and sitting on a decent position there.
+
+--- Cluster 227 (n=14) ---
+  Bank mix: {'DBS': 9, 'OCBC': 2, 'UOB': 3}
+  Top terms: insurance, 10k, account, stocks, salary, month, savings, current
+  Sample sentences:
+    - Current Situation Salary: $4.3k/month (base) + 3-4 months bonus Savings Rate: $2.5k/month Net Worth: $72k into
+    - Reassessing full FIRE vs indefinite CoastFI at $2.5M Portfolio adjustments: Maintaining 70% CSPX, 5% DBS, 25% 
+    - Current finances roughly: \~60% of net worth in liquid savings in OCBC 360 for BTO, >3 months of expenses \~30
+    - Insurance: 2035 one policy matures (S$300K), GE endowments 2029–30 matures(\\\~S$100K), • SSB S$200K ring-fenc
+    - Salary & Saving \- Take home salary will be about \~$6.4k \- Using DBS Multiplier (2.2% interest with 5k savin
+
+--- Cluster 228 (n=19) ---
+  Bank mix: {'UOB': 12, 'DBS': 4, 'OCBC': 3}
+  Top terms: criteria, easiest, gives, uob easiest, hit, good, higher, points
+  Sample sentences:
+    - Actually uob one seems ok for you to consider cause you are able to hit the criteria.
+    - DBS Multiplier also has the added bonus of earning higher interest if you qualify for the criteria, which you 
+    - This helps you to build credit score faster because you'll have 2 lines of credit for a few years, and when yo
+    - The requirements are pretty easy to hit with uob
+    - Dropping the DBs allows you to get ntb status after enough time has passed to get a welcome gift.
+
+--- Cluster 229 (n=11) ---
+  Bank mix: {'UOB': 8, 'DBS': 3}
+  Top terms: card, cashback, cards, pay, 4mpd, account, bank account, uob bank
+  Sample sentences:
+    - If you have a UOB bank account then it’s worth looking into UOB Preferred platinum as you can earn up to 4mpd 
+    - You can also use UOB Visa Signature for a larger cap compared to some of the other cards like UOB PPV.
+    - If you do land on DBS, the Altitude card supports Apple Pay, Google Pay and Samsung Pay too, so you're not giv
+    - The UOB preferred platinum still allows you to get 4mpd from virtually any offline merchant.
+    - For "free" CC, you can either look for those with easier to hit waiver criteria (E.g. UOB Evol) or if you're c
+
+--- Cluster 230 (n=37) ---
+  Bank mix: {'DBS': 14, 'UOB': 10, 'OCBC': 13}
+  Top terms: cash, current, 100k, 10, stocks, sgd, 7k, vwra
+  Sample sentences:
+    - Core ETFs of VWRA+CSPX (31.3k) DBS (11.7k) Satellite (6.7k) Gold (12.6k) Crypto (10.6k)
+    - Allocation: Growth (55%): 20% QLD (2x QQQ), 15% SSO (2x S&P 500), 15% RSSB (Global Stocks & Bonds), 5% TMF (3x
+    - Portfolio: - UOB One: $150k - VWRA: $70k - CSPX: $8k - D05: $10.5k - NVDA: $7k - Idle cash: $60k
+    - Current setup: 1. Emergency fund: ~S$20k (DBS Multiplier) 2.
+    - Current assets: Cash: 250k (UOB One/Stash) 100k emergency fund 150k reserved for future property upgrade/downs
+
+--- Cluster 231 (n=11) ---
+  Bank mix: {'DBS': 11}
+  Top terms: 15, 50, 35, rest, 25, dbs 15, 50 dbs, gold
+  Sample sentences:
+    - TSLA (5%) 10k DBS (5%) 5k Crypto (2.5%) All DCA.
+    - 50% NVDA 10% DBS Rest US tech.
+    - Year to date- DBS +38% / CSPX +26% / NVDA +174%
+    - Portfolio breakdown: 65% DBS, 25% VOO, 3.7% VTWO and 5.3% JEPQ.
+    - 50% bitcoin, 25% DBS, 25% S&P500
+
+--- Cluster 232 (n=35) ---
+  Bank mix: {'DBS': 35}
+  Top terms: look, based, calibrate, risk, growth, income, depend, cost
+  Sample sentences:
+    - DBS provides a few types of asset allocations for consideration, depending on the type of risk profile you hav
+    - The best way to look at a bank's performance is through the lens of the commercial book, and at net interest i
+    - This has been factored into our NIM projections.
+    - All our stress tests go into our modelling to identify companies that are at risk, and we then put them on the
+    - For the rest of the portfolio, we have done some very detailed kicking of the tires, on both the property and 
+
+--- Cluster 233 (n=13) ---
+  Bank mix: {'DBS': 6, 'UOB': 6, 'OCBC': 1}
+  Top terms: website, app, uob app, couldn, record, record dbs, dbs website, mail
+  Sample sentences:
+    - I must be too poor because I didn't receive any e-mail on DBS Treasures like last time
+    - For some fuck reason I can't even download my bank statements in pdf from DBS/POSB ibanking website.
+    - I cant seem to find the information in the DBS website.
+    - I think it’s not available on UOB.
+    - I can't find any option like that on the UOB app/website.
+
+--- Cluster 234 (n=13) ---
+  Bank mix: {'DBS': 12, 'UOB': 1}
+  Top terms: 500, years, years dbs, vwra, vt, brk, total, returns
+  Sample sentences:
+    - Between DBS, Singtel and Keppel, 52 week growth numbers are 38.06%(DBS), 38.34%(Singtel) and 41.65%(Keppel).
+    - 10 years - DBS 558.42%, BRK - 276.76% 15 years - DBS 728.84%, BRK - 507.42% 20 years - DBS 1,041.84%, BRK - 80
+    - 10 years - DBS 558.42%, BRK - 276.76%, S&P 500 - 299.02%, VT - 199.54% 15 years - DBS 728.84%, BRK - 507.42%, 
+    - 10 years - DBS 558.42%, S&P 500 - 299.02%, VT - 199.54% 15 years - DBS 728.84%, S&P 500 - 670.78%, VT - 338.95
+    - Total Returns (3/5/10/20 Years) DBS - 119.68%, 248.17%, 486.88%, 1,216.30% SPY - 83.83%, 105.34%, 277.67%, 692
+
+--- Cluster 235 (n=133) ---
+  Bank mix: {'DBS': 21, 'UOB': 87, 'OCBC': 25}
+  Top terms: card, spend, cashback, spending, good, better, account, miles
+  Sample sentences:
+    - Im able to fulfill crediting salary into dbs, spending at least $20 on paylah, and having insurance.
+    - With the new-to-bank sign-up bonuses, plus Citi Rewards for online spending and UOB PRVI Miles (PPV) for conta
+    - With 150k you can transfer to uob one, if you can hit the spending, its higher at uob one.
+    - You already found that it has $400 extra premium compared to UOB.
+    - If you're willing to min-max miles card, it definitely beats cashback % by a large margin, especially for low 
+
+--- Cluster 236 (n=592) ---
+  Bank mix: {'UOB': 392, 'OCBC': 68, 'DBS': 132}
+  Top terms: card, spend, miles, 500, month, cashback, credit, account
+  Sample sentences:
+    - If you want a higher rate and don't mind double checking, UOB's EVOL pays 10% cashback on local online and mob
+    - OCBC 365 needs that same S$800 to unlock its dining and fuel cashback, but it still carries a fee around S$196
+    - As someone already suggested… Debt Restructuring Plan/ Debt Consolidation Plan etc, it merge all your CC bills
+    - UOB PPV ($600): Everything offline contactless (ie. dining, shopping, simplyGo) UOB PPV ($600): Everything onl
+    - UOB preferred platinum visa (will be my paywave card) - gives me 4mpd for anything paywaveable (buying macs fr
+
+--- Cluster 237 (n=10) ---
+  Bank mix: {'DBS': 8, 'OCBC': 2}
+  Top terms: interim, dividend, quarter, board, board declared, cents dbsh, dbsh, dbsh ordinary
+  Sample sentences:
+    - DBS 5-year total return (capital appreciation + dividends reinvested) of ≈ 229% for DBS (2019–2024) in SGD ter
+    - The Board has declared an interim one-tier tax-exempt dividend of 54 cents for each DBSH ordinary share for th
+    - The Board has declared an interim one-tier tax-exempt dividend of 54 cents for each DBSH ordinary share for th
+    - The Board has declared an interim one-tier tax-exempt dividend of 48 cents for each DBSH ordinary share for th
+    - To begin with, it plans to introduce a Capital Return dividend of 15 cents per share per quarter to be paid ou
+
+--- Cluster 238 (n=38) ---
+  Bank mix: {'OCBC': 4, 'DBS': 31, 'UOB': 3}
+  Top terms: dividend, cents, share, cents share, quarter, declared, board, board declared
+  Sample sentences:
+    - OCBC declared an interim dividend of S$0.47 a share, up from S$0.41 a share the year before.
+    - The Singapore bank declared S$0.81 in dividends per share for the second quarter of 2026
+    - OCBC artificially inflate their share price by offering 60% dividend payout.
+    - Expenses declined 3%, while The Board declared an ordinary dividend of SGD 66 cents per share and a Capital Re
+    - Together with a Capital Return dividend of 15 cents per share, the total dividend for the quarter amounts to 8
+
+--- Cluster 239 (n=112) ---
+  Bank mix: {'OCBC': 36, 'DBS': 57, 'UOB': 19}
+  Top terms: cents, dividend, payout, share, year, ordinary, capital, ratio
+  Sample sentences:
+    - For 2022, ocbc's full year dividends amounts to $0.68 (including interim dividends of $0.28).
+    - DBS payout ratio is slightly above 50%
+    - Using the UOB Absolute Cashback Card for the entire S$20,000 transaction would yield S$340 in cashback (1.7% o
+    - Dbs quarterly dividend is currently 60c per share with capital returns of 15c for the next 2 years.
+    - Doubling of ordinary dividends over past five years 
+
+--- Cluster 240 (n=18) ---
+  Bank mix: {'DBS': 3, 'UOB': 14, 'OCBC': 1}
+  Top terms: eir, 100k, stash, uob stash, account, eir 100k, gives, uob account
+  Sample sentences:
+    - Sorry, buying DBS on SGX should be minimum SGD 2.50.
+    - UOB only gives 4mpd if between 1000 to 2000/month.
+    - There's UOB one account EIR is 5%
+    - Current UOB One gives 5% pa for first 100k.
+    - Uob one above 100k only yield 0.05 percent.
+
+--- Cluster 241 (n=145) ---
+  Bank mix: {'DBS': 69, 'OCBC': 40, 'UOB': 36}
+  Top terms: years, fixed, year, offering, months, 45, dbs offering, loan
+  Sample sentences:
+    - Entered dbs at 38, its now 78.
+    - currently, the repricing package offered by OCBC are: 1) 2-Yr Fixed.
+    - OCBC offering 1.5% interest rates for 153 days locked in at $50K minimum amount.
+    - For repricing with OCBC, was offer at 28years instead of 30years.
+    - DBS Multiplier: 1.8% interest (CAP at 50k)
+
+--- Cluster 242 (n=20) ---
+  Bank mix: {'OCBC': 1, 'UOB': 1, 'DBS': 18}
+  Top terms: rate, loans, floating, floating rate, fixed, fixed rate, management, wealth
+  Sample sentences:
+    - For fire insurance, some mortgages like OCBC's bundles fire insurance with their floating rate plans.
+    - This loan features two tranches with tenures of three and five years.
+    - The dividend income comes from DBS, REITs, and bonds.
+    - 1/4 of the revenue for DBS comes from wealth management.
+    - Despite DBS wealth management revenues, it still relies largely on interest rates.
+
+--- Cluster 243 (n=119) ---
+  Bank mix: {'DBS': 118, 'OCBC': 1}
+  Top terms: billion, million, year, quarter, 200, 200 million, capital, return
+  Sample sentences:
+    - DBS is so flush with cash that they loaned $30 billion back to MAS.
+    - Now, my father intends to refinance again with OCBC to extract an additional $1 million.
+    - The consolidation also added $10 billion to loans, $12 billion to deposits, 2.7 million in credit card account
+    - We have another $100 billion of loans which have yet to be repriced, of which $10 billion gets repriced in the
+    - I guided earlier that we have $2 billion-3 billion of surplus capital to return.
+
+--- Cluster 244 (n=44) ---
+  Bank mix: {'DBS': 44}
+  Top terms: billion, book, activities, total, retail, assets, treasures, commercial
+  Sample sentences:
+    - DBS is “only” $200 billion.
+    - $300 billion dollars for DBS alone in Assets Under Management AUM.
+    - The total CRE exposure in Hong Kong is $19 billion.
+    - Of that, about $3 billion is office, $3 billion is retail and $13 billion is mixed use.
+    - The figures include inflows from Treasures, Treasures Private Client and the Private Bank.
+
+--- Cluster 245 (n=17) ---
+  Bank mix: {'UOB': 3, 'DBS': 13, 'OCBC': 1}
+  Top terms: lol, lol dbs, singtel, singtel dbs, just, banking, citi, citi ocbc
+  Sample sentences:
+    - Currently on UOB One but losing dollars there as they nerfed interest rates.
+    - Dbs share price going down recently 🤔
+    - I bought DBS at 24 and average down when im down 20%, now it is just slight loss only.
+    - Probably due to DBS service down?
+    - Singtel down, dbs down.
+
+--- Cluster 246 (n=21) ---
+  Bank mix: {'DBS': 15, 'UOB': 4, 'OCBC': 2}
+  Top terms: called, did, said, called dbs, checked, hotline, dbs said, officer
+  Sample sentences:
+    - so went to sleep, woke up, still wasn't there Contacted DBS hotline @ 8 AM to query about it, they say the tra
+    - I checked my dbs acct that it did go through.
+    - #x200B; Showed this proof of transfer to DBS and after 2 days of checking they confirmed it was a fake confirm
+    - then i get a notification tap to approve by UOB from my mobile app.. but the merchant already processed the tr
+    - I see.. because I received 1st one from DBS saying one month exceeded but received from another bank on the ne
+
+--- Cluster 247 (n=314) ---
+  Bank mix: {'DBS': 175, 'UOB': 86, 'OCBC': 53}
+  Top terms: account, card, years, ago, got, just, started, year
+  Sample sentences:
+    - I received a call today from a guy claiming to be from DBS.
+    - I was offered a position at UOB but chose to hold it till I went for an interview at st engineering.
+    - I just received an email from “DBS” asking me to do a survey.
+    - I, too, had a scam call from DBS recently.
+    - He joined DBS as a Treasury Manager then jumped to different international banks.
+
+--- Cluster 248 (n=22) ---
+  Bank mix: {'DBS': 22}
+  Top terms: seeing, stress, seeing stress, systemic, outlook, seeing outlook, signs, signs stress
+  Sample sentences:
+    - At the same time, there will be headwinds from markets, rates, and FX, which we need to navigate and manage.
+    - On potential for recoveries or GP writebacks, we will continue to assess.
+    - Piyush Gupta No, we have not had any material downgrades.
+    - Having said that, we are not seeing any obvious signs of stress.
+    - We are not seeing pressure with that book.
+
+--- Cluster 249 (n=13) ---
+  Bank mix: {'UOB': 8, 'DBS': 4, 'OCBC': 1}
+  Top terms: account, just, salary, spend, currently, credit, salary credit, hsbc
+  Sample sentences:
+    - I use UOB One because my CC and salary credit is to that account and I’m lazy to switch banks just to squeeze 
+    - You may need a DBS./POSB account for Vickers, No worries, I almost signed up for the same plan until I talked 
+    - I replaced my “1.7% uob+grabpay” with 2% SC spree card as grab incentives getting lesser, and im too lazy to t
+    - Yes but only because I had too much cash sitting in my DBS multiplier account that I hadn't invested.. not cau
+    - Now I cannot get the salary credit and the UOB one interest until I find a new job.
+
+--- Cluster 250 (n=15) ---
+  Bank mix: {'DBS': 15}
+  Top terms: impact, trade, markets, fees, management, wealth, wealth management, growth
+  Sample sentences:
+    - If it gets to $150, for example, many countries in the region will start having challenges with their trade de
+    - Under what conditions will the bank not increase the dividend by Tan Su Shan There are no specific circumstanc
+    - Tan Su Shan Cyclical tailwinds are those driven by market cycles.
+    - Do you think it will lead to additional penalties on the CET-1 beyond the 40 basis points that was imposed for
+    - Transfers to NPL also result in GP write-backs, but downgrades within the watchlist would increase GP.
+
+--- Cluster 251 (n=21) ---
+  Bank mix: {'DBS': 21}
+  Top terms: months, time, couple, years, half, couple months, year, 2027
+  Sample sentences:
+    - We started the process a few months ago and it will take till year-end to get fully up.
+    - The work is also going to take a few months but we are hopeful it can be completed within six months.
+    - For example, completing tasks that previously took months or years in a matter of weeks.
+    - So we will need a couple more quarters of clarity before we can commit to anything.
+    - We said that we had up to 2027, so we still have a year and a half more to go.
+
+--- Cluster 252 (n=12) ---
+  Bank mix: {'DBS': 10, 'OCBC': 2}
+  Top terms: scam, scammers, dbs product, product, product scam, card, ocbc scam, referring
+  Sample sentences:
+    - DBS card – fraud or scam?
+    - But I suspect it has something to do with my DBS acc being used by scammers to move funds.
+    - Referring to the OCBC scam?
+    - The dbs product is a scam.
+    - This, DBS Multiplier is an utter scam.
+
+--- Cluster 253 (n=10) ---
+  Bank mix: {'DBS': 9, 'OCBC': 1}
+  Top terms: regulations, operate, standards, abide, abide regulations, sustainability, continue, continue operate
+  Sample sentences:
+    - So DBS has to work within the confines of our regulatory environment.
+    - Standards for KYC and AML are extremely rigorous.
+    - The standards we operate under are aligned with those in other global wealth centres.
+    - We engage regulators constantly and will stay within the regulations.
+    - But there is a balance, and I also have to make sure we are not too conservative.
+
+--- Cluster 254 (n=23) ---
+  Bank mix: {'DBS': 23}
+  Top terms: years, past, went, year, growth, 15, 20, dividend
+  Sample sentences:
+    - DBS is still the best after all these years with capital growth + dividend growth + dividends.
+    - The thing is, DBS stock price has already gone up A LOT recently.
+    - You don’t choose to buy DBS but you can see that the shares went up 15%.
+    - DBS and the other banks have done very well since late last year, that’s probably why you can see 10-15%.
+    - And you know, DBS has gone up 20% year-to-date and S&P500 only 15%.
+
+--- Cluster 255 (n=33) ---
+  Bank mix: {'DBS': 32, 'OCBC': 1}
+  Top terms: impact, banking, consumer, slowdown, growth, nim, headwinds, sector
+  Sample sentences:
+    - In light of yet another DBS service disruption, how are you diversifying your banking accounts?.
+    - And how do you think the upcoming OCBC results might influence the banking sector's near-term outlook?
+    - Since there is so much uncertainty, we will reserve giving more specific guidance until the next quarter.
+    - So there will not be any real direct impact in What will have an impact is the deferral of new product and ser
+    - How do you see it shaping up with the economy going through a tough time?
+
+--- Cluster 256 (n=10) ---
+  Bank mix: {'UOB': 5, 'DBS': 4, 'OCBC': 1}
+  Top terms: card, years, got, did, salary, balance, cancelled, manulife
+  Sample sentences:
+    - Realized i made a mistake when i did my “salary” transfer into my UOB One account for Feb where i forgot to ch
+    - i wrote into manulife to cancel one of my dbs linked polices with manulife within the 14 days because i realis
+    - I know this bacause I had to cancel my personal UOB one just today since only one of them is getting the bonus
+    - I had a DBS credit card cancelled it about 6 years ago, forgot that I and outstanding balance of 30k and now a
+    - I’ve been with UOB for 6+ years and it’s crazy that despite having balance in the bank with them (>20k) yet th
+
+--- Cluster 257 (n=124) ---
+  Bank mix: {'UOB': 34, 'DBS': 71, 'OCBC': 19}
+  Top terms: just, account, think, people, like, bad, problem, risk
+  Sample sentences:
+    - While UOb has a negative reputation.. you won’t be there forever.
+    - If the annual fee fight itself is what's wearing you down, worth knowing not every UOB card runs the same way.
+    - Those comparing VWRA with DBS or anything else are missing the entire point of a world index.
+    - Hi DBS changed their UI recently and its damn unintuitive.
+    - I agree with having discounted shares, but you're just delusional and wishfully thinking with DBS.
+
+--- Cluster 258 (n=113) ---
+  Bank mix: {'UOB': 40, 'DBS': 38, 'OCBC': 35}
+  Top terms: bad, worst, experience, service, hate, credit, terrible, customer
+  Sample sentences:
+    - uob promos are the worst.
+    - Background is that I'm a UOB one card holder and I had a bad experience after the first quarter.
+    - Another day, another bad loan for UOB.
+    - Substantially losing faith in UOB and their credit risk management approach.
+    - I think UOB is by far, the worst bank I have transacted with.
+
+--- Cluster 259 (n=28) ---
+  Bank mix: {'DBS': 19, 'UOB': 7, 'OCBC': 2}
+  Top terms: worse, rate, rates, account, dbs rates, worse uob, worst, problem
+  Sample sentences:
+    - Anyways I’m sure Warren is absolutely devastated with his underperformance relative to DBS over the last 5 yea
+    - I think the all-in CPF/DBS/gold people are even worse.
+    - Having to set aside huge provisions = poor credit standards and decisions, at corp banking front Weak revenue 
+    - The problem with big banks like DBS is that they are slow to implement new tech, they are expensive, poor cust
+    - DBS's rates are the lowest.
+
+--- Cluster 260 (n=17) ---
+  Bank mix: {'DBS': 10, 'UOB': 4, 'OCBC': 3}
+  Top terms: tried, told, calling, tried calling, wasn, times, did, called
+  Sample sentences:
+    - We have lodged a police report, reported to DBS immediately and followed up the best we can.
+    - I have tried calling DBS hotline several times to check on the status, but they say it has not been received y
+    - (I tried calling the dbs helpline but they don’t even know what is going on and that to contact my relationshi
+    - I’m not expecting immediate response, but DBS did not reply for 2 weeks and I tried calling them during office
+    - I received an email from Toshl on 16th Mar on this and wasn't able to sync with DBS from then onwards.
+
+--- Cluster 261 (n=24) ---
+  Bank mix: {'UOB': 2, 'DBS': 22}
+  Top terms: basis points, points, basis, 17, 17 20, 20, 20 basis, specific
+  Sample sentences:
+    - Don't settle for the sub-optimal UOB rate in the mean-time.
+    - Specific allowances are assumed to be between 17 and 20 basis points.
+    - For office properties, the cap rates are generally in the range of 3-4%.
+    - For retail properties, cap rates are generally in the range of about 3.5-5.0%.]
+    - And now it is specific allowances that are to be 17-20 basis points.
+
+--- Cluster 262 (n=197) ---
+  Bank mix: {'UOB': 73, 'OCBC': 32, 'DBS': 92}
+  Top terms: card, account, got, transactions, credit, charges, fraudulent, cancelled
+  Sample sentences:
+    - I login my UOB account to found out that there were fraudulent transactions made and the hackers basically wip
+    - The worst part was OCBC was my main bank, and when my account got frozen, I had no access to money at all.
+    - The officer eventually said the case was “closed,” but since then OCBC sent me a letter saying they do not wan
+    - Post on DBS was taken down by moderators today because "we limit discussion to financial independence.
+    - I realized that there are recent charges to my bank account(DBS) that I registered to IBKR from June to Septem
+
+--- Cluster 263 (n=27) ---
+  Bank mix: {'UOB': 15, 'DBS': 8, 'OCBC': 4}
+  Top terms: fee, waive, card, annual, fees, account, waiver, cancelled
+  Sample sentences:
+    - I was making a regular, low-value PayNow transfer to settle a routine maintenance fee (nothing unusual, no big
+    - UOB used to call me to sell travel/accident/hospital cash insurance until I told them I wanted to withdraw my 
+    - they were lenient with bonus interest for my uob one account.
+    - I tried withdrawing stable coins back into my dbs account but it quoted me a 30 usd fee.
+    - However, my DBS manager told me after I deposited my money that I couldn't invest in any of their funds becaus
+
+--- Cluster 264 (n=11) ---
+  Bank mix: {'DBS': 11}
+  Top terms: growth, wealth, onshore, revenue, gupta, piyush, piyush gupta, money
+  Sample sentences:
+    - Back to DBS, to your point on overseas expansion, has that translated to meaningful improvements (quantifiable
+    - As we watch DBS march toward this psychologically important S$50 level, the key question on everyone's mind is
+    - Which part of me saying that DBS(and other banks) expansion was fuelled by entering other markets aggressively
+    - (The Edge) You mentioned several times that surplus deposits are being deployed into HQLA.
+    - The advice we give our clients has always been to stay invested as time in the market is far better than Tan S
+
+--- Cluster 265 (n=206) ---
+  Bank mix: {'DBS': 202, 'UOB': 3, 'OCBC': 1}
+  Top terms: rates, rate, year, quarter, growth, think, nim, half
+  Sample sentences:
+    - Why the Jio Credit-BofA deal could herald renewed foreign interest in non-banks.
+    - You can't possibly look at both graphs and tell me that VWRA is erratic while DBS is on an upward trend.
+    - Then as time goes on, my UOB One gets depleted, yes, but it’s aligned to the thesis that over the long run, sh
+    - Bummer, yeah DBS kind of implied they were removing that feature very soon, likely because at that point it lo
+    - because I thought I just saw them post a revision of their rate increase up to 7+% last few weeks ago only if 
+
+--- Cluster 266 (n=14) ---
+  Bank mix: {'OCBC': 1, 'DBS': 13}
+  Top terms: year, think, rate, rates, growth, higher, obviously, obviously rate
+  Sample sentences:
+    - Yes, I’ve seen the marketing collateral and confirmed with OCBC With the assumption that the Fed won’t be incr
+    - Any big upside depends on a China and Hong Kong turnaround, which I do not see happening this year.
+    - If we get, say, a 100-basis-point rate cut, will it really change the IRR of projects and lead to higher credi
+    - I think they will evaluate us on an ongoing basis and, at some stage, I guess they will get more comfortable a
+    - But in the longer term, I think money will flow back from FD to Casa, and our interest rate sensitivity will g
+
+--- Cluster 267 (n=116) ---
+  Bank mix: {'DBS': 114, 'UOB': 2}
+  Top terms: year, growth, income, quarter, million, single, digit, single digit
+  Sample sentences:
+    - The SGD is also projected to appreciate against the USD and DBS has also said it may reach 1:1 parity by 2040.
+    - DBS We need more inflows to pump it.
+    - This is to increase the multiplier for the uob account
+    - At the beginning of the year, I had thought we might be able to get mid- single-digit growth.
+    - Net interest income will be flattish or slightly up from loan growth even if NIM is slightly down.
+
+--- Cluster 268 (n=52) ---
+  Bank mix: {'DBS': 32, 'OCBC': 9, 'UOB': 11}
+  Top terms: asia, hong, hong kong, kong, markets, china, indonesia, singapore hong
+  Sample sentences:
+    - DBS's portfolio appears to be highly focused on Singapore and Emerging Markets.
+    - For example, DBS has retail businesses in China, Hong Kong, India, Indonesia, and Taiwan, and is therefore sus
+    - You see DBS presence in Hong Kong and Taiwan.
+    - Headquartered and listed in Singapore, DBS is in the three key Asian axes of growth: Greater China, Southeast 
+    - The biggest data centre operators around the world are specialised, such as Singtel, ST Telemedia and Equinix,
+
+--- Cluster 269 (n=14) ---
+  Bank mix: {'UOB': 1, 'DBS': 13}
+  Top terms: nimble, continue, disciplined, stay, resilient, continue nimble, discipline, costs
+  Sample sentences:
+    - We want to apologise for this incident and we will work closely with UOB Kay Hian to enhance our operational p
+    - To get high resiliency, it is necessary to get the appropriate discipline and rigour to test well before going
+    - We will also continue to be nimble.
+    - Our aim is to stay ahead of emerging trends so that we can proactively identify weaker cases and support them 
+    - In addition, we were maintaining price discipline.
+
+--- Cluster 270 (n=12) ---
+  Bank mix: {'DBS': 12}
+  Top terms: focus, going, intend, thought, just, make, comfort, comfort level
+  Sample sentences:
+    - That is an important distinction.
+    - I just think that you have choices to make.
+    - That is the first comfort level you should take.
+    - And that is exactly what we have been doing.
+    - That is what we intend to do.
+
+--- Cluster 271 (n=394) ---
+  Bank mix: {'DBS': 389, 'UOB': 4, 'OCBC': 1}
+  Top terms: ai, wealth, want, management, people, new, continue, work
+  Sample sentences:
+    - Based on the article, it seems DBS really wants to make it easier for customers.
+    - And it does seem that DBS is more successful at expanding overseas and with business and wealthy customers, ra
+    - So as long DBS is prudent then all is good.
+    - Although i have never voted for them in my entire life, I need them to make sure DBS thrives at least till SG 
+    - The greatest problem is water and rising sea levels DBS is also strengthening their presence in HK as a gatewa
+
+--- Cluster 272 (n=38) ---
+  Bank mix: {'DBS': 26, 'OCBC': 5, 'UOB': 7}
+  Top terms: record, year, quarter, half, performance, profit, achieved, delivered
+  Sample sentences:
+    - Following an exceptional first half, the bank upgraded its full-year guidance.
+    - .. and yet DBS returned record profits for last quarter.
+    - The leverage ratio of 5.9% was well DBS CEO Tan Su Shan said, “We had a strong start to the year, with record 
+    - DBS CEO Tan Su Shan said, “Record profit before tax and return on equity of 16% were a testament to the resili
+    - We achieved record total income in the third quarter, and new highs for nine-month net profit and ROE.
+
+--- Cluster 273 (n=23) ---
+  Bank mix: {'DBS': 23}
+  Top terms: quarter, strong, good, january, year, solid, good quarter, fourth
+  Sample sentences:
+    - It has been a challenging quarter from a technology standpoint, and therefore it is refreshing that the busine
+    - For the fourth quarter, growth momentum remained strong.
+    - January was very good indeed.
+    - We had a good first quarter.
+    - It was obviously a very strong quarter, exceptional by any measure.
+
+--- Cluster 274 (n=14) ---
+  Bank mix: {'DBS': 2, 'UOB': 12}
+  Top terms: customers, long, long term, term, group, committed, right, decades
+  Sample sentences:
+    - As a purpose-driven bank, we remain committed to contributing to society.
+    - We remain focused on being an Asian bank that is future-forward, digitally enabled, and transformative.
+    - The Group remains committed to supporting our customers on their green journeys.
+    - For nearly nine decades, UOB has adopted a customer-centric approach to create long-term value by staying rele
+    - UOB believes in being a responsible financial services provider and is steadfast in its support of art, social
+
+--- Cluster 275 (n=82) ---
+  Bank mix: {'DBS': 80, 'UOB': 2}
+  Top terms: ai, growth, opportunities, markets, strong, new, opportunity, market
+  Sample sentences:
+    - The decline could trigger increased usage of AI in the form of AI applications and agentic AI, which would gen
+    - The MAS equity program could be a medium term technical driver for DBS.
+    - I think DBS is on the right track to stay competitive such as going digital and such.
+    - I increased my position in UOB though when it was below $36 recently, looking forward to see how they integrat
+    - We have set ourselves new targets for service availability and recovery on top of what MAS requires.
+
+--- Cluster 276 (n=22) ---
+  Bank mix: {'DBS': 6, 'OCBC': 10, 'UOB': 6}
+  Top terms: group, growth, strong, liquidity, capital, healthy, maintained, funding
+  Sample sentences:
+    - SZRCB continues to do well.
+    - , record 1H performance provides good foundation for the year and demonstrates ability to stay resilient and c
+    - The wealth growth has been robust and well spread.
+    - Fixed deposits were stable, given the bank's strong liquidity position.
+    - In particular, robust wealth management momentum was maintained.
+
+--- Cluster 277 (n=24) ---
+  Bank mix: {'DBS': 22, 'OCBC': 1, 'UOB': 1}
+  Top terms: asset, asset quality, quality, resilient, quality remained, remained, continued, remained resilient
+  Sample sentences:
+    - Asset quality was resilient.
+    - Asset quality continued to be sound.
+    - Asset quality was good.
+    - Asset quality remained resilient.
+    - Asset quality remained sound.
+
+--- Cluster 278 (n=142) ---
+  Bank mix: {'DBS': 68, 'UOB': 42, 'OCBC': 32}
+  Top terms: strong, growth, continue, franchise, capital, opportunities, customers, position
+  Sample sentences:
+    - DBS analyst Jason Sum concurs, adding that Genting Singapore is well positioned to recover with Singapore’s Va
+    - Hope uob can sustain.
+    - In my opinion, that's theoretical as DBS management has repeatedly assured that it's confident of maintaining 
+    - This reflects the resilience of our franchise and our ability to capture opportunities and support client need
+    - Our solid balance sheet, with prudent general allowance buffers, strong capital position and robust liquidity,
+
+--- Cluster 279 (n=13) ---
+  Bank mix: {'DBS': 11, 'UOB': 2}
+  Top terms: wealth, management, wealth management, growth, demand, business, growth wealth, china
+  Sample sentences:
+    - Momentum is good for wealth management and cards.
+    - As global trade and investment diversify, we expect the use of RMB as a payments and investment currency to co
+    - As more data centres are built, demand rises for equipment and related infrastructure.
+    - There is a large pipeline of deals in Hong Kong and China, and we are playing to our strengths there.
+    - We see secular growth in wealth management, both in Asia and globally.
+
+--- Cluster 280 (n=100) ---
+  Bank mix: {'OCBC': 2, 'DBS': 96, 'UOB': 2}
+  Top terms: growth, strong, flows, trade, markets, asia, seeing, doing
+  Sample sentences:
+    - Have an OCBC multiplier account which has been doing great.
+    - I think while DBS is doing well, perhaps diversification is always good.
+    - And in terms of capital gains, DBS has been doing better over the past few years.
+    - The Asean region and India are doing well.
+    - Some sectors are still doing well, while there continues to be opportunities in the China-outbound business an
+
+======================================================================
+NEXT STEP (manual): inspect the clusters above, name them, and write
+the frozen taxonomy to config/aspects.yaml (see aspects/assign.py).
+======================================================================

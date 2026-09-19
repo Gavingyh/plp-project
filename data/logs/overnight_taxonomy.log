@@ -1,0 +1,16 @@
+INFO    __main__                     Comparing 3 candidate taxonomies against 36884 sentences.
+candidate                   #asp  avg/sent  %other  separation  top_sim
+-----------------------------------------------------------------------
+A_proposal_aligned             4      3.87    1.0%      0.1125   0.6577
+B_data_derived_coarse          2      1.98    0.6%      0.1695   0.7688
+C_data_derived_fine            3      2.96    0.3%      0.2222   0.7643
+
+How to read this:
+  - avg_aspects_per_sentence closer to 1 = more discriminating (candidate A's known
+    problem, quantified here — most sentences matching ~4 of 5 aspects near-equally).
+  - avg_centroid_separation higher = the aspects are more distinct from each other.
+  - pct_other very high or very low are both worth a second look: too high means the
+    taxonomy doesn't fit the corpus; too low (~0%) means the floor never triggers.
+
+This is decision support, not a decision — see config/aspects.yaml's header comment
+and the design notes' 'Aspect taxonomy sign-off' open decision.

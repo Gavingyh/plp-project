@@ -1,0 +1,63 @@
+INFO:     Started server process [96353]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8009 (Press CTRL+C to quit)
+INFO:     127.0.0.1:51111 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51113 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51120 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [96353]
+INFO:     Started server process [26381]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8021 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52328 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52330 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52332 - "GET /banks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52334 - "GET /sentiment?bank=DBS&aspect=dividend_policy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52336 - "GET /sentiment/compare?aspect=dividend_policy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52338 - "GET /sentiment/trend?bank=DBS HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52340 - "GET /sentiment/index?window=all_time HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52342 - "GET /sentiment/series?bank=DBS&bucket=month HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52346 - "GET /coverage?bank=UOB HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52348 - "GET /evidence?query=dividend&bank=DBS&k=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52351 - "GET /analyst-consensus?bank=OCBC HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52354 - "GET /suggestions?limit=3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52356 - "GET /sentiment?bank=HSBC HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:52358 - "GET /sentiment/series?bank=DBS&bucket=fortnight HTTP/1.1" 422 Unprocessable Content
+INFO:     127.0.0.1:52360 - "GET /suggestions?limit=99 HTTP/1.1" 422 Unprocessable Content
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26381]
+INFO:     Started server process [92509]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:64863 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [92509]
+INFO:     Started server process [64100]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49324 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51344 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51365 - "GET /demo-personas HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51434 - "GET /demo-personas/synthetic HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51435 - "GET /demo-personas HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51684 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51696 - "GET /demo-personas HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51697 - "GET /demo-personas/synthetic HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51725 - "GET /demo-personas HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51726 - "GET /synthetic-personas HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:51727 - "GET /health HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [64100]

@@ -1,0 +1,16 @@
+Data survey report — generated 2026-08-03T13:41:28.446745
+============================================================
+
+NEWS — NewsAPI
+  No data (key missing or zero results).
+
+NEWS — Alpha Vantage
+  No data (key missing, zero results, or tickers not indexed).
+
+REDDIT
+  No data (credentials missing or zero results).
+
+============================================================
+VERDICT
+============================================================
+No sources returned data — set API keys in .env and re-run before making any go/no-go call.

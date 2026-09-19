@@ -1,0 +1,19 @@
+writing manifest [K
+success [K[?25h[?2026l
+=== gemma3:4b ===
+INFO    __main__                     results: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_gemma3_4b.jsonl
+INFO    __main__                     summary: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_gemma3_4b.md
+{'n': 23, 'model': 'OllamaBackend / gemma3:4b', 'results_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_gemma3_4b.jsonl', 'summary_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_gemma3_4b.md', 'n_fabricated': 0, 'fabrication_rate': 0.0}
+=== phi4-mini:latest ===
+INFO    __main__                     results: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_phi4-mini_latest.jsonl
+INFO    __main__                     summary: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_phi4-mini_latest.md
+{'n': 23, 'model': 'OllamaBackend / phi4-mini:latest', 'results_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_phi4-mini_latest.jsonl', 'summary_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_phi4-mini_latest.md', 'n_fabricated': 19, 'fabrication_rate': 0.826}
+=== llama3.1:8b ===
+INFO    __main__                     results: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_llama3.1_8b.jsonl
+INFO    __main__                     summary: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_llama3.1_8b.md
+{'n': 23, 'model': 'OllamaBackend / llama3.1:8b', 'results_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_llama3.1_8b.jsonl', 'summary_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_llama3.1_8b.md', 'n_fabricated': 3, 'fabrication_rate': 0.13}
+=== llama3.2:3b ===
+INFO    __main__                     results: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_llama3.2_3b.jsonl
+INFO    __main__                     summary: /Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_llama3.2_3b.md
+{'n': 23, 'model': 'OllamaBackend / llama3.2:3b', 'results_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_results_llama3.2_3b.jsonl', 'summary_path': '/Users/gavin/Projects/plp-project/data/eval/chatbot_eval_summary_llama3.2_3b.md', 'n_fabricated': 10, 'fabrication_rate': 0.435}
+=== ALL DONE ===

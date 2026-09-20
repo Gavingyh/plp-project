@@ -84,6 +84,48 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ---
 
+## Running the CNA scraper
+
+`ingest/cna_scraper.py` reads a CNA (Channel News Asia) RSS feed, fetches each
+linked article and extracts the full text (not just the RSS summary) with
+trafilatura, falling back to a BeautifulSoup heuristic. It is a standalone
+script: it writes a JSON or CSV file and does not touch `data/plp.db`.
+
+Its dependencies (`feedparser`, `beautifulsoup4`, `trafilatura`) are in
+`requirements.txt`, so the Quick start install covers them.
+
+```bash
+# default feed, all items, writes articles.json in the current directory
+.venv-plp/bin/python3 ingest/cna_scraper.py
+
+# a specific feed, first 20 items, 2s between requests
+.venv-plp/bin/python3 ingest/cna_scraper.py \
+    --feed "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6936"\
+    --limit 20 --delay 2 --output ingest/cna_articles.json
+
+# CSV instead (also inferred from a .csv --output)
+.venv-plp/bin/python3 ingest/cna_scraper.py --format csv --output articles.csv
+```
+
+| option | default | meaning |
+|---|---|---|
+| `--feed` | CNA feed URL | RSS feed URL, refer to https://www.channelnewsasia.com/rss for different categories|
+| `--limit` | all items | maximum number of articles to fetch |
+| `--delay` | `1.5` | seconds to wait between article requests |
+| `--output` | `articles.json` | output path |
+| `--format` | from `--output` extension, else `json` | `json` or `csv` |
+
+Each record has `title`, `link`, `published`, `feed_summary`, `full_text`,
+`author`, `extraction_method` (`trafilatura`, `bs4_fallback` or `none`) and
+`error`. Progress goes to stderr, ending with a count of articles extracted
+successfully. Articles that fail to fetch or parse are still written, with
+`full_text` empty and the reason in `error`.
+
+Only use the output for personal research or archiving; respect CNA's Terms
+of Service and copyright before redistributing it.
+
+---
+
 ## Layout
 
 ```

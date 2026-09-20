@@ -37,3 +37,8 @@ vaderSentiment>=3.3.2
 # tests
 pytest>=8.0.0
 httpx>=0.27.0   # required by fastapi.testclient.TestClient
+
+#for cna scraping
+feedparser
+beautifulsoup4
+trafilatura

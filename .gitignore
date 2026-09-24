@@ -8,3 +8,14 @@ __pycache__/
 
 # service pid files written by scripts/start.sh
 data/run/
+
+# data too large for GitHub (100MB file limit); shared as a snapshot instead,
+# see "Getting the database" in README.md
+data/plp.db
+data/plp.db-shm
+data/plp.db-wal
+data/sentence_embeddings.npz
+data/snapshots/
+
+# API keys; copy .env.example to .env
+.env

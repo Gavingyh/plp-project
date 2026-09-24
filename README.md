@@ -85,6 +85,25 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ---
 
+## Getting the database
+
+`data/plp.db` (about 98MB) is too large for GitHub, so it isn't in the repo.
+Download the latest snapshot from the team's shared folder, then:
+
+```bash
+gunzip -c plp-2026-09-24.db.gz > data/plp.db
+shasum -a 256 plp-2026-09-24.db.gz   # should match the checksum below
+```
+
+| snapshot | size | sha256 | contents |
+|---|---|---|---|
+| `plp-2026-09-24.db.gz` | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | 27,659 documents, 42,609 sentences; news backfilled to 2023-01 and preprocessed ([docs/news-data.md](docs/news-data.md)) |
+
+`data/sentence_embeddings.npz` isn't shared either. It is a cache that
+`python -m aspects.embed_store` rebuilds from the database.
+
+---
+
 ## Pulling news
 
 ```bash
@@ -159,7 +178,7 @@ scripts/      start/stop/status, resumable overnight backfill, model comparison
 learning/     Study material on the concepts and techniques used
 docs/spec/    Functional and technical specifications
 docs/evidence/  Dated outputs backing claims in the docs
-data/plp.db   SQLite store (gitignored)
+data/plp.db   SQLite store (gitignored; see Getting the database)
 ```
 
 ## Tests

@@ -201,7 +201,10 @@ python run_daily_batch.py                   # daily: Yahoo, last 45 days of Goog
 ```
 
 None of these create `sentences`. Run `python -m preprocess.pipeline` for
-that, before aspect discovery.
+that, before aspect discovery. It was run on 2026-09-24 after the cleanups
+and produced 5,764 news sentences (DBS 2,563, OCBC 1,577, UOB 1,624). 347
+news articles gave no sentence, mostly headlines naming two banks, which
+the pipeline drops as ambiguous at sentence level.
 
 ## Counts: source × bank × month
 

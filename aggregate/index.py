@@ -59,7 +59,8 @@ _LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 # sentences score positive vs 2.3% of Reddit sentences. Triple-weighting
 # self-authored promotional prose amplified a known skew instead of damping
 # it. 1.0 counts it honestly without letting it dominate.
-_SOURCE_WEIGHT = {"earnings": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0}
+_SOURCE_WEIGHT = {"earnings": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0,
+                  "yahoo_news": 1.5, "google_news": 1.5}
 
 WINDOWS = {"7d": 7, "30d": 30, "all_time": None}
 

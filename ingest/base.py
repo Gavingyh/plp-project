@@ -49,13 +49,13 @@ def resolve_bank(text: str, fallback: str | None = None) -> str | None:
     return fallback
 
 
-def request_with_retries(url, params, timeout=15):
+def request_with_retries(url, params, timeout=15, headers=None):
     """GET with a few retries on transient failures (timeouts, 429, 5xx).
     Does NOT retry on 4xx auth errors (401/403) — a bad key won't fix itself."""
     last_exc = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            resp = requests.get(url, params=params, timeout=timeout)
+            resp = requests.get(url, params=params, timeout=timeout, headers=headers)
             if resp.status_code in (401, 403):
                 resp.raise_for_status()
             if resp.status_code == 429 or resp.status_code >= 500:

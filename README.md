@@ -24,6 +24,7 @@ sentiment store.
 | [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Data model, API contract, module map, configuration, testing |
 | [learning/](learning/) | Study material on the concepts and techniques used, by subject |
 | [docs/data-viability.md](docs/data-viability.md) | Evidence appendix — per-source findings from testing each data source |
+| [docs/news-data.md](docs/news-data.md) | News dataset: sources, coverage, filter and dedup rules, known gaps, counts by month |
 | [docs/annotation-guideline.md](docs/annotation-guideline.md) | Labelling scheme for the annotation task |
 | [docs/verification-ledger.md](docs/verification-ledger.md) | Every number in the docs, with the command that produced it |
 | [API_KEYS.md](API_KEYS.md) | Obtaining each API key |
@@ -81,6 +82,21 @@ No API key is required — the pipeline runs on Reddit, earnings PDFs and
 local models alone. Two things that will otherwise cost you time:
 **always invoke `.venv-plp/bin/python3` by path**, and set `HF_HUB_OFFLINE=1`
 for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
+
+---
+
+## Pulling news
+
+```bash
+.venv-plp/bin/python run_news_pull.py            # Yahoo, Google News (from 2023-01-01), NewsAPI, Alpha Vantage
+.venv-plp/bin/python run_news_pull.py --report   # source × bank × month counts
+```
+
+Writes into the `documents` table after a bank-mention check, broker/venue
+false-positive masking and cross-source dedup. Rejected articles go to
+`data/news_flagged.csv`, not silently away. Safe to re-run. It does not
+create `sentences`; run `python -m preprocess.pipeline` afterwards.
+[docs/news-data.md](docs/news-data.md) has the sources, rules and gaps.
 
 ---
 

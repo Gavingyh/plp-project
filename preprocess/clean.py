@@ -47,6 +47,8 @@ def clean_earnings(text: str) -> str:
 CLEANERS = {
     "newsapi": clean_news,
     "alphavantage": clean_news,
+    "yahoo_news": clean_news,
+    "google_news": clean_news,
     "arctic_shift": clean_reddit,
     "earnings": clean_earnings,
 }

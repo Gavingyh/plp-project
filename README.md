@@ -87,17 +87,18 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ## Getting the database
 
-`data/plp.db` (about 98MB) is too large for GitHub, so it isn't in the repo.
+`data/plp.db` (about 103MB) is too large for GitHub, so it isn't in the repo.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
-gunzip -c plp-2026-09-24.db.gz > data/plp.db
-shasum -a 256 plp-2026-09-24.db.gz   # should match the checksum below
+gunzip -c plp-2026-09-24-v2.db.gz > data/plp.db
+shasum -a 256 plp-2026-09-24-v2.db.gz   # should match the checksum below
 ```
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-09-24.db.gz` | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | 27,659 documents, 42,609 sentences; news backfilled to 2023-01 and preprocessed ([docs/news-data.md](docs/news-data.md)) |
+| `plp-2026-09-24-v2.db.gz` (latest) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
+| `plp-2026-09-24.db.gz` (superseded) | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | same day, before embeddings, aspects, sentiment and index were run on the news |
 
 `data/sentence_embeddings.npz` isn't shared either. It is a cache that
 `python -m aspects.embed_store` rebuilds from the database.
@@ -115,6 +116,12 @@ Writes into the `documents` table after a bank-mention check, broker/venue
 false-positive masking and cross-source dedup. Rejected articles go to
 `data/news_flagged.csv`, not silently away. Safe to re-run. It does not
 create `sentences`; run `python -m preprocess.pipeline` afterwards.
+
+To run the daily batch (news, Reddit, analyst consensus) every morning on a
+Mac, install the launchd job in
+[scripts/com.plp.dailybatch.plist](scripts/com.plp.dailybatch.plist); the
+file's header has the install, run-now and remove commands. Output goes to
+`data/logs/daily_batch.log`.
 [docs/news-data.md](docs/news-data.md) has the sources, rules and gaps.
 
 ---

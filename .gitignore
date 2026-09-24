@@ -19,3 +19,6 @@ data/snapshots/
 
 # API keys; copy .env.example to .env
 .env
+
+# output of the scheduled daily batch (scripts/com.plp.dailybatch.plist)
+data/logs/daily_batch.log

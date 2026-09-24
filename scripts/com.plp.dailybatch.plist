@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  macOS launchd job: runs run_daily_batch.py every day at 07:30 (or at the
+  next wake, if the Mac was asleep). Yahoo news has no history, so this is how
+  its coverage grows; it also tops up Google News, NewsAPI, Reddit and the
+  analyst consensus.
+
+  Install (edit the two paths below first if the repo lives elsewhere):
+    cp scripts/com.plp.dailybatch.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.plp.dailybatch.plist
+  Run once now:   launchctl kickstart gui/$(id -u)/com.plp.dailybatch
+  Remove:         launchctl bootout gui/$(id -u)/com.plp.dailybatch
+                  rm ~/Library/LaunchAgents/com.plp.dailybatch.plist
+  Output:         data/logs/daily_batch.log
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.plp.dailybatch</string>
+  <key>WorkingDirectory</key><string>/Users/gavin/Projects/plp-project</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/gavin/Projects/plp-project/.venv-plp/bin/python</string>
+    <string>run_daily_batch.py</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict><key>HF_HUB_OFFLINE</key><string>1</string></dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer></dict>
+  <key>StandardOutPath</key><string>/Users/gavin/Projects/plp-project/data/logs/daily_batch.log</string>
+  <key>StandardErrorPath</key><string>/Users/gavin/Projects/plp-project/data/logs/daily_batch.log</string>
+</dict>
+</plist>

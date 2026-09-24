@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>SG Bank Sentiment Corpus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --page: #f5f6f7;
+  --surface: #fcfcfb;
+  --ink: #0e1116;
+  --ink-2: #4a515c;
+  --muted: #7f8691;
+  --grid: #e3e5e8;
+  --axis: #c3c7cd;
+  --line: rgba(14, 17, 22, 0.10);
+  --accent: #2a78d6;
+  --s-reddit: #2a78d6;
+  --s-earnings: #eb6834;
+  --s-news: #1baf7a;
+  --good: #0ca30c;
+  --warn: #fab219;
+  --crit: #d03b3b;
+  --chip-good: rgba(12, 163, 12, 0.10);
+  --chip-warn: rgba(250, 178, 25, 0.16);
+  --chip-crit: rgba(208, 59, 59, 0.10);
+  --good-ink: #006300;
+  --warn-ink: #7a5200;
+  --crit-ink: #a52626;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0f1113;
+    --surface: #17191c;
+    --ink: #f2f3f5;
+    --ink-2: #c1c6cd;
+    --muted: #8b919a;
+    --grid: #2a2d31;
+    --axis: #3b3f45;
+    --line: rgba(255, 255, 255, 0.10);
+    --accent: #5a9be8;
+    --s-reddit: #3987e5;
+    --s-earnings: #d95926;
+    --s-news: #199e70;
+    --chip-good: rgba(12, 163, 12, 0.16);
+    --chip-warn: rgba(250, 178, 25, 0.14);
+    --chip-crit: rgba(208, 59, 59, 0.18);
+    --good-ink: #3ccf3c;
+    --warn-ink: #fab219;
+    --crit-ink: #f07a7a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0f1113;
+  --surface: #17191c;
+  --ink: #f2f3f5;
+  --ink-2: #c1c6cd;
+  --muted: #8b919a;
+  --grid: #2a2d31;
+  --axis: #3b3f45;
+  --line: rgba(255, 255, 255, 0.10);
+  --accent: #5a9be8;
+  --s-reddit: #3987e5;
+  --s-earnings: #d95926;
+  --s-news: #199e70;
+  --chip-good: rgba(12, 163, 12, 0.16);
+  --chip-warn: rgba(250, 178, 25, 0.14);
+  --chip-crit: rgba(208, 59, 59, 0.18);
+  --good-ink: #3ccf3c;
+  --warn-ink: #fab219;
+  --crit-ink: #f07a7a;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  padding-inline: 20px;
+  padding-block: 40px 72px;
+}
+.wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 48px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+h1 { font-size: 34px; line-height: 1.15; }
+h2 { font-size: 21px; line-height: 1.25; }
+h3 { font-size: 15px; }
+p { margin: 0; max-width: 66ch; }
+.eyebrow {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); font-weight: 500;
+}
+.lede { font-size: 17px; color: var(--ink-2); }
+header { display: grid; gap: 12px; }
+section { display: grid; gap: 16px; }
+.section-head { display: grid; gap: 6px; }
+.section-head p { color: var(--ink-2); }
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+
+/* summary figures */
+.stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+.stat { background: var(--surface); padding: 18px 18px 16px; display: grid; gap: 4px; align-content: start; }
+.stat .v { font-size: 28px; font-weight: 600; line-height: 1.1; }
+.stat .k { font-size: 13px; color: var(--ink-2); }
+.stat .d { font-size: 12.5px; color: var(--muted); }
+@media (max-width: 720px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--sans); }
+.note { font-size: 13px; color: var(--muted); }
+
+/* tables */
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td.wrap-cell { white-space: normal; text-align: left; min-width: 180px; color: var(--ink-2); }
+thead th { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+tbody tr:last-child td { border-bottom: none; }
+tr.total td { font-weight: 600; border-top: 1px solid var(--axis); }
+td .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+.swatch { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 8px; vertical-align: 0; }
+
+details { font-size: 13.5px; }
+details summary { cursor: pointer; color: var(--ink-2); font-weight: 500; }
+details[open] summary { margin-bottom: 10px; }
+
+/* pipeline */
+.stages { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.stage { display: grid; grid-template-columns: 170px 132px minmax(0, 1fr); gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--grid); align-items: start; }
+.stage:last-child { border-bottom: none; }
+.stage .name { font-weight: 600; }
+.stage .what { color: var(--ink-2); }
+.stage .what b { color: var(--ink); font-weight: 600; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
+  padding: 2px 9px 2px 7px; border-radius: 999px; justify-self: start; white-space: nowrap;
+}
+.chip svg { width: 13px; height: 13px; flex: none; }
+.chip.good { background: var(--chip-good); color: var(--good-ink); }
+.chip.warn { background: var(--chip-warn); color: var(--warn-ink); }
+.chip.crit { background: var(--chip-crit); color: var(--crit-ink); }
+@media (max-width: 640px) {
+  .stage { grid-template-columns: minmax(0, 1fr) auto; }
+  .stage .what { grid-column: 1 / -1; }
+}
+
+/* caveats */
+.caveats { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.caveats li { display: grid; gap: 3px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.caveats li strong { font-weight: 600; }
+.caveats li span { color: var(--ink-2); max-width: 72ch; }
+
+.getting { display: grid; gap: 10px; }
+.kv { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 6px 16px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+
+.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.toc a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--grid); }
+.toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.part { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; padding-top: 8px; border-top: 1px solid var(--grid); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.finding { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px; color: var(--ink); max-width: 72ch; }
+td.dim, th.dim { color: var(--muted); }
+table.appendix td, table.appendix th { padding: 5px 8px; font-size: 12.5px; }
+table.appendix th.grp { text-align: center; border-bottom: 1px solid var(--axis); }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--grid); padding-top: 16px; }
+
+/* tooltip */
+.tip {
+  position: fixed; z-index: 10; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14); max-width: 240px; font-variant-numeric: tabular-nums;
+}
+.tip b { font-weight: 600; }
+.tip .row { display: flex; align-items: center; gap: 7px; }
+.tip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.hit { cursor: default; }
+.hit:hover .mark, .hit:focus .mark { opacity: 0.82; }
+@media (prefers-reduced-motion: no-preference) { .mark { transition: opacity 120ms ease; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">PLP practice module · data inventory · as of 24 Sep 2026</div>
+    <h1>SG Bank Sentiment Corpus</h1>
+    <p class="lede">What is in <code>plp.db</code> for DBS, OCBC and UOB after this week's news backfill and a full pipeline run, how far each processing stage has got, and what to watch for before re-running aspect discovery. The overview comes first; the detail by source, the downstream tables and month-by-month appendices follow.</p>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <a href="#h-sources">Database</a><a href="#h-banks">By bank</a><a href="#h-time">Over time</a><a href="#h-news">News by month</a><a href="#h-pipeline">Pipeline</a><a href="#h-caveats">Caveats</a><a href="#h-reddit">Reddit</a><a href="#h-earn">Earnings</a><a href="#h-newsd">News filter</a><a href="#h-aspects">Aspects</a><a href="#h-sent">Sentiment</a><a href="#h-labels">Labelling set</a><a href="#h-analyst">Analyst consensus</a><a href="#h-get">Getting the data</a><a href="#h-app-a">Appendix A</a><a href="#h-app-b">Appendix B</a>
+  </nav>
+
+  <div class="stats" role="list">
+    <div class="stat" role="listitem">
+      <div class="v">42,690</div>
+      <div class="k">sentences, the unit of analysis</div>
+      <div class="d">from 27,737 documents</div>
+    </div>
+    <div class="stat" role="listitem">
+      <div class="v">2020 – 2026</div>
+      <div class="k">time span, to 24 Sep 2026</div>
+      <div class="d">news from Jan 2023</div>
+    </div>
+    <div class="stat" role="listitem">
+      <div class="v">5,757</div>
+      <div class="k">news articles</div>
+      <div class="d">up from 20 at the start of the week</div>
+    </div>
+    <div class="stat" role="listitem">
+      <div class="v">0 of 997</div>
+      <div class="k">candidates labelled by a person</div>
+      <div class="d">996 have an LLM pre-label</div>
+    </div>
+  </div>
+
+  <section aria-labelledby="h-sources">
+    <div class="section-head">
+      <h2 id="h-sources">What's in the database</h2>
+      <p>Three kinds of text: retail investor discussion on Reddit, the banks' own earnings material, and news. Documents are split into sentences, and each sentence is attributed to the one bank it names.</p>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Source</th><th>Documents</th><th>Sentences</th><th>DBS</th><th>OCBC</th><th>UOB</th><th>Span</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="swatch" style="background: var(--s-reddit)"></span>Reddit <span class="sub">r/singaporefi via Arctic Shift · 3,592 posts, 18,210 comments</span></td>
+              <td>21,802</td><td>24,670</td><td>11,826</td><td>3,824</td><td>9,020</td><td>Jan 2020 – Sep 2026</td>
+            </tr>
+            <tr>
+              <td><span class="swatch" style="background: var(--s-earnings)"></span>Earnings <span class="sub">IR releases, presentations, transcripts (PDF)</span></td>
+              <td>178</td><td>12,254</td><td>9,093</td><td>1,561</td><td>1,600</td><td>May 2020 – Sep 2026</td>
+            </tr>
+            <tr>
+              <td><span class="swatch" style="background: var(--s-news)"></span>Google News <span class="sub">RSS search · headlines only</span></td>
+              <td>5,630</td><td>5,396</td><td>2,482</td><td>1,432</td><td>1,482</td><td>Jan 2023 – Sep 2026</td>
+            </tr>
+            <tr>
+              <td><span class="swatch" style="background: var(--s-news)"></span>Yahoo Finance <span class="sub">headline + summary · SGX and ADR tickers</span></td>
+              <td>114</td><td>344</td><td>64</td><td>141</td><td>139</td><td>Sep 2025 – Sep 2026</td>
+            </tr>
+            <tr>
+              <td><span class="swatch" style="background: var(--s-news)"></span>NewsAPI <span class="sub">headline + description · free tier, ~1 month</span></td>
+              <td>13</td><td>26</td><td>19</td><td>4</td><td>3</td><td>Aug – Sep 2026</td>
+            </tr>
+            <tr class="total">
+              <td>Total</td><td>27,737</td><td>42,690</td><td>23,484</td><td>6,962</td><td>12,244</td><td>Jan 2020 – Sep 2026</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Sentence counts by bank include only sentences that name exactly one bank. 3,687 documents name more than one bank (3,396 of them on Reddit); their sentences are kept where each names a single bank. Alpha Vantage returned nothing: it does not index SGX tickers.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-banks">
+    <div class="section-head">
+      <h2 id="h-banks">What each bank's sentences come from</h2>
+      <p>DBS has more than three times OCBC's volume. Its lead over UOB is mostly earnings material; over OCBC, Reddit and earnings contribute about equally. News is the most evenly spread source across the three banks.</p>
+    </div>
+    <div class="panel">
+      <div class="legend" aria-hidden="true">
+        <span><i style="background: var(--s-reddit)"></i>Reddit</span>
+        <span><i style="background: var(--s-earnings)"></i>Earnings</span>
+        <span><i style="background: var(--s-news)"></i>News (all sources)</span>
+      </div>
+      <div class="chart" id="chart-banks" role="img" aria-label="Stacked bars of sentences per bank by source. DBS 23,484: Reddit 11,826, earnings 9,093, news 2,565. OCBC 6,962: Reddit 3,824, earnings 1,561, news 1,577. UOB 12,244: Reddit 9,020, earnings 1,600, news 1,624."></div>
+      <details>
+        <summary>Show as a table</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Bank</th><th>Reddit</th><th>Earnings</th><th>News</th><th>Total</th><th>Share</th></tr></thead>
+            <tbody>
+              <tr><td>DBS</td><td>11,826</td><td>9,093</td><td>2,565</td><td>23,484</td><td>55.0%</td></tr>
+              <tr><td>OCBC</td><td>3,824</td><td>1,561</td><td>1,577</td><td>6,962</td><td>16.3%</td></tr>
+              <tr><td>UOB</td><td>9,020</td><td>1,600</td><td>1,624</td><td>12,244</td><td>28.7%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-time">
+    <div class="section-head">
+      <h2 id="h-time">Coverage over time</h2>
+      <p>Sentences per year by source. Reddit carries 2020–2022 on its own; earnings material is thin before 2023 (UOB only), and news starts in January 2023. 2026 runs to 24 September.</p>
+    </div>
+    <div class="panel">
+      <div class="legend" aria-hidden="true">
+        <span><i style="background: var(--s-reddit)"></i>Reddit</span>
+        <span><i style="background: var(--s-earnings)"></i>Earnings</span>
+        <span><i style="background: var(--s-news)"></i>News</span>
+      </div>
+      <div class="chart" id="chart-years" role="img" aria-label="Stacked columns of sentences per year by source, 2020 to 2026. Totals: 2020 523, 2021 1,520, 2022 2,019, 2023 6,991, 2024 10,453, 2025 12,097, 2026 9,087 to 24 September."></div>
+      <details>
+        <summary>Show as a table</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Year</th><th>Reddit</th><th>Earnings</th><th>News</th><th>Total</th></tr></thead>
+            <tbody id="tbl-years"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-news">
+    <div class="section-head">
+      <h2 id="h-news">News articles per month</h2>
+      <p>Every month from January 2023 has news for all three banks. The rise towards the present is mostly an artefact: Google ranks recent articles higher, so more of them survive each query's cap. Normalise per month before comparing periods.</p>
+    </div>
+    <div class="panel">
+      <div class="chart" id="chart-news" role="img" aria-label="Columns of news articles per month from January 2023 to September 2026, rising from about 45 to 100 a month in 2023 to 200 to 356 a month in 2026. Average per month: 2023 77, 2024 90, 2025 131, 2026 244."></div>
+      <p class="note">Average per month: 2023 · 77, 2024 · 90, 2025 · 131, 2026 · 244. By bank over the whole period: DBS 2,485, OCBC 1,460, UOB 1,521, more than one bank 291.</p>
+      <details>
+        <summary>Show as a table</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Month</th><th>Articles</th><th>Month</th><th>Articles</th><th>Month</th><th>Articles</th></tr></thead>
+            <tbody id="tbl-news"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-pipeline">
+    <div class="section-head">
+      <h2 id="h-pipeline">How far each stage has got</h2>
+      <p>Every stage that doesn't need people has now run on the full corpus, news included (24 September). What remains is aspect discovery, which the team re-runs once the CNA feed is in, and human labelling.</p>
+    </div>
+    <div class="stages">
+      <div class="stage">
+        <div class="name">Ingestion</div>
+        <span class="chip good"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Scheduled</span>
+        <div class="what"><b>27,737 documents.</b> A daily job (07:30, launchd) tops up news, Reddit and analyst consensus. Its first run on 24 Sep added 78 documents: 76 Reddit, 2 news.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Sentences</div>
+        <span class="chip good"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Current</span>
+        <div class="what"><b>42,690 sentences</b>, 5,766 of them from news. 347 news articles gave no sentence, mostly headlines naming two banks.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Embeddings</div>
+        <span class="chip good"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Current</span>
+        <div class="what"><b>42,690 FinBERT vectors</b>, one per sentence. The 26 belonging to removed articles were pruned.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Aspect discovery</div>
+        <span class="chip warn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5l6 11H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.5v3.2M8 11.6v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Re-run due</span>
+        <div class="what"><b>281 bottom-up clusters</b> from the 11 Sep run, without news. Planned re-run once the CNA feed is loaded.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Aspect assignment</div>
+        <span class="chip warn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5l6 11H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.5v3.2M8 11.6v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Provisional</span>
+        <div class="what"><b>All 42,690 sentences</b> tagged with the five-aspect seed taxonomy (90,027 sentence–aspect pairs). Current, but the named aspects mostly collect neutral banking vocabulary; see the sentiment section and <code>docs/evidence/aspect-sentiment-concentration-2026-09-24.md</code>.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Sentiment</div>
+        <span class="chip warn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5l6 11H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.5v3.2M8 11.6v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Baseline only</span>
+        <div class="what"><b>Zero-shot base FinBERT</b> on all 90,027 pairs: 85.6% neutral, 9.9% positive, 4.5% negative. The fine-tuned model needs the human labels below.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Sentiment index</div>
+        <span class="chip good"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Current</span>
+        <div class="what"><b>260 rows</b> recomputed on 24 Sep with news included, across 7-day, 30-day and all-time windows.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Human labels</div>
+        <span class="chip crit"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.8v3.8M8 11v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Not started</span>
+        <div class="what"><b>997 candidates</b> (797 train/dev, 200 test) and a 200-row blind test file, <b>none labelled by a person</b>. 996 carry an LLM pre-label (llama3.2:3b). Drawn before the news existed: 601 Reddit, 395 earnings, 1 news.</div>
+      </div>
+      <div class="stage">
+        <div class="name">Analyst consensus</div>
+        <span class="chip good"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Collecting</span>
+        <div class="what"><b>4 daily snapshots per bank</b> (6, 7, 10 and 24 Sep) of Yahoo's rating and target-price aggregates. Numbers, not text; kept apart from the sentiment pipeline.</div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-caveats">
+    <div class="section-head">
+      <h2 id="h-caveats">Before you use it</h2>
+      <p>Properties of the data that will show up in any cluster, score or chart built on it.</p>
+    </div>
+    <ul class="caveats">
+      <li><strong>DBS dominates.</strong><span>55% of sentences are about DBS, 29% UOB and 16% OCBC. Cross-bank comparisons need per-bank normalisation, and labelling samples should be stratified by bank.</span></li>
+      <li><strong>Earnings and news read far more positive than Reddit.</strong><span>Base FinBERT scores 25.5% of earnings pairs and 21.7% of news pairs positive, against 2.3% for Reddit. Earnings is management describing its own results; headlines are written to be newsworthy. Earnings is also uneven across banks: DBS 9,093 sentences, OCBC 1,561, UOB 1,600.</span></li>
+      <li><strong>Reddit is one community.</strong><span>21,794 of the 21,802 Reddit documents come from r/singaporefi. It speaks for that community's retail investors, not Singapore's in general.</span></li>
+      <li><strong>News is mostly headlines, and its volume over time is a sample.</strong><span>Google News gives headlines only, so most news articles are one sentence. Monthly counts rise towards the present because of Google's ranking, not because coverage grew. About 130 items are self-published (90 from DBS's own newsroom, 41 wire press releases).</span></li>
+      <li><strong>News has been filtered, and every decision is logged.</strong><span>Articles had to name the bank. Broker and venue names (UOB Kay Hian, DBS Vickers, OCBC Arena) don't count as a mention, and analyst calls on other companies and the banks' daily FX notes were removed. Near-duplicates across sources were dropped. <code>data/news_flagged.csv</code> lists all 3,838 decisions with reasons; details are in <code>docs/news-data.md</code>.</span></li>
+      <li><strong>The labelling set predates the news.</strong><span>Only 1 of the 997 candidates is a news sentence. If news should be in the fine-tuning data, candidates need re-drawing after aspect assignment has run on it.</span></li>
+    </ul>
+  </section>
+
+
+  <div class="part">Detail</div>
+
+  <section aria-labelledby="h-reddit">
+    <div class="section-head">
+      <h2 id="h-reddit">Reddit</h2>
+      <p>Posts and comments collected through the Arctic Shift archive. 21,794 of the 21,802 documents come from r/singaporefi; the other 8 are from r/SingaporeInvestments. A Reddit sentence is kept only if it names a bank itself; it never inherits the bank from its thread.</p>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Year</th><th>Posts</th><th>Comments</th><th>Documents</th><th>Sentences</th></tr></thead>
+          <tbody>
+            <tr><td>2020</td><td>50</td><td>218</td><td>268</td><td>290</td></tr>
+            <tr><td>2021</td><td>213</td><td>930</td><td>1,143</td><td>1,285</td></tr>
+            <tr><td>2022</td><td>264</td><td>1,272</td><td>1,536</td><td>1,746</td></tr>
+            <tr><td>2023</td><td>533</td><td>2,877</td><td>3,410</td><td>3,970</td></tr>
+            <tr><td>2024</td><td>949</td><td>4,497</td><td>5,446</td><td>6,278</td></tr>
+            <tr><td>2025</td><td>1,091</td><td>5,241</td><td>6,332</td><td>7,181</td></tr>
+            <tr><td>2026 (to 23 Sep)</td><td>492</td><td>3,175</td><td>3,667</td><td>3,920</td></tr>
+            <tr class="total"><td>Total</td><td>3,592</td><td>18,210</td><td>21,802</td><td>24,670</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Sentences by bank: DBS 11,826, OCBC 3,824, UOB 9,020. 3,396 Reddit documents name more than one bank. Current to 23 Sep; the daily job keeps it topped up.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-earn">
+    <div class="section-head">
+      <h2 id="h-earn">Earnings documents</h2>
+      <p>PDFs from each bank's investor-relations site: results releases, presentations and, for DBS, analyst and media-briefing transcripts. UOB's archive reaches back to 2020; DBS's and OCBC's start in 2023.</p>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bank</th><th>2020</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>2026</th><th>Documents</th><th>Sentences</th></tr></thead>
+          <tbody>
+            <tr><td>DBS</td><td class="dim">–</td><td class="dim">–</td><td class="dim">–</td><td>15</td><td>21</td><td>22</td><td>17</td><td>75</td><td>9,093</td></tr>
+            <tr><td>OCBC</td><td class="dim">–</td><td class="dim">–</td><td class="dim">–</td><td>9</td><td>12</td><td>11</td><td>8</td><td>40</td><td>1,561</td></tr>
+            <tr><td>UOB</td><td>7</td><td>10</td><td>11</td><td>11</td><td>7</td><td>10</td><td>7</td><td>63</td><td>1,600</td></tr>
+            <tr class="total"><td>Total</td><td>7</td><td>10</td><td>11</td><td>35</td><td>40</td><td>43</td><td>32</td><td>178</td><td>12,254</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="finding">DBS has almost six times as many earnings sentences as OCBC or UOB, largely because its archive includes 28 analyst and media-briefing transcripts (by file name); OCBC's and UOB's don't. Transcripts are long and conversational, so they add sentences far faster than slide decks.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-newsd">
+    <div class="section-head">
+      <h2 id="h-newsd">News: sources, filter decisions and publishers</h2>
+      <p>Every news source passes the same filter before it is stored: the article must name the bank, names that only contain a bank's name don't count, and near-duplicates across sources are dropped. Every decision is logged in <code>data/news_flagged.csv</code>.</p>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <h3>Filter decisions (3,838 logged)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Decision</th><th>Articles</th></tr></thead>
+            <tbody>
+              <tr><td>Rejected: names none of the three banks</td><td>2,490</td></tr>
+              <tr><td>Rejected: duplicate of a stored article</td><td>407</td></tr>
+              <tr><td>Rejected: only a broker, venue, research or market-note mention</td><td>394</td></tr>
+              <tr><td>Removed after audit</td><td>270</td></tr>
+              <tr><td>Kept, flagged as possible bank commentary</td><td>258</td></tr>
+              <tr><td>Kept, a name was masked but the bank still named</td><td>19</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Removed after audit: 195 FX and macro market notes, 63 analyst calls on other companies, 12 older NewsAPI rows naming no bank. Name-only rejections: market note 105 (all in the first daily run, which the rule now stops at the door), rating call 85, UOB Kay Hian 83, OCBC Cycle 43, research attribution 41, UOB Painting of the Year 16, OCBC Securities 12, UOB Plaza 5, OCBC Arena 3, OCBC Square 3 (some headlines match two).</p>
+      </div>
+      <div class="panel">
+        <h3>Most frequent publishers (of 570)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Publisher</th><th>Articles</th></tr></thead>
+            <tbody>
+              <tr><td>The Business Times</td><td>670</td></tr>
+              <tr><td>The Straits Times</td><td>454</td></tr>
+              <tr><td>The Edge Singapore</td><td>281</td></tr>
+              <tr><td>The MileLion</td><td>197</td></tr>
+              <tr><td>Yahoo Finance Singapore</td><td>180</td></tr>
+              <tr><td>Singapore Business Review</td><td>156</td></tr>
+              <tr><td>Mothership</td><td>114</td></tr>
+              <tr><td>Asian Banking &amp; Finance</td><td>114</td></tr>
+              <tr><td>fintechnews.sg</td><td>111</td></tr>
+              <tr><td>finews.asia</td><td>103</td></tr>
+              <tr><td>CNA</td><td>103</td></tr>
+              <tr><td>The Star</td><td>102</td></tr>
+              <tr><td>Reuters</td><td>92</td></tr>
+              <tr><td>Sethisfy</td><td>90</td></tr>
+              <tr><td>DBS Bank Ltd (own newsroom)</td><td>90</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>How the Google News queries were chosen</h3>
+      <p>Seven pull techniques were piloted on three sample months. Only headline-restricted <code>intitle:</code> queries were worth their requests (27–32 new articles a month for 3 requests); DBS needs a banking context word because a bare "DBS" headline also matches Aston Martin DBS, Dragon Ball Super and American-football "DBs". Weekly windows, other Google editions, per-outlet queries and full-name variants added almost nothing. Final set: three queries per bank.</p>
+      <p><b>CNA feed:</b> Emily's scraper (<code>ingest/cna_scraper.py</code>) is in the repo but writes a JSON file, not the database: 0 CNA documents in <code>plp.db</code>, 15 sample articles from 18–20 Sep in <code>ingest/cna_articles.json</code>. 103 CNA headlines are already stored via Google News and Yahoo, so the CNA feed should go through the same filter and dedup when it is loaded.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-aspects">
+    <div class="section-head">
+      <h2 id="h-aspects">Aspects</h2>
+      <p>Sentence–aspect pairs from the five-aspect seed taxonomy, now covering all 42,690 sentences, news included. A sentence can carry more than one aspect (2.1 on average), so pairs exceed sentences.</p>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>DBS</th><th>OCBC</th><th>UOB</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>Dividend policy</td><td>13,452</td><td>4,307</td><td>7,575</td><td>25,334</td></tr>
+            <tr><td>Management guidance</td><td>11,038</td><td>3,339</td><td>5,684</td><td>20,061</td></tr>
+            <tr><td>Net interest margin</td><td>10,894</td><td>3,250</td><td>5,862</td><td>20,006</td></tr>
+            <tr><td>Other</td><td>9,602</td><td>2,610</td><td>4,494</td><td>16,706</td></tr>
+            <tr><td>Asset quality</td><td>4,683</td><td>1,218</td><td>2,019</td><td>7,920</td></tr>
+            <tr class="total"><td>Total pairs</td><td>49,669</td><td>14,724</td><td>25,634</td><td>90,027</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">This taxonomy predates the planned re-run of aspect discovery (281 bottom-up clusters on 11 Sep) and will be revisited then.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-sent">
+    <div class="section-head">
+      <h2 id="h-sent">Sentiment baseline</h2>
+      <p>Zero-shot scores from base FinBERT, before any fine-tuning, on all 90,027 sentence–aspect pairs. These are a baseline to beat, not results.</p>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <h3>By source and bank</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source · bank</th><th>Pairs</th><th>Positive</th><th>Neutral</th><th>Negative</th></tr></thead>
+            <tbody>
+              <tr><td>Reddit · DBS</td><td>29,795</td><td>2.4%</td><td>94.9%</td><td>2.7%</td></tr>
+              <tr><td>Reddit · OCBC</td><td>9,002</td><td>2.1%</td><td>94.6%</td><td>3.3%</td></tr>
+              <tr><td>Reddit · UOB</td><td>20,041</td><td>2.1%</td><td>94.7%</td><td>3.2%</td></tr>
+              <tr><td>Earnings · DBS</td><td>15,386</td><td>24.2%</td><td>68.2%</td><td>7.5%</td></tr>
+              <tr><td>Earnings · OCBC</td><td>2,968</td><td>27.2%</td><td>66.3%</td><td>6.5%</td></tr>
+              <tr><td>Earnings · UOB</td><td>2,921</td><td>30.5%</td><td>62.4%</td><td>7.1%</td></tr>
+              <tr><td>News · DBS</td><td>4,488</td><td>21.0%</td><td>70.9%</td><td>8.1%</td></tr>
+              <tr><td>News · OCBC</td><td>2,754</td><td>22.7%</td><td>70.7%</td><td>6.6%</td></tr>
+              <tr><td>News · UOB</td><td>2,672</td><td>21.9%</td><td>70.7%</td><td>7.3%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>By aspect</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Aspect</th><th>Pairs</th><th>Positive</th><th>Negative</th></tr></thead>
+            <tbody>
+              <tr><td>Dividend policy</td><td>25,334</td><td>3.6%</td><td>0.7%</td></tr>
+              <tr><td>Management guidance</td><td>20,061</td><td>1.3%</td><td>0.2%</td></tr>
+              <tr><td>Net interest margin</td><td>20,006</td><td>1.0%</td><td>0.3%</td></tr>
+              <tr><td>Other</td><td>16,706</td><td>45.2%</td><td>21.5%</td></tr>
+              <tr><td>Asset quality</td><td>7,920</td><td>0.3%</td><td>2.0%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="finding">Almost all of the baseline's polarity sits in the "other" aspect: 45.2% positive and 21.5% negative there, against 3.6% or less for each named aspect. The scorer labels each sentence once and copies the label to every aspect it carries, so this comes from the assignment: sentences that match three or four seed-term centroids at once are plain transactional or factual lines, and evaluative sentences fall below the similarity floor into "other". Per-aspect scores from this taxonomy measure how neutral the matched vocabulary is. Details and options for the taxonomy decision: <code>docs/evidence/aspect-sentiment-concentration-2026-09-24.md</code>.</p>
+    <div class="panel">
+      <h3>Sentiment index, all time, all sources (recomputed 24 Sep, news included)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bank</th><th>Overall</th><th>Dividend policy</th><th>Net interest margin</th><th>Mgmt guidance</th><th>Asset quality</th><th>Other</th><th>Pairs (n)</th></tr></thead>
+          <tbody>
+            <tr><td>DBS</td><td>0.063</td><td>0.029</td><td>0.007</td><td>0.009</td><td>−0.017</td><td>0.289</td><td>49,669</td></tr>
+            <tr><td>OCBC</td><td>0.070</td><td>0.043</td><td>0.011</td><td>0.016</td><td>−0.007</td><td>0.296</td><td>14,724</td></tr>
+            <tr><td>UOB</td><td>0.036</td><td>0.018</td><td>0.001</td><td>0.007</td><td>−0.012</td><td>0.180</td><td>25,634</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Scores run from −1 to 1. The index table holds 260 rows across 7-day, 30-day and all-time windows, blended and per source. Scores remain baseline FinBERT and inherit the aspect caveat above.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-labels">
+    <div class="section-head">
+      <h2 id="h-labels">Labelling set</h2>
+      <p>Candidates for human sentiment labels, drawn before any news was in the pipeline. The train/dev split is a stratified sample; the test split is a random one.</p>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <h3>Candidates by split and source</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Split</th><th>Reddit</th><th>Earnings</th><th>News</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td>Train/dev (stratified)</td><td>448</td><td>348</td><td>1</td><td>797</td></tr>
+              <tr><td>Test (random)</td><td>153</td><td>47</td><td>0</td><td>200</td></tr>
+              <tr class="total"><td>Total</td><td>601</td><td>395</td><td>1</td><td>997</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Human labels: 0. The blind test file (<code>test_blind.csv</code>, 200 rows: DBS 116, UOB 51, OCBC 33) is also unlabelled.</p>
+      </div>
+      <div class="panel">
+        <h3>Candidates by aspect and bank</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Aspect</th><th>DBS</th><th>OCBC</th><th>UOB</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td>Other</td><td>352</td><td>84</td><td>87</td><td>523</td></tr>
+              <tr><td>Dividend policy</td><td>118</td><td>29</td><td>53</td><td>200</td></tr>
+              <tr><td>Net interest margin</td><td>61</td><td>25</td><td>33</td><td>119</td></tr>
+              <tr><td>Management guidance</td><td>52</td><td>17</td><td>28</td><td>97</td></tr>
+              <tr><td>Asset quality</td><td>38</td><td>10</td><td>10</td><td>58</td></tr>
+              <tr class="total"><td>Total</td><td>621</td><td>165</td><td>211</td><td>997</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Machine pre-labels on the candidates</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Labeller</th><th>Positive</th><th>Neutral</th><th>Negative</th><th>Missing</th></tr></thead>
+          <tbody>
+            <tr><td>LLM pre-label (llama3.2:3b)</td><td>463</td><td>223</td><td>310</td><td>1</td></tr>
+            <tr><td>Base FinBERT</td><td>278</td><td>444</td><td>275</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">The two agree on 460 of 996 candidates (46%), so neither is a stand-in for human labels. Asset quality has only 58 candidates, which limits what fine-tuning can learn for it.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-analyst">
+    <div class="section-head">
+      <h2 id="h-analyst">Analyst consensus</h2>
+      <p>Daily snapshots of Yahoo Finance's aggregate analyst rating and 12-month target price. Structured numbers, stored in their own table and not part of the text pipeline.</p>
+    </div>
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bank</th><th>Date</th><th>Analysts</th><th>Rating</th><th>Mean (1 = strong buy)</th><th>Target mean (S$)</th><th>Price (S$)</th></tr></thead>
+          <tbody>
+            <tr><td>DBS</td><td>6 Sep</td><td>16</td><td>Buy</td><td>2.19</td><td>76.73</td><td>78.65</td></tr>
+            <tr><td>DBS</td><td>7 Sep</td><td>16</td><td>Buy</td><td>2.19</td><td>76.73</td><td>78.47</td></tr>
+            <tr><td>DBS</td><td>10 Sep</td><td>16</td><td>Buy</td><td>2.19</td><td>77.11</td><td>76.79</td></tr>
+            <tr><td>DBS</td><td>24 Sep</td><td>17</td><td>Buy</td><td>2.35</td><td>78.14</td><td>77.48</td></tr>
+            <tr><td>OCBC</td><td>6 Sep</td><td>16</td><td>Buy</td><td>2.19</td><td>31.27</td><td>32.27</td></tr>
+            <tr><td>OCBC</td><td>7 Sep</td><td>16</td><td>Buy</td><td>2.19</td><td>31.27</td><td>31.88</td></tr>
+            <tr><td>OCBC</td><td>10 Sep</td><td>16</td><td>Buy</td><td>2.19</td><td>31.37</td><td>31.39</td></tr>
+            <tr><td>OCBC</td><td>24 Sep</td><td>17</td><td>Buy</td><td>1.86</td><td>31.53</td><td>31.59</td></tr>
+            <tr><td>UOB</td><td>6 Sep</td><td>15</td><td>Hold</td><td>2.93</td><td>42.98</td><td>42.01</td></tr>
+            <tr><td>UOB</td><td>7 Sep</td><td>15</td><td>Hold</td><td>2.93</td><td>42.98</td><td>41.75</td></tr>
+            <tr><td>UOB</td><td>10 Sep</td><td>15</td><td>Hold</td><td>2.93</td><td>42.98</td><td>40.99</td></tr>
+            <tr><td>UOB</td><td>24 Sep</td><td>16</td><td>Hold</td><td>2.81</td><td>43.30</td><td>42.50</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Four snapshots so far; the daily job adds one each morning.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-get">
+    <div class="section-head">
+      <h2 id="h-get">Getting the data</h2>
+      <p>The database is too large for GitHub (about 100MB, against a 100MB file limit), so it's shared as a compressed snapshot in the team's Teams folder.</p>
+    </div>
+    <div class="panel getting">
+      <dl class="kv">
+        <dt>Snapshot</dt><dd><code>data/snapshots/plp-2026-09-24-v2.db.gz</code> · 28.0MB</dd>
+        <dt>SHA-256</dt><dd><code>cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0</code></dd>
+        <dt>Unpack</dt><dd><code>gunzip -c plp-2026-09-24-v2.db.gz &gt; data/plp.db</code></dd>
+        <dt>Code</dt><dd>GitHub, <code>main</code>. News method: <code>docs/news-data.md</code>. Setup: <code>README.md</code>.</dd>
+      </dl>
+    </div>
+  </section>
+
+
+  <div class="part">Appendices</div>
+
+  <section aria-labelledby="h-app-a">
+    <div class="section-head">
+      <h2 id="h-app-a">Appendix A · Sentences by month, source and bank</h2>
+      <p>Every month from January 2020 to September 2026 (81 months). Sentences are the unit every later stage works on.</p>
+    </div>
+    <div class="panel">
+      <details>
+        <summary>Show all 81 months</summary>
+        <div class="table-wrap">
+          <table class="appendix">
+            <thead>
+              <tr><th></th><th class="grp" colspan="3">Reddit</th><th class="grp" colspan="3">Earnings</th><th class="grp" colspan="3">News</th><th></th></tr>
+              <tr><th>Month</th><th>DBS</th><th>OCBC</th><th>UOB</th><th>DBS</th><th>OCBC</th><th>UOB</th><th>DBS</th><th>OCBC</th><th>UOB</th><th>Total</th></tr>
+            </thead>
+            <tbody id="tbl-app-a"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-app-b">
+    <div class="section-head">
+      <h2 id="h-app-b">Appendix B · News articles by month and bank</h2>
+      <p>Stored news articles (Google News, Yahoo and NewsAPI together), January 2023 to September 2026. The per-source version is in <code>docs/news-data.md</code>.</p>
+    </div>
+    <div class="panel">
+      <details>
+        <summary>Show all 45 months</summary>
+        <div class="table-wrap">
+          <table class="appendix">
+            <thead><tr><th>Month</th><th>DBS</th><th>OCBC</th><th>UOB</th><th>More than one bank</th><th>Total</th></tr></thead>
+            <tbody id="tbl-app-b"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <footer>Full report. Counts are read from <code>plp.db</code> on 24 Sep 2026 after the news backfill, both cleanups, the first scheduled daily batch and a full pipeline run (sentences, embeddings, aspects, sentiment, index). Re-run <code>python run_news_pull.py --report</code> for current news counts.</footer>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function () {
+  const SERIES = [
+    { key: "reddit", name: "Reddit", color: "var(--s-reddit)", labelInk: "#ffffff" },
+    { key: "earnings", name: "Earnings", color: "var(--s-earnings)", labelInk: "#0e1116" },
+    { key: "news", name: "News", color: "var(--s-news)", labelInk: "#0e1116" },
+  ];
+  const BANKS = [
+    { bank: "DBS", reddit: 11826, earnings: 9093, news: 2565 },
+    { bank: "OCBC", reddit: 3824, earnings: 1561, news: 1577 },
+    { bank: "UOB", reddit: 9020, earnings: 1600, news: 1624 },
+  ];
+  const YEARS = [
+    { y: "2020", reddit: 290, earnings: 233, news: 0 },
+    { y: "2021", reddit: 1285, earnings: 235, news: 0 },
+    { y: "2022", reddit: 1746, earnings: 273, news: 0 },
+    { y: "2023", reddit: 3970, earnings: 2129, news: 892 },
+    { y: "2024", reddit: 6278, earnings: 3123, news: 1052 },
+    { y: "2025", reddit: 7181, earnings: 3372, news: 1544 },
+    { y: "2026", reddit: 3920, earnings: 2889, news: 2278, partial: true },
+  ];
+  const NEWS = [["2023-01",45],["2023-02",50],["2023-03",72],["2023-04",61],["2023-05",97],["2023-06",75],["2023-07",86],["2023-08",111],["2023-09",66],["2023-10",94],["2023-11",102],["2023-12",59],["2024-01",61],["2024-02",103],["2024-03",69],["2024-04",76],["2024-05",98],["2024-06",69],["2024-07",100],["2024-08",114],["2024-09",94],["2024-10",74],["2024-11",121],["2024-12",95],["2025-01",66],["2025-02",123],["2025-03",126],["2025-04",105],["2025-05",106],["2025-06",120],["2025-07",163],["2025-08",146],["2025-09",109],["2025-10",145],["2025-11",261],["2025-12",97],["2026-01",153],["2026-02",233],["2026-03",215],["2026-04",245],["2026-05",274],["2026-06",239],["2026-07",356],["2026-08",212],["2026-09",271]];
+
+  const NS = "http://www.w3.org/2000/svg";
+  const fmt = (n) => n.toLocaleString("en-US");
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const monthName = (m) => MONTHS[+m.slice(5) - 1] + " " + m.slice(0, 4);
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function text(parent, x, y, str, attrs) {
+    const t = el("text", Object.assign({ x, y, fill: "var(--muted)", "font-size": 12 }, attrs || {}), parent);
+    t.textContent = str;
+    return t;
+  }
+  // bar with 4px rounded data-end, square at the baseline
+  function barPath(x, y, w, h, dir, round) {
+    const r = round ? Math.min(4, w / 2, h / 2) : 0;
+    if (dir === "up") {
+      return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+    }
+    return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+  }
+  function niceMax(v, step) { return Math.ceil(v / step) * step; }
+
+  // tooltip
+  const tip = document.getElementById("tip");
+  function showTip(evt, html) {
+    tip.innerHTML = html;
+    tip.hidden = false;
+    const pad = 14;
+    const r = tip.getBoundingClientRect();
+    let x = evt.clientX + pad, y = evt.clientY + pad;
+    if (x + r.width > window.innerWidth - 8) x = evt.clientX - r.width - pad;
+    if (y + r.height > window.innerHeight - 8) y = evt.clientY - r.height - pad;
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+  function bindTip(node, html) {
+    node.setAttribute("tabindex", "0");
+    node.classList.add("hit");
+    node.addEventListener("mousemove", (e) => showTip(e, html));
+    node.addEventListener("mouseleave", hideTip);
+    node.addEventListener("focus", () => {
+      const b = node.getBoundingClientRect();
+      showTip({ clientX: b.left + b.width / 2, clientY: b.top }, html);
+    });
+    node.addEventListener("blur", hideTip);
+  }
+  const seriesRows = (d) => SERIES.map((s) =>
+    `<div class="row"><i style="background:${s.color}"></i>${s.name}<span style="margin-left:auto;padding-left:12px">${fmt(d[s.key])}</span></div>`).join("");
+
+  // 1. horizontal stacked bars per bank
+  (function () {
+    const W = 860, rowH = 34, gapRow = 22, left = 56, right = 64, top = 8, axisH = 28;
+    const H = top + BANKS.length * rowH + (BANKS.length - 1) * gapRow + axisH;
+    const max = 25000, plotW = W - left - right;
+    const sx = (v) => (v / max) * plotW;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+    const yAxis = top + BANKS.length * rowH + (BANKS.length - 1) * gapRow;
+    for (let v = 0; v <= max; v += 5000) {
+      const x = left + sx(v);
+      el("line", { x1: x, x2: x, y1: top - 4, y2: yAxis, stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+      text(svg, x, yAxis + 18, v === 0 ? "0" : fmt(v), { "text-anchor": "middle" });
+    }
+    BANKS.forEach((b, i) => {
+      const y = top + i * (rowH + gapRow);
+      const total = b.reddit + b.earnings + b.news;
+      text(svg, left - 12, y + rowH / 2 + 4, b.bank, { "text-anchor": "end", fill: "var(--ink)", "font-size": 13, "font-weight": 600 });
+      let x = left;
+      SERIES.forEach((s, j) => {
+        const w = sx(b[s.key]);
+        const last = j === SERIES.length - 1;
+        const segW = last ? w : Math.max(0, w - 2); // 2px surface gap between segments
+        const g = el("g", {}, svg);
+        el("path", { class: "mark", d: barPath(x, y, segW, rowH, "right", last), fill: s.color }, g);
+        if (segW > 58) {
+          text(g, x + 8, y + rowH / 2 + 4, fmt(b[s.key]), { fill: s.labelInk, "font-size": 12, "font-weight": 500 });
+        }
+        bindTip(g, `<b>${b.bank} · ${s.name}</b><br>${fmt(b[s.key])} sentences (${(100 * b[s.key] / total).toFixed(1)}% of ${b.bank})`);
+        x += w;
+      });
+      text(svg, x + 8, y + rowH / 2 + 4, fmt(total), { fill: "var(--ink-2)", "font-size": 12.5, "font-weight": 600 });
+    });
+    document.getElementById("chart-banks").appendChild(svg);
+  })();
+
+  // 2. stacked columns per year
+  (function () {
+    const W = 860, H = 300, left = 52, right = 12, top = 14, bottom = 30;
+    const plotW = W - left - right, plotH = H - top - bottom;
+    const max = 14000, sy = (v) => (v / max) * plotH;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+    for (let v = 0; v <= max; v += 2000) {
+      const y = top + plotH - sy(v);
+      el("line", { x1: left, x2: W - right, y1: y, y2: y, stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+      text(svg, left - 8, y + 4, v === 0 ? "0" : fmt(v), { "text-anchor": "end" });
+    }
+    const band = plotW / YEARS.length, bw = Math.min(56, band * 0.56);
+    const tbody = document.getElementById("tbl-years");
+    YEARS.forEach((d, i) => {
+      const cx = left + band * i + band / 2, x = cx - bw / 2;
+      const total = d.reddit + d.earnings + d.news;
+      let yCursor = top + plotH;
+      const present = SERIES.filter((s) => d[s.key] > 0);
+      const g = el("g", {}, svg);
+      el("rect", { x: cx - band / 2, y: top, width: band, height: plotH, fill: "transparent" }, g);
+      present.forEach((s, j) => {
+        const h = sy(d[s.key]);
+        const last = j === present.length - 1;
+        const segH = last ? h : Math.max(0, h - 2);
+        el("path", { class: "mark", d: barPath(x, yCursor - segH, bw, segH, "up", last), fill: s.color }, g);
+        yCursor -= h;
+      });
+      text(g, cx, yCursor - 7, fmt(total), { "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 12, "font-weight": 600 });
+      text(svg, cx, H - 10, d.partial ? d.y + "*" : d.y, { "text-anchor": "middle" });
+      bindTip(g, `<b>${d.y}${d.partial ? " (to 24 Sep)" : ""}</b>${seriesRows(d)}<div class="row" style="margin-top:3px"><b>Total</b><b style="margin-left:auto;padding-left:12px">${fmt(total)}</b></div>`);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${d.y}${d.partial ? " (to 24 Sep)" : ""}</td><td>${fmt(d.reddit)}</td><td>${fmt(d.earnings)}</td><td>${fmt(d.news)}</td><td>${fmt(total)}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("chart-years").appendChild(svg);
+    const n = document.createElement("p");
+    n.className = "note";
+    n.textContent = "* 2026 runs to 24 September.";
+    document.getElementById("chart-years").appendChild(n);
+  })();
+
+  // appendices
+  (function () {
+    const SENT = {"2020-01":[4,0,0,0,0,0,0,0,0],"2020-02":[10,0,0,0,0,0,0,0,0],"2020-03":[12,0,0,0,0,0,0,0,0],"2020-04":[3,0,2,0,0,0,0,0,0],"2020-05":[16,2,4,0,0,57,0,0,0],"2020-06":[13,6,0,0,0,0,0,0,0],"2020-07":[8,0,6,0,0,0,0,0,0],"2020-08":[28,3,4,0,0,97,0,0,0],"2020-09":[33,7,1,0,0,0,0,0,0],"2020-10":[16,7,0,0,0,0,0,0,0],"2020-11":[36,9,5,0,0,79,0,0,0],"2020-12":[46,8,1,0,0,0,0,0,0],"2021-01":[49,12,5,0,0,0,0,0,0],"2021-02":[58,26,6,0,0,82,0,0,0],"2021-03":[41,7,3,0,0,0,0,0,0],"2021-04":[64,14,3,0,0,0,0,0,0],"2021-05":[90,10,8,0,0,30,0,0,0],"2021-06":[56,17,43,0,0,0,0,0,0],"2021-07":[95,6,21,0,0,0,0,0,0],"2021-08":[106,14,19,0,0,84,0,0,0],"2021-09":[16,3,0,0,0,0,0,0,0],"2021-10":[84,12,18,0,0,0,0,0,0],"2021-11":[122,20,33,0,0,39,0,0,0],"2021-12":[121,29,54,0,0,0,0,0,0],"2022-01":[213,35,37,0,0,0,0,0,0],"2022-02":[59,5,22,0,0,90,0,0,0],"2022-03":[95,6,25,0,0,0,0,0,0],"2022-04":[64,7,40,0,0,0,0,0,0],"2022-05":[99,17,46,0,0,39,0,0,0],"2022-06":[84,38,26,0,0,0,0,0,0],"2022-07":[59,37,27,0,0,0,0,0,0],"2022-08":[43,9,11,0,0,81,0,0,0],"2022-09":[48,13,5,0,0,0,0,0,0],"2022-10":[52,28,53,0,0,0,0,0,0],"2022-11":[81,44,71,0,0,63,0,0,0],"2022-12":[99,52,96,0,0,0,0,0,0],"2023-01":[107,59,87,0,0,0,20,14,11],"2023-02":[109,35,63,0,0,91,29,18,4],"2023-03":[171,37,128,0,0,0,32,17,20],"2023-04":[122,60,112,0,0,0,32,10,20],"2023-05":[132,57,153,454,91,65,37,26,32],"2023-06":[131,56,152,0,0,0,28,14,25],"2023-07":[91,25,147,0,0,0,29,26,29],"2023-08":[132,111,171,633,128,56,60,38,13],"2023-09":[150,79,225,0,0,0,29,17,18],"2023-10":[143,67,219,0,0,0,41,26,24],"2023-11":[95,34,150,428,119,64,38,32,23],"2023-12":[129,45,186,0,0,0,30,17,13],"2024-01":[181,107,303,0,0,0,26,17,17],"2024-02":[164,98,249,789,153,88,40,19,44],"2024-03":[208,91,331,0,0,0,20,9,30],"2024-04":[232,96,354,0,0,0,21,19,30],"2024-05":[101,62,148,470,79,1,47,32,17],"2024-06":[178,82,289,0,0,0,29,28,13],"2024-07":[190,104,193,0,0,0,45,28,26],"2024-08":[172,98,218,666,111,50,74,13,26],"2024-09":[232,92,207,0,0,0,41,31,23],"2024-10":[181,120,258,0,0,0,22,29,23],"2024-11":[193,78,182,560,102,54,52,29,40],"2024-12":[206,93,187,0,0,0,37,24,31],"2025-01":[265,84,326,0,0,0,34,13,14],"2025-02":[320,123,226,891,146,91,70,19,28],"2025-03":[82,57,141,0,0,0,63,26,35],"2025-04":[215,68,231,0,0,0,38,19,39],"2025-05":[250,100,290,497,21,40,48,22,33],"2025-06":[416,104,271,0,0,0,51,43,19],"2025-07":[365,67,193,0,0,0,60,64,36],"2025-08":[335,84,234,843,106,72,61,39,40],"2025-09":[315,69,209,0,0,0,60,19,31],"2025-10":[346,47,161,0,0,0,64,34,46],"2025-11":[345,79,215,533,108,24,127,81,72],"2025-12":[298,90,160,0,0,0,44,31,21],"2026-01":[289,79,174,0,0,0,57,48,52],"2026-02":[242,87,104,880,150,49,117,62,63],"2026-03":[176,47,88,0,0,0,93,61,93],"2026-04":[265,93,94,0,0,0,122,80,36],"2026-05":[368,83,103,500,90,0,100,98,78],"2026-06":[296,61,108,0,0,0,119,38,85],"2026-07":[251,58,127,0,0,0,137,127,117],"2026-08":[381,30,119,949,157,0,105,56,64],"2026-09":[133,25,39,0,0,114,136,64,70]};
+    const NB = {"2023-01":[20,14,11,0],"2023-02":[28,18,4,0],"2023-03":[31,17,20,4],"2023-04":[32,9,19,1],"2023-05":[37,26,32,2],"2023-06":[28,14,25,8],"2023-07":[29,26,28,3],"2023-08":[59,38,13,1],"2023-09":[28,16,17,5],"2023-10":[41,26,24,3],"2023-11":[38,32,23,9],"2023-12":[28,17,13,1],"2024-01":[24,17,17,3],"2024-02":[39,19,44,1],"2024-03":[22,9,31,7],"2024-04":[22,19,30,5],"2024-05":[46,31,16,5],"2024-06":[29,25,13,2],"2024-07":[44,27,26,3],"2024-08":[72,13,26,3],"2024-09":[40,30,24,0],"2024-10":[22,29,23,0],"2024-11":[51,29,40,1],"2024-12":[37,24,30,4],"2025-01":[35,13,14,4],"2025-02":[69,19,28,7],"2025-03":[63,26,32,5],"2025-04":[38,19,41,7],"2025-05":[47,23,32,4],"2025-06":[49,43,19,9],"2025-07":[59,63,35,6],"2025-08":[60,39,40,7],"2025-09":[59,18,29,3],"2025-10":[62,28,42,13],"2025-11":[118,59,65,19],"2025-12":[45,23,22,7],"2026-01":[53,44,43,13],"2026-02":[111,59,52,11],"2026-03":[88,43,70,14],"2026-04":[124,74,37,10],"2026-05":[99,89,72,14],"2026-06":[117,35,78,9],"2026-07":[130,110,102,14],"2026-08":[87,51,56,18],"2026-09":[125,57,63,26]};
+    const a = document.getElementById("tbl-app-a");
+    const tot = new Array(9).fill(0);
+    Object.keys(SENT).sort().forEach((m) => {
+      const v = SENT[m]; v.forEach((n, i) => (tot[i] += n));
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${monthName(m)}</td>` + v.map((n) => `<td${n ? "" : ' class="dim"'}>${n ? fmt(n) : "–"}</td>`).join("") + `<td>${fmt(v.reduce((x, y) => x + y, 0))}</td>`;
+      a.appendChild(tr);
+    });
+    const ta = document.createElement("tr"); ta.className = "total";
+    ta.innerHTML = "<td>Total</td>" + tot.map((n) => `<td>${fmt(n)}</td>`).join("") + `<td>${fmt(tot.reduce((x, y) => x + y, 0))}</td>`;
+    a.appendChild(ta);
+    const b = document.getElementById("tbl-app-b");
+    const tb = [0, 0, 0, 0];
+    Object.keys(NB).sort().forEach((m) => {
+      const v = NB[m]; v.forEach((n, i) => (tb[i] += n));
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${monthName(m)}</td>` + v.map((n) => `<td>${fmt(n)}</td>`).join("") + `<td>${fmt(v.reduce((x, y) => x + y, 0))}</td>`;
+      b.appendChild(tr);
+    });
+    const tt = document.createElement("tr"); tt.className = "total";
+    tt.innerHTML = "<td>Total</td>" + tb.map((n) => `<td>${fmt(n)}</td>`).join("") + `<td>${fmt(tb.reduce((x, y) => x + y, 0))}</td>`;
+    b.appendChild(tt);
+  })();
+
+  // 3. news per month, single series
+  (function () {
+    const W = 860, H = 260, left = 40, right = 12, top = 14, bottom = 30;
+    const plotW = W - left - right, plotH = H - top - bottom;
+    const max = 400, sy = (v) => (v / max) * plotH;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}` });
+    for (let v = 0; v <= max; v += 100) {
+      const y = top + plotH - sy(v);
+      el("line", { x1: left, x2: W - right, y1: y, y2: y, stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+      text(svg, left - 8, y + 4, String(v), { "text-anchor": "end" });
+    }
+    const band = plotW / NEWS.length, bw = Math.max(4, Math.min(14, band - 3));
+    const peak = NEWS.reduce((a, b) => (b[1] > a[1] ? b : a));
+    NEWS.forEach(([m, n], i) => {
+      const cx = left + band * i + band / 2;
+      const g = el("g", {}, svg);
+      el("rect", { x: cx - band / 2, y: top, width: band, height: plotH, fill: "transparent" }, g);
+      const h = sy(n);
+      el("path", { class: "mark", d: barPath(cx - bw / 2, top + plotH - h, bw, h, "up", true), fill: "var(--s-news)" }, g);
+      if (m === peak[0]) text(g, cx, top + plotH - h - 7, fmt(n), { "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 12, "font-weight": 600 });
+      if (m.endsWith("-01")) text(svg, cx - band / 2, H - 10, m.slice(0, 4), { "text-anchor": "start" });
+      bindTip(g, `<b>${monthName(m)}${m === "2026-09" ? " (to 24 Sep)" : ""}</b><br>${fmt(n)} news articles`);
+    });
+    document.getElementById("chart-news").appendChild(svg);
+    const tbody = document.getElementById("tbl-news");
+    const per = Math.ceil(NEWS.length / 3);
+    for (let r = 0; r < per; r++) {
+      const tr = document.createElement("tr");
+      let cells = "";
+      for (let c = 0; c < 3; c++) {
+        const d = NEWS[r + c * per];
+        cells += d ? `<td>${monthName(d[0])}</td><td>${fmt(d[1])}</td>` : "<td></td><td></td>";
+      }
+      tr.innerHTML = cells;
+      tbody.appendChild(tr);
+    }
+  })();
+})();
+</script>
+
+</body>
+</html>

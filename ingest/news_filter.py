@@ -104,6 +104,24 @@ FALSE_POSITIVES = [
 # Nov: UOB"). So these are kept, and only flagged for human review.
 _COMMENTARY_HINT = re.compile(
     r"(?:[:\-–—]|,?\s+says)\s*(?:DBS|OCBC|UOB)(?:'s|’s)?(?:\s+[\w-]+){0,4}\s*$", re.IGNORECASE)
+
+# When that credited speaker is talking about a currency, rates, commodities
+# or the macro economy, the headline is one of the banks' daily market notes,
+# syndicated in bulk by FX sites since 2026 ("Australian Dollar: Gradual
+# upside within capped range – UOB"). Those are about the market, not the
+# bank, so the credit is masked like a broker name.
+_MARKET_TOPIC = re.compile(
+    r"\b(?:dollar|yen|yuan|renminbi|RMB|won|ringgit|rupiah|peso|baht|euro|pound|sterling|"
+    r"franc|rupee|dong|NEER|USD|SGD|EUR|JPY|CNH|AUD|NZD|GBP|KRW|INR|IDR|MYR|THB|PHP|VND|"
+    r"TWD|HKD|FX|oil|gold|silver|copper|brent|Fed|Federal\s+Reserve|FOMC|BoJ|BoE|ECB|PBoC|RBA|"
+    r"RBI|BSP|central\s+bank|rate\s+(?:cut|hike)s?|yields?|Treasur(?:y|ies)|inflation|CPI|GDP|"
+    r"recession|tariffs?|STI|Straits\s+Times\s+Index|Nikkei|Hang\s+Seng|S&P)\b", re.IGNORECASE)
+# (CNY is left out: in Singapore headlines it is Chinese New Year as often as
+# the yuan.) The bank's own news can share that shape, "Singapore's best FX
+# bank: DBS", "Tokenized Physical Gold: DBS Unveils ...", so awards and
+# launches are exempt, as are own results.
+_MARKET_NOTE_EXEMPT = re.compile(
+    r"\bbest\b[^:–—-]*\bbank\b|\baward|\bunveil|\blaunch|\bintroduc", re.IGNORECASE)
 _FALSE_POSITIVE_RES = [(label, re.compile(p, re.IGNORECASE)) for label, p in FALSE_POSITIVES]
 
 # A "rating call" headline that also talks about the bank's own results is
@@ -119,6 +137,11 @@ _FLAG_FIELDS = ["flagged_at", "reason", "kept", "source", "doc_id", "banks", "ph
 def mask_false_positives(text: str) -> tuple[str, list[str]]:
     """Replace broker/venue names with a neutral token and report which fired."""
     found = []
+    credit = _COMMENTARY_HINT.search(text)
+    if (credit and _MARKET_TOPIC.search(text[:credit.start()])
+            and not _OWN_PERFORMANCE.search(text) and not _MARKET_NOTE_EXEMPT.search(text)):
+        found.append("market note")
+        text = text[:credit.start()] + " _masked_ "
     for label, pat in _FALSE_POSITIVE_RES:
         if label == "rating call" and _OWN_PERFORMANCE.search(text):
             continue

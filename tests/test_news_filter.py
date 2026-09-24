@@ -59,6 +59,16 @@ def _flagged(path):
     ("DBS's CEO Tan Su Shan sells shares", ["DBS"], []),
     ("UOB CEO Lowers Loan Growth Forecast as First-Quarter Profit Leaps 67%", ["UOB"], []),
     ("OCBC keeps 2025 earnings guidance amid uncertainties; Q1 profit falls 5%", ["OCBC"], []),
+    # the banks' daily market notes, syndicated by FX sites
+    ("Australian Dollar: Gradual upside within capped range against US Dollar – UOB", [], ["market note"]),
+    ("Japanese Yen: Two-way risks into BoJ meeting – OCBC", [], ["market note"]),
+    ("Singapore Dollar: Range trade holds near recent lows – UOB", [], ["market note"]),
+    # a trailing credit that isn't a market note stays a mention
+    ("Citibank consumer banking acquisition to be complete by Nov: UOB", ["UOB"], []),
+    ("Asia's best digital bank 2025: DBS", ["DBS"], []),
+    ("Singapore’s best FX bank 2025: DBS", ["DBS"], []),
+    ("Tokenized Physical Gold: DBS Unveils Strong 1-Gram Tokens", ["DBS"], []),
+    ("E-hongbao for CNY: Avoid scanning QR gift card that looks tampered with, says DBS", ["DBS"], []),
 ])
 def test_mentioned_banks(title, banks, phrases):
     assert mentioned_banks(title) == (banks, phrases)

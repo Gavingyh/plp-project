@@ -120,3 +120,17 @@ def test_count_table_lists_news_by_month(temp_db, monkeypatch, tmp_path):
     table = count_table()
     assert "| 2024-03 | 0 | 1 | 1 |" in table  # columns: yahoo UOB, google DBS, total
     assert table.splitlines()[-1] == "| **total** | 1 | 1 | 2 |"
+
+
+def test_query_filter_runs_only_matching_queries(monkeypatch):
+    seen = []
+    monkeypatch.setattr(gn, "_fetch_window", lambda bank, q, s, e: seen.append(q) or [])
+    list(gn.iter_batches("2024-03-01", "2024-04-01", query_filter="intitle:"))
+    assert len(seen) == 3 and all(q.startswith("intitle:") for q in seen)
+
+
+def test_dbs_intitle_query_needs_banking_context():
+    # bare intitle:DBS pulls in Aston Martin DBS, Dragon Ball Super, "DBs" in
+    # American football; the pilot found about a third of results were junk
+    dbs_intitle = [q for q in gn.QUERIES["DBS"] if q.startswith("intitle:")]
+    assert dbs_intitle and "bank" in dbs_intitle[0] and "Singapore" in dbs_intitle[0]

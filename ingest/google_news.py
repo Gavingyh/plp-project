@@ -16,14 +16,27 @@ publisher's homepage is kept in raw.source_href. No article pages are fetched,
 so paywalled outlets (Straits Times, Business Times) contribute headlines
 only.
 
-Queries per bank are a quoted name from the team brief plus a looser
-unquoted one. In a live probe for March 2024 the loose query returned 4-7x
-as many items. Non-bank results from the loose query are removed by
-news_filter.
+Three queries per bank:
+  - a quoted name from the team brief ("DBS Group" Singapore)
+  - a looser unquoted one (DBS bank Singapore); in a live probe for March
+    2024 it returned 4-7x as many items as the quoted one
+  - an intitle: query, which requires the bank in the headline. In a pilot on
+    three sample months (2026-09-24) it added 27-32 new articles a month on
+    top of the first two queries, for 3 requests a month. Bare "DBS" in a
+    headline also matches Aston Martin DBS, Dragon Ball Super, American
+    football "DBs" and deep brain stimulation, so the DBS query needs a
+    banking context word; OCBC and UOB don't. Broker and venue names are
+    excluded in the query itself.
+Non-bank results are removed by news_filter either way.
+
+The same pilot found no gain worth the requests from weekly windows, other
+Google News editions (MY/GB/US), per-outlet site: queries, or full-name
+variants. See docs/news-data.md.
 
 USAGE:
   python -m ingest.google_news --since 2023-01-01          # backfill to today
   python -m ingest.google_news --since 2024-03-01 --until 2024-04-01
+  python -m ingest.google_news --since 2023-01-01 --query-filter intitle:
 """
 
 import argparse
@@ -43,10 +56,12 @@ RSS_URL = "https://news.google.com/rss/search"
 EDITION = {"hl": "en-SG", "gl": "SG", "ceid": "SG:en"}
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; plp-research/1.0; academic project)"}
 
+_EXCLUDE = '-"Kay Hian" -Vickers -"OCBC Arena" -"OCBC Cycle"'
 QUERIES = {
-    "DBS": ['"DBS Group" Singapore', "DBS bank Singapore"],
-    "OCBC": ['"OCBC Bank" Singapore', "OCBC Singapore"],
-    "UOB": ['"UOB bank" Singapore', "UOB Singapore"],
+    "DBS": ['"DBS Group" Singapore', "DBS bank Singapore",
+            f"intitle:DBS (bank OR Singapore OR SGX OR POSB OR PayLah) {_EXCLUDE}"],
+    "OCBC": ['"OCBC Bank" Singapore', "OCBC Singapore", f"intitle:OCBC {_EXCLUDE}"],
+    "UOB": ['"UOB bank" Singapore', "UOB Singapore", f"intitle:UOB {_EXCLUDE}"],
 }
 
 SPLIT_AT = 90         # Google caps a response at 100 items; a window this full may be truncated, so split it
@@ -120,16 +135,20 @@ def _months(since: date, until: date):
         start = nxt
 
 
-def iter_batches(since: str, until: str | None = None):
+def iter_batches(since: str, until: str | None = None, query_filter: str | None = None):
     """Yield (month_label, docs) one calendar month at a time, all banks and
     queries, so a caller can insert as it goes and an interrupted backfill
-    keeps what it already fetched."""
+    keeps what it already fetched. query_filter, if given, runs only the
+    queries containing that substring, e.g. "intitle:" to backfill a newly
+    added query without re-fetching the others."""
     s = date.fromisoformat(since)
     u = date.fromisoformat(until) if until else datetime.now(timezone.utc).date() + timedelta(days=1)
     for start, end in _months(s, u):
         docs, seen = [], set()
         for bank, queries in QUERIES.items():
             for query in queries:
+                if query_filter and query_filter not in query:
+                    continue
                 for d in _fetch_window(bank, query, start, end):
                     if d["doc_id"] not in seen:
                         seen.add(d["doc_id"])
@@ -149,9 +168,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Backfill Google News RSS headlines")
     parser.add_argument("--since", required=True, help="YYYY-MM-DD")
     parser.add_argument("--until", default=None, help="YYYY-MM-DD, exclusive (default: today)")
+    parser.add_argument("--query-filter", default=None,
+                        help='only run queries containing this text, e.g. "intitle:"')
     args = parser.parse_args()
     index = load_index()
-    for month, docs in iter_batches(args.since, args.until):
+    for month, docs in iter_batches(args.since, args.until, args.query_filter):
         kept, stats = filter_and_dedup(docs, index)
         _, inserted = upsert_documents(kept)
         logger.info(f"{month}: inserted {inserted}  filter={stats}")

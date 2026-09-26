@@ -59,9 +59,9 @@ Rendered for the report: [SVG](img/04-pipeline.svg) · [PNG](img/04-pipeline.png
 
 ## What this shows and doesn't show
 
-Each arrow is a step someone runs; RUNBOOK lists them in order. Every step after
-ingestion processes only rows it hasn't processed before (see
-[06](06-batch-pipeline.md)). Discovery runs offline and doesn't write to the pipeline's
+Each arrow is a step someone runs; RUNBOOK lists them in order. Every step between
+ingestion and the index processes only rows it hasn't processed before; the index is
+recomputed in full each time (see [06](06-batch-pipeline.md)). Discovery runs offline and doesn't write to the pipeline's
 tables: its output is evidence for choosing the aspect taxonomy
 (`docs/evidence/aspect-discovery-2026-09-11.md`). The three dashed boxes are decided but
 not built: bank NER would improve attribution inside preprocessing, the LLM classifier

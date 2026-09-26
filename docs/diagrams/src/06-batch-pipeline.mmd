@@ -1,0 +1,39 @@
+sequenceDiagram
+  accTitle: Batch pipeline sequence
+  accDescr: Ingestion writes documents; preprocessing, aspect assignment and scoring each pick up only new rows; the index is deleted and recomputed in full.
+
+  actor op as Operator
+  participant ing as run_daily_batch.py
+  participant pre as preprocess.pipeline
+  participant asg as aspects.assign
+  participant emb as aspects.embed_store
+  participant sc as sentiment.score
+  participant agg as aggregate.index
+  participant db as plp.db
+  participant npz as embeddings cache
+
+  op->>ing: run_daily_batch.py
+  ing->>db: news (as in diagram 05), Reddit since 7 days ago: documents
+  ing->>db: analyst consensus: analyst_consensus
+
+  op->>pre: python -m preprocess.pipeline
+  pre->>db: SELECT documents with no sentences yet
+  Note over pre: clean, split, attribute each sentence to a bank, drop near-duplicates
+  pre->>db: INSERT OR IGNORE sentences
+
+  op->>asg: python -m aspects.assign
+  asg->>emb: update()
+  emb->>db: SELECT all sentences
+  emb->>npz: embed new sentences, drop removed ones, save
+  asg->>db: SELECT sentences already assigned
+  Note over asg: cosine similarity to each seed-term centroid, floor from config
+  asg->>db: INSERT OR IGNORE sentence_aspects
+
+  op->>sc: python -m sentiment.score
+  sc->>db: SELECT (sentence, aspect) pairs not yet scored
+  Note over sc: base FinBERT, one label per sentence
+  sc->>db: INSERT OR IGNORE aspect_sentiment
+
+  op->>agg: python -m aggregate.index
+  agg->>db: DELETE FROM sentiment_index
+  agg->>db: recompute every bank, aspect, window and source, then INSERT

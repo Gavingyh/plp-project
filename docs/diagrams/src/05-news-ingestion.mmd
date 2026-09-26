@@ -1,0 +1,45 @@
+sequenceDiagram
+  accTitle: News ingestion sequence
+  accDescr: The news runner loads existing news for deduplication, then pulls Yahoo, Google News month by month, NewsAPI and Alpha Vantage, sending every batch through the filter before inserting it.
+
+  actor op as Operator
+  participant run as run_news_pull.py
+  participant yn as ingest.yahoo_news
+  participant gn as ingest.google_news
+  participant ext as External services
+  participant nf as ingest.news_filter
+  participant db as plp.db
+  participant csv as news_flagged.csv
+
+  op->>run: run_news_pull.py [--source] [--since]
+  run->>nf: load_index()
+  nf->>db: SELECT stored news (for dedup)
+  Note over run,nf: one shared index, so duplicates are caught across sources in the same run
+
+  run->>yn: pull()
+  loop each SGX and ADR ticker, each tab
+    yn->>ext: Yahoo Finance get_news
+  end
+  yn-->>run: articles
+  run->>nf: filter_and_dedup(articles, index)
+  nf->>csv: rejected and flagged articles, with reasons
+  nf-->>run: kept articles
+  run->>db: upsert_documents (INSERT OR IGNORE)
+
+  loop each calendar month from --since
+    run->>gn: iter_batches
+    loop each bank, each query
+      gn->>ext: Google News RSS, after: / before:
+      opt 90 or more results and window longer than a day
+        gn->>ext: re-query each half of the window
+      end
+    end
+    gn-->>run: the month's articles
+    run->>nf: filter_and_dedup
+    run->>db: upsert_documents
+  end
+
+  Note over run,ext: NewsAPI, then Alpha Vantage: pull, filter and insert the same way
+
+  run->>db: count by source, bank, month
+  run-->>op: prints the count table

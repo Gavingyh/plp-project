@@ -16,6 +16,9 @@ sentiment store.
 
 | document | what it covers |
 |---|---|
+| **[docs/PLAN.md](docs/PLAN.md)** | What happens between now and submission on 1 Nov 2026: decisions made, open decisions, workstreams by role, week-by-week sequence, and how every component maps to the course |
+| [docs/submission-checklist.html](docs/submission-checklist.html) | The same plan as a tickable checklist, split into what only people can do and what AI can do |
+| [docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html) | What the database holds: sources, bank balance, coverage over time, pipeline status, caveats |
 | **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way — the decision log with the evidence behind each choice |
 | **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
 | **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
@@ -42,11 +45,14 @@ sentiment store.
   Zero rows are human-labelled.
 - **Local chatbot models fabricate citations.** Answers carrying a
   `⚠️ VERIFICATION WARNING` cited evidence that was never retrieved.
-- **Aspect assignment is not validated** and the taxonomy decision is open.
+- **Per-aspect scores aren't meaningful yet.** The current assignment gives
+  plain factual sentences several aspects and sends evaluative ones to
+  "other"; it is being replaced by LLM classification (DESIGN decision 16).
+- **News volume over time is a sampling artefact.** Google News favours recent
+  articles; normalise per month before comparing periods.
 
 [docs/STATUS.md](docs/STATUS.md) is the single source of truth for these
-caveats — this list is a summary and every figure in STATUS is traceable
-through [docs/verification-ledger.md](docs/verification-ledger.md).
+caveats — this list is a summary.
 
 ---
 
@@ -91,13 +97,14 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
-gunzip -c plp-2026-09-24-v2.db.gz > data/plp.db
-shasum -a 256 plp-2026-09-24-v2.db.gz   # should match the checksum below
+gunzip -c plp-2026-09-26.db.gz > data/plp.db
+shasum -a 256 plp-2026-09-26.db.gz   # should match the checksum below
 ```
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-09-24-v2.db.gz` (latest) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
+| `plp-2026-09-26.db.gz` (latest; the frozen corpus) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), D5) |
+| `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
 | `plp-2026-09-24.db.gz` (superseded) | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | same day, before embeddings, aspects, sentiment and index were run on the news |
 
 `data/sentence_embeddings.npz` isn't shared either. It is a cache that
@@ -118,7 +125,7 @@ false-positive masking and cross-source dedup. Rejected articles go to
 create `sentences`; run `python -m preprocess.pipeline` afterwards.
 
 To run the daily batch (news, Reddit, analyst consensus) every morning on a
-Mac, install the launchd job in
+Mac, install the launchd job (not running anywhere since 2026-09-26) in
 [scripts/com.plp.dailybatch.plist](scripts/com.plp.dailybatch.plist); the
 file's header has the install, run-now and remove commands. Output goes to
 `data/logs/daily_batch.log`.

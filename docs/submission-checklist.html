@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { color-scheme: light; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+</style>
+<title>PLP Submission Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --page: #f5f6f7;
+  --surface: #fcfcfb;
+  --ink: #0e1116;
+  --ink-2: #4a515c;
+  --muted: #7f8691;
+  --grid: #e3e5e8;
+  --line: rgba(14, 17, 22, 0.10);
+  --accent: #2a78d6;
+  --people: #b4441a;
+  --people-bg: rgba(235, 104, 52, 0.10);
+  --decide: #7a5200;
+  --decide-bg: rgba(250, 178, 25, 0.16);
+  --ai: #1f5fae;
+  --ai-bg: rgba(42, 120, 214, 0.10);
+  --crit: #a52626;
+  --crit-bg: rgba(208, 59, 59, 0.10);
+  --done: #7f8691;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0f1113; --surface: #17191c; --ink: #f2f3f5; --ink-2: #c1c6cd; --muted: #8b919a;
+    --grid: #2a2d31; --line: rgba(255, 255, 255, 0.10); --accent: #5a9be8;
+    --people: #f08a5d; --people-bg: rgba(217, 89, 38, 0.18);
+    --decide: #fab219; --decide-bg: rgba(250, 178, 25, 0.14);
+    --ai: #7fb2ef; --ai-bg: rgba(57, 135, 229, 0.18);
+    --crit: #f07a7a; --crit-bg: rgba(208, 59, 59, 0.18); --done: #6d737c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0f1113; --surface: #17191c; --ink: #f2f3f5; --ink-2: #c1c6cd; --muted: #8b919a;
+  --grid: #2a2d31; --line: rgba(255, 255, 255, 0.10); --accent: #5a9be8;
+  --people: #f08a5d; --people-bg: rgba(217, 89, 38, 0.18);
+  --decide: #fab219; --decide-bg: rgba(250, 178, 25, 0.14);
+  --ai: #7fb2ef; --ai-bg: rgba(57, 135, 229, 0.18);
+  --crit: #f07a7a; --crit-bg: rgba(208, 59, 59, 0.18); --done: #6d737c;
+}
+* { box-sizing: border-box; }
+body { background: var(--page); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.55; padding-inline: 20px; padding-block: 40px 72px; }
+.wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+h1 { font-size: 32px; line-height: 1.15; }
+h2 { font-size: 20px; }
+p { margin: 0; max-width: 66ch; }
+code { font-family: var(--mono); font-size: 0.86em; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; }
+header { display: grid; gap: 12px; }
+.lede { font-size: 17px; color: var(--ink-2); }
+
+.top { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.top > div { background: var(--surface); padding: 18px 20px; display: grid; gap: 6px; align-content: start; }
+.count .v { font-size: 40px; font-weight: 600; line-height: 1; }
+.count .k { color: var(--ink-2); font-size: 13.5px; }
+.weights { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.weights b { color: var(--ink); font-weight: 600; }
+.path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13.5px; }
+.path span.step { padding: 3px 10px; border-radius: 999px; background: var(--crit-bg); color: var(--crit); font-weight: 500; }
+.path span.arrow { color: var(--muted); }
+@media (max-width: 640px) { .top { grid-template-columns: minmax(0, 1fr); } }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--ink-2); }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.tag.people { background: var(--people-bg); color: var(--people); }
+.tag.decide { background: var(--decide-bg); color: var(--decide); }
+.tag.ai { background: var(--ai-bg); color: var(--ai); }
+.tag.crit { background: var(--crit-bg); color: var(--crit); }
+.tag.when { background: transparent; color: var(--muted); border: 1px solid var(--grid); }
+
+section { display: grid; gap: 14px; }
+.section-head { display: grid; gap: 6px; }
+.section-head .row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; }
+.section-head p { color: var(--ink-2); }
+.progress { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.item { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--grid); }
+.item:last-child { border-bottom: none; }
+.item input { width: 17px; height: 17px; margin: 3px 0 0; accent-color: var(--accent); cursor: pointer; }
+.item input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.body { display: grid; gap: 4px; }
+.body .title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.body label { font-weight: 600; cursor: pointer; }
+.body .why { color: var(--ink-2); font-size: 14px; max-width: 72ch; }
+.body .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.item.is-done label, .item.is-done .why { color: var(--done); }
+.item.is-done label { text-decoration: line-through; text-decoration-thickness: 1px; }
+
+.plan { display: grid; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.week { display: grid; grid-template-columns: 130px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--grid); }
+.week:last-child { border-bottom: none; }
+.week .d { font-weight: 600; }
+.week .d small { display: block; color: var(--muted); font-weight: 400; font-size: 12.5px; }
+.week ul { margin: 0; padding-left: 16px; display: grid; gap: 3px; font-size: 14px; color: var(--ink-2); }
+.week h3 { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
+@media (max-width: 700px) { .week { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+
+.note { font-size: 13px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--grid); padding-top: 16px; display: grid; gap: 6px; }
+button.reset { font: inherit; font-size: 13px; color: var(--ink-2); background: transparent; border: 1px solid var(--grid); border-radius: 6px; padding: 4px 10px; cursor: pointer; justify-self: start; }
+button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">PLP practice module · DBS, OCBC, UOB sentiment dashboard · updated 26 Sep 2026 with the team's decisions</div>
+    <h1>PLP Submission Checklist</h1>
+    <p class="lede">Everything left before submission, matching <code>docs/PLAN.md</code>: decisions D1–D5 made on 26 Sep, O1–O5 still open. Each item says who can do it: only people, AI now, or AI once something else is in place.</p>
+  </header>
+
+  <div class="top">
+    <div class="count">
+      <div class="v" id="days">37</div>
+      <div class="k">days to submission<br>Sunday 1 November 2026</div>
+    </div>
+    <div>
+      <div class="weights"><span>System, code, datasets, docs <b>20%</b></span><span>Report under 20 pages <b>20%</b></span><span>Demo video, ~20 min, all members <b>5%</b></span><span>Peer review <b>5%</b></span></div>
+      <div class="path" aria-label="Critical path">
+        <span class="step">Aspect classifier</span><span class="arrow">→</span>
+        <span class="step">Human labels</span><span class="arrow">→</span>
+        <span class="step">Fine-tuned FinBERT</span><span class="arrow">→</span>
+        <span class="step">Test results</span><span class="arrow">→</span>
+        <span class="step">Report and video</span>
+      </div>
+      <p class="note">The rubric's deep-neural-network requirement is the fine-tuned classifier, and it can't be trained until people have labelled data. Nothing is labelled yet, and labelling waits on the re-drawn sheet, so the aspect classifier is the first link in the chain.</p>
+    </div>
+  </div>
+
+  <div class="legend" aria-hidden="true">
+    <span class="tag people">Only people</span>
+    <span class="tag decide">AI, after a team call</span>
+    <span class="tag ai">AI can do now</span>
+    <span class="tag crit">Critical path</span>
+  </div>
+
+  <section aria-labelledby="h-people">
+    <div class="section-head">
+      <div class="row"><h2 id="h-people">Only people can do these</h2><span class="progress" data-progress="people"></span></div>
+      <p>Judgement, access, accountability or presence. AI can prepare material for most of them, but the act is yours.</p>
+    </div>
+    <ul class="list" data-group="people">
+      <li class="item"><input type="checkbox" id="p-keys"><div class="body">
+        <div class="title"><label for="p-keys">Rotate the NewsAPI and Alpha Vantage keys</label><span class="tag crit">Today</span></div>
+        <div class="why">Both keys leaked into git history in the first commit (<code>cd37dfa</code>) and are still the ones in your <code>.env</code>; checked 26 Sep. Regenerate them on each provider's site, update <code>.env</code>, and share the new ones privately.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-roles"><div class="body">
+        <div class="title"><label for="p-roles">Fill the roles offline</label><span class="tag when">This week</span></div>
+        <div class="why">Data and NER, Labelling, Modelling, Interfaces; report and video are shared. No names go in the repository (decision D4). Each person later writes their own contribution summary for the report.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-validate"><div class="body">
+        <div class="title"><label for="p-validate">Check the aspect classifier's validation sample</label><span class="tag crit">Week 1</span></div>
+        <div class="why">About 100 sentences with the LLM's chosen aspect. Mark each right or wrong using the aspect definitions in <code>docs/annotation-guideline.md</code>. It decides whether the full run goes ahead as designed.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-supervisor"><div class="body">
+        <div class="title"><label for="p-supervisor">Confirm two things with the supervisor</label><span class="tag when">By ~5 Oct</span></div>
+        <div class="why">That the proposal's four aspects are kept but now assigned by an LLM (O1), and whether retail chatter and management commentary belong in one index (O2).</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-agree"><div class="body">
+        <div class="title"><label for="p-agree">Agreement round</label><span class="tag crit">Week 2</span></div>
+        <div class="why">Two people label the same 150 rows of the re-drawn sheet independently. κ ≥ 0.6 for aspect and for sentiment before the rest is split up; below that, tighten the guideline and redo the sample.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-label"><div class="body">
+        <div class="title"><label for="p-label">Label the data</label><span class="tag crit">Critical path · by ~16 Oct</span></div>
+        <div class="why">About 1,000 rows, aspect and sentiment per sentence. Test rows only from the blind sheet. Don't label the current <code>candidates.csv</code>: it's being replaced.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-ner"><div class="body">
+        <div class="title"><label for="p-ner">Annotate the NER gold set</label><span class="tag when">Week 2</span></div>
+        <div class="why">About 200 sentences, marking which bank each mention refers to, weighted to the hard cases: POSB, lowercase "dbs", UOB Kay Hian, DBS Vickers, Bank of Singapore, Aston Martin DBS. Roughly two hours.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-cna"><div class="body">
+        <div class="title"><label for="p-cna">Load the CNA feed</label><span class="tag when">By ~11 Oct</span></div>
+        <div class="why">Whoever owns the CNA scraper decides how it goes into the database; it must pass the same news filter so the 103 CNA headlines already stored aren't double-counted. Discovery re-runs after this.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-relevance"><div class="body">
+        <div class="title"><label for="p-relevance">Decide on stricter relevance filtering (O5)</label><span class="tag when">By ~12 Oct</span></div>
+        <div class="why">Whether passing mentions ("paid via DBS PayNow") should be dropped. It changes the data, so decide before the final pipeline run.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-model"><div class="body">
+        <div class="title"><label for="p-model">Choose the chatbot model for the demo (O3)</label><span class="tag when">By ~19 Oct</span></div>
+        <div class="why"><code>llama3.1:8b</code> fabricates citations 13% of the time against 43–48% for <code>llama3.2:3b</code>, but is slower.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-hosted"><div class="body">
+        <div class="title"><label for="p-hosted">Decide on the OpenAI and Gemini backends (O4)</label><span class="tag when">By ~19 Oct</span></div>
+        <div class="why">Provide a key for each so they can be tested, or stop claiming they work.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-eval"><div class="body">
+        <div class="title"><label for="p-eval">Chatbot evaluation that needs people</label><span class="tag when">19–25 Oct</span></div>
+        <div class="why">Read transcripts for numerical fidelity; rate a sample of answers so the LLM judge can be calibrated; run the SASSI questionnaire with 5–8 users.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-snapshot"><div class="body">
+        <div class="title"><label for="p-snapshot">Keep the team's database copy current</label><span class="tag when">After each big change</span></div>
+        <div class="why">Upload the snapshot the README lists as latest. The copy on Teams predates the 24 Sep pipeline run.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-write"><div class="body">
+        <div class="title"><label for="p-write">Write the parts of the report only you can</label><span class="tag when">By ~30 Oct</span></div>
+        <div class="why">Conclusions and their limits, contribution summaries, and the GenAI declaration's pros and cons as you experienced them. Read and own every AI-drafted section.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-video"><div class="body">
+        <div class="title"><label for="p-video">Record the demo video</label><span class="tag when">By ~31 Oct</span></div>
+        <div class="why">About 20 minutes, every member presenting. Rehearse on the recording machine and open every dashboard tab first.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-peer"><div class="body">
+        <div class="title"><label for="p-peer">Peer review</label><span class="tag when">Ongoing</span></div>
+        <div class="why">5% of the grade, running through the project per the course schedule.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-submit"><div class="body">
+        <div class="title"><label for="p-submit">Submit</label><span class="tag crit">1 Nov</span></div>
+        <div class="why">System, source code, datasets and documentation; the report; the video. One person owns the upload and checks it opens.</div>
+      </div></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-ai">
+    <div class="section-head">
+      <div class="row"><h2 id="h-ai">AI can do these now</h2><span class="progress" data-progress="ai"></span></div>
+      <p>Decided and unblocked. Each is reviewable by a person afterwards.</p>
+    </div>
+    <ul class="list" data-group="ai">
+      <li class="item"><input type="checkbox" id="a-classifier"><div class="body">
+        <div class="title"><label for="a-classifier">Build and run the LLM aspect classifier</label><span class="tag crit">Week 1</span></div>
+        <div class="why">A fixed prompt (role, task, the five aspect definitions, constraints, examples) returning one aspect per sentence; a 100-sentence validation sample for people to check; then the full run overnight. Decision 16.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-redraw"><div class="body">
+        <div class="title"><label for="a-redraw">Re-draw the candidate set and pre-label it</label><span class="tag crit">Week 1, after the classifier</span></div>
+        <div class="why">Stratified across Reddit, earnings and news and across banks; ≥ 200 per sentiment class overall and ~80 per aspect; a fresh random blind test split; LLM suggestions on train/dev rows only. Update the sheet export and <code>train/agreement.py</code> for aspect + sentiment.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-chat"><div class="body">
+        <div class="title"><label for="a-chat">Give the chatbot memory and an advice guard</label><span class="tag when">Week 1</span></div>
+        <div class="why">Pass recent turns and track the current bank, aspect and window; detect advice-seeking before the model runs and answer with a fixed reply (today 3 of 7). Decision 19.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-numbers"><div class="body">
+        <div class="title"><label for="a-numbers">Add the number-checking guard</label><span class="tag when">Week 2</span></div>
+        <div class="why">Compare every figure in an answer with the tools' results and flag mismatches, as the citation check already does.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-discovery"><div class="body">
+        <div class="title"><label for="a-discovery">Re-run aspect discovery with a sweep</label><span class="tag when">Week 2, after CNA</span></div>
+        <div class="why">Sweep <code>min_cluster_size</code> (the 281-cluster run used the default on a smaller corpus) and report whether <code>other</code> hides a missing aspect.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-ner"><div class="body">
+        <div class="title"><label for="a-ner">Build and evaluate bank NER</label><span class="tag when">Week 2</span></div>
+        <div class="why">spaCy recognition plus resolution to DBS, OCBC, UOB or not the bank; precision, recall and F1 on the gold set against alias matching. Decision 18.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-evalset"><div class="body">
+        <div class="title"><label for="a-evalset">Build the chatbot evaluation</label><span class="tag when">Weeks 2–3</span></div>
+        <div class="why">About 30 frozen questions with expected behaviour written first, multi-turn scenarios, retrieval Hit@K and MRR, and a judge prompt to calibrate against people's ratings.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-dash"><div class="body">
+        <div class="title"><label for="a-dash">Fix stale dashboard text and check every tab</label><span class="tag when">Week 2</span></div>
+        <div class="why">It still says "~1-month news window".</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-report"><div class="body">
+        <div class="title"><label for="a-report">Draft the report structure and factual sections</label><span class="tag when">Weeks 2–3</span></div>
+        <div class="why">The required sections, with datasets and methods drafted from the docs and a reference list; results and conclusions wait for the models.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="a-repro"><div class="body">
+        <div class="title"><label for="a-repro">Test the submission from a clean copy</label><span class="tag when">Week 4, again in week 5</span></div>
+        <div class="why">Clone fresh, follow only the README, restore the snapshot, run the tests, start the dashboard.</div>
+      </div></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-decide">
+    <div class="section-head">
+      <div class="row"><h2 id="h-decide">AI can do these once something else is in place</h2><span class="progress" data-progress="decide"></span></div>
+      <p>Waiting on labels, results, or a team call named in each item.</p>
+    </div>
+    <ul class="list" data-group="decide">
+      <li class="item"><input type="checkbox" id="d-finetune"><div class="body">
+        <div class="title"><label for="d-finetune">Fine-tune FinBERT and evaluate everything</label><span class="tag crit">After labelling</span></div>
+        <div class="why">Three seeds; sentiment against base FinBERT, VADER and TF-IDF + logistic regression; aspect categorisation against the human aspect labels; NER against its gold set. Then re-score the corpus with the fine-tuned model.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="d-video"><div class="body">
+        <div class="title"><label for="d-video">Draft the video script and results figures</label><span class="tag when">After results</span></div>
+        <div class="why">About 20 minutes mapped to the rubric, with a part for each member.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="d-cnaload"><div class="body">
+        <div class="title"><label for="d-cnaload">Write the CNA loader</label><span class="tag decide">If the CNA owner wants it</span></div>
+        <div class="why">Route CNA articles through the news filter so stored CNA headlines aren't double-counted; the scraper stays as it is.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="d-relevance"><div class="body">
+        <div class="title"><label for="d-relevance">Tighten relevance filtering</label><span class="tag decide">If O5 says yes</span></div>
+        <div class="why">Drop passing mentions before the final pipeline run.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="d-hosted"><div class="body">
+        <div class="title"><label for="d-hosted">Verify the OpenAI and Gemini backends</label><span class="tag decide">Once keys exist</span></div>
+        <div class="why">One real call each, fixing whatever breaks.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="d-model"><div class="body">
+        <div class="title"><label for="d-model">Switch the chatbot's default model</label><span class="tag decide">After O3</span></div>
+        <div class="why">Change the default and raise the 120-second timeout if the slower model is chosen.</div>
+      </div></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-plan">
+    <div class="section-head">
+      <h2 id="h-plan">The five weeks</h2>
+      <p>Aspects gate labelling, and labelling gates the model, so the aspect classifier comes first. Same sequence as <code>docs/PLAN.md</code>.</p>
+    </div>
+    <div class="plan">
+      <div class="week"><div class="d">28 Sep<small>gate: candidates re-drawn</small></div>
+        <div><h3>People</h3><ul><li>Rotate keys; fill roles</li><li>Check the classifier's validation sample</li><li>Book the supervisor meeting</li></ul></div>
+        <div><h3>AI</h3><ul><li>Aspect classifier, full run overnight</li><li>Re-draw and pre-label candidates</li><li>Chatbot memory and advice guard</li></ul></div></div>
+      <div class="week"><div class="d">5 Oct<small>gate: κ ≥ 0.6; O1, O2 decided</small></div>
+        <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>Supervisor meeting</li><li>NER gold set; CNA loaded</li></ul></div>
+        <div><h3>AI</h3><ul><li>Discovery re-run and sweep; NER</li><li>Number guard; dashboard fixes</li><li>Report structure and drafts</li></ul></div></div>
+      <div class="week"><div class="d">12 Oct<small>gate: ~1,000 labelled; model trained</small></div>
+        <div><h3>People</h3><ul><li>Finish labelling</li><li>Decide O5</li></ul></div>
+        <div><h3>AI</h3><ul><li>Fine-tune, three seeds</li><li>Evaluate all four tasks</li><li>Re-score the corpus</li></ul></div></div>
+      <div class="week"><div class="d">19 Oct<small>gate: results frozen</small></div>
+        <div><h3>People</h3><ul><li>Interpret results; transcripts; SASSI</li><li>Decide O3, O4; rehearse</li></ul></div>
+        <div><h3>AI</h3><ul><li>Chatbot evaluation; results tables</li><li>Video script; clean-copy test</li></ul></div></div>
+      <div class="week"><div class="d">26 Oct<small>gate: submitted</small></div>
+        <div><h3>People</h3><ul><li>Conclusions, contributions, GenAI</li><li>Record the video; submit</li></ul></div>
+        <div><h3>AI</h3><ul><li>Final snapshot and data report</li><li>Second clean-copy test</li></ul></div></div>
+    </div>
+    <p class="note">If labelling slips past 18 Oct: fine-tune on what exists with k-fold cross-validation, and report the smaller set honestly.</p>
+  </section>
+
+  <footer>
+    <span>Ticks are saved in this browser only, so each person keeps their own; they aren't shared with the team.</span>
+    <span>Sources: <code>docs/PLAN.md</code> (the plan this mirrors), <code>docs/HANDOFF.md</code>, <code>docs/STATUS.md</code>, <code>docs/spec/functional-spec.md</code>, the course notes, and checks of the repository and database on 26 Sep 2026.</span>
+    <button type="button" class="reset" id="reset">Clear my ticks</button>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const KEY = "plp-submission-checklist-v2";
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  function refresh() {
+    document.querySelectorAll(".list").forEach((list) => {
+      const boxes = list.querySelectorAll("input[type=checkbox]");
+      let done = 0;
+      boxes.forEach((b) => { b.closest(".item").classList.toggle("is-done", b.checked); if (b.checked) done++; });
+      const out = document.querySelector(`[data-progress="${list.dataset.group}"]`);
+      if (out) out.textContent = `${done} of ${boxes.length} done`;
+    });
+  }
+  document.querySelectorAll(".list input[type=checkbox]").forEach((b) => {
+    b.checked = !!state[b.id];
+    b.addEventListener("change", () => { state[b.id] = b.checked; save(); refresh(); });
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    state = {}; save();
+    document.querySelectorAll(".list input[type=checkbox]").forEach((b) => (b.checked = false));
+    refresh();
+  });
+  refresh();
+
+  // days to the 1 Nov 2026 deadline, Singapore time
+  const deadline = Date.UTC(2026, 10, 1, 16, 0, 0); // midnight at the end of 1 Nov, Singapore time (UTC+8)
+  const days = Math.max(0, Math.ceil((deadline - Date.now()) / 86400000));
+  document.getElementById("days").textContent = String(days);
+})();
+</script>
+
+</body>
+</html>

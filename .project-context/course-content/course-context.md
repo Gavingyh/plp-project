@@ -8,7 +8,7 @@
  
 - Team of 4 (course recommends 3; 4 justified by dual-source pipeline, see §4)
 - Must include: one of {sentiment mining, conversational UI} — we have both (sentiment mining is core; chatbot added on top)
-- At least 2 text mining tasks — we have 3 (NER, unsupervised aspect/topic discovery, supervised sentiment classification)
+- At least 2 text mining tasks — **updated 2026-09-26:** four are planned: aspect discovery (clustering, done), aspect categorisation (LLM, planned), bank entity recognition (NER, planned; before this date no NER existed despite being listed here), sentiment classification (fine-tuned FinBERT, blocked on labels). See `docs/PLAN.md` section 3
 - At least 1 self-built/fine-tuned DNN — FinBERT fine-tuned (see §5)
 - Implementation in Python
 - ~10 man-days effort per participant
@@ -51,6 +51,17 @@ DBS, OCBC, UOB together: >S$180B combined market cap, ~half of the Straits Times
 ---
  
 ## 4. Data Sources — Locked, Verified Access Status (as of Aug 01, 2026)
+
+> **Superseded by what was actually built (2026-09-26).** Reddit: PRAW was
+> unavailable (application declined), so Arctic Shift supplies
+> `r/singaporefi`; the planned subreddits returned almost nothing. News:
+> NewsAPI's one-month limit made it marginal; Google News RSS, backfilled
+> month by month from Jan 2023, is the main news source, with Yahoo Finance
+> headlines. **Yahoo Finance, excluded below as too fragile/ToS-risky, is
+> used** for news headlines and consensus aggregates; the reversal and its
+> risk are DESIGN decision 14. Alpha Vantage indexes none of the tickers.
+> Analyst stream: Yahoo consensus aggregates, not report text. Current
+> sources: `docs/spec/functional-spec.md` section 3 and `docs/news-data.md`.
  
 ### Primary: Financial news
 - **NewsAPI.org** — https://newsapi.org/docs — free tier: 100 req/day, ~1 month lookback only. Fine for a recent window; a longer historical pull needs a paid tier or a fallback dataset.
@@ -104,7 +115,10 @@ If the report wants a lexicon comparison, find one and cite it directly. One exa
 **Model inputs (independent variables):** contextual text embedding (FinBERT), source type (earnings/social/analyst/news), discovered aspect tag, bank identity (DBS/OCBC/UOB).
 **Target (dependent variable):** sentiment polarity per (document, aspect) pair.
  
-**Seed-labelling plan (3 steps):**
+**Seed-labelling plan (3 steps)** — *as proposed; what is actually planned is
+in `docs/PLAN.md` section 6: a local LLM pre-labels, people correct, and each
+row records aspect and sentiment. The Loughran-McDonald weak-labelling step
+was not used.*
 1. Weak/bootstrap labels via Loughran-McDonald financial dictionary (general lexicons like VADER mislabel financial phrasing, e.g. "beat lowered guidance").
 2. Human-verified seed set: stratified sample (~500–800 docs across banks/sources/aspects), manually annotated → gold fine-tuning/validation set.
 3. Iterative multi-pass refinement: 2–3 annotation passes, using inter-pass disagreements to refine aspect seeds and relabel edge cases.
@@ -113,7 +127,8 @@ If the report wants a lexicon comparison, find one and cite it directly. One exa
 - Dashboard: overall + aspect-based sentiment index per bank, batch-refreshed (daily, not live streaming)
 - Chatbot: natural-language Q&A over the dashboard (e.g. "How does the market feel about DBS's Q2 results?") returning aspect-based sentiment summaries with supporting evidence — this is what satisfies the conversational-UI requirement
  
-**Rubric mapping (already confirmed satisfied):**
+**Rubric mapping** — *as proposed. The current mapping, with course module and
+evaluation per component, is `docs/PLAN.md` section 3:*
 | Requirement | Satisfied by |
 |---|---|
 | Conversational UI | Chatbot layer |
@@ -124,6 +139,11 @@ If the report wants a lexicon comparison, find one and cite it directly. One exa
 ---
  
 ## 6. Open Items / Risks Still Active
+
+> **Status 2026-09-26:** 1 resolved (Yahoo consensus aggregates, disclosed as
+> such); 2 resolved (volumes measured, news backfilled); 3 and 5 are handled
+> by role-based workstreams in `docs/PLAN.md`; 4 resolved (Arctic Shift
+> instead of PRAW). Live risks are in `docs/PLAN.md` section 8.
  
 1. **Analyst report data access** — no confirmed source yet. Needs a same-week check: does anyone have institutional access, or does this stream get dropped/substituted.
 2. **Data volume confirmation** — run `plp-data` survey tool with real API keys before finalizing scope; NewsAPI's 1-month lookback limit may force a shorter historical window than originally planned, or a paid-tier decision.
@@ -152,5 +172,33 @@ Worth stating plainly in the report, because it cuts both ways:
 - *What it did well.* It found four real defects that human review had missed: `ingest/earnings_extract.py` called `text.split("")`, an empty separator that raises `ValueError` on every PDF page while `pull()` swallowed the exception, so the earnings source silently produced nothing; `aspects/discover.py` bound one SQL parameter per sentence and had been dying on SQLite's 32,766-parameter limit since the corpus grew past it; `aspects/compare_taxonomies.py` measured at a hardcoded similarity floor of 0.35 while the pipeline had moved to 0.65, so the tool meant to inform the taxonomy decision was describing a threshold nothing used; and `docs/STATUS.md`'s by-source document counts summed to 18,815 against its own stated total of 21,924.
 - *What had to be constrained.* The session ran under an explicit rule that every number trace to a command run in that session and every external fact to a fetched source, with the results recorded in `docs/verification-ledger.md`. That rule caught the model's own errors twice: it drew a confident conclusion from the taxonomy table before checking which floor the tool used (wrong floor, wrong conclusion), and it wrote a test asserting Cohen's κ below 0.1 for a case where κ is arithmetically 0.46. Both were caught by verifying rather than by review.
 - *The honest reading.* Model-written text about a codebase is plausible by construction and unreliable without checking. The verification ledger, not the fluency of the prose, is what makes this documentation trustworthy.
+
+**2026-09-24 to 2026-09-26 — Claude Code (Opus 5.5), interactive sessions.**
+News backfill (Google News RSS and Yahoo, with a shared relevance and dedup
+filter, a seven-technique query pilot, and two audited clean-ups), the
+database moved out of git into checksummed snapshots, a full pipeline run on
+the news, a daily scheduling job (later stopped by the team), the data report
+and submission checklist, the analysis of why named aspects score neutral,
+and this round of plan and documentation updates against all four course
+modules.
+
+- *What it did well.* It found that 12 of the original 20 news rows named no
+  bank, that the chat tab never sent conversation history to the model, that
+  the aspect assignment rather than the scorer explained the neutral named
+  aspects, and that the leaked API keys had not been rotated.
+- *What went wrong and was caught by checking.* A filter rule silently failed
+  because it ran on the headline twice, which let 63 analyst calls into the
+  database before an audit caught it. A pilot on three sample months
+  under-predicted the `intitle:` backfill's volume and missed a flood of
+  syndicated FX notes that only appeared in 2026; 195 were removed after a
+  quality check. A regex used to measure junk headlines was itself wrong on
+  the first attempt, and one report sentence claimed DBS's lead came from
+  earnings when, against OCBC, Reddit contributed slightly more. Each was
+  caught by re-checking against the data before it was relied on.
+- *Where people stayed in control.* Every deletion and the git history
+  rewrite waited for explicit approval; the rewrite was run by a team member
+  after the assistant's own attempt was blocked as destructive. Decisions on
+  aspects, labelling, NER scope and naming were put to the team as questions
+  rather than made.
 
 **Keep updating this section as work continues — needed verbatim-ish for the report's GenAI declaration.**

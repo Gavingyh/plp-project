@@ -1,3 +1,5 @@
+> **Superseded 2026-09-26 by `docs/PLAN.md`.** Kept as the record of how the system was first planned and built; not the current plan.
+
 # MVP Implementation Plan — Retail Investor Sentiment Dashboard (DBS / OCBC / UOB)
 
 **Scope:** end-to-end slice from data retrieval → aspect discovery → fine-tuned aspect-sentiment classifier → sentiment index → dashboard → agentic chatbot.

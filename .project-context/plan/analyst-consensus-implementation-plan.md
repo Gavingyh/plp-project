@@ -1,3 +1,5 @@
+> **Superseded 2026-09-26 by `docs/PLAN.md`.** Kept as the record of how the system was first planned and built; not the current plan.
+
 # Implementation Plan: Analyst Consensus Ingestion (Yahoo Finance)
 
 **Audience:** an AI coding agent executing this plan step by step.

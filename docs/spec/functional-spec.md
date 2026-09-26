@@ -8,8 +8,9 @@ adjacent ground and are not repeated here: [DESIGN.md](../DESIGN.md) explains
 [STATUS.md](../STATUS.md) what is and is not finished. Where this document
 states a limitation, STATUS is the authority and this is a summary.
 
-Current as of 2026-09-11. Figures trace to
-[verification-ledger.md](../verification-ledger.md).
+Current as of 2026-09-26. Corpus figures are from the database on that date
+(the corpus is frozen from then); requirements marked **Planned** were decided
+on 2026-09-26 and are sequenced in [PLAN.md](../PLAN.md).
 
 ---
 
@@ -68,7 +69,8 @@ grounded chatbot; a labelling workflow for the fine-tuning dataset.
 | non-goal | why |
 |---|---|
 | Investment advice | The chatbot must decline buy/sell framing. The system reports sentiment, not recommendations. |
-| Real-time streaming | The proposal specifies scheduled batches. Sources are polled on demand or by cron. |
+| Real-time streaming | The proposal specifies scheduled batches. Sources are polled on demand; the daily job is not running, and the corpus is frozen at 26 Sep 2026 for analysis. |
+| Voice input or output | The chatbot is text-only. The speech content of the Conversational UIs module is out of scope. |
 | Full analyst report text | Brokerage IP behind entitlements. Yahoo Finance consensus *aggregates* are the substitute, disclosed as such. |
 | Price prediction or backtesting | No claim is made that sentiment predicts returns. Price data is reference only. |
 | Beating a WAF | UOB's IR site signals refusal to scripted clients; the Wayback Machine is used instead of fingerprint spoofing. |
@@ -80,16 +82,18 @@ grounded chatbot; a labelling workflow for the fine-tuning dataset.
 
 | source | provides | cadence | key | caveats |
 |---|---|---|---|---|
-| **Reddit** via Arctic Shift | `r/singaporefi` posts and comments, 2020 to present. 21,726 documents, 24,591 sentences | Incremental 7-day pull; resumable multi-year backfill | none | Reddit declined the API application, so PRAW is unavailable. Keyword search times out, so whole subreddits are harvested by date window and filtered locally. `r/singapore` and `r/investing` returned zero bank-mentioning items and were dropped. |
+| **Reddit** via Arctic Shift | `r/singaporefi` posts and comments, 2020 to present. 21,805 documents, 24,675 sentences | Incremental 7-day pull; resumable multi-year backfill | none | Reddit declined the API application, so PRAW is unavailable. Keyword search times out, so whole subreddits are harvested by date window and filtered locally. `r/singapore` and `r/investing` returned zero bank-mentioning items and were dropped. |
 | **Earnings PDFs** | Results releases, CEO presentations, and DBS analyst-call transcripts. 178 documents, 12,254 sentences | Manual, quarterly | none | DBS and OCBC fetched directly from IR sites; UOB via the Wayback Machine because its site is WAF-blocked. Archive coverage thins for recent quarters. Tables are not extracted, only prose. |
-| **Yahoo Finance consensus** | Analyst counts, rating distribution, mean and median price targets | Daily, safe to re-run | none | **Unofficial API.** No published terms bless it; it needs a cookie and crumb handshake. Provides aggregates, not analyst reasoning. Must not be described as "analyst reports". |
-| **NewsAPI** | Article title and description. 20 documents, 39 sentences | On demand | `NEWSAPI_KEY` | Free tier gives roughly one month of lookback and truncates body text, so usable text is title plus description. Contributes marginally at current volume. |
+| **Google News RSS** | Headlines with publisher and date, found by date-windowed searches, Jan 2023 to Sep 2026. 5,685 documents, 5,447 sentences | Backfill by month; safe to re-run | none | No official API; results are Google's ranking, not a census, and favour recent articles, so monthly volume rises towards the present. Headlines only; stored links are Google redirects. Filtered and deduplicated as described in [news-data.md](../news-data.md). |
+| **Yahoo Finance news** | Headline and summary for SGX and ADR tickers. 114 documents, 344 sentences | On demand | none | Unofficial endpoint (`yfinance`); no date parameter and no paging, so no history beyond about 12 months, and three daily runs added nothing new. |
+| **Yahoo Finance consensus** | Analyst counts, rating distribution, mean and median price targets | On demand, safe to re-run | none | **Unofficial API.** No published terms bless it; it needs a cookie and crumb handshake. Provides aggregates, not analyst reasoning. Must not be described as "analyst reports". |
+| **NewsAPI** | Article title and description. 13 documents, 26 sentences | On demand | `NEWSAPI_KEY` | Free tier gives roughly one month of lookback and truncates body text, so usable text is title plus description. 12 of the original 20 rows named no bank and were removed on 2026-09-24. |
 | **Alpha Vantage** | Nothing | — | `ALPHAVANTAGE_KEY` | Does not index SGX-listed tickers at all, confirmed live across three ticker formats for all three banks. Adapter retained in case coverage is added. |
 
-The proposal committed to four streams. All four exist, but their weights are
-very unequal: Reddit and earnings carry the corpus, consensus is structured
-data rather than text, and news is marginal. That is a finding for the report,
-not a gap to paper over.
+The proposal committed to four streams. All four exist. Reddit carries most
+of the text, earnings and news are substantial, and consensus is structured
+data rather than text. A fifth feed, CNA, has a scraper but is not yet loaded
+(PLAN.md, section 4).
 
 ---
 
@@ -97,7 +101,7 @@ not a gap to paper over.
 
 Each requirement has acceptance criteria that can be checked against the code,
 a test, or a running instance. Status values: **Done**, **Partial**,
-**Blocked**.
+**Blocked**, and **Planned** (decided, not yet built).
 
 ### 4.1 Dashboard
 
@@ -139,22 +143,39 @@ Thirteen endpoints in `api/main.py`. No authentication; localhost only.
 | C6 | Runs without any API key | Ollama backend auto-selected when no key is present | Done |
 | C7 | Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude verified; GPT and Gemini never run against real APIs |
 
+| C8 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | **Planned** — today only the latest question reaches the model |
+| C9 | Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | **Planned** — would close C4 |
+| C10 | Every number in an answer matches a tool result | An output guard compares each figure with the tools' results and flags a mismatch, as C3 does for citations | **Planned** — would close most of C2 |
+| C11 | Evaluated on a frozen, sliced gold set | About 30 questions with expected behaviour written before tuning; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; multi-turn scenarios; SASSI questionnaire with 5–8 users | **Planned** — today 23 single-turn questions, also used during tuning |
+
 C2, C3 and C4 are the honest weak points of the system and are the most
 report-relevant findings in the project. See the evaluation section of STATUS.
+C8–C11 apply the Conversational UIs module and are DESIGN decision 19.
 
 ### 4.4 Labelling workflow
 
 | # | Requirement | Acceptance criteria | Status |
 |---|---|---|---|
-| L1 | Export a stratified candidate set for annotation | `preprocess/export_candidates.py` writes 998 rows: 798 `train_dev`, 200 `test` | Done |
+| L1 | Export a stratified candidate set for annotation | `preprocess/export_candidates.py` writes the candidate set: currently 997 rows, 797 `train_dev` and 200 `test` (one removed with off-topic news on 2026-09-24) | Done, to be re-drawn (L7) |
 | L2 | The test split is drawn at random before any model screening, and frozen | `split=test` rows are randomly sampled independently of model output | Done |
 | L3 | Annotators are not shown model opinions when labelling the test set | `preprocess/export_blind_test.py` writes a sheet carrying sentence, aspect and provenance only | Done |
 | L4 | Pre-labelling reduces annotation to correction | `train/llm_prelabel.py` fills `llm_prelabel` and `llm_rationale`, never `label`; checkpointed and resumable | Done, 997 of 998 rows |
 | L5 | Agreement between annotators is measured before dividing the work | `train/agreement.py` reports Cohen's κ against a 0.6 target | Done |
 | L6 | A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Blocked** — zero rows human-labelled |
 
+| L7 | Annotators choose the aspect and the sentiment for each sentence | Re-drawn candidate set across Reddit, earnings and news; ≥ 200 rows per sentiment class overall, ~80 per aspect; blind test sheet; κ reported for aspect and for sentiment | **Planned** — DESIGN decision 17 |
+
 L6 blocks the project's deep-neural-network deliverable. It is the single
-highest-value outstanding task.
+highest-value outstanding task, and L7 now precedes it.
+
+### 4.5 Text-mining tasks
+
+| # | Task | Acceptance criteria | Status |
+|---|---|---|---|
+| T1 | Aspect discovery by clustering | FinBERT embeddings, UMAP, HDBSCAN over the full corpus; cluster count, noise share and correspondence to the aspects reported | Done on 36,884 sentences (2026-09-11, 281 clusters, 67% noise); re-run with a `min_cluster_size` sweep once CNA is loaded |
+| T2 | Aspect categorisation | A local LLM assigns each sentence one of the four proposal aspects or `other`; accuracy and macro-F1 against the human aspect labels, with seed-centroid assignment as baseline | **Planned** — DESIGN decision 16 |
+| T3 | Bank entity recognition and resolution | Organisation mentions recognised and resolved to DBS, OCBC, UOB or not the bank; precision, recall and F1 on a ~200-sentence gold set against alias matching | **Planned** — DESIGN decision 18 |
+| T4 | Sentiment classification (fine-tuned FinBERT) | = L6: per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Blocked** on labelling |
 
 ---
 
@@ -165,7 +186,7 @@ highest-value outstanding task.
 | Requirement | Satisfied by | Code | Status |
 |---|---|---|---|
 | Conversational user interface | Tool-calling chatbot with RAG evidence retrieval, on CLI, dashboard tab and API | `chatbot/` | Done |
-| At least two text mining tasks | (1) Unsupervised aspect discovery, (2) supervised aspect-sentiment classification, (3) rule-based bank entity attribution | `aspects/discover.py`, `sentiment/score.py`, `preprocess/pipeline.py` | Done for 1 and 3; 2 is zero-shot, not yet supervised |
+| At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, planned classifier and NER modules, `train/finetune.py` | T1 done; T2, T3 planned; T4 blocked on labelling |
 | A sentiment mining component | Overall and aspect-based sentiment index across four sources | `sentiment/`, `aggregate/` | Done |
 | At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Blocked on labelling** |
 
@@ -177,9 +198,9 @@ asks for does not exist until the labelled data does.
 
 | Commitment | Reality | Status |
 |---|---|---|
-| Four data streams | All four exist; earnings and Reddit carry the corpus, consensus is aggregates not text, news is marginal | Partial |
-| Aspects: dividend policy, asset quality, NIM, management guidance | Implemented as the frozen taxonomy, but not validated. Clustering the full corpus produces 281 finer clusters that cut across these four, and these four centroids are the least distinct of three candidates tested | **Open decision** |
-| ~1,000 labelled examples, 200–300 per class | 998 candidates exported, 0 labelled. Two aspects cannot reach 200 per class from the current pool | Blocked |
+| Four data streams | All four exist. News now spans every month from Jan 2023 (5,812 articles); consensus is aggregates, not text | Done |
+| Aspects: dividend policy, asset quality, NIM, management guidance | Kept. Seed-centroid assignment failed validation; replaced by LLM assignment, one aspect per sentence (decided 2026-09-26, to confirm with the supervisor) | **Planned** |
+| ~1,000 labelled examples, 200–300 per class | 0 labelled. The target is read as per sentiment class overall; the candidate set is being re-drawn for aspect + sentiment labelling | Blocked |
 | Accuracy, precision, recall, F1 per class, macro-F1 on a held-out split | Implemented in `train/evaluate.py` against base FinBERT, a lexicon baseline and a classical ML baseline | Blocked on labelling |
 | Dashboard with overall and aspect sentiment, batch refreshed | Done, five tabs | Done |
 | Chatbot answering with supporting evidence | Done, with the grounding caveats in 4.3 | Partial |
@@ -191,9 +212,9 @@ asks for does not exist until the labelled data does.
 Summarised from [STATUS.md](../STATUS.md), which is the authority.
 
 1. **No fine-tuned model exists.** All sentiment is base FinBERT, zero-shot.
-2. **Aspect assignment is not validated.** Reddit sentences are assigned to
-   `net_interest_margin` although the Reddit corpus contains zero occurrences
-   of the phrase.
+2. **Aspect assignment is not meaningful yet.** Plain factual sentences get
+   three or four aspects, and evaluative ones fall to `other`, so named-aspect
+   scores are nearly all neutral. Being replaced (T2).
 3. **Local models fabricate citations**, and the check detects rather than
    prevents.
 4. **Advice-declining fails more often than it works.**
@@ -202,6 +223,9 @@ Summarised from [STATUS.md](../STATUS.md), which is the authority.
 6. **Relevance filtering is weak.** Sentences mentioning a bank incidentally
    still enter the corpus. Roughly 2.6% of sentences are extraction artifacts.
 7. **GPT and Gemini backends are unverified.**
+8. **The chatbot has no memory between turns** (C8).
+9. **News volume over time is a sampling artefact.** Google News favours
+   recent articles; compare periods only after normalising per month.
 
 ---
 

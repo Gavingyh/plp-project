@@ -7,8 +7,9 @@ Reasoning lives in [DESIGN.md](../DESIGN.md) and is referenced rather than
 repeated. Commands live in [RUNBOOK.md](../RUNBOOK.md). Current state and
 caveats live in [STATUS.md](../STATUS.md).
 
-Verified against the code and database on 2026-09-11. See
-[verification-ledger.md](../verification-ledger.md).
+Verified against the code and database on 2026-09-11; the module map,
+operations and open decisions were updated on 2026-09-26. Planned components
+are marked as such and sequenced in [PLAN.md](../PLAN.md).
 
 ---
 
@@ -51,7 +52,8 @@ criticise an app in consecutive sentences.
 
 | module | responsibility | entry points |
 |---|---|---|
-| `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection | `arctic_shift`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
+| `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection, news relevance filter and cross-source dedup | `arctic_shift`, `google_news`, `yahoo_news`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, `news_filter`, `cna_scraper` (writes JSON, not the database), plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
+| repository root | Batch entry points | `run_news_pull.py` (every news source, then a source × bank × month table; `--audit` re-checks stored news), `run_daily_batch.py` (news, Reddit, consensus) |
 | `preprocess/` | Documents to sentences; labelling exports | `pipeline`, `export_candidates`, `export_blind_test` |
 | `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison | `assign`, `discover`, `compare_taxonomies`, `embed_store` |
 | `sentiment/` | Aspect-conditioned sentiment classification | `score` |
@@ -61,7 +63,13 @@ criticise an app in consecutive sentences.
 | `api/` | FastAPI REST layer | `uvicorn api.main:app` |
 | `dashboard/` | Streamlit UI | `streamlit run dashboard/app.py` |
 | `config/` | Aspect taxonomy, logging configuration | — |
-| `scripts/` | Service lifecycle, overnight backfill, model comparison | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh` |
+| `scripts/` | Service lifecycle, overnight backfill, model comparison, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
+
+Planned (DESIGN decisions 16–19, not yet in the code): an LLM aspect
+classifier replacing `aspects/assign.py`'s seed-centroid matching, a bank
+entity recognition step, aspect + sentiment labelling support in
+`preprocess/` and `train/agreement.py`, and conversation memory plus input
+and output guards in `chatbot/`.
 
 Run every module as `.venv-plp/bin/python3 -m <module>`. Never plain
 `python3`; see RUNBOOK for why.
@@ -419,6 +427,17 @@ month-sized chunk, each committing immediately, so an interruption loses at
 most one chunk. It fails fast if launched under the wrong interpreter, which
 is how one overnight run was lost.
 
+**Data snapshots.** `data/plp.db` is not in git (it passed GitHub's 100 MB
+limit). After a material change, `PRAGMA wal_checkpoint(TRUNCATE)`, then
+gzip it to `data/snapshots/plp-<date>[-vN].db.gz` (gitignored), verify it
+unpacks and passes `PRAGMA integrity_check`, and record the name, size and
+SHA-256 in the README. Snapshots are how a reported number is tied to the
+exact data behind it.
+
+**Scheduling.** Ingestion is manual since 2026-09-26. The launchd template
+in `scripts/` runs `run_daily_batch.py` at 07:30; it ingests only, so the
+pipeline steps must still be run afterwards.
+
 **Failure modes.** RUNBOOK's troubleshooting table is the reference. The two
 that cost the most time historically are the wrong Python interpreter, which
 fails every import with a Python 3.9 syntax error, and a missing
@@ -469,15 +488,15 @@ author.
 
 ## 13. Ownership and open decisions
 
-| area | owner |
-|---|---|
-| Ingestion and data sources | |
-| Preprocessing and labelling | |
-| Aspects, sentiment, fine-tuning | |
-| Dashboard, API, chatbot | |
-| Report and video | |
+Ownership is by role, filled offline; see [HANDOFF.md](../HANDOFF.md). No
+personal names are kept in the repository.
 
 ### Open decisions
+
+> **Updated 2026-09-26.** Decisions 1 and 5 were made by the team (PLAN.md
+> section 2: D1, D2) and 3 has a planned fix (DESIGN decision 19). The live
+> list is PLAN.md's "Still open" table; the rows below record how they stood
+> on 2026-09-11.
 
 | # | Decision | Evidence available | Who decides |
 |---|---|---|---|

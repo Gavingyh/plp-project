@@ -4,7 +4,12 @@ Written to be usable directly as source material for the project report —
 the sections map onto methodology, results, limitations and future work.
 
 For reasoning behind design choices, see [DESIGN.md](DESIGN.md). For how to
-run anything mentioned here, see [RUNBOOK.md](RUNBOOK.md).
+run anything mentioned here, see [RUNBOOK.md](RUNBOOK.md). For what happens
+next, see [PLAN.md](PLAN.md).
+
+**Last updated 2026-09-26**, after the news backfill, a full pipeline run on
+the news, and the decisions recorded in PLAN.md section 2. Sections that still
+describe an earlier state carry a dated note saying so.
 
 ---
 
@@ -14,16 +19,19 @@ run anything mentioned here, see [RUNBOOK.md](RUNBOOK.md).
 |---|---|
 | "DBS/OCBC show more positive sentiment than UOB" | No longer an artifact of missing UOB data — all three banks now have earnings coverage (DBS 9,093 sentences, UOB 1,600, OCBC 1,561). DBS still carries ~6x the earnings volume of the other two, so check the per-source breakdown before making a blended claim. |
 | "The fine-tuned FinBERT classifier achieves X" | No fine-tuned model exists. All scores are base FinBERT, zero-shot. |
-| "The aspect breakdown shows NIM sentiment is Y" | **Measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
+| "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Plain factual sentences get three or four aspects at once and evaluative ones fall to `other`, so named-aspect scores are nearly all neutral ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)); the assignment is being replaced (DESIGN decision 16). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
 | "The chatbot cites its sources" | Local models fabricate citations — 43–48% of answers on the default model, across two runs. A code check flags this, but it detects rather than prevents. See the evaluation below. |
 | "GPT / Gemini backends work" | Never run against their real APIs — no keys were available. |
+| "The chatbot handles follow-up questions" | It has no memory: only the latest question reaches the model (DESIGN decision 19). |
+| "News volume rose sharply in 2026" | An artefact of Google News ranking recent articles higher. Normalise per month before comparing periods ([news-data.md](news-data.md)). |
 
 **The Reddit-only rows remain the cleanest cross-bank comparison** (DBS
--0.0015, OCBC -0.0107, UOB -0.0106 — no meaningful difference). The blended
-rows are now defensible too, but read them alongside the per-source
-breakdown: earnings text scores far higher than retail chatter for every bank
-(DBS +0.168, OCBC +0.206, UOB +0.229), so blended scores track earnings
-coverage as much as sentiment.
+-0.0015, OCBC -0.0108, UOB -0.0105, all-time, 2026-09-26 — no meaningful
+difference). Read blended rows alongside the per-source breakdown: earnings
+text scores far higher than retail chatter for every bank (DBS +0.168, OCBC
++0.206, UOB +0.229), and Google News headlines sit in between (DBS +0.114,
+OCBC +0.134, UOB +0.129), so blended scores track each bank's source mix as
+much as its sentiment.
 
 ---
 
@@ -31,30 +39,33 @@ coverage as much as sentiment.
 
 | | count |
 |---|---|
-| documents | 21,924 |
-| sentences | 36,884 |
-| (sentence, aspect) pairs scored | 79,987 |
-| date range | Jan 2020 – Sep 2026 |
+| documents | 27,795 |
+| sentences | 42,746 |
+| (sentence, aspect) pairs scored | 90,117 |
+| date range | 6 Jan 2020 – 25 Sep 2026 |
 
 By source:
 
 | source | documents | sentences |
 |---|---|---|
-| Reddit (`r/singaporefi`) | 21,726 | 24,591 |
+| Reddit (`r/singaporefi`) | 21,805 | 24,675 |
 | Earnings PDFs (DBS, OCBC, UOB) | 178 | 12,254 |
-| NewsAPI | 20 | 39 |
+| Google News (headlines) | 5,685 | 5,447 |
+| Yahoo Finance news | 114 | 344 |
+| NewsAPI | 13 | 26 |
 
-By bank: DBS 20,907 · UOB 10,601 · OCBC 5,376 sentences.
+By bank: DBS 23,516 · UOB 12,253 · OCBC 6,977 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase: 9,270 lines of Python (6,542 excluding tests), 251 tests.
+Codebase: 11,200 lines of Python (7,770 excluding tests), 303 tests.
 
-Every figure on this page was re-taken from `data/plp.db` on 2026-09-11 and
-is recorded with its query in [verification-ledger.md](verification-ledger.md).
-The previous version of this table under-reported documents by source — it
-listed 18,620 / 177 / 18, which summed to 18,815 against its own stated total
-of 21,924.
+These figures were taken from `data/plp.db` on 2026-09-26, after the last
+ingestion; the corpus is frozen from that date (the daily job is stopped).
+The database is not in git: the snapshot matching it, and its checksum, are
+listed in the README. [verification-ledger.md](verification-ledger.md)
+records the 2026-09-11 figures with their queries; news figures and method
+are in [news-data.md](news-data.md).
 
 ---
 
@@ -62,8 +73,12 @@ of 21,924.
 
 **Ingestion.** Reddit (Arctic Shift, 2020–present), earnings PDFs auto-fetched
 from DBS and OCBC IR sites and, for WAF-blocked UOB, from the Wayback
-Machine; NewsAPI; Yahoo Finance analyst consensus. All
-idempotent — re-running any adapter inserts nothing new.
+Machine; news from Google News RSS (backfilled month by month from January
+2023), Yahoo Finance and NewsAPI, all through one relevance and dedup filter
+(`ingest/news_filter.py`, every rejection logged); Yahoo Finance analyst
+consensus. All idempotent — re-running any adapter inserts nothing new. One
+command runs every news pull (`run_news_pull.py`); a daily launchd job exists
+but is not running.
 
 **Preprocessing.** Sentence segmentation with financial-abbreviation handling,
 per-source cleaning, per-sentence bank attribution, near-duplicate removal.
@@ -80,7 +95,7 @@ chatbot with four pluggable model backends and RAG evidence retrieval.
 Suggested starter questions are generated from the index rather than
 hardcoded, so the UI never offers a question the data cannot answer.
 
-**Engineering.** 251 tests (external APIs mocked with captured payloads),
+**Engineering.** 303 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the dashboard and API.
 
@@ -192,6 +207,13 @@ trustworthy than the check itself.
 
 ### 1. Labelling — the critical blocker
 
+> **Updated 2026-09-26.** The labelling design changes (DESIGN decision 17):
+> annotators will choose the aspect and the sentiment for each sentence, on
+> a re-drawn candidate set that includes news. **Don't start labelling the
+> current sheet.** The candidate set now holds 997 rows, one having been
+> removed with the off-topic news on 2026-09-24. The description below is of
+> the current sheet and remains accurate for it.
+
 Zero examples human-labelled. This blocks the fine-tuned classifier, which
 blocks the deep-learning deliverable the proposal commits to.
 
@@ -270,6 +292,11 @@ bank, because it publishes full analyst-call transcripts and they are long.
 The per-source breakdown remains the honest way to read blended figures.
 
 ### 3. Aspect taxonomy not validated
+
+> **Decided 2026-09-26.** Keep the proposal's four aspects plus `other`, and
+> assign them with a local LLM, one per sentence (DESIGN decision 16), to be
+> confirmed with the supervisor (PLAN.md, O1). The analysis below is the
+> evidence behind that decision.
 
 The taxonomy is still the proposal's four a-priori aspects. The earlier
 finding — that clustering found only a coarse consumer-banking versus
@@ -414,6 +441,10 @@ The rules had to move into code.
 ---
 
 ## How to improve it
+
+> **Superseded 2026-09-26 by [PLAN.md](PLAN.md)**, which sequences this list
+> against the submission date and adds what came out of the final course
+> module. Kept as the record of how the priorities looked on 2026-09-11.
 
 Roughly in order of value.
 

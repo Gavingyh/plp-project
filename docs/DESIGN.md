@@ -10,16 +10,20 @@ Why this system is built the way it is. For how to run it, see
 
 **[STATUS.md](STATUS.md) is the single source of truth for these caveats.**
 It is kept current against the database; this page explains design reasoning
-and will drift. The short version, as of 2026-09-11:
+and will drift. The short version, as of 2026-09-26:
 
-- Read blended cross-bank figures next to the per-source breakdown. All three
-  banks now have earnings coverage, but DBS carries roughly six times the
-  earnings volume of the other two.
+- Read blended cross-bank figures next to the per-source breakdown. DBS
+  carries about 55% of all sentences and roughly six times the earnings
+  volume of the other two banks.
 - There is no fine-tuned model. Every score is base FinBERT, zero-shot.
+- Per-aspect scores are not meaningful yet: the current assignment gives
+  plain factual sentences three or four aspects and sends evaluative ones to
+  `other` (decision 16 replaces it).
 - The GPT and Gemini backends have never been run against their real APIs.
 - Local chatbot models fabricate citations. The code-level check is a
-  detector, not a fix.
-- Aspect assignment is not validated, and the taxonomy decision is open.
+  detector, not a fix. The chatbot also has no memory between turns yet.
+
+What happens next, and in what order, is in [PLAN.md](PLAN.md).
 
 ---
 
@@ -122,6 +126,10 @@ guidance. Fourteen consecutive quarters are available.
 
 ### 4. Aspect assignment is frozen-centroid, not re-clustered per batch
 
+> **Superseded 2026-09-26 by decision 16.** Kept as the record of why the
+> first design was chosen; the seed-centroid assignment survives only as the
+> baseline decision 16 is measured against.
+
 Clustering runs once, offline, to derive a taxonomy (`aspects/discover.py`).
 Assignment then matches sentences to those frozen centroids every batch
 (`aspects/assign.py`). Re-clustering per batch would renumber and rename
@@ -129,6 +137,9 @@ aspects between runs, so a dashboard user would see categories shift
 underneath them.
 
 ### 5. Similarity floor raised 0.35 → 0.65
+
+> **Superseded 2026-09-26 by decision 16.** No floor fixes the underlying
+> problem, which the 2026-09-24 evidence below decision 16 explains.
 
 The original floor did not discriminate between anything. Measured sweep on
 the real corpus:
@@ -181,7 +192,7 @@ It is an **unofficial API** — the endpoint the `yfinance` library wraps, with
 no published terms blessing it and a cookie/crumb handshake that exists to
 slow automated access. It also provides consensus *aggregates*, not analyst
 report text. Both caveats are surfaced in the module, the dashboard and the
-API response.
+API response. Since 2026-09-24 Yahoo is also a news source; see decision 14.
 
 ### 8. Chatbot uses a plain tool-calling loop, not a framework
 
@@ -227,6 +238,122 @@ stderr so stdout carries only real program output — the chatbot's answer can
 be piped on its own. A rotating file captures DEBUG regardless of console
 level, so unattended overnight runs remain diagnosable.
 
+### 13. News from Google News RSS and Yahoo, through one shared filter
+
+*2026-09-24.* News had been 20 NewsAPI rows over one month, because NewsAPI's
+free tier reaches back about a month and Yahoo's news stream has no history.
+Google News RSS accepts `after:`/`before:` date operators, which makes
+history reachable one month at a time. The corpus now holds about 5,800 news
+articles covering every month from January 2023.
+
+Every news source passes `ingest/news_filter.py` before insert: the article
+must name a bank; broker, venue, research-desk and market-note mentions
+(UOB Kay Hian, OCBC Arena, "DBS maintains 'buy' on IHH", "Australian Dollar:
+... – UOB") don't count as a mention; and near-duplicates across sources are
+dropped by normalised URL or 90% headline similarity within three days. Every
+rejection is logged in `data/news_flagged.csv`. The query set was chosen by a
+pilot of seven techniques; only headline-restricted `intitle:` queries earned
+their requests. Method, rules, pilot results and known gaps:
+[news-data.md](news-data.md).
+
+Consequence to state in the report: Google's ranking favours recent articles,
+so news volume per month rises towards the present (about 77 a month in 2023,
+244 in 2026). Normalise per month before comparing periods.
+
+### 14. Yahoo Finance used despite the course notes excluding it
+
+*2026-09-24.* The project's original context notes rejected Yahoo Finance as
+"too fragile/ToS-risky for a graded deliverable". It is now used twice: the
+analyst consensus aggregates (decision 7) and news headlines via `yfinance`.
+The reversal is deliberate: the alternatives for both are paywalled, the
+data used is headline text and published aggregates rather than scraped
+article bodies, and the risk that matters for grading, an endpoint breaking,
+is contained by freezing the corpus in snapshots (decision 15). In practice
+Yahoo contributed 114 news articles, all from the first pull; its stream
+changes little from day to day and three daily runs added nothing. Google
+News carries the history. The report should say both things.
+
+### 15. The database lives outside git, as dated snapshots
+
+*2026-09-24.* `data/plp.db` passed GitHub's 100 MB file limit (about 103 MB)
+and the embeddings cache was already over it. Both are gitignored. The
+database is shared as a gzipped, checksummed snapshot (about 28 MB), listed in
+the README with its SHA-256; the embeddings are a cache that
+`python -m aspects.embed_store` rebuilds. Snapshots are also the record of
+exactly which data a reported number came from.
+
+### 16. Aspects assigned by a local LLM, one per sentence
+
+*Decided 2026-09-26; to be implemented.* The seed-centroid assignment of
+decisions 4 and 5 fails in a way no threshold fixes. The four centroids are
+close to each other, so plain transactional or factual sentences ("transfer
+the money to your DBS account") match three or four aspects at once: 46% of
+assigned sentences did. Evaluative sentences, where the sentiment is, sit
+further from the jargon-heavy seed terms and fall to `other`, which ends up
+holding almost all the polarity (45% positive, 22% negative, against ≤ 3.6%
+positive for every named aspect). Evidence:
+[evidence/aspect-sentiment-concentration-2026-09-24.md](evidence/aspect-sentiment-concentration-2026-09-24.md).
+
+The replacement asks a local model to classify each sentence into exactly one
+of the proposal's four aspects or `other`, with a fixed prompt (role, task,
+schema of the five categories with definitions, constraints, a few examples,
+input) and structured output, following the course's zero-shot ABSA pattern
+(NMSM Day 2). It keeps the proposal's aspects, so it changes the method, not
+the taxonomy. It is validated against a human-checked sample before the full
+run, and evaluated against the human aspect labels from decision 17, with
+the seed-centroid assignment as its baseline. Clustering (`aspects/discover.py`)
+still runs offline, as the unsupervised discovery task: it tests whether
+`other` hides a real aspect the four don't cover.
+
+### 17. Annotators label aspect and sentiment together
+
+*Decided 2026-09-26; to be implemented.* Labels were attached to
+automatically assigned (sentence, aspect) pairs, so a wrong assignment wasted
+an annotator's effort and the assignment itself was never evaluated. Each row
+is now one sentence: the annotator chooses its aspect and its sentiment toward
+the bank as an investment on that aspect, or flags it as not about the bank.
+Candidates are re-drawn across Reddit, earnings and news. The target of
+200–300 rows per sentiment class is read as the proposal wrote it, per
+sentiment class overall, with a floor of roughly 80 rows per aspect.
+
+### 18. Bank entity recognition, scoped narrowly
+
+*Decided 2026-09-26; to be implemented.* Bank attribution is alias matching
+(`ingest/base.py`). It works for clean headlines but can't separate the bank
+from things that share its name. The NER task recognises organisation
+mentions with spaCy's pretrained model (installed; its NER is switched off
+in segmentation today) and resolves each to DBS, OCBC, UOB or "not the bank":
+POSB, lowercase "dbs" in Reddit text, UOB Kay Hian and DBS Vickers, Bank of
+Singapore and Great Eastern, Aston Martin DBS. It is evaluated on a
+~200-sentence gold set weighted to those cases, against alias matching. The
+scope is kept to what improves attribution, so it doesn't compete with
+labelling for time.
+
+### 19. Chatbot changes drawn from the Conversational UIs module
+
+*Decided 2026-09-26; to be implemented.* Three gaps, each matching a
+specific part of CNI Day 1:
+
+- **No memory.** The dashboard shows the conversation, but only the latest
+  question reaches the model, so "and OCBC?" loses its context. The fix
+  passes recent turns and tracks the current bank, aspect and time window.
+- **Advice-declining is prompt-only**, and works for 3 of 7 advice-seeking
+  gold-set questions on every model tested. The fix is an input guard that
+  detects advice-seeking before the model runs and answers with a fixed,
+  reviewed reply: templates for critical responses, generation for the rest.
+- **Numbers are not checked.** Citations are verified against what was
+  retrieved (decision 9), numbers aren't. An output guard compares every
+  figure in an answer with the tools' results.
+
+The architecture stays a tool-calling loop (decision 8). CNI's rule, use the
+least autonomous architecture that handles the task's variability, is the
+reason for a guard over a model upgrade: the questions this bot faces are
+narrow, and deterministic checks around the model are cheaper and more
+reliable than trusting it more. Evaluation grows accordingly: a frozen gold
+set of about 30 questions written before tuning, retrieval Hit@K and MRR,
+faithfulness scored by an LLM judge calibrated on human ratings, multi-turn
+scenarios, and a SASSI questionnaire with a handful of users.
+
 ---
 
 ## Notable implementation details
@@ -254,7 +381,11 @@ could mislead someone.
 
 ## Deliberate scope limits
 
-- Batch, not streaming. Sources are polled on demand or by cron.
+- Batch, not streaming. Sources are polled on demand. A daily launchd job
+  exists (`scripts/com.plp.dailybatch.plist`) but is not running on any
+  machine since 2026-09-26; the corpus is frozen for analysis.
+- Text only. The speech content of the Conversational UIs module (Days 3–4)
+  is out of scope.
 - Alpha Vantage is retained in the codebase but contributes nothing — it
   does not index SGX-listed tickers (confirmed across all three, in several
   ticker formats).

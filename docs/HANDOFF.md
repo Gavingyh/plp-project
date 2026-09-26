@@ -2,8 +2,9 @@
 
 Start here if you are new to this project, or picking it up after time away.
 
-Written 2026-09-11. Everything factual in it traces to
-[verification-ledger.md](verification-ledger.md).
+Written 2026-09-11; the reading order, "Needs a human" and ownership sections
+were updated on 2026-09-26. The overnight run log further down is the record
+of 2026-09-11 and is left as written.
 
 ---
 
@@ -24,6 +25,7 @@ datasets, a report under 20 pages, and a demo video.
 
 | # | document | why |
 |---|---|---|
+| 0 | [PLAN.md](PLAN.md) | What happens next, in what order, and the decisions already made. Read this first if you are picking up work |
 | 1 | [STATUS.md](STATUS.md) | What is actually true today. **The single source of truth for caveats.** Read the first two sections before quoting any number to anyone. |
 | 2 | [spec/functional-spec.md](spec/functional-spec.md) | What the system is supposed to do, and which requirements are Done, Partial or Blocked |
 | 3 | [DESIGN.md](DESIGN.md) | Why it is built this way. The decision log is the section to read before changing anything |
@@ -48,17 +50,21 @@ scripts/status.sh
 scripts/stop.sh
 ```
 
-The pipeline needs no API key. You do need the database, which is gitignored —
-either copy `data/plp.db` from a teammate or rebuild it by running the
-pipeline in [RUNBOOK.md](RUNBOOK.md), which takes about an hour.
+The pipeline needs no API key. You do need the database, which is not in git:
+download the latest snapshot from the team's shared folder and unpack it as
+described under "Getting the database" in the [README](../README.md).
+Rebuilding from scratch is possible but slow, and would not reproduce the
+exact corpus the report describes.
 
 ---
 
 ## Needs a human
 
-Ordered by urgency.
+Ordered by urgency. Updated 2026-09-26; the full sequence is in
+[PLAN.md](PLAN.md) and a tickable list in
+[submission-checklist.html](submission-checklist.html).
 
-### 1. Rotate two API keys — do this today
+### 1. Rotate two API keys — still not done on 2026-09-26
 
 `.env.example` is tracked in git and contained **real** NewsAPI and Alpha
 Vantage keys from the first commit (`cd37dfa`) until 2026-09-11. They are
@@ -74,6 +80,13 @@ that is a call for whoever owns the repository, and rewriting shared history
 has its own costs. Rotating the keys makes the exposure harmless either way.
 
 ### 2. Label the data — this is the critical path
+
+> **Updated 2026-09-26: wait for the re-drawn sheet.** Annotators will choose
+> the aspect as well as the sentiment for each sentence (DESIGN decision 17),
+> on a new candidate set that includes news, produced after the new aspect
+> classifier runs (PLAN.md section 5, week 1). Don't label the current
+> `candidates.csv`. The rules below about the blind test sheet and the
+> agreement round still apply.
 
 Zero of 998 candidate rows are human-labelled. This blocks the fine-tuned
 classifier, which blocks the deep-neural-network deliverable the rubric
@@ -95,8 +108,17 @@ labelling section of [RUNBOOK.md](RUNBOOK.md). Three rules that matter:
 - Two aspects cannot reach the proposal's 200-per-class target regardless of
   how labels fall: `asset_quality` has 58 candidate rows and
   `management_guidance` has 97. Decide what to do about that before you start.
+  (Resolved 2026-09-26: the proposal's 200–300 target is per *sentiment*
+  class overall, not per aspect; the re-drawn set adds a floor of about 80
+  rows per aspect. PLAN.md section 6.)
 
 ### 3. Settle the aspect taxonomy — team plus supervisor
+
+> **Decided by the team 2026-09-26, to confirm with the supervisor.** Keep the
+> proposal's four aspects plus `other`, assigned by a local LLM, one per
+> sentence (DESIGN decision 16). The supervisor's input is still needed
+> because the method differs from the proposal. Evidence as it stood on
+> 2026-09-11:
 
 This is now well evidenced and needs a decision, not more analysis. Dropping
 the proposal's four a-priori aspects changes what was proposed, so it is not a
@@ -151,13 +173,17 @@ at face value reaches the opposite of the truth.
 
 ## Ownership
 
-| area | owner |
+By role. The team fills the roles offline; no personal names are kept in the
+repository. One person can hold more than one role. Tasks per role are in
+[PLAN.md](PLAN.md) section 4.
+
+| role | covers |
 |---|---|
-| Ingestion and data sources | |
-| Preprocessing and labelling | |
-| Aspects, sentiment, fine-tuning | |
-| Dashboard, API, chatbot | |
-| Report and video | |
+| Data and NER | ingestion, news and CNA feeds, bank entity recognition, dataset packaging |
+| Labelling | annotation guideline, agreement round, the labelled set |
+| Modelling | aspect classifier, aspect discovery, fine-tuning and evaluation |
+| Interfaces | dashboard, API, chatbot and its evaluation |
+| Report and video | everyone; each person writes their own contribution summary |
 
 ---
 

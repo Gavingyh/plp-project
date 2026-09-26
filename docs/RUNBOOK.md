@@ -67,8 +67,12 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.assign
 
 Steps are **order-dependent** — each consumes the previous step's output.
 
+The corpus is frozen from 2026-09-26 and the shared snapshot has already been
+through every step below, so a teammate restoring it (README, "Getting the
+database") needs none of this. Run the steps only after adding data.
+
 ```bash
-# 1. Ingest. Default is a 7-day incremental Reddit pull.
+# 1. Ingest: news, a 7-day incremental Reddit pull, analyst consensus.
 .venv-plp/bin/python3 run_daily_batch.py
 
 # 2. Documents -> sentences
@@ -95,6 +99,10 @@ Do not assume a hang. On an M-series Mac with MPS:
 | `aspects.assign` | **10–20 min** for ~10k new sentences | FinBERT embedding; longer sentences cost more |
 | `sentiment.score` | **20–30 min** for ~18k new pairs | FinBERT classification |
 | `aggregate.index` | ~2 s | pure SQL + arithmetic |
+
+Measured 2026-09-24 on news: 5,751 headline sentences were embedded and
+assigned in under a minute, and 9,891 pairs scored in about a minute.
+Headlines are short; long earnings sentences sit at the slow end of the table.
 
 Steps 3 and 4 only process *new* work, so subsequent runs are fast. Progress
 appears in the logs; the log file also captures DEBUG detail
@@ -127,6 +135,43 @@ it there by hand. Run it after either.
 # Analyst consensus (fast, safe to re-run daily)
 .venv-plp/bin/python3 -m ingest.yahoo_analyst
 ```
+
+### News
+
+Every news source goes through `ingest/news_filter.py`; rejected and flagged
+articles are logged in `data/news_flagged.csv`. Method and rules:
+[news-data.md](news-data.md).
+
+```bash
+# all news sources; Google News backfilled month by month from 2023-01-01 (~20 min)
+.venv-plp/bin/python3 run_news_pull.py
+
+# one source, or a date range
+.venv-plp/bin/python3 run_news_pull.py --source google --since 2024-01-01 --until 2024-07-01
+.venv-plp/bin/python3 -m ingest.google_news --since 2023-01-01 --query-filter intitle:
+
+# source x bank x month counts; re-check stored news against the current rules (flags only)
+.venv-plp/bin/python3 run_news_pull.py --report
+.venv-plp/bin/python3 run_news_pull.py --audit
+```
+
+Removing articles an audit flags is a manual, approved step; see the two
+clean-ups recorded in news-data.md.
+
+### Snapshot the database after a material change
+
+```bash
+sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"
+gzip -9 -c data/plp.db > data/snapshots/plp-<date>-vN.db.gz
+gunzip -c data/snapshots/plp-<date>-vN.db.gz > /tmp/check.db && sqlite3 /tmp/check.db "PRAGMA integrity_check;"
+shasum -a 256 data/snapshots/plp-<date>-vN.db.gz   # record name, size and checksum in the README
+```
+
+### Scheduling
+
+Not running since 2026-09-26. To run the ingestion daily on a Mac, install
+`scripts/com.plp.dailybatch.plist`; its header has the install, run-now and
+remove commands. It ingests only; run the pipeline steps afterwards.
 
 ### UOB earnings — fetched from the Wayback Machine
 
@@ -331,6 +376,12 @@ the aspect-discovery tests.
 ---
 
 ## Labelling workflow
+
+> **2026-09-26: the labelling design is changing** (DESIGN decision 17):
+> annotators will record aspect and sentiment per sentence, on a re-drawn
+> candidate set. The commands below produce and support the current
+> (sentence, aspect) sheet; don't start labelling it. This section will be
+> updated when the new sheet and tools exist (PLAN.md section 5, week 1).
 
 ```bash
 .venv-plp/bin/python3 -m preprocess.export_candidates --train-dev 800 --test 200

@@ -78,7 +78,9 @@ Rendered for the report: [SVG](img/14-chatbot-components.svg) · [PNG](img/14-ch
 
 ## What this shows and doesn't show
 
-Modules without a class of their own (`chatbot/agent.py`'s functions, `guards`,
+Everything here is built. The dotted arrows are UML "uses" dependencies, not planned
+parts; solid arrows with hollow heads are inheritance, and the filled diamond means a
+`Conversation` owns its turns. Modules without a class of their own (`chatbot/agent.py`'s functions, `guards`,
 `tools`) are drawn as classes marked `module`. The tracker is `_ToolCallTracker` in the
 code; the leading underscore is dropped here because Mermaid would render it oddly. Only
 the members a turn uses are listed. Each backend owns its whole tool-calling loop,

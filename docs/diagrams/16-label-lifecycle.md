@@ -30,7 +30,8 @@ Rendered for the report: [SVG](img/16-label-lifecycle.svg) · [PNG](img/16-label
 
 ## What this shows and doesn't show
 
-**Everything here is planned** (DESIGN decisions 16 and 17, PLAN section 6); it is
+**Everything here is planned** (DESIGN decisions 16 and 17, PLAN section 6), and the state
+names are descriptive, not code; it is
 drawn dashed throughout. The version 1 sheet exists but won't be labelled. The split is
 fixed when the row is drawn and never changes: test rows are sampled at random before any
 model screening and only ever evaluate the model. If the agreement sample falls below
@@ -46,7 +47,7 @@ Each row names the file and line an element comes from, and the text that line m
 | test drawn at random, blind sheet | `docs/PLAN.md:149` | `labelled only from the blind sheet` |
 | suggestions on train/dev only | `docs/PLAN.md:150` | `The local LLM's suggestions are shown for the train/dev` |
 | 150-row agreement sample | `docs/PLAN.md:152` | `Two people label the same 150 rows first` |
-| not-about-bank flag | `docs/annotation-guideline.md:16` | `set `not_about_bank` and stop` |
+| not-about-bank flag | `docs/annotation-guideline.md:16` | `` set `not_about_bank` and stop `` |
 | don't label version 1 | `docs/annotation-guideline.md:7` | `don't label the current` |
 
 ## Planned elements

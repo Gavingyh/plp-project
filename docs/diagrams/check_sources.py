@@ -2,7 +2,8 @@
 Checks every diagram page's sources table against the repository: each
 `path:line` must exist and that line must contain the "symbol checked" text.
 Rows whose source is not a `path:line` (a DESIGN decision, the schema dump)
-are checked for the file's existence only.
+are checked for the file's existence only. A row inside a sources table that
+can't be parsed is itself a failure, so no row is skipped silently.
 
   .venv-plp/bin/python3 docs/diagrams/check_sources.py
 Exits non-zero, listing every failure, if anything doesn't match.
@@ -14,18 +15,32 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 ROOT = HERE.parent.parent
-ROW = re.compile(r"^\|\s*(?P<el>.+?)\s*\|\s*`(?P<src>[^`]+)`\s*\|\s*`(?P<sym>[^`]*)`\s*\|\s*$")
+# The symbol is a code span: `text`, or `` text `` when the text itself has backticks.
+ROW = re.compile(r"^\|\s*(?P<el>.+?)\s*\|\s*`(?P<src>[^`]+)`\s*\|\s*"
+                 r"(?:`` (?P<sym2>.*?) ``|`(?P<sym>[^`]*)`)\s*\|\s*$")
+HEADER = "| element | source | symbol checked |"
 
 
 def check() -> list[str]:
     failures, checked = [], 0
     for page in sorted(HERE.glob("[0-9][0-9]-*.md")):
+        in_table = False
         for n, line in enumerate(page.read_text(encoding="utf-8").splitlines(), 1):
+            if line.strip() == HEADER:
+                in_table = True
+                continue
+            if not in_table or line.startswith("|---"):
+                continue
+            if not line.startswith("|"):
+                in_table = False
+                continue
             m = ROW.match(line)
             if not m:
+                failures.append(f"{page.name}:{n}: sources row not parsed: {line[:120]!r}")
                 continue
             checked += 1
-            src, sym = m["src"], m["sym"]
+            src = m["src"]
+            sym = m["sym2"] if m["sym2"] is not None else m["sym"]
             path, _, lineno = src.partition(":")
             f = ROOT / path
             where = f"{page.name}:{n} ({src})"

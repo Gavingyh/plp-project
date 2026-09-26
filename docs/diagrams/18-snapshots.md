@@ -60,10 +60,10 @@ Each row names the file and line an element comes from, and the text that line m
 | verify | `docs/RUNBOOK.md:166` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
 | record checksum in the README | `docs/RUNBOOK.md:167` | `# record name, size and checksum in the README` |
 | after a material change | `docs/RUNBOOK.md:161` | `### Snapshot the database after a material change` |
-| too large for git | `README.md:96` | ``data/plp.db` (about 103MB) is too large for GitHub` |
-| shared folder | `README.md:97` | `Download the latest snapshot from the team's shared folder` |
-| decompress | `README.md:100` | `gunzip -c plp-2026-09-26.db.gz > data/plp.db` |
-| compare checksum | `README.md:101` | `# should match the checksum below` |
-| snapshot table | `README.md:104` | `| snapshot | size | sha256 | contents |` |
-| embeddings rebuilt, not shared | `README.md:111` | ``python -m aspects.embed_store` rebuilds from the database` |
+| too large for git | `README.md:97` | `` `data/plp.db` (about 103MB) is too large for GitHub `` |
+| shared folder | `README.md:98` | `Download the latest snapshot from the team's shared folder` |
+| decompress | `README.md:101` | `gunzip -c plp-2026-09-26.db.gz > data/plp.db` |
+| compare checksum | `README.md:102` | `# should match the checksum below` |
+| snapshot table | `README.md:105` | `| snapshot | size | sha256 | contents |` |
+| embeddings rebuilt, not shared | `README.md:112` | `` `python -m aspects.embed_store` rebuilds from the database `` |
 | decision | `docs/DESIGN.md:276` | `### 15. The database lives outside git, as dated snapshots` |

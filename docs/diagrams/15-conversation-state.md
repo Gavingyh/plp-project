@@ -32,7 +32,8 @@ Rendered for the report: [SVG](img/15-conversation-state.svg) · [PNG](img/15-co
 
 ## What this shows and doesn't show
 
-The state is a small dictionary: `banks`, `aspect` (empty means overall) and `window`.
+The state names (NoContext, HasContext) describe the situation; the code has no such
+enum. The state is a small dictionary: `banks`, `aspect` (empty means overall) and `window`.
 It is overwritten, not accumulated: the latest tool call wins. **Doc/code disagreement:**
 DESIGN decision 19 says the state tracks the time window, but none of the six tool schemas
 exposes a window argument (`get_sentiment` accepts one in Python, but the model is never

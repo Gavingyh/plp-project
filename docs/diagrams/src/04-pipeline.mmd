@@ -1,0 +1,48 @@
+flowchart TB
+  accTitle: Processing pipeline
+  accDescr: Sources are ingested into documents, split into sentences, embedded, tagged with aspects, scored and aggregated into an index that the dashboard, API and chatbot read. Planned replacements are dashed.
+
+  subgraph src["Sources"]
+    reddit["Reddit<br/>ingest.arctic_shift"]
+    news["News<br/>Google, Yahoo, NewsAPI"]
+    pdfs["Earnings PDFs<br/>ingest.earnings_extract"]
+    cons["Analyst consensus<br/>ingest.yahoo_analyst"]
+  end
+
+  filt{{"News filter<br/>bank named? duplicate?"}}
+  docs[("documents")]
+  acons[("analyst_consensus")]
+  prep["Split into sentences, attribute bank,<br/>drop near-duplicates<br/>preprocess.pipeline"]
+  ner["Bank entity recognition<br/>(planned, DESIGN 18)"]
+  sents[("sentences")]
+  emb["FinBERT embeddings<br/>aspects.embed_store"]
+  disc["Aspect discovery, offline<br/>UMAP + HDBSCAN, aspects.discover"]
+  assign["Seed-centroid aspect assignment<br/>aspects.assign"]
+  llm["LLM aspect classifier<br/>(planned, DESIGN 16)"]
+  sa[("sentence_aspects")]
+  score["Base FinBERT, zero-shot<br/>sentiment.score"]
+  ft["Fine-tuned FinBERT<br/>(planned, PLAN section 3)"]
+  as[("aspect_sentiment")]
+  agg["Index: windows, sources,<br/>volume floor, shrinkage<br/>aggregate.index"]
+  idx[("sentiment_index")]
+  ui["Dashboard, REST API, chatbot"]
+
+  reddit --> docs
+  news --> filt --> docs
+  pdfs --> docs
+  cons --> acons
+  docs --> prep --> sents
+  ner -.-> prep
+  sents --> emb --> assign --> sa
+  emb -.-> disc
+  disc -. "informs the taxonomy" .-> assign
+  llm -. "replaces" .-> assign
+  sa --> score --> as
+  ft -. "replaces" .-> score
+  as --> agg --> idx
+  idx --> ui
+  sents -- "evidence" --> ui
+  acons --> ui
+
+  classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
+  class ner,llm,ft planned;

@@ -1,0 +1,84 @@
+erDiagram
+  accTitle: Data model of plp.db
+  accDescr: Six SQLite tables. Documents split into sentences; sentences get aspects and sentiment; the index is derived from sentiment; analyst consensus stands alone.
+
+  documents {
+    TEXT doc_id PK
+    TEXT source
+    TEXT source_detail
+    TEXT bank
+    TEXT doc_type
+    TEXT title
+    TEXT body
+    TEXT published_at
+    TEXT url
+    TEXT ingested_at
+    TEXT raw
+    INTEGER has_analyst_view "added later by ingest/analyst_tag.py"
+  }
+  sentences {
+    TEXT sentence_id PK
+    TEXT doc_id FK
+    TEXT bank
+    TEXT text
+    INTEGER char_start
+    INTEGER char_end
+    TEXT published_at
+    TEXT source
+    TEXT url
+    TEXT norm_hash
+    TEXT processed_at
+  }
+  sentence_aspects {
+    TEXT sentence_id PK, FK
+    TEXT aspect PK
+    REAL similarity
+    TEXT assigned_at
+  }
+  aspect_sentiment {
+    TEXT sentence_id PK, FK
+    TEXT aspect PK
+    TEXT label
+    REAL confidence
+    TEXT model_version PK
+    TEXT scored_at
+  }
+  sentiment_index {
+    TEXT bank PK
+    TEXT aspect PK
+    TEXT window PK
+    TEXT source PK
+    REAL score
+    INTEGER n
+    INTEGER pos_n
+    INTEGER neu_n
+    INTEGER neg_n
+    REAL confidence_mean
+    TEXT model_version PK
+    TEXT computed_at
+  }
+  analyst_consensus {
+    TEXT bank PK
+    TEXT as_of_date PK
+    TEXT ticker
+    INTEGER n_analysts
+    TEXT recommendation_key
+    REAL recommendation_mean
+    REAL target_mean
+    REAL target_median
+    REAL target_high
+    REAL target_low
+    REAL current_price
+    INTEGER strong_buy
+    INTEGER buy
+    INTEGER hold
+    INTEGER sell
+    INTEGER strong_sell
+    TEXT fetched_at
+  }
+
+  documents ||--o{ sentences : "doc_id, declared key"
+  sentences ||--o{ sentence_aspects : "sentence_id, declared key"
+  sentences ||--o{ aspect_sentiment : "sentence_id, declared key"
+  sentence_aspects ||..o{ aspect_sentiment : "sentence_id and aspect, joined by convention"
+  aspect_sentiment }o..o{ sentiment_index : "derived: aggregated by bank, aspect, window, source"

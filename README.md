@@ -25,6 +25,7 @@ sentiment store.
 | **[docs/HANDOFF.md](docs/HANDOFF.md)** | Start here if you're new to the project — read order, open decisions, what needs a human |
 | [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | What the system does, for whom, with acceptance criteria and rubric traceability |
 | [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Data model, API contract, module map, configuration, testing |
+| [docs/diagrams/README.md](docs/diagrams/README.md) | Twenty diagrams of the system (data model, pipeline, sequences, chatbot, labelling, plan), each traced to the code, with a shortlist for the report |
 | [learning/](learning/) | Study material on the concepts and techniques used, by subject |
 | [docs/data-viability.md](docs/data-viability.md) | Evidence appendix — per-source findings from testing each data source |
 | [docs/news-data.md](docs/news-data.md) | News dataset: sources, coverage, filter and dedup rules, known gaps, counts by month |

@@ -402,6 +402,24 @@ the aspect-discovery tests.
 
 ---
 
+## Diagrams
+
+The diagrams in `docs/diagrams/` are drawn by hand from the code, so update them when
+the code they describe changes. Edit the `.mmd` in `docs/diagrams/src/`, copy it into
+the page's Mermaid block, then:
+
+```bash
+docs/diagrams/render_diagrams.sh                       # all; or pass a prefix, e.g. 07
+.venv-plp/bin/python3 docs/diagrams/check_sources.py   # every sources-table line still says what it claims
+```
+
+Rendering needs Node (`npx` fetches the Mermaid CLI). `docs/diagrams/test_diagrams.py`
+fails if a page and its `.mmd` differ; `pytest -q` from the repository root runs it, but
+`pytest tests/` (above) doesn't. See
+[docs/diagrams/README.md](diagrams/README.md).
+
+---
+
 ## Labelling workflow
 
 > **2026-09-26: the labelling design is changing** (DESIGN decision 17):

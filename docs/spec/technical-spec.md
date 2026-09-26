@@ -17,7 +17,8 @@ are marked as such and sequenced in [PLAN.md](../PLAN.md).
 
 The pipeline diagram is in [DESIGN.md](../DESIGN.md#what-the-system-does).
 Rather than redraw it, here is one sentence's journey through the system, with
-`sentence_id` as the thread that ties it together.
+`sentence_id` as the thread that ties it together. Twenty more diagrams, each
+traced to the code, are in [docs/diagrams](../diagrams/README.md).
 
 A DBS analyst-call transcript PDF is downloaded to
 `data/earnings_pdfs/DBS/`. `ingest.earnings_extract` extracts prose lines from it,

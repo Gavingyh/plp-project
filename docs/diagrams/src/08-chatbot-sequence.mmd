@@ -1,0 +1,40 @@
+sequenceDiagram
+  accTitle: Chatbot sequence from the dashboard
+  accDescr: The Chat tab hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
+
+  actor user as Investor
+  participant ui as Dashboard Chat tab
+  participant conv as Conversation
+  participant turn as answer_turn
+  participant g as chatbot.guards
+  participant be as Backend (Ollama)
+  participant llm as Language model
+  participant tools as Tools
+  participant db as plp.db and embeddings
+
+  user->>ui: types a question
+  ui->>conv: ask(question)
+  conv->>turn: question, last three turns, state
+  turn->>g: advice_reply, scope_reply
+  alt a guard matches
+    g-->>turn: fixed reply
+  else the model answers
+    turn->>be: question, system prompt with state, tools, history
+    loop until a final answer, at most eight model calls
+      be->>llm: messages, tool schemas, temperature 0.2
+      llm-->>be: tool calls, or final text
+      opt tool calls
+        be->>tools: execute(name, arguments)
+        tools->>db: SELECT index rows, sentences, embeddings
+        db-->>tools: rows
+        tools-->>be: JSON result, recorded for the checks
+      end
+    end
+    be-->>turn: answer text
+    turn->>g: cited ids and figures against recorded results
+    g-->>turn: anything unverified
+  end
+  turn-->>conv: TurnResult, with any warnings
+  conv->>conv: update state from the tool calls, keep the turn
+  conv-->>ui: answer
+  ui-->>user: shows the answer

@@ -1,0 +1,78 @@
+# Chatbot: one turn from the dashboard
+
+Which component calls which, in order, when an investor asks a question in the dashboard's Chat tab. For the report's system-design section and for debugging a turn.
+
+**Legend.** Solid shapes and arrows are built and running. Dashed shapes and arrows labelled *planned* are decided but not yet built, with the DESIGN.md decision that records them. Shapes marked *not installed* exist in the repository but aren't running anywhere.
+
+```mermaid
+sequenceDiagram
+  accTitle: Chatbot sequence from the dashboard
+  accDescr: The Chat tab hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
+
+  actor user as Investor
+  participant ui as Dashboard Chat tab
+  participant conv as Conversation
+  participant turn as answer_turn
+  participant g as chatbot.guards
+  participant be as Backend (Ollama)
+  participant llm as Language model
+  participant tools as Tools
+  participant db as plp.db and embeddings
+
+  user->>ui: types a question
+  ui->>conv: ask(question)
+  conv->>turn: question, last three turns, state
+  turn->>g: advice_reply, scope_reply
+  alt a guard matches
+    g-->>turn: fixed reply
+  else the model answers
+    turn->>be: question, system prompt with state, tools, history
+    loop until a final answer, at most eight model calls
+      be->>llm: messages, tool schemas, temperature 0.2
+      llm-->>be: tool calls, or final text
+      opt tool calls
+        be->>tools: execute(name, arguments)
+        tools->>db: SELECT index rows, sentences, embeddings
+        db-->>tools: rows
+        tools-->>be: JSON result, recorded for the checks
+      end
+    end
+    be-->>turn: answer text
+    turn->>g: cited ids and figures against recorded results
+    g-->>turn: anything unverified
+  end
+  turn-->>conv: TurnResult, with any warnings
+  conv->>conv: update state from the tool calls, keep the turn
+  conv-->>ui: answer
+  ui-->>user: shows the answer
+```
+
+Rendered for the report: [SVG](img/08-chatbot-sequence.svg) · [PNG](img/08-chatbot-sequence.png)
+
+## What this shows and doesn't show
+
+The REST API follows the same path from `Conversation` onwards, rebuilding the
+conversation from the `history` the client sends ([13](13-api-chat.md)). With a
+hosted-model key, the backend calls that service instead of Ollama; the loop is the same.
+The citation check that runs alongside the guards' checks lives in the tool-call tracker
+in `chatbot/agent.py`. The model's own reasoning between calls is not shown.
+
+## Sources
+
+Each row names the file and line an element comes from, and the text that line must contain; `check_sources.py` verifies them.
+
+| element | source | symbol checked |
+|---|---|---|
+| Chat tab hands over the question | `dashboard/app.py:360` | `answer = st.session_state.conversation.ask(question).answer` |
+| Conversation.ask | `chatbot/agent.py:258` | `def ask(self, question: str, verbose: bool = False)` |
+| last three turns and state | `chatbot/agent.py:259` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
+| guards first | `chatbot/agent.py:157` | `for guard, reply in (("advice", advice_reply(question, context_banks)),` |
+| backend chosen | `chatbot/agent.py:164` | `backend = backend or get_backend(backend_name)` |
+| model call | `chatbot/backends/ollama_backend.py:77` | `data = self._chat(messages, ollama_tools)` |
+| temperature sent | `chatbot/backends/ollama_backend.py:52` | `"options": {"temperature": self.temperature}` |
+| tool executed and recorded | `chatbot/agent.py:112` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
+| tools read the database | `chatbot/tools.py:61` | `def get_sentiment(bank: str` |
+| evidence search uses embeddings | `chatbot/retrieval.py:103` | `query_vec = embed_sentences([query])[0]` |
+| figures checked against results | `chatbot/agent.py:184` | `figures = unverified_numbers(` |
+| state updated | `chatbot/agent.py:261` | `self._update_state(r)` |
+| turn kept | `chatbot/agent.py:262` | `self.turns.append(r)` |

@@ -1,0 +1,114 @@
+# Live schema of data/plp.db, dumped 2026-09-26 (read-only: PRAGMA and SELECT only)
+
+## analyst_consensus  (rows: 14)
+columns (cid, name, type, notnull, default, pk):
+  (0, 'bank', 'TEXT', 1, None, 1)
+  (1, 'as_of_date', 'TEXT', 1, None, 2)
+  (2, 'ticker', 'TEXT', 1, None, 0)
+  (3, 'n_analysts', 'INTEGER', 0, None, 0)
+  (4, 'recommendation_key', 'TEXT', 0, None, 0)
+  (5, 'recommendation_mean', 'REAL', 0, None, 0)
+  (6, 'target_mean', 'REAL', 0, None, 0)
+  (7, 'target_median', 'REAL', 0, None, 0)
+  (8, 'target_high', 'REAL', 0, None, 0)
+  (9, 'target_low', 'REAL', 0, None, 0)
+  (10, 'current_price', 'REAL', 0, None, 0)
+  (11, 'strong_buy', 'INTEGER', 0, None, 0)
+  (12, 'buy', 'INTEGER', 0, None, 0)
+  (13, 'hold', 'INTEGER', 0, None, 0)
+  (14, 'sell', 'INTEGER', 0, None, 0)
+  (15, 'strong_sell', 'INTEGER', 0, None, 0)
+  (16, 'fetched_at', 'TEXT', 1, None, 0)
+foreign keys (id, seq, table, from, to, on_update, on_delete, match): none
+indexes (seq, name, unique, origin, partial):
+  (0, 'idx_analyst_consensus_bank', 0, 'c', 0)
+  (1, 'sqlite_autoindex_analyst_consensus_1', 1, 'pk', 0)
+
+## aspect_sentiment  (rows: 90117)
+columns (cid, name, type, notnull, default, pk):
+  (0, 'sentence_id', 'TEXT', 1, None, 1)
+  (1, 'aspect', 'TEXT', 1, None, 2)
+  (2, 'label', 'TEXT', 1, None, 0)
+  (3, 'confidence', 'REAL', 1, None, 0)
+  (4, 'model_version', 'TEXT', 1, None, 3)
+  (5, 'scored_at', 'TEXT', 1, None, 0)
+foreign keys (id, seq, table, from, to, on_update, on_delete, match):
+  (0, 0, 'sentences', 'sentence_id', 'sentence_id', 'NO ACTION', 'NO ACTION', 'NONE')
+indexes (seq, name, unique, origin, partial):
+  (0, 'idx_aspect_sentiment_model', 0, 'c', 0)
+  (1, 'idx_aspect_sentiment_aspect', 0, 'c', 0)
+  (2, 'sqlite_autoindex_aspect_sentiment_1', 1, 'pk', 0)
+
+## documents  (rows: 27795)
+columns (cid, name, type, notnull, default, pk):
+  (0, 'doc_id', 'TEXT', 0, None, 1)
+  (1, 'source', 'TEXT', 1, None, 0)
+  (2, 'source_detail', 'TEXT', 0, None, 0)
+  (3, 'bank', 'TEXT', 1, None, 0)
+  (4, 'doc_type', 'TEXT', 1, None, 0)
+  (5, 'title', 'TEXT', 0, None, 0)
+  (6, 'body', 'TEXT', 1, None, 0)
+  (7, 'published_at', 'TEXT', 1, None, 0)
+  (8, 'url', 'TEXT', 1, None, 0)
+  (9, 'ingested_at', 'TEXT', 1, None, 0)
+  (10, 'raw', 'TEXT', 0, None, 0)
+  (11, 'has_analyst_view', 'INTEGER', 0, '0', 0)
+foreign keys (id, seq, table, from, to, on_update, on_delete, match): none
+indexes (seq, name, unique, origin, partial):
+  (0, 'idx_documents_published_at', 0, 'c', 0)
+  (1, 'idx_documents_source', 0, 'c', 0)
+  (2, 'idx_documents_bank', 0, 'c', 0)
+  (3, 'sqlite_autoindex_documents_1', 1, 'pk', 0)
+
+## sentence_aspects  (rows: 90117)
+columns (cid, name, type, notnull, default, pk):
+  (0, 'sentence_id', 'TEXT', 1, None, 1)
+  (1, 'aspect', 'TEXT', 1, None, 2)
+  (2, 'similarity', 'REAL', 1, None, 0)
+  (3, 'assigned_at', 'TEXT', 1, None, 0)
+foreign keys (id, seq, table, from, to, on_update, on_delete, match):
+  (0, 0, 'sentences', 'sentence_id', 'sentence_id', 'NO ACTION', 'NO ACTION', 'NONE')
+indexes (seq, name, unique, origin, partial):
+  (0, 'idx_sentence_aspects_aspect', 0, 'c', 0)
+  (1, 'sqlite_autoindex_sentence_aspects_1', 1, 'pk', 0)
+
+## sentences  (rows: 42746)
+columns (cid, name, type, notnull, default, pk):
+  (0, 'sentence_id', 'TEXT', 0, None, 1)
+  (1, 'doc_id', 'TEXT', 1, None, 0)
+  (2, 'bank', 'TEXT', 1, None, 0)
+  (3, 'text', 'TEXT', 1, None, 0)
+  (4, 'char_start', 'INTEGER', 0, None, 0)
+  (5, 'char_end', 'INTEGER', 0, None, 0)
+  (6, 'published_at', 'TEXT', 1, None, 0)
+  (7, 'source', 'TEXT', 1, None, 0)
+  (8, 'url', 'TEXT', 1, None, 0)
+  (9, 'norm_hash', 'TEXT', 1, None, 0)
+  (10, 'processed_at', 'TEXT', 1, None, 0)
+foreign keys (id, seq, table, from, to, on_update, on_delete, match):
+  (0, 0, 'documents', 'doc_id', 'doc_id', 'NO ACTION', 'NO ACTION', 'NONE')
+indexes (seq, name, unique, origin, partial):
+  (0, 'idx_sentences_norm_hash', 0, 'c', 0)
+  (1, 'idx_sentences_bank', 0, 'c', 0)
+  (2, 'idx_sentences_doc', 0, 'c', 0)
+  (3, 'sqlite_autoindex_sentences_1', 1, 'pk', 0)
+
+## sentiment_index  (rows: 257)
+columns (cid, name, type, notnull, default, pk):
+  (0, 'bank', 'TEXT', 1, None, 1)
+  (1, 'aspect', 'TEXT', 1, None, 2)
+  (2, 'window', 'TEXT', 1, None, 3)
+  (3, 'source', 'TEXT', 1, None, 4)
+  (4, 'score', 'REAL', 1, None, 0)
+  (5, 'n', 'INTEGER', 1, None, 0)
+  (6, 'pos_n', 'INTEGER', 1, None, 0)
+  (7, 'neu_n', 'INTEGER', 1, None, 0)
+  (8, 'neg_n', 'INTEGER', 1, None, 0)
+  (9, 'confidence_mean', 'REAL', 1, None, 0)
+  (10, 'model_version', 'TEXT', 1, None, 5)
+  (11, 'computed_at', 'TEXT', 1, None, 0)
+foreign keys (id, seq, table, from, to, on_update, on_delete, match): none
+indexes (seq, name, unique, origin, partial):
+  (0, 'sqlite_autoindex_sentiment_index_1', 1, 'pk', 0)
+
+PRAGMA foreign_keys (enforcement on this connection): 0

@@ -40,9 +40,13 @@ anything you draw from it.
   `run_daily_batch.py`, `ingest.*`), no pipeline step (`preprocess.*`,
   `aspects.*`, `sentiment.*`, `aggregate.*`), no training, no chatbot or
   Ollama calls. Everything you need is in the code, the docs and the schema.
-- Don't modify existing code. The only code you add is the render script
-  and its test (section 4). Documentation edits are limited to adding links
-  (section 5).
+- Don't modify existing code. The only code you add is the render script,
+  the sources-check script and one test (section 4). Documentation edits are
+  limited to adding links (section 5).
+- **Everything you create lives under `docs/`**, in `docs/diagrams/`: the
+  Mermaid sources, the pages, the rendered images, the schema dump and both
+  scripts. The one exception is `tests/test_diagrams.py`, which must sit in
+  `tests/` for pytest to find it. The run log goes in `docs/HANDOFF.md`.
 - `data/labeled/`, `data/snapshots/`, `.env`: don't open or change.
 
 ### No-hallucination protocol
@@ -76,10 +80,12 @@ anything you draw from it.
 
 ### Working conventions
 
-- Create branch `overnight/diagrams` from `main` and commit there, one
-  commit per diagram group (sections 3.A–3.F), plus one for the render
-  script and one for the verification pass. Imperative subject, a body
-  saying why, the attribution trailer from your own instructions.
+- **Work on `main`; don't create a branch.** Before the first commit, check
+  `git status`: if there are uncommitted changes you didn't make, leave them
+  alone and stage only your own files, by path, never with `git add -A` or
+  `git add .`. One commit per diagram group (sections 3.A–3.F), plus one for
+  the scripts and test and one for the verification pass. Imperative subject,
+  a body saying why, the attribution trailer from your own instructions.
   **Do not push.**
 - Keep a run log at the end of `docs/HANDOFF.md` under a new heading
   "Overnight run log — diagrams (<date>)": done, skipped and why,
@@ -137,7 +143,8 @@ anything you draw from it.
 
 ## 1. Orientation (do first)
 
-1. `git status`, `git log --oneline -5`; create the branch.
+1. `git status`, `git log --oneline -5`; confirm you are on `main` and note
+   any uncommitted changes that aren't yours, so you never stage them.
 2. Dump the live schema to `docs/diagrams/schema-2026-<mm>-<dd>.txt`:
    for each table, `PRAGMA table_info`, `PRAGMA foreign_key_list`,
    `PRAGMA index_list`, and `SELECT COUNT(*)`. This file is the evidence the
@@ -323,7 +330,7 @@ In this order, stopping when time runs out:
 
 ## 4. Render script and test
 
-- `scripts/render_diagrams.sh`: for every `docs/diagrams/src/*.mmd`,
+- `docs/diagrams/render_diagrams.sh`: for every `docs/diagrams/src/*.mmd`,
   render SVG and PNG into `docs/diagrams/img/` with a white background
   (`-b white`) and a PNG width that reads on an A4 page (`-w 1600`,
   scale 2). Stop with a non-zero exit and the file name on the first
@@ -332,8 +339,10 @@ In this order, stopping when time runs out:
   block equals `src/NN-*.mmd` exactly; every `.mmd` has a page; every page
   has a sources table. No rendering in the test (no Node dependency in
   pytest).
-- Document the script in `docs/RUNBOOK.md` with one short section:
-  "Diagrams: edit the `.mmd`, copy it into the page, run the script".
+- Document both scripts in `docs/RUNBOOK.md` with one short section:
+  "Diagrams: edit the `.mmd`, copy it into the page, run
+  `docs/diagrams/render_diagrams.sh`, then
+  `.venv-plp/bin/python3 docs/diagrams/check_sources.py`".
 
 ---
 
@@ -353,8 +362,8 @@ In this order, stopping when time runs out:
 ## 6. Verification pass (mandatory)
 
 1. **Render everything** with the script. Every core diagram must render.
-2. **Sources check**: write a small script (commit it under `scripts/`)
-   that reads every sources table and confirms each `path:line` exists and
+2. **Sources check**: write `docs/diagrams/check_sources.py`, run with the
+   venv Python, that reads every sources table and confirms each `path:line` exists and
    that line contains its "symbol checked" text. Fix every failure.
 3. **Schema check**: confirm every entity and attribute in
    `03-data-model` matches the schema dump from section 1: same tables,
@@ -376,12 +385,13 @@ In this order, stopping when time runs out:
 
 ## 7. Deliverables checklist
 
-- [ ] Branch `overnight/diagrams`, logical commits, nothing pushed
+- [ ] Commits on `main`, one per group, only your own files staged, nothing pushed
 - [ ] Schema dump `docs/diagrams/schema-<date>.txt`
 - [ ] Core diagrams 01–10: `.mmd`, page with sources table, SVG, PNG
 - [ ] Extended diagrams 11–20 as far as time allowed, same form
-- [ ] `scripts/render_diagrams.sh`, the sources-check script,
+- [ ] `docs/diagrams/render_diagrams.sh`, `docs/diagrams/check_sources.py`,
       `tests/test_diagrams.py`, RUNBOOK section
+- [ ] Nothing created outside `docs/` except `tests/test_diagrams.py`
 - [ ] `docs/diagrams/README.md` with the index, legend and report shortlist
 - [ ] Links added in `README.md` and the technical spec, nothing else changed
 - [ ] Verification pass done; tests green; run log in `docs/HANDOFF.md`

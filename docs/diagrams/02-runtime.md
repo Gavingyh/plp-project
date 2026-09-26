@@ -68,7 +68,7 @@ Each row names the file and line an element comes from, and the text that line m
 | Ollama started if needed | `scripts/start.sh:203` | `start_ollama() {` |
 | plp.db location | `ingest/db.py:17` | `DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")` |
 | embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")` |
-| news filter log location | `ingest/news_filter.py:49` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
+| news filter log location | `ingest/news_filter.py:53` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
 | dashboard reads the database | `dashboard/app.py:23` | `from ingest.db import get_connection` |
 | API reads the database | `api/main.py:28` | `from ingest.db import get_connection` |
 | evidence search reads the embeddings | `chatbot/retrieval.py:98` | `all_ids, all_vecs = load_for_search()` |

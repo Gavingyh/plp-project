@@ -87,13 +87,14 @@ grounded chatbot; a labelling workflow for the fine-tuning dataset.
 | **Google News RSS** | Headlines with publisher and date, found by date-windowed searches, Jan 2023 to Sep 2026. 5,685 documents, 5,447 sentences | Backfill by month; safe to re-run | none | No official API; results are Google's ranking, not a census, and favour recent articles, so monthly volume rises towards the present. Headlines only; stored links are Google redirects. Filtered and deduplicated as described in [news-data.md](../news-data.md). |
 | **Yahoo Finance news** | Headline and summary for SGX and ADR tickers. 114 documents, 344 sentences | On demand | none | Unofficial endpoint (`yfinance`); no date parameter and no paging, so no history beyond about 12 months, and three daily runs added nothing new. |
 | **Yahoo Finance consensus** | Analyst counts, rating distribution, mean and median price targets | On demand, safe to re-run | none | **Unofficial API.** No published terms bless it; it needs a cookie and crumb handshake. Provides aggregates, not analyst reasoning. Must not be described as "analyst reports". |
+| **CNA** | Full article text, found through the Wayback Machine's index of CNA URLs that name a bank. 207 documents, 1,599 sentences, Jan 2023 to Sep 2026 | Backfill; re-runs fetch only what isn't cached | none | Covers only what the archive captured, 0 to 13 articles a month. Fetched at CNA's robots.txt crawl delay; the text is kept out of git (DESIGN decision 20) |
 | **NewsAPI** | Article title and description. 13 documents, 26 sentences | On demand | `NEWSAPI_KEY` | Free tier gives roughly one month of lookback and truncates body text, so usable text is title plus description. 12 of the original 20 rows named no bank and were removed on 2026-09-24. |
 | **Alpha Vantage** | Nothing | — | `ALPHAVANTAGE_KEY` | Does not index SGX-listed tickers at all, confirmed live across three ticker formats for all three banks. Adapter retained in case coverage is added. |
 
 The proposal committed to four streams. All four exist. Reddit carries most
 of the text, earnings and news are substantial, and consensus is structured
-data rather than text. A fifth feed, CNA, has a scraper but is not yet loaded
-(PLAN.md, section 4).
+data rather than text. A fifth, CNA, adds full-text news articles
+(DESIGN decision 20).
 
 ---
 

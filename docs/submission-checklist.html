@@ -188,8 +188,8 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="why">About 200 sentences, marking which bank each mention refers to, weighted to the hard cases: POSB, lowercase "dbs", UOB Kay Hian, DBS Vickers, Bank of Singapore, Aston Martin DBS. Roughly two hours.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-cna"><div class="body">
-        <div class="title"><label for="p-cna">Load the CNA feed</label><span class="tag when">By ~11 Oct</span></div>
-        <div class="why">Whoever owns the CNA scraper decides how it goes into the database; it must pass the same news filter so the 103 CNA headlines already stored aren't double-counted. Discovery re-runs after this.</div>
+        <div class="title"><label for="p-cna">Review the CNA load</label><span class="tag when">By ~11 Oct</span></div>
+        <div class="why">CNA was loaded on 26 Sep: 207 full-text articles from 2023, found through the Wayback Machine (DESIGN decision 20). Whoever owns the CNA scraper should spot-check a few articles and read the coverage gaps in <code>docs/news-data.md</code>. Discovery can re-run now.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-relevance"><div class="body">
         <div class="title"><label for="p-relevance">Decide on stricter relevance filtering (O5)</label><span class="tag when">By ~12 Oct</span></div>
@@ -286,8 +286,8 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="why">About 20 minutes mapped to the rubric, with a part for each member.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="d-cnaload"><div class="body">
-        <div class="title"><label for="d-cnaload">Write the CNA loader</label><span class="tag decide">If the CNA owner wants it</span></div>
-        <div class="why">Route CNA articles through the news filter so stored CNA headlines aren't double-counted; the scraper stays as it is.</div>
+        <div class="title"><label for="d-cnaload">Write the CNA loader</label><span class="tag decide">Done 26 Sep</span></div>
+        <div class="why"><code>ingest/cna_archive.py</code> backfills CNA from 2023 and loads it through the news filter, which now keeps a full-text article over a stored bare headline without counting the headline twice. The RSS scraper stays as it is, and its output loads the same way.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="d-relevance"><div class="body">
         <div class="title"><label for="d-relevance">Tighten relevance filtering</label><span class="tag decide">If O5 says yes</span></div>
@@ -314,7 +314,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div><h3>People</h3><ul><li>Rotate keys; fill roles</li><li>Check the classifier's validation sample</li><li>Book the supervisor meeting</li></ul></div>
         <div><h3>AI</h3><ul><li>Aspect classifier, full run overnight</li><li>Re-draw and pre-label candidates</li></ul></div></div>
       <div class="week"><div class="d">5 Oct<small>gate: κ ≥ 0.6; O1, O2 decided</small></div>
-        <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>Supervisor meeting</li><li>NER gold set; CNA loaded</li></ul></div>
+        <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>Supervisor meeting</li><li>NER gold set; CNA load reviewed</li></ul></div>
         <div><h3>AI</h3><ul><li>Discovery re-run and sweep; NER</li><li>Frozen chatbot evaluation set; dashboard fixes</li><li>Report structure and drafts</li></ul></div></div>
       <div class="week"><div class="d">12 Oct<small>gate: ~1,000 labelled; model trained</small></div>
         <div><h3>People</h3><ul><li>Finish labelling</li><li>Decide O5</li></ul></div>

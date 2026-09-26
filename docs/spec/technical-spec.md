@@ -53,7 +53,7 @@ criticise an app in consecutive sentences.
 
 | module | responsibility | entry points |
 |---|---|---|
-| `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection, news relevance filter and cross-source dedup | `arctic_shift`, `google_news`, `yahoo_news`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, `news_filter`, `cna_scraper` (writes JSON, not the database), plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
+| `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection, news relevance filter and cross-source dedup | `arctic_shift`, `google_news`, `yahoo_news`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, `news_filter`, `cna_scraper` (RSS to a JSON file), `cna_archive` (CNA backfill into the database), plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
 | repository root | Batch entry points | `run_news_pull.py` (every news source, then a source × bank × month table; `--audit` re-checks stored news), `run_daily_batch.py` (news, Reddit, consensus) |
 | `preprocess/` | Documents to sentences; labelling exports | `pipeline`, `export_candidates`, `export_blind_test` |
 | `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison | `assign`, `discover`, `compare_taxonomies`, `embed_store` |
@@ -89,7 +89,7 @@ One row per ingested item, before segmentation.
 | column | type | meaning |
 |---|---|---|
 | `doc_id` | TEXT PK | Deterministic hash of source plus native ID. Makes ingestion idempotent. |
-| `source` | TEXT | `newsapi` \| `alphavantage` \| `arctic_shift` \| `earnings` |
+| `source` | TEXT | `arctic_shift` \| `earnings` \| `google_news` \| `yahoo_news` \| `newsapi` \| `cna` \| `alphavantage` |
 | `source_detail` | TEXT | Publication name, subreddit, or document type |
 | `bank` | TEXT | `DBS` \| `OCBC` \| `UOB` \| `MULTI` |
 | `doc_type` | TEXT | `article` \| `submission` \| `comment` \| `earnings_release` |
@@ -259,7 +259,7 @@ changed silently.
 |---|---|---|---|
 | `SHRINKAGE_K` | 5 | `aggregate/index.py` | `score × n/(n+k)` |
 | `MIN_VOLUME_FOR_SCORE` | 5 | `chatbot/tools.py` | Below this, report insufficient data |
-| `_SOURCE_WEIGHT` | earnings 1.0, arctic_shift 1.0, newsapi 1.5, alphavantage 1.5 | `aggregate/index.py` | Earnings was 3.0 until it became the second-largest and most positively skewed source |
+| `_SOURCE_WEIGHT` | earnings 1.0, arctic_shift 1.0; news sources 1.5 (google_news, yahoo_news, newsapi, cna, alphavantage) | `aggregate/index.py` | Earnings was 3.0 until it became the second-largest and most positively skewed source |
 | `_LEXICAL_WEIGHT` | 0.15 | `chatbot/retrieval.py` | Keyword-overlap boost over cosine similarity |
 | `similarity_floor` | 0.65 | `config/aspects.yaml` | Below it, a sentence falls to `other` |
 
@@ -393,7 +393,7 @@ loss.
 
 ## 10. Testing
 
-251 tests, no network calls. External APIs are mocked with captured real
+379 tests, no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
 

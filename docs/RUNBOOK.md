@@ -158,6 +158,15 @@ articles are logged in `data/news_flagged.csv`. Method and rules:
 Removing articles an audit flags is a manual, approved step; see the two
 clean-ups recorded in news-data.md.
 
+CNA is separate from `run_news_pull.py` because it is slow: it fetches every
+article's full text at CNA's 10-second crawl delay (about 75 minutes for the
+2023–2026 backfill). A re-run only fetches what `data/cna/` doesn't hold yet.
+
+```bash
+caffeinate -i .venv-plp/bin/python3 -m ingest.cna_archive --since 2023-01-01 --until 2026-09-26
+.venv-plp/bin/python3 -m ingest.cna_archive --load-only --since 2023-01-01 --until 2026-09-26  # cache only
+```
+
 ### Snapshot the database after a material change
 
 ```bash
@@ -391,7 +400,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-251 tests. No network calls — external APIs are mocked with captured real
+379 tests. No network calls — external APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
 

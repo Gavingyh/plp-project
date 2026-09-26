@@ -107,8 +107,10 @@ from the code's `CREATE TABLE`: `documents.has_analyst_view` is added afterwards
 `ingest/analyst_tag.py` with `ALTER TABLE`, so a database built from `ingest/db.py` alone
 lacks it.
 
-Rows on 2026-09-26: documents 27,795; sentences 42,746; sentence_aspects 90,117;
-aspect_sentiment 90,117; sentiment_index 257; analyst_consensus 14.
+Rows in the schema dump, taken on 2026-09-26 before CNA was loaded: documents 27,795;
+sentences 42,746; sentence_aspects 90,117; aspect_sentiment 90,117; sentiment_index 257;
+analyst_consensus 14. Loading CNA the same day added rows but changed no table or column;
+current counts are in `docs/STATUS.md`.
 
 ## Sources
 

@@ -11,7 +11,7 @@ flowchart TB
 
   subgraph src["Sources"]
     reddit["Reddit<br/>ingest.arctic_shift"]
-    news["News<br/>Google, Yahoo, NewsAPI"]
+    news["News<br/>Google, Yahoo, NewsAPI, CNA"]
     pdfs["Earnings PDFs<br/>ingest.earnings_extract"]
     cons["Analyst consensus<br/>ingest.yahoo_analyst"]
   end
@@ -77,10 +77,11 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | Reddit adapter | `ingest/arctic_shift.py:40` | `BASE_URL = "https://arctic-shift` |
-| news filter | `ingest/news_filter.py:245` | `def filter_and_dedup(` |
+| news filter | `ingest/news_filter.py:260` | `def filter_and_dedup(` |
+| news sources | `ingest/news_filter.py:55` | `NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news", "cna")` |
 | consensus writes analyst_consensus | `ingest/yahoo_analyst.py:131` | `def upsert(rows` |
-| preprocessing | `preprocess/pipeline.py:87` | `def run() -> dict:` |
-| bank attribution per sentence | `preprocess/pipeline.py:59` | `def _resolve_sentence_bank(` |
+| preprocessing | `preprocess/pipeline.py:90` | `def run() -> dict:` |
+| bank attribution per sentence | `preprocess/pipeline.py:62` | `def _resolve_sentence_bank(` |
 | sentence splitting | `preprocess/segment.py:35` | `def segment(text: str)` |
 | embeddings | `aspects/embed_store.py:47` | `def update() -> dict:` |
 | FinBERT embedding model | `aspects/embed.py:15` | `MODEL_NAME = "ProsusAI/finbert"` |

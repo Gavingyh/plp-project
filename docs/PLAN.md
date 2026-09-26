@@ -82,8 +82,8 @@ Owners are roles, filled offline (D4). One person can hold more than one role.
 split is detailed in the checklist.
 
 **Data and NER**
-- Load the CNA feed through `ingest/news_filter.py` (whoever owns the CNA
-  scraper decides how)
+- ~~Load the CNA feed through `ingest/news_filter.py`~~ Done 2026-09-26:
+  207 articles from 2023 on (DESIGN decision 20)
 - Bank NER: gold set of ~200 sentences (people), the recognition and
   resolution step and its evaluation (AI)
 - Final data snapshot and dataset description for submission (AI, reviewed)
@@ -95,7 +95,7 @@ split is detailed in the checklist.
 **Modelling**
 - LLM aspect classifier: prompt, validation sample, full run (AI; a person
   checks the validation sample)
-- Aspect discovery re-run once CNA is loaded, with a `min_cluster_size` sweep
+- Aspect discovery re-run now that CNA is loaded, with a `min_cluster_size` sweep
   (AI runs it; people interpret it)
 - Fine-tuning across three seeds, evaluation against baselines, re-scoring
   the corpus (AI, after labelling)
@@ -123,7 +123,7 @@ an aspect), so the aspect classifier comes first.
 | week | gate at the end of the week | people | AI |
 |---|---|---|---|
 | 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled | Rotate API keys; fill roles; check the aspect classifier's 100-sentence validation sample; book the supervisor meeting | Aspect-classifier prompt and validation run; full run overnight; re-draw candidates; update the labelling sheet and tools for aspect + sentiment |
-| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; decisions O1, O2 made | Agreement round (two people, 150 rows), then full labelling; supervisor meeting; NER gold set; CNA loaded | Discovery re-run and sweep; NER step; frozen chatbot evaluation set; report structure and datasets/methods drafts |
+| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; decisions O1, O2 made | Agreement round (two people, 150 rows), then full labelling; supervisor meeting; NER gold set; CNA load reviewed (loaded 26 Sep) | Discovery re-run and sweep; NER step; frozen chatbot evaluation set; report structure and datasets/methods drafts |
 | 12 – 18 Oct | ~1,000 rows labelled; model trained | Finish labelling; decide O5 | Fine-tune (3 seeds); evaluate sentiment, aspect categorisation and NER; re-score the corpus |
 | 19 – 25 Oct | Results frozen | Interpret results; transcript reading; SASSI sessions; decide O3, O4; rehearse | Chatbot evaluation; results tables and figures; video script; clean-copy install test |
 | 26 Oct – 1 Nov | Submitted | Conclusions, contribution summaries, GenAI declaration; record the video; final read-through; submit | Final snapshot and data report; second clean-copy test |

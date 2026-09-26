@@ -22,9 +22,10 @@ flowchart LR
     gnews["Google News RSS"]
     yahoo["Yahoo Finance<br/>news, analyst consensus"]
     newsapi["NewsAPI"]
+    cna["CNA<br/>article pages"]
     av["Alpha Vantage<br/>returns nothing for SGX tickers"]
     ir["DBS and OCBC<br/>investor-relations sites"]
-    wayback["Wayback Machine<br/>UOB earnings PDFs"]
+    wayback["Wayback Machine<br/>UOB earnings PDFs,<br/>index of CNA URLs"]
   end
 
   subgraph llms["Language-model backends"]
@@ -40,9 +41,10 @@ flowchart LR
   gnews -- "headlines" --> core
   yahoo -- "headlines, rating aggregates" --> core
   newsapi -- "headlines, descriptions" --> core
+  cna -- "full articles" --> core
   av -. "no articles" .-> core
   ir -- "results PDFs" --> core
-  wayback -- "archived PDFs" --> core
+  wayback -- "archived PDFs,<br/>CNA URLs and pages" --> core
 
   core <-- "prompts, tool calls,<br/>answers" --> ollama
   core <-- "same, with an API key" --> hosted
@@ -70,6 +72,9 @@ Each row names the file and line an element comes from, and the text that line m
 | Yahoo Finance news | `ingest/yahoo_news.py:93` | `yf.Ticker(ticker).get_news(` |
 | Yahoo Finance consensus | `ingest/yahoo_analyst.py:71` | `finance/quoteSummary/` |
 | NewsAPI | `ingest/newsapi.py:58` | `newsapi.org/v2/everything` |
+| CNA article pages | `ingest/cna_archive.py:69` | `SITE = "www.channelnewsasia.com"` |
+| Wayback index of CNA URLs | `ingest/cna_archive.py:68` | `CDX_URL = "https://web.archive.org/cdx/search/cdx"` |
+| archived CNA pages | `ingest/cna_archive.py:214` | `archived = f"https://web.archive.org/web/` |
 | Alpha Vantage | `ingest/alphavantage.py:51` | `alphavantage.co/query` |
 | Alpha Vantage returns nothing | `ingest/alphavantage.py:49` | `doesn't index SGX-listed names` |
 | DBS investor relations | `ingest/earnings_fetch_ir.py:64` | `https://www.dbs.com/investors` |

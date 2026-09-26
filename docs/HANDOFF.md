@@ -398,3 +398,25 @@ Ran `.project-context/prompt/overnight-diagrams.md`. Everything is in
 - Optionally fix the dashboard footer and the test counts. They are one-line
   doc and UI edits, left alone because this run doesn't change code or existing
   docs beyond the links.
+
+## CNA loaded (2026-09-26)
+
+CNA was the one planned addition to the frozen corpus. `ingest/cna_archive.py`
+finds CNA bank articles from 2023 on through the Wayback Machine's index of CNA
+URLs, fetches their full text at CNA's robots.txt crawl delay, and loads them
+through the news filter. Result: 207 articles and 1,599 sentences, run through
+every pipeline step. The new snapshot is `plp-2026-09-26-v2.db.gz` (README).
+Decision and trade-offs: DESIGN decision 20. Coverage and gaps: news-data.md.
+
+- **The filter changed.** A full-text article is no longer dropped as a
+  duplicate of a headline-only copy; 117 CNA stories would have been lost to
+  Google News headlines. No stored row was deleted.
+- **CNA is not a complete record.** Only headlines whose URL names a bank are
+  found, and only what the archive captured: 0 to 13 articles a month.
+- **Needs a human:** whoever owns the CNA scraper should spot-check a few
+  articles, and share the new snapshot in the team folder.
+- **Setup:** `trafilatura` is in `requirements.txt` but was missing from this
+  machine's venv; run `pip install -r requirements.txt` after pulling.
+- Superseded in the diagrams log above: CNA is now loaded (diagrams 01, 04
+  and 11 show it), and the test counts in README, RUNBOOK, STATUS and the
+  technical spec are corrected (379 in `tests/`).

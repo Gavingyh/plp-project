@@ -98,13 +98,14 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
-gunzip -c plp-2026-09-26.db.gz > data/plp.db
-shasum -a 256 plp-2026-09-26.db.gz   # should match the checksum below
+gunzip -c plp-2026-09-26-v2.db.gz > data/plp.db
+shasum -a 256 plp-2026-09-26-v2.db.gz   # should match the checksum below
 ```
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-09-26.db.gz` (latest; the frozen corpus) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), D5) |
+| `plp-2026-09-26-v2.db.gz` (latest; the frozen corpus) | 28.9MB | `f6aac79a212368747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored; index recomputed. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), D5) |
+| `plp-2026-09-26.db.gz` (superseded) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed; before CNA |
 | `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
 | `plp-2026-09-24.db.gz` (superseded) | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | same day, before embeddings, aspects, sentiment and index were run on the news |
 
@@ -174,6 +175,24 @@ successfully. Articles that fail to fetch or parse are still written, with
 Only use the output for personal research or archiving; respect CNA's Terms
 of Service and copyright before redistributing it.
 
+### Loading CNA into the database
+
+The RSS feed only holds the latest items, so for history use
+`ingest/cna_archive.py`. It finds CNA articles whose URL names a bank (from
+the Wayback Machine's index of CNA URLs), fetches each one's full text from
+CNA at the 10-second crawl delay CNA's robots.txt asks for, and loads them
+through the same news filter as every other source, as `source = 'cna'`.
+Fetched text is cached in `data/cna/` (gitignored), so a re-run resumes.
+
+```bash
+.venv-plp/bin/python3 -m ingest.cna_archive --since 2023-01-01 --until 2026-09-26 --dry-run
+.venv-plp/bin/python3 -m ingest.cna_archive --since 2023-01-01 --until 2026-09-26
+# the RSS scraper's output loads the same way:
+.venv-plp/bin/python3 -m ingest.cna_archive --from-json ingest/cna_articles.json
+```
+
+Then run the pipeline steps in `docs/RUNBOOK.md`.
+
 ---
 
 ## Layout
@@ -199,5 +218,5 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 251 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 379 tests
 ```

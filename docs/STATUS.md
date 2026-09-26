@@ -24,6 +24,7 @@ describe an earlier state carry a dated note saying so.
 | "GPT / Gemini backends work" | Never run against their real APIs — no keys were available. |
 | "The chatbot's answers are grounded" | The harness now flags invented figures and citations and answers advice and off-topic questions itself, but the local 3B model still invents citations in 43–48% of answers ([evidence](evidence/chatbot-harness-2026-09-26.md)). A flagged answer is flagged, not corrected. |
 | "News volume rose sharply in 2026" | An artefact of Google News ranking recent articles higher. Normalise per month before comparing periods ([news-data.md](news-data.md)). |
+| "CNA covered the banks more in 2023–24 than in 2025–26" | CNA articles are those the Wayback Machine happened to capture, with a bank in the URL: 0 to 13 a month. Use CNA for its full text, not its volume ([news-data.md](news-data.md)). |
 
 **The Reddit-only rows remain the cleanest cross-bank comparison** (DBS
 -0.0015, OCBC -0.0108, UOB -0.0105, all-time, 2026-09-26 — no meaningful
@@ -39,9 +40,9 @@ much as its sentiment.
 
 | | count |
 |---|---|
-| documents | 27,795 |
-| sentences | 42,746 |
-| (sentence, aspect) pairs scored | 90,117 |
+| documents | 28,002 |
+| sentences | 44,345 |
+| (sentence, aspect) pairs scored | 92,498 |
 | date range | 6 Jan 2020 – 25 Sep 2026 |
 
 By source:
@@ -51,17 +52,19 @@ By source:
 | Reddit (`r/singaporefi`) | 21,805 | 24,675 |
 | Earnings PDFs (DBS, OCBC, UOB) | 178 | 12,254 |
 | Google News (headlines) | 5,685 | 5,447 |
+| CNA (full articles) | 207 | 1,599 |
 | Yahoo Finance news | 114 | 344 |
 | NewsAPI | 13 | 26 |
 
-By bank: DBS 23,516 · UOB 12,253 · OCBC 6,977 sentences.
+By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase: 11,200 lines of Python (7,770 excluding tests), 303 tests.
+Codebase: 12,600 lines of Python (8,670 excluding tests), 379 tests.
 
-These figures were taken from `data/plp.db` on 2026-09-26, after the last
-ingestion; the corpus is frozen from that date (the daily job is stopped).
+These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
+loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
+from that date (the daily job is stopped).
 The database is not in git: the snapshot matching it, and its checksum, are
 listed in the README. [verification-ledger.md](verification-ledger.md)
 records the 2026-09-11 figures with their queries; news figures and method
@@ -74,7 +77,8 @@ are in [news-data.md](news-data.md).
 **Ingestion.** Reddit (Arctic Shift, 2020–present), earnings PDFs auto-fetched
 from DBS and OCBC IR sites and, for WAF-blocked UOB, from the Wayback
 Machine; news from Google News RSS (backfilled month by month from January
-2023), Yahoo Finance and NewsAPI, all through one relevance and dedup filter
+2023), Yahoo Finance and NewsAPI, and CNA full-text articles from 2023 found
+through the Wayback Machine, all through one relevance and dedup filter
 (`ingest/news_filter.py`, every rejection logged); Yahoo Finance analyst
 consensus. All idempotent — re-running any adapter inserts nothing new. One
 command runs every news pull (`run_news_pull.py`); a daily launchd job exists
@@ -95,7 +99,7 @@ chatbot with four pluggable model backends and RAG evidence retrieval.
 Suggested starter questions are generated from the index rather than
 hardcoded, so the UI never offers a question the data cannot answer.
 
-**Engineering.** 303 tests (external APIs mocked with captured payloads),
+**Engineering.** 379 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the dashboard and API.
 

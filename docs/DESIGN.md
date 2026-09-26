@@ -370,6 +370,34 @@ them, so the demo model (PLAN.md, O3) matters more than any further prompt
 work. Of 19 figures the number check flagged in the final run, 18 were
 invented. The temperature change had no measurable effect at 23 questions.
 
+### 20. CNA loaded as full text, found through the Wayback Machine
+
+*2026-09-26.* CNA was the one planned addition to the frozen corpus (PLAN,
+D5). Its scraper read only the live RSS feed, which holds the latest items and
+none about the banks, and wrote a file rather than the database.
+`ingest/cna_archive.py` finds CNA bank articles from 2023 on through the
+Wayback Machine's index of CNA URLs, whose slugs carry the headline. It
+fetches each article's full text from CNA at robots.txt's 10-second crawl
+delay, or from the archived copy when CNA no longer serves it, and loads it
+through the shared news filter. That added 207 articles and 1,599 sentences.
+
+Three choices came with it:
+
+- **A full-text article beats a headline-only copy.** Google News had
+  already stored 117 of the 207 as bare headlines, and first-copy-wins would
+  have dropped the full text. The filter now keeps the fuller article, and the
+  sentence-level hash in preprocessing stops the shared headline being
+  counted twice. No stored row was deleted.
+- **CNA sentences must name the bank themselves.** Unlike the other news
+  sources, a CNA document is a whole article, not a headline and a line, so
+  it doesn't lend its bank to sentences that name none. Many sentences that
+  say "the bank" are lost; none are attributed to the wrong bank.
+- **Weighted 1.5, like the other news sources** (decision 6).
+
+CNA is not a complete record: only headlines whose URL names a bank are
+found, and only what the archive captured, so months hold 0 to 13 articles.
+It adds full text, not volume. Details: [news-data.md](news-data.md).
+
 ---
 
 ## Notable implementation details

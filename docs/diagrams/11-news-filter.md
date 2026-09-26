@@ -5,7 +5,7 @@ The order of decisions `ingest/news_filter.py` makes for each news article, and 
 ```mermaid
 flowchart TB
   accTitle: News filter decisions
-  accDescr: An article already stored is skipped. Otherwise non-bank phrases are masked; an article naming no bank is rejected; a duplicate is rejected; otherwise it is kept, with flags for masked phrases and possible bank commentary.
+  accDescr: An article already stored is skipped. Otherwise non-bank phrases are masked; an article naming no bank is rejected; a duplicate is rejected, unless the article has full text and the only earlier copy is a bare headline; otherwise it is kept, with flags for masked phrases and possible bank commentary.
 
   a(["News article"])
   stored{"Already stored,<br/>or kept earlier this run?"}
@@ -17,6 +17,8 @@ flowchart TB
   r2["Rejected: no_bank_mention"]
   dup{"Same URL, or a headline 90% similar<br/>within 3 days?"}
   r3["Rejected: duplicate"]
+  fuller{"This one has full text,<br/>and every earlier copy<br/>is a bare headline?"}
+  f3["Flagged, kept:<br/>kept_full_text_over_headline"]
   keep["Kept: bank set from the text,<br/>MULTI if more than one"]
   f1["Flagged, kept:<br/>kept_with_false_positive_phrase"]
   f2["Flagged, kept:<br/>kept_possible_bank_commentary"]
@@ -29,7 +31,9 @@ flowchart TB
   why -- yes --> r1
   why -- no --> r2
   named -- yes --> dup
-  dup -- yes --> r3
+  dup -- yes --> fuller
+  fuller -- no --> r3
+  fuller -- yes --> f3 --> keep
   dup -- no --> keep --> ins
   keep -. "if a phrase was masked" .-> f1
   keep -. "if the headline credits the bank<br/>at the end, e.g. ': UOB'" .-> f2
@@ -44,7 +48,10 @@ so nothing is dropped silently. Masking comes first so that "UOB Kay Hian upgrad
 counts as a DBS article rather than being rejected or counted as UOB. Market notes (a
 currency or macro headline ending in a bank's name) and rating calls are masked unless the
 headline also mentions the bank's own results, an award or a launch. The two flags don't
-stop an article being kept; they mark it for a person to look at. The rules are described
+stop an article being kept; they mark it for a person to look at. A full-text article
+(CNA) is kept even when Google News already stored the same story, because Google News
+stores the headline alone; the headline isn't counted twice, because preprocessing drops
+any sentence whose normalised text is already stored. The rules are described
 in full, with counts, in [../news-data.md](../news-data.md).
 
 ## Sources
@@ -53,17 +60,20 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| already stored | `ingest/news_filter.py:260` | `if d["doc_id"] in index.doc_ids:` |
-| mask, then find banks | `ingest/news_filter.py:263` | `banks, phrases = mentioned_banks(doc_text(` |
-| masking function | `ingest/news_filter.py:137` | `def mask_false_positives(text: str)` |
-| market notes masked first | `ingest/news_filter.py:143` | `found.append("market note")` |
-| exemptions for the bank's own news | `ingest/news_filter.py:142` | `and not _OWN_PERFORMANCE.search(text) and not _MARKET_NOTE_EXEMPT.search(text)):` |
-| brokers, venues, research, rating calls | `ingest/news_filter.py:73` | `FALSE_POSITIVES = [` |
-| no bank: which reason | `ingest/news_filter.py:269` | `reason = "false_positive_only" if phrases else "no_bank_mention"` |
-| duplicate check | `ingest/news_filter.py:274` | `dup = index.find_duplicate(` |
-| 90% headline similarity | `ingest/news_filter.py:53` | `TITLE_SIMILARITY = 0.90` |
-| within 3 days | `ingest/news_filter.py:54` | `DUP_WINDOW_DAYS = 3` |
-| bank from the text, MULTI | `ingest/news_filter.py:280` | `d = {**d, "bank": banks[0] if len(banks) == 1 else "MULTI"}` |
-| flag: masked phrase | `ingest/news_filter.py:284` | `"reason": "kept_with_false_positive_phrase"` |
-| flag: possible commentary | `ingest/news_filter.py:287` | `"reason": "kept_possible_bank_commentary"` |
-| every decision logged | `ingest/news_filter.py:292` | `_append_flagged(flagged)` |
+| already stored | `ingest/news_filter.py:275` | `if d["doc_id"] in index.doc_ids:` |
+| mask, then find banks | `ingest/news_filter.py:278` | `banks, phrases = mentioned_banks(doc_text(` |
+| masking function | `ingest/news_filter.py:141` | `def mask_false_positives(text: str)` |
+| market notes masked first | `ingest/news_filter.py:147` | `found.append("market note")` |
+| exemptions for the bank's own news | `ingest/news_filter.py:146` | `and not _OWN_PERFORMANCE.search(text) and not _MARKET_NOTE_EXEMPT.search(text)):` |
+| brokers, venues, research, rating calls | `ingest/news_filter.py:77` | `FALSE_POSITIVES = [` |
+| no bank: which reason | `ingest/news_filter.py:284` | `reason = "false_positive_only" if phrases else "no_bank_mention"` |
+| duplicate check | `ingest/news_filter.py:290` | `dup = index.find_duplicate(` |
+| full text over a bare headline | `ingest/news_filter.py:292` | `# Full text beats a headline-only copy, unless a fuller copy is also stored.` |
+| flag: full text kept | `ingest/news_filter.py:296` | `"reason": "kept_full_text_over_headline"` |
+| headline not counted twice | `preprocess/pipeline.py:114` | `if h in seen_hashes:` |
+| 90% headline similarity | `ingest/news_filter.py:57` | `TITLE_SIMILARITY = 0.90` |
+| within 3 days | `ingest/news_filter.py:58` | `DUP_WINDOW_DAYS = 3` |
+| bank from the text, MULTI | `ingest/news_filter.py:304` | `d = {**d, "bank": banks[0] if len(banks) == 1 else "MULTI"}` |
+| flag: masked phrase | `ingest/news_filter.py:308` | `"reason": "kept_with_false_positive_phrase"` |
+| flag: possible commentary | `ingest/news_filter.py:311` | `"reason": "kept_possible_bank_commentary"` |
+| every decision logged | `ingest/news_filter.py:316` | `_append_flagged(flagged)` |

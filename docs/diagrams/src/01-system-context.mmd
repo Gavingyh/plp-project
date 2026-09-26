@@ -15,9 +15,10 @@ flowchart LR
     gnews["Google News RSS"]
     yahoo["Yahoo Finance<br/>news, analyst consensus"]
     newsapi["NewsAPI"]
+    cna["CNA<br/>article pages"]
     av["Alpha Vantage<br/>returns nothing for SGX tickers"]
     ir["DBS and OCBC<br/>investor-relations sites"]
-    wayback["Wayback Machine<br/>UOB earnings PDFs"]
+    wayback["Wayback Machine<br/>UOB earnings PDFs,<br/>index of CNA URLs"]
   end
 
   subgraph llms["Language-model backends"]
@@ -33,9 +34,10 @@ flowchart LR
   gnews -- "headlines" --> core
   yahoo -- "headlines, rating aggregates" --> core
   newsapi -- "headlines, descriptions" --> core
+  cna -- "full articles" --> core
   av -. "no articles" .-> core
   ir -- "results PDFs" --> core
-  wayback -- "archived PDFs" --> core
+  wayback -- "archived PDFs,<br/>CNA URLs and pages" --> core
 
   core <-- "prompts, tool calls,<br/>answers" --> ollama
   core <-- "same, with an API key" --> hosted

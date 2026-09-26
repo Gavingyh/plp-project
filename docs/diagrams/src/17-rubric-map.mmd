@@ -1,0 +1,43 @@
+flowchart LR
+  accTitle: Rubric items, components and course modules
+  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition, LLM aspect categorisation and annotation are planned; the fine-tuned sentiment model is built but has never run.
+
+  subgraph R["Rubric item"]
+    r1["data"]
+    r2["preprocessing"]
+    r3["text-mining task 1"]
+    r4["text-mining task 2"]
+    r5["text-mining task 3"]
+    r6["the DNN, text-mining task 4"]
+    r7["labels"]
+    r8["sentiment mining"]
+    r9["conversational UI"]
+  end
+
+  subgraph C["Component, and the course modules it draws on"]
+    c1["Corpus: Reddit, earnings,<br/>news, analyst consensus<br/><i>TA · NMSM</i>"]
+    c2["Sentence segmentation,<br/>bank attribution<br/><i>TA</i>"]
+    c3["Aspect discovery<br/>UMAP + HDBSCAN<br/><i>TA · NMSM</i>"]
+    c4["Aspect categorisation<br/>by a local LLM<br/><i>TA · NMSM</i>"]
+    c5["Bank entity recognition<br/>and resolution<br/><i>TA · NMSM</i>"]
+    c6["Sentiment: fine-tuned FinBERT,<br/>built, never run<br/><i>TPML · NMSM</i>"]
+    c7["Annotation, kappa at least 0.6<br/><i>TA</i>"]
+    c8["Sentiment index, dashboard<br/><i>NMSM</i>"]
+    c9["Chatbot with tool calling<br/><i>CNI</i>"]
+  end
+
+  key["<b>Course modules</b><br/>TA: Text Analytics<br/>NMSM: New Media and Sentiment Mining<br/>TPML: Text Processing using Machine Learning<br/>CNI: Conversational UIs"]
+
+  r1 --> c1
+  r2 --> c2
+  r3 --> c3
+  r4 -.-> c4
+  r5 -.-> c5
+  r6 --> c6
+  r7 -.-> c7
+  r8 --> c8
+  r9 --> c9
+  C ~~~ key
+
+  classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
+  class c4,c5,c7 planned;

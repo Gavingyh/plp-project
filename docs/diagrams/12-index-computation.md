@@ -34,7 +34,8 @@ score based on few sentences toward neutral, and every row stores `n` so a reade
 the sample size. The volume floor is not applied when rows are computed: the chatbot's
 tools apply it when reading, and the dashboard shows `n` beside each score instead. The
 continuous time series (`compute_time_series`) uses the same summarising function, so a
-chart can't disagree with the headline number.
+chart can't disagree with the headline number. It applies its own floor: a bucket with fewer than 5 sentences is marked
+`sufficient=False`, and the dashboard leaves it off the line and says how many it omitted.
 
 ## Sources
 
@@ -56,4 +57,6 @@ Each row names the file and line an element comes from, and the text that line m
 | shrinkage constant | `aggregate/index.py:48` | `SHRINKAGE_K = 5` |
 | deleted and rewritten | `aggregate/index.py:236` | `conn.execute("DELETE FROM sentiment_index")` |
 | volume floor, applied when read | `chatbot/tools.py:22` | `MIN_VOLUME_FOR_SCORE = 5` |
+| time-series floor | `aggregate/index.py:129` | `min_n: int = 5` |
+| thin buckets left off the chart | `dashboard/app.py:277` | `plotted = series[series.sufficient]` |
 | insufficient data reported | `chatbot/tools.py:87` | `if n < MIN_VOLUME_FOR_SCORE:` |

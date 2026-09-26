@@ -1,0 +1,28 @@
+flowchart LR
+  accTitle: Database snapshot and restore
+  accDescr: The owner checkpoints the write-ahead log, compresses the database, verifies the copy, records its checksum in the README and puts it in the team's shared folder. A teammate downloads it, checks the checksum and decompresses it to data/plp.db; the embeddings cache is rebuilt locally.
+
+  subgraph make["Make a snapshot, after a material change"]
+    direction TB
+    ck["Checkpoint the write-ahead log<br/>PRAGMA wal_checkpoint(TRUNCATE)"]
+    gz["Compress<br/>gzip -9 to data/snapshots/plp-date-vN.db.gz"]
+    ver{"Decompressed copy passes<br/>PRAGMA integrity_check?"}
+    sha["Record name, size and sha256<br/>in the README snapshot table"]
+    up["Put the .gz in the<br/>team's shared folder (by hand)"]
+  end
+
+  subgraph use["Restore, on a teammate's machine"]
+    direction TB
+    dl["Download the latest snapshot"]
+    same{"sha256 matches<br/>the README?"}
+    un["gunzip to data/plp.db"]
+    emb["Rebuild the embeddings cache<br/>python -m aspects.embed_store"]
+  end
+
+  ck --> gz --> ver
+  ver -- yes --> sha --> up
+  ver -- no --> gz
+  make -- "shared folder" --> use
+  dl --> same
+  same -- yes --> un --> emb
+  same -- no --> dl

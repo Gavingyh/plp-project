@@ -315,18 +315,22 @@ with tab5:
     # Imported lazily: chatbot.agent pulls in the model backends and the
     # embedding store, which would slow every dashboard start even for
     # someone who never opens this tab.
-    from chatbot.agent import ask as chatbot_ask
+    from chatbot.agent import Conversation
     from chatbot.suggestions import get_suggestions
 
     st.caption(
         "Answers come from the sentiment index in this dashboard, not from the "
         "model's own knowledge. A local model may still cite evidence it never "
         "retrieved - answers flagged with a verification warning should not be "
-        "trusted. The chatbot does not give investment advice."
+        "trusted, and figures that match nothing the tools returned are flagged too. "
+        "The chatbot remembers the last few turns, so follow-ups like \"and OCBC?\" work. "
+        "It does not give investment advice."
     )
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = Conversation()
 
     for role, content in st.session_state.chat_history:
         with st.chat_message(role):
@@ -353,7 +357,7 @@ with tab5:
         with st.chat_message("assistant"):
             with st.spinner("Thinking - a local model can take a minute..."):
                 try:
-                    answer = chatbot_ask(question, verbose=False)
+                    answer = st.session_state.conversation.ask(question).answer
                 except Exception as exc:  # backend unreachable, bad key, etc.
                     answer = (f"The chatbot backend could not be reached: `{exc}`\n\n"
                               "If you are using the local backend, check that "
@@ -363,6 +367,7 @@ with tab5:
 
     if st.session_state.chat_history and st.button("Clear conversation"):
         st.session_state.chat_history = []
+        st.session_state.conversation = Conversation()
         st.rerun()
 
     disclosure_footer()

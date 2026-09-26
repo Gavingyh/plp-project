@@ -19,7 +19,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from chatbot.agent import ask as chatbot_ask
+from chatbot.agent import Conversation
 from aggregate.index import compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
@@ -173,14 +173,25 @@ def suggestions(limit: int = Query(6, ge=1, le=20)):
     return {"suggestions": get_suggestions(limit=limit)}
 
 
+class ChatMessage(BaseModel):
+    role: str      # "user" | "assistant"
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
     backend: str | None = None  # "claude" | "openai" | "gemini" | "ollama" | None (auto-detect)
+    # Earlier turns, oldest first, so a follow-up ("and OCBC?") resolves. The API
+    # stays stateless: the client sends the conversation back each time.
+    history: list[ChatMessage] = []
 
 
 @app.post("/chat")
 def chat(req: ChatRequest):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="message must not be empty")
-    answer = chatbot_ask(req.message, verbose=False, backend_name=req.backend)
-    return {"question": req.message, "answer": answer}
+    conv = Conversation.from_messages([m.model_dump() for m in req.history], backend_name=req.backend)
+    turn = conv.ask(req.message)
+    return {"question": req.message, "answer": turn.answer, "guard": turn.guard,
+            "citation_unverified": turn.citation_unverified,
+            "unverified_numbers": turn.unverified_numbers}

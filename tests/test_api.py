@@ -138,14 +138,33 @@ def test_chat_empty_message_returns_400():
     assert resp.status_code == 400
 
 
-def test_chat_calls_agent_and_returns_answer(monkeypatch):
-    def fake_ask(message, verbose=True, backend_name=None):
-        assert message == "hello"
-        assert backend_name == "ollama"
-        return "fake answer"
+class _FakeConversation:
+    seen = {}
 
-    monkeypatch.setattr("api.main.chatbot_ask", fake_ask)
+    @classmethod
+    def from_messages(cls, messages, backend_name=None):
+        cls.seen = {"messages": messages, "backend": backend_name}
+        return cls()
+
+    def ask(self, message):
+        from chatbot.agent import TurnResult
+        return TurnResult(question=message, answer="fake answer")
+
+
+def test_chat_calls_agent_and_returns_answer(monkeypatch):
+    monkeypatch.setattr("api.main.Conversation", _FakeConversation)
     client = TestClient(app)
     resp = client.post("/chat", json={"message": "hello", "backend": "ollama"})
     assert resp.status_code == 200
-    assert resp.json() == {"question": "hello", "answer": "fake answer"}
+    assert resp.json() == {"question": "hello", "answer": "fake answer", "guard": None,
+                           "citation_unverified": False, "unverified_numbers": []}
+    assert _FakeConversation.seen == {"messages": [], "backend": "ollama"}
+
+
+def test_chat_passes_history_for_follow_ups(monkeypatch):
+    monkeypatch.setattr("api.main.Conversation", _FakeConversation)
+    history = [{"role": "user", "content": "DBS dividends?"},
+               {"role": "assistant", "content": "Neutral."}]
+    resp = TestClient(app).post("/chat", json={"message": "and OCBC?", "history": history})
+    assert resp.status_code == 200
+    assert _FakeConversation.seen["messages"] == history

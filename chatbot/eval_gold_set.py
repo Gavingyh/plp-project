@@ -98,6 +98,9 @@ _ADVICE_DECLINE_MARKERS = (
 _NO_DATA_MARKERS = (
     "no data", "not covered", "don't have data", "do not have data", "only cover",
     "only covers", "not available", "outside the scope", "out of scope", "not something i track",
+    # the off-topic reply of chatbot/guards.py's scope guard, added when the checker
+    # was found not to recognise it (2026-09-26)
+    "outside what i can help with",
     "don't track", "do not track", "cannot answer", "can't answer",
 )
 

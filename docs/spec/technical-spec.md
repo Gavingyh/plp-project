@@ -65,11 +65,13 @@ criticise an app in consecutive sentences.
 | `config/` | Aspect taxonomy, logging configuration | — |
 | `scripts/` | Service lifecycle, overnight backfill, model comparison, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
 
-Planned (DESIGN decisions 16–19, not yet in the code): an LLM aspect
+Planned (DESIGN decisions 16–18, not yet in the code): an LLM aspect
 classifier replacing `aspects/assign.py`'s seed-centroid matching, a bank
-entity recognition step, aspect + sentiment labelling support in
-`preprocess/` and `train/agreement.py`, and conversation memory plus input
-and output guards in `chatbot/`.
+entity recognition step, and aspect + sentiment labelling support in
+`preprocess/` and `train/agreement.py`. Decision 19's chatbot harness is
+built: `chatbot/guards.py` (advice, off-topic, figure and sentence-id checks)
+and `Conversation` / `answer_turn` in `chatbot/agent.py` (memory, state,
+per-turn record); `/chat` accepts earlier turns as `history`.
 
 Run every module as `.venv-plp/bin/python3 -m <module>`. Never plain
 `python3`; see RUNBOOK for why.

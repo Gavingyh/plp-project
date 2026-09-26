@@ -22,7 +22,7 @@ describe an earlier state carry a dated note saying so.
 | "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Plain factual sentences get three or four aspects at once and evaluative ones fall to `other`, so named-aspect scores are nearly all neutral ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)); the assignment is being replaced (DESIGN decision 16). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
 | "The chatbot cites its sources" | Local models fabricate citations — 43–48% of answers on the default model, across two runs. A code check flags this, but it detects rather than prevents. See the evaluation below. |
 | "GPT / Gemini backends work" | Never run against their real APIs — no keys were available. |
-| "The chatbot handles follow-up questions" | It has no memory: only the latest question reaches the model (DESIGN decision 19). |
+| "The chatbot's answers are grounded" | The harness now flags invented figures and citations and answers advice and off-topic questions itself, but the local 3B model still invents citations in 43–48% of answers ([evidence](evidence/chatbot-harness-2026-09-26.md)). A flagged answer is flagged, not corrected. |
 | "News volume rose sharply in 2026" | An artefact of Google News ranking recent articles higher. Normalise per month before comparing periods ([news-data.md](news-data.md)). |
 
 **The Reddit-only rows remain the cleanest cross-bank comparison** (DBS
@@ -102,6 +102,15 @@ start/stop/status scripts for the dashboard and API.
 ---
 
 ## Chatbot evaluation
+
+> **Updated 2026-09-26.** Memory, input guards and output checks were added
+> (DESIGN decision 19). With them, advice and out-of-scope questions are
+> handled correctly 7 of 7 times (was 2–3 of 7), by code rather than the
+> model; invented citations are unchanged at 43–48% on `llama3.2:3b`; the new
+> number check flagged 19 figures in the final run, 18 of them invented.
+> Method and tables: [evidence/chatbot-harness-2026-09-26.md](evidence/chatbot-harness-2026-09-26.md).
+> The analysis below is of the 11 Sep runs and still describes the model's
+> own behaviour.
 
 A 23-question gold set (`chatbot/eval_gold_set.py`) run against five local
 models via `chatbot/run_eval.py`. Tool selection, advice-declining behaviour

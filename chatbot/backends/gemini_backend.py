@@ -32,7 +32,7 @@ import sys
 import requests
 
 from config.logging_config import get_logger
-from chatbot.backends.base import LLMBackend, ToolExecutor
+from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -73,7 +73,8 @@ def _to_gemini_tools(claude_tool_schemas: list[dict]) -> list[dict]:
 class GeminiBackend(LLMBackend):
     name = "gemini"
 
-    def __init__(self, api_key: str, model: str = DEFAULT_MODEL):
+    def __init__(self, api_key: str, model: str = DEFAULT_MODEL,
+                 temperature: float = DEFAULT_TEMPERATURE):
         if not api_key:
             raise RuntimeError(
                 "GEMINI_API_KEY not set. Set it in .env to use Gemini, or use "
@@ -81,6 +82,7 @@ class GeminiBackend(LLMBackend):
             )
         self._api_key = api_key
         self.model = model
+        self.temperature = temperature
 
     def _generate(self, contents: list[dict], system: str, tools: list[dict]) -> dict:
         url = f"{_API_BASE}/{self.model}:generateContent"
@@ -91,6 +93,7 @@ class GeminiBackend(LLMBackend):
                     "system_instruction": {"parts": [{"text": system}]},
                     "contents": contents,
                     "tools": tools,
+                    "generationConfig": {"temperature": self.temperature},
                 },
                 timeout=_REQUEST_TIMEOUT,
             )
@@ -109,9 +112,13 @@ class GeminiBackend(LLMBackend):
         return resp.json()
 
     def ask(self, question: str, system: str, tool_schemas: list[dict],
-            tool_executor: ToolExecutor, verbose: bool = True) -> str:
+            tool_executor: ToolExecutor, verbose: bool = True,
+            history: History | None = None) -> str:
         gemini_tools = _to_gemini_tools(tool_schemas)
-        contents = [{"role": "user", "parts": [{"text": question}]}]
+        # Gemini names the assistant role "model".
+        contents = [{"role": "model" if h["role"] == "assistant" else "user",
+                     "parts": [{"text": h["content"]}]} for h in (history or [])]
+        contents.append({"role": "user", "parts": [{"text": question}]})
 
         for _ in range(MAX_TOOL_ITERATIONS):
             data = self._generate(contents, system, gemini_tools)

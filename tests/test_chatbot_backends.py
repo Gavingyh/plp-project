@@ -241,11 +241,11 @@ def test_ask_appends_warning_when_backend_fabricates(monkeypatch):
         name = "fake"
         model = "fake-model"
 
-        def ask(self, question, system, tool_schemas, tool_executor, verbose=True):
+        def ask(self, question, system, tool_schemas, tool_executor, verbose=True, **kwargs):
             return 'Evidence: "totally made up quote" (sentence_id: 999, url: https://fake.example.com)'
 
     monkeypatch.setattr("chatbot.agent.get_backend", lambda name=None: _FabricatingBackend())
-    answer = ask("test question", verbose=False)
+    answer = ask("How is sentiment on DBS?", verbose=False)  # on-topic, so no guard answers it
     assert "VERIFICATION WARNING" in answer
 
 
@@ -254,7 +254,7 @@ def test_ask_no_warning_when_backend_is_honest(monkeypatch):
         name = "fake"
         model = "fake-model"
 
-        def ask(self, question, system, tool_schemas, tool_executor, verbose=True):
+        def ask(self, question, system, tool_schemas, tool_executor, verbose=True, **kwargs):
             return "The sentiment score is 0.5 based on 100 data points."
 
     monkeypatch.setattr("chatbot.agent.get_backend", lambda name=None: _HonestBackend())

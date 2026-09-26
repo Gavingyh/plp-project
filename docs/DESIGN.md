@@ -331,8 +331,9 @@ labelling for time.
 
 ### 19. Chatbot changes drawn from the Conversational UIs module
 
-*Decided 2026-09-26; to be implemented.* Three gaps, each matching a
-specific part of CNI Day 1:
+*Decided and implemented 2026-09-26* (`chatbot/guards.py`, `chatbot/agent.py`).
+Results: [evidence/chatbot-harness-2026-09-26.md](evidence/chatbot-harness-2026-09-26.md).
+Three gaps, each matching a specific part of CNI Day 1:
 
 - **No memory.** The dashboard shows the conversation, but only the latest
   question reaches the model, so "and OCBC?" loses its context. The fix
@@ -353,6 +354,21 @@ reliable than trusting it more. Evaluation grows accordingly: a frozen gold
 set of about 30 questions written before tuning, retrieval Hit@K and MRR,
 faithfulness scored by an LLM judge calibrated on human ratings, multi-turn
 scenarios, and a SASSI questionnaire with a handful of users.
+
+Built alongside the three fixes: an off-topic reply for questions about
+other banks or nothing the system covers; a check that cited sentence ids
+were actually retrieved; evidence results packaged with a short id, a plain
+date and a ready-made citation; a fixed reply when the model returns nothing
+usable; decoding temperature 0.2 on every backend (`CHATBOT_TEMPERATURE`);
+and an optional per-turn trace (`CHATBOT_TRACE_FILE`).
+
+What it achieved, on the gold set with `llama3.2:3b`: advice and
+out-of-scope questions went from 2 of 7 handled correctly to 7 of 7, all by
+guards and so independent of the model. Invented citations stayed at
+43–48%: the harness detects them but can't make a 3B model stop producing
+them, so the demo model (PLAN.md, O3) matters more than any further prompt
+work. Of 19 figures the number check flagged in the final run, 18 were
+invented. The temperature change had no measurable effect at 23 questions.
 
 ---
 

@@ -9,7 +9,7 @@ could be swapped in for school-project use without needing an API key.
 import sys
 
 from config.logging_config import get_logger
-from chatbot.backends.base import LLMBackend, ToolExecutor
+from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -19,7 +19,8 @@ MAX_TOOL_ITERATIONS = 8  # safety cap so a confused loop can't run forever
 class ClaudeBackend(LLMBackend):
     name = "claude"
 
-    def __init__(self, api_key: str, model: str = "claude-sonnet-5"):
+    def __init__(self, api_key: str, model: str = "claude-sonnet-5",
+                 temperature: float = DEFAULT_TEMPERATURE):
         if not api_key:
             raise RuntimeError(
                 "ANTHROPIC_API_KEY not set. Either set it in .env to use Claude, or use the "
@@ -27,17 +28,19 @@ class ClaudeBackend(LLMBackend):
             )
         self.model = model
         self._api_key = api_key
+        self.temperature = temperature
 
     def ask(self, question: str, system: str, tool_schemas: list[dict],
-            tool_executor: ToolExecutor, verbose: bool = True) -> str:
+            tool_executor: ToolExecutor, verbose: bool = True,
+            history: History | None = None) -> str:
         import anthropic  # imported here so importing this module doesn't require the package at load time
 
         client = anthropic.Anthropic(api_key=self._api_key)
-        messages = [{"role": "user", "content": question}]
+        messages = list(history or []) + [{"role": "user", "content": question}]
 
         for _ in range(MAX_TOOL_ITERATIONS):
             response = client.messages.create(
-                model=self.model, max_tokens=1024, system=system,
+                model=self.model, max_tokens=1024, system=system, temperature=self.temperature,
                 tools=tool_schemas, messages=messages,
             )
             messages.append({"role": "assistant", "content": response.content})

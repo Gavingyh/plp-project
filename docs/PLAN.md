@@ -36,7 +36,7 @@ fine-tuned deep neural network; Python.
 |---|---|---|---|
 | D1 | **A local LLM assigns each sentence one aspect**: one of the proposal's four (dividend policy, asset quality, net interest margin, management guidance) or `other` | Seed-centroid assignment gives 46% of sentences three or four aspects at once and sends evaluative sentences to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). An LLM prompted with a fixed schema reads meaning, not vocabulary (NMSM Day 2, zero-shot ABSA) | Keeps the proposal's aspects, so this changes the method, not the taxonomy. Replaces DESIGN decisions 4 and 5. Validated against the human aspect labels (D2) |
 | D2 | **Annotators record aspect and sentiment for each sentence** | Labels no longer depend on the automatic assignment being right, and the human aspect choices become the gold set that evaluates D1 | Candidates are re-drawn to include news; the annotation guideline gains aspect definitions ([annotation-guideline.md](annotation-guideline.md)) |
-| D3 | **Four text-mining tasks**: aspect discovery (clustering), aspect categorisation (D1), bank entity recognition (new), sentiment classification (the fine-tuned DNN) | All four are real and evaluable. NER is scoped narrowly so it doesn't compete with labelling | The course notes' earlier NER claim becomes true. See 5.3 |
+| D3 | **Four text-mining tasks**: aspect discovery (clustering), aspect categorisation (D1), bank entity recognition (new), sentiment classification (the fine-tuned DNN) | All four are real and evaluable. NER is scoped narrowly so it doesn't compete with labelling | The course notes' earlier NER claim becomes true. See section 7 |
 | D4 | **No personal names in the repository** | Team preference; work is split offline | Ownership is recorded by role (section 4); contribution summaries go in the report only |
 | D5 | **The daily ingestion job is not running on any machine** | Stopped on 26 Sep at the team's request. Over its three runs Yahoo added nothing and one run failed at wake-up before the network was up | The corpus is frozen at 26 Sep unless someone runs `run_news_pull.py` / `run_daily_batch.py` by hand. `scripts/com.plp.dailybatch.plist` remains as a template |
 
@@ -46,7 +46,7 @@ fine-tuned deep neural network; Python.
 |---|---|---|---|
 | O1 | Confirm D1 with the supervisor. It keeps the proposal's aspects but changes how they are assigned, which the report must explain | team, supervisor | 5 Oct |
 | O2 | One blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text | team, supervisor | 5 Oct |
-| O3 | Default chatbot model for the demo: `llama3.1:8b` fabricates citations 13% of the time, `llama3.2:3b` 43–48%, but the 8B is slower | team | 19 Oct |
+| O3 | Default chatbot model for the demo: `llama3.1:8b` fabricates citations 13% of the time, `llama3.2:3b` 43–48%, but the 8B is slower. The harness now detects fabrication but can't prevent it, so this choice decides how many flagged answers a demo shows | team | 19 Oct |
 | O4 | OpenAI and Gemini backends: provide keys to verify them, or stop claiming they work | team | 19 Oct |
 | O5 | Stricter relevance filtering for passing mentions ("paid via DBS PayNow"). It changes the data, so it must be decided before the final pipeline run | team | 12 Oct |
 
@@ -101,10 +101,10 @@ split is detailed in the checklist.
   the corpus (AI, after labelling)
 
 **Interfaces**
-- Chatbot, from CNI: conversation memory across turns; an input guard that
-  declines investment advice with a fixed reply (today 3 of 7); an output
-  guard that checks every number against the tools' results; a larger frozen
-  evaluation set with retrieval metrics and a calibrated judge (AI)
+- Chatbot, from CNI: conversation memory, advice and off-topic guards, and
+  the number check are **done** (26 Sep; [evidence](evidence/chatbot-harness-2026-09-26.md)).
+  Still to do: a larger frozen evaluation set with multi-turn scenarios,
+  retrieval metrics and a calibrated judge (AI)
 - SASSI user study and transcript reading (people)
 - Dashboard: remove stale text, check every tab against the final database
   (AI, then a person opens every tab)
@@ -122,8 +122,8 @@ an aspect), so the aspect classifier comes first.
 
 | week | gate at the end of the week | people | AI |
 |---|---|---|---|
-| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled | Rotate API keys; fill roles; check the aspect classifier's 100-sentence validation sample; book the supervisor meeting | Aspect-classifier prompt and validation run; full run overnight; re-draw candidates; update the labelling sheet and tools for aspect + sentiment; chatbot memory and advice guard |
-| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; decisions O1, O2 made | Agreement round (two people, 150 rows), then full labelling; supervisor meeting; NER gold set; CNA loaded | Discovery re-run and sweep; NER step; number-checking guard; report structure and datasets/methods drafts |
+| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled | Rotate API keys; fill roles; check the aspect classifier's 100-sentence validation sample; book the supervisor meeting | Aspect-classifier prompt and validation run; full run overnight; re-draw candidates; update the labelling sheet and tools for aspect + sentiment |
+| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; decisions O1, O2 made | Agreement round (two people, 150 rows), then full labelling; supervisor meeting; NER gold set; CNA loaded | Discovery re-run and sweep; NER step; frozen chatbot evaluation set; report structure and datasets/methods drafts |
 | 12 – 18 Oct | ~1,000 rows labelled; model trained | Finish labelling; decide O5 | Fine-tune (3 seeds); evaluate sentiment, aspect categorisation and NER; re-score the corpus |
 | 19 – 25 Oct | Results frozen | Interpret results; transcript reading; SASSI sessions; decide O3, O4; rehearse | Chatbot evaluation; results tables and figures; video script; clean-copy install test |
 | 26 Oct – 1 Nov | Submitted | Conclusions, contribution summaries, GenAI declaration; record the video; final read-through; submit | Final snapshot and data report; second clean-copy test |

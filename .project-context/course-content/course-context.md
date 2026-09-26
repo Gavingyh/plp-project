@@ -201,4 +201,15 @@ modules.
   aspects, labelling, NER scope and naming were put to the team as questions
   rather than made.
 
+**2026-09-26 — Claude Code (Opus 5.5): the chatbot harness.** Conversation
+memory, advice and off-topic guards, a check of every figure against the
+tools' results, evidence packaged for citing, and lower decoding temperature
+(DESIGN decision 19), evaluated live against the gold set. The honest reading
+for the report: the guards moved advice and out-of-scope handling from 2 of 7
+to 7 of 7 because they take the decision away from the model; nothing the
+harness did reduced a 3B model's invented citations (still 43–48%). The first
+live run exposed five false alarms in the new checks, one of which predated
+the work; each was fixed with a regression test, and the off-topic rule was
+added after seeing a failure, which is stated rather than hidden.
+
 **Keep updating this section as work continues — needed verbatim-ish for the report's GenAI declaration.**

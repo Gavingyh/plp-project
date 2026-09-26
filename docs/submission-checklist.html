@@ -197,7 +197,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
       </div></li>
       <li class="item"><input type="checkbox" id="p-model"><div class="body">
         <div class="title"><label for="p-model">Choose the chatbot model for the demo (O3)</label><span class="tag when">By ~19 Oct</span></div>
-        <div class="why"><code>llama3.1:8b</code> fabricates citations 13% of the time against 43–48% for <code>llama3.2:3b</code>, but is slower.</div>
+        <div class="why"><code>llama3.1:8b</code> fabricates citations 13% of the time against 43–48% for <code>llama3.2:3b</code>, but is slower. The harness flags fabrication but can't prevent it, so this decides how many flagged answers the demo shows.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-hosted"><div class="body">
         <div class="title"><label for="p-hosted">Decide on the OpenAI and Gemini backends (O4)</label><span class="tag when">By ~19 Oct</span></div>
@@ -233,7 +233,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
   <section aria-labelledby="h-ai">
     <div class="section-head">
       <div class="row"><h2 id="h-ai">AI can do these now</h2><span class="progress" data-progress="ai"></span></div>
-      <p>Decided and unblocked. Each is reviewable by a person afterwards.</p>
+      <p>Decided and unblocked. Each is reviewable by a person afterwards. Already done on 26 Sep: chatbot memory, the advice and off-topic guards, and the number check (<code>docs/evidence/chatbot-harness-2026-09-26.md</code>).</p>
     </div>
     <ul class="list" data-group="ai">
       <li class="item"><input type="checkbox" id="a-classifier"><div class="body">
@@ -243,14 +243,6 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
       <li class="item"><input type="checkbox" id="a-redraw"><div class="body">
         <div class="title"><label for="a-redraw">Re-draw the candidate set and pre-label it</label><span class="tag crit">Week 1, after the classifier</span></div>
         <div class="why">Stratified across Reddit, earnings and news and across banks; ≥ 200 per sentiment class overall and ~80 per aspect; a fresh random blind test split; LLM suggestions on train/dev rows only. Update the sheet export and <code>train/agreement.py</code> for aspect + sentiment.</div>
-      </div></li>
-      <li class="item"><input type="checkbox" id="a-chat"><div class="body">
-        <div class="title"><label for="a-chat">Give the chatbot memory and an advice guard</label><span class="tag when">Week 1</span></div>
-        <div class="why">Pass recent turns and track the current bank, aspect and window; detect advice-seeking before the model runs and answer with a fixed reply (today 3 of 7). Decision 19.</div>
-      </div></li>
-      <li class="item"><input type="checkbox" id="a-numbers"><div class="body">
-        <div class="title"><label for="a-numbers">Add the number-checking guard</label><span class="tag when">Week 2</span></div>
-        <div class="why">Compare every figure in an answer with the tools' results and flag mismatches, as the citation check already does.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="a-discovery"><div class="body">
         <div class="title"><label for="a-discovery">Re-run aspect discovery with a sweep</label><span class="tag when">Week 2, after CNA</span></div>
@@ -320,10 +312,10 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
     <div class="plan">
       <div class="week"><div class="d">28 Sep<small>gate: candidates re-drawn</small></div>
         <div><h3>People</h3><ul><li>Rotate keys; fill roles</li><li>Check the classifier's validation sample</li><li>Book the supervisor meeting</li></ul></div>
-        <div><h3>AI</h3><ul><li>Aspect classifier, full run overnight</li><li>Re-draw and pre-label candidates</li><li>Chatbot memory and advice guard</li></ul></div></div>
+        <div><h3>AI</h3><ul><li>Aspect classifier, full run overnight</li><li>Re-draw and pre-label candidates</li></ul></div></div>
       <div class="week"><div class="d">5 Oct<small>gate: κ ≥ 0.6; O1, O2 decided</small></div>
         <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>Supervisor meeting</li><li>NER gold set; CNA loaded</li></ul></div>
-        <div><h3>AI</h3><ul><li>Discovery re-run and sweep; NER</li><li>Number guard; dashboard fixes</li><li>Report structure and drafts</li></ul></div></div>
+        <div><h3>AI</h3><ul><li>Discovery re-run and sweep; NER</li><li>Frozen chatbot evaluation set; dashboard fixes</li><li>Report structure and drafts</li></ul></div></div>
       <div class="week"><div class="d">12 Oct<small>gate: ~1,000 labelled; model trained</small></div>
         <div><h3>People</h3><ul><li>Finish labelling</li><li>Decide O5</li></ul></div>
         <div><h3>AI</h3><ul><li>Fine-tune, three seeds</li><li>Evaluate all four tasks</li><li>Re-score the corpus</li></ul></div></div>

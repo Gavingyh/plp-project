@@ -11,6 +11,10 @@ Automated checks:
     rather than answering from general knowledge?
   - citation fabrication rate: how often chatbot/agent.py's verification
     check fired.
+  - the harness (docs/DESIGN.md decision 19): which input guard answered, if
+    any, and how many answers carried a figure no tool returned. The number
+    check is a strict detector, not a grade: a flagged figure still needs a
+    person to read it.
 
 NOT automated, and left in the transcript for a human to grade: whether a
 stated number is correct, and whether cited evidence is actually relevant.
@@ -28,7 +32,7 @@ import json
 import os
 from datetime import datetime, timezone
 
-from chatbot.agent import ask
+from chatbot.agent import answer_turn
 from chatbot.eval_gold_set import GOLD_SET, looks_like_advice_decline, looks_like_no_data_response
 from config.logging_config import get_logger, setup_logging
 
@@ -108,11 +112,11 @@ def run(backend_name: str | None = None, limit: int | None = None,
     for item in items:
         logger.info("[%s] %s", item["id"], item["question"])
         try:
-            answer, calls = ask(item["question"], verbose=False, backend_name=backend_name,
-                                 return_trace=True)
-            error = None
+            turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)
+            answer, calls, error = turn.answer, turn.calls, None
+            guard, numbers = turn.guard, turn.unverified_numbers
         except Exception as e:
-            answer, calls, error = "", [], str(e)
+            answer, calls, error, guard, numbers = "", [], str(e), None, []
             logger.warning("[%s] FAILED: %s", item["id"], e)
 
         fabricated = "VERIFICATION WARNING" in answer
@@ -131,6 +135,8 @@ def run(backend_name: str | None = None, limit: int | None = None,
             "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
                              "result": c.get("result")} for c in calls],
             "citation_fabricated": fabricated,
+            "input_guard": guard,
+            "unverified_numbers": numbers,
             "tool_selection_check": tool_check,
             "behavior_check": behavior_check,
         })
@@ -162,6 +168,8 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
 
     behavior_checked = [r for r in results if r["behavior_check"]["applicable"]]
     behavior_correct = [r for r in behavior_checked if r["behavior_check"]["correct"]]
+    n_guarded = sum(1 for r in results if r.get("input_guard"))
+    n_numbers = sum(1 for r in results if r.get("unverified_numbers"))
 
     lines = [
         f"# Chatbot evaluation summary",
@@ -179,6 +187,8 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
         f"{len(behavior_correct)}/{len(behavior_checked)} correct",
         f"- Citation fabrication flagged: {n_fabricated}/{n} answers "
         f"({100 * n_fabricated / n:.0f}%)",
+        f"- Answered by an input guard without calling the model: {n_guarded}/{n}",
+        f"- Answers carrying a figure no tool returned: {n_numbers}/{n}",
         f"",
         f"## Failures needing a look",
         f"",
@@ -193,6 +203,8 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
             problems.append(f"behavior: {r['behavior_check']['reason']}")
         if r["citation_fabricated"]:
             problems.append("citation fabrication flagged")
+        if r.get("unverified_numbers"):
+            problems.append(f"unverified figures: {', '.join(r['unverified_numbers'])}")
         if problems:
             lines.append(f"- **{r['id']}** ({r['category']}): {'; '.join(problems)}")
     if not any(r["error"] or

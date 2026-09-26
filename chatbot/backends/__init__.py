@@ -23,7 +23,7 @@ Env vars (all optional):
 
 import os
 
-from chatbot.backends.base import LLMBackend
+from chatbot.backends.base import DEFAULT_TEMPERATURE, LLMBackend
 from chatbot.backends.claude_backend import ClaudeBackend
 from chatbot.backends.gemini_backend import DEFAULT_MODEL as GEMINI_DEFAULT_MODEL
 from chatbot.backends.gemini_backend import GeminiBackend
@@ -45,29 +45,42 @@ def _auto_detect() -> str:
     return "ollama"
 
 
+def _temperature() -> float:
+    """CHATBOT_TEMPERATURE, or the low default for grounded answers."""
+    try:
+        return float(os.environ.get("CHATBOT_TEMPERATURE", DEFAULT_TEMPERATURE))
+    except ValueError:
+        return DEFAULT_TEMPERATURE
+
+
 def get_backend(name: str | None = None) -> LLMBackend:
     """Build the requested backend, or auto-detect one if name is None."""
     name = (name or os.environ.get("CHATBOT_BACKEND") or _auto_detect()).lower()
+    temperature = _temperature()
 
     if name == "claude":
         return ClaudeBackend(
             api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
             model=os.environ.get("CLAUDE_MODEL", "claude-sonnet-5"),
+            temperature=temperature,
         )
     if name == "openai":
         return OpenAIBackend(
             api_key=os.environ.get("OPENAI_API_KEY", ""),
             model=os.environ.get("OPENAI_MODEL", OPENAI_DEFAULT_MODEL),
+            temperature=temperature,
         )
     if name == "gemini":
         return GeminiBackend(
             api_key=os.environ.get("GEMINI_API_KEY", ""),
             model=os.environ.get("GEMINI_MODEL", GEMINI_DEFAULT_MODEL),
+            temperature=temperature,
         )
     if name == "ollama":
         return OllamaBackend(
             model=os.environ.get("OLLAMA_MODEL", DEFAULT_MODEL),
             base_url=os.environ.get("OLLAMA_BASE_URL", DEFAULT_BASE_URL),
+            temperature=temperature,
         )
     raise ValueError(
         f"Unknown CHATBOT_BACKEND {name!r} — expected 'claude', 'openai', 'gemini', or 'ollama'"

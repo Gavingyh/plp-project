@@ -25,7 +25,7 @@ import requests
 
 from chatbot.backends._openai_compat import to_openai_function_tools as _to_ollama_tools
 from config.logging_config import get_logger
-from chatbot.backends.base import LLMBackend, ToolExecutor
+from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -38,15 +38,18 @@ _REQUEST_TIMEOUT = 120  # local generation, esp. "thinking" models, can be slow 
 class OllamaBackend(LLMBackend):
     name = "ollama"
 
-    def __init__(self, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_BASE_URL):
+    def __init__(self, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_BASE_URL,
+                 temperature: float = DEFAULT_TEMPERATURE):
         self.model = model
         self.base_url = base_url.rstrip("/")
+        self.temperature = temperature
 
     def _chat(self, messages: list[dict], tools: list[dict]) -> dict:
         try:
             resp = requests.post(
                 f"{self.base_url}/api/chat",
-                json={"model": self.model, "messages": messages, "tools": tools, "stream": False},
+                json={"model": self.model, "messages": messages, "tools": tools, "stream": False,
+                      "options": {"temperature": self.temperature}},
                 timeout=_REQUEST_TIMEOUT,
             )
         except requests.exceptions.ConnectionError as e:
@@ -64,9 +67,11 @@ class OllamaBackend(LLMBackend):
         return resp.json()
 
     def ask(self, question: str, system: str, tool_schemas: list[dict],
-            tool_executor: ToolExecutor, verbose: bool = True) -> str:
+            tool_executor: ToolExecutor, verbose: bool = True,
+            history: History | None = None) -> str:
         ollama_tools = _to_ollama_tools(tool_schemas)
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": question}]
+        messages = ([{"role": "system", "content": system}] + list(history or [])
+                    + [{"role": "user", "content": question}])
 
         for _ in range(MAX_TOOL_ITERATIONS):
             data = self._chat(messages, ollama_tools)

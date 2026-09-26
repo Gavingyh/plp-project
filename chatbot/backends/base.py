@@ -17,6 +17,11 @@ from abc import ABC, abstractmethod
 from typing import Callable
 
 ToolExecutor = Callable[[str, dict], str]  # (tool_name, tool_input) -> JSON string result
+History = list[dict]  # earlier turns: [{"role": "user" | "assistant", "content": str}, ...]
+
+# Factual, grounded answers want near-greedy decoding (TPML Day 3 decoding guide:
+# temperature 0.1-0.3 for factual QA). Ollama's own default is tuned for chat.
+DEFAULT_TEMPERATURE = 0.2
 
 
 class LLMBackend(ABC):
@@ -25,7 +30,12 @@ class LLMBackend(ABC):
 
     name: str  # short identifier, e.g. "claude", "ollama" — used in logs/errors
 
+    temperature: float = DEFAULT_TEMPERATURE
+
     @abstractmethod
     def ask(self, question: str, system: str, tool_schemas: list[dict],
-             tool_executor: ToolExecutor, verbose: bool = True) -> str:
+             tool_executor: ToolExecutor, verbose: bool = True,
+             history: History | None = None) -> str:
+        """`history` holds earlier turns as plain text, oldest first. Tool calls
+        from earlier turns are not replayed: the model re-fetches what it needs."""
         ...

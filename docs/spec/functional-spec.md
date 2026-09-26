@@ -136,21 +136,22 @@ Thirteen endpoints in `api/main.py`. No authentication; localhost only.
 | # | Requirement | Acceptance criteria | Status |
 |---|---|---|---|
 | C1 | Answers questions about sentiment by querying the store, not from model memory | Six tools: `get_sentiment`, `compare_banks`, `get_trend`, `get_coverage`, `search_evidence`, `get_analyst_consensus` | Done |
-| C2 | Never states a number it did not retrieve | Enforced in code by the volume floor, and by prompt rule 1 | **Partial** — the floor is enforced; numerical fidelity of answers is not automatically checked |
+| C2 | Never states a number it did not retrieve | Enforced in code by the volume floor, and by prompt rule 1; every figure is checked against the tools' results (C10) | **Partial** — invented figures are now detected and flagged, not prevented |
 | C3 | Never cites evidence it did not retrieve | If `search_evidence` was not called, any quoted evidence, `sentence_id` or URL is fabricated by definition and the answer is flagged | **Partial** — detection works; local models still fabricate at 43–48% (3B) and 13% (8B) |
-| C4 | Declines investment advice | Advice-seeking questions are declined with a not-financial-advice statement | **Partial** — best observed is 3 of 7 gold-set questions, on every model tested |
+| C4 | Declines investment advice | Advice-seeking questions are declined with a not-financial-advice statement | Done through C9 — prompt-only was 2–3 of 7 on every model tested |
 | C5 | Says so plainly when data is thin | Tools return `insufficient_data` below 5 observations | Done |
 | C6 | Runs without any API key | Ollama backend auto-selected when no key is present | Done |
 | C7 | Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude verified; GPT and Gemini never run against real APIs |
 
-| C8 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | **Planned** — today only the latest question reaches the model |
-| C9 | Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | **Planned** — would close C4 |
-| C10 | Every number in an answer matches a tool result | An output guard compares each figure with the tools' results and flags a mismatch, as C3 does for citations | **Planned** — would close most of C2 |
+| C8 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | Done — dashboard and API (`history`); verified live in a three-turn conversation |
+| C9 | Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | Done — 7 of 7, by guards; off-topic questions get a scope reply too |
+| C10 | Every number in an answer matches a tool result | An output guard compares each figure with the tools' results and flags a mismatch, as C3 does for citations | Done — 18 of 19 flagged figures in the final run were invented; the one false alarm is fixed |
 | C11 | Evaluated on a frozen, sliced gold set | About 30 questions with expected behaviour written before tuning; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; multi-turn scenarios; SASSI questionnaire with 5–8 users | **Planned** — today 23 single-turn questions, also used during tuning |
 
-C2, C3 and C4 are the honest weak points of the system and are the most
-report-relevant findings in the project. See the evaluation section of STATUS.
-C8–C11 apply the Conversational UIs module and are DESIGN decision 19.
+C2 and C3 remain the honest weak points: the harness detects invented
+figures and citations but a small local model keeps producing them (43–48% of
+answers). C8–C11 apply the Conversational UIs module and are DESIGN decision
+19; results in [evidence/chatbot-harness-2026-09-26.md](../evidence/chatbot-harness-2026-09-26.md).
 
 ### 4.4 Labelling workflow
 
@@ -217,14 +218,14 @@ Summarised from [STATUS.md](../STATUS.md), which is the authority.
    scores are nearly all neutral. Being replaced (T2).
 3. **Local models fabricate citations**, and the check detects rather than
    prevents.
-4. **Advice-declining fails more often than it works.**
+4. **Invented figures and citations are flagged, not prevented.** The local
+   3B model still produces them in 43–48% of answers.
 5. **Blended cross-bank figures track earnings coverage.** DBS carries roughly
    six times the earnings volume of the other two banks.
 6. **Relevance filtering is weak.** Sentences mentioning a bank incidentally
    still enter the corpus. Roughly 2.6% of sentences are extraction artifacts.
 7. **GPT and Gemini backends are unverified.**
-8. **The chatbot has no memory between turns** (C8).
-9. **News volume over time is a sampling artefact.** Google News favours
+8. **News volume over time is a sampling artefact.** Google News favours
    recent articles; compare periods only after normalising per month.
 
 ---

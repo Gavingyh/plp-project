@@ -218,7 +218,21 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     any qualitative claim. See docs/DESIGN.md, 'Grounding rules': every
     qualitative claim must cite a sentence_id + url."""
     results = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k)
-    return {"query": query, "results": results, "n_found": len(results)}
+    # Packaged for citing, per the grounded-generation contract (CNI Day 2):
+    # a short id, the date without a timestamp, and a ready-made citation the
+    # model can copy, so it has no reason to compose one. The retrieval score
+    # is renamed so it can't be mistaken for a sentiment score.
+    packaged = []
+    for i, r in enumerate(results, start=1):
+        date = (r.get("published_at") or "")[:10]
+        item = {"evidence_id": f"E{i}", "sentence_id": r["sentence_id"], "bank": r.get("bank"),
+                "date": date, "text": r.get("text"), "url": r.get("url"),
+                "cite_as": f"[{r.get('bank')}, {date}, sentence_id {r['sentence_id']}]",
+                "relevance": r.get("score")}
+        if "aspect" in r:
+            item["aspect"], item["sentiment"] = r.get("aspect"), r.get("sentiment")
+        packaged.append(item)
+    return {"query": query, "results": packaged, "n_found": len(packaged)}
 
 
 # Anthropic tool-use schema for the four structured-data tools + search_evidence.

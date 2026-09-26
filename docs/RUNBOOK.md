@@ -308,9 +308,32 @@ ollama serve
 ```
 
 Set `CHATBOT_BACKEND` to `ollama`, `claude`, `openai` or `gemini` to force
-one; otherwise it auto-detects from whichever key is present. Local model
-answers may carry a `⚠️ VERIFICATION WARNING` — that means the model cited
-evidence it never retrieved, and the answer should not be trusted.
+one; otherwise it auto-detects from whichever key is present. Two warnings
+can be appended to an answer, and both mean "don't trust this part":
+
+- `⚠️ VERIFICATION WARNING`: the model cited evidence (a quote, sentence id or
+  URL) it never retrieved.
+- `⚠️ NUMBER CHECK`: a figure in the answer matches nothing the tools returned
+  for that question. The check is strict: a figure the model derived
+  legitimately in an unusual way can also trip it, so read the flagged one.
+
+Buy/sell/hold questions, price predictions and questions only about other
+banks never reach the model: they get a fixed reply (`chatbot/guards.py`).
+
+| setting | default | effect |
+|---|---|---|
+| `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
+| `CHATBOT_TRACE_FILE` | unset | if set, each dashboard or API turn appends a JSON line: question, answer, tool calls and results, guards, state |
+
+The dashboard's Chat tab remembers the last three turns, so follow-ups like
+"and OCBC?" work. The API is stateless: send earlier turns in `history`:
+
+```bash
+curl -s localhost:8000/chat -H 'content-type: application/json' -d '{
+  "message": "and OCBC?",
+  "history": [{"role": "user", "content": "How is sentiment on DBS dividends?"},
+              {"role": "assistant", "content": "..."}]}'
+```
 
 The answer goes to stdout and diagnostics to stderr, so:
 
@@ -330,10 +353,14 @@ Runs `chatbot/eval_gold_set.py` against the chatbot and writes:
 - `data/eval/chatbot_eval_results.jsonl` — full transcript (question, answer,
   every tool call and its raw result)
 - `data/eval/chatbot_eval_summary.md` — automated checks: tool selection,
-  advice-decline behaviour, citation-fabrication rate
+  advice-decline behaviour, citation-fabrication rate, how many questions an
+  input guard answered, and how many answers carried an unverified figure
 
-Whether a stated *number* is correct isn't automated — read the transcript
-for that; free-text extraction is less trustworthy than the check itself.
+Use `--tag` to keep runs apart, and `CHATBOT_TEMPERATURE` to compare decoding
+settings.
+
+The number check flags figures no tool returned; it doesn't prove the
+unflagged ones are used correctly. Read the transcript for that.
 
 ---
 

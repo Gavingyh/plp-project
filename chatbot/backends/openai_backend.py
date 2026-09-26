@@ -26,7 +26,7 @@ import requests
 
 from chatbot.backends._openai_compat import to_openai_function_tools
 from config.logging_config import get_logger
-from chatbot.backends.base import LLMBackend, ToolExecutor
+from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -39,7 +39,8 @@ _API_URL = "https://api.openai.com/v1/chat/completions"
 class OpenAIBackend(LLMBackend):
     name = "openai"
 
-    def __init__(self, api_key: str, model: str = DEFAULT_MODEL):
+    def __init__(self, api_key: str, model: str = DEFAULT_MODEL,
+                 temperature: float = DEFAULT_TEMPERATURE):
         if not api_key:
             raise RuntimeError(
                 "OPENAI_API_KEY not set. Set it in .env to use GPT, or use CHATBOT_BACKEND=ollama "
@@ -47,6 +48,7 @@ class OpenAIBackend(LLMBackend):
             )
         self._api_key = api_key
         self.model = model
+        self.temperature = temperature
 
     def _chat(self, messages: list[dict], tools: list[dict]) -> dict:
         try:
@@ -54,7 +56,8 @@ class OpenAIBackend(LLMBackend):
                 _API_URL,
                 headers={"Authorization": f"Bearer {self._api_key}",
                          "Content-Type": "application/json"},
-                json={"model": self.model, "messages": messages, "tools": tools},
+                json={"model": self.model, "messages": messages, "tools": tools,
+                      "temperature": self.temperature},
                 timeout=_REQUEST_TIMEOUT,
             )
         except requests.exceptions.ConnectionError as e:
@@ -65,9 +68,11 @@ class OpenAIBackend(LLMBackend):
         return resp.json()
 
     def ask(self, question: str, system: str, tool_schemas: list[dict],
-            tool_executor: ToolExecutor, verbose: bool = True) -> str:
+            tool_executor: ToolExecutor, verbose: bool = True,
+            history: History | None = None) -> str:
         openai_tools = to_openai_function_tools(tool_schemas)
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": question}]
+        messages = ([{"role": "system", "content": system}] + list(history or [])
+                    + [{"role": "user", "content": question}])
 
         for _ in range(MAX_TOOL_ITERATIONS):
             data = self._chat(messages, openai_tools)

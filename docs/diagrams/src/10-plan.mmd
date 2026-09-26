@@ -1,0 +1,28 @@
+gantt
+  accTitle: Plan to 1 November 2026
+  accDescr: Five weekly stages from 28 September to 1 November, people's work and AI work side by side, each week ending in a gate.
+  title Five weeks to submission
+  dateFormat YYYY-MM-DD
+  axisFormat %d %b
+  todayMarker off
+
+  section People
+  Keys, roles, classifier sample, book supervisor   :p1, 2026-09-28, 7d
+  Agreement round, then labelling                   :p2, 2026-10-05, 14d
+  Supervisor, NER gold set, CNA loaded              :p3, 2026-10-05, 7d
+  Interpret results, transcripts, SASSI, rehearse   :p4, 2026-10-19, 7d
+  Write conclusions, record video, submit           :p5, 2026-10-26, 7d
+
+  section AI
+  Aspect classifier, re-draw candidates             :a1, 2026-09-28, 7d
+  Discovery, NER, chatbot eval set, report drafts   :a2, 2026-10-05, 7d
+  Fine-tune, evaluate, re-score                     :a3, 2026-10-12, 7d
+  Chatbot evaluation, results, video script         :a4, 2026-10-19, 7d
+  Final snapshot, clean-copy test                   :a5, 2026-10-26, 7d
+
+  section Gates
+  Candidates re-drawn                               :milestone, g1, 2026-10-04, 0d
+  Agreement reached, O1 and O2 decided              :milestone, g2, 2026-10-11, 0d
+  About 1,000 rows labelled, model trained          :milestone, g3, 2026-10-18, 0d
+  Results frozen                                    :milestone, g4, 2026-10-25, 0d
+  Submitted                                         :milestone, g5, 2026-11-01, 0d

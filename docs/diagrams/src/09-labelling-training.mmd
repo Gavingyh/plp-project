@@ -1,0 +1,39 @@
+flowchart TB
+  accTitle: Labelling and training workflow
+  accDescr: Version 1 exported and pre-labelled candidates but was never labelled. Version 2, planned, classifies aspects first, re-draws candidates and labels aspect and sentiment. Training and evaluation are written but have never run.
+
+  subgraph v1["Version 1, as built: stopped before annotation"]
+    exp["Export 997 candidates<br/>preprocess.export_candidates"]
+    pre1["LLM pre-labels, sentiment only<br/>train.llm_prelabel"]
+    blind1["Blind test sheet<br/>preprocess.export_blind_test"]
+    ann1["Annotation: not started,<br/>superseded by version 2"]
+  end
+
+  subgraph v2["Version 2 (planned, DESIGN 16 and 17)"]
+    cls["LLM aspect classifier<br/>over every sentence"]
+    redraw["Re-draw candidates<br/>Reddit, earnings, news"]
+    pre2["Pre-label train/dev only"]
+    blind2["New blind test sheet"]
+    ann2["People label aspect and sentiment,<br/>or flag not about the bank"]
+  end
+
+  subgraph train["Built, never run: nothing is labelled yet"]
+    agree["Agreement on 150 shared rows<br/>Cohen's kappa, train.agreement"]
+    merge["Merge blind labels<br/>into the candidate set"]
+    ft["Fine-tune FinBERT<br/>train.finetune"]
+    ev["Evaluate on the frozen test split<br/>train.evaluate"]
+  end
+
+  base["Baselines: base FinBERT zero-shot,<br/>VADER lexicon, TF-IDF + logistic regression"]
+  rescore["Re-score the corpus with the fine-tuned model<br/>(planned, PLAN section 5)"]
+
+  exp --> pre1 --> blind1 --> ann1
+  cls -.-> redraw -.-> pre2 -.-> blind2 -.-> ann2
+  ann1 -. "was the route" .-> agree
+  ann2 -.-> agree
+  agree --> merge --> ft --> ev
+  base --> ev
+  ev -.-> rescore
+
+  classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
+  class cls,redraw,pre2,blind2,ann2,rescore planned;

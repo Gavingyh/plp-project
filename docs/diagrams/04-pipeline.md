@@ -30,7 +30,7 @@ flowchart TB
   score["Base FinBERT, zero-shot<br/>sentiment.score"]
   ft["Fine-tuned FinBERT<br/>(planned, PLAN section 3)"]
   as[("aspect_sentiment")]
-  agg["Index: windows, sources,<br/>volume floor, shrinkage<br/>aggregate.index"]
+  agg["Index: windows, sources,<br/>shrinkage at low volume<br/>aggregate.index"]
   idx[("sentiment_index")]
   ui["Dashboard, REST API, chatbot"]
 

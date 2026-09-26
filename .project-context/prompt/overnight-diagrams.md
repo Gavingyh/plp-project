@@ -43,10 +43,12 @@ anything you draw from it.
 - Don't modify existing code. The only code you add is the render script,
   the sources-check script and one test (section 4). Documentation edits are
   limited to adding links (section 5).
-- **Everything you create lives under `docs/`**, in `docs/diagrams/`: the
-  Mermaid sources, the pages, the rendered images, the schema dump and both
-  scripts. The one exception is `tests/test_diagrams.py`, which must sit in
-  `tests/` for pytest to find it. The run log goes in `docs/HANDOFF.md`.
+- **Everything you create lives in `docs/diagrams/`**: the Mermaid sources,
+  the pages, the rendered images, the schema dump, both scripts and the test.
+  Create nothing anywhere else. (pytest still runs the test: `pytest.ini`
+  sets no test paths, so any `test_*.py` in the repo is collected; this was
+  checked on 2026-09-26.) The run log goes in `docs/HANDOFF.md`. The only
+  edit outside `docs/` is one link row in the root `README.md` (section 5).
 - `data/labeled/`, `data/snapshots/`, `.env`: don't open or change.
 
 ### No-hallucination protocol
@@ -335,7 +337,7 @@ In this order, stopping when time runs out:
   (`-b white`) and a PNG width that reads on an A4 page (`-w 1600`,
   scale 2). Stop with a non-zero exit and the file name on the first
   failure. Idempotent.
-- `tests/test_diagrams.py`: for every `docs/diagrams/NN-*.md`, the Mermaid
+- `docs/diagrams/test_diagrams.py`: for every `docs/diagrams/NN-*.md`, the Mermaid
   block equals `src/NN-*.mmd` exactly; every `.mmd` has a page; every page
   has a sources table. No rendering in the test (no Node dependency in
   pytest).
@@ -374,8 +376,9 @@ In this order, stopping when time runs out:
 5. **Look at every PNG** once. Fix clipped labels, overlapping edges and
    unreadable text; split diagrams that don't read at A4 width.
 6. Run the full test suite:
-   `HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q`. It must be green;
-   if not, record the output in the run log.
+   `HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q`. It must be green,
+   and its count must include `docs/diagrams/test_diagrams.py` (check with
+   `--collect-only`); if not, record the output in the run log.
 7. Finish the run log: diagrams done, extended ones not reached,
    doc/code disagreements, left out and why, and what needs a human
    (for example: confirm the report shortlist; check that GitHub renders
@@ -390,8 +393,9 @@ In this order, stopping when time runs out:
 - [ ] Core diagrams 01–10: `.mmd`, page with sources table, SVG, PNG
 - [ ] Extended diagrams 11–20 as far as time allowed, same form
 - [ ] `docs/diagrams/render_diagrams.sh`, `docs/diagrams/check_sources.py`,
-      `tests/test_diagrams.py`, RUNBOOK section
-- [ ] Nothing created outside `docs/` except `tests/test_diagrams.py`
+      `docs/diagrams/test_diagrams.py`, RUNBOOK section
+- [ ] Nothing created outside `docs/diagrams/`; the only edit outside `docs/`
+      is the one README link row
 - [ ] `docs/diagrams/README.md` with the index, legend and report shortlist
 - [ ] Links added in `README.md` and the technical spec, nothing else changed
 - [ ] Verification pass done; tests green; run log in `docs/HANDOFF.md`

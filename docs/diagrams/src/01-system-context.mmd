@@ -1,0 +1,41 @@
+flowchart LR
+  accTitle: System context
+  accDescr: The sentiment system with its three kinds of user, its five text and data sources, and its four model backends.
+
+  investor(["Retail investor"])
+  team(["Project team<br/>ingests, labels, trains"])
+  grader(["Grader<br/>installs from the README"])
+
+  subgraph sys["Sentiment dashboard for DBS, OCBC and UOB"]
+    core["Batch pipeline<br/>dashboard, REST API, chatbot"]
+  end
+
+  subgraph sources["Text and data sources"]
+    reddit["Arctic Shift<br/>Reddit archive"]
+    gnews["Google News RSS"]
+    yahoo["Yahoo Finance<br/>news, analyst consensus"]
+    newsapi["NewsAPI"]
+    av["Alpha Vantage<br/>returns nothing for SGX tickers"]
+    ir["DBS and OCBC<br/>investor-relations sites"]
+    wayback["Wayback Machine<br/>UOB earnings PDFs"]
+  end
+
+  subgraph llms["Language-model backends"]
+    ollama["Ollama, local<br/>default, no key needed"]
+    hosted["Claude, OpenAI, Gemini<br/>hosted; only Claude verified"]
+  end
+
+  investor -- "asks questions,<br/>reads scores and quotes" --> core
+  team -- "runs ingestion,<br/>labelling, training" --> core
+  grader -- "restores a snapshot,<br/>starts the services" --> core
+
+  reddit -- "posts, comments" --> core
+  gnews -- "headlines" --> core
+  yahoo -- "headlines, rating aggregates" --> core
+  newsapi -- "headlines, descriptions" --> core
+  av -. "no articles" .-> core
+  ir -- "results PDFs" --> core
+  wayback -- "archived PDFs" --> core
+
+  core <-- "prompts, tool calls,<br/>answers" --> ollama
+  core <-- "same, with an API key" --> hosted

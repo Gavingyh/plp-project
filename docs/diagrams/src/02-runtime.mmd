@@ -1,0 +1,35 @@
+flowchart TB
+  accTitle: Runtime view
+  accDescr: Three services started by scripts/start.sh, the batch commands run by hand, and the local files each reads or writes.
+
+  subgraph services["Services: scripts/start.sh"]
+    ui["Streamlit dashboard, port 8501<br/>FastAPI REST API, port 8000"]
+    oll["Ollama<br/>port 11434"]
+  end
+
+  subgraph files["Local files in data/"]
+    db[("plp.db<br/>SQLite, not in git")]
+    emb[("sentence_embeddings.npz<br/>cache, not in git")]
+    flagged["news_flagged.csv<br/>news filter log"]
+    snaps["snapshots/*.db.gz<br/>not in git"]
+  end
+
+  subgraph batch["Batch commands, run by hand"]
+    pull["Ingestion<br/>run_news_pull.py, run_daily_batch.py"]
+    pipe["Pipeline steps<br/>preprocess, aspects, sentiment, aggregate"]
+  end
+
+  plist["launchd daily job<br/>not installed"]
+
+  ui -- "reads scores, evidence" --> db
+  ui -- "evidence search" --> emb
+  ui -- "chat" --> oll
+  pull -- "writes documents" --> db
+  pull -- "logs decisions" --> flagged
+  pipe -- "reads and writes" --> db
+  pipe -- "updates" --> emb
+  db -. "checkpoint and gzip, by hand" .-> snaps
+  plist -. "would run" .-> pull
+
+  classDef inactive stroke-dasharray: 5 5,color:#555,fill:#fafafa;
+  class plist inactive;

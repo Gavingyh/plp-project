@@ -1,0 +1,69 @@
+classDiagram
+  accTitle: Chatbot components
+  accDescr: Conversation holds TurnResults and calls answer_turn, which uses the guards, a tool-call tracker, the tools and one of four backends implementing LLMBackend.
+
+  class Conversation {
+    +backend_name
+    +turns : list~TurnResult~
+    +state : banks, aspect, window
+    +ask(question) TurnResult
+    +history() list
+    +from_messages(messages)$ Conversation
+  }
+  class TurnResult {
+    +question
+    +answer
+    +calls
+    +guard
+    +citation_unverified
+    +unverified_numbers
+  }
+  class agent {
+    <<module>>
+    +answer_turn(question, history, state) TurnResult
+    +ask(question) str
+  }
+  class ToolCallTracker {
+    +calls
+    +verified_urls
+    +verified_sentence_ids
+    +execute(name, arguments) str
+    +answer_has_unverified_citation(answer) bool
+  }
+  class guards {
+    <<module>>
+    +advice_reply(question, context_banks)
+    +scope_reply(question)
+    +unverified_numbers(answer, tool_results, question)
+    +unverified_sentence_ids(answer, retrieved_ids)
+  }
+  class tools {
+    <<module>>
+    +get_sentiment()
+    +compare_banks()
+    +get_trend()
+    +get_coverage()
+    +search_evidence()
+    +get_analyst_consensus()
+  }
+  class LLMBackend {
+    <<abstract>>
+    +name
+    +temperature
+    +ask(question, system, tool_schemas, tool_executor, history) str
+  }
+  class OllamaBackend
+  class ClaudeBackend
+  class OpenAIBackend
+  class GeminiBackend
+
+  Conversation "1" *-- "*" TurnResult : keeps
+  Conversation ..> agent : calls answer_turn
+  agent ..> guards : before and after the model
+  agent ..> ToolCallTracker : creates one per turn
+  ToolCallTracker ..> tools : runs
+  agent ..> LLMBackend : asks
+  LLMBackend <|-- OllamaBackend
+  LLMBackend <|-- ClaudeBackend
+  LLMBackend <|-- OpenAIBackend
+  LLMBackend <|-- GeminiBackend

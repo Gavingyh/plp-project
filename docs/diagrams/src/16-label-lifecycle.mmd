@@ -1,0 +1,21 @@
+stateDiagram-v2
+  accTitle: Label lifecycle, planned
+  accDescr: Planned. A candidate is drawn into the train/dev or test split. Train/dev rows get an LLM suggestion; test rows go to a blind sheet. A person labels aspect and sentiment or flags the row. Some rows form the agreement sample. Labelled train/dev rows train the model; test rows only evaluate it.
+
+  [*] --> Drawn : re-drawn after the aspect classifier runs
+  Drawn --> Suggested : train/dev split
+  Drawn --> Blind : test split
+  Suggested --> WithAnnotator : model suggestion shown
+  Blind --> WithAnnotator : no model output shown
+  WithAnnotator --> NotAboutBank : flagged
+  WithAnnotator --> Labelled : aspect and sentiment set
+  Labelled --> AgreementSample : in the shared 150 rows
+  AgreementSample --> Labelled : kappa at least 0.6
+  Labelled --> Training : train/dev row
+  Labelled --> HeldOut : test row
+  NotAboutBank --> [*]
+  Training --> [*]
+  HeldOut --> [*]
+
+  classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa
+  class Drawn,Suggested,Blind,WithAnnotator,Labelled,NotAboutBank,AgreementSample,Training,HeldOut planned

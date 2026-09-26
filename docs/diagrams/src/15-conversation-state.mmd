@@ -1,0 +1,23 @@
+stateDiagram-v2
+  accTitle: Conversation state
+  accDescr: A new conversation has no context. Each turn updates it from tool calls or from a bank named in a guard-answered question; the state is added to the next turn's system prompt. Window is never set today.
+
+  [*] --> NoContext : new conversation
+  NoContext --> HasContext : a turn names a bank
+  HasContext --> HasContext : each turn updates it
+  HasContext --> [*] : Clear conversation
+  NoContext --> [*] : Clear conversation
+
+  note left of HasContext
+    How a turn updates it:
+    a tool call with a bank sets banks and aspect,
+    compare_banks sets all three banks,
+    a guard-answered question naming a bank sets banks.
+    The latest turn wins.
+  end note
+  note right of HasContext
+    Added to the next turn's system prompt,
+    so "and OCBC?" keeps the aspect.
+    window stays empty: no tool
+    takes a window argument today.
+  end note

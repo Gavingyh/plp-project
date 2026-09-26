@@ -17,6 +17,9 @@ data/plp.db-wal
 data/sentence_embeddings.npz
 data/snapshots/
 
+# full-text CNA articles fetched by ingest/cna_archive.py: CNA's copyright, not redistributed
+data/cna/
+
 # API keys; copy .env.example to .env
 .env
 

@@ -53,6 +53,9 @@ def _sentence_id(doc_id: str, start: int, end: int) -> str:
 # about the bank. For those sources we require an explicit in-sentence
 # mention. This is the "keyword-plus-length heuristic, known precision
 # limitation" docs/DESIGN.md notes for the relevance filter.
+# CNA is left out on purpose: its documents are whole articles, not a
+# headline and a line, and a long article strays into other banks and the
+# wider market, so a sentence must name the bank itself.
 _INHERIT_DOC_BANK_SOURCES = {"newsapi", "alphavantage", "yahoo_news", "google_news", "earnings"}
 
 

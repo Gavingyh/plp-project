@@ -1,7 +1,7 @@
 """
 Relevance filter and cross-source dedup shared by every news adapter.
 
-Every news pull (yahoo_news, google_news, newsapi, alphavantage) goes through
+Every news pull (yahoo_news, google_news, newsapi, alphavantage, cna) goes through
 filter_and_dedup() before upsert_documents(), so the same rules apply whichever
 source an article came from:
 
@@ -24,6 +24,10 @@ source an article came from:
    is >= TITLE_SIMILARITY similar to one published within DUP_WINDOW_DAYS.
    The first copy stored wins, and adapters run Yahoo first because Yahoo
    carries a summary, not just a headline.
+   One exception: a full-text article is not a duplicate of a copy that is
+   only its headline (Google News stores headlines alone). It is kept, and
+   flagged `kept_full_text_over_headline`. The headline isn't counted twice:
+   preprocessing drops a sentence whose normalised text is already stored.
 
 Nothing is silently dropped. Every article rejected by rule 1, 2 or 3, every
 article kept but containing a masked phrase, and every kept headline that
@@ -48,7 +52,7 @@ logger = get_logger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")
 
-NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news")
+NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news", "cna")
 
 TITLE_SIMILARITY = 0.90
 DUP_WINDOW_DAYS = 3
@@ -205,25 +209,35 @@ class _Index:
         self.doc_ids: set[str] = set()
         self.urls: dict[str, str] = {}
         self.by_day: dict[int, list[tuple[str, str]]] = {}
+        self.headline_only: set[str] = set()
 
-    def add(self, doc_id: str, title: str, url: str, published_at: str):
+    def add(self, doc_id: str, title: str, url: str, published_at: str, body: str | None = None):
         self.doc_ids.add(doc_id)
+        if body is not None and is_headline_only(title, body):
+            self.headline_only.add(doc_id)
         key = normalise_url(url)
         if key:
             self.urls.setdefault(key, doc_id)
         self.by_day.setdefault(_day(published_at), []).append((normalise_title(title), doc_id))
 
-    def find_duplicate(self, title: str, url: str, published_at: str) -> str | None:
+    def find_duplicate(self, title: str, url: str, published_at: str,
+                       skip: set[str] | frozenset = frozenset()) -> str | None:
+        """The first stored document this one duplicates, ignoring doc_ids in skip."""
         key = normalise_url(url)
-        if key and key in self.urls:
+        if key and key in self.urls and self.urls[key] not in skip:
             return self.urls[key]
         norm = normalise_title(title)
         d = _day(published_at)
         for day in range(d - DUP_WINDOW_DAYS, d + DUP_WINDOW_DAYS + 1):
             for other, doc_id in self.by_day.get(day, ()):
-                if _similar(norm, other):
+                if doc_id not in skip and _similar(norm, other):
                     return doc_id
         return None
+
+
+def is_headline_only(title: str | None, body: str | None) -> bool:
+    """True when a document's body is just its headline (or empty)."""
+    return not body or normalise_title(body) == normalise_title(title or "")
 
 
 def load_index() -> _Index:
@@ -232,11 +246,12 @@ def load_index() -> _Index:
     conn = get_connection()
     try:
         placeholders = ",".join("?" * len(NEWS_SOURCES))
-        for doc_id, title, url, published_at in conn.execute(
-            f"SELECT doc_id, title, url, published_at FROM documents WHERE source IN ({placeholders})",
+        for doc_id, title, url, published_at, body in conn.execute(
+            f"SELECT doc_id, title, url, published_at, body FROM documents "
+            f"WHERE source IN ({placeholders})",
             NEWS_SOURCES,
         ):
-            idx.add(doc_id, title, url, published_at)
+            idx.add(doc_id, title, url, published_at, body)
     finally:
         conn.close()
     return idx
@@ -254,7 +269,7 @@ def filter_and_dedup(docs: list[dict], index: _Index | None = None) -> tuple[lis
     kept, flagged = [], []
     stats = {"input": len(docs), "already_stored": 0, "no_bank_mention": 0,
              "false_positive_only": 0, "duplicate": 0, "kept": 0, "kept_with_phrase": 0,
-             "kept_possible_commentary": 0}
+             "kept_possible_commentary": 0, "kept_full_text_over_headline": 0}
 
     for d in docs:
         if d["doc_id"] in index.doc_ids:
@@ -271,7 +286,16 @@ def filter_and_dedup(docs: list[dict], index: _Index | None = None) -> tuple[lis
             flagged.append({**row, "reason": reason, "kept": 0})
             continue
 
-        dup = index.find_duplicate(d.get("title") or d["body"], d["url"], d["published_at"])
+        title = d.get("title") or d["body"]
+        dup = index.find_duplicate(title, d["url"], d["published_at"])
+        if dup and dup in index.headline_only and not is_headline_only(d.get("title"), d["body"]):
+            # Full text beats a headline-only copy, unless a fuller copy is also stored.
+            fuller = index.find_duplicate(title, d["url"], d["published_at"], skip=index.headline_only)
+            if not fuller:
+                stats["kept_full_text_over_headline"] += 1
+                flagged.append({**row, "reason": "kept_full_text_over_headline", "kept": 1,
+                                "duplicate_of": dup})
+            dup = fuller
         if dup:
             stats["duplicate"] += 1
             flagged.append({**row, "reason": "duplicate", "kept": 0, "duplicate_of": dup})
@@ -285,7 +309,7 @@ def filter_and_dedup(docs: list[dict], index: _Index | None = None) -> tuple[lis
         if _COMMENTARY_HINT.search(d.get("title") or ""):
             stats["kept_possible_commentary"] += 1
             flagged.append({**row, "reason": "kept_possible_bank_commentary", "kept": 1})
-        index.add(d["doc_id"], d.get("title") or d["body"], d["url"], d["published_at"])
+        index.add(d["doc_id"], d.get("title") or d["body"], d["url"], d["published_at"], d["body"])
         kept.append(d)
         stats["kept"] += 1
 

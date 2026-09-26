@@ -174,3 +174,39 @@ def test_rating_call_rejected_when_body_repeats_title(temp_db, flagged_path):
     # first copy and the headline slipped through on the second.
     kept, stats = filter_and_dedup([_doc("rc", "DBS maintains 'buy' on IHH Healthcare")])
     assert kept == [] and stats["false_positive_only"] == 1
+
+
+# --- full text over a headline-only copy --------------------------------
+
+def test_full_text_is_kept_over_a_headline_only_copy(temp_db, flagged_path):
+    upsert_documents([_doc("gn", "DBS sued for US$1 billion in 1MDB-linked claim",
+                           published="2026-09-09T13:00:00+00:00")])
+    article = _doc("cna", "DBS sued for US$1 billion in 1MDB-linked claim", source="cna",
+                   published="2026-09-09T21:25:00+08:00",
+                   body="DBS sued for US$1 billion in 1MDB-linked claim\nDBS rejected the claim.")
+    kept, stats = filter_and_dedup([article])
+
+    assert [d["doc_id"] for d in kept] == ["cna"]
+    assert stats["kept_full_text_over_headline"] == 1 and stats["duplicate"] == 0
+    row = _flagged(flagged_path)[0]
+    assert row["reason"] == "kept_full_text_over_headline" and row["duplicate_of"] == "gn"
+
+
+def test_full_text_is_still_a_duplicate_of_a_fuller_copy(temp_db, flagged_path):
+    upsert_documents([
+        _doc("gn", "DBS sued for US$1 billion in 1MDB-linked claim", published="2026-09-09T13:00:00+00:00"),
+        _doc("yh", "DBS sued for US$1 billion in 1MDB-linked claim", source="yahoo_news",
+             published="2026-09-09T14:00:00+00:00", body="Liquidators sued DBS Bank on Wednesday."),
+    ])
+    article = _doc("cna", "DBS sued for US$1 billion in 1MDB-linked claim", source="cna",
+                   published="2026-09-09T21:25:00+08:00", body="Full story about DBS.")
+    kept, stats = filter_and_dedup([article])
+    assert kept == [] and stats["duplicate"] == 1
+
+
+def test_headline_only_copy_of_stored_full_text_is_a_duplicate(temp_db, flagged_path):
+    upsert_documents([_doc("cna", "DBS sued for US$1 billion in 1MDB-linked claim", source="cna",
+                           published="2026-09-09T21:25:00+08:00", body="Full story about DBS.")])
+    kept, stats = filter_and_dedup([_doc("gn", "DBS sued for US$1 billion in 1MDB-linked claim",
+                                         published="2026-09-09T13:00:00+00:00")])
+    assert kept == [] and stats["duplicate"] == 1

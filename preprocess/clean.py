@@ -25,6 +25,43 @@ def clean_news(text: str) -> str:
     return _WHITESPACE.sub(" ", text).strip()
 
 
+# CNA full text (ingest/cna_archive.py) comes one paragraph per line: headline,
+# standfirst, then the story. Datelines take three forms: "SINGAPORE: ",
+# "WASHINGTON, Sept 19 : " and "Sept 18 : ". Bank names are excluded so a
+# paragraph opening "DBS: ..." keeps its subject.
+_CNA_DATELINE = re.compile(
+    r"^(?!(?:DBS|OCBC|UOB|POSB)\b)"
+    r"(?:[A-Z][A-Z .'’-]{1,40}(?:,\s*[A-Z][a-z]{2,4}\.?\s+\d{1,2})?|[A-Z][a-z]{2,4}\.?\s+\d{1,2})"
+    r"\s*:\s+")
+_CNA_BULLET = re.compile(r"^[•·▪\-–]\s+")
+_CNA_BOILERPLATE = re.compile(
+    r"^(source:|listen to this article|this audio is (?:ai-)?generated|"
+    r"get (?:cna|whatsapp|telegram)|follow (?:cna|us) on|read more:|related:)", re.IGNORECASE)
+_TERMINAL = re.compile(r"[.!?:;…\"'”’)\]]$")
+
+
+def clean_cna(text: str) -> str:
+    """Paragraph lines into sentences: drop subheadings, footnotes and
+    boilerplate, strip the dateline, and end every paragraph with a full stop
+    so the headline and standfirst don't run into the first sentence."""
+    kept = []
+    for i, line in enumerate(l.strip() for l in text.split("\n")):
+        line = _CNA_BULLET.sub("", line)
+        if not line or _CNA_BOILERPLATE.match(line):
+            continue
+        letters = [c for c in line if c.isalpha()]
+        if letters and line.upper() == line and len(line) < 100:
+            continue  # ALL-CAPS subheading
+        if line.startswith("(") and line.endswith(")"):
+            continue  # "($1 = 156.8600 yen)"
+        if i < 3:
+            line = _CNA_DATELINE.sub("", line)
+        if not _TERMINAL.search(line):
+            line += "."
+        kept.append(line)
+    return clean_news(" ".join(kept))
+
+
 def clean_reddit(text: str) -> str | None:
     """Returns None for bot/AutoModerator comments — caller should drop them."""
     lowered = text.lower()
@@ -49,6 +86,7 @@ CLEANERS = {
     "alphavantage": clean_news,
     "yahoo_news": clean_news,
     "google_news": clean_news,
+    "cna": clean_cna,
     "arctic_shift": clean_reddit,
     "earnings": clean_earnings,
 }

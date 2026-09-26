@@ -1,6 +1,6 @@
 """Tests for preprocess/clean.py's per-source text cleaning."""
 
-from preprocess.clean import clean_earnings, clean_news, clean_reddit
+from preprocess.clean import clean_earnings, clean_for_source, clean_news, clean_reddit
 
 
 def test_clean_news_strips_truncation_marker():
@@ -38,3 +38,24 @@ def test_clean_reddit_preserves_case():
 
 def test_clean_earnings_collapses_whitespace():
     assert clean_earnings("DBS   reported\n\nstrong   results") == "DBS reported strong results"
+
+
+def test_clean_cna_ends_headline_and_paragraphs_as_sentences():
+    text = "DBS sued in 1MDB-linked claim\nDBS rejected the claim\nSINGAPORE: Liquidators sued DBS Bank."
+    assert clean_for_source("cna", text) == (
+        "DBS sued in 1MDB-linked claim. DBS rejected the claim. Liquidators sued DBS Bank.")
+
+
+def test_clean_cna_strips_each_dateline_form():
+    text = "Headline\nWASHINGTON, Sept 19 : The US said so.\nSept 18 : NASA is in talks."
+    assert clean_for_source("cna", text) == "Headline. The US said so. NASA is in talks."
+
+
+def test_clean_cna_keeps_a_bank_name_before_a_colon():
+    assert clean_for_source("cna", "Headline\nDBS: we will fight it.") == "Headline. DBS: we will fight it."
+
+
+def test_clean_cna_drops_subheadings_footnotes_bullets_and_boilerplate():
+    text = ("Headline\nNEW TALKS ON AI\n• OCBC could not be reached for comment\n"
+            "($1 = 1.35 SGD)\nSource: CNA/rj")
+    assert clean_for_source("cna", text) == "Headline. OCBC could not be reached for comment."

@@ -1,0 +1,49 @@
+
+======================================================================
+Found 4 clusters, 0 noise points (0% of sentences)
+======================================================================
+
+--- Cluster 0 (n=28) ---
+  Bank mix: {'DBS': 1, 'UOB': 27}
+  Top terms: ended, quarter ended, quarter, 31, ended 31, privateandconfidential, 30, ended 30
+  Sample sentences:
+    - Total the real estate NPL in the fourth quarter.
+    - For the Financial Year / Fourth Quarter Ended 31 December 2024 Private and Confidential.
+    - Deputy Chairman and Chief Executive Officer For the First Quarter Ended 31 March 2022 PrivateandConfidential.
+    - Wee Ee Cheong, Deputy Chairman and Chief Executive Officer For the first quarter ended 31 March 2023
+    - Deputy Chairman and Chief Executive Officer For the First Quarter Ended 31 March 2021 PrivateandConfidential.
+
+--- Cluster 1 (n=31) ---
+  Bank mix: {'DBS': 3, 'OCBC': 3, 'UOB': 25}
+  Top terms: ta, te, 17, ts, tio, ia, ia te, ro
+  Sample sentences:
+    - Travailler en tant que noir à DBS Singapour.
+    - J’ai postulé pour le graduate programme chez DBS et j’ai passé le test en ligne.
+    - Ma question c’est est-ce qu’il y a des noirs qui travaillent déjà chez DBS ou qui ont déjà été pris pour ce pr
+    - I p r h ef a o s r e m
+    - First Quarter 2026 Results Press Release Strong Funding, Liquidity and Capital Position % ∆ in c o n s ta n t 
+
+--- Cluster 2 (n=34) ---
+  Bank mix: {'UOB': 34}
+  Top terms: year, year year, year growth, growth, ytd, growth ytd, 22, feb
+  Sample sentences:
+    - Represents year-on-year growth for 2024 2.
+    - Cross-border income Assets under management of Group Wholesale management franchise3, 1 Year-on-year growth as
+    - 2 Year-on-year growth as at end-Mar 2021.
+    - Year on year growth for YTD Aug ’21.
+    - Year on year growth in 9M21.
+
+--- Cluster 3 (n=44252) ---
+  Bank mix: {'DBS': 24427, 'UOB': 12416, 'OCBC': 7409}
+  Top terms: account, card, income, year, just, billion, credit, like
+  Sample sentences:
+    - Scam call impersonating DBS- caller knew my full name and NRIC.
+    - I received a call today from a guy claiming to be from DBS.
+    - I usually don't pick up unknown numbers, but I was actually expecting a call and coincidentally had also conta
+    - At that point, I wasn't too suspicious yet because DBS had previously called me almost immediately after I mad
+    - Is ST Engineering a good choice for fresh grad over UOB?.
+
+======================================================================
+NEXT STEP (manual): inspect the clusters above, name them, and write
+the frozen taxonomy to config/aspects.yaml (see aspects/assign.py).
+======================================================================

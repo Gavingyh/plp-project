@@ -1,0 +1,259 @@
+
+======================================================================
+Found 25 clusters, 22876 noise points (52% of sentences)
+======================================================================
+
+--- Cluster 0 (n=337) ---
+  Bank mix: {'DBS': 244, 'UOB': 30, 'OCBC': 63}
+  Top terms: financial, group, statements, audit, information, financial statements, management, presentation
+  Sample sentences:
+    - DBS ("Specific Provisions") for HK.
+    - DBS Vickers is a wholly owned subsidiary of the DBS Bank that has a limited liability incase of a unforeseen e
+    - UOB does not recognize this transaction as salary credit
+    - Penalty of fixed deposit's premature withdrawal (DBS).
+    - Depending on how the rep/agent behaves, escalate the case, discuss potential legal avenues and potential revie
+
+--- Cluster 1 (n=179) ---
+  Bank mix: {'DBS': 108, 'OCBC': 48, 'UOB': 23}
+  Top terms: dividend, cents, share, payout, cents share, quarter, ordinary, declared
+  Sample sentences:
+    - Currently my DBS dividend yield based off my averaged out cost is about 8%.
+    - OCBC declared an interim dividend of S$0.47 a share, up from S$0.41 a share the year before.
+    - DBS 5-year total return (capital appreciation + dividends reinvested) of ≈ 229% for DBS (2019–2024) in SGD ter
+    - The Singapore bank declared S$0.81 in dividends per share for the second quarter of 2026
+    - For 2022, ocbc's full year dividends amounts to $0.68 (including interim dividends of $0.28).
+
+--- Cluster 2 (n=113) ---
+  Bank mix: {'DBS': 68, 'OCBC': 22, 'UOB': 23}
+  Top terms: banking, income, products, customers, services, trading, management, wealth
+  Sample sentences:
+    - Equities (growth layer) - mainly DBS + global tech exposure.
+    - DBS Home Equity Income Loan for seniors with private properties.
+    - OCBC 360 account with credit card spending and investment/insurance.
+    - All DBS ILP are a mix of insurance and investment.
+    - A large proportion of their funding base are from retail deposits, although less than DBS.
+
+--- Cluster 3 (n=187) ---
+  Bank mix: {'DBS': 29, 'UOB': 115, 'OCBC': 43}
+  Top terms: loans, exposure, total, non, risks, assets, credit, individuals
+  Sample sentences:
+    - DBS Total Unbilled credit card transactions.
+    - DBS Treasures non-citizen / non-resident.
+    - Financials: • Total net worth: \~550k • CPF: \~230k (BTO payments not started yet) • Investments: \~170k • \~6
+    - UOB Absolute: covers all other expenditure that are excluded by other cards.
+    - Three of the four ETFs (including the one above) offered by DBS through their invest saver RSP pay out their d
+
+--- Cluster 4 (n=827) ---
+  Bank mix: {'DBS': 294, 'OCBC': 331, 'UOB': 202}
+  Top terms: income, net, profit, loans, ratio, 15, non, assets
+  Sample sentences:
+    - 1600 + 1296/76.25 =1,616 shares 1616 X 0.81 X 4 = $5,235.84 dividends per year DBS provided positive forward g
+    - For reference OCBC around 2.2 and JPM around 2.6 2025 EPS: 3.88 2026 EPS est: 4.11 2027 EPS ets: 4.43 EPS is p
+    - 150000 DBS POINTS SUBSCRIPTION ADMIN FEE - SGD 5,500.00 75000 DBS POINTS SUBSCRIPTION ADMIN FEE - SGD 2,850.00
+    - Breakdown of the above debts: $9500- DBS Cashline $2200- DBS Loan (Ends in Dec ‘26) $4100- Credit cards $5500-
+    - OCBC Bonus+ 1.4% -> 1.1%.
+
+--- Cluster 5 (n=211) ---
+  Bank mix: {'DBS': 79, 'OCBC': 31, 'UOB': 101}
+  Top terms: income, net, profit, yoy, growth, qoq, record, ratio
+  Sample sentences:
+    - Past 5 year performance in my portfolio DBS has been overall better CSPX / VWRA, whatever gains in those ETFs 
+    - In SGX, DBS shares have shown consistent share price uptrend while still paying dividend abv 5%.
+    - Record total income and profit before tax, ROE at 17.3% Group NII up YoY, higher loan and deposit volumes more
+    - Trade shifts – supply chain, working Business momentum resilient in April, but risk from heightened uncertaint
+    - Total income up 11% to $5.75bn from broad-based growth Commercial book NII rises from balance sheet growth and
+
+--- Cluster 6 (n=177) ---
+  Bank mix: {'DBS': 111, 'UOB': 49, 'OCBC': 17}
+  Top terms: ratio, allowances, million, basis, basis points, points, loans, specific
+  Sample sentences:
+    - Asset quality was resilient, with the NPL ratio stable at 1.0% and specific allowances at 14 basis points of l
+    - Specific allowances were SGD 157 million or 14 basis points of loans.
+    - Allowance coverage stood at 131% and at 200% after considering Liquidity remained healthy.
+    - Total allowances were unchanged as higher specific allowances were offset by a general allowance release.
+    - General allowances of SGD 206 million were written back, including the release of allowances previously set as
+
+--- Cluster 7 (n=127) ---
+  Bank mix: {'UOB': 59, 'DBS': 40, 'OCBC': 28}
+  Top terms: profit, net, shares, drop, net profit, drops, billion, stock
+  Sample sentences:
+    - Singapore Bank UOB Struggles With Hong Kong, China Property Loans as Prices Sink.
+    - Currently on UOB One but losing dollars there as they nerfed interest rates.
+    - watching uob one drop from 5% to now 2.5% is quite sad.
+    - Drop a mil on DBS stock and live off dividends bro
+    - UOB Stash also, drop from 2% to 1.5%.
+
+--- Cluster 8 (n=340) ---
+  Bank mix: {'DBS': 155, 'OCBC': 112, 'UOB': 73}
+  Top terms: profit, record, stock, high, shares, earnings, net, rises
+  Sample sentences:
+    - DBS breaks new barrier at S$52.75 as STI soars to new high of 4,346.68 points.
+    - DBS hits new high at S$53.24, driving STI to all-time peak of 4,367.51 points.
+    - OCBC stock vs other banks.
+    - DBS shares soar more than 3% to hit a record high, after posting earnings that beat forecasts.
+    - Lacklustre UOB share price movement on an up day.
+
+--- Cluster 9 (n=844) ---
+  Bank mix: {'DBS': 565, 'UOB': 141, 'OCBC': 138}
+  Top terms: income, million, lower, net, quarter, billion, year, fell
+  Sample sentences:
+    - In 2008 during the Global Financial Crisis, DBS Group Holdings suffered a severe share price drop of roughly 5
+    - At the moment, UOB's profit is approximately 15.8% down on yoy basis.
+    - The DBS fund underperformed by an annualised 5.99%.
+    - Cut off yield dropped to 4%, that’s less than the CIMB 4.2% and OCBC 4.08% FD rates.
+    - UOB Absolute Cashback has dropped the cashback for Grab topups to 0.3% since a few months ago
+
+--- Cluster 10 (n=2066) ---
+  Bank mix: {'DBS': 1539, 'OCBC': 310, 'UOB': 217}
+  Top terms: income, billion, net, million, rose, year, higher, quarter
+  Sample sentences:
+    - Aggressive in-flow from retail today into DBS.
+    - DBS is up about 23% year-to-date and continues to climb.
+    - DBS Group announced a robust nine percent increase in net profit for the second quarter, bolstered by a remark
+    - OCBC Bank reports a 22% increase in Q2 profit to $2.22 billion, driven by strong wealth management income, wit
+    - Happy that UOB upped the interest rate.
+
+--- Cluster 11 (n=147) ---
+  Bank mix: {'UOB': 34, 'DBS': 80, 'OCBC': 33}
+  Top terms: 2026, 2025, quarter, results, review, briefing, group, dbs group
+  Sample sentences:
+    - UOB one interest dropping to 1.9 p.a. max, thoughts on next steps.
+    - UOB MAP 2026 Career Progression.
+    - DBS TOMORROW (17 aug).
+    - businesstimes.com.sg/banking-finance/manulife-ousts-aviva-to-clinch-us12b-tie-up-with-dbs In this case, you'll
+    - DBS Multiplier Account spending summary.
+
+--- Cluster 12 (n=211) ---
+  Bank mix: {'UOB': 42, 'OCBC': 52, 'DBS': 117}
+  Top terms: best, world, asia, world best, 2025, awards, banking, best bank
+  Sample sentences:
+    - UoB gave me a local credit rating of un rateable.
+    - OCBC premier banking benefits.
+    - DBS was supposedly the “world’s best digital bank” in 2021.
+    - The Bank of China has been given an “A” credit rating by Fitch with stable outlook which is 2 notches below th
+    - 1754608752509 (1125×1321) DBS conferred three global awards, including the most prestigious ‘World’s Best Bank
+
+--- Cluster 13 (n=547) ---
+  Bank mix: {'DBS': 313, 'OCBC': 103, 'UOB': 131}
+  Top terms: ceo, head, appoints, tan, new, banking, group, chairman
+  Sample sentences:
+    - He joined DBS as a Treasury Manager then jumped to different international banks.
+    - DBS Wealth Planning Manager.
+    - Tan Su Shan - CEO of DBS | Podcast |
+    - Billionaire doctor in boardroom key to OCBC’s new CEO Tan Teck
+    - Currently sitting at dbs
+
+--- Cluster 14 (n=850) ---
+  Bank mix: {'DBS': 550, 'OCBC': 161, 'UOB': 139}
+  Top terms: services, customers, banking, said, outage, digital, disruption, mas
+  Sample sentences:
+    - Suspended shares in CPF account (DBS agent bank).
+    - Standard charted bill payment from DBS failing.
+    - Called DBS they said it’s issue with SC due to their maintenance.
+    - Friend reported it to the police after receiving credit card bills from OCBC, of which they do not have a bank
+    - UOB Credit Card Rejection.
+
+--- Cluster 15 (n=6700) ---
+  Bank mix: {'DBS': 4789, 'UOB': 944, 'OCBC': 967}
+  Top terms: growth, wealth, year, new, ai, billion, million, banking
+  Sample sentences:
+    - The decline could trigger increased usage of AI in the form of AI applications and agentic AI, which would gen
+    - You expect the returns from DBS to continue rising 2.
+    - Do you prefer diversification or do you strongly believe in DBS as a company?
+    - It simply suggests that there is a less downside to UOB while keeping similar dividend payouts of 4%+ as a pro
+    - So today you wanna buy DBS after it has had an incredible 200% returns over the past 5 years.
+
+--- Cluster 16 (n=224) ---
+  Bank mix: {'UOB': 154, 'OCBC': 28, 'DBS': 42}
+  Top terms: card, credit, credit card, account, cashback, uob account, uob credit, visa
+  Sample sentences:
+    - UOB Future Banker Programme.
+    - UOB Future Bankers Programme.
+    - OCBC 335%, Google 270% are two other examples.
+    - DBS LIVE STUDENT CREDIT CARD.
+    - Currently just using.1 care uob one for everything
+
+--- Cluster 17 (n=1198) ---
+  Bank mix: {'DBS': 709, 'UOB': 283, 'OCBC': 206}
+  Top terms: account, transfer, usd, use, app, card, dbs account, open
+  Sample sentences:
+    - Just transfer in SGD to, and from DBS to avoid any fees.
+    - Once for E-Trade to DBS and 2nd time from DBS to IBKR?
+    - If you have a DBS multicurrency account, then the second transfer from DBF to IBKR SG is free.
+    - If IBKR is using DBS, you should be able to do a local transfer from your multicurrency account.
+    - DBS remit does not work when sending to Sgp banks.
+
+--- Cluster 18 (n=535) ---
+  Bank mix: {'UOB': 171, 'DBS': 282, 'OCBC': 82}
+  Top terms: account, card, using, use, uob account, currently, ibkr, custodian
+  Sample sentences:
+    - I have a UOB account with foreign residential and mailing address (also Australia).
+    - SGD cash seems to be held in Singapore probably DBS but not 100% sure as iBKR SG ultimately is a subsidiary of
+    - Majority of dbs earnings is still in singapore.
+    - DBS owns VWRA pls
+    - DBS is backed by gov - good, but anyway not interested in stock picking
+
+--- Cluster 19 (n=1688) ---
+  Bank mix: {'UOB': 602, 'DBS': 754, 'OCBC': 332}
+  Top terms: account, card, just, savings, uob account, money, using, years
+  Sample sentences:
+    - I was offered a position at UOB but chose to hold it till I went for an interview at st engineering.
+    - Hi, I just got my first dividend payout from DBS yesterday ($1296) and immediately bought more DBS shares usin
+    - Hi, I received some USD recently in my DBS account.
+    - I have a Manulife Smartretire (II) - 5 years that I signed after listening to a DBS agent back in 2021.
+    - I just received an email from “DBS” asking me to do a survey.
+
+--- Cluster 20 (n=1561) ---
+  Bank mix: {'UOB': 484, 'DBS': 833, 'OCBC': 244}
+  Top terms: account, card, just, like, money, don, got, credit
+  Sample sentences:
+    - Reason being I have seen a lot of comments in various communities saying UOB is run like a SME and there not m
+    - Yet there's widespread criticism of these funds, despite this being the same business driving shareholder retu
+    - I just go to any DBS branch to apply and the 100k in my Multiplier gets "locked away" for 6 months for the ext
+    - I have used moomoo with cdp, i can say that the commission is worse than dbs vickers… so I don’t think it will
+    - I once had a scam caller even direct me to the dbs hotline to check if he's a scammer.
+
+--- Cluster 21 (n=640) ---
+  Bank mix: {'DBS': 346, 'UOB': 196, 'OCBC': 98}
+  Top terms: account, does, did, buy, just, know, like, card
+  Sample sentences:
+    - Is anyone still doing monthly investment in DBS stock now?
+    - Is that not UOB kay hian
+    - Hi how do you buy odd lots of DBS?
+    - I saw a cat named DBS, should I buy?
+    - DBS at ATH, should I buy?
+
+--- Cluster 22 (n=547) ---
+  Bank mix: {'DBS': 243, 'UOB': 186, 'OCBC': 118}
+  Top terms: fixed, years, 100k, year, fd, cash, account, sgd
+  Sample sentences:
+    - Entered dbs at 38, its now 78.
+    - DBS from $19 (2020) NVDA as my first stock (2017)
+    - 1. $150k in UOB ONE account (2.5%) or, 2. $100k in UOB Stash account (2.045%) and invest the $50k?
+    - Core ETFs of VWRA+CSPX (31.3k) DBS (11.7k) Satellite (6.7k) Gold (12.6k) Crypto (10.6k)
+    - DBS, Crypto & gold each 3.5% cash Background: 26y/o, earning 5k before CPF deduction.
+
+--- Cluster 23 (n=217) ---
+  Bank mix: {'DBS': 136, 'UOB': 51, 'OCBC': 30}
+  Top terms: better, good, rates, rate, higher, account, think, card
+  Sample sentences:
+    - For selling, DBS vickers is better.
+    - Because you believe DBS is better than index funds.
+    - This DBS bandwagon is actually great because there are some blue chip REITs going for 6+% forward yield now.
+    - For me i think there are much better opportunities outside of DBS
+    - Quite a bullish call from DBS.
+
+--- Cluster 24 (n=996) ---
+  Bank mix: {'UOB': 631, 'OCBC': 125, 'DBS': 240}
+  Top terms: card, spend, miles, cashback, 500, month, credit, account
+  Sample sentences:
+    - If you want a higher rate and don't mind double checking, UOB's EVOL pays 10% cashback on local online and mob
+    - On UOB Kay Hian Utrade, mi commission $18-$25 per transaction 2.
+    - OCBC 365 needs that same S$800 to unlock its dining and fuel cashback, but it still carries a fee around S$196
+    - As someone already suggested… Debt Restructuring Plan/ Debt Consolidation Plan etc, it merge all your CC bills
+    - UOB preferred platinum visa (will be my paywave card) - gives me 4mpd for anything paywaveable (buying macs fr
+
+======================================================================
+NEXT STEP (manual): inspect the clusters above, name them, and write
+the frozen taxonomy to config/aspects.yaml (see aspects/assign.py).
+======================================================================

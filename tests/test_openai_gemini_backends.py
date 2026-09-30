@@ -249,3 +249,18 @@ def test_explicit_backend_name_overrides_auto_detect(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "fake")
     backend = get_backend("gemini")
     assert isinstance(backend, GeminiBackend)
+
+
+@pytest.mark.parametrize("env, expected", [
+    ({}, "gemini-3.8-flash"),
+    ({"GEMINI_CHAT_MODEL": "gemini-3.7-flash"}, "gemini-3.7-flash"),
+    ({"GEMINI_MODEL": "gemini-3.6-flash", "GEMINI_CHAT_MODEL": "gemini-3.7-flash"}, "gemini-3.6-flash"),
+])
+def test_gemini_model_setting(monkeypatch, env, expected):
+    from chatbot.backends import get_backend
+    for var in ("GEMINI_MODEL", "GEMINI_CHAT_MODEL"):
+        monkeypatch.delenv(var, raising=False)
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
+    assert get_backend("gemini").model == expected

@@ -13,7 +13,8 @@ Env vars (all optional):
   CLAUDE_MODEL      default "claude-sonnet-5"
   OPENAI_MODEL      default "gpt-4o-mini" (NOT live-tested — see
                     openai_backend.py docstring)
-  GEMINI_MODEL      default "gemini-2.0-flash" (NOT live-tested, and carries
+  GEMINI_MODEL      default "gemini-3.8-flash"; GEMINI_CHAT_MODEL also read
+                    (NOT live-tested, and carries
                     more real risk than the OpenAI backend — see
                     gemini_backend.py docstring)
   OLLAMA_MODEL      default "llama3.2:3b" (verified tool-calling support —
@@ -73,7 +74,10 @@ def get_backend(name: str | None = None) -> LLMBackend:
     if name == "gemini":
         return GeminiBackend(
             api_key=os.environ.get("GEMINI_API_KEY", ""),
-            model=os.environ.get("GEMINI_MODEL", GEMINI_DEFAULT_MODEL),
+            # GEMINI_CHAT_MODEL is accepted too: the key is for the chatbot only,
+            # and that is the name the team's .env uses.
+            model=(os.environ.get("GEMINI_MODEL") or os.environ.get("GEMINI_CHAT_MODEL")
+                   or GEMINI_DEFAULT_MODEL),
             temperature=temperature,
         )
     if name == "ollama":

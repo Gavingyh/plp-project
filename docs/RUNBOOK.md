@@ -317,7 +317,18 @@ ollama serve
 ```
 
 Set `CHATBOT_BACKEND` to `ollama`, `claude`, `openai` or `gemini` to force
-one; otherwise it auto-detects from whichever key is present. Two warnings
+one; otherwise it auto-detects from whichever key is present, so a Gemini key
+in `.env` makes Gemini the default unless `CHATBOT_BACKEND=ollama` is set.
+
+**Gemini** (`GEMINI_API_KEY`, the team's key is for the chatbot only): the
+model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
+`gemini-3.8-flash`. A key from Google AI Studio is 39 characters starting
+`AIza`. On the free tier Google may use prompts and responses to improve its
+products and people may review them, and its terms say not to send
+sensitive, confidential or personal information: test with questions whose
+tool results are numbers, and keep evidence searches (which return Reddit
+text) to the local model. Check the terms again before wider use:
+https://ai.google.dev/gemini-api/terms. Two warnings
 can be appended to an answer, and both mean "don't trust this part":
 
 - `⚠️ VERIFICATION WARNING`: the model cited evidence (a quote, sentence id or

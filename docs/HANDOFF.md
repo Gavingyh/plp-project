@@ -462,7 +462,13 @@ first fine-tuning) is now in the repository. Evidence:
      assistant: put that in the GenAI declaration.
   4. Confirm the taxonomy change with the supervisor (PLAN O1).
 - **Gemini.** A free-tier `GEMINI_API_KEY` is in `.env`, for the chatbot
-  only. While it is set, the chatbot's auto-detection picks Gemini over
-  Ollama; set `CHATBOT_BACKEND=ollama` to keep the local model. The code reads
-  `GEMINI_MODEL` (default `gemini-2.0-flash`, which Google shut down on
-  1 June 2026); `.env` sets `GEMINI_CHAT_MODEL`, which nothing reads.
+  only. Google rejected it on 2026-09-30 ("API key not valid"): it isn't in
+  the AI Studio format (39 characters, starting `AIza`), so it needs
+  replacing. While a key is set, the chatbot's auto-detection picks Gemini
+  over Ollama; set `CHATBOT_BACKEND=ollama` to keep the local model. The model
+  comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL` (`.env` sets
+  `gemini-3.8-flash`, also the default now; the old default,
+  `gemini-2.0-flash`, was shut down on 1 June 2026). The key is sent in a
+  header, so it can't reach a logged URL. Free-tier inputs may be read by
+  Google's reviewers: test only with questions whose tool results are
+  numbers, not evidence text.

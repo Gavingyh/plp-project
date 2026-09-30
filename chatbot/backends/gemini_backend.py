@@ -22,8 +22,10 @@ response as the actual verification this module hasn't had. If it 400s,
 the error body will usually say exactly which field is wrong — start there
 before assuming the whole approach is broken.
 
-Default model (GEMINI_MODEL env var to override): gemini-2.0-flash — check
-for a newer/cheaper option before relying on this long-term.
+Default model (GEMINI_MODEL, or GEMINI_CHAT_MODEL, to override):
+gemini-3.8-flash, stable since 2026-09-02 with no shutdown date announced.
+The previous default, gemini-2.0-flash, was shut down on 2026-06-01 (Google's
+deprecations page), so check that page when this starts failing with 404.
 """
 
 import json
@@ -36,7 +38,7 @@ from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, Tool
 
 logger = get_logger(__name__)
 
-DEFAULT_MODEL = "gemini-2.0-flash"
+DEFAULT_MODEL = "gemini-3.8-flash"
 MAX_TOOL_ITERATIONS = 8
 _REQUEST_TIMEOUT = 60
 _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"

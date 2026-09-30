@@ -84,6 +84,6 @@ Each row names the file and line an element comes from, and the text that line m
 | Claude | `chatbot/backends/claude_backend.py:36` | `import anthropic` |
 | OpenAI | `chatbot/backends/openai_backend.py:36` | `api.openai.com/v1/chat/completions` |
 | OpenAI unverified | `chatbot/backends/openai_backend.py:4` | `NOT VERIFIED AGAINST THE LIVE API` |
-| Gemini | `chatbot/backends/gemini_backend.py:42` | `generativelanguage.googleapis.com` |
-| Ollama is the default without a key | `chatbot/backends/__init__.py:45` | `return "ollama"` |
+| Gemini | `chatbot/backends/gemini_backend.py:44` | `generativelanguage.googleapis.com` |
+| Ollama is the default without a key | `chatbot/backends/__init__.py:46` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

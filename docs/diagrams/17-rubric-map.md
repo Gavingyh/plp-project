@@ -7,7 +7,7 @@ Each rubric item, the component that answers it, and the course module that comp
 ```mermaid
 flowchart LR
   accTitle: Rubric items, components and course modules
-  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition, LLM aspect categorisation and annotation are planned; the fine-tuned sentiment model is built but has never run.
+  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition and LLM aspect categorisation are planned; annotation is done and the fine-tuned sentiment model is trained.
 
   subgraph R["Rubric item"]
     r1["data"]
@@ -27,7 +27,7 @@ flowchart LR
     c3["Aspect discovery<br/>UMAP + HDBSCAN<br/><i>TA · NMSM</i>"]
     c4["Aspect categorisation<br/>by a local LLM<br/><i>TA · NMSM</i>"]
     c5["Bank entity recognition<br/>and resolution<br/><i>TA · NMSM</i>"]
-    c6["Sentiment: fine-tuned FinBERT,<br/>built, never run<br/><i>TPML · NMSM</i>"]
+    c6["Sentiment: fine-tuned FinBERT,<br/>trained, below base on macro-F1<br/><i>TPML · NMSM</i>"]
     c7["Annotation, kappa at least 0.6<br/><i>TA</i>"]
     c8["Sentiment index, dashboard<br/><i>NMSM</i>"]
     c9["Chatbot with tool calling<br/><i>CNI</i>"]
@@ -41,13 +41,13 @@ flowchart LR
   r4 -.-> c4
   r5 -.-> c5
   r6 --> c6
-  r7 -.-> c7
+  r7 --> c7
   r8 --> c8
   r9 --> c9
   C ~~~ key
 
   classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
-  class c4,c5,c7 planned;
+  class c4,c5 planned;
 ```
 
 Rendered for the report: [SVG](img/17-rubric-map.svg) · [PNG](img/17-rubric-map.png)
@@ -56,10 +56,10 @@ Rendered for the report: [SVG](img/17-rubric-map.svg) · [PNG](img/17-rubric-map
 
 One rubric item maps to one component. The modules each component draws on are
 written inside it rather than drawn as arrows, because fourteen crossing arrows into four
-boxes were unreadable. Three components are planned (dashed): the LLM aspect classifier,
-bank entity recognition and the annotation round. The fine-tuned sentiment model is
-written but has never run, because nothing is labelled yet; base FinBERT zero-shot scores
-the corpus today. Aspect discovery is built and was run once to derive the taxonomy; PLAN
+boxes were unreadable. Two components are planned (dashed): the LLM aspect classifier and
+bank entity recognition. The first annotation round is done (1,277 rows, sentiment kappa
+0.93), and the fine-tuned sentiment model trained on it scores macro-F1 0.547 against base
+FinBERT's 0.571, so base FinBERT zero-shot still scores the corpus. Aspect discovery is built and was run once to derive the taxonomy; PLAN
 section 5 schedules a re-run. Not shown: the day-level course references and the
 evaluation for each component, which are in the PLAN table this is drawn from.
 
@@ -81,8 +81,10 @@ Each row names the file and line an element comes from, and the text that line m
 | module abbreviations | `docs/PLAN.md:72` | `Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,` |
 | aspect discovery is built | `aspects/discover.py:49` | `def run(min_cluster_size: int = 10)` |
 | segmentation is built | `preprocess/segment.py:35` | `def segment(text: str)` |
-| fine-tuning is built | `train/finetune.py:94` | `def run(seed: int = 42` |
-| base FinBERT scores today | `dashboard/app.py:134` | `applied zero-shot; the fine-tuned model does not exist yet` |
+| fine-tuning is built | `train/finetune.py:97` | `def run(seed: int = 42` |
+| base FinBERT scores today | `dashboard/app.py:133` | `"consensus aggregates rather than analyst reports, scores come from base "` |
+| annotation done | `docs/evidence/annotation-agreement-2026-09-27.md:34` | `| candidates, both splits | 1,277 | 0.952 | **0.926** |` |
+| fine-tuned, below base | `docs/evidence/finetune-2026-09-30.md:27` | `| fine-tuned FinBERT, 3 seeds |` |
 
 ## Planned elements
 
@@ -90,4 +92,3 @@ Each row names the file and line an element comes from, and the text that line m
 |---|---|
 | Aspect categorisation by a local LLM | DESIGN.md decision 16; PLAN.md D1 |
 | Bank entity recognition and resolution | DESIGN.md decision 18; PLAN.md D3, section 7 |
-| Annotation of aspect and sentiment | DESIGN.md decision 17; PLAN.md D2, section 6 |

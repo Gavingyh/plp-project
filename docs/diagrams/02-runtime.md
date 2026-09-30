@@ -71,8 +71,8 @@ Each row names the file and line an element comes from, and the text that line m
 | news filter log location | `ingest/news_filter.py:53` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
 | dashboard reads the database | `dashboard/app.py:23` | `from ingest.db import get_connection` |
 | API reads the database | `api/main.py:28` | `from ingest.db import get_connection` |
-| evidence search reads the embeddings | `chatbot/retrieval.py:98` | `all_ids, all_vecs = load_for_search()` |
-| dashboard chat | `dashboard/app.py:318` | `from chatbot.agent import Conversation` |
+| evidence search reads the embeddings | `chatbot/retrieval.py:103` | `all_ids, all_vecs = load_for_search()` |
+| dashboard chat | `dashboard/app.py:319` | `from chatbot.agent import Conversation` |
 | API chat | `api/main.py:22` | `from chatbot.agent import Conversation` |
 | database not in git | `.gitignore:14` | `data/plp.db` |
 | embeddings not in git | `.gitignore:17` | `data/sentence_embeddings.npz` |

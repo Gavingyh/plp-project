@@ -67,7 +67,7 @@ materially better and costs nothing.
 | Embedding, mean pooling, MPS device selection | `aspects/embed.py` |
 | Embedding cache (101 MB `.npz`) | `aspects/embed_store.py` |
 | Zero-shot classification, `model_version = finbert-base-zeroshot-v1` | `sentiment/score.py` |
-| Fine-tuning script, written and smoke-tested, never run for real | `train/finetune.py` |
+| Fine-tuning script; first real run 2026-09-30, three seeds ([results](../../docs/evidence/finetune-2026-09-30.md)) | `train/finetune.py` |
 | Baseline comparison harness | `train/evaluate.py` |
 
 The `model_version` column in `aspect_sentiment` is part of that table's

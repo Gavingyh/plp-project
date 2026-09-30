@@ -15,7 +15,9 @@ and will drift. The short version, as of 2026-09-26:
 - Read blended cross-bank figures next to the per-source breakdown. DBS
   carries about 55% of all sentences and roughly six times the earnings
   volume of the other two banks.
-- There is no fine-tuned model. Every score is base FinBERT, zero-shot.
+- A fine-tuned model exists but doesn't beat base FinBERT on macro-F1
+  (0.547 ± 0.013 against 0.571, [evidence](evidence/finetune-2026-09-30.md)). Every stored score is
+  base FinBERT, zero-shot.
 - Per-aspect scores are not meaningful yet: the current assignment gives
   plain factual sentences three or four aspects and sends evaluative ones to
   `other` (decision 16 replaces it).
@@ -284,7 +286,8 @@ exactly which data a reported number came from.
 
 ### 16. Aspects assigned by a local LLM, one per sentence
 
-*Decided 2026-09-26; to be implemented.* The seed-centroid assignment of
+*Decided 2026-09-26; to be implemented. Its taxonomy is replaced by decision
+21's ten aspects; the method stands.* The seed-centroid assignment of
 decisions 4 and 5 fails in a way no threshold fixes. The four centroids are
 close to each other, so plain transactional or factual sentences ("transfer
 the money to your DBS account") match three or four aspects at once: 46% of
@@ -307,7 +310,11 @@ still runs offline, as the unsupervised discovery task: it tests whether
 
 ### 17. Annotators label aspect and sentiment together
 
-*Decided 2026-09-26; to be implemented.* Labels were attached to
+*Decided 2026-09-26; first round labelled 2026-09-27 (1,277 rows after
+cleaning, sentiment κ 0.93; [evidence](evidence/annotation-agreement-2026-09-27.md)).
+The round attached labels to candidate rows whose aspect annotators
+corrected, rather than to one row per sentence, and had no "not about the
+bank" flag; five aspects are below the 80-row floor.* Labels were attached to
 automatically assigned (sentence, aspect) pairs, so a wrong assignment wasted
 an annotator's effort and the assignment itself was never evaluated. Each row
 is now one sentence: the annotator chooses its aspect and its sentiment toward
@@ -397,6 +404,30 @@ Three choices came with it:
 CNA is not a complete record: only headlines whose URL names a bank are
 found, and only what the archive captured, so months hold 0 to 13 articles.
 It adds full text, not volume. Details: [news-data.md](news-data.md).
+
+### 21. Ten aspects, derived from the clustered corpus
+
+*2026-09-30, adopting the text-analytics workstream's work of 25–27 Sep.*
+Decision 16 kept the proposal's four aspects. The workstream instead labelled
+all 338 clusters of the 25 Sep discovery run and found that the four covered
+a small part of what people write about the banks: retail banking and the
+stock itself, which the proposal left in `other`, are the two largest themes.
+The taxonomy is now ten aspects plus `other`: the proposal's four, broadened;
+capital and liquidity; income and profit results; wealth business; investor
+stock sentiment; retail banking; and the macro environment
+([evidence/aspect-taxonomy-2026-09-25.md](evidence/aspect-taxonomy-2026-09-25.md)).
+The first labelled round (decision 17) was done under it, and the corpus was
+re-assigned and re-scored under it on 30 Sep.
+
+This replaces decision 16's taxonomy, not its method. Seed-centroid
+assignment is still a stopgap, and a worse one with ten aspects: at the
+carried-over 0.65 floor a sentence matches 6.4 aspects on average, and
+annotators changed the assigned aspect on 86% of candidate rows. The LLM
+classifier of decision 16, given these ten aspects, remains the fix, and the
+1,277 human aspect labels are now its evaluation set. Two things the report
+must say: the cluster labels were drafted with an AI assistant and not
+checked by a second person, and aspect agreement between annotators was not
+measured.
 
 ---
 

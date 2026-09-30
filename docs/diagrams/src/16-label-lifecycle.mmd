@@ -1,21 +1,21 @@
 stateDiagram-v2
-  accTitle: Label lifecycle, planned
-  accDescr: Planned. A candidate is drawn into the train/dev or test split. Train/dev rows get an LLM suggestion; test rows go to a blind sheet. A person labels aspect and sentiment or flags the row. Some rows form the agreement sample. Labelled train/dev rows train the model; test rows only evaluate it.
+  accTitle: Label lifecycle, first round
+  accDescr: A candidate is exported into the train/dev or test split. Train/dev rows carry an LLM suggestion; test rows go to a blind sheet. Two people label each row and disagreements are resolved. Duplicated or leaked rows are dropped; the rest train the model or form the test set. A not-about-the-bank flag is planned.
 
-  [*] --> Drawn : re-drawn after the aspect classifier runs
-  Drawn --> Suggested : train/dev split
-  Drawn --> Blind : test split
-  Suggested --> WithAnnotator : model suggestion shown
-  Blind --> WithAnnotator : no model output shown
-  WithAnnotator --> NotAboutBank : flagged
-  WithAnnotator --> Labelled : aspect and sentiment set
-  Labelled --> AgreementSample : in the shared 150 rows
-  AgreementSample --> Labelled : kappa at least 0.6
-  Labelled --> Training : train/dev row
-  Labelled --> HeldOut : test row
+  [*] --> Exported : drawn from the scored sample
+  Exported --> Suggested : train/dev split
+  Exported --> Blind : test split
+  Suggested --> Labelled : two people set aspect and sentiment
+  Blind --> Labelled : same, no model output shown
+  Labelled --> NotAboutBank : flagged
+  Labelled --> Resolved : disagreements settled
+  Resolved --> Dropped : duplicate, or leaked into test
+  Resolved --> Training : train/dev row
+  Resolved --> HeldOut : test row
   NotAboutBank --> [*]
+  Dropped --> [*]
   Training --> [*]
   HeldOut --> [*]
 
   classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa
-  class Drawn,Suggested,Blind,WithAnnotator,Labelled,NotAboutBank,AgreementSample,Training,HeldOut planned
+  class NotAboutBank planned

@@ -73,7 +73,7 @@ Each row names the file and line an element comes from, and the text that line m
 | figure check is not a grade | `chatbot/run_eval.py:16` | `check is a strict detector, not a grade` |
 | 18 of 19 flagged were invented | `docs/evidence/chatbot-harness-2026-09-26.md:52` | `raw tool output, 18 were invented` |
 | planned evaluation | `docs/PLAN.md:70` | `frozen ~30-question gold set; retrieval Hit@K and MRR; faithfulness via an LLM judge` |
-| planned evaluation, recorded | `docs/DESIGN.md:354` | `set of about 30 questions written before tuning, retrieval Hit@K and MRR,` |
+| planned evaluation, recorded | `docs/DESIGN.md:361` | `set of about 30 questions written before tuning, retrieval Hit@K and MRR,` |
 
 ## Planned elements
 

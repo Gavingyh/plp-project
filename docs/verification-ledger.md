@@ -1,7 +1,11 @@
 # Verification ledger
 
 Every number and claim added to the documentation on 2026-09-11, with the
-command that produced it. The rule this run worked under: a figure that
+command that produced it.
+
+> **2026-09-30:** sentiment-index figures here counted a sentence once per
+> aspect it matched. The index now counts each sentence once in its
+> cross-aspect rows, so current values differ; see STATUS.md. The rule this run worked under: a figure that
 cannot be traced to a command in this file does not go in a document.
 
 Existing docs were treated as unverified sources, not as ground truth. That

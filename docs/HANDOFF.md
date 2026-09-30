@@ -420,3 +420,49 @@ Decision and trade-offs: DESIGN decision 20. Coverage and gaps: news-data.md.
 - Superseded in the diagrams log above: CNA is now loaded (diagrams 01, 04
   and 11 show it), and the test counts in README, RUNBOOK, STATUS and the
   technical spec are corrected (379 in `tests/`).
+
+## Text-analytics workstream integrated (2026-09-30)
+
+The workstream's 25–27 Sep work (10-aspect taxonomy, first labelling round,
+first fine-tuning) is now in the repository. Evidence:
+[aspect taxonomy](evidence/aspect-taxonomy-2026-09-25.md),
+[annotation agreement](evidence/annotation-agreement-2026-09-27.md),
+[fine-tuning](evidence/finetune-2026-09-30.md). Decision: DESIGN 21.
+
+- **Taxonomy.** `config/aspects.yaml` has ten aspects. The corpus was
+  re-assigned and re-scored under them; snapshot `plp-2026-09-30.db.gz`.
+- **Labels.** `data/labeled/` holds both annotators' sheets, the resolved
+  sheets, and `candidates.csv`, which `python -m train.labels` builds: it
+  removes 5 train/dev copies of test sentences and 18 duplicate rows, and
+  takes test labels from the blind sheet. Training refuses a file that still
+  has either problem. Sentiment κ 0.93 (test sheet 0.96).
+- **Fine-tuning.** Three seeds, macro-F1 0.547 ± 0.013 against base FinBERT
+  zero-shot's 0.571. Better on negative sentences (recall 0.54 against 0.21).
+  Models in `models/` (gitignored); share `models/finbert-absa/seed_*/final`
+  through the team folder.
+- **Notebooks.** The workstream's four Colab notebooks are in `notebooks/`,
+  outputs cleared; a test keeps them that way.
+- **Fixed on the way.**
+  - The index counted a sentence once per aspect it matched in its
+    cross-aspect rows. At 6.4 aspects per sentence that would have lifted
+    DBS's headline to +0.23. Each sentence now counts once: DBS +0.122,
+    OCBC +0.136, UOB +0.074. Earlier published figures (+0.060, +0.071,
+    +0.036) used the old method.
+  - Scoring classified a sentence once per aspect. It now classifies each
+    sentence once, batched by length, committing as it goes.
+  - Colab needed a runtime patch for CUDA; `config/device.py` now picks it.
+  - `train.agreement` double-counted duplicated pairs.
+- **Needs people.**
+  1. The test labels are not blind: each annotator's blind-sheet labels
+     match their labels made with the LLM suggestion visible. Decide whether
+     to relabel the 299 test rows blind.
+  2. Aspect agreement was never measured; five aspects have under 80 rows.
+     A small second round would fix both.
+  3. The cluster labels behind the taxonomy were drafted with an AI
+     assistant: put that in the GenAI declaration.
+  4. Confirm the taxonomy change with the supervisor (PLAN O1).
+- **Gemini.** A free-tier `GEMINI_API_KEY` is in `.env`, for the chatbot
+  only. While it is set, the chatbot's auto-detection picks Gemini over
+  Ollama; set `CHATBOT_BACKEND=ollama` to keep the local model. The code reads
+  `GEMINI_MODEL` (default `gemini-2.0-flash`, which Google shut down on
+  1 June 2026); `.env` sets `GEMINI_CHAT_MODEL`, which nothing reads.

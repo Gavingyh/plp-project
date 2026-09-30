@@ -28,7 +28,7 @@ flowchart TB
   llm["LLM aspect classifier<br/>(planned, DESIGN 16)"]
   sa[("sentence_aspects")]
   score["Base FinBERT, zero-shot<br/>sentiment.score"]
-  ft["Fine-tuned FinBERT<br/>(planned, PLAN section 3)"]
+  ft["Fine-tuned FinBERT, trained 30 Sep;<br/>replaces base only if it beats it<br/>(PLAN section 5)"]
   as[("aspect_sentiment")]
   agg["Index: windows, sources,<br/>shrinkage at low volume<br/>aggregate.index"]
   idx[("sentiment_index")]
@@ -66,7 +66,8 @@ tables: its output is evidence for choosing the aspect taxonomy
 (`docs/evidence/aspect-discovery-2026-09-11.md`). The three dashed boxes are decided but
 not built: bank NER would improve attribution inside preprocessing, the LLM classifier
 would replace seed-centroid assignment, and a fine-tuned model would replace zero-shot
-scoring once labels exist (its training code, `train/finetune.py`, has never run).
+scoring only if it beats it; the first run, on 1,277 labelled rows, did not (macro-F1 0.547
+against 0.571, `docs/evidence/finetune-2026-09-30.md`).
 Earnings PDFs are fetched by two modules (`earnings_fetch_ir`, `earnings_fetch_uob`)
 before `earnings_extract` reads them; the fetch step is folded into the source box.
 
@@ -84,15 +85,16 @@ Each row names the file and line an element comes from, and the text that line m
 | bank attribution per sentence | `preprocess/pipeline.py:62` | `def _resolve_sentence_bank(` |
 | sentence splitting | `preprocess/segment.py:35` | `def segment(text: str)` |
 | embeddings | `aspects/embed_store.py:47` | `def update() -> dict:` |
-| FinBERT embedding model | `aspects/embed.py:15` | `MODEL_NAME = "ProsusAI/finbert"` |
+| FinBERT embedding model | `aspects/embed.py:17` | `MODEL_NAME = "ProsusAI/finbert"` |
 | discovery: UMAP | `aspects/discover.py:90` | `reducer = umap.UMAP(` |
 | discovery: HDBSCAN | `aspects/discover.py:95` | `clusterer = hdbscan.HDBSCAN(` |
 | assignment from seed centroids | `aspects/assign.py:61` | `vecs = embed_sentences(cfg["seed_terms"])` |
-| sentiment scoring | `sentiment/score.py:89` | `def run() -> dict:` |
-| zero-shot base FinBERT | `sentiment/score.py:37` | `MODEL_NAME = "ProsusAI/finbert"` |
-| index aggregation | `aggregate/index.py:225` | `def run() -> int:` |
-| fine-tuning code, never run | `train/finetune.py:94` | `def run(seed: int = 42` |
-| evidence read by the chatbot | `chatbot/retrieval.py:98` | `all_ids, all_vecs = load_for_search()` |
+| sentiment scoring | `sentiment/score.py:97` | `def run() -> dict:` |
+| zero-shot base FinBERT | `sentiment/score.py:38` | `MODEL_NAME = "ProsusAI/finbert"` |
+| index aggregation | `aggregate/index.py:252` | `def run() -> int:` |
+| fine-tuning code | `train/finetune.py:97` | `def run(seed: int = 42` |
+| first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:31` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |
+| evidence read by the chatbot | `chatbot/retrieval.py:103` | `all_ids, all_vecs = load_for_search()` |
 
 ## Planned elements
 
@@ -100,4 +102,4 @@ Each row names the file and line an element comes from, and the text that line m
 |---|---|
 | Bank entity recognition | DESIGN.md decision 18 |
 | LLM aspect classifier | DESIGN.md decision 16 |
-| Fine-tuned FinBERT | PLAN.md section 3 (the DNN); blocked on labelling |
+| Scoring the corpus with the fine-tuned model | PLAN.md section 5; only if it beats base FinBERT |

@@ -94,7 +94,7 @@ Found 281 clusters, 24814 noise points (67% of sentences)
   Top terms: briefing, quarter, dbs quarter, results, second, second quarter, dbs second, 2025
   Sample sentences:
     - HYDERABAD, India, Aug. 6, 2026 /PRNewswire/ --
-    - Email: nicholasteh@dbs.com DBS/Fourth-quarter 2025 results Page 8 of 8 DBS Group Holdings Ltd Tel: 65.6878 888
+    - Email: [email redacted] DBS/Fourth-quarter 2025 results Page 8 of 8 DBS Group Holdings Ltd Tel: 65.6878 888
     - Edited transcript of DBS third-quarter 2023 results media briefing, 6 November 2023
     - Edna Koh Good morning and welcome to DBS’s third-quarter financial results briefing.
     - Edited transcript of DBS fourth-quarter 2025 media briefing, 9 February 2026 Edna Koh Welcome to DBS's fourth-
@@ -1495,9 +1495,9 @@ Found 281 clusters, 24814 noise points (67% of sentences)
   Sample sentences:
     - Read more at straitstimes.com.
     - [advice needed] OCBC Premierlife.
-    - Hi there, Came across this post while searching if the same email ([SalesAcq@ocbc.com](mailto:SalesAcq@ocbc.co
-    - For more Group Strategic Marketing & Communications Investor Relations Email: ednakoh@dbs.com
-    - Email: michaelsia@dbs.com
+    - Hi there, Came across this post while searching if the same email ([[email redacted]](mailto:[email redacted]
+    - For more Group Strategic Marketing & Communications Investor Relations Email: [email redacted]
+    - Email: [email redacted]
 
 --- Cluster 149 (n=28) ---
   Bank mix: {'UOB': 13, 'DBS': 9, 'OCBC': 6}

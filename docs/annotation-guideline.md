@@ -1,12 +1,14 @@
 # Annotation Guideline — Aspect-Sentiment Labeling
 
-## Version 2 (decided 2026-09-26) — read this first
+## Version 2 — read this first
 
 The labelling design changed on 2026-09-26 (DESIGN decision 17, PLAN.md
-section 6). The re-drawn candidate sheet that implements it is produced after
-the new aspect classifier runs; until it exists, **don't label the current
-`candidates.csv`**. Everything after this section still applies, except where
-it says a row is a fixed (sentence, aspect) pair.
+section 6): annotators set the aspect as well as the sentiment. The first
+round under it was labelled on 2026-09-27 with the 10-aspect taxonomy
+(DESIGN decision 21); its results are in
+[evidence/annotation-agreement-2026-09-27.md](evidence/annotation-agreement-2026-09-27.md).
+Everything after this section still applies, except where it says a row is a
+fixed (sentence, aspect) pair.
 
 **Each row is one sentence.** For each one:
 
@@ -14,26 +16,31 @@ it says a row is a fixed (sentence, aspect) pair.
    in via DBS PayNow" in a thread about something else), or the name refers
    to something else entirely (UOB Kay Hian the broker, Aston Martin DBS),
    set `not_about_bank` and stop. Don't force an aspect or a sentiment onto
-   it.
-2. **Choose one aspect**: the one the sentence is mainly about, from the five
-   below. If it touches two, choose the one its sentiment is about.
+   it. (The 2026-09-27 sheet had no `not_about_bank` column; add it next
+   round.)
+2. **Choose one aspect**: the one the sentence is mainly about, from the ten
+   below or `other`. If it touches two, choose the one its sentiment is about.
 3. **Choose one sentiment** toward the bank on that aspect: `positive`,
    `neutral` or `negative`. The rest of this guideline is about that choice.
 
-### The five aspects
+### The aspects
 
-| aspect | covers | doesn't cover |
+Derived from the clustered corpus; definitions and counts in
+[evidence/aspect-taxonomy-2026-09-25.md](evidence/aspect-taxonomy-2026-09-25.md).
+
+| aspect | covers | not here |
 |---|---|---|
-| `dividend_policy` | dividends paid or expected, payout ratio, special dividends, dividend yield, capital returned to shareholders (including buybacks) | a customer's interest earnings on deposits (that's a product: `other`) |
-| `asset_quality` | loan quality: non-performing loans, allowances and provisions, credit costs, write-backs, exposure to troubled borrowers or sectors | fraud or scams against customers (`other`) |
-| `net_interest_margin` | the bank's margin and net interest income: NIM, loan and deposit pricing *as it affects the bank*, loan growth, the effect of interest-rate moves on earnings | rates offered to customers on savings, deposits or cards: a depositor's 5% is a cost to the bank, so discuss it under `other` |
-| `management_guidance` | forward-looking statements by the bank: targets, outlook, guidance raised or cut, stated strategy for future performance | leadership appointments with no outlook attached, and past results (the aspect of the result itself) |
-| `other` | everything else about the bank: products, fees, cards and rewards, service quality, outages, scams, the app, branches, awards, share price and valuation, regulation and penalties | — |
-
-Share price and valuation ("DBS looks expensive at 2x book") belong in
-`other`: they matter to an investor but are not one of the proposal's four
-aspects. If you find yourself using `other` for a recurring theme, note it;
-that is exactly what the discovery task is meant to surface.
+| `asset_quality` | non-performing loans, allowances and provisions, credit costs, exposure to troubled borrowers or sectors | scams against customers (`retail_banking_sentiment`) |
+| `capital_liquidity` | CET1 and capital ratios, leverage, LCR/NSFR, Basel rules, capital instruments and bond issuance | dividends and buybacks (`dividend_policy`) |
+| `dividend_policy` | dividends paid or expected, DPS, payout ratio, ex-dividend dates, dividend yield, capital returned to shareholders | interest a customer earns on deposits (`retail_banking_sentiment`) |
+| `net_interest_margin` | NIM and net interest income, loan and deposit growth as a driver of them, the effect of rate moves on the bank's earnings | rates offered to customers (`retail_banking_sentiment`) |
+| `management_guidance` | forward-looking statements by the bank: targets, outlook, guidance raised or cut, strategy, earnings-call answers | results already reported (`income_profit_results`) |
+| `income_profit_results` | reported income and profit: total income, net profit, fee and trading income | results that are specifically NIM, asset quality or wealth (those aspects) |
+| `wealth_business` | wealth management and private or premier banking: AUM, wealth fee income, wealth targets | retail savings products (`retail_banking_sentiment`) |
+| `investor_stock_sentiment` | the stock itself: buy, sell or hold views, share price and valuation, target prices, returns against alternatives | the bank's own results (`income_profit_results`) |
+| `retail_banking_sentiment` | products and service as customers experience them: cards, cashback, savings accounts, fees, app outages, scams, rejected applications | — |
+| `macro_market_environment` | GDP, rate cuts and hikes, geopolitics and trade, the macro outlook as it affects the banks | — |
+| `other` | appointments and pay, awards, M&A and partnerships, CSR, careers, regulatory boilerplate, anything else | — |
 
 ### What the sheet looks like
 
@@ -45,12 +52,15 @@ with no model output (see "The `test` split is frozen" below).
 ### Agreement
 
 The agreement round is the same as below, but κ is computed twice, once for
-the aspect and once for the sentiment, and both should reach 0.6. The
-agreement tool is being updated to match (PLAN.md section 5, week 1).
+the aspect and once for the sentiment, and both should reach 0.6.
+`train.agreement` measures sentiment only; aspect agreement needs the two
+sheets joined on `sentence_id` alone, which it doesn't do yet. The
+2026-09-27 round measured sentiment only: the aspects were corrected once and
+shared.
 
 ---
 
-## Version 1 (the current sheet)
+## Version 1 (superseded)
 
 For labeling `data/labeled/candidates.csv` (generated by
 `python -m preprocess.export_candidates`). Each row is one (sentence, aspect)

@@ -41,14 +41,18 @@ sentiment store.
   three banks have earnings coverage now, but DBS carries roughly six times
   the earnings volume of the other two, and earnings text scores far more
   positive than retail chatter.
-- **No fine-tuned model exists.** All sentiment comes from base FinBERT
-  applied zero-shot; the labelled dataset it needs hasn't been created yet.
-  Zero rows are human-labelled.
+- **The fine-tuned model doesn't beat base FinBERT yet.** Trained on 1,277
+  labelled rows, it scores macro-F1 0.547 ± 0.013 over three seeds against
+  base FinBERT zero-shot's 0.571, though it finds far more negative
+  sentences ([evidence](docs/evidence/finetune-2026-09-30.md)). All scores
+  in the database still come from base FinBERT.
 - **Local chatbot models fabricate citations.** Answers carrying a
   `⚠️ VERIFICATION WARNING` cited evidence that was never retrieved.
-- **Per-aspect scores aren't meaningful yet.** The current assignment gives
-  plain factual sentences several aspects and sends evaluative ones to
-  "other"; it is being replaced by LLM classification (DESIGN decision 16).
+- **Per-aspect scores aren't meaningful yet.** Aspects are matched by
+  embedding similarity, which gives a sentence 6.4 of the 10 aspects on
+  average, and annotators disagreed with the matched aspect on 86% of
+  labelled rows. LLM classification is the planned replacement (DESIGN
+  decisions 16 and 21).
 - **News volume over time is a sampling artefact.** Google News favours recent
   articles; normalise per month before comparing periods.
 
@@ -98,13 +102,14 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
-gunzip -c plp-2026-09-26-v2.db.gz > data/plp.db
-shasum -a 256 plp-2026-09-26-v2.db.gz   # should match the checksum below
+gunzip -c plp-2026-09-30.db.gz > data/plp.db
+shasum -a 256 plp-2026-09-30.db.gz   # should match the checksum below
 ```
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-09-26-v2.db.gz` (latest; the frozen corpus) | 28.9MB | `f6aac79a212368747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored; index recomputed. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), D5) |
+| `plp-2026-09-30.db.gz` (latest; the frozen corpus) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), D5) |
+| `plp-2026-09-26-v2.db.gz` (superseded) | 28.9MB | `f6aac79a212368747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored under the four-aspect taxonomy; index recomputed |
 | `plp-2026-09-26.db.gz` (superseded) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed; before CNA |
 | `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
 | `plp-2026-09-24.db.gz` (superseded) | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | same day, before embeddings, aspects, sentiment and index were run on the news |

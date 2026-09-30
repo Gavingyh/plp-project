@@ -431,11 +431,20 @@ fails if a page and its `.mmd` differ; `pytest -q` from the repository root runs
 
 ## Labelling workflow
 
-> **2026-09-26: the labelling design is changing** (DESIGN decision 17):
-> annotators will record aspect and sentiment per sentence, on a re-drawn
-> candidate set. The commands below produce and support the current
-> (sentence, aspect) sheet; don't start labelling it. This section will be
-> updated when the new sheet and tools exist (PLAN.md section 5, week 1).
+> **First round labelled 2026-09-27** under the 10-aspect taxonomy
+> (DESIGN decisions 17 and 21; results in
+> [evidence/annotation-agreement-2026-09-27.md](evidence/annotation-agreement-2026-09-27.md)).
+> `data/labeled/` holds each annotator's sheets (`agreement/`), the resolved
+> candidates (`resolved/`), the resolved blind test sheet (`test_blind.csv`),
+> and `candidates.csv`, which training reads. **Don't edit `candidates.csv`
+> by hand**: rebuild it from the resolved sheets, which removes duplicated
+> pairs and train/test leakage and takes test labels from the blind sheet:
+>
+> ```bash
+> .venv-plp/bin/python3 -m train.labels
+> ```
+>
+> The commands below are for the next round.
 
 ```bash
 .venv-plp/bin/python3 -m preprocess.export_candidates --train-dev 800 --test 200
@@ -488,13 +497,18 @@ provenance and nothing else. Fill in `label`, and `flag` for rows that
 shouldn't be scored at all — expect some, since a known limitation is that
 sentences mentioning a bank incidentally still enter the corpus.
 
+Label the blind sheet on its own, before or without looking at the same rows
+in `candidates.csv`. In the 27 Sep round each annotator's blind labels were
+identical to their candidates-sheet labels on all 299 rows, so the test
+labels can't be called blind.
+
 ### Check agreement before splitting up the work
 
 Two annotators label the same ~150 rows independently, then:
 
 ```bash
-.venv-plp/bin/python3 -m train.agreement --a alice.csv --b bob.csv
-.venv-plp/bin/python3 -m train.agreement --a alice.csv --b bob.csv --show-disagreements 20
+.venv-plp/bin/python3 -m train.agreement --a data/labeled/agreement/test_blind_coder_a.csv \
+    --b data/labeled/agreement/test_blind_coder_b.csv --show-disagreements 20
 ```
 
 Target is Cohen's κ ≥ 0.6. Below that, the guideline is ambiguous somewhere
@@ -516,13 +530,36 @@ was produced:
 ### Then fine-tune
 
 ```bash
-.venv-plp/bin/python3 -m train.finetune --seed 42
-.venv-plp/bin/python3 -m train.evaluate --model-dir models/finbert-absa/seed_42/final
+for seed in 42 1 7; do
+  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.finetune --seed $seed
+  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.evaluate --model-dir models/finbert-absa/seed_$seed/final
+done
 ```
 
-Neither runs until `label` is filled in. Report mean and standard deviation
-across at least three seeds — a single run's F1 can be seed noise at this
-data size.
+Both refuse a `candidates.csv` with duplicated pairs or a sentence in both
+splits. Report mean and standard deviation across the seeds — a single run's
+F1 can be seed noise at this data size. Models land in `models/` (gitignored,
+about 440 MB each); share them through the team folder, not git. Results so
+far: [evidence/finetune-2026-09-30.md](evidence/finetune-2026-09-30.md).
+
+### Running on a Colab GPU
+
+The code picks CUDA automatically (`config/device.py`), so nothing needs
+patching on Colab. In a notebook:
+
+```bash
+!git clone https://github.com/Gavingyh/plp-project.git   # or upload a zip if the repo is private
+%cd plp-project
+!pip install -q -r requirements.txt
+# upload data/plp.db (restore it from the snapshot, README "Getting the database")
+!python -m aspects.assign && python -m sentiment.score && python -m aggregate.index
+!for s in 42 1 7; do python -m train.finetune --seed $s; python -m train.evaluate --model-dir models/finbert-absa/seed_$s/final; done
+```
+
+Download `models/` and the updated `data/plp.db` afterwards; a Colab runtime
+forgets both. The notebooks the team used are in [notebooks/](../notebooks/README.md);
+commit a notebook only with its outputs cleared, since outputs carry corpus
+text (`tests/test_notebooks.py` checks).
 
 ---
 

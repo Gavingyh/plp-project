@@ -281,7 +281,7 @@ assignment, or does it just shrink the corpus without fixing anything?
 
 **Repository**
 
-- `config/aspects.yaml` — the four aspects and their seed terms
+- `config/aspects.yaml` — the aspects and their seed terms (ten since 2026-09-30; this note discusses the original four)
 - `docs/annotation-guideline.md` — the rule that factual statements carry valence
 - `docs/STATUS.md` — the aspect-assignment problem
 - `docs/verification-ledger.md` — corpus figures and their queries

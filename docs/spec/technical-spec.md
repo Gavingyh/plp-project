@@ -248,10 +248,14 @@ treated as compromised.
 
 ### `config/aspects.yaml`
 
-Five aspects, each with `label` and `seed_terms` that bootstrap its centroid,
-plus `similarity_floor: 0.65`. The floor is a calibration point, not a final
-answer. The taxonomy content is an open team decision and should not be
-changed silently.
+Ten aspects plus `other` (DESIGN decision 21), each with a `label` and
+`seed_terms`: full sentences taken from the aspect's clusters, whose mean
+embedding is the centroid. `similarity_floor: 0.65` was calibrated for the
+earlier four-aspect taxonomy and not re-tuned; at this floor a sentence
+matches 6.4 aspects on average. The chatbot's tool schemas read the aspect
+list from this file, so changing it changes what the chatbot can ask for;
+re-run `aspects.assign` (after clearing `sentence_aspects`) and
+`sentiment.score` afterwards.
 
 ### Tuning constants
 
@@ -503,7 +507,7 @@ personal names are kept in the repository.
 
 | # | Decision | Evidence available | Who decides |
 |---|---|---|---|
-| 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team plus supervisor. It changes what was proposed. |
+| 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source. *Decided 2026-09-30: ten data-derived aspects (DESIGN decision 21)* | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team plus supervisor. It changes what was proposed. |
 | 2 | **Default local model.** `llama3.1:8b` fabricates citations at 13% against `llama3.2:3b`'s 43–48%, but is noticeably slower | STATUS chatbot evaluation | Team |
 | 3 | **Advice-declining fix.** 3 of 7 at best on every model, so it is a prompt and design problem, not a model choice | `data/eval/chatbot_eval_results_*.jsonl` | Whoever owns the chatbot |
 | 4 | **Whether blending is right at all.** Management commentary and retail chatter in one index is a legitimate methodological question, currently resolved in favour of the proposal with composition made visible | Per-source rows in `sentiment_index` | Team plus supervisor |

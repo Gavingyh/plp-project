@@ -1,6 +1,6 @@
 flowchart LR
   accTitle: Rubric items, components and course modules
-  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition, LLM aspect categorisation and annotation are planned; the fine-tuned sentiment model is built but has never run.
+  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition and LLM aspect categorisation are planned; annotation is done and the fine-tuned sentiment model is trained.
 
   subgraph R["Rubric item"]
     r1["data"]
@@ -20,7 +20,7 @@ flowchart LR
     c3["Aspect discovery<br/>UMAP + HDBSCAN<br/><i>TA · NMSM</i>"]
     c4["Aspect categorisation<br/>by a local LLM<br/><i>TA · NMSM</i>"]
     c5["Bank entity recognition<br/>and resolution<br/><i>TA · NMSM</i>"]
-    c6["Sentiment: fine-tuned FinBERT,<br/>built, never run<br/><i>TPML · NMSM</i>"]
+    c6["Sentiment: fine-tuned FinBERT,<br/>trained, below base on macro-F1<br/><i>TPML · NMSM</i>"]
     c7["Annotation, kappa at least 0.6<br/><i>TA</i>"]
     c8["Sentiment index, dashboard<br/><i>NMSM</i>"]
     c9["Chatbot with tool calling<br/><i>CNI</i>"]
@@ -34,10 +34,10 @@ flowchart LR
   r4 -.-> c4
   r5 -.-> c5
   r6 --> c6
-  r7 -.-> c7
+  r7 --> c7
   r8 --> c8
   r9 --> c9
   C ~~~ key
 
   classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
-  class c4,c5,c7 planned;
+  class c4,c5 planned;

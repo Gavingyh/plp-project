@@ -1,11 +1,11 @@
 flowchart TB
   accTitle: Sentiment index computation
-  accDescr: Every scored pair is read with its bank, source and date, filtered to a window, weighted by source and confidence, grouped four ways, summarised with shrinkage toward neutral, and written. A volume floor applies later, when the chatbot reads a score.
+  accDescr: Every scored pair is read with its bank, source and date, filtered to a window, weighted by source and confidence, grouped four ways (counting each sentence once in the rows that span aspects), summarised with shrinkage toward neutral, and written. A volume floor applies later, when the chatbot reads a score.
 
   rows[("aspect_sentiment<br/>joined to sentences")]
   win["Repeat for each window:<br/>last 7 days, 30 days, all time"]
   item["Each pair becomes<br/>label score x confidence x source weight"]
-  grp["Group four ways per bank:<br/>aspect and source, aspect blended,<br/>source across aspects, headline ALL/ALL"]
+  grp["Group four ways per bank:<br/>aspect and source, aspect blended,<br/>source across aspects, headline ALL/ALL<br/>across aspects: each sentence once"]
   sum["Weighted mean,<br/>then shrink toward 0: score x n / (n + 5)"]
   out[("sentiment_index<br/>deleted and rewritten each run")]
   read["Chatbot tools read a row"]

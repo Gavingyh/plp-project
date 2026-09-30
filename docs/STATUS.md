@@ -18,8 +18,8 @@ describe an earlier state carry a dated note saying so.
 | claim you might make | why you can't, yet |
 |---|---|
 | "DBS/OCBC show more positive sentiment than UOB" | No longer an artifact of missing UOB data — all three banks now have earnings coverage (DBS 9,093 sentences, UOB 1,600, OCBC 1,561). DBS still carries ~6x the earnings volume of the other two, so check the per-source breakdown before making a blended claim. |
-| "The fine-tuned FinBERT classifier achieves X" | No fine-tuned model exists. All scores are base FinBERT, zero-shot. |
-| "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Plain factual sentences get three or four aspects at once and evaluative ones fall to `other`, so named-aspect scores are nearly all neutral ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)); the assignment is being replaced (DESIGN decision 16). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
+| "Fine-tuning improved sentiment classification" | It didn't, on macro-F1: 0.547 ± 0.013 over three seeds against base FinBERT zero-shot's 0.571 on the 299-row test split. It does find far more negative sentences (recall 0.54 against 0.21). The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT ([evidence](evidence/finetune-2026-09-30.md)). |
+| "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
 | "The chatbot cites its sources" | Local models fabricate citations — 43–48% of answers on the default model, across two runs. A code check flags this, but it detects rather than prevents. See the evaluation below. |
 | "GPT / Gemini backends work" | Never run against their real APIs — no keys were available. |
 | "The chatbot's answers are grounded" | The harness now flags invented figures and citations and answers advice and off-topic questions itself, but the local 3B model still invents citations in 43–48% of answers ([evidence](evidence/chatbot-harness-2026-09-26.md)). A flagged answer is flagged, not corrected. |
@@ -27,12 +27,20 @@ describe an earlier state carry a dated note saying so.
 | "CNA covered the banks more in 2023–24 than in 2025–26" | CNA articles are those the Wayback Machine happened to capture, with a bank in the URL: 0 to 13 a month. Use CNA for its full text, not its volume ([news-data.md](news-data.md)). |
 
 **The Reddit-only rows remain the cleanest cross-bank comparison** (DBS
--0.0015, OCBC -0.0108, UOB -0.0105, all-time, 2026-09-26 — no meaningful
+-0.003, OCBC -0.029, UOB -0.022, all-time, 2026-09-30 — no meaningful
 difference). Read blended rows alongside the per-source breakdown: earnings
-text scores far higher than retail chatter for every bank (DBS +0.168, OCBC
-+0.206, UOB +0.229), and Google News headlines sit in between (DBS +0.114,
-OCBC +0.134, UOB +0.129), so blended scores track each bank's source mix as
-much as its sentiment.
+text scores far higher than retail chatter for every bank (DBS +0.286, OCBC
++0.375, UOB +0.406), and Google News headlines sit in between (DBS +0.172,
+OCBC +0.218, UOB +0.201), so blended scores (DBS +0.122, OCBC +0.136, UOB
++0.074) track each bank's source mix as much as its sentiment.
+
+**Figures before 2026-09-30 counted a sentence once per aspect it matched.**
+The cross-aspect rows (the headline, and each source's all-aspect row) now
+count each sentence once. The old method weighted sentences that match many
+aspects, which are mostly positive earnings prose, more heavily, and at the
+new taxonomy's 6.4 aspects per sentence it would have lifted DBS's headline
+to +0.23. The earlier published headlines were DBS +0.060, OCBC +0.071, UOB
++0.036; dated figures elsewhere in the docs used the old method.
 
 ---
 
@@ -220,6 +228,14 @@ trustworthy than the check itself.
 
 ### 1. Labelling — the critical blocker
 
+> **Updated 2026-09-30.** The first round is done: 1,300 rows labelled by two
+> people on 2026-09-27 under the 10-aspect taxonomy, 1,277 after removing
+> duplicates and train/test leakage, sentiment κ 0.93 (test sheet 0.96).
+> Aspect agreement wasn't measured, the test labels weren't independent of
+> the model's suggestion, and five aspects have fewer than 80 rows
+> ([evidence](evidence/annotation-agreement-2026-09-27.md)). Everything
+> below describes the superseded version-1 sheet.
+>
 > **Updated 2026-09-26.** The labelling design changes (DESIGN decision 17):
 > annotators will choose the aspect and the sentiment for each sentence, on
 > a re-drawn candidate set that includes news. **Don't start labelling the
@@ -306,6 +322,14 @@ The per-source breakdown remains the honest way to read blended figures.
 
 ### 3. Aspect taxonomy not validated
 
+> **Updated 2026-09-30.** The taxonomy is now ten aspects derived from the
+> 338-cluster discovery run (DESIGN decision 21,
+> [evidence](evidence/aspect-taxonomy-2026-09-25.md)), and the corpus was
+> re-assigned under it. Assignment is still by embedding similarity at an
+> un-re-tuned floor, so the validation this section asks for is still owed;
+> the LLM classifier (decision 16) now has 1,277 human aspect labels to be
+> evaluated against. The rest of this section is the history.
+>
 > **Decided 2026-09-26.** Keep the proposal's four aspects plus `other`, and
 > assign them with a local LLM, one per sentence (DESIGN decision 16), to be
 > confirmed with the supervisor (PLAN.md, O1). The analysis below is the

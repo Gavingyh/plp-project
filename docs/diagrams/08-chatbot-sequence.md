@@ -63,7 +63,7 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Chat tab hands over the question | `dashboard/app.py:360` | `answer = st.session_state.conversation.ask(question).answer` |
+| Chat tab hands over the question | `dashboard/app.py:361` | `answer = st.session_state.conversation.ask(question).answer` |
 | Conversation.ask | `chatbot/agent.py:258` | `def ask(self, question: str, verbose: bool = False)` |
 | last three turns and state | `chatbot/agent.py:259` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
 | guards first | `chatbot/agent.py:157` | `for guard, reply in (("advice", advice_reply(question, context_banks)),` |
@@ -72,7 +72,7 @@ Each row names the file and line an element comes from, and the text that line m
 | temperature sent | `chatbot/backends/ollama_backend.py:52` | `"options": {"temperature": self.temperature}` |
 | tool executed and recorded | `chatbot/agent.py:112` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
 | tools read the database | `chatbot/tools.py:61` | `def get_sentiment(bank: str` |
-| evidence search uses embeddings | `chatbot/retrieval.py:103` | `query_vec = embed_sentences([query])[0]` |
+| evidence search uses embeddings | `chatbot/retrieval.py:108` | `query_vec = embed_sentences([query])[0]` |
 | figures checked against results | `chatbot/agent.py:184` | `figures = unverified_numbers(` |
 | state updated | `chatbot/agent.py:261` | `self._update_state(r)` |
 | turn kept | `chatbot/agent.py:262` | `self.turns.append(r)` |

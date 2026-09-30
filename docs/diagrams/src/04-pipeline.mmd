@@ -21,7 +21,7 @@ flowchart TB
   llm["LLM aspect classifier<br/>(planned, DESIGN 16)"]
   sa[("sentence_aspects")]
   score["Base FinBERT, zero-shot<br/>sentiment.score"]
-  ft["Fine-tuned FinBERT<br/>(planned, PLAN section 3)"]
+  ft["Fine-tuned FinBERT, trained 30 Sep;<br/>replaces base only if it beats it<br/>(PLAN section 5)"]
   as[("aspect_sentiment")]
   agg["Index: windows, sources,<br/>shrinkage at low volume<br/>aggregate.index"]
   idx[("sentiment_index")]

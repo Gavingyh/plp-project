@@ -163,7 +163,7 @@ answers). C8–C11 apply the Conversational UIs module and are DESIGN decision
 | L3 | Annotators are not shown model opinions when labelling the test set | `preprocess/export_blind_test.py` writes a sheet carrying sentence, aspect and provenance only | Done |
 | L4 | Pre-labelling reduces annotation to correction | `train/llm_prelabel.py` fills `llm_prelabel` and `llm_rationale`, never `label`; checkpointed and resumable | Done, 997 of 998 rows |
 | L5 | Agreement between annotators is measured before dividing the work | `train/agreement.py` reports Cohen's κ against a 0.6 target | Done |
-| L6 | A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Blocked** — zero rows human-labelled |
+| L6 | A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Met, result negative**: three seeds, macro-F1 0.547 ± 0.013 against base FinBERT's 0.571 ([evidence](../evidence/finetune-2026-09-30.md)) |
 
 | L7 | Annotators choose the aspect and the sentiment for each sentence | Re-drawn candidate set across Reddit, earnings and news; ≥ 200 rows per sentiment class overall, ~80 per aspect; blind test sheet; κ reported for aspect and for sentiment | **Planned** — DESIGN decision 17 |
 
@@ -177,7 +177,7 @@ highest-value outstanding task, and L7 now precedes it.
 | T1 | Aspect discovery by clustering | FinBERT embeddings, UMAP, HDBSCAN over the full corpus; cluster count, noise share and correspondence to the aspects reported | Done on 36,884 sentences (2026-09-11, 281 clusters, 67% noise); re-run with a `min_cluster_size` sweep once CNA is loaded |
 | T2 | Aspect categorisation | A local LLM assigns each sentence one of the four proposal aspects or `other`; accuracy and macro-F1 against the human aspect labels, with seed-centroid assignment as baseline | **Planned** — DESIGN decision 16 |
 | T3 | Bank entity recognition and resolution | Organisation mentions recognised and resolved to DBS, OCBC, UOB or not the bank; precision, recall and F1 on a ~200-sentence gold set against alias matching | **Planned** — DESIGN decision 18 |
-| T4 | Sentiment classification (fine-tuned FinBERT) | = L6: per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Blocked** on labelling |
+| T4 | Sentiment classification (fine-tuned FinBERT) | = L6: per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Done**, below base FinBERT (see L6) |
 
 ---
 
@@ -190,11 +190,13 @@ highest-value outstanding task, and L7 now precedes it.
 | Conversational user interface | Tool-calling chatbot with RAG evidence retrieval, on CLI, dashboard tab and API | `chatbot/` | Done |
 | At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, planned classifier and NER modules, `train/finetune.py` | T1 done; T2, T3 planned; T4 blocked on labelling |
 | A sentiment mining component | Overall and aspect-based sentiment index across four sources | `sentiment/`, `aggregate/` | Done |
-| At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Blocked on labelling** |
+| At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Met**: trained on 1,277 labelled rows, three seeds; below base FinBERT on macro-F1 |
 
-The DNN requirement is the one at risk. Base FinBERT is a deep neural network
-and is used throughout, but the *self-built or fine-tuned* element the rubric
-asks for does not exist until the labelled data does.
+The DNN requirement is met since 2026-09-30: FinBERT fine-tuned on the
+team's labels, evaluated over three seeds against three baselines. Its
+result is negative on macro-F1 (0.547 ± 0.013 against base FinBERT's 0.571)
+and positive on the minority negative class; the report has to explain both
+([evidence](../evidence/finetune-2026-09-30.md)).
 
 ### Proposal commitments
 
@@ -213,7 +215,9 @@ asks for does not exist until the labelled data does.
 
 Summarised from [STATUS.md](../STATUS.md), which is the authority.
 
-1. **No fine-tuned model exists.** All sentiment is base FinBERT, zero-shot.
+1. **The fine-tuned model doesn't beat base FinBERT on macro-F1** (0.547 ±
+   0.013 against 0.571, [evidence](../evidence/finetune-2026-09-30.md)). All stored sentiment is base
+   FinBERT, zero-shot.
 2. **Aspect assignment is not meaningful yet.** Plain factual sentences get
    three or four aspects, and evaluative ones fall to `other`, so named-aspect
    scores are nearly all neutral. Being replaced (T2).

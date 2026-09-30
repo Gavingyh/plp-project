@@ -34,7 +34,7 @@ fine-tuned deep neural network; Python.
 
 | # | decision | why | consequence |
 |---|---|---|---|
-| D1 | **A local LLM assigns each sentence one aspect**: one of the proposal's four (dividend policy, asset quality, net interest margin, management guidance) or `other` | Seed-centroid assignment gives 46% of sentences three or four aspects at once and sends evaluative sentences to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). An LLM prompted with a fixed schema reads meaning, not vocabulary (NMSM Day 2, zero-shot ABSA) | Keeps the proposal's aspects, so this changes the method, not the taxonomy. Replaces DESIGN decisions 4 and 5. Validated against the human aspect labels (D2) |
+| D1 | **A local LLM assigns each sentence one aspect**: one of ten (DESIGN decision 21; the proposal's four until 30 Sep) or `other` | Seed-centroid assignment gives 46% of sentences three or four aspects at once and sends evaluative sentences to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). An LLM prompted with a fixed schema reads meaning, not vocabulary (NMSM Day 2, zero-shot ABSA) | Changes the method; the taxonomy changed separately on 30 Sep (DESIGN 21). Replaces DESIGN decisions 4 and 5. Evaluated against the 1,277 human aspect labels (D2) |
 | D2 | **Annotators record aspect and sentiment for each sentence** | Labels no longer depend on the automatic assignment being right, and the human aspect choices become the gold set that evaluates D1 | Candidates are re-drawn to include news; the annotation guideline gains aspect definitions ([annotation-guideline.md](annotation-guideline.md)) |
 | D3 | **Four text-mining tasks**: aspect discovery (clustering), aspect categorisation (D1), bank entity recognition (new), sentiment classification (the fine-tuned DNN) | All four are real and evaluable. NER is scoped narrowly so it doesn't compete with labelling | The course notes' earlier NER claim becomes true. See section 7 |
 | D4 | **No personal names in the repository** | Team preference; work is split offline | Ownership is recorded by role (section 4); contribution summaries go in the report only |
@@ -117,8 +117,18 @@ split is detailed in the checklist.
 
 ## 5. Sequence
 
-Labelling gates the DNN, and aspects gate labelling (D2 attaches sentiment to
-an aspect), so the aspect classifier comes first.
+**Status on 30 Sep.** The text-analytics workstream ran ahead of this
+sequence, without waiting for the aspect classifier: the 10-aspect taxonomy
+(DESIGN 21), one labelling round of 1,300 rows by two people (sentiment
+κ 0.93), and a first fine-tuning run all happened 25–27 Sep. What that
+changes below: labelling no longer gates the DNN; the aspect classifier is
+still to build, and is now evaluated against the human aspect labels instead
+of feeding the labelling; aspect agreement was not measured and the five
+smallest aspects are below 80 rows, so a top-up round is worth planning;
+fine-tuning results are in [evidence/finetune-2026-09-30.md](evidence/finetune-2026-09-30.md).
+
+The original ordering: labelling gates the DNN, and aspects gate labelling
+(D2 attaches sentiment to an aspect), so the aspect classifier comes first.
 
 | week | gate at the end of the week | people | AI |
 |---|---|---|---|
@@ -137,16 +147,22 @@ allows either) and report the smaller set honestly.
 ## 6. Labelling design
 
 - **Unit.** One sentence per row. The annotator chooses its aspect (one of
-  five) and its sentiment toward the bank as an investment on that aspect, or
-  flags it as not about the bank.
+  the ten, or `other`) and its sentiment toward the bank as an investment on
+  that aspect, or flags it as not about the bank. The 27 Sep round corrected
+  the aspect on exported (sentence, aspect) rows, which produced duplicates
+  that `train/labels.py` now removes, and had no not-about-the-bank flag.
 - **Volume.** About 1,000 rows. The proposal's target is 200–300 rows per
   *sentiment* class; that is an overall target, not a per-aspect one. The
   re-drawn set also aims for at least ~80 rows per aspect so aspect
   categorisation can be evaluated on every class.
 - **Sources.** Stratified across Reddit, earnings and news, and across banks.
-  The current 997 candidates hold one news sentence.
-- **Test split.** 200 rows drawn at random before any model-based selection,
-  labelled only from the blind sheet, which shows no model output.
+  The 27 Sep round: 617 Reddit, 477 earnings, 183 news rows.
+- **Test split.** Rows drawn at random before any model-based selection,
+  labelled only from the blind sheet, which shows no model output. The 27 Sep
+  round drew 300; its blind-sheet labels are identical to the same
+  annotators' labels on the candidates sheet, where the suggestion was
+  visible, so they cannot count as blind
+  ([evidence](evidence/annotation-agreement-2026-09-27.md)).
 - **Pre-labels.** The local LLM's suggestions are shown for the train/dev
   split only.
 - **Agreement.** Two people label the same 150 rows first. Cohen's κ is

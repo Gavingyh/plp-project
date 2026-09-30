@@ -27,6 +27,7 @@ from sklearn.model_selection import train_test_split
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from config.device import best_device
+from train.finetune import read_input_format
 from train.labels import check_splits
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -83,13 +84,15 @@ def eval_finetuned(model_dir: str, df: pd.DataFrame) -> dict:
     model = AutoModelForSequenceClassification.from_pretrained(model_dir).eval()
     device = best_device()
     model.to(device)
+    with_aspect = read_input_format(model_dir)   # as the model was trained
     preds = []
     with torch.no_grad():
         for i in range(0, len(df), 32):
             batch = df.iloc[i:i + 32]
-            enc = tokenizer(batch["text"].tolist(), batch["aspect"].tolist(),
-                             padding=True, truncation=True, max_length=128,
-                             return_tensors="pt").to(device)
+            segments = ([batch["text"].tolist(), batch["aspect"].tolist()] if with_aspect
+                        else [batch["text"].tolist()])
+            enc = tokenizer(*segments, padding=True, truncation=True, max_length=128,
+                            return_tensors="pt").to(device)
             logits = model(**enc).logits
             idx = logits.argmax(dim=-1).cpu().tolist()
             preds.extend(model.config.id2label[i].lower() for i in idx)

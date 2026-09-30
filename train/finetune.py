@@ -18,9 +18,13 @@ at this data size).
 
 USAGE:
   python -m train.finetune --seed 42
+  python -m train.finetune --seed 42 --no-aspect          # sentence only, to test the aspect input
+  python -m train.finetune --seed 42 --folds 5 --fold 0   # cross-validation fold, dev score only
+  python -m train.finetune --seed 42 --out-dir models/experiments
 """
 
 import argparse
+import json
 import os
 import shutil
 
@@ -28,6 +32,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import f1_score
+from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_class_weight
 from torch.utils.data import Dataset
 from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
@@ -76,13 +81,45 @@ def _load_labeled(split: str) -> pd.DataFrame:
     return df
 
 
-def _tokenize(tokenizer, df: pd.DataFrame):
-    enc = tokenizer(
-        df["text"].tolist(), df["aspect"].tolist(),  # sentence-pair: [CLS] sentence [SEP] aspect [SEP]
-        padding=True, truncation=True, max_length=128, return_tensors="pt",
-    )
+INPUT_FORMAT_FILE = "input_format.json"
+
+
+def write_input_format(model_dir: str, with_aspect: bool) -> None:
+    """Record how the model was fed, so evaluation tokenizes the same way."""
+    with open(os.path.join(model_dir, INPUT_FORMAT_FILE), "w") as f:
+        json.dump({"with_aspect": with_aspect}, f)
+
+
+def read_input_format(model_dir: str) -> bool:
+    """True when the model takes (sentence, aspect) pairs. Models saved before
+    the marker existed were all trained on pairs."""
+    path = os.path.join(model_dir, INPUT_FORMAT_FILE)
+    if not os.path.exists(path):
+        return True
+    with open(path) as f:
+        return bool(json.load(f)["with_aspect"])
+
+
+def _tokenize(tokenizer, df: pd.DataFrame, with_aspect: bool = True):
+    texts = df["text"].tolist()
+    if with_aspect:   # sentence-pair: [CLS] sentence [SEP] aspect [SEP]
+        enc = tokenizer(texts, df["aspect"].tolist(), padding=True, truncation=True,
+                        max_length=128, return_tensors="pt")
+    else:             # sentence alone: [CLS] sentence [SEP]
+        enc = tokenizer(texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
     labels = [LABEL2ID[l] for l in df["label"]]
     return enc, labels
+
+
+def fold_split(train_dev_df: pd.DataFrame, folds: int, fold: int, seed: int):
+    """(train, dev) for one fold of stratified K-fold over train_dev. The test
+    split never enters: callers pass train_dev rows only."""
+    if not 0 <= fold < folds:
+        raise ValueError(f"fold must be in 0..{folds - 1}, got {fold}")
+    skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=seed)
+    df = train_dev_df.reset_index(drop=True)
+    train_idx, dev_idx = list(skf.split(df, df["label"]))[fold]
+    return df.iloc[train_idx], df.iloc[dev_idx]
 
 
 def compute_metrics(eval_pred):
@@ -94,22 +131,29 @@ def compute_metrics(eval_pred):
     }
 
 
-def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16):
+def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
+        with_aspect: bool = True, out_dir: str | None = None,
+        folds: int | None = None, fold: int | None = None):
+    """Train one model. With folds/fold, train on K-1 folds of train_dev and
+    return the dev score on the held-out fold, saving no model."""
     torch.manual_seed(seed)
     np.random.seed(seed)
+    out_root = out_dir or MODEL_OUT_DIR
+    run_name = f"seed_{seed}" if folds is None else f"seed_{seed}_fold{fold}of{folds}"
 
     train_dev_df = _load_labeled("train_dev")
-    # Simple 85/15 split of the labeled train_dev pool for train vs. dev
-    # (k-fold is the documented alternative given a small seed set — swap
-    # in sklearn's StratifiedKFold here once labeling is complete and the
-    # team decides which to use).
-    train_dev_df = train_dev_df.sample(frac=1, random_state=seed).reset_index(drop=True)
-    split_idx = int(len(train_dev_df) * 0.85)
-    train_df, dev_df = train_dev_df[:split_idx], train_dev_df[split_idx:]
+    if folds is None:
+        # 85/15 split of the labeled train_dev pool for train vs. dev.
+        train_dev_df = train_dev_df.sample(frac=1, random_state=seed).reset_index(drop=True)
+        split_idx = int(len(train_dev_df) * 0.85)
+        train_df, dev_df = train_dev_df[:split_idx], train_dev_df[split_idx:]
+    else:
+        # K-fold: a steadier dev estimate than one 15% slice of ~1,000 rows.
+        train_df, dev_df = fold_split(train_dev_df, folds, fold, seed)
 
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-    train_enc, train_labels = _tokenize(tokenizer, train_df)
-    dev_enc, dev_labels = _tokenize(tokenizer, dev_df)
+    train_enc, train_labels = _tokenize(tokenizer, train_df, with_aspect)
+    dev_enc, dev_labels = _tokenize(tokenizer, dev_df, with_aspect)
 
     class_weights = compute_class_weight("balanced", classes=np.arange(len(LABELS)), y=train_labels)
     print(f"Class weights (neg/neu/pos): {class_weights}")
@@ -127,7 +171,7 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16)
     warmup_steps = max(1, round(0.10 * total_steps))
 
     training_args = TrainingArguments(
-        output_dir=os.path.join(MODEL_OUT_DIR, f"seed_{seed}"),
+        output_dir=os.path.join(out_root, run_name),
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
@@ -151,9 +195,17 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16)
     )
     trainer.train()
 
-    final_dir = os.path.join(MODEL_OUT_DIR, f"seed_{seed}", "final")
+    if folds is not None:
+        # A fold model exists only for its dev score; keep nothing on disk.
+        metrics = trainer.evaluate()
+        shutil.rmtree(training_args.output_dir, ignore_errors=True)
+        print(f"Fold {fold} of {folds}: dev macro-F1 {metrics.get('eval_macro_f1')}")
+        return metrics
+
+    final_dir = os.path.join(out_root, run_name, "final")
     trainer.save_model(final_dir)
     tokenizer.save_pretrained(final_dir)
+    write_input_format(final_dir, with_aspect)
     # Per-epoch checkpoints carry optimizer state (~1.2 GB each); the best
     # epoch is already in final/, so they are only disk use once it is saved.
     for name in os.listdir(training_args.output_dir):
@@ -169,6 +221,15 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--no-aspect", action="store_true",
+                        help="train on the sentence alone, without the aspect")
+    parser.add_argument("--out-dir", default=None, help=f"default {MODEL_OUT_DIR}")
+    parser.add_argument("--folds", type=int, default=None, help="K for K-fold on train_dev")
+    parser.add_argument("--fold", type=int, default=None, help="which fold is dev (0..K-1)")
     args = parser.parse_args()
-    metrics = run(seed=args.seed, epochs=args.epochs, lr=args.lr, batch_size=args.batch_size)
+    if (args.folds is None) != (args.fold is None):
+        parser.error("--folds and --fold go together")
+    metrics = run(seed=args.seed, epochs=args.epochs, lr=args.lr, batch_size=args.batch_size,
+                  with_aspect=not args.no_aspect, out_dir=args.out_dir,
+                  folds=args.folds, fold=args.fold)
     print(metrics)

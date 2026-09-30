@@ -470,3 +470,51 @@ first fine-tuning) is now in the repository. Evidence:
   which was overloaded (503) on 2026-09-30, while `gemini-3.6-flash` worked.
   Free-tier inputs may be read by Google's reviewers: don't send evidence
   text (`search_evidence` returns Reddit posts).
+
+## Overnight run log — experiments (2026-09-30)
+
+Running `.project-context/prompt/overnight-experiments.md` from HEAD
+`a6bad3d`. Baseline: 445 tests pass; Ollama up; 58 GB free.
+
+- Job A (fine-tuning experiments): done, `454c989`. 8 epochs chosen on dev
+  (0.637 against 0.616); test macro-F1 0.577 ± 0.027, level with base
+  FinBERT's 0.571. The aspect input wins in all five CV folds (+0.026) and
+  lifts negative-class F1 from 0.29 to 0.44
+  ([evidence](evidence/finetune-experiments-2026-09-30.md), with model
+  checksums).
+- Job B (assignment calibration): done, `60b9a53`. Seed-centroid top-1
+  accuracy against the human aspect labels is 0.41-0.42 at any floor up to
+  0.70 (majority-class 0.37); no floor fixes it
+  ([evidence](evidence/aspect-assignment-calibration-2026-09-30.md)).
+- Job C (discovery sweep): done, `78d796b`. 358 clusters at 10 (65% noise),
+  collapse into one cluster at 25 and 50, 25 aspect-like clusters at 100.
+- Job D (chatbot evaluation): done, `d35d032`. 3B unchanged from 26 Sep;
+  8B: 13/16 tools, 7/7 behaviour, 4/23 citation warnings, 3/23 answers with
+  invented figures, no backend errors. All 29 flagged figures were real
+  inventions; 2 of 14 citation warnings were false alarms
+  ([evidence](evidence/chatbot-eval-2026-09-30.md)).
+- Verification: 454 tests pass; diagram sources clean after updating nine
+  moved line numbers in pages 04, 09, 16 and 17; every number in the four
+  evidence files comes from a command in that file; `models/` stays out of
+  git (weights and checksums listed in the fine-tuning experiments file).
+
+Left out, and why:
+- Nothing from the prompt. The CV fold models were deleted after scoring, as
+  specified; only the E1 and E2 finals are kept.
+- `aspects.compare_taxonomies` measures its own hard-coded four-aspect
+  candidate A, not the current config, despite its docstring. Recorded in the
+  calibration file, not fixed (outside the run's scope).
+
+Needs a human:
+1. **Scoring model.** E1 (8 epochs, with aspect) is level with base FinBERT
+   on macro-F1 (0.577 ± 0.027 against 0.571), better on negative sentences
+   (0.44 against 0.30) and worse on neutral. Whether it replaces base
+   FinBERT for the corpus is PLAN section 5's decision.
+2. **Aspect assignment.** No floor makes centroid assignment accurate (top-1
+   0.41); leave the floor at 0.65 and build the LLM classifier, whose
+   baseline is now measured.
+3. **Demo model (O3).** The 8B invents far less than the 3B (3 against 9
+   invented-citation answers) at about twice the runtime.
+4. **Model weights** exist only on this MacBook; copy them to the team
+   folder and check the SHA-256 values in the experiments file.
+

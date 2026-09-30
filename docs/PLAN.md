@@ -126,6 +126,11 @@ still to build, and is now evaluated against the human aspect labels instead
 of feeding the labelling; aspect agreement was not measured and the five
 smallest aspects are below 80 rows, so a top-up round is worth planning;
 fine-tuning results are in [evidence/finetune-2026-09-30.md](evidence/finetune-2026-09-30.md).
+Overnight experiments on 30 Sep–1 Oct:
+[longer training and the aspect input](evidence/finetune-experiments-2026-09-30.md),
+[centroid assignment against the human aspects](evidence/aspect-assignment-calibration-2026-09-30.md),
+[the discovery sweep](evidence/aspect-discovery-sweep-2026-09-30.md) and
+[the chatbot gold set on the rebuilt database](evidence/chatbot-eval-2026-09-30.md).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (D2 attaches sentiment to an aspect), so the aspect classifier comes first.

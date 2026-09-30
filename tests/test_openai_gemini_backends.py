@@ -191,8 +191,10 @@ def test_gemini_backend_full_loop(monkeypatch):
 
     assert answer == "The sentiment for DBS is neutral."
     assert calls == [("get_sentiment", {"bank": "DBS"})]
-    # key goes in query params, not headers, for Gemini's REST API
-    assert fake_post.requests[0]["params"] == {"key": "fake-key"}
+    # the key goes in a header, never the URL (requests puts URLs in error messages)
+    assert fake_post.requests[0]["headers"] == {"x-goog-api-key": "fake-key"}
+    assert not fake_post.requests[0]["params"]
+    assert "fake-key" not in fake_post.requests[0]["url"]
     # system prompt goes in a dedicated field, not the contents array
     assert fake_post.requests[0]["json"]["system_instruction"]["parts"][0]["text"] == "system prompt"
     # the function response must be sent back as a functionResponse part

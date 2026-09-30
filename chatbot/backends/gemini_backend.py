@@ -87,8 +87,10 @@ class GeminiBackend(LLMBackend):
     def _generate(self, contents: list[dict], system: str, tools: list[dict]) -> dict:
         url = f"{_API_BASE}/{self.model}:generateContent"
         try:
+            # The key goes in a header, not the URL: requests puts the URL in
+            # its error messages, and errors are logged to data/logs/plp.log.
             resp = requests.post(
-                url, params={"key": self._api_key},
+                url, headers={"x-goog-api-key": self._api_key},
                 json={
                     "system_instruction": {"parts": [{"text": system}]},
                     "contents": contents,

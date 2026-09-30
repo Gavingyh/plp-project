@@ -322,8 +322,9 @@ in `.env` makes Gemini the default unless `CHATBOT_BACKEND=ollama` is set.
 
 **Gemini** (`GEMINI_API_KEY`, the team's key is for the chatbot only): the
 model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
-`gemini-3.8-flash`. A key from Google AI Studio is 39 characters starting
-`AIza`. On the free tier Google may use prompts and responses to improve its
+`gemini-3.8-flash`; on 2026-09-30 that model and 3.7 kept answering 503 (high
+demand) while `gemini-3.6-flash` worked, so set that if 3.8 is busy. The
+backend retries a 503 or 429 three times. On the free tier Google may use prompts and responses to improve its
 products and people may review them, and its terms say not to send
 sensitive, confidential or personal information: test with questions whose
 tool results are numbers, and keep evidence searches (which return Reddit

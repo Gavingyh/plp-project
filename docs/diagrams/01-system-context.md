@@ -30,7 +30,7 @@ flowchart LR
 
   subgraph llms["Language-model backends"]
     ollama["Ollama, local<br/>default, no key needed"]
-    hosted["Claude, OpenAI, Gemini<br/>hosted; only Claude verified"]
+    hosted["Claude, OpenAI, Gemini<br/>hosted; Claude and Gemini verified"]
   end
 
   investor -- "asks questions,<br/>reads scores and quotes" --> core
@@ -58,8 +58,8 @@ Shows every external party the code talks to and what crosses each boundary. It
 doesn't show internals (see [02](02-runtime.md) and [04](04-pipeline.md)) or the CNA
 feed, which has a scraper (`ingest/cna_scraper.py`) that writes a JSON file and is not
 connected to the system. Alpha Vantage is drawn dashed because its adapter runs but no
-SGX ticker is indexed, so it contributes nothing. Of the hosted backends, only Claude
-has returned a real response; OpenAI and Gemini are implemented but unverified.
+SGX ticker is indexed, so it contributes nothing. Of the hosted backends, Claude and
+(since 2026-09-30) Gemini have returned real responses; OpenAI is implemented but unverified.
 
 ## Sources
 
@@ -84,6 +84,7 @@ Each row names the file and line an element comes from, and the text that line m
 | Claude | `chatbot/backends/claude_backend.py:36` | `import anthropic` |
 | OpenAI | `chatbot/backends/openai_backend.py:36` | `api.openai.com/v1/chat/completions` |
 | OpenAI unverified | `chatbot/backends/openai_backend.py:4` | `NOT VERIFIED AGAINST THE LIVE API` |
-| Gemini | `chatbot/backends/gemini_backend.py:44` | `generativelanguage.googleapis.com` |
+| Gemini verified | `chatbot/backends/gemini_backend.py:4` | `VERIFIED against the live API on 2026-09-30` |
+| Gemini | `chatbot/backends/gemini_backend.py:46` | `generativelanguage.googleapis.com` |
 | Ollama is the default without a key | `chatbot/backends/__init__.py:46` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

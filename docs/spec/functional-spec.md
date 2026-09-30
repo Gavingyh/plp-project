@@ -142,7 +142,7 @@ Thirteen endpoints in `api/main.py`. No authentication; localhost only.
 | C4 | Declines investment advice | Advice-seeking questions are declined with a not-financial-advice statement | Done through C9 — prompt-only was 2–3 of 7 on every model tested |
 | C5 | Says so plainly when data is thin | Tools return `insufficient_data` below 5 observations | Done |
 | C6 | Runs without any API key | Ollama backend auto-selected when no key is present | Done |
-| C7 | Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude verified; GPT and Gemini never run against real APIs (the Gemini key added on 2026-09-30 was rejected as invalid) |
+| C7 | Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude and Gemini verified (Gemini on 2026-09-30, [evidence](../evidence/gemini-backend-2026-09-30.md)); GPT never run |
 
 | C8 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | Done — dashboard and API (`history`); verified live in a three-turn conversation |
 | C9 | Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | Done — 7 of 7, by guards; off-topic questions get a scope reply too |
@@ -229,7 +229,7 @@ Summarised from [STATUS.md](../STATUS.md), which is the authority.
    six times the earnings volume of the other two banks.
 6. **Relevance filtering is weak.** Sentences mentioning a bank incidentally
    still enter the corpus. Roughly 2.6% of sentences are extraction artifacts.
-7. **GPT and Gemini backends are unverified.**
+7. **The GPT backend is unverified** (Gemini was verified on 2026-09-30).
 8. **News volume over time is a sampling artefact.** Google News favours
    recent articles; compare periods only after normalising per month.
 

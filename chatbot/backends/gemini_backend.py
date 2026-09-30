@@ -1,10 +1,10 @@
 """
 Gemini backend — a third frontier-model option alongside Claude and GPT.
 
-NOT VERIFIED AGAINST THE LIVE API, and carries more risk than the OpenAI
-backend: no GEMINI_API_KEY was available when this was written, and Google's
-REST API has version-specific details that are easy to get wrong from
-documentation alone. Specifically:
+VERIFIED against the live API on 2026-09-30 with gemini-3.6-flash
+(docs/evidence/gemini-backend-2026-09-30.md): tool calling and the
+functionResponse continuation both work. It was written before any key was
+available, and these were the risky parts:
 
   - Gemini's function-declaration `type` field is a proto enum serialized
     as an UPPERCASE string ("OBJECT", "STRING", "INTEGER"...), not
@@ -30,6 +30,7 @@ deprecations page), so check that page when this starts failing with 404.
 
 import json
 import sys
+import time
 
 import requests
 
@@ -41,6 +42,7 @@ logger = get_logger(__name__)
 DEFAULT_MODEL = "gemini-3.8-flash"
 MAX_TOOL_ITERATIONS = 8
 _REQUEST_TIMEOUT = 60
+_RETRY_WAITS = (2, 5, 15)   # seconds before each retry on 429 / 503
 _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 
@@ -88,21 +90,27 @@ class GeminiBackend(LLMBackend):
 
     def _generate(self, contents: list[dict], system: str, tools: list[dict]) -> dict:
         url = f"{_API_BASE}/{self.model}:generateContent"
-        try:
-            # The key goes in a header, not the URL: requests puts the URL in
-            # its error messages, and errors are logged to data/logs/plp.log.
-            resp = requests.post(
-                url, headers={"x-goog-api-key": self._api_key},
-                json={
-                    "system_instruction": {"parts": [{"text": system}]},
-                    "contents": contents,
-                    "tools": tools,
-                    "generationConfig": {"temperature": self.temperature},
-                },
-                timeout=_REQUEST_TIMEOUT,
-            )
-        except requests.exceptions.ConnectionError as e:
-            raise RuntimeError(f"Could not reach the Gemini API: {e}") from e
+        payload = {
+            "system_instruction": {"parts": [{"text": system}]},
+            "contents": contents,
+            "tools": tools,
+            "generationConfig": {"temperature": self.temperature},
+        }
+        # 503 ("high demand") and 429 (rate limit) are routine on the free tier
+        # and usually clear within seconds; a single one shouldn't lose the answer.
+        for attempt in range(len(_RETRY_WAITS) + 1):
+            try:
+                # The key goes in a header, not the URL: requests puts the URL in
+                # its error messages, and errors are logged to data/logs/plp.log.
+                resp = requests.post(url, headers={"x-goog-api-key": self._api_key},
+                                     json=payload, timeout=_REQUEST_TIMEOUT)
+            except requests.exceptions.ConnectionError as e:
+                raise RuntimeError(f"Could not reach the Gemini API: {e}") from e
+            if resp.status_code not in (429, 503) or attempt == len(_RETRY_WAITS):
+                break
+            logger.warning("Gemini %s returned %s; retrying in %ss", self.model,
+                           resp.status_code, _RETRY_WAITS[attempt])
+            time.sleep(_RETRY_WAITS[attempt])
         if resp.status_code == 400:
             raise RuntimeError(
                 f"Gemini API returned 400 (bad request) — the error body usually names the "

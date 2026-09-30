@@ -264,3 +264,27 @@ def test_gemini_model_setting(monkeypatch, env, expected):
         monkeypatch.setenv(k, v)
     monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
     assert get_backend("gemini").model == expected
+
+
+def test_gemini_backend_retries_a_busy_model_then_answers(monkeypatch):
+    fake_post = _FakePost([_GEMINI_FINAL_ANSWER_RESPONSE])
+    statuses = iter([503, 429, 200])
+    real_call = fake_post.__call__
+
+    class _Busy:
+        status_code = 0
+        text = "busy"
+
+    def flaky_post(url, **kwargs):
+        code = next(statuses)
+        if code != 200:
+            resp = _Busy()
+            resp.status_code = code
+            return resp
+        return real_call(url, **kwargs)
+
+    monkeypatch.setattr("requests.post", flaky_post)
+    monkeypatch.setattr("chatbot.backends.gemini_backend.time.sleep", lambda s: None)
+    backend = GeminiBackend(api_key="fake-key")
+    answer = backend.ask("q", "system prompt", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert answer == "The sentiment for DBS is neutral."

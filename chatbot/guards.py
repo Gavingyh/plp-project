@@ -75,8 +75,8 @@ def advice_reply(question: str, context_banks: list[str] | None = None) -> str |
         "themselves are saying, and none of it is financial advice.\n\n"
         "What I can show you instead:\n"
         f"- the overall sentiment on {subject} and how it has moved recently\n"
-        "- sentiment on one aspect: dividends, net interest margin, asset quality or "
-        "management guidance\n"
+        "- sentiment on one aspect, such as dividends, net interest margin, asset quality, "
+        "the wealth business, retail banking or the share price\n"
         "- how the three banks compare\n"
         "- the quotes behind any of these\n\n"
         f"For example: \"How has sentiment on {example_bank}'s dividends changed recently?\""
@@ -117,7 +117,7 @@ def scope_reply(question: str) -> str | None:
         return (
             "That's outside what I can help with. I answer questions about sentiment on "
             "Singapore's three listed banks, DBS, OCBC and UOB: how sentiment looks overall or on "
-            "dividends, net interest margin, asset quality or management guidance, how it has "
+            "an aspect such as dividends, margins, asset quality, wealth or retail banking, how it has "
             "changed, how the banks compare, and the quotes behind a score."
         )
     return None

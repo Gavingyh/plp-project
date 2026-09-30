@@ -21,7 +21,7 @@ describe an earlier state carry a dated note saying so.
 | "Fine-tuning improved sentiment classification" | It didn't, on macro-F1: 0.547 ± 0.013 over three seeds against base FinBERT zero-shot's 0.571 on the 299-row test split. It does find far more negative sentences (recall 0.54 against 0.21). The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT ([evidence](evidence/finetune-2026-09-30.md)). |
 | "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
 | "The chatbot cites its sources" | Local models fabricate citations — 43–48% of answers on the default model, across two runs. A code check flags this, but it detects rather than prevents. See the evaluation below. |
-| "GPT / Gemini backends work" | Never run against their real APIs. A Gemini key was added on 2026-09-30 but Google rejected it as invalid; no OpenAI key exists. |
+| "GPT / Gemini backends work" | Gemini works: verified live on 2026-09-30 on numbers-only questions ([evidence](evidence/gemini-backend-2026-09-30.md)). GPT has never been run: no OpenAI key exists. |
 | "The chatbot's answers are grounded" | The harness now flags invented figures and citations and answers advice and off-topic questions itself, but the local 3B model still invents citations in 43–48% of answers ([evidence](evidence/chatbot-harness-2026-09-26.md)). A flagged answer is flagged, not corrected. |
 | "News volume rose sharply in 2026" | An artefact of Google News ranking recent articles higher. Normalise per month before comparing periods ([news-data.md](news-data.md)). |
 | "CNA covered the banks more in 2023–24 than in 2025–26" | CNA articles are those the Wayback Machine happened to capture, with a bank in the URL: 0 to 13 a month. Use CNA for its full text, not its volume ([news-data.md](news-data.md)). |
@@ -430,10 +430,10 @@ something to settle in code.
 GPT and Gemini backends are written to documented API contracts but have
 never received a real response. Gemini carries more risk — its schema `type`
 field expects uppercase proto-enum values, unlike the JSON-Schema lowercase
-used everywhere else in this codebase. A Gemini key was added on 2026-09-30;
-Google rejected it as invalid, so it needs replacing before the first real
-call. The default model is now `gemini-3.8-flash` (the old default was shut
-down on 1 June 2026), and the key is sent in a header rather than the URL.
+used everywhere else in this codebase. **Gemini was verified live on
+2026-09-30** ([evidence](evidence/gemini-backend-2026-09-30.md)): tool calls and answers were correct on
+`gemini-3.6-flash`; `gemini-3.8-flash`, the default, was overloaded that day.
+GPT remains unverified.
 
 ### 5. Smaller gaps
 
@@ -504,7 +504,7 @@ Roughly in order of value.
    better default for anyone whose machine can run it — at the cost of being
    noticeably slower. Reading the transcripts for numerical fidelity is still
    outstanding and still human work.
-5. **Verify GPT/Gemini backends** with one real call each.
+5. **Verify the GPT backend** with one real call (Gemini was verified on 2026-09-30).
 6. ~~**Continuous time series** for `get_trend`.~~ Done — `compute_time_series`
    in `aggregate/index.py` buckets by week, month or quarter through the same
    `_summarize` the stored index uses, so a chart cannot disagree with the

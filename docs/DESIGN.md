@@ -21,7 +21,8 @@ and will drift. The short version, as of 2026-09-26:
 - Per-aspect scores are not meaningful yet: the current assignment gives
   plain factual sentences three or four aspects and sends evaluative ones to
   `other` (decision 16 replaces it).
-- The GPT and Gemini backends have never been run against their real APIs.
+- The GPT backend has never been run against its real API; Gemini was
+  verified on 2026-09-30 ([evidence](evidence/gemini-backend-2026-09-30.md)).
 - Local chatbot models fabricate citations. The code-level check is a
   detector, not a fix. The chatbot also has no memory between turns yet.
 

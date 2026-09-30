@@ -71,6 +71,15 @@ def _clean(series: pd.Series) -> pd.Series:
     return series.astype(str).str.strip().str.lower()
 
 
+def _one_row_per_pair(df: pd.DataFrame, col: str, name: str) -> pd.DataFrame:
+    labels = df.assign(_v=_clean(df[col])).groupby(KEY)["_v"].nunique()
+    conflicting = labels[labels > 1]
+    if not conflicting.empty:
+        raise ValueError(f"{name} lists {len(conflicting)} (sentence_id, aspect) pair(s) more than "
+                         f"once with different labels, first: {list(conflicting.index[:3])}")
+    return df.drop_duplicates(KEY, keep="first")
+
+
 def load_pair(file_a: str, file_b: str, col: str = "label") -> pd.DataFrame:
     """Two annotator sheets joined on (sentence_id, aspect).
 
@@ -85,6 +94,10 @@ def load_pair(file_a: str, file_b: str, col: str = "label") -> pd.DataFrame:
         if missing:
             raise ValueError(f"{name} is missing column(s): {', '.join(missing)}")
 
+    # A pair listed twice in one sheet (an aspect correction can make two
+    # candidate rows the same pair) would be joined to the other sheet twice
+    # and counted twice. Keep one copy, unless the copies disagree.
+    a, b = _one_row_per_pair(a, col, "--a"), _one_row_per_pair(b, col, "--b")
     merged = a[KEY + [col]].merge(b[KEY + [col]], on=KEY, suffixes=("_a", "_b"))
     if merged.empty:
         raise ValueError("no (sentence_id, aspect) rows are present in both files")

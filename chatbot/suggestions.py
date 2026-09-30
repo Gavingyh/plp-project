@@ -28,6 +28,12 @@ _ASPECT_PHRASING = {
     "asset_quality": "asset quality",
     "net_interest_margin": "net interest margin",
     "management_guidance": "management guidance",
+    "capital_liquidity": "capital and liquidity",
+    "income_profit_results": "earnings results",
+    "wealth_business": "wealth business",
+    "investor_stock_sentiment": "share price",
+    "retail_banking_sentiment": "retail banking",
+    "macro_market_environment": "macro environment",
 }
 
 # Simplest and most reliable question types first.

@@ -162,3 +162,22 @@ def test_all_three_labels_appear_in_the_confusion_matrix():
     or the printed matrix silently stops lining up with its header."""
     result = score(_pairs(["positive", "positive"], ["positive", "negative"]))
     assert result["confusion"].shape == (len(LABELS), len(LABELS))
+
+
+def test_a_pair_listed_twice_in_a_sheet_counts_once(tmp_path):
+    rows = [{"sentence_id": "s1", "aspect": "a", "label": "positive"},
+            {"sentence_id": "s1", "aspect": "a", "label": "positive"},
+            {"sentence_id": "s2", "aspect": "a", "label": "neutral"}]
+    a, b = tmp_path / "a.csv", tmp_path / "b.csv"
+    pd.DataFrame(rows).to_csv(a, index=False)
+    pd.DataFrame(rows).to_csv(b, index=False)
+    assert len(load_pair(str(a), str(b))) == 2
+
+
+def test_a_pair_listed_twice_with_different_labels_is_refused(tmp_path):
+    rows = [{"sentence_id": "s1", "aspect": "a", "label": "positive"},
+            {"sentence_id": "s1", "aspect": "a", "label": "negative"}]
+    a = tmp_path / "a.csv"
+    pd.DataFrame(rows).to_csv(a, index=False)
+    with pytest.raises(ValueError, match="more than once"):
+        load_pair(str(a), str(a))

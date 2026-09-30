@@ -29,6 +29,7 @@ USAGE:
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+from config.device import best_device
 from config.logging_config import get_logger, setup_logging
 from ingest.db import get_connection, init_db, now_iso
 
@@ -38,6 +39,7 @@ MODEL_NAME = "ProsusAI/finbert"
 MODEL_VERSION = "finbert-base-zeroshot-v1"  # bump when the fine-tuned model replaces this
 _BATCH_SIZE = 32
 _MAX_LENGTH = 128
+_CHUNK = 2000   # sentences classified and committed per step
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS aspect_sentiment (
@@ -62,7 +64,7 @@ _id2label = None
 def _get_model():
     global _tokenizer, _model, _device, _id2label
     if _model is None:
-        _device = "mps" if torch.backends.mps.is_available() else "cpu"
+        _device = best_device()
         _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         _model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME).to(_device).eval()
         _id2label = {k: v.lower() for k, v in _model.config.id2label.items()}
@@ -70,19 +72,25 @@ def _get_model():
 
 
 def classify_sentences(texts: list[str]) -> list[tuple[str, float]]:
-    """Returns [(label, confidence), ...] for each input text."""
+    """Returns [(label, confidence), ...] for each input text, in input order.
+
+    Batches are formed from texts of similar length: each batch is padded to
+    its longest text, so mixing a 20-token sentence with a 128-token one
+    wastes most of the batch, and on Apple's MPS every new padded shape costs
+    a graph compile. Each text is classified independently, so the order
+    changes nothing but speed."""
     tokenizer, model, device, id2label = _get_model()
-    results = []
+    order = sorted(range(len(texts)), key=lambda i: len(texts[i]))
+    results: list[tuple[str, float] | None] = [None] * len(texts)
     with torch.no_grad():
-        for i in range(0, len(texts), _BATCH_SIZE):
-            batch = texts[i:i + _BATCH_SIZE]
-            enc = tokenizer(batch, padding=True, truncation=True,
-                             max_length=_MAX_LENGTH, return_tensors="pt").to(device)
-            logits = model(**enc).logits
-            probs = torch.softmax(logits, dim=-1)
+        for start in range(0, len(order), _BATCH_SIZE):
+            idx_batch = order[start:start + _BATCH_SIZE]
+            enc = tokenizer([texts[i] for i in idx_batch], padding=True, truncation=True,
+                            max_length=_MAX_LENGTH, return_tensors="pt").to(device)
+            probs = torch.softmax(model(**enc).logits, dim=-1)
             top_prob, top_idx = probs.max(dim=-1)
-            for p, idx in zip(top_prob.tolist(), top_idx.tolist()):
-                results.append((id2label[idx], round(p, 4)))
+            for i, p, k in zip(idx_batch, top_prob.tolist(), top_idx.tolist()):
+                results[i] = (id2label[k], round(p, 4))
     return results
 
 
@@ -106,22 +114,37 @@ def run() -> dict:
         conn.close()
         return {"already_scored_or_no_assignments": True, "newly_scored": 0}
 
-    texts = [r[2] for r in rows]
-    predictions = classify_sentences(texts)
-    ts = now_iso()
-    to_insert = [
-        (sentence_id, aspect, label, conf, MODEL_VERSION, ts)
-        for (sentence_id, aspect, _text), (label, conf) in zip(rows, predictions)
-    ]
-    conn.executemany(
-        """INSERT OR IGNORE INTO aspect_sentiment
-           (sentence_id, aspect, label, confidence, model_version, scored_at)
-           VALUES (?,?,?,?,?,?)""",
-        to_insert,
-    )
-    conn.commit()
+    # Base FinBERT never sees the aspect, so a sentence assigned to several
+    # aspects gets the same prediction for each: classify each sentence once
+    # and copy the result to its pairs, instead of once per pair.
+    pairs_by_sentence: dict[str, list[str]] = {}
+    text_of: dict[str, str] = {}
+    for sentence_id, aspect, text in rows:
+        pairs_by_sentence.setdefault(sentence_id, []).append(aspect)
+        text_of[sentence_id] = text
+    ids = list(pairs_by_sentence)
+
+    # Commit chunk by chunk, so a long run shows progress and a re-run
+    # resumes: the query above only returns pairs not yet scored.
+    written = 0
+    for start in range(0, len(ids), _CHUNK):
+        chunk = ids[start:start + _CHUNK]
+        predictions = classify_sentences([text_of[i] for i in chunk])
+        ts = now_iso()
+        to_insert = [(sid, aspect, label, conf, MODEL_VERSION, ts)
+                     for sid, (label, conf) in zip(chunk, predictions)
+                     for aspect in pairs_by_sentence[sid]]
+        conn.executemany(
+            """INSERT OR IGNORE INTO aspect_sentiment
+               (sentence_id, aspect, label, confidence, model_version, scored_at)
+               VALUES (?,?,?,?,?,?)""",
+            to_insert,
+        )
+        conn.commit()
+        written += len(to_insert)
+        logger.info("scored %d/%d sentences (%d pairs)", min(start + _CHUNK, len(ids)), len(ids), written)
     conn.close()
-    return {"newly_scored": len(to_insert), "model_version": MODEL_VERSION}
+    return {"newly_scored": written, "sentences_classified": len(ids), "model_version": MODEL_VERSION}
 
 
 if __name__ == "__main__":

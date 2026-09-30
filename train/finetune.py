@@ -1,10 +1,9 @@
 """
 Fine-tune FinBERT for aspect-conditioned sentiment classification.
 
-NOT RUNNABLE YET — requires data/labeled/candidates.csv to have its `label`
-column filled in by human annotators (human-annotation-bound work
-this pipeline cannot do on its own). This script is ready to run the moment
-that data exists.
+Reads data/labeled/candidates.csv, built from the resolved annotation
+sheets by train/labels.py, and refuses to train if the file has duplicate
+pairs or a sentence in both splits (see check_splits there).
 
 Sentence-pair (NLI-style) input formulation:
   [CLS] {sentence} [SEP] {aspect} [SEP]  ->  3-way softmax
@@ -23,6 +22,7 @@ USAGE:
 
 import argparse
 import os
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -32,6 +32,8 @@ from sklearn.utils.class_weight import compute_class_weight
 from torch.utils.data import Dataset
 from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
                            EarlyStoppingCallback, Trainer, TrainingArguments)
+
+from train.labels import check_splits
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANDIDATES_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
@@ -63,6 +65,7 @@ def _load_labeled(split: str) -> pd.DataFrame:
             "docs/annotation-guideline.md."
         )
     df = pd.read_csv(CANDIDATES_PATH)
+    check_splits(df)
     df = df[df["split"] == split]
     df = df[df["label"].isin(LABELS)]  # drops unlabeled rows
     if df.empty:
@@ -151,6 +154,11 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16)
     final_dir = os.path.join(MODEL_OUT_DIR, f"seed_{seed}", "final")
     trainer.save_model(final_dir)
     tokenizer.save_pretrained(final_dir)
+    # Per-epoch checkpoints carry optimizer state (~1.2 GB each); the best
+    # epoch is already in final/, so they are only disk use once it is saved.
+    for name in os.listdir(training_args.output_dir):
+        if name.startswith("checkpoint-"):
+            shutil.rmtree(os.path.join(training_args.output_dir, name), ignore_errors=True)
     print(f"Model saved to {final_dir}")
     return trainer.evaluate()
 

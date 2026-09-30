@@ -137,3 +137,14 @@ def test_counts_reconcile_with_the_bucket_totals(temp_db):
     _insert(temp_db, "u0", "DBS", "dividend_policy", "neutral", "2026-01-07T00:00:00+00:00")
     p = compute_time_series("DBS", "dividend_policy", min_n=1)[0]
     assert p["pos_n"] + p["neu_n"] + p["neg_n"] == p["n"] == 6
+
+
+def test_aspect_all_counts_a_multi_aspect_sentence_once(temp_db):
+    _insert(temp_db, "a", "DBS", "dividend_policy", "positive", "2026-01-05T00:00:00+00:00")
+    conn = temp_db.get_connection()
+    conn.execute("INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, "
+                 "scored_at) VALUES ('a', 'asset_quality', 'positive', 0.9, 'test-model', ?)", (now_iso(),))
+    conn.commit()
+    conn.close()
+    assert compute_time_series("DBS", "ALL", min_n=1)[0]["n"] == 1
+    assert compute_time_series("DBS", "dividend_policy", min_n=1)[0]["n"] == 1

@@ -129,9 +129,10 @@ def disclosure_footer():
         f"Not financial advice — sentiment is an indicator, not a recommendation. "
         f"Last refreshed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. "
         "See docs/STATUS.md for known limitations (Reddit skews toward DBS, "
-        "~1-month news window, analyst figures are Yahoo consensus aggregates "
-        "rather than analyst reports, and the sentiment model is base FinBERT "
-        "applied zero-shot; the fine-tuned model does not exist yet)."
+        "news volume rises towards the present, analyst figures are Yahoo "
+        "consensus aggregates rather than analyst reports, scores come from base "
+        "FinBERT applied zero-shot, and aspects are matched by embedding "
+        "similarity, so a sentence often counts under several aspects)."
     )
 
 

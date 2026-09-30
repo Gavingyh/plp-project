@@ -7,9 +7,8 @@ Baselines are required, not optional: the claim
 zero-shot, a lexicon method, and a classical ML method. This script runs all
 of them on the same frozen test set so the comparison is apples-to-apples.
 
-NOT RUNNABLE YET — same blocker as train/finetune.py: needs labeled test
-data, and for the fine-tuned-model comparison, needs a model already trained
-by train/finetune.py.
+Needs data/labeled/candidates.csv (built by train/labels.py) and, for the
+fine-tuned comparison, a model trained by train/finetune.py.
 
 USAGE:
   python -m train.evaluate --model-dir models/finbert-absa/seed_42/final
@@ -27,6 +26,9 @@ from sklearn.metrics import classification_report, f1_score
 from sklearn.model_selection import train_test_split
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+from config.device import best_device
+from train.labels import check_splits
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANDIDATES_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
 LABELS = ["negative", "neutral", "positive"]
@@ -34,6 +36,7 @@ LABELS = ["negative", "neutral", "positive"]
 
 def _load_test_set() -> pd.DataFrame:
     df = pd.read_csv(CANDIDATES_PATH)
+    check_splits(df)
     df = df[(df["split"] == "test") & (df["label"].isin(LABELS))]
     if df.empty:
         raise ValueError("No labeled test rows found — Labeling must be complete first.")
@@ -78,7 +81,7 @@ def eval_tfidf_logreg(train_dev_df: pd.DataFrame, test_df: pd.DataFrame) -> dict
 def eval_finetuned(model_dir: str, df: pd.DataFrame) -> dict:
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     model = AutoModelForSequenceClassification.from_pretrained(model_dir).eval()
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = best_device()
     model.to(device)
     preds = []
     with torch.no_grad():

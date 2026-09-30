@@ -87,8 +87,13 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
         return []
 
     has_aspect_cols = bool(aspect or sentiment)
-    candidates = []
+    candidates, seen = [], set()
     for r in rows:
+        # A sentiment filter without an aspect joins every (sentence, aspect)
+        # row, so the same sentence can arrive once per aspect it matched.
+        if r[0] in seen:
+            continue
+        seen.add(r[0])
         d = {"sentence_id": r[0], "text": r[1], "bank": r[2], "url": r[3], "published_at": r[4]}
         if has_aspect_cols:
             d["aspect"], d["sentiment"] = r[5], r[6]

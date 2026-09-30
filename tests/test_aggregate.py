@@ -164,3 +164,35 @@ def test_recent_data_included_in_7d_window(temp_db):
     ).fetchone()
     conn.close()
     assert n_7d == (1,)
+
+
+def _add_aspect(temp_db, sentence_id, aspect, label, confidence, model_version="test-model"):
+    conn = temp_db.get_connection()
+    conn.execute(
+        "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, scored_at) "
+        "VALUES (?,?,?,?,?,?)", (sentence_id, aspect, label, confidence, model_version, now_iso()))
+    conn.commit()
+    conn.close()
+
+
+def test_rows_across_aspects_count_each_sentence_once(temp_db):
+    # s1 matched three aspects, s2 one. Per-aspect rows count pairs; the
+    # ALL rows must count two sentences, not four pairs, or s1 outweighs s2 3:1.
+    _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "positive", 0.9)
+    _add_aspect(temp_db, "s1", "asset_quality", "positive", 0.9)
+    _add_aspect(temp_db, "s1", "wealth_business", "positive", 0.9)
+    _insert_scored_sentence(temp_db, "s2", "DBS", "retail_banking_sentiment", "negative", 0.9)
+    run_aggregate()
+    conn = temp_db.get_connection()
+    rows = dict(conn.execute(
+        "SELECT source, n FROM sentiment_index WHERE bank='DBS' AND aspect='ALL' AND window='all_time'").fetchall())
+    headline = conn.execute(
+        "SELECT score, pos_n, neg_n FROM sentiment_index WHERE bank='DBS' AND aspect='ALL' "
+        "AND window='all_time' AND source='ALL'").fetchone()
+    per_aspect = conn.execute(
+        "SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' "
+        "AND window='all_time' AND source='ALL'").fetchone()[0]
+    conn.close()
+    assert rows == {"ALL": 2, "arctic_shift": 2}
+    assert headline == (0.0, 1, 1)          # one positive, one negative sentence: balanced
+    assert per_aspect == 1

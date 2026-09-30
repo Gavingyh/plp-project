@@ -1,111 +1,213 @@
 # Frozen aspect taxonomy.
 #
-# STATUS: seeded from the proposal's a-priori aspects, NOT yet validated
-# against real cluster centroids.
+# STATUS (2026-09-25): rewritten from the September proposal's 4 a-priori
+# aspects to a 10-aspect taxonomy built from a full manual review of the
+# 338-cluster HDBSCAN discovery run on the current 42,690-sentence corpus
+# (see the aspect-cluster-labels-v2.xlsx workbook shared alongside this
+# file for the cluster-by-cluster reasoning). Summary of what changed and
+# why:
 #
-# UPDATED 2026-09-11: discovery has been re-run on the full corpus (36,884
-# sentences) and the picture below has changed in one important way. With
-# earnings text present, genuine analyst-style clusters DO emerge — leverage
-# ratio, Basel III / CET-1, fee income by line, return on equity — which the
-# Reddit-only corpus could never produce. What has NOT changed is that they
-# do not correspond to these four aspects: the run yields 281 clusters with a
-# median size of 23 and 67% noise, finer than these labels and cutting across
-# them. Separately, these four centroids are the least distinct of three
-# candidates measured (0.1125 mean pairwise cosine distance vs 0.1695 and
-# 0.2222), and that is a property of the seed terms which no threshold change
-# can fix. See docs/evidence/aspect-discovery-2026-09-11.md and
-# docs/evidence/taxonomy-comparison-2026-09-11.md. The DECISION NEEDED below
-# still stands and is now better evidenced.
+#   - asset_quality, capital_liquidity, dividend_policy, net_interest_margin
+#     and management_guidance are KEPT from the original proposal, but each
+#     was broadened to also cover clusters whose own vocabulary clearly
+#     matched even when only part of the visible sample text did.
+#     net_interest_margin additionally absorbs what had been a separate
+#     "loan/deposit growth" grouping, since loan and deposit growth is how
+#     every earnings release explains NIM movement.
+#   - income_profit_results, wealth_business, investor_stock_sentiment,
+#     retail_banking_sentiment and macro_market_environment are NEW.
+#     wealth_business exists because AUM / wealth-management fee income is
+#     a disclosed primary revenue driver for all three banks and was
+#     previously being diluted into generic income results.
+#     investor_stock_sentiment and retail_banking_sentiment were promoted
+#     out of what earlier passes had written off as "non-aspect content" —
+#     Reddit "should I buy/sell/hold" chatter IS retail investor sentiment
+#     (the subject of this project), and consumer-banking product/service
+#     experience is a plausible indirect signal for investor sentiment
+#     toward the bank's retail franchise.
+#   - Everything else (leadership/exec pay, awards, M&A/partnerships, CSR,
+#     careers, regulatory boilerplate, PDF-extraction noise, filler) is
+#     deliberately NOT an aspect here. It falls through to "other" below.
 #
-# The original 2026-09-06 finding, on 2,888 Reddit-only sentences, follows.
-# `python -m aspects.discover` found 9 real clusters
-# (52% noise) — but they do NOT cleanly correspond to these 4 aspects. They
-# split along a coarser axis instead:
-#   - "consumer banking service" (accounts, transfers, scam calls, cashback/
-#     rewards cards, RM relationships) — the majority of Reddit content
-#   - "investment/stock discussion" (dividend yields, analyst price targets,
-#     buying decisions, stock performance vs. benchmarks) — a real cluster,
-#     but it doesn't further subdivide into asset_quality vs. NIM vs.
-#     management_guidance the way this file assumes.
-# This is expected, not a bug: r/singaporefi is personal-finance-oriented,
-# not equity-analyst-oriented, so granular analyst-style aspects are sparse
-# in Reddit chat. They should show up once earnings-release text is ingested
-# (`python -m ingest.earnings_extract` — still pending a human downloading the PDFs,
-# see ingest/earnings_fetch_ir.py) — that's where NIM/asset-quality/guidance language
-# actually lives. Until then, treat aspect-level breakdowns from this seeded
-# taxonomy as provisional (assign.py's floor is currently too permissive —
-# most sentences match ~4 of 5 aspects near-equally, see docs/data-viability.md).
-#
-# DECISION NEEDED (flagged in the plan's "Open decisions"): once earnings
-# text is in, re-run discover.py and decide whether to (a) keep these 4
-# proposal aspects and accept that Reddit mostly won't populate them, letting
-# earnings/news carry that signal, or (b) add "service_quality" /
-# "stock_valuation" as additional data-driven aspects alongside them. This
-# needs a team/mentor call, not a silent pipeline change.
+# NOT YET DONE: similarity_floor (see bottom of file) was calibrated in
+# September for a 4-5 aspect taxonomy via aspects/compare_taxonomies.py.
+# It has not been re-swept for this 10-aspect taxonomy, which now spans
+# both very broad aspects (retail_banking_sentiment, investor_stock_sentiment)
+# and narrow ones (wealth_business, macro_market_environment, dividend_policy)
+# — the right floor plausibly differs per aspect, or at minimum needs a
+# fresh sweep at 0.65's neighbourhood before candidates.csv is regenerated
+# for real. Treat 0.65 below as a carried-over starting point, not a
+# validated choice for this taxonomy.
 #
 # Each aspect's `seed_terms` bootstrap its centroid embedding (mean of
-# FinBERT embeddings of the seed phrases) until real cluster centroids from
-# discover.py replace them.
+# FinBERT embeddings of the seed sentences) until real cluster centroids
+# from discover.py are substituted in directly (see assign.py's bootstrap
+# note). These seed_terms are now full representative SENTENCES pulled
+# from the labeled clusters themselves (diversified across banks and
+# sub-topics within each aspect), rather than short abstract phrases —
+# short phrases like "dividend yield" embed differently than the kind of
+# full sentences FinBERT will actually see at assignment time.
 
 aspects:
-  dividend_policy:
-    label: "Dividend Policy"
-    seed_terms:
-      - "dividend payout ratio"
-      - "special dividend"
-      - "dividend yield"
-      - "capital return to shareholders"
-      - "share buyback"
-
   asset_quality:
     label: "Asset Quality / Provisioning"
     seed_terms:
-      - "non-performing loans"
-      - "credit provisions"
-      - "asset quality"
-      - "loan loss allowance"
-      - "NPL ratio"
+      - "Specific allowances were SGD 157 million or 14 basis points of loans."
+      - "Asset quality was resilient, with the NPL ratio stable at 1.0% and specific allowances at 14 basis points of loans."
+      - "Allowance coverage was high at 125% and 216% after considering collateral."
+      - "Specific allowances were 19% lower at SGD 113 million or 10 basis points of loans."
+      - "Asset quality was resilient."
+      - "Total allowances rose from a write-back of $3 million to $84 million due mainly to higher specific allowances."
+      - "The NPL ratio was stable at 1.0%."
+      - "Total allowance reserves stood at $6.63 billion, with $2.72 billion in specific allowance."
+      - "Non-performing assets rose 6% or $313 million from the previous quarter to $5.30 billion."
+      - "Allowance coverage stood at 130% and at 197% after considering collateral."
+
+  capital_liquidity:
+    label: "Capital & Liquidity"
+    seed_terms:
+      - "OCBC prices US$750m in Tier 2 notes at 4.602%"
+      - "We guided previously that under Basel IV, our CET-1 ratio will go up."
+      - "The liquidity coverage ratio of 151% and net stable funding ratio of 117% were both well above regulatory requirements."
+      - "The leverage ratio was at 6.2%, more than twice the regulatory minimum of 3%."
+      - "Capital was healthy with CET-1 ratio at 14.7%."
+      - "Final Basel III reforms took effect in Singapore on 1 July 2024."
+      - "United Overseas Bank has issued €500 million of covered bonds."
+      - "Common Equity Tier-1 ratio remained strong at 14.7%."
+      - "Liquidity remained ample, with liquidity coverage ratio and net stable funding ratio both well above regulatory requirements."
+
+  dividend_policy:
+    label: "Dividend Policy"
+    seed_terms:
+      - "For 2022, OCBC's full year dividends amounted to $0.68, including interim dividends of $0.28."
+      - "DBS declares dividend payout of 81 cents as Q2 profit comes in better than expected."
+      - "OCBC declared an interim dividend of S$0.47 a share, up from S$0.41 a share the year before."
+      - "UOB Q2 profit up 1% to $1.43 billion; dividend of 88 cents declared."
+      - "The Board proposed a final ordinary dividend of 66 cents per share for the fourth quarter, an increase of six cents."
+      - "Latest DBS dividend payment was due on the 17th."
+      - "Currently my DBS dividend yield based off my averaged out cost is about 8%."
+      - "1 million in DBS stock will pay you 75k in dividends, plus your share of retained earnings."
+      - "DBS payout ratio is slightly above 50%."
 
   net_interest_margin:
     label: "Net Interest Margin"
     seed_terms:
-      - "net interest margin"
-      - "interest rate spread"
-      - "NIM compression"
-      - "funding costs"
-      - "loan growth"
+      - "Record total income and profit before tax, ROE at 17.3%. Group NII up YoY on higher loan and deposit volumes."
+      - "Group net interest income was little changed on a day-adjusted basis at SGD 3.49 billion."
+      - "Commercial book net interest income rose 1%."
+      - "Net interest margin expanded by a faster three basis points to 2.19%."
+      - "Loans rose 2% or SGD 8 billion in constant-currency terms to SGD 453 billion."
+      - "Customer loans were S$327 billion as at 30 September 2025, up 7% year-on-year."
+      - "Commercial book net interest income of SGD 3.48 billion was also little changed on a day-adjusted basis."
+      - "Net interest margin — Commercial Book — was 2.83%, with cost/income ratio at 39.1%."
+      - "Highest markets trading income since 2021. Group NII resilient as balance sheet growth more than offset lower rates."
+      - "Net interest margin rose eight basis points from higher interest rates."
 
   management_guidance:
     label: "Management Guidance"
     seed_terms:
-      - "management guidance"
-      - "full year outlook"
-      - "CEO commentary"
-      - "forward guidance"
-      - "strategic priorities"
+      - "Piyush Gupta: the short answer is no."
+      - "Tan Yong Hong (Citi): I have three broad questions."
+      - "Let me stop here and take questions."
+      - "At the same time, there will be headwinds from markets, rates, and FX, which we need to navigate and manage."
+      - "We do the best we can with the models we have, but we want to be prudent."
+      - "We remain constructive on the medium-term economic outlook."
+      - "Under what conditions will the bank not increase the dividend?"
+      - "Do you think it will lead to additional penalties on the CET-1 ratio beyond the 40 basis points already guided?"
+      - "The best way to look at a bank's performance is through the lens of the commercial book."
+      - "The capacity freed up can then be redeployed into growth areas."
+
+  income_profit_results:
+    label: "Income & Profit Results"
+    seed_terms:
+      - "Expenses increased 4% to SGD 9.25 billion, led by higher staff costs."
+      - "Fee income and treasury customer sales reached new highs, led by wealth management, while deposit growth was tempered."
+      - "The Commercial book net fee income rose 35% to SGD 1.48 billion."
+      - "Compared to the previous quarter, net profit was 24% higher."
+      - "Record fees and treasury customer sales; profit before allowances was a record $10,692 million."
+      - "Share of results of associates was S$279 million, an increase of 11% from a year ago."
+      - "Expenses rose 6% or $107 million."
+      - "Total income rose 24% to $4.69 billion."
+      - "OCBC Group third-quarter 2025 net profit rose 9% year-on-year."
+      - "Markets trading income rose 49% to $1.37 billion."
+
+  wealth_business:
+    label: "Wealth Management / Private Banking"
+    seed_terms:
+      - "The increase was led by wealth management fees, which reached a record SGD 907 million driven by higher investment activity."
+      - "It was broad-based — we had 22% growth in wealth management and 21% growth in cards."
+      - "Well-entrenched wealth continuum, with a pathway to over S$1 trillion overall AUM."
+      - "As a percentage of Group income inflows, banking AUM grew 12% year-on-year, broad-based across private banking and premier banking."
+      - "$300 billion dollars for DBS alone in Assets Under Management (AUM)."
+      - "UOB targets doubling wealth income by 2030."
+      - "Wealth management fees grew 45% to SGD 536 million from a continued strengthening of markets."
+      - "FY24 wealth management income comprises the consolidated income from private banking, premier banking and insurance."
+
+  investor_stock_sentiment:
+    label: "Investor / Retail Stock Sentiment"
+    seed_terms:
+      - "DBS breaks new barrier at S$52.75 as STI soars to a new high of 4,346.68 points."
+      - "DBS raises STI year-end target to 5,850 after earnings lift."
+      - "It is untrue that DBS only started beating the indexes in the last 5 years."
+      - "As a starter stock, DBS is just fine."
+      - "Lacklustre UOB share price movement on an up day."
+      - "For selling, DBS Vickers is better."
+      - "Singapore bank UOB struggles with Hong Kong, China property loans as prices sink."
+      - "DBS is best for SG markets."
+      - "Is DBS still a good buy given the drop in interest rates?"
+      - "Do you regret not buying DBS shares?"
+      - "Assessing DBS Group Holdings (SGX:D05) valuation as longer-term returns outpace recent share price gains."
+
+  retail_banking_sentiment:
+    label: "Retail Banking Products & Customer Experience"
+    seed_terms:
+      - "I received a call today from a guy claiming to be from DBS."
+      - "I have a UOB account with a foreign residential and mailing address."
+      - "The primary objective of using a UOB One card was to hit the $500 spend to qualify for the cashback boost."
+      - "UOB PPV ($600): everything offline contactless — dining, shopping, SimplyGo."
+      - "OCBC offering 1.5% interest rates for 153 days locked in at $50K minimum amount."
+      - "Deposit from DBS to IBKR is free of charge."
+      - "I was making a regular, low-value PayNow transfer when fraudulent transactions appeared on my account."
+      - "DBS/POSB digital services restored after a disruption lasting more than 12 hours."
+      - "I recently applied for a UOB One credit card and was rejected."
+      - "UOB promos are the worst."
+      - "Just transfer in SGD to and from DBS to avoid any fees."
+
+  macro_market_environment:
+    label: "Macro & Market Environment"
+    seed_terms:
+      - "The IMF recently upped its global growth forecast."
+      - "Recent escalations in trade tensions have heightened macroeconomic risks and market volatility."
+      - "With interest rates expected to fall next year, could that lead to a weaker share price for DBS?"
+      - "Singapore's GDP growth forecast for 2026 was revised amid a stronger regional outlook."
+      - "Rate cuts are likely amid a more cautious global growth backdrop."
 
   other:
-    label: "Other"
+    # NOT used to build a centroid (assign.py explicitly skips "other" when
+    # building centroids) — this is purely the fallback label for a sentence
+    # that doesn't clear similarity_floor against any aspect above, plus a
+    # human-readable description of what tends to land there. Editing
+    # seed_terms here has no effect on assignment; it's documentation only.
+    label: "Other / Not an investment aspect"
     seed_terms:
-      - "banking services"
-      - "customer experience"
-      - "digital banking"
+      - "leadership and executive appointments, pay and job cuts"
+      - "brand awards and rankings"
+      - "M&A, partnerships and regional expansion news"
+      - "CSR, sustainability and community initiatives"
+      - "careers, recruitment and graduate programmes"
+      - "audit, disclaimer and regulatory-filing boilerplate"
+      - "garbled PDF extraction artifacts and generic filler"
 
 # Sentences whose best cosine similarity to any non-OTHER centroid falls
 # below this threshold are assigned to "other" rather than forced into the
 # nearest-but-still-distant aspect.
 #
-# RECALIBRATED 2026-09-06 from 0.35 -> 0.65, backed by a live sweep
-# (aspects/compare_taxonomies.py), not guessed. At 0.35, even a 2-aspect
-# coarse candidate matched BOTH aspects on ~100% of sentences (avg 2.00/2) —
-# meaning 0.35 wasn't discriminating between anything, for any taxonomy.
-# The sweep: floor 0.35->2.00 avg matched/0.1% other; 0.50->1.96/0.6%;
-# 0.60->1.89/2.8%; 0.70->1.63/9.2%; 0.75->1.29/18.9%. 0.65 is a starting
-# recalibration between those points, not a final answer — re-sweep whenever
-# the corpus grows materially (earnings text added, full backfill in) or the
-# taxonomy changes, since the right floor depends on both.
-# NOTE: this is a pure calibration fix (how confidently something must match
-# before counting), independent of the taxonomy-content decision above —
-# safe to apply without the same sign-off, since it changes threshold, not
-# meaning.
+# CARRIED OVER, NOT RE-VALIDATED for this taxonomy (see note at top of
+# file). Last calibrated 2026-09-06 from 0.35 -> 0.65 via a live sweep
+# (aspects/compare_taxonomies.py) against a 4/2/3-aspect candidate set:
+# floor 0.35->2.00 avg matched/0.1% other; 0.50->1.96/0.6%; 0.60->1.89/2.8%;
+# 0.70->1.63/9.2%; 0.75->1.29/18.9%. Re-sweep against THIS taxonomy before
+# treating candidates.csv output as final — a 10-aspect taxonomy with both
+# very broad aspects (retail_banking_sentiment) and narrow ones
+# (macro_market_environment) may not want one floor for all of them.
 similarity_floor: 0.65

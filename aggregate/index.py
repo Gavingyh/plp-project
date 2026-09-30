@@ -96,10 +96,26 @@ CREATE TABLE IF NOT EXISTS sentiment_index (
 def _fetch_all_rows(conn):
     return conn.execute("""
         SELECT sa.bank, ase.aspect, ase.label, ase.confidence, ase.model_version,
-               sa.source, sa.published_at
+               sa.source, sa.published_at, ase.sentence_id
         FROM aspect_sentiment ase
         JOIN sentences sa ON sa.sentence_id = ase.sentence_id
     """).fetchall()
+
+
+def _one_per_sentence(pairs: dict, sentence_id: str, key, item) -> None:
+    """Keep, per sentence, the pair with the highest confidence.
+
+    A sentence matched to several aspects has one (sentence, aspect) row per
+    aspect. Rows that aggregate across aspects must count the sentence once:
+    counting every pair weights a sentence by how many aspects it matched,
+    and sentences that match many aspects (earnings-style prose) are far more
+    positive than those that match few, so the 2026-09-30 re-run at 6.4
+    aspects per sentence lifted DBS's headline from about +0.06 to +0.23.
+    Base FinBERT gives every pair of a sentence the same label, so the choice
+    of pair only matters for an aspect-conditioned model."""
+    current = pairs.get((key, sentence_id))
+    if current is None or item[1] > current[1]:
+        pairs[(key, sentence_id)] = item
 
 
 def _summarize(items):
@@ -157,7 +173,8 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
     conn = get_connection()
     try:
         rows = conn.execute(
-            f"SELECT {_BUCKET_SQL[bucket]} AS period, ase.label, ase.confidence, sa.source "
+            f"SELECT {_BUCKET_SQL[bucket]} AS period, ase.label, ase.confidence, sa.source, "
+            f"ase.sentence_id "
             f"FROM aspect_sentiment ase "
             f"JOIN sentences sa ON sa.sentence_id = ase.sentence_id "
             f"WHERE {' AND '.join(where)} "
@@ -168,11 +185,18 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
         conn.close()
 
     buckets: dict[str, list] = {}
-    for period, label, confidence, row_source in rows:
+    per_sentence: dict = {}
+    across = not aspect or aspect == "ALL"
+    for period, label, confidence, row_source, sentence_id in rows:
         if period is None or label not in _LABEL_SCORE:
             continue
-        weight = _SOURCE_WEIGHT.get(row_source, 1.0)
-        buckets.setdefault(period, []).append((label, confidence, weight))
+        item = (label, confidence, _SOURCE_WEIGHT.get(row_source, 1.0))
+        if across:   # same rule as the stored index: each sentence once
+            _one_per_sentence(per_sentence, sentence_id, period, item)
+        else:
+            buckets.setdefault(period, []).append(item)
+    for (period, _sentence_id), item in per_sentence.items():
+        buckets.setdefault(period, []).append(item)
 
     series = []
     for period in sorted(buckets):
@@ -192,14 +216,17 @@ def _compute_rows_for_window(all_rows, window_name: str, days: int | None):
     # blended-across-sources and blended-across-aspects rows respectively, so a
     # single grouping pass produces every combination the consumers need.
     groups = defaultdict(list)
-    for bank, aspect, label, confidence, model_version, source, published_at in all_rows:
+    across_aspects: dict = {}   # (group key, sentence_id) -> one item per sentence
+    for bank, aspect, label, confidence, model_version, source, published_at, sentence_id in all_rows:
         if cutoff is not None and published_at < cutoff:
             continue
         item = (label, confidence, _SOURCE_WEIGHT.get(source, 1.0))
         groups[(bank, aspect, source, model_version)].append(item)          # per aspect, per source
         groups[(bank, aspect, SOURCE_ALL, model_version)].append(item)      # per aspect, blended
-        groups[(bank, "ALL", source, model_version)].append(item)           # per source, all aspects
-        groups[(bank, "ALL", SOURCE_ALL, model_version)].append(item)       # the headline number
+        _one_per_sentence(across_aspects, sentence_id, (bank, "ALL", source, model_version), item)      # per source, all aspects
+        _one_per_sentence(across_aspects, sentence_id, (bank, "ALL", SOURCE_ALL, model_version), item)  # the headline number
+    for (key, _sentence_id), item in across_aspects.items():
+        groups[key].append(item)
 
     out = []
     ts = now_iso()

@@ -12,6 +12,8 @@ import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
+from config.device import best_device
+
 MODEL_NAME = "ProsusAI/finbert"
 _MAX_LENGTH = 128
 _BATCH_SIZE = 32
@@ -24,7 +26,7 @@ _device = None
 def _get_model():
     global _tokenizer, _model, _device
     if _model is None:
-        _device = "mps" if torch.backends.mps.is_available() else "cpu"
+        _device = best_device()
         _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         _model = AutoModel.from_pretrained(MODEL_NAME).to(_device).eval()
     return _tokenizer, _model, _device

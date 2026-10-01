@@ -15,6 +15,7 @@ cached in data/aspect_llm/<model>.jsonl (gitignored) so a run resumes.
 
 USAGE:
   python -m aspects.llm_classify --eval                    # the 1,277 labelled sentences
+  python -m aspects.llm_classify --corpus                  # every sentence into the cache only
   python -m aspects.llm_classify --eval --model qwen3:4b --no-think --limit 50
 
 `--no-think` turns off a reasoning model's hidden thinking (Ollama's `think`
@@ -164,6 +165,15 @@ def classify_rows(rows: pd.DataFrame, model: str = DEFAULT_MODEL, chat=ollama_ch
     return pd.DataFrame(out)
 
 
+def corpus_rows(conn, seed: int = 2026, limit: int | None = None) -> pd.DataFrame:
+    """Every corpus sentence in a fixed random order: a run stopped early has
+    covered a random sample, and the first n rows are aggregate.preview's
+    sample of n (same seed, same draw)."""
+    df = pd.read_sql("SELECT sentence_id, text FROM sentences ORDER BY sentence_id", conn)
+    df = df.sample(frac=1, random_state=seed).reset_index(drop=True)
+    return df.head(limit) if limit else df
+
+
 def evaluate(pred: list[str], gold: list[str]) -> dict:
     from sklearn.metrics import f1_score
     keys = sorted(set(gold) | set(pred))
@@ -176,11 +186,29 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--model", default=DEFAULT_MODEL)
     p.add_argument("--eval", action="store_true", help="classify the labelled sentences and score them")
+    p.add_argument("--corpus", action="store_true",
+                   help="classify every corpus sentence into the answer cache (random order, resumable); "
+                        "writes nothing to the database")
+    p.add_argument("--seed", type=int, default=2026)
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--no-think", action="store_true", help="turn off a reasoning model's thinking")
     args = p.parse_args()
-    if not args.eval:
-        p.error("only --eval is supported: applying the classifier to the corpus is a separate, approved step")
+    if not (args.eval or args.corpus):
+        p.error("use --eval or --corpus: writing aspects to the database is a separate, approved step")
+    if args.corpus:
+        from ingest.db import get_connection
+        conn = get_connection()
+        try:
+            rows = corpus_rows(conn, args.seed, args.limit)
+        finally:
+            conn.close()
+        chat = functools.partial(ollama_chat, think=False) if args.no_think else ollama_chat
+        cache = _cache_path(args.model + ("-nothink" if args.no_think else ""))
+        t = time.time()
+        res = classify_rows(rows, args.model, chat, cache)
+        print(f"corpus: {len(res)} of {len(rows)} sentences in the cache ({time.time() - t:.0f}s this run); "
+              f"aspects {dict(Counter(res['aspect']).most_common())}")
+        return
 
     labels = pd.read_csv(LABELS_PATH).drop_duplicates("sentence_id")
     if args.limit:

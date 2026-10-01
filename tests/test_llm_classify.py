@@ -65,3 +65,17 @@ def test_think_is_sent_only_when_asked(monkeypatch):
     lc.ollama_chat("m", [], KEYS, think=False)
     assert "think" not in sent[0] and sent[1]["think"] is False
     assert sent[1]["format"]["properties"]["aspect"]["enum"] == KEYS
+
+
+def test_corpus_order_is_fixed_and_starts_with_the_preview_sample():
+    import sqlite3
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE sentences (sentence_id TEXT, text TEXT)")
+    conn.executemany("INSERT INTO sentences VALUES (?, ?)", [(f"s{i:03d}", f"t{i}") for i in range(200)])
+    rows = lc.corpus_rows(conn, seed=2026)
+    assert len(rows) == 200 and rows["sentence_id"].is_unique
+    assert rows["sentence_id"].tolist() == lc.corpus_rows(conn, seed=2026)["sentence_id"].tolist()
+    # aggregate.preview draws its sample of n the same way, so the first n rows match it
+    base = pd.read_sql("SELECT sentence_id, text FROM sentences ORDER BY sentence_id", conn)
+    assert rows["sentence_id"].head(30).tolist() == base.sample(n=30, random_state=2026)["sentence_id"].tolist()
+    assert len(lc.corpus_rows(conn, seed=2026, limit=10)) == 10

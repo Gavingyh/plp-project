@@ -21,7 +21,8 @@ and will drift. The short version, as of 2026-09-26:
 - Per-aspect scores are not meaningful yet: the current assignment gives
   plain factual sentences three or four aspects and sends evaluative ones to
   `other` (decision 16 replaces it).
-- The GPT and Gemini backends have never been run against their real APIs.
+- The GPT backend has never been run against its real API; Gemini was
+  verified on 2026-09-30 ([evidence](evidence/gemini-backend-2026-09-30.md)).
 - Local chatbot models fabricate citations. The code-level check is a
   detector, not a fix. The chatbot also has no memory between turns yet.
 
@@ -428,6 +429,23 @@ classifier of decision 16, given these ten aspects, remains the fix, and the
 must say: the cluster labels were drafted with an AI assistant and not
 checked by a second person, and aspect agreement between annotators was not
 measured.
+
+### 22. Opus 5.5 as an additional labeller, never the gold label
+
+*2026-10-01.* Claude Opus 5.5, run through Claude Code subagents, labels the
+same sentences as the annotators, as one more rater: aspect blind, then
+sentiment given the human aspect, with the annotation guideline quoted as
+its instructions. Its answers live in `data/labeled/claude/`, apart from the
+human labels, and change a gold label only through a person's decision on
+the review queue. It fills two gaps in the 27 Sep round: aspect agreement
+was never measured (one rater), and the sentiment labels were anchored on a
+model suggestion. On the 1,277 rows it agrees with the human aspect at κ
+0.80 and the human sentiment at κ 0.79
+([evidence/opus-labeller-2026-10-01.md](evidence/opus-labeller-2026-10-01.md)).
+The pipeline's aspect classifier stays local (decision 16): the Opus run
+isn't re-runnable code and isn't sized for 44,345 sentences. The report's
+GenAI declaration lists it, and its agreement figures are human–LLM, not
+human–human.
 
 ---
 

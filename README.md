@@ -41,18 +41,23 @@ sentiment store.
   three banks have earnings coverage now, but DBS carries roughly six times
   the earnings volume of the other two, and earnings text scores far more
   positive than retail chatter.
-- **The fine-tuned model doesn't beat base FinBERT yet.** Trained on 1,277
-  labelled rows, it scores macro-F1 0.547 ± 0.013 over three seeds against
-  base FinBERT zero-shot's 0.571, though it finds far more negative
-  sentences ([evidence](docs/evidence/finetune-2026-09-30.md)). All scores
-  in the database still come from base FinBERT.
+- **The fine-tuned model leads base FinBERT on macro-F1, not on accuracy.**
+  With the readable aspect label as input it scores test macro-F1 0.604 ±
+  0.035 over three seeds (0.615 for the three averaged) against base
+  FinBERT zero-shot's 0.571; base FinBERT still has the higher accuracy
+  (0.70 against 0.66) and calls far fewer neutral sentences polar
+  ([evidence](docs/evidence/finetune-fixes-2026-10-01.md)). All scores in
+  the database still come from base FinBERT; switching is a team decision.
 - **Local chatbot models fabricate citations.** Answers carrying a
   `⚠️ VERIFICATION WARNING` cited evidence that was never retrieved.
 - **Per-aspect scores aren't meaningful yet.** Aspects are matched by
   embedding similarity, which gives a sentence 6.4 of the 10 aspects on
   average, and annotators disagreed with the matched aspect on 86% of
-  labelled rows. LLM classification is the planned replacement (DESIGN
-  decisions 16 and 21).
+  labelled rows. LLM classification is the replacement: `llama3.1:8b`
+  matches the human aspect on 73% of the 1,277 labelled sentences against
+  41% for the embedding match
+  ([evidence](docs/evidence/llm-aspect-classifier-2026-10-01.md)), but it
+  hasn't been run on the corpus yet (DESIGN decisions 16 and 21).
 - **News volume over time is a sampling artefact.** Google News favours recent
   articles; normalise per month before comparing periods.
 
@@ -63,14 +68,38 @@ caveats — this list is a summary.
 
 ## Quick start
 
-```bash
-python3 -m venv .venv-plp
-.venv-plp/bin/python3 -m pip install -r requirements.txt
-.venv-plp/bin/python3 -m spacy download en_core_web_sm
-cp .env.example .env
-```
+**You need Python 3.10 or newer** (developed and tested on 3.14). Check with
+`python3 --version`. On a Mac the built-in `python3` is 3.9, and
+`pip install` then fails with `No matching distribution found for
+torch>=2.9.0`; install a newer Python from python.org or Homebrew and create
+the environment with it, e.g. `python3.14 -m venv .venv-plp`.
 
-Run the pipeline (order matters — each step consumes the previous one's
+1. Install:
+
+   ```bash
+   python3 -m venv .venv-plp
+   .venv-plp/bin/python3 -m pip install -r requirements.txt
+   .venv-plp/bin/python3 -m spacy download en_core_web_sm
+   cp .env.example .env
+   ```
+
+2. Restore the database from the latest snapshot (see
+   [Getting the database](#getting-the-database) below).
+
+3. Start the interfaces:
+
+   ```bash
+   scripts/start.sh     # dashboard + API + Ollama, with health checks
+   scripts/status.sh    # what's up, on which port
+   scripts/stop.sh      # stop it again
+   ```
+
+   The dashboard uses port 8501 and the API 8000. If either is taken, the
+   script says so; choose others with
+   `PLP_DASHBOARD_PORT=8601 PLP_API_PORT=8100 scripts/start.sh`.
+
+The snapshot already holds the processed corpus. To refresh or rebuild it,
+run the pipeline (order matters — each step consumes the previous one's
 output):
 
 ```bash
@@ -79,14 +108,6 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m preprocess.pipeline
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.assign
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
-```
-
-Then start the interfaces:
-
-```bash
-scripts/start.sh     # dashboard + API + Ollama, with health checks
-scripts/status.sh    # what's up, on which port
-scripts/stop.sh      # stop it again
 ```
 
 No API key is required — the pipeline runs on Reddit, earnings PDFs and
@@ -98,7 +119,7 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ## Getting the database
 
-`data/plp.db` (about 103MB) is too large for GitHub, so it isn't in the repo.
+`data/plp.db` (198.5 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
@@ -205,23 +226,27 @@ Then run the pipeline steps in `docs/RUNBOOK.md`.
 ```
 ingest/       Data sources -> documents table
 preprocess/   documents -> sentences (the unit of analysis), labelling exports
-aspects/      FinBERT embeddings, taxonomy discovery, aspect assignment
+aspects/      FinBERT embeddings, taxonomy discovery, aspect assignment, the LLM aspect classifier
 sentiment/    Aspect-sentiment classification
 aggregate/    Per-bank/aspect index, volume shrinkage, time series
-train/        Fine-tuning, evaluation, pre-labelling, annotator agreement
+train/        Fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller
 dashboard/    Streamlit UI (Overview, Heatmap, Time Series, Evidence, Chat)
 api/          FastAPI REST endpoints
 chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends
 config/       Aspect taxonomy, logging configuration
 scripts/      start/stop/status, resumable overnight backfill, model comparison
+notebooks/    The text-analytics workstream's Colab notebooks (outputs cleared)
 learning/     Study material on the concepts and techniques used
 docs/spec/    Functional and technical specifications
 docs/evidence/  Dated outputs backing claims in the docs
+docs/diagrams/  Twenty diagrams, each traced to the code
+data/labeled/ Human labels; data/labeled/claude/ holds the Opus labeller's answers
 data/plp.db   SQLite store (gitignored; see Getting the database)
 ```
 
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 379 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 438 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 479: adds the diagram and notebook checks
 ```

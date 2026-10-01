@@ -56,4 +56,4 @@ Each row names the file and line an element comes from, and the text that line m
 | no window in get_sentiment's schema | `chatbot/tools.py:255` | `"required": ["bank"],` |
 | get_sentiment accepts a window in Python | `chatbot/tools.py:61` | `def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time")` |
 | Clear conversation | `dashboard/app.py:371` | `st.session_state.conversation = Conversation()` |
-| DESIGN claims the window is tracked | `docs/DESIGN.md:347` | `tracks the current bank, aspect and time window` |
+| DESIGN claims the window is tracked | `docs/DESIGN.md:348` | `tracks the current bank, aspect and time window` |

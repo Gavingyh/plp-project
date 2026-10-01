@@ -60,6 +60,16 @@ exact corpus the report describes.
 
 ## Needs a human
 
+> **Updated 2026-10-01.** Items 2 and 3 below describe 26 Sep and are
+> superseded: the first labelling round is done (1,277 rows, sentiment κ
+> 0.93), the taxonomy is ten aspects (DESIGN decision 21), and the LLM
+> aspect classifier is built and evaluated but not run on the corpus. Gemini
+> was verified on 30 Sep (item 5). The current list is "Needs a human (night
+> 1)" at the end of the night 1 run log below: whether the fine-tuned model
+> scores the corpus, whether to run the aspect classifier on it, the README
+> fixes (now made), the Opus review queues and the wealth-versus-retail
+> boundary. Item 1, rotating the keys, is still open.
+
 Ordered by urgency. Updated 2026-09-26; the full sequence is in
 [PLAN.md](PLAN.md) and a tickable list in
 [submission-checklist.html](submission-checklist.html).
@@ -197,6 +207,8 @@ repository. One person can hold more than one role. Tasks per role are in
 | `scripts/start.sh` refuses port 8501 | Another project's Streamlit is on it | Use `PLP_DASHBOARD_PORT`, or stop that process yourself. The script will not kill it for you |
 | Chatbot answer carries a verification warning | The model cited evidence it never retrieved | Do not trust that answer |
 | Dashboard says "No sentiment data yet" | Pipeline has not run, or `data/plp.db` is missing | See RUNBOOK |
+| `pip install` fails: `No matching distribution found for torch>=2.9.0` | The venv was made with Python 3.9 (a Mac's built-in `python3`) | Recreate it with Python 3.10 or newer, e.g. `python3.14 -m venv .venv-plp` |
+| A long run stops for an hour, then carries on | The Mac slept: low battery, or the lid closed. `caffeinate -i` prevents neither | Keep it plugged in with the lid open |
 
 ---
 
@@ -462,13 +474,130 @@ first fine-tuning) is now in the repository. Evidence:
      assistant: put that in the GenAI declaration.
   4. Confirm the taxonomy change with the supervisor (PLAN O1).
 - **Gemini.** A free-tier `GEMINI_API_KEY` is in `.env`, for the chatbot
-  only. Google rejected it on 2026-09-30 ("API key not valid"): it isn't in
-  the AI Studio format (39 characters, starting `AIza`), so it needs
-  replacing. While a key is set, the chatbot's auto-detection picks Gemini
-  over Ollama; set `CHATBOT_BACKEND=ollama` to keep the local model. The model
-  comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL` (`.env` sets
-  `gemini-3.8-flash`, also the default now; the old default,
-  `gemini-2.0-flash`, was shut down on 1 June 2026). The key is sent in a
-  header, so it can't reach a logged URL. Free-tier inputs may be read by
-  Google's reviewers: test only with questions whose tool results are
-  numbers, not evidence text.
+  only. It works (the first key didn't), and the backend is now verified live
+  ([evidence](evidence/gemini-backend-2026-09-30.md)). While a key is set,
+  the chatbot's auto-detection picks Gemini over Ollama; set
+  `CHATBOT_BACKEND=ollama` to keep the local model. The model comes from
+  `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`; `.env` asks for `gemini-3.8-flash`,
+  which was overloaded (503) on 2026-09-30, while `gemini-3.6-flash` worked.
+  Free-tier inputs may be read by Google's reviewers: don't send evidence
+  text (`search_evidence` returns Reddit posts).
+
+## Overnight run log — experiments (2026-09-30)
+
+Running `.project-context/prompt/overnight-experiments.md` from HEAD
+`a6bad3d`. Baseline: 445 tests pass; Ollama up; 58 GB free.
+
+- Job A (fine-tuning experiments): done, `454c989`. 8 epochs chosen on dev
+  (0.637 against 0.616); test macro-F1 0.577 ± 0.027, level with base
+  FinBERT's 0.571. The aspect input wins in all five CV folds (+0.026) and
+  lifts negative-class F1 from 0.29 to 0.44
+  ([evidence](evidence/finetune-experiments-2026-09-30.md), with model
+  checksums).
+- Job B (assignment calibration): done, `60b9a53`. Seed-centroid top-1
+  accuracy against the human aspect labels is 0.41-0.42 at any floor up to
+  0.70 (majority-class 0.37); no floor fixes it
+  ([evidence](evidence/aspect-assignment-calibration-2026-09-30.md)).
+- Job C (discovery sweep): done, `78d796b`. 358 clusters at 10 (65% noise),
+  collapse into one cluster at 25 and 50, 25 aspect-like clusters at 100.
+- Job D (chatbot evaluation): done, `d35d032`. 3B unchanged from 26 Sep;
+  8B: 13/16 tools, 7/7 behaviour, 4/23 citation warnings, 3/23 answers with
+  invented figures, no backend errors. All 29 flagged figures were real
+  inventions; 2 of 14 citation warnings were false alarms
+  ([evidence](evidence/chatbot-eval-2026-09-30.md)).
+- Verification: 454 tests pass; diagram sources clean after updating nine
+  moved line numbers in pages 04, 09, 16 and 17; every number in the four
+  evidence files comes from a command in that file; `models/` stays out of
+  git (weights and checksums listed in the fine-tuning experiments file).
+
+Left out, and why:
+- Nothing from the prompt. The CV fold models were deleted after scoring, as
+  specified; only the E1 and E2 finals are kept.
+- `aspects.compare_taxonomies` measures its own hard-coded four-aspect
+  candidate A, not the current config, despite its docstring. Recorded in the
+  calibration file, not fixed (outside the run's scope).
+
+Needs a human:
+1. **Scoring model.** E1 (8 epochs, with aspect) is level with base FinBERT
+   on macro-F1 (0.577 ± 0.027 against 0.571), better on negative sentences
+   (0.44 against 0.30) and worse on neutral. Whether it replaces base
+   FinBERT for the corpus is PLAN section 5's decision.
+2. **Aspect assignment.** No floor makes centroid assignment accurate (top-1
+   0.41); leave the floor at 0.65 and build the LLM classifier, whose
+   baseline is now measured.
+3. **Demo model (O3).** The 8B invents far less than the 3B (3 against 9
+   invented-citation answers) at about twice the runtime.
+4. **Model weights** exist only on this MacBook; copy them to the team
+   folder and check the SHA-256 values in the experiments file.
+
+
+## Overnight run log — night 1 (2026-10-01)
+
+Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
+
+- Doc/code disagreement found before training: `train/finetune.py` computed
+  and printed balanced class weights but never passed them to the loss, while
+  its docstring, the technical spec and the 30 Sep evidence said
+  "class-weighted loss". Every model so far used plain cross-entropy. Fixed in
+  the docs; the weighting is now a real option (`--class-weights`), default
+  `none` so earlier results stay reproducible.
+- J1 (fine-tuning fixes): done
+  ([evidence](evidence/finetune-fixes-2026-10-01.md)). Per-batch padding
+  matches the old padding within noise (CV 0.621 against 0.622). On 5-fold
+  CV, balanced class weights (0.630), source weights (0.633) and the
+  readable aspect label (0.637) each lean ahead of the baseline (0.621),
+  all within the noise between two runs of the same configuration; prior
+  class weights collapse (0.525), which CV can't judge fairly. The three
+  combined scored 0.635, so the readable label alone was trained on seeds
+  42, 1, 7: test macro-F1 0.630, 0.617, 0.565 (0.604 ± 0.035; 3-model
+  average 0.615) against 0.577 ± 0.027 on 30 Sep and base FinBERT's 0.571.
+  Neutral sentences called polar remain the main error. The Mac slept
+  12:22–13:29 (battery at 1%, then lid closed; `caffeinate -i` stops
+  neither), pausing one CV fold; it resumed unharmed.
+- J2 (LLM aspect classifier): done
+  ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)). On the 1,277
+  human aspect labels, llama3.1:8b scores top-1 0.729 (macro-F1 0.679) and
+  qwen3:4b without thinking 0.719 (0.671), against 0.413 (0.296) for
+  seed-centroid assignment; no invalid answers. Full corpus: about 24 h
+  (llama) or 16 h (qwen) on this Mac. Where the two agree (76%), they match
+  the human label 83.5% of the time. Nothing written to the database.
+  qwen3:4b needed a `--no-think` option: thinking took 92–216 s a sentence.
+  The Mac slept again 15:51–17:20 (battery), pausing the qwen run.
+- Opus 5.5 labeller (asked for on 1 Oct, outside the night 1 prompt; DESIGN
+  22): Opus subagents labelled all 1,277 rows blind, aspect then sentiment
+  given the human aspect, with the guideline as instructions; transcripts
+  audited, no rater opened another file. Against the human labels: aspect
+  κ 0.80 (0.842; llama3.1:8b 0.729), sentiment κ 0.79, every sentiment
+  disagreement on the neutral boundary. Review queues: 202 aspect, 173
+  sentiment rows in `data/labeled/claude/`; nothing applied to
+  `candidates.csv` ([evidence](evidence/opus-labeller-2026-10-01.md)).
+- Verification: 479 tests pass (`pytest -q` from the root, slow tests
+  included); `docs/diagrams/check_sources.py` clean (moved line numbers
+  updated); PLAN section 5 points to the night 1 evidence.
+
+**Needs a human (night 1):**
+
+1. Whether the readable-label fine-tuned model should score the corpus in
+   place of base FinBERT, and if so the 3-model average (test macro-F1
+   0.615) rather than one seed. It calls fewer sentences neutral.
+2. Whether to run the LLM aspect classifier on the corpus (llama3.1:8b
+   about 24 h on this Mac, qwen3:4b about 16 h, both about 40 h) and what
+   to do where the two disagree (24% of sentences, each right under half the
+   time): keep llama's answer, `other`, or unassigned.
+3. ~~The four README fixes in
+   [install-test-2026-10-01.md](evidence/install-test-2026-10-01.md).~~
+   Made on 1 Oct, with RUNBOOK, STATUS and both specs brought up to date.
+4. The Opus review queues (202 aspect, 173 sentiment rows; 43 and 37 on the
+   test split), and where a retail customer's investment products belong,
+   wealth or retail banking (63 rows), before the next labelling round.
+5. Long runs need the Mac plugged in with the lid open: it slept twice on
+   1 Oct (battery, then lid), pausing jobs for about an hour each time.
+- J3 (preprocessing dry run): done, `606dde4`. 98 of 44,345 sentences
+  (0.22%, all earnings PDFs) are debris; broader rules remove real
+  sentiment, so preprocessing isn't where the model's errors are.
+- J4 (install test): done, `1ff6c74`. With a Mac's default `python3`
+  (Apple's 3.9) the install fails on `torch>=2.9.0` and the README never
+  names the Python it needs; with 3.14 every step works, the snapshot
+  checksum matches, 421 tests pass, and the API and dashboard answer on free
+  ports ([evidence](evidence/install-test-2026-10-01.md), four README fixes
+  listed there).

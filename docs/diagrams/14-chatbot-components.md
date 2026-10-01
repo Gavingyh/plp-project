@@ -106,4 +106,4 @@ Each row names the file and line an element comes from, and the text that line m
 | OllamaBackend | `chatbot/backends/ollama_backend.py:38` | `class OllamaBackend(LLMBackend):` |
 | ClaudeBackend | `chatbot/backends/claude_backend.py:19` | `class ClaudeBackend(LLMBackend):` |
 | OpenAIBackend | `chatbot/backends/openai_backend.py:39` | `class OpenAIBackend(LLMBackend):` |
-| GeminiBackend | `chatbot/backends/gemini_backend.py:75` | `class GeminiBackend(LLMBackend):` |
+| GeminiBackend | `chatbot/backends/gemini_backend.py:77` | `class GeminiBackend(LLMBackend):` |

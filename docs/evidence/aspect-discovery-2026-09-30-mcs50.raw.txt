@@ -1,0 +1,39 @@
+
+======================================================================
+Found 3 clusters, 417 noise points (1% of sentences)
+======================================================================
+
+--- Cluster 0 (n=94) ---
+  Bank mix: {'UOB': 39, 'DBS': 11, 'OCBC': 44}
+  Top terms: rates, rate, account, cut, 360, ocbc 360, cuts, 2025
+  Sample sentences:
+    - UOB One lowering interest rate from 2.5% maximum to 1.9% maximum, from 1 December 2025
+    - From what I know, DBS has cancelled the 5-year Flexed loan package at 1.78% and increased the 3-year Flexed lo
+    - Ocbc 360 revised rates.
+    - At the same time, DBS multiplier has reduced their interest rate by 50%.
+    - OCBC raises interest rate on 360 savings account again, adding to banks’ competition for deposits.
+
+--- Cluster 1 (n=381) ---
+  Bank mix: {'DBS': 275, 'UOB': 38, 'OCBC': 68}
+  Top terms: financial, group, statements, audit, information, management, financial statements, presentation
+  Sample sentences:
+    - DBS ("Specific Provisions") for HK.
+    - DBS Vickers is a wholly owned subsidiary of the DBS Bank that has a limited liability incase of a unforeseen e
+    - UOB does not recognize this transaction as salary credit
+    - Penalty of fixed deposit's premature withdrawal (DBS).
+    - Depending on how the rep/agent behaves, escalate the case, discuss potential legal avenues and potential revie
+
+--- Cluster 2 (n=43453) ---
+  Bank mix: {'DBS': 23967, 'UOB': 12266, 'OCBC': 7220}
+  Top terms: account, card, income, just, year, billion, credit, like
+  Sample sentences:
+    - Scam call impersonating DBS- caller knew my full name and NRIC.
+    - I received a call today from a guy claiming to be from DBS.
+    - I usually don't pick up unknown numbers, but I was actually expecting a call and coincidentally had also conta
+    - At that point, I wasn't too suspicious yet because DBS had previously called me almost immediately after I mad
+    - Is ST Engineering a good choice for fresh grad over UOB?.
+
+======================================================================
+NEXT STEP (manual): inspect the clusters above, name them, and write
+the frozen taxonomy to config/aspects.yaml (see aspects/assign.py).
+======================================================================

@@ -47,7 +47,7 @@ fine-tuned deep neural network; Python.
 | O1 | Confirm D1 with the supervisor. It keeps the proposal's aspects but changes how they are assigned, which the report must explain | team, supervisor | 5 Oct |
 | O2 | One blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text | team, supervisor | 5 Oct |
 | O3 | Default chatbot model for the demo: `llama3.1:8b` fabricates citations 13% of the time, `llama3.2:3b` 43–48%, but the 8B is slower. The harness now detects fabrication but can't prevent it, so this choice decides how many flagged answers a demo shows | team | 19 Oct |
-| O4 | OpenAI and Gemini backends: provide keys to verify them, or stop claiming they work | team | 19 Oct |
+| O4 | OpenAI backend: provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep) | team | 19 Oct |
 | O5 | Stricter relevance filtering for passing mentions ("paid via DBS PayNow"). It changes the data, so it must be decided before the final pipeline run | team | 12 Oct |
 
 ---
@@ -126,6 +126,18 @@ still to build, and is now evaluated against the human aspect labels instead
 of feeding the labelling; aspect agreement was not measured and the five
 smallest aspects are below 80 rows, so a top-up round is worth planning;
 fine-tuning results are in [evidence/finetune-2026-09-30.md](evidence/finetune-2026-09-30.md).
+Overnight experiments on 30 Sep–1 Oct:
+[longer training and the aspect input](evidence/finetune-experiments-2026-09-30.md),
+[centroid assignment against the human aspects](evidence/aspect-assignment-calibration-2026-09-30.md),
+[the discovery sweep](evidence/aspect-discovery-sweep-2026-09-30.md) and
+[the chatbot gold set on the rebuilt database](evidence/chatbot-eval-2026-09-30.md).
+Overnight run, night 1 (1 Oct):
+[fine-tuning fixes](evidence/finetune-fixes-2026-10-01.md),
+[the LLM aspect classifier against the human aspects](evidence/llm-aspect-classifier-2026-10-01.md),
+[a preprocessing dry run](evidence/preprocessing-dry-run-2026-10-01.md) and
+[a clean-copy install test](evidence/install-test-2026-10-01.md).
+Also 1 Oct: [Opus 5.5 as an additional labeller](evidence/opus-labeller-2026-10-01.md)
+(DESIGN 22), which gives the first aspect agreement figure (human–LLM κ 0.80).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (D2 attaches sentiment to an aspect), so the aspect classifier comes first.

@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PLP Brief, 1 October</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root {
+  --ground: #f5f7f6;
+  --surface: #ffffff;
+  --ink: #18211e;
+  --muted: #56625d;
+  --rule: #d9dfdc;
+  --accent: #1d6b61;
+  --accent-soft: #e2efec;
+  --decide: #8a5a0b;
+  --decide-bg: #f7ecd8;
+  --team: #2c4f86;
+  --team-bg: #e3eaf6;
+  --ai: #1d6b61;
+  --ai-bg: #dfeeea;
+  --crit: #a3322a;
+  --crit-bg: #f6e0dd;
+  --bar: #1d6b61;
+  --bar-muted: #b9c4bf;
+  --code-bg: #eaeeec;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #111614;
+    --surface: #181f1c;
+    --ink: #e4ebe7;
+    --muted: #9aa7a1;
+    --rule: #2b3431;
+    --accent: #63c3b4;
+    --accent-soft: #1d2f2b;
+    --decide: #e3b45c;
+    --decide-bg: #33291a;
+    --team: #8fb0e8;
+    --team-bg: #1d2638;
+    --ai: #63c3b4;
+    --ai-bg: #1a2e2a;
+    --crit: #f08a7f;
+    --crit-bg: #3a2120;
+    --bar: #63c3b4;
+    --bar-muted: #4a5753;
+    --code-bg: #212a27;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #111614;
+  --surface: #181f1c;
+  --ink: #e4ebe7;
+  --muted: #9aa7a1;
+  --rule: #2b3431;
+  --accent: #63c3b4;
+  --accent-soft: #1d2f2b;
+  --decide: #e3b45c;
+  --decide-bg: #33291a;
+  --team: #8fb0e8;
+  --team-bg: #1d2638;
+  --ai: #63c3b4;
+  --ai-bg: #1a2e2a;
+  --crit: #f08a7f;
+  --crit-bg: #3a2120;
+  --bar: #63c3b4;
+  --bar-muted: #4a5753;
+  --code-bg: #212a27;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 15.5px/1.6 var(--body);
+  padding-inline: 20px;
+  padding-block: 0 64px;
+}
+.wrap { max-width: 760px; margin: 0 auto; }
+
+header.mast {
+  padding-block: 40px 28px;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  gap: 14px;
+}
+.eyebrow {
+  font: 500 12px/1.3 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+}
+h1 {
+  font: 600 clamp(30px, 5vw, 40px)/1.1 var(--display);
+  margin: 0;
+  text-wrap: balance;
+  letter-spacing: -0.005em;
+}
+.lede { font-size: 17px; margin: 0; max-width: 64ch; }
+.countdown {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font: 500 13px/1 var(--mono); color: var(--accent);
+}
+.countdown b { font: 600 22px/1 var(--display); }
+
+section { padding-block: 34px 6px; }
+h2 {
+  font: 600 22px/1.2 var(--display);
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+h3 {
+  font: 600 16px/1.3 var(--body);
+  margin: 26px 0 8px;
+}
+p { margin: 0 0 12px; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+code {
+  font: 400 0.86em/1.4 var(--mono);
+  background: var(--code-bg);
+  padding: 1px 5px; border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+.muted { color: var(--muted); }
+.small { font-size: 13.5px; }
+
+/* headline outcomes */
+.outcomes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.outcome { background: var(--surface); padding: 16px 18px; display: grid; gap: 4px; align-content: start; }
+.outcome .k { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.outcome .v { font: 600 26px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.outcome .d { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+
+/* work log */
+.log { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; }
+.log li {
+  display: grid; grid-template-columns: 150px 1fr; gap: 6px 18px;
+  padding-block: 14px; border-top: 1px solid var(--rule);
+}
+.log li:last-child { border-bottom: 1px solid var(--rule); }
+.log .what { font: 600 14.5px/1.4 var(--body); }
+.log .what span { display: block; font: 400 12px/1.4 var(--mono); color: var(--muted); margin-top: 3px; }
+.log p { margin: 0 0 6px; }
+.log p:last-child { margin-bottom: 0; }
+@media (max-width: 560px) { .log li { grid-template-columns: 1fr; } }
+
+/* tables */
+.tbl { overflow-x: auto; margin: 6px 0 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 12px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.hi td { background: var(--accent-soft); font-weight: 600; }
+
+/* bar chart */
+.chart { display: grid; gap: 9px; margin: 10px 0 8px; }
+.chart .row { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 12px; align-items: center; }
+.chart .lab { font-size: 14px; line-height: 1.3; }
+.chart .lab small { display: block; color: var(--muted); font-size: 12px; }
+.track { position: relative; height: 22px; }
+.track::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(to right, var(--rule) 1px, transparent 1px); background-size: 25% 100%; opacity: 0.8; }
+.fill {
+  position: absolute; left: 0; top: 3px; bottom: 3px;
+  background: var(--bar); border-radius: 0 4px 4px 0;
+  display: flex; align-items: center;
+}
+.fill.base { background: var(--bar-muted); }
+.fill span {
+  position: absolute; left: calc(100% + 8px);
+  font: 500 13px/1 var(--mono); color: var(--ink); white-space: nowrap;
+}
+.axis { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 12px; }
+.axis .ticks { display: flex; justify-content: space-between; font: 400 11px/1 var(--mono); color: var(--muted); }
+@media (max-width: 560px) {
+  .chart .row, .axis { grid-template-columns: 1fr; gap: 4px; }
+  .axis div:first-child { display: none; }
+}
+
+/* to-do */
+.todo { list-style: none; padding: 0; margin: 0; display: grid; }
+.todo li {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 16px;
+  padding-block: 12px; border-top: 1px solid var(--rule);
+}
+.todo li:last-child { border-bottom: 1px solid var(--rule); }
+.todo .t { font-weight: 600; }
+.todo .w { grid-column: 1 / -1; color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+.when { font: 500 12px/1.3 var(--mono); color: var(--muted); white-space: nowrap; align-self: start; padding-top: 3px; }
+.when.overdue { color: var(--crit); }
+.group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin: 30px 0 4px; }
+.group-head h3 { margin: 0; }
+.chip {
+  display: inline-block; font: 500 11px/1 var(--mono); letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 5px 8px; border-radius: 3px;
+}
+.chip.decide { color: var(--decide); background: var(--decide-bg); }
+.chip.team { color: var(--team); background: var(--team-bg); }
+.chip.ai { color: var(--ai); background: var(--ai-bg); }
+.chip.crit { color: var(--crit); background: var(--crit-bg); }
+
+.note {
+  border-left: 3px solid var(--decide);
+  background: var(--surface);
+  padding: 12px 16px; margin: 14px 0; font-size: 14.5px;
+}
+.note p { margin: 0; }
+.refs { columns: 2 260px; column-gap: 28px; padding-left: 18px; margin: 6px 0 0; font-size: 14px; }
+.refs li { margin-bottom: 6px; break-inside: avoid; }
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Thu 1 Oct 2026</span></div>
+  <h1>Where the project stands on 1 October</h1>
+  <p class="lede">The fine-tuned sentiment model now edges past base FinBERT, an LLM aspect classifier is ready that nearly doubles aspect accuracy, and Opus 5.5 labelled our 1,277 sentences as an extra rater. Three decisions and one overdue task need the team.</p>
+  <div class="countdown"><b>31</b> days to submission · Sun 1 Nov</div>
+</header>
+
+<section aria-labelledby="h-outcomes">
+  <h2 id="h-outcomes">Today's results at a glance</h2>
+  <div class="outcomes">
+    <div class="outcome">
+      <span class="k">Sentiment model</span>
+      <span class="v">0.604</span>
+      <span class="d">Test macro-F1 over three seeds (0.615 averaged), against base FinBERT's 0.571</span>
+    </div>
+    <div class="outcome">
+      <span class="k">Aspect classifier</span>
+      <span class="v">0.729</span>
+      <span class="d">Matches the human aspect, against 0.413 for the method the pipeline uses today</span>
+    </div>
+    <div class="outcome">
+      <span class="k">Opus vs our labels</span>
+      <span class="v">κ 0.80 / 0.79</span>
+      <span class="d">Aspect / sentiment agreement with an independent Opus 5.5 rater</span>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-done">
+  <h2 id="h-done">What was done today</h2>
+  <ul class="log">
+    <li>
+      <div class="what">Sentiment model<span>fine-tuned FinBERT</span></div>
+      <div>
+        <p>Found that the class weights our docs described had never been applied: every model before today trained with plain cross-entropy. Fixed, and made weighting an option.</p>
+        <p>Tested four changes by 5-fold cross-validation. One helped: giving the model the aspect's readable name ("Dividend Policy") instead of its key (<code>dividend_policy</code>). Three models trained with it are saved with checksums.</p>
+      </div>
+    </li>
+    <li>
+      <div class="what">Aspect classifier<span>local LLM, DESIGN 16</span></div>
+      <div>
+        <p>Built and scored against our 1,277 human aspect labels. <code>llama3.1:8b</code> picks the human's aspect 73% of the time, <code>qwen3:4b</code> 72%. Nothing was written to the database: running it on the corpus is a team call.</p>
+      </div>
+    </li>
+    <li>
+      <div class="what">Opus 5.5 labeller<span>extra rater, DESIGN 22</span></div>
+      <div>
+        <p>Opus labelled all 1,277 sentences: the aspect without seeing ours, then sentiment given our aspect, using our annotation guideline as its instructions. An audit of all 22 raters' file access confirmed none saw a human label.</p>
+        <p>Our labels are unchanged. Disagreements are queued for us to review.</p>
+      </div>
+    </li>
+    <li>
+      <div class="what">Preprocessing check<span>dry run</span></div>
+      <div><p>Only 98 of 44,345 sentences (0.22%) are PDF debris. Better cleaning won't move the model; its errors are elsewhere.</p></div>
+    </li>
+    <li>
+      <div class="what">Clean-copy install<span>README test</span></div>
+      <div><p>A fresh clone works end to end on Python 3.14. It fails on a Mac's built-in Python 3.9 with an unhelpful error; the README now says 3.10 or newer is required.</p></div>
+    </li>
+    <li>
+      <div class="what">Docs and housekeeping</div>
+      <div><p>README, STATUS, RUNBOOK, both specs, HANDOFF and the checklist brought up to date. The AI usage declaration now covers 26 Sep to 1 Oct. Everything is on <code>main</code> (<code>d4a1418</code>); all 479 tests pass.</p></div>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-results">
+  <h2 id="h-results">The results in more detail</h2>
+
+  <h3>Sentiment: fine-tuned FinBERT against the baseline</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>model, 299-row test split</th><th class="num">macro-F1</th><th class="num">accuracy</th></tr></thead>
+      <tbody>
+        <tr><td>Base FinBERT, zero-shot <span class="muted small">(scores everything in the database today)</span></td><td class="num">0.571</td><td class="num">0.70</td></tr>
+        <tr><td>Fine-tuned, 30 Sep (aspect key, 3 seeds)</td><td class="num">0.577 ± 0.027</td><td class="num">0.60–0.66</td></tr>
+        <tr><td>Fine-tuned, 1 Oct (readable aspect name, 3 seeds)</td><td class="num">0.604 ± 0.035</td><td class="num">0.61–0.68</td></tr>
+        <tr class="hi"><td>Fine-tuned, 1 Oct, the three averaged</td><td class="num">0.615</td><td class="num">0.66</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The gain over base FinBERT is about one seed's standard deviation, so it is a lead, not a decisive win. Base FinBERT is still more accurate: the fine-tuned model calls more neutral sentences positive or negative. In exchange it finds far more of the negative ones.</p>
+
+  <h3>Aspects: how often each method picks the human's aspect</h3>
+  <div class="chart" role="img" aria-label="Agreement with the human aspect on 1,277 sentences: always retail banking 0.374, seed-centroid 0.413, qwen3:4b 0.719, llama3.1:8b 0.729, Opus 5.5 0.842.">
+    <div class="row"><div class="lab">Always "retail banking"<small>the commonest answer</small></div><div class="track"><div class="fill base" style="width:37.4%" title="0.374"><span>0.374</span></div></div></div>
+    <div class="row"><div class="lab">Seed-centroid<small>what the pipeline uses today</small></div><div class="track"><div class="fill base" style="width:41.3%" title="0.413"><span>0.413</span></div></div></div>
+    <div class="row"><div class="lab"><code>qwen3:4b</code><small>local, ~16 h for the corpus</small></div><div class="track"><div class="fill" style="width:71.9%" title="0.719"><span>0.719</span></div></div></div>
+    <div class="row"><div class="lab"><code>llama3.1:8b</code><small>local, ~24 h for the corpus</small></div><div class="track"><div class="fill" style="width:72.9%" title="0.729"><span>0.729</span></div></div></div>
+    <div class="row"><div class="lab">Opus 5.5<small>reference, not for the pipeline</small></div><div class="track"><div class="fill" style="width:84.2%" title="0.842"><span>0.842</span></div></div></div>
+  </div>
+  <div class="axis" aria-hidden="true"><div></div><div class="ticks"><span>0</span><span>0.25</span><span>0.5</span><span>0.75</span><span>1</span></div></div>
+  <p class="small muted" style="margin-top:10px">Top-1 agreement with our human aspect label, 1,277 sentences.</p>
+
+  <h3>Opus 5.5 against our labels</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th></th><th class="num">agreement</th><th class="num">Cohen's κ</th><th class="num">disagreements</th><th class="num">on test split</th></tr></thead>
+      <tbody>
+        <tr><td>Aspect (Opus didn't see ours)</td><td class="num">0.842</td><td class="num">0.80</td><td class="num">202</td><td class="num">43</td></tr>
+        <tr><td>Sentiment (given our aspect)</td><td class="num">0.865</td><td class="num">0.79</td><td class="num">173</td><td class="num">37</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>This is the first aspect-agreement figure we have, since our two annotators shared one aspect column. It is human-versus-LLM agreement, and the report must call it that. Every sentiment disagreement is about where neutral ends; Opus never swapped positive and negative.</p>
+  <div class="note"><p><b>A gap in our guideline.</b> A third of the aspect disagreements (63 rows) are retail investing services: DBS Vickers trades, regular savings plans, gold, portfolio financing. We labelled them wealth, Opus labelled them retail banking, and the guideline doesn't say which is right.</p></div>
+</section>
+
+<section aria-labelledby="h-todo">
+  <h2 id="h-todo">To do</h2>
+
+  <div class="group-head"><h3>Decisions for the team</h3><span class="chip decide">Team call</span></div>
+  <ul class="todo">
+    <li><span class="t">Should the fine-tuned model score the corpus instead of base FinBERT?</span><span class="when">before the 12–18 Oct re-score</span>
+      <span class="w">Use the three averaged (0.615). It changes the headline numbers: fewer sentences called neutral.</span></li>
+    <li><span class="t">Run the LLM aspect classifier on the whole corpus?</span><span class="when">soon: it gates re-scoring</span>
+      <span class="w">About 24 hours on the MacBook (plugged in, lid open). Also decide what happens where <code>llama3.1:8b</code> and <code>qwen3:4b</code> disagree (24% of sentences, where each is right under half the time): keep llama's answer, mark <code>other</code>, or leave unassigned.</span></li>
+    <li><span class="t">Wealth or retail banking for retail investment products?</span><span class="when">before the next labelling round</span>
+      <span class="w">Settles 63 rows at once; the answer goes into the annotation guideline.</span></li>
+    <li><span class="t">O1: confirm the aspect approach with the supervisor</span><span class="when">by 5 Oct</span></li>
+    <li><span class="t">O2: one blended index, or per-source indices side by side</span><span class="when">by 5 Oct</span></li>
+    <li><span class="t">O5: stricter relevance filtering for passing mentions</span><span class="when">by 12 Oct</span></li>
+    <li><span class="t">O3: which chatbot model to demo</span><span class="when">by 19 Oct</span></li>
+    <li><span class="t">O4: verify the OpenAI backend or stop claiming it</span><span class="when">by 19 Oct</span></li>
+  </ul>
+
+  <div class="group-head"><h3>Work only people can do</h3><span class="chip team">Team</span></div>
+  <ul class="todo">
+    <li><span class="t">Rotate the NewsAPI and Alpha Vantage keys <span class="chip crit">Overdue</span></span><span class="when overdue">open since 11 Sep</span>
+      <span class="w">Both leaked into git history in the first commit, and on 26 Sep they were still the live keys.</span></li>
+    <li><span class="t">Review the Opus disagreements</span><span class="when">start this week</span>
+      <span class="w">Fill the <code>decision</code> column in <code>data/labeled/claude/review_aspect.csv</code> and <code>review_sentiment.csv</code>. Start with the 80 test-split rows (43 aspect, 37 sentiment).</span></li>
+    <li><span class="t">Aspect agreement round and a top-up labelling round</span><span class="when">5–11 Oct</span>
+      <span class="w">Two people label the same rows' aspects independently. Five aspects are below 80 rows: dividend policy 33, macro 22, capital and liquidity 49, NIM 58, asset quality 78.</span></li>
+    <li><span class="t">Label the NER gold set (about 200 sentences)</span><span class="when">5–11 Oct</span></li>
+    <li><span class="t">Chatbot evaluation that needs people</span><span class="when">19–25 Oct</span>
+      <span class="w">A user questionnaire with 5–8 people, and ratings to calibrate the automated judge.</span></li>
+    <li><span class="t">Upload the latest database snapshot to the team folder</span><span class="when">now</span>
+      <span class="w"><code>plp-2026-09-30.db.gz</code>; the copy there is older. Checksum in the README.</span></li>
+    <li><span class="t">Report, video, peer review, submission</span><span class="when">by 30 Oct – 1 Nov</span>
+      <span class="w">Conclusions, each person's contribution summary, and the GenAI pros and cons; record the demo video; submit by Sun 1 Nov.</span></li>
+  </ul>
+
+  <div class="group-head"><h3>Claude can do next, without the team</h3><span class="chip ai">AI</span></div>
+  <ul class="todo">
+    <li><span class="t">Preview the first two decisions on a corpus sample</span><span class="when">~1–2 h</span>
+      <span class="w">Re-assign aspects and re-score a random sample in memory, and show how the index would move. The database is not touched.</span></li>
+    <li><span class="t">Build the bank-name recognition step (NER)</span><span class="when">~half a day</span>
+      <span class="w">Recognition and resolution code, its evaluation against today's alias matching, and a blank gold sheet for the team.</span></li>
+    <li><span class="t">Build the chatbot evaluation</span><span class="when">weeks 2–3</span>
+      <span class="w">About 30 frozen questions, retrieval Hit@K and MRR, and a judge prompt to calibrate.</span></li>
+    <li><span class="t">Draft the report structure, datasets and methods</span><span class="when">weeks 2–3</span>
+      <span class="w">Each figure linked to its evidence file, for the team to edit and own.</span></li>
+    <li><span class="t">Fix <code>aspects/compare_taxonomies.py</code></span><span class="when">~30 min</span>
+      <span class="w">It still compares against the old four aspects.</span></li>
+    <li><span class="t">Check every dashboard tab, and a second clean-copy test</span><span class="when">week 4–5</span></li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-know">
+  <h2 id="h-know">Worth knowing</h2>
+  <p><b>For the GenAI declaration.</b> The Opus labelling sent our sentences, Reddit text included, to Anthropic under a Claude subscription. The run is saved in full but can't be exactly reproduced. Both points are already in the AI usage log.</p>
+  <p><b>For long runs on the MacBook.</b> It slept twice today, once on a flat battery and once with the lid closed, costing about two and a half hours. Keep it plugged in with the lid open.</p>
+</section>
+
+<section aria-labelledby="h-refs">
+  <h2 id="h-refs">Read more</h2>
+  <ul class="refs">
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/finetune-fixes-2026-10-01.md" target="_blank" rel="noopener">Fine-tuning fixes</a> <span class="muted small">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/llm-aspect-classifier-2026-10-01.md" target="_blank" rel="noopener">LLM aspect classifier</a> <span class="muted small">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/opus-labeller-2026-10-01.md" target="_blank" rel="noopener">Opus 5.5 labeller</a> <span class="muted small">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/preprocessing-dry-run-2026-10-01.md" target="_blank" rel="noopener">Preprocessing dry run</a> <span class="muted small">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/install-test-2026-10-01.md" target="_blank" rel="noopener">Clean-copy install test</a> <span class="muted small">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/HANDOFF.md" target="_blank" rel="noopener">HANDOFF</a> <span class="muted small">run log and what needs a human</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/STATUS.md" target="_blank" rel="noopener">STATUS</a> <span class="muted small">what's true today</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/PLAN.md" target="_blank" rel="noopener">PLAN</a> <span class="muted small">sequence and open decisions</span></li>
+  </ul>
+</section>
+
+<footer>Figures are from the run logs and evidence files on <code>main</code> at <code>d4a1418</code>, 1 Oct 2026.</footer>
+
+</div>
+</body>
+</html>

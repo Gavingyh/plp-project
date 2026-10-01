@@ -10,6 +10,12 @@ from memory.
 
 ## Setup
 
+Python 3.10 or newer is required (developed on 3.14). A Mac's built-in
+`python3` is 3.9: `pip install` then fails on `torch>=2.9.0` without saying
+why, so create the environment with a newer interpreter
+(`python3.14 -m venv .venv-plp`) after installing one from python.org or
+Homebrew ([evidence](evidence/install-test-2026-10-01.md)).
+
 ```bash
 cd /path/to/plp-project
 python3 -m venv .venv-plp
@@ -322,8 +328,9 @@ in `.env` makes Gemini the default unless `CHATBOT_BACKEND=ollama` is set.
 
 **Gemini** (`GEMINI_API_KEY`, the team's key is for the chatbot only): the
 model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
-`gemini-3.8-flash`. A key from Google AI Studio is 39 characters starting
-`AIza`. On the free tier Google may use prompts and responses to improve its
+`gemini-3.8-flash`; on 2026-09-30 that model and 3.7 kept answering 503 (high
+demand) while `gemini-3.6-flash` worked, so set that if 3.8 is busy. The
+backend retries a 503 or 429 three times. On the free tier Google may use prompts and responses to improve its
 products and people may review them, and its terms say not to send
 sensitive, confidential or personal information: test with questions whose
 tool results are numbers, and keep evidence searches (which return Reddit
@@ -411,14 +418,15 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-379 tests. No network calls — external APIs are mocked with captured real
-payloads, so a provider changing its response shape surfaces as a failing test
-rather than a silent production break.
+438 tests in `tests/`; `pytest -q` from the repository root runs 479,
+adding the diagram and notebook checks. No network calls — external APIs are
+mocked with captured real payloads, so a provider changing its response shape
+surfaces as a failing test rather than a silent production break.
 
-Runtime depends on what else the machine is doing: 62 seconds idle, and 106
-seconds measured while a local model evaluation ran alongside it. Roughly 35
-seconds of that is `umap`/`hdbscan` import cost (numba), paid once per run by
-the aspect-discovery tests.
+On 2026-10-01 all 479 ran in 45 seconds on the MacBook Air; a fresh clone's
+first run of `tests/` took 2.6 minutes. Part of every run is
+`umap`/`hdbscan` import cost (numba), paid once by the aspect-discovery
+tests.
 
 ---
 
@@ -540,18 +548,70 @@ was produced:
 
 ### Then fine-tune
 
+The configuration chosen on 2026-10-01 by cross-validation (8 epochs, the
+aspect's readable label as the second segment):
+
 ```bash
 for seed in 42 1 7; do
-  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.finetune --seed $seed
-  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.evaluate --model-dir models/finbert-absa/seed_$seed/final
+  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.finetune --seed $seed --epochs 8 --aspect-text label \
+      --out-dir models/experiments-2026-10-01/label
 done
+# each model, their average (mean of probabilities), the three baselines, accuracy by source
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.evaluate \
+    --model-dir models/experiments-2026-10-01/label/seed_{42,1,7}/final
 ```
 
-Both refuse a `candidates.csv` with duplicated pairs or a sentence in both
-splits. Report mean and standard deviation across the seeds — a single run's
-F1 can be seed noise at this data size. Models land in `models/` (gitignored,
-about 440 MB each); share them through the team folder, not git. Results so
-far: [evidence/finetune-2026-09-30.md](evidence/finetune-2026-09-30.md).
+| `train.finetune` option | effect |
+|---|---|
+| `--epochs N` | upper bound; early stopping (patience 2 on dev macro-F1) usually ends sooner |
+| `--aspect-text key\|label` | the aspect as its key (`dividend_policy`, default) or its label from `config/aspects.yaml` |
+| `--no-aspect` | sentence only |
+| `--class-weights none\|balanced\|prior` | default `none`, plain cross-entropy (what every model before 1 Oct used) |
+| `--source-weights` | weight rows so the training source mix matches the corpus |
+| `--folds 5 --fold F` | one cross-validation fold: prints dev macro-F1 and keeps no model |
+| `--out-dir DIR` | where `seed_<s>/final` goes (default `models/finbert-absa`) |
+
+Each saved model records its input format in `input_format.json`, and
+`train.evaluate` feeds it the same way. Both refuse a `candidates.csv` with
+duplicated pairs or a sentence in both splits. Report mean and standard
+deviation across the seeds — a single run's F1 can be seed noise at this data
+size. Choose configurations on cross-validation, never on the test split.
+Models land in `models/` (gitignored, about 440 MB each); share them through
+the team folder with the checksums in the evidence, not git. Results:
+[evidence/finetune-fixes-2026-10-01.md](evidence/finetune-fixes-2026-10-01.md)
+(earlier: [finetune-experiments-2026-09-30.md](evidence/finetune-experiments-2026-09-30.md)).
+
+### The LLM aspect classifier (evaluation only)
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval                              # llama3.1:8b
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval --model qwen3:4b --no-think
+```
+
+Classifies the 1,277 labelled sentences through local Ollama and scores them
+against the human aspect: about 40 minutes for `llama3.1:8b`, 30 for
+`qwen3:4b`. `--no-think` is needed for qwen3, whose hidden reasoning
+otherwise takes minutes a sentence. Answers are cached in `data/aspect_llm/`
+(gitignored), so an interrupted run resumes. It writes nothing to the
+database; running it on the corpus is a team decision
+([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
+
+### The Opus labeller
+
+Opus 5.5 labelled the 1,277 sentences as an additional rater through Claude
+Code subagents, each given one instructions file and one batch from
+`data/labeled/claude/` (DESIGN decision 22). The answers are kept; to rebuild
+the merged file and the review queues:
+
+```bash
+.venv-plp/bin/python3 -m train.opus_labels merge
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.opus_labels score --centroid
+```
+
+People settle the disagreements in `data/labeled/claude/review_aspect.csv`
+and `review_sentiment.csv` (the `decision` column); nothing changes
+`candidates.csv` automatically
+([evidence](evidence/opus-labeller-2026-10-01.md)).
 
 ### Running on a Colab GPU
 
@@ -564,7 +624,8 @@ patching on Colab. In a notebook:
 !pip install -q -r requirements.txt
 # upload data/plp.db (restore it from the snapshot, README "Getting the database")
 !python -m aspects.assign && python -m sentiment.score && python -m aggregate.index
-!for s in 42 1 7; do python -m train.finetune --seed $s; python -m train.evaluate --model-dir models/finbert-absa/seed_$s/final; done
+!for s in 42 1 7; do python -m train.finetune --seed $s --epochs 8 --aspect-text label; done
+!python -m train.evaluate --model-dir models/finbert-absa/seed_42/final models/finbert-absa/seed_1/final models/finbert-absa/seed_7/final
 ```
 
 Download `models/` and the updated `data/plp.db` afterwards; a Colab runtime

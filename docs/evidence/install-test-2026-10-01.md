@@ -53,6 +53,7 @@ checksum are right.
    runs them.
 3. **Mention the port overrides** (`PLP_DASHBOARD_PORT`, `PLP_API_PORT`): the
    defaults, 8501 and 8000, are common enough to be taken.
-4. **Update stale figures**: the database is 118 MB uncompressed, not "about
-   103MB"; `tests/` holds 421 tests, not 379 (the same 379 appears in RUNBOOK,
+4. **Update stale figures**: the database restored from
+   `plp-2026-09-30.db.gz` is 198.5 MB (the 10-aspect re-run tripled the
+   aspect tables), not "about 103MB"; `tests/` holds 421 tests, not 379 (the same 379 appears in RUNBOOK,
    STATUS and the technical spec).

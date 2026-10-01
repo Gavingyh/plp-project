@@ -1,16 +1,16 @@
-# Chatbot: one turn from the dashboard
+# Chatbot: one turn from a chat client
 
-Which component calls which, in order, when an investor asks a question in the dashboard's Chat tab. For the report's system-design section and for debugging a turn.
+Which component calls which, in order, when someone asks a question in the terminal chat (`chatbot/chat.py`); `POST /chat` runs the same turn ([13](13-api-chat.md)). For the report's system-design section and for debugging a turn.
 
 **Legend.** Solid shapes and arrows are built and running. Dashed shapes and arrows labelled *planned* are decided but not yet built, with the DESIGN.md decision that records them. Shapes marked *not installed* exist in the repository but aren't running anywhere.
 
 ```mermaid
 sequenceDiagram
-  accTitle: Chatbot sequence from the dashboard
-  accDescr: The Chat tab hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
+  accTitle: Chatbot sequence from a chat client
+  accDescr: The chat client hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
 
   actor user as Investor
-  participant ui as Dashboard Chat tab
+  participant ui as Chat client (terminal chat)
   participant conv as Conversation
   participant turn as answer_turn
   participant g as chatbot.guards
@@ -63,7 +63,7 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Chat tab hands over the question | `dashboard/app.py:361` | `answer = st.session_state.conversation.ask(question).answer` |
+| chat client hands over the question | `chatbot/chat.py:77` | `last = conv.ask(q)` |
 | Conversation.ask | `chatbot/agent.py:258` | `def ask(self, question: str, verbose: bool = False)` |
 | last three turns and state | `chatbot/agent.py:259` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
 | guards first | `chatbot/agent.py:157` | `for guard, reply in (("advice", advice_reply(question, context_banks)),` |

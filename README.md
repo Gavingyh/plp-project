@@ -7,8 +7,9 @@ Processing (NUS-ISS).
 The system ingests public text about the three banks (Reddit, news, earnings
 releases, analyst consensus), splits it into sentences, assigns each sentence
 to a financial aspect, scores sentiment, and exposes the result through a
-dashboard, a REST API, and a chatbot that answers questions by querying the
-sentiment store.
+REST API and a chatbot that answers questions by querying the sentiment
+store. The dashboard is a separate project built on the API:
+[docs/api-integration.md](docs/api-integration.md) is its contract.
 
 ---
 
@@ -22,6 +23,7 @@ sentiment store.
 | **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way — the decision log with the evidence behind each choice |
 | **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
 | **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
+| **[docs/api-integration.md](docs/api-integration.md)** | For whoever builds the dashboard: running the API, which endpoint feeds which view, example responses, the chat contract, and what the screen must say |
 | **[docs/HANDOFF.md](docs/HANDOFF.md)** | Start here if you're new to the project — read order, open decisions, what needs a human |
 | [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | What the system does, for whom, with acceptance criteria and rubric traceability |
 | [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Data model, API contract, module map, configuration, testing |
@@ -89,14 +91,15 @@ the environment with it, e.g. `python3.14 -m venv .venv-plp`.
 3. Start the interfaces:
 
    ```bash
-   scripts/start.sh     # dashboard + API + Ollama, with health checks
+   scripts/start.sh     # the REST API + Ollama, with health checks
    scripts/status.sh    # what's up, on which port
    scripts/stop.sh      # stop it again
    ```
 
-   The dashboard uses port 8501 and the API 8000. If either is taken, the
-   script says so; choose others with
-   `PLP_DASHBOARD_PORT=8601 PLP_API_PORT=8100 scripts/start.sh`.
+   The API uses port 8000 (interactive docs at `http://localhost:8000/docs`).
+   If it's taken, the script says so; choose another with
+   `PLP_API_PORT=8100 scripts/start.sh`. To try the chatbot in the terminal:
+   `.venv-plp/bin/python3 -m chatbot.chat`.
 
 The snapshot already holds the processed corpus. To refresh or rebuild it,
 run the pipeline (order matters — each step consumes the previous one's
@@ -230,9 +233,8 @@ aspects/      FinBERT embeddings, taxonomy discovery, aspect assignment, the LLM
 sentiment/    Aspect-sentiment classification
 aggregate/    Per-bank/aspect index, volume shrinkage, time series
 train/        Fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller
-dashboard/    Streamlit UI (Overview, Heatmap, Time Series, Evidence, Chat)
-api/          FastAPI REST endpoints
-chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends
+api/          FastAPI REST API: the interface a dashboard builds on (docs/api-integration.md)
+chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends, a terminal chat for testing
 config/       Aspect taxonomy, logging configuration
 scripts/      start/stop/status, resumable overnight backfill, model comparison
 notebooks/    The text-analytics workstream's Colab notebooks (outputs cleared)

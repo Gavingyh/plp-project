@@ -14,7 +14,8 @@ An aspect-based sentiment system for Singapore's three listed banks — DBS,
 OCBC and UOB — built for the NUS-ISS Practical Language Processing practice
 module. It ingests public text, splits it into sentences, assigns each
 sentence to a financial aspect, scores sentiment, and exposes the result
-through a dashboard, a REST API and a grounded chatbot.
+through a REST API and a grounded chatbot; the dashboard is a separate
+project built on the API ([api-integration.md](api-integration.md)).
 
 **Deliverables are due 1 November 2026:** the system with source code and
 datasets, a report under 20 pages, and a demo video.
@@ -45,7 +46,7 @@ python3 -m venv .venv-plp
 .venv-plp/bin/python3 -m spacy download en_core_web_sm
 cp .env.example .env          # no keys needed to run
 
-scripts/start.sh              # dashboard + API + Ollama, with health checks
+scripts/start.sh              # the API + Ollama, with health checks
 scripts/status.sh
 scripts/stop.sh
 ```
@@ -192,7 +193,7 @@ repository. One person can hold more than one role. Tasks per role are in
 | Data and NER | ingestion, news and CNA feeds, bank entity recognition, dataset packaging |
 | Labelling | annotation guideline, agreement round, the labelled set |
 | Modelling | aspect classifier, aspect discovery, fine-tuning and evaluation |
-| Interfaces | dashboard, API, chatbot and its evaluation |
+| Interfaces | the API, the chatbot and its evaluation; the dashboard, as a separate project on the API |
 | Report and video | everyone; each person writes their own contribution summary |
 
 ---
@@ -204,7 +205,7 @@ repository. One person can hold more than one role. Tasks per role are in
 | `TypeError: unsupported operand type(s) for \|` | conda's Python 3.9 shadowing the venv | Use `.venv-plp/bin/python3` by absolute path, always |
 | `ModuleNotFoundError: torch` | System Python | Same |
 | A step hangs at near-zero CPU | HuggingFace metadata check | `HF_HUB_OFFLINE=1` |
-| `scripts/start.sh` refuses port 8501 | Another project's Streamlit is on it | Use `PLP_DASHBOARD_PORT`, or stop that process yourself. The script will not kill it for you |
+| `scripts/start.sh` refuses port 8000 | Another project's server is on it | Use `PLP_API_PORT`, or stop that process yourself. The script will not kill it for you |
 | Chatbot answer carries a verification warning | The model cited evidence it never retrieved | Do not trust that answer |
 | Dashboard says "No sentiment data yet" | Pipeline has not run, or `data/plp.db` is missing | See RUNBOOK |
 | `pip install` fails: `No matching distribution found for torch>=2.9.0` | The venv was made with Python 3.9 (a Mac's built-in `python3`) | Recreate it with Python 3.10 or newer, e.g. `python3.14 -m venv .venv-plp` |

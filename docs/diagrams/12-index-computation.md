@@ -1,6 +1,6 @@
 # How a sentiment index row is computed
 
-How `aggregate/index.py` turns scored sentence–aspect pairs into the numbers the dashboard, API and chatbot show. For the report's sentiment-index section.
+How `aggregate/index.py` turns scored sentence–aspect pairs into the numbers the API and chatbot serve. For the report's sentiment-index section.
 
 ```mermaid
 flowchart TB
@@ -35,10 +35,10 @@ the sample size. A sentence matched to several aspects has a pair per aspect; th
 rows count each pair, but the rows spanning aspects (each source's ALL row and the headline)
 count the sentence once, using its most confident pair. Before 2026-09-30 they counted every
 pair, which weighted sentences by how many aspects they matched. The volume floor is not applied when rows are computed: the chatbot's
-tools apply it when reading, and the dashboard shows `n` beside each score instead. The
+tools apply it when reading, and the API returns `n` beside each score for a dashboard to show. The
 continuous time series (`compute_time_series`) uses the same summarising function, so a
 chart can't disagree with the headline number. It applies its own floor: a bucket with fewer than 5 sentences is marked
-`sufficient=False`, and the dashboard leaves it off the line and says how many it omitted.
+`sufficient=False`, and a chart should leave it off the line ([api-integration.md](../api-integration.md)).
 
 ## Sources
 
@@ -62,5 +62,5 @@ Each row names the file and line an element comes from, and the text that line m
 | deleted and rewritten | `aggregate/index.py:263` | `conn.execute("DELETE FROM sentiment_index")` |
 | volume floor, applied when read | `chatbot/tools.py:22` | `MIN_VOLUME_FOR_SCORE = 5` |
 | time-series floor | `aggregate/index.py:145` | `min_n: int = 5` |
-| thin buckets left off the chart | `dashboard/app.py:278` | `plotted = series[series.sufficient]` |
+| thin buckets left off the chart | `docs/api-integration.md:85` | `gap, not a line through them, and not a zero.` |
 | insufficient data reported | `chatbot/tools.py:87` | `if n < MIN_VOLUME_FOR_SCORE:` |

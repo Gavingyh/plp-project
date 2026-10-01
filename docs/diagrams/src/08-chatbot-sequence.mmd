@@ -1,9 +1,9 @@
 sequenceDiagram
-  accTitle: Chatbot sequence from the dashboard
-  accDescr: The Chat tab hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
+  accTitle: Chatbot sequence from a chat client
+  accDescr: The chat client hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
 
   actor user as Investor
-  participant ui as Dashboard Chat tab
+  participant ui as Chat client (terminal chat)
   participant conv as Conversation
   participant turn as answer_turn
   participant g as chatbot.guards

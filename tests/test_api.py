@@ -168,3 +168,43 @@ def test_chat_passes_history_for_follow_ups(monkeypatch):
     resp = TestClient(app).post("/chat", json={"message": "and OCBC?", "history": history})
     assert resp.status_code == 200
     assert _FakeConversation.seen["messages"] == history
+
+
+def test_aspects_lists_every_key_with_its_label():
+    body = TestClient(app).get("/aspects").json()
+    keys = [a["key"] for a in body["aspects"]]
+    assert "dividend_policy" in keys and "other" in keys and len(keys) == 11
+    assert {"key": "dividend_policy", "label": "Dividend Policy"} in body["aspects"]
+
+
+def test_evidence_latest_filters_by_bank_and_aspect(temp_db):
+    _insert_scored_sentence(temp_db, "s1", "OCBC", "dividend_policy", "positive", 0.9)
+    _insert_scored_sentence(temp_db, "s2", "OCBC", "asset_quality", "negative", 0.8)
+    _insert_scored_sentence(temp_db, "s3", "DBS", "dividend_policy", "neutral", 0.7)
+    client = TestClient(app)
+    rows = client.get("/evidence/latest", params={"bank": "OCBC", "aspect": "dividend_policy"}).json()["rows"]
+    assert [r["sentence_id"] for r in rows] == ["s1"] and rows[0]["label"] == "positive"
+    all_ocbc = client.get("/evidence/latest", params={"bank": "OCBC"}).json()["rows"]
+    assert {r["sentence_id"] for r in all_ocbc} == {"s1", "s2"}
+    assert client.get("/evidence/latest", params={"bank": "HSBC"}).status_code == 422
+
+
+def test_analyst_consensus_latest_keeps_each_banks_newest_row(temp_db):
+    conn = temp_db.get_connection()
+    for bank, day in (("DBS", "2026-09-25"), ("UOB", "2026-09-24"), ("UOB", "2026-09-10")):
+        conn.execute("INSERT INTO analyst_consensus (bank, as_of_date, ticker, n_analysts, fetched_at) "
+                     "VALUES (?,?,?,?,?)", (bank, day, f"{bank}.SI", 10, now_iso()))
+    conn.commit()
+    conn.close()
+    rows = TestClient(app).get("/analyst-consensus/latest").json()["rows"]
+    assert [(r["bank"], r["as_of_date"]) for r in rows] == [("DBS", "2026-09-25"), ("UOB", "2026-09-24")]
+
+
+def test_committed_openapi_spec_matches_the_app():
+    """docs/api/openapi.json is what the dashboard team generates clients from;
+    regenerate it when an endpoint changes (command in docs/api-integration.md)."""
+    import json
+    import os
+    path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs", "api", "openapi.json")
+    with open(path) as f:
+        assert json.load(f) == json.loads(json.dumps(app.openapi(), sort_keys=True))

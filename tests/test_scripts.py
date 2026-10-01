@@ -6,9 +6,9 @@ cover the two properties that would hurt most:
 
   - every script parses (`bash -n`), because a typo in a rarely-run script
     surfaces at the worst possible moment;
-  - start.sh refuses a port it does not own. Port 8501 on a development
-    machine is as likely to be another project's Streamlit as it is to be
-    this one's, and "start my dashboard" must never take down somebody else's
+  - start.sh refuses a port it does not own. Port 8000 on a development
+    machine is as likely to be another project's server as it is to be
+    this one's, and "start my API" must never take down somebody else's
     work. This is the one behaviour where being wrong is destructive rather
     than merely annoying.
 

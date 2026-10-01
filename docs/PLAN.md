@@ -66,7 +66,7 @@ is the backbone of the report's solution-approach section.
 | **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 | TA Day 2 (text categorisation); NMSM Day 2 AM (structured ABSA prompt: role, task, schema, constraints, examples) | accuracy and macro-F1 against human aspect labels (D2); confusion matrix; baseline: seed-centroid assignment |
 | **Sentiment classification** (fine-tuned FinBERT) | the DNN; text-mining task 4 | TPML Day 3 (transfer learning, BERT fine-tuning); NMSM Days 1–3 (ABSA, lexicon and supervised approaches) | per-class precision, recall, F1 and macro-F1 on a frozen random test split, mean ± sd over ≥3 seeds; baselines: base FinBERT zero-shot, VADER lexicon, TF-IDF + logistic regression |
 | Annotation | labels | TA Day 1 (annotation methodology, Cohen's κ); TA Day 1 (LLMs as annotators with human correction) | κ ≥ 0.6 on a shared 150-row sample, for aspect and for sentiment |
-| Sentiment index, dashboard | sentiment mining | NMSM Day 2 PM (aggregation by holder, time, aspect; heat maps; time series) | shrinkage and volume floors already in `aggregate/index.py` |
+| Sentiment index, served by the API | sentiment mining | NMSM Day 2 PM (aggregation by holder, time, aspect; heat maps; time series) | shrinkage and volume floors already in `aggregate/index.py` |
 | **Chatbot** (tool calling over the index and evidence) | conversational UI | CNI Day 1 (design process, grounding, tool calling, state, guardrails, evaluation); CNI Day 2 (grounded-generation contract, evaluation discipline) | frozen ~30-question gold set; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; SASSI questionnaire with 5–8 users; multi-turn scenarios |
 
 Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,
@@ -106,8 +106,9 @@ split is detailed in the checklist.
   Still to do: a larger frozen evaluation set with multi-turn scenarios,
   retrieval metrics and a calibrated judge (AI)
 - SASSI user study and transcript reading (people)
-- Dashboard: remove stale text, check every tab against the final database
-  (AI, then a person opens every tab)
+- ~~Dashboard: remove stale text, check every tab~~ The dashboard is now a
+  teammate's separate project on the API (DESIGN decision 23); its contract
+  is [api-integration.md](api-integration.md)
 
 **Report and video** (everyone)
 - Structure, datasets and methods drafts, results tables, script (AI)

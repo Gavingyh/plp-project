@@ -41,6 +41,8 @@ writes `aspect_sentiment` with a label, a confidence, and a `model_version`.
 and shrinkage. When a user later asks the chatbot about DBS margins,
 `search_evidence` retrieves it by cosine similarity over the cached embedding,
 and the answer cites it by that same `sentence_id` and the transcript's URL.
+A dashboard, built as a separate project, reads the same rows through the
+REST API ([api-integration.md](../api-integration.md)).
 
 The invariant: **the sentence is the unit of analysis**, and every downstream
 artifact keys off `sentence_id`. Document-level sentiment would defeat the
@@ -59,10 +61,9 @@ criticise an app in consecutive sentences.
 | `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison, the LLM aspect classifier and assignment evaluation | `assign`, `discover`, `compare_taxonomies`, `embed_store`, `llm_classify` (evaluation only), `assignment_eval` |
 | `sentiment/` | Aspect-conditioned sentiment classification | `score` |
 | `aggregate/` | The sentiment index and continuous time series | `index` |
-| `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation | `agent`, `run_eval` |
+| `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation, a terminal chat for testing | `chat`, `agent`, `run_eval` |
 | `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `opus_labels` |
-| `api/` | FastAPI REST layer | `uvicorn api.main:app` |
-| `dashboard/` | Streamlit UI | `streamlit run dashboard/app.py` |
+| `api/` | FastAPI REST API: the system's interface; the dashboard is a separate project on it (DESIGN decision 23) | `uvicorn api.main:app` |
 | `config/` | Aspect taxonomy, logging configuration | — |
 | `scripts/` | Service lifecycle, overnight backfill, model comparison, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
 
@@ -133,7 +134,7 @@ coexist with the current `finbert-base-zeroshot-v1` rather than overwrite
 them.
 
 ### `sentiment_index`
-The aggregate the dashboard, API and chatbot read.
+The aggregate the API and chatbot read, and a dashboard through the API.
 
 `(bank, aspect, window, source, model_version)` primary key, plus `score`,
 `n`, `pos_n`, `neu_n`, `neg_n`, `confidence_mean`, `computed_at`.
@@ -144,7 +145,8 @@ The aggregate the dashboard, API and chatbot read.
   dimension exists so a blended figure is never opaque.
 - `score` is shrunk and weighted, in −1 to +1.
 - `n` is always stored and always displayed. A sentiment number without its
-  sample size is the main way this dashboard could mislead someone.
+  sample size is the main way a dashboard could mislead someone, so the API
+  returns it with every score.
 
 ### `analyst_consensus`
 Standalone; not part of the sentence pipeline. `(bank, as_of_date)` primary
@@ -204,7 +206,6 @@ assignment, discovery, taxonomy comparison and chatbot retrieval.
 | scikit-learn | ≥1.7 | TF-IDF for cluster labelling, Cohen's κ, classical baseline, metrics |
 | umap-learn | ≥0.5 | Dimensionality reduction before clustering |
 | hdbscan | ≥0.8 | Density clustering for taxonomy discovery |
-| streamlit | 1.63.0 | Dashboard; health at `/_stcore/health` |
 | fastapi + uvicorn | ≥0.115 / ≥0.30 | REST API |
 | pdfplumber | ≥0.11 | Earnings PDF prose extraction |
 | vaderSentiment | ≥3.3.2 | Lexicon baseline for evaluation |
@@ -242,7 +243,7 @@ Local models available through Ollama:
 | `LOG_LEVEL` | `INFO` | Console verbosity |
 | `DEBUG` | `false` | DEBUG level plus un-silencing third-party libraries |
 | `LOG_FILE` | `data/logs/plp.log` | `none` disables file logging |
-| `PLP_DASHBOARD_PORT` / `PLP_API_PORT` | 8501 / 8000 | `scripts/start.sh`, `stop.sh`, `status.sh` |
+| `PLP_API_PORT` | 8000 | `scripts/start.sh`, `stop.sh`, `status.sh` |
 
 `.env.example` is tracked, so every value in it must be a placeholder. Real
 keys were committed there from the first commit until 2026-09-11 and must be
@@ -493,7 +494,8 @@ development tool and must not be exposed to a network.
    terms blessing it, and a cookie-and-crumb handshake that exists to slow
    automated access. It provides consensus aggregates, not analyst reasoning,
    and must not be described as "analyst reports". The caveat is surfaced in
-   the module, the dashboard and the API response.
+   the module and the API response, and the integration guide asks a
+   dashboard to show it.
 
 `sgx.com` and `sginvestors.io` were tested and both serve bot-protection
 responses to plain clients. Scraping them would need a headless browser and

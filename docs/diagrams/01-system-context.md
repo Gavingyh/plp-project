@@ -7,15 +7,17 @@ Who uses the system and which outside services it depends on. For a reader meeti
 ```mermaid
 flowchart LR
   accTitle: System context
-  accDescr: The sentiment system with its three kinds of user, its five text and data sources, and its four model backends.
+  accDescr: The sentiment system with its three kinds of user, the separate dashboard that reads its API, its text and data sources, and its four model backends.
 
   investor(["Retail investor"])
   team(["Project team<br/>ingests, labels, trains"])
   grader(["Grader<br/>installs from the README"])
 
-  subgraph sys["Sentiment dashboard for DBS, OCBC and UOB"]
-    core["Batch pipeline<br/>dashboard, REST API, chatbot"]
+  subgraph sys["Sentiment system for DBS, OCBC and UOB"]
+    core["Batch pipeline<br/>REST API, chatbot"]
   end
+
+  dash["Dashboard<br/>separate project"]
 
   subgraph sources["Text and data sources"]
     reddit["Arctic Shift<br/>Reddit archive"]
@@ -33,7 +35,8 @@ flowchart LR
     hosted["Claude, OpenAI, Gemini<br/>hosted; Claude and Gemini verified"]
   end
 
-  investor -- "asks questions,<br/>reads scores and quotes" --> core
+  investor -- "reads scores and quotes,<br/>asks questions" --> dash
+  dash -- "REST API" --> core
   team -- "runs ingestion,<br/>labelling, training" --> core
   grader -- "restores a snapshot,<br/>starts the services" --> core
 

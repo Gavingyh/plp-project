@@ -229,36 +229,36 @@ Progress: `data/backfill_overnight.log` and `data/.backfill_progress.txt`.
 
 ## Interfaces
 
+The system's interface is the REST API, with a terminal chat for testing the
+chatbot. The dashboard is a separate project that reads the API (DESIGN
+decision 23); [api-integration.md](api-integration.md) is its contract.
+
 ### Start and stop
 
 ```bash
-scripts/start.sh              # Ollama (if needed), API, dashboard
+scripts/start.sh              # Ollama (if needed) and the API
 scripts/status.sh             # what's running, on which port, healthy or not
 scripts/stop.sh               # stop everything this project started
 ```
 
-Each takes an optional service name — `dashboard`, `api` or `ollama` — to act
-on just one. The scripts work from any directory.
+Each takes an optional service name — `api` or `ollama` — to act on just one.
+The scripts work from any directory.
 
-Ports come from `PLP_DASHBOARD_PORT` (default 8501) and `PLP_API_PORT`
-(default 8000):
+The API's port comes from `PLP_API_PORT` (default 8000):
 
 ```bash
-PLP_DASHBOARD_PORT=8511 scripts/start.sh dashboard
+PLP_API_PORT=8100 scripts/start.sh api
 ```
 
 What the scripts do that the raw commands below don't:
 
 - **Refuse a port they don't own.** If something else is listening, they print
   the owning process and exit rather than starting or killing anything. This
-  is not hypothetical: 8501 is a common default and a second Streamlit project
-  on the same machine will already be there.
-- **Wait for a real health check** before reporting success — `/health` for
-  the API, `/_stcore/health` for the dashboard — so a green message means the
-  service answers, not merely that a process exists. Note the limit: the
-  dashboard's endpoint reports that the Streamlit *server* is up, not that any
-  page renders. It reported healthy for months while two tables crashed on a
-  missing matplotlib. Open the page after starting it.
+  is not hypothetical: 8000 is a common default, and another project on the
+  development Mac already uses it.
+- **Wait for a real health check** before reporting success (`/health` for
+  the API), so a green message means the service answers, not merely that a
+  process exists.
 - **Fail fast on the wrong interpreter**, with the same check
   `scripts/overnight_backfill.py` uses, instead of failing per-request later.
 - **Set `HF_HUB_OFFLINE=1`** and load `.env`.
@@ -280,13 +280,13 @@ that line, so the file is fine; shell is just the wrong parser for it.
 These are what the scripts run, and remain the reference:
 
 ```bash
-# Dashboard
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m streamlit run dashboard/app.py
-
 # REST API (docs at http://localhost:8000/docs)
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m uvicorn api.main:app --port 8000
 
-# Chatbot (also available as the dashboard's Chat tab)
+# Chatbot, interactive, with memory and the answer flags (/suggest, /tools, /reset, /quit)
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.chat --backend ollama
+
+# Chatbot, one question
 CHATBOT_BACKEND=ollama .venv-plp/bin/python3 -m chatbot.agent "How does the market feel about DBS's dividend policy?"
 ```
 
@@ -310,8 +310,8 @@ The questions are generated from the sentiment index, not hardcoded, so a
 bank or aspect without enough data is never suggested and a clicked
 suggestion won't dead-end on "insufficient data". Categories are `overall`,
 `aspect`, `compare`, `consensus`, `trend`, `evidence` — useful if the
-frontend wants to group or icon them. The Chat tab in the Streamlit
-dashboard renders the same list as buttons.
+frontend wants to group or icon them. The terminal chat prints the same list
+with `/suggest`.
 
 ### Chatbot backends
 
@@ -350,9 +350,9 @@ banks never reach the model: they get a fixed reply (`chatbot/guards.py`).
 | setting | default | effect |
 |---|---|---|
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
-| `CHATBOT_TRACE_FILE` | unset | if set, each dashboard or API turn appends a JSON line: question, answer, tool calls and results, guards, state |
+| `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, guards, state |
 
-The dashboard's Chat tab remembers the last three turns, so follow-ups like
+The terminal chat remembers the last three turns, so follow-ups like
 "and OCBC?" work. The API is stateless: send earlier turns in `history`:
 
 ```bash
@@ -651,8 +651,6 @@ text (`tests/test_notebooks.py` checks).
 | `TypeError: unsupported operand \|` | conda Python 3.9 | use `.venv-plp/bin/python3` |
 | Step hangs, near-zero CPU | HuggingFace metadata check | `HF_HUB_OFFLINE=1` |
 | `Could not reach Ollama` | Ollama not running | `ollama serve` |
-| Dashboard: "No sentiment data yet" | pipeline not run | run steps 1–5 above |
-| Dashboard tab crashes with `Styler.background_gradient requires matplotlib` | dependencies not current | `.venv-plp/bin/python3 -m pip install -r requirements.txt` |
-| Dashboard log shows `No module named 'torchvision'` | Streamlit's file watcher walking `transformers`, which lazily imports vision models this project never uses | Harmless noise; ignore it |
+| API returns `insufficient_data` everywhere | pipeline not run, or no database restored | restore the snapshot (README), or run steps 1–5 above |
 | Chatbot answer has a verification warning | model fabricated citations | don't trust it; try a hosted backend |
 | `pip: bad interpreter` | venv was created under an older directory name | use `.venv-plp/bin/python3 -m pip` |

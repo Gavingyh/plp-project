@@ -47,8 +47,8 @@ refreshed, evidence-linked read of what is being said about the three banks.
 
 | user | what they need | served by |
 |---|---|---|
-| **Retail reader** | A quick read on sentiment per bank and aspect, with the evidence behind it and an honest signal when data is thin | Streamlit dashboard, chatbot |
-| **Frontend or API consumer** | The same numbers as JSON, for a non-Streamlit interface | FastAPI REST API |
+| **Retail reader** | A quick read on sentiment per bank and aspect, with the evidence behind it and an honest signal when data is thin | the dashboard (a separate project, on the API), chatbot |
+| **Dashboard builder or API consumer** | Every number, its evidence and the chat, as JSON | FastAPI REST API ([api-integration.md](../api-integration.md)) |
 | **Teammate, marker, supervisor** | To reproduce every number, see what is unfinished, and judge what the numbers support | Docs, evidence files, verification ledger, test suite |
 
 The third user is not an afterthought. This is a graded practice module whose
@@ -62,8 +62,8 @@ nicety.
 
 **In scope.** Batch ingestion of public text about the three banks;
 sentence-level aspect assignment and sentiment scoring; a per-bank, per-aspect
-index with time windows and a continuous series; a dashboard, a REST API and a
-grounded chatbot; a labelling workflow for the fine-tuning dataset.
+index with time windows and a continuous series; a REST API and a grounded
+chatbot, on which a separate project builds the dashboard; a labelling workflow for the fine-tuning dataset.
 
 **Explicit non-goals**, each a deliberate decision rather than an omission:
 
@@ -105,27 +105,34 @@ Each requirement has acceptance criteria that can be checked against the code,
 a test, or a running instance. Status values: **Done**, **Partial**,
 **Blocked**, and **Planned** (decided, not yet built).
 
-### 4.1 Dashboard
+### 4.1 Dashboard (a separate project)
 
-The dashboard has five tabs, defined in `dashboard/app.py`.
+*Changed 2026-10-01 (DESIGN decision 23).* The dashboard is built by a
+teammate as a separate project on the REST API; the Streamlit dashboard that
+was here is removed (its last version is in git history before that date).
+The requirements stay, so they can be traced: this repository's part is the
+API support for each, and the UI is the other project's.
 
-| # | Requirement | Acceptance criteria | Status |
+| # | Requirement | API support here | Status |
 |---|---|---|---|
-| D1 | As a retail reader, I see an overall sentiment score per bank so I can compare the three at a glance | Overview tab shows a score and its sample size `n` for each of DBS, OCBC, UOB. No score is ever displayed without `n`. | Done |
-| D2 | I see sentiment broken down by aspect so I can drill into what drives the headline | Aspect Heatmap tab shows a bank-by-aspect grid | Done |
-| D3 | I see how sentiment moved over time, not just a snapshot | Time Series tab plots a continuous series with a week/month/quarter selector. Buckets below the volume floor appear as gaps, never interpolated. Underlying counts are expandable. | Done |
-| D4 | I can read the actual sentences behind a score | Evidence tab returns sentences with `sentence_id`, source URL and date | Done |
-| D5 | I can ask questions in natural language | Chat tab runs the same agent as the CLI, offers generated starter questions, and shows the verification warning when it fires | Done |
-| D6 | I am told when the data cannot support a number | Any cell with `n` below 5 reads "insufficient data" rather than a score | Done |
-| D7 | I can see which sources produced a blended figure | Per-source breakdown available alongside blended rows | Done |
+| D1 | As a retail reader, I see an overall sentiment score per bank so I can compare the three at a glance | `GET /sentiment?bank=` returns a score with its sample size `n`; no score without `n` | API done; UI separate |
+| D2 | I see sentiment broken down by aspect so I can drill into what drives the headline | `GET /sentiment/index` returns the whole bank × aspect grid in one call | API done; UI separate |
+| D3 | I see how sentiment moved over time, not just a snapshot | `GET /sentiment/series` with a week/month/quarter bucket; thin buckets come back `sufficient: false`, never interpolated | API done; UI separate |
+| D4 | I can read the actual sentences behind a score | `GET /evidence/latest` and `GET /evidence` return sentences with `sentence_id`, source URL and date | API done; UI separate |
+| D5 | I can ask questions in natural language | `POST /chat` runs the same agent as the terminal chat and returns the verification flags; `GET /suggestions` gives starter questions | API done; UI separate |
+| D6 | I am told when the data cannot support a number | results below the volume floor carry `insufficient_data` | API done; UI separate |
+| D7 | I can see which sources produced a blended figure | `GET /sentiment/index?source=*` and `GET /sources` | API done; UI separate |
 
 ### 4.2 REST API
 
-Thirteen endpoints in `api/main.py`. No authentication; localhost only.
+Sixteen endpoints in `api/main.py`. No authentication; localhost only; CORS
+open so a browser dashboard on any port can call it. The integration guide is
+[api-integration.md](../api-integration.md), and `docs/api/openapi.json` is the
+machine-readable contract (a test keeps it current).
 
 | # | Requirement | Acceptance criteria | Status |
 |---|---|---|---|
-| A1 | A frontend can fetch the same numbers the dashboard shows | `/sentiment`, `/sentiment/compare`, `/sentiment/index`, `/sentiment/trend`, `/sentiment/series` return JSON matching the stored index | Done |
+| A1 | A dashboard can fetch every number it shows | `/sentiment`, `/sentiment/compare`, `/sentiment/index`, `/sentiment/trend`, `/sentiment/series` return JSON matching the stored index | Done |
 | A2 | Invalid input is rejected, not guessed at | `bank` is validated against `^(DBS\|OCBC\|UOB)$`, `window` against `^(7d\|30d\|all_time)$`, `bucket` against `^(week\|month\|quarter)$`; bad values give HTTP 422, and an unknown bucket gives 400 | Done, covered in `tests/test_api.py` |
 | A3 | A chat UI can offer questions the data can actually answer | `/suggestions?limit=N` returns questions generated from the index, never hardcoded, excluding advice-seeking and out-of-scope framings | Done |
 | A4 | A caller can distinguish "no data" from "neutral sentiment" | `/coverage` reports `has_data`; thin results carry `insufficient_data` | Done |
@@ -145,7 +152,7 @@ Thirteen endpoints in `api/main.py`. No authentication; localhost only.
 | C6 | Runs without any API key | Ollama backend auto-selected when no key is present | Done |
 | C7 | Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude and Gemini verified (Gemini on 2026-09-30, [evidence](../evidence/gemini-backend-2026-09-30.md)); GPT never run |
 
-| C8 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | Done — dashboard and API (`history`); verified live in a three-turn conversation |
+| C8 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | Done — terminal chat and API (`history`); verified live in a three-turn conversation |
 | C9 | Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | Done — 7 of 7, by guards; off-topic questions get a scope reply too |
 | C10 | Every number in an answer matches a tool result | An output guard compares each figure with the tools' results and flags a mismatch, as C3 does for citations | Done — 18 of 19 flagged figures in the final run were invented; the one false alarm is fixed |
 | C11 | Evaluated on a frozen, sliced gold set | About 30 questions with expected behaviour written before tuning; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; multi-turn scenarios; SASSI questionnaire with 5–8 users | **Planned** — today 23 single-turn questions, also used during tuning |
@@ -188,7 +195,7 @@ five smallest aspects.
 
 | Requirement | Satisfied by | Code | Status |
 |---|---|---|---|
-| Conversational user interface | Tool-calling chatbot with RAG evidence retrieval, on CLI, dashboard tab and API | `chatbot/` | Done |
+| Conversational user interface | Tool-calling chatbot with RAG evidence retrieval, in the terminal chat and through the API (the dashboard's chat uses `POST /chat`) | `chatbot/` | Done |
 | At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, `aspects/llm_classify.py`, planned NER module, `train/finetune.py` | T1 and T4 done; T2 evaluated, not applied; T3 planned |
 | A sentiment mining component | Overall and aspect-based sentiment index across four sources | `sentiment/`, `aggregate/` | Done |
 | At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Met**: trained on 1,277 labelled rows, three seeds; ahead of base FinBERT on macro-F1, behind on accuracy |
@@ -209,7 +216,7 @@ positive or negative; the report has to explain both
 | Aspects: dividend policy, asset quality, NIM, management guidance | Kept within ten aspects derived from the corpus (DESIGN decision 21). Seed-centroid assignment failed validation; LLM assignment, one aspect per sentence, is built and evaluated (0.729 against 0.413) but not yet applied | Partial |
 | ~1,000 labelled examples, 200–300 per class | 1,277 labelled on 2026-09-27: 275 negative, 543 neutral, 459 positive (the target read as per sentiment class overall) | Done |
 | Accuracy, precision, recall, F1 per class, macro-F1 on a held-out split | `train/evaluate.py` on the 299-row random test split, against base FinBERT, a lexicon baseline and a classical ML baseline | Done |
-| Dashboard with overall and aspect sentiment, batch refreshed | Done, five tabs | Done |
+| Dashboard with overall and aspect sentiment, batch refreshed | A separate project builds it on the API, which serves every view (DESIGN decision 23) | API done; UI separate |
 | Chatbot answering with supporting evidence | Done, with the grounding caveats in 4.3 | Partial |
 
 ---

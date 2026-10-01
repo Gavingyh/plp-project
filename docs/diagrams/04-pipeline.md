@@ -1,4 +1,4 @@
-# Pipeline: from sources to the dashboard
+# Pipeline: from sources to the API
 
 How text becomes a sentiment score, stage by stage, and what each stage writes. For the report's solution-approach section.
 
@@ -7,7 +7,7 @@ How text becomes a sentiment score, stage by stage, and what each stage writes. 
 ```mermaid
 flowchart TB
   accTitle: Processing pipeline
-  accDescr: Sources are ingested into documents, split into sentences, embedded, tagged with aspects, scored and aggregated into an index that the dashboard, API and chatbot read. Planned replacements are dashed.
+  accDescr: Sources are ingested into documents, split into sentences, embedded, tagged with aspects, scored and aggregated into an index that the API and chatbot serve, and a separate dashboard reads through the API. Planned replacements are dashed.
 
   subgraph src["Sources"]
     reddit["Reddit<br/>ingest.arctic_shift"]
@@ -32,7 +32,7 @@ flowchart TB
   as[("aspect_sentiment")]
   agg["Index: windows, sources,<br/>shrinkage at low volume<br/>aggregate.index"]
   idx[("sentiment_index")]
-  ui["Dashboard, REST API, chatbot"]
+  ui["REST API, chatbot<br/>dashboard: separate project"]
 
   reddit --> docs
   news --> filt --> docs
@@ -80,7 +80,7 @@ Each row names the file and line an element comes from, and the text that line m
 | Reddit adapter | `ingest/arctic_shift.py:40` | `BASE_URL = "https://arctic-shift` |
 | news filter | `ingest/news_filter.py:260` | `def filter_and_dedup(` |
 | news sources | `ingest/news_filter.py:55` | `NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news", "cna")` |
-| consensus writes analyst_consensus | `ingest/yahoo_analyst.py:131` | `def upsert(rows` |
+| consensus writes analyst_consensus | `ingest/yahoo_analyst.py:146` | `def upsert(rows` |
 | preprocessing | `preprocess/pipeline.py:90` | `def run() -> dict:` |
 | bank attribution per sentence | `preprocess/pipeline.py:62` | `def _resolve_sentence_bank(` |
 | sentence splitting | `preprocess/segment.py:35` | `def segment(text: str)` |

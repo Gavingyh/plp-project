@@ -10,21 +10,22 @@ Why this system is built the way it is. For how to run it, see
 
 **[STATUS.md](STATUS.md) is the single source of truth for these caveats.**
 It is kept current against the database; this page explains design reasoning
-and will drift. The short version, as of 2026-09-26:
+and will drift. The short version, as of 2026-10-01:
 
 - Read blended cross-bank figures next to the per-source breakdown. DBS
   carries about 55% of all sentences and roughly six times the earnings
   volume of the other two banks.
-- A fine-tuned model exists but doesn't beat base FinBERT on macro-F1
-  (0.547 ± 0.013 against 0.571, [evidence](evidence/finetune-2026-09-30.md)). Every stored score is
+- The fine-tuned model leads base FinBERT on macro-F1 and trails it on
+  accuracy (0.604 ± 0.035 against 0.571; accuracy 0.66 against 0.70,
+  [evidence](evidence/finetune-fixes-2026-10-01.md)). Every stored score is
   base FinBERT, zero-shot.
-- Per-aspect scores are not meaningful yet: the current assignment gives
-  plain factual sentences three or four aspects and sends evaluative ones to
-  `other` (decision 16 replaces it).
+- Per-aspect scores are not meaningful yet: the current assignment gives a
+  sentence 6.4 of the ten aspects on average. The LLM classifier of decision
+  16 is built and evaluated (0.729 against 0.413) but not yet applied.
 - The GPT backend has never been run against its real API; Gemini was
   verified on 2026-09-30 ([evidence](evidence/gemini-backend-2026-09-30.md)).
 - Local chatbot models fabricate citations. The code-level check is a
-  detector, not a fix. The chatbot also has no memory between turns yet.
+  detector, not a fix.
 
 What happens next, and in what order, is in [PLAN.md](PLAN.md).
 
@@ -35,8 +36,9 @@ What happens next, and in what order, is in [PLAN.md](PLAN.md).
 Ingests public text about DBS, OCBC and UOB from several sources, splits it
 into sentences, assigns each sentence to one or more financial aspects,
 scores sentiment per (sentence, aspect), aggregates into a per-bank index,
-and exposes the result through a dashboard, a REST API and a chatbot that
-answers questions by querying that store.
+and exposes the result through a REST API and a chatbot that answers
+questions by querying that store. The dashboard is a separate project built
+on the API (decision 23).
 
 ```
  sources                  ingest/            preprocess/         aspects/
@@ -57,10 +59,13 @@ answers questions by querying that store.
                                                                     ▼
                                                             aggregate/index
                                                                     │
-                                    ┌───────────────────────────────┼────────────────┐
-                                    ▼                               ▼                ▼
-                              dashboard/                          api/           chatbot/
-                              (Streamlit)                      (FastAPI)     (tools + RAG)
+                                                    ┌───────────────┼────────────────┐
+                                                    ▼                                ▼
+                                                  api/  ─────────────────────────▶ chatbot/
+                                               (FastAPI)          POST /chat     (tools + RAG)
+                                                    ▲
+                                                    │ HTTP
+                                         dashboard (a separate project)
 ```
 
 Everything is stored in one SQLite file (`data/plp.db`). Tables:
@@ -446,6 +451,23 @@ The pipeline's aspect classifier stays local (decision 16): the Opus run
 isn't re-runnable code and isn't sized for 44,345 sentences. The report's
 GenAI declaration lists it, and its agreement figures are human–LLM, not
 human–human.
+
+
+### 23. The dashboard is a separate project; this repository exposes the API
+
+*2026-10-01, the team's call.* A teammate builds the dashboard as its own
+project, so the Streamlit dashboard here was removed (its last version is
+in git history before this date). The REST API is now the system's
+interface, and was extended so a dashboard needs nothing else:
+`/evidence/latest` for the drill-down list, `/analyst-consensus/latest` for
+every bank at once (each bank's own newest row: the Streamlit page had taken
+one date for all banks and so hid UOB's consensus), and `/aspects` for
+readable labels. CORS is open, `docs/api/openapi.json` is the
+machine-readable contract (a test fails if it drifts), and
+[api-integration.md](api-integration.md) maps each view to its endpoint and
+lists what the screen must say. The chatbot stays, reachable through
+`POST /chat` and, for testing, a terminal chat (`python -m chatbot.chat`).
+Streamlit and matplotlib left `requirements.txt` with the page.
 
 ---
 

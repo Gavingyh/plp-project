@@ -1,0 +1,849 @@
+{
+  "components": {
+    "schemas": {
+      "ChatMessage": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatMessage",
+        "type": "object"
+      },
+      "ChatRequest": {
+        "properties": {
+          "backend": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backend"
+          },
+          "history": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "ChatRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "The system's interface: the sentiment index, its evidence, analyst consensus and the chatbot, for any dashboard or client to read. Read-only except POST /chat, which only calls a model. Integration guide: docs/api-integration.md.",
+    "title": "SG Bank Sentiment API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/analyst-consensus": {
+      "get": {
+        "operationId": "analyst_consensus_analyst_consensus_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bank",
+            "required": true,
+            "schema": {
+              "pattern": "^(DBS|OCBC|UOB)$",
+              "title": "Bank",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyst Consensus"
+      }
+    },
+    "/analyst-consensus/latest": {
+      "get": {
+        "description": "Every bank's newest consensus row in one call. Banks are fetched\nseparately and can carry different dates; each bank's own newest row is\nreturned, so a bank fetched a day earlier is never dropped.",
+        "operationId": "analyst_consensus_latest_analyst_consensus_latest_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Analyst Consensus Latest"
+      }
+    },
+    "/aspects": {
+      "get": {
+        "description": "The aspect keys with their readable labels, from config/aspects.yaml, for labelling a UI.",
+        "operationId": "aspects_aspects_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Aspects"
+      }
+    },
+    "/banks": {
+      "get": {
+        "operationId": "banks_banks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Banks"
+      }
+    },
+    "/chat": {
+      "post": {
+        "operationId": "chat_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Chat"
+      }
+    },
+    "/coverage": {
+      "get": {
+        "operationId": "coverage_coverage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bank",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bank"
+            }
+          },
+          {
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Coverage"
+      }
+    },
+    "/evidence": {
+      "get": {
+        "operationId": "evidence_evidence_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "required": true,
+            "schema": {
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bank",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bank"
+            }
+          },
+          {
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sentiment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(positive|neutral|negative)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sentiment"
+            }
+          },
+          {
+            "in": "query",
+            "name": "k",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "title": "K",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence"
+      }
+    },
+    "/evidence/latest": {
+      "get": {
+        "description": "The newest sentences for a bank, optionally one aspect, with their stored\nsentiment label: a drill-down list for a dashboard. (`/evidence` is the\nsemantic search the chatbot uses, and needs a query.)",
+        "operationId": "evidence_latest_evidence_latest_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bank",
+            "required": true,
+            "schema": {
+              "pattern": "^(DBS|OCBC|UOB)$",
+              "title": "Bank",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence Latest"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/sentiment": {
+      "get": {
+        "operationId": "sentiment_sentiment_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bank",
+            "required": true,
+            "schema": {
+              "pattern": "^(DBS|OCBC|UOB)$",
+              "title": "Bank",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          },
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "all_time",
+              "pattern": "^(7d|30d|all_time)$",
+              "title": "Window",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sentiment"
+      }
+    },
+    "/sentiment/compare": {
+      "get": {
+        "operationId": "sentiment_compare_sentiment_compare_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          },
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "all_time",
+              "pattern": "^(7d|30d|all_time)$",
+              "title": "Window",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sentiment Compare"
+      }
+    },
+    "/sentiment/index": {
+      "get": {
+        "description": "Raw rows from sentiment_index for the given window \u2014 one call to build\na full bank x aspect grid client-side, instead of one call per cell.\n\n`source` defaults to \"ALL\" (the blended headline number). Pass a specific\nsource (\"earnings\", \"arctic_shift\", \"newsapi\") to get that component\nalone, or \"*\" for every row including all per-source breakdowns \u2014 useful\nfor showing what the blend is made of, which matters here because\nearnings coverage is very unequal across banks (see /sources).",
+        "operationId": "sentiment_index_dump_sentiment_index_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "all_time",
+              "pattern": "^(7d|30d|all_time)$",
+              "title": "Window",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "default": "ALL",
+              "title": "Source",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sentiment Index Dump"
+      }
+    },
+    "/sentiment/series": {
+      "get": {
+        "description": "Continuous sentiment series for charting.\n\n/sentiment/trend answers \"up or down\" from two fixed windows; this returns\nthe whole shape. Buckets below min_n come back with sufficient=false\nrather than being dropped, so a chart can show a gap instead of\ninterpolating across data that isn't there.",
+        "operationId": "sentiment_series_sentiment_series_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bank",
+            "required": true,
+            "schema": {
+              "pattern": "^(DBS|OCBC|UOB)$",
+              "title": "Bank",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bucket",
+            "required": false,
+            "schema": {
+              "default": "month",
+              "pattern": "^(week|month|quarter)$",
+              "title": "Bucket",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "default": "ALL",
+              "title": "Source",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_n",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "minimum": 1,
+              "title": "Min N",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sentiment Series"
+      }
+    },
+    "/sentiment/trend": {
+      "get": {
+        "operationId": "sentiment_trend_sentiment_trend_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bank",
+            "required": true,
+            "schema": {
+              "pattern": "^(DBS|OCBC|UOB)$",
+              "title": "Bank",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Aspect"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sentiment Trend"
+      }
+    },
+    "/sources": {
+      "get": {
+        "description": "Per-bank, per-source sentence counts \u2014 the composition behind the\nblended index. Exposed because earnings coverage is currently very\nunequal (UOB's IR site is WAF-blocked, so it has almost no earnings\nmaterial), which makes a naive cross-bank comparison misleading unless a\nreader can see this.",
+        "operationId": "sources_breakdown_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sources Breakdown"
+      }
+    },
+    "/suggestions": {
+      "get": {
+        "description": "Starter questions for a chat UI to show as clickable prompts.\n\nEvery question returned is one the current data can answer - they are\ngenerated from the sentiment index rather than hardcoded, so a bank or\naspect with too little data never gets suggested. Advice-seeking and\nout-of-scope questions are excluded by design; the chatbot declines\nthose, so offering them would be misleading.",
+        "operationId": "suggestions_suggestions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 6,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Suggestions"
+      }
+    }
+  }
+}

@@ -1,9 +1,10 @@
 """
-Minimal REST API over the sentiment store and chatbot — for a frontend other
-than the Streamlit dashboard (dashboard/app.py) to consume. Deliberately
-thin: every endpoint is a direct pass-through to an existing function in
-chatbot/tools.py (already tested against the real DB) or a plain read of
-sentiment_index. No new business logic lives here.
+The REST API: the system's interface. The dashboard is a separate project
+that builds on it (DESIGN decision 23; docs/api-integration.md is the
+contract, docs/api/openapi.json the machine-readable one). Deliberately
+thin: every endpoint is a pass-through to an existing function in
+chatbot/tools.py (already tested against the real DB) or a plain read of the
+database. No new business logic lives here.
 
 CORS is wide open (allow_origins=["*"]) — this is a school project running
 locally/on a grader's machine, not a public deployment; a real deployment
@@ -14,6 +15,8 @@ USAGE:
   # then e.g. curl http://localhost:8000/sentiment?bank=DBS
   # interactive docs at http://localhost:8000/docs
 """
+
+import os
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,12 +34,14 @@ setup_logging()
 logger = get_logger(__name__)
 
 BANKS = ["DBS", "OCBC", "UOB"]
+ASPECTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "aspects.yaml")
 
 app = FastAPI(
     title="SG Bank Sentiment API",
-    description="Minimal API over the sentiment store and chatbot. "
-                 "See dashboard/app.py for the reference Streamlit UI this "
-                 "same data backs — this API exists for any other frontend.",
+    description="The system's interface: the sentiment index, its evidence, analyst "
+                 "consensus and the chatbot, for any dashboard or client to read. "
+                 "Read-only except POST /chat, which only calls a model. "
+                 "Integration guide: docs/api-integration.md.",
 )
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
@@ -136,6 +141,59 @@ def evidence(query: str, bank: str | None = None, aspect: str | None = None,
 @app.get("/analyst-consensus")
 def analyst_consensus(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$")):
     return get_analyst_consensus(bank)
+
+
+@app.get("/analyst-consensus/latest")
+def analyst_consensus_latest():
+    """Every bank's newest consensus row in one call. Banks are fetched
+    separately and can carry different dates; each bank's own newest row is
+    returned, so a bank fetched a day earlier is never dropped."""
+    from ingest.yahoo_analyst import LATEST_PER_BANK_SQL
+    conn = get_connection()
+    try:
+        cur = conn.execute(LATEST_PER_BANK_SQL)
+        cols = [c[0] for c in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+    except Exception:
+        rows = []   # the table doesn't exist before the first consensus pull
+    finally:
+        conn.close()
+    return {"rows": rows}
+
+
+@app.get("/evidence/latest")
+def evidence_latest(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = None,
+                    limit: int = Query(30, ge=1, le=200)):
+    """The newest sentences for a bank, optionally one aspect, with their stored
+    sentiment label: a drill-down list for a dashboard. (`/evidence` is the
+    semantic search the chatbot uses, and needs a query.)"""
+    conn = get_connection()
+    try:
+        if aspect:
+            cur = conn.execute(
+                """SELECT s.sentence_id, s.text, s.source, s.url, s.published_at, ase.aspect,
+                          ase.label, ase.confidence
+                   FROM sentences s JOIN aspect_sentiment ase ON ase.sentence_id = s.sentence_id
+                   WHERE s.bank = ? AND ase.aspect = ? ORDER BY s.published_at DESC LIMIT ?""",
+                (bank, aspect, limit))
+        else:
+            cur = conn.execute(
+                """SELECT sentence_id, text, source, url, published_at FROM sentences
+                   WHERE bank = ? ORDER BY published_at DESC LIMIT ?""", (bank, limit))
+        cols = [c[0] for c in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+    finally:
+        conn.close()
+    return {"bank": bank, "aspect": aspect, "rows": rows}
+
+
+@app.get("/aspects")
+def aspects():
+    """The aspect keys with their readable labels, from config/aspects.yaml, for labelling a UI."""
+    import yaml
+    with open(ASPECTS_PATH) as f:
+        cfg = yaml.safe_load(f)["aspects"]
+    return {"aspects": [{"key": k, "label": v.get("label", k)} for k, v in cfg.items()]}
 
 
 @app.get("/sentiment/series")

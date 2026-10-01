@@ -114,14 +114,18 @@ checksums, evaluated against all three baselines; not used for scoring. Opus
 5.5 labelled the same sentences as an additional rater (DESIGN decision 22),
 giving the first aspect agreement figure.
 
-**Interfaces.** Streamlit dashboard (including a Chat tab), FastAPI REST API,
-chatbot with four pluggable model backends and RAG evidence retrieval.
+**Interfaces.** A FastAPI REST API that serves every number, its evidence,
+analyst consensus and the chatbot (sixteen endpoints, open CORS, an OpenAPI
+contract in `docs/api/openapi.json`), and a terminal chat for testing the
+chatbot, which has four pluggable model backends and RAG evidence retrieval.
 Suggested starter questions are generated from the index rather than
-hardcoded, so the UI never offers a question the data cannot answer.
+hardcoded, so a chat UI never offers a question the data cannot answer. The
+dashboard is a separate project built on the API (DESIGN decision 23); the
+Streamlit dashboard that was here was removed on 2026-10-01.
 
 **Engineering.** 438 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
-start/stop/status scripts for the dashboard and API. A clean copy installs
+start/stop/status scripts for the API and Ollama. A clean copy installs
 and runs from the README on Python 3.14
 ([evidence](evidence/install-test-2026-10-01.md)).
 

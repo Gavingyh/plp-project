@@ -44,7 +44,7 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | drawn from the scored sample | `notebooks/README.md:17` | `Candidates were stratified within that sample` |
-| suggestions on train/dev only | `docs/PLAN.md:178` | `The local LLM's suggestions are shown for the train/dev` |
+| suggestions on train/dev only | `docs/PLAN.md:179` | `The local LLM's suggestions are shown for the train/dev` |
 | blind sheet | `preprocess/export_blind_test.py:104` | `def export_blind(` |
 | two annotators | `docs/evidence/annotation-agreement-2026-09-27.md:14` | `each annotator's labels on the 1,300 candidates` |
 | resolved | `docs/evidence/annotation-agreement-2026-09-27.md:16` | `the candidates after resolving disagreements` |

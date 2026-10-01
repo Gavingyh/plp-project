@@ -103,3 +103,19 @@ def test_upsert_same_day_replaces_not_duplicates(temp_db):
 def test_get_analyst_consensus_no_data(temp_db):
     result = get_analyst_consensus("OCBC")
     assert result["has_data"] is False
+
+
+def test_latest_per_bank_keeps_a_bank_fetched_on_an_earlier_day(temp_db):
+    """UOB last fetched a day before DBS must still appear (the dashboard lost it on 2026-09-25)."""
+    from ingest.db import get_connection
+    from ingest.yahoo_analyst import latest_per_bank
+    base = fetch_bank(_FakeSession(_FAKE_PAYLOAD), "crumb", "DBS", "D05.SI")
+    upsert([{**base, "bank": "DBS", "as_of_date": "2026-09-25"},
+            {**base, "bank": "UOB", "ticker": "U11.SI", "as_of_date": "2026-09-24"},
+            {**base, "bank": "UOB", "ticker": "U11.SI", "as_of_date": "2026-09-10"}])
+    conn = get_connection()
+    try:
+        rows = latest_per_bank(conn)
+    finally:
+        conn.close()
+    assert [(r[0], r[1]) for r in rows] == [("DBS", "2026-09-25"), ("UOB", "2026-09-24")]

@@ -128,6 +128,21 @@ def pull() -> list[dict]:
     return rows
 
 
+# Each bank's newest row. Banks are fetched separately and can land on
+# different dates, so "the newest date overall" would drop a bank: on
+# 2026-09-25 that hid UOB (last fetched 2026-09-24) from the dashboard.
+LATEST_PER_BANK_SQL = """
+    SELECT ac.* FROM analyst_consensus ac
+    JOIN (SELECT bank, MAX(as_of_date) AS d FROM analyst_consensus GROUP BY bank) latest
+      ON latest.bank = ac.bank AND latest.d = ac.as_of_date
+    ORDER BY ac.bank"""
+
+
+def latest_per_bank(conn) -> list:
+    """Each bank's newest consensus row (sqlite3.Row-compatible tuples)."""
+    return conn.execute(LATEST_PER_BANK_SQL).fetchall()
+
+
 def upsert(rows: list[dict]) -> int:
     """One snapshot per (bank, date). Re-running on the same day REPLACES that
     day's row rather than creating a duplicate, so the batch stays idempotent

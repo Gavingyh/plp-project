@@ -29,7 +29,7 @@ flowchart LR
     c5["Bank entity recognition<br/>and resolution<br/><i>TA · NMSM</i>"]
     c6["Sentiment: fine-tuned FinBERT,<br/>trained, below base on macro-F1<br/><i>TPML · NMSM</i>"]
     c7["Annotation, kappa at least 0.6<br/><i>TA</i>"]
-    c8["Sentiment index, dashboard<br/><i>NMSM</i>"]
+    c8["Sentiment index, served by the API<br/><i>NMSM</i>"]
     c9["Chatbot with tool calling<br/><i>CNI</i>"]
   end
 
@@ -76,13 +76,13 @@ Each row names the file and line an element comes from, and the text that line m
 | task 2: aspect categorisation | `docs/PLAN.md:66` | `| **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 |` |
 | DNN, task 4: sentiment | `docs/PLAN.md:67` | `| **Sentiment classification** (fine-tuned FinBERT) | the DNN; text-mining task 4 |` |
 | labels: annotation | `docs/PLAN.md:68` | `| Annotation | labels |` |
-| sentiment mining: index, dashboard | `docs/PLAN.md:69` | `| Sentiment index, dashboard | sentiment mining |` |
+| sentiment mining: index, served by the API | `docs/PLAN.md:69` | `| Sentiment index, served by the API | sentiment mining |` |
 | conversational UI: chatbot | `docs/PLAN.md:70` | `| **Chatbot** (tool calling over the index and evidence) | conversational UI |` |
 | module abbreviations | `docs/PLAN.md:72` | `Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,` |
 | aspect discovery is built | `aspects/discover.py:49` | `def run(min_cluster_size: int = 10)` |
 | segmentation is built | `preprocess/segment.py:35` | `def segment(text: str)` |
 | fine-tuning is built | `train/finetune.py:235` | `def run(seed: int = 42` |
-| base FinBERT scores today | `dashboard/app.py:133` | `"consensus aggregates rather than analyst reports, scores come from base "` |
+| base FinBERT scores today | `docs/api-integration.md:161` | `**Scores come from base FinBERT, zero-shot.**` |
 | annotation done | `docs/evidence/annotation-agreement-2026-09-27.md:34` | `| candidates, both splits | 1,277 | 0.952 | **0.926** |` |
 | fine-tuned, below base | `docs/evidence/finetune-2026-09-30.md:28` | `| fine-tuned FinBERT, 3 seeds |` |
 

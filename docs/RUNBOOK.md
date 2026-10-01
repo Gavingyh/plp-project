@@ -30,7 +30,7 @@ The pipeline runs without any API key. Keys only add sources:
 |---|---|---|
 | *(none)* | Reddit, earnings PDFs, Yahoo consensus, local chatbot | — |
 | `NEWSAPI_KEY` | news articles (~1 month lookback on free tier) | optional |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | hosted chatbot model | optional |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | hosted chatbot model (`OPENAI_API_KEY` with `OPENAI_BASE_URL` for any OpenAI-compatible provider, such as Groq) | optional |
 
 ---
 
@@ -335,7 +335,28 @@ products and people may review them, and its terms say not to send
 sensitive, confidential or personal information: test with questions whose
 tool results are numbers, and keep evidence searches (which return Reddit
 text) to the local model. Check the terms again before wider use:
-https://ai.google.dev/gemini-api/terms. Two warnings
+https://ai.google.dev/gemini-api/terms.
+
+**Any OpenAI-compatible provider** (Groq, NVIDIA NIM, OpenRouter, …) goes
+through the `openai` backend with its address in `OPENAI_BASE_URL`. For
+Groq's free tier: create a key at https://console.groq.com/keys, consider
+switching on Zero Data Retention in its Data Controls settings (evidence
+searches send Reddit text), and put three lines in `.env`:
+
+```bash
+OPENAI_BASE_URL=https://api.groq.com/openai/v1
+OPENAI_API_KEY=<the Groq key>
+OPENAI_MODEL=openai/gpt-oss-120b        # or llama-3.3-70b-versatile, qwen/qwen3.8-27b
+```
+
+With that key set, auto-detection picks this backend over Gemini and Ollama;
+set `CHATBOT_BACKEND` to choose another. Groq's free tier allowed 8,000
+tokens a minute on 2026-09-30, about one question a minute with this
+chatbot's prompt and tools; the backend waits out a 429 or 503 (after
+Groq's `Retry-After` when sent) four times. Not yet run against Groq: the
+first successful answer is this setup's verification.
+
+Two warnings
 can be appended to an answer, and both mean "don't trust this part":
 
 - `⚠️ VERIFICATION WARNING`: the model cited evidence (a quote, sentence id or
@@ -385,7 +406,15 @@ Runs `chatbot/eval_gold_set.py` against the chatbot and writes:
   input guard answered, and how many answers carried an unverified figure
 
 Use `--tag` to keep runs apart, and `CHATBOT_TEMPERATURE` to compare decoding
-settings.
+settings. Gold set v2 on each Groq model, one after another (the free tier's
+rate limit makes each run slow, roughly 45 minutes):
+
+```bash
+for m in openai/gpt-oss-120b llama-3.3-70b-versatile qwen/qwen3.8-27b; do
+  OPENAI_MODEL=$m HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.run_eval \
+      --backend openai --set v2 --tag "groq_${m//[^A-Za-z0-9.]/_}_v2"
+done
+```
 
 The number check flags figures no tool returned; it doesn't prove the
 unflagged ones are used correctly. Read the transcript for that.

@@ -203,6 +203,10 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="title"><label for="p-hosted">Decide on the OpenAI and Gemini backends (O4)</label><span class="tag when">By ~19 Oct</span></div>
         <div class="why">Provide a key for each so they can be tested, or stop claiming they work.</div>
       </div></li>
+      <li class="item"><input type="checkbox" id="p-groq"><div class="body">
+        <div class="title"><label for="p-groq">Get a free Groq API key for larger chatbot models</label><span class="tag when">Before O3</span></div>
+        <div class="why">The code is ready: the <code>openai</code> backend reaches Groq through <code>OPENAI_BASE_URL</code>. Create a key at console.groq.com, consider switching on Zero Data Retention, and add the three lines in the RUNBOOK (Chatbot backends) to <code>.env</code>. Then gold set v2 runs on <code>openai/gpt-oss-120b</code>, <code>llama-3.3-70b-versatile</code> and <code>qwen/qwen3.8-27b</code> (RUNBOOK, Evaluating the chatbot), giving three larger models to compare with the local 3B and 8B. Optional: an NVIDIA NIM key (Llama 3.3 70B), same backend.</div>
+      </div></li>
       <li class="item"><input type="checkbox" id="p-eval"><div class="body">
         <div class="title"><label for="p-eval">Chatbot evaluation that needs people</label><span class="tag when">19–25 Oct</span></div>
         <div class="why">Read transcripts for numerical fidelity; rate a sample of answers so the LLM judge can be calibrated; run the SASSI questionnaire with 5–8 users.</div>

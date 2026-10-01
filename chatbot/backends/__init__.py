@@ -13,6 +13,8 @@ Env vars (all optional):
   CLAUDE_MODEL      default "claude-sonnet-5"
   OPENAI_MODEL      default "gpt-4o-mini" (NOT live-tested — see
                     openai_backend.py docstring)
+  OPENAI_BASE_URL   default "https://api.openai.com/v1"; any OpenAI-compatible
+                    provider, e.g. "https://api.groq.com/openai/v1"
   GEMINI_MODEL      default "gemini-3.8-flash"; GEMINI_CHAT_MODEL also read
                     (NOT live-tested, and carries
                     more real risk than the OpenAI backend — see
@@ -70,6 +72,7 @@ def get_backend(name: str | None = None) -> LLMBackend:
             api_key=os.environ.get("OPENAI_API_KEY", ""),
             model=os.environ.get("OPENAI_MODEL", OPENAI_DEFAULT_MODEL),
             temperature=temperature,
+            base_url=os.environ.get("OPENAI_BASE_URL") or None,
         )
     if name == "gemini":
         return GeminiBackend(

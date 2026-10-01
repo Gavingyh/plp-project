@@ -131,6 +131,70 @@ def test_openai_backend_401_gives_clear_error(monkeypatch):
         backend.ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
 
 
+def test_openai_backend_uses_a_compatible_providers_base_url(monkeypatch):
+    fake_post = _FakePost([_OPENAI_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.groq.com/openai/v1/")
+    monkeypatch.setenv("OPENAI_MODEL", "openai/gpt-oss-120b")
+    backend = get_backend("openai")
+    backend.ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert fake_post.requests[0]["url"] == "https://api.groq.com/openai/v1/chat/completions"
+    assert fake_post.requests[0]["json"]["model"] == "openai/gpt-oss-120b"
+
+
+def test_openai_backend_defaults_to_openai(monkeypatch):
+    fake_post = _FakePost([_OPENAI_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    get_backend("openai").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert fake_post.requests[0]["url"] == "https://api.openai.com/v1/chat/completions"
+
+
+def test_openai_backend_sends_back_only_standard_message_fields(monkeypatch):
+    """A reasoning model's extra fields (Groq's gpt-oss returns `reasoning`) aren't echoed back."""
+    with_reasoning = copy.deepcopy(_OPENAI_TOOL_CALL_RESPONSE)
+    with_reasoning["choices"][0]["message"]["reasoning"] = "I should call get_sentiment."
+    fake_post = _FakePost([with_reasoning, _OPENAI_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    OpenAIBackend(api_key="k").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assistant = next(m for m in fake_post.requests[1]["json"]["messages"] if m["role"] == "assistant")
+    assert set(assistant) == {"role", "content", "tool_calls"} and assistant["content"] == ""
+
+
+def test_openai_backend_waits_out_a_rate_limit(monkeypatch):
+    fake_post = _FakePost([_OPENAI_FINAL_ANSWER_RESPONSE])
+    statuses = iter([429, 503, 200])
+    waits = []
+
+    class _Limited:
+        text = "rate limited"
+
+        def __init__(self, code, headers):
+            self.status_code, self.headers = code, headers
+
+    def flaky_post(url, **kwargs):
+        code = next(statuses)
+        if code == 429:
+            return _Limited(429, {"retry-after": "7"})
+        if code == 503:
+            return _Limited(503, {})
+        return fake_post(url, **kwargs)
+
+    monkeypatch.setattr("requests.post", flaky_post)
+    monkeypatch.setattr("chatbot.backends.openai_backend.time.sleep", waits.append)
+    answer = OpenAIBackend(api_key="k").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert answer == "The sentiment for DBS is neutral."
+    assert waits == [7.0, 15]                        # Retry-After when given, else the second default
+
+
+def test_openai_backend_400_includes_error_body(monkeypatch):
+    monkeypatch.setattr("requests.post", _FakePost([{}], status_code=400))
+    with pytest.raises(RuntimeError, match="fake error body"):
+        OpenAIBackend(api_key="k").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+
+
 # ---------------------------------------------------------------------------
 # Gemini backend
 # ---------------------------------------------------------------------------

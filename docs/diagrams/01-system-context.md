@@ -62,7 +62,8 @@ doesn't show internals (see [02](02-runtime.md) and [04](04-pipeline.md)) or the
 feed, which has a scraper (`ingest/cna_scraper.py`) that writes a JSON file and is not
 connected to the system. Alpha Vantage is drawn dashed because its adapter runs but no
 SGX ticker is indexed, so it contributes nothing. Of the hosted backends, Claude and
-(since 2026-09-30) Gemini have returned real responses; OpenAI is implemented but unverified.
+(since 2026-09-30) Gemini have returned real responses; OpenAI is implemented but unverified (it also
+reaches any OpenAI-compatible provider, such as Groq, through `OPENAI_BASE_URL`).
 
 ## Sources
 
@@ -85,9 +86,9 @@ Each row names the file and line an element comes from, and the text that line m
 | Wayback Machine | `ingest/earnings_fetch_uob.py:49` | `CDX_URL = "http://web.archive.org` |
 | Ollama | `chatbot/backends/ollama_backend.py:32` | `DEFAULT_BASE_URL = "http://localhost:11434"` |
 | Claude | `chatbot/backends/claude_backend.py:36` | `import anthropic` |
-| OpenAI | `chatbot/backends/openai_backend.py:36` | `api.openai.com/v1/chat/completions` |
-| OpenAI unverified | `chatbot/backends/openai_backend.py:4` | `NOT VERIFIED AGAINST THE LIVE API` |
+| OpenAI, or any compatible provider via `OPENAI_BASE_URL` | `chatbot/backends/openai_backend.py:46` | `DEFAULT_BASE_URL = "https://api.openai.com/v1"` |
+| OpenAI unverified | `chatbot/backends/openai_backend.py:7` | `NOT VERIFIED AGAINST THE LIVE API` |
 | Gemini verified | `chatbot/backends/gemini_backend.py:4` | `VERIFIED against the live API on 2026-09-30` |
 | Gemini | `chatbot/backends/gemini_backend.py:46` | `generativelanguage.googleapis.com` |
-| Ollama is the default without a key | `chatbot/backends/__init__.py:46` | `return "ollama"` |
+| Ollama is the default without a key | `chatbot/backends/__init__.py:48` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

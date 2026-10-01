@@ -654,3 +654,10 @@ to the database.
 - **Judge against the harness** (`1b665fb`). `chatbot.judge checks` scores
   the judge on answers the harness flagged for invented citations, with no
   human ratings needed.
+- **Larger hosted models through the OpenAI backend.** It now reads
+  `OPENAI_BASE_URL`, so any OpenAI-compatible provider works. Groq's free
+  tier offers `openai/gpt-oss-120b`, `llama-3.3-70b-versatile` and
+  `qwen/qwen3.8-27b`. It retries rate limits and sends back only standard
+  message fields. Setup and the three-model gold-set loop are in the
+  RUNBOOK. It is unverified until someone adds a Groq key: that's on the
+  submission checklist.

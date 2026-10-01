@@ -105,5 +105,5 @@ Each row names the file and line an element comes from, and the text that line m
 | temperature | `chatbot/backends/base.py:33` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:38` | `class OllamaBackend(LLMBackend):` |
 | ClaudeBackend | `chatbot/backends/claude_backend.py:19` | `class ClaudeBackend(LLMBackend):` |
-| OpenAIBackend | `chatbot/backends/openai_backend.py:39` | `class OpenAIBackend(LLMBackend):` |
+| OpenAIBackend | `chatbot/backends/openai_backend.py:51` | `class OpenAIBackend(LLMBackend):` |
 | GeminiBackend | `chatbot/backends/gemini_backend.py:77` | `class GeminiBackend(LLMBackend):` |

@@ -60,6 +60,16 @@ exact corpus the report describes.
 
 ## Needs a human
 
+> **Updated 2026-10-01.** Items 2 and 3 below describe 26 Sep and are
+> superseded: the first labelling round is done (1,277 rows, sentiment κ
+> 0.93), the taxonomy is ten aspects (DESIGN decision 21), and the LLM
+> aspect classifier is built and evaluated but not run on the corpus. Gemini
+> was verified on 30 Sep (item 5). The current list is "Needs a human (night
+> 1)" at the end of the night 1 run log below: whether the fine-tuned model
+> scores the corpus, whether to run the aspect classifier on it, the README
+> fixes (now made), the Opus review queues and the wealth-versus-retail
+> boundary. Item 1, rotating the keys, is still open.
+
 Ordered by urgency. Updated 2026-09-26; the full sequence is in
 [PLAN.md](PLAN.md) and a tickable list in
 [submission-checklist.html](submission-checklist.html).
@@ -197,6 +207,8 @@ repository. One person can hold more than one role. Tasks per role are in
 | `scripts/start.sh` refuses port 8501 | Another project's Streamlit is on it | Use `PLP_DASHBOARD_PORT`, or stop that process yourself. The script will not kill it for you |
 | Chatbot answer carries a verification warning | The model cited evidence it never retrieved | Do not trust that answer |
 | Dashboard says "No sentiment data yet" | Pipeline has not run, or `data/plp.db` is missing | See RUNBOOK |
+| `pip install` fails: `No matching distribution found for torch>=2.9.0` | The venv was made with Python 3.9 (a Mac's built-in `python3`) | Recreate it with Python 3.10 or newer, e.g. `python3.14 -m venv .venv-plp` |
+| A long run stops for an hour, then carries on | The Mac slept: low battery, or the lid closed. `caffeinate -i` prevents neither | Keep it plugged in with the lid open |
 
 ---
 
@@ -572,9 +584,9 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
    about 24 h on this Mac, qwen3:4b about 16 h, both about 40 h) and what
    to do where the two disagree (24% of sentences, each right under half the
    time): keep llama's answer, `other`, or unassigned.
-3. The four README fixes in
-   [install-test-2026-10-01.md](evidence/install-test-2026-10-01.md),
-   above all naming Python 3.10 or newer.
+3. ~~The four README fixes in
+   [install-test-2026-10-01.md](evidence/install-test-2026-10-01.md).~~
+   Made on 1 Oct, with RUNBOOK, STATUS and both specs brought up to date.
 4. The Opus review queues (202 aspect, 173 sentiment rows; 43 and 37 on the
    test split), and where a retail customer's investment products belong,
    wealth or retail banking (63 rows), before the next labelling round.

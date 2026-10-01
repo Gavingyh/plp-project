@@ -8,9 +8,10 @@ adjacent ground and are not repeated here: [DESIGN.md](../DESIGN.md) explains
 [STATUS.md](../STATUS.md) what is and is not finished. Where this document
 states a limitation, STATUS is the authority and this is a summary.
 
-Current as of 2026-09-26. Corpus figures are from the database on that date
-(the corpus is frozen from then); requirements marked **Planned** were decided
-on 2026-09-26 and are sequenced in [PLAN.md](../PLAN.md).
+Current as of 2026-09-26, with labelling, the fine-tuned model and aspect
+categorisation updated on 2026-10-01. Corpus figures are from the database on
+2026-09-26 (the corpus is frozen from then); requirements marked **Planned**
+were decided on 2026-09-26 and are sequenced in [PLAN.md](../PLAN.md).
 
 ---
 
@@ -163,21 +164,21 @@ answers). C8–C11 apply the Conversational UIs module and are DESIGN decision
 | L3 | Annotators are not shown model opinions when labelling the test set | `preprocess/export_blind_test.py` writes a sheet carrying sentence, aspect and provenance only | Done |
 | L4 | Pre-labelling reduces annotation to correction | `train/llm_prelabel.py` fills `llm_prelabel` and `llm_rationale`, never `label`; checkpointed and resumable | Done, 997 of 998 rows |
 | L5 | Agreement between annotators is measured before dividing the work | `train/agreement.py` reports Cohen's κ against a 0.6 target | Done |
-| L6 | A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Met, result negative**: three seeds, macro-F1 0.547 ± 0.013 against base FinBERT's 0.571 ([evidence](../evidence/finetune-2026-09-30.md)) |
+| L6 | A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Met**: with the readable aspect label, three seeds score macro-F1 0.604 ± 0.035 (0.615 averaged) against base FinBERT's 0.571, which keeps the higher accuracy ([evidence](../evidence/finetune-fixes-2026-10-01.md)); the 30 Sep configuration scored 0.547 ± 0.013 |
 
-| L7 | Annotators choose the aspect and the sentiment for each sentence | Re-drawn candidate set across Reddit, earnings and news; ≥ 200 rows per sentiment class overall, ~80 per aspect; blind test sheet; κ reported for aspect and for sentiment | **Planned** — DESIGN decision 17 |
+| L7 | Annotators choose the aspect and the sentiment for each sentence | Re-drawn candidate set across Reddit, earnings and news; ≥ 200 rows per sentiment class overall, ~80 per aspect; blind test sheet; κ reported for aspect and for sentiment | **Partly met** by the 2026-09-27 round: 1,277 rows (617 Reddit, 477 earnings, 183 news), 275 / 543 / 459 negative / neutral / positive, sentiment κ 0.93. Not met: five aspects below 80 rows, and aspect κ between people (only human–LLM, 0.80, DESIGN decision 22) |
 
-L6 blocks the project's deep-neural-network deliverable. It is the single
-highest-value outstanding task, and L7 now precedes it.
+What L7 still owes is human–human aspect agreement and more rows for the
+five smallest aspects.
 
 ### 4.5 Text-mining tasks
 
 | # | Task | Acceptance criteria | Status |
 |---|---|---|---|
-| T1 | Aspect discovery by clustering | FinBERT embeddings, UMAP, HDBSCAN over the full corpus; cluster count, noise share and correspondence to the aspects reported | Done on 36,884 sentences (2026-09-11, 281 clusters, 67% noise); re-run with a `min_cluster_size` sweep once CNA is loaded |
-| T2 | Aspect categorisation | A local LLM assigns each sentence one of the four proposal aspects or `other`; accuracy and macro-F1 against the human aspect labels, with seed-centroid assignment as baseline | **Planned** — DESIGN decision 16 |
+| T1 | Aspect discovery by clustering | FinBERT embeddings, UMAP, HDBSCAN over the full corpus; cluster count, noise share and correspondence to the aspects reported | Done on 36,884 sentences (2026-09-11, 281 clusters, 67% noise); swept over `min_cluster_size` on all 44,345 sentences on 2026-09-30 (10: 358 clusters, 65% noise; 100: 25 clusters, 52% noise; [evidence](../evidence/aspect-discovery-sweep-2026-09-30.md)) |
+| T2 | Aspect categorisation | A local LLM assigns each sentence one of the ten aspects (DESIGN decision 21) or `other`; accuracy and macro-F1 against the human aspect labels, with seed-centroid assignment as baseline | **Evaluated, not applied** (2026-10-01): `llama3.1:8b` top-1 0.729, macro-F1 0.679, against seed-centroid 0.413 and 0.296 ([evidence](../evidence/llm-aspect-classifier-2026-10-01.md)); a corpus run waits for the team |
 | T3 | Bank entity recognition and resolution | Organisation mentions recognised and resolved to DBS, OCBC, UOB or not the bank; precision, recall and F1 on a ~200-sentence gold set against alias matching | **Planned** — DESIGN decision 18 |
-| T4 | Sentiment classification (fine-tuned FinBERT) | = L6: per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Done**, below base FinBERT (see L6) |
+| T4 | Sentiment classification (fine-tuned FinBERT) | = L6: per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Done**: 0.604 ± 0.035 against base FinBERT's 0.571 (see L6) |
 
 ---
 
@@ -188,24 +189,26 @@ highest-value outstanding task, and L7 now precedes it.
 | Requirement | Satisfied by | Code | Status |
 |---|---|---|---|
 | Conversational user interface | Tool-calling chatbot with RAG evidence retrieval, on CLI, dashboard tab and API | `chatbot/` | Done |
-| At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, planned classifier and NER modules, `train/finetune.py` | T1 done; T2, T3 planned; T4 blocked on labelling |
+| At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, `aspects/llm_classify.py`, planned NER module, `train/finetune.py` | T1 and T4 done; T2 evaluated, not applied; T3 planned |
 | A sentiment mining component | Overall and aspect-based sentiment index across four sources | `sentiment/`, `aggregate/` | Done |
-| At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Met**: trained on 1,277 labelled rows, three seeds; below base FinBERT on macro-F1 |
+| At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Met**: trained on 1,277 labelled rows, three seeds; ahead of base FinBERT on macro-F1, behind on accuracy |
 
 The DNN requirement is met since 2026-09-30: FinBERT fine-tuned on the
-team's labels, evaluated over three seeds against three baselines. Its
-result is negative on macro-F1 (0.547 ± 0.013 against base FinBERT's 0.571)
-and positive on the minority negative class; the report has to explain both
-([evidence](../evidence/finetune-2026-09-30.md)).
+team's labels, evaluated over three seeds against three baselines. With the
+configuration chosen on 2026-10-01 it leads base FinBERT on macro-F1 (0.604 ±
+0.035 against 0.571, about one seed standard deviation) and trails it on
+accuracy (0.66 against 0.70), because it calls more neutral sentences
+positive or negative; the report has to explain both
+([evidence](../evidence/finetune-fixes-2026-10-01.md)).
 
 ### Proposal commitments
 
 | Commitment | Reality | Status |
 |---|---|---|
 | Four data streams | All four exist. News now spans every month from Jan 2023 (5,812 articles); consensus is aggregates, not text | Done |
-| Aspects: dividend policy, asset quality, NIM, management guidance | Kept. Seed-centroid assignment failed validation; replaced by LLM assignment, one aspect per sentence (decided 2026-09-26, to confirm with the supervisor) | **Planned** |
-| ~1,000 labelled examples, 200–300 per class | 0 labelled. The target is read as per sentiment class overall; the candidate set is being re-drawn for aspect + sentiment labelling | Blocked |
-| Accuracy, precision, recall, F1 per class, macro-F1 on a held-out split | Implemented in `train/evaluate.py` against base FinBERT, a lexicon baseline and a classical ML baseline | Blocked on labelling |
+| Aspects: dividend policy, asset quality, NIM, management guidance | Kept within ten aspects derived from the corpus (DESIGN decision 21). Seed-centroid assignment failed validation; LLM assignment, one aspect per sentence, is built and evaluated (0.729 against 0.413) but not yet applied | Partial |
+| ~1,000 labelled examples, 200–300 per class | 1,277 labelled on 2026-09-27: 275 negative, 543 neutral, 459 positive (the target read as per sentiment class overall) | Done |
+| Accuracy, precision, recall, F1 per class, macro-F1 on a held-out split | `train/evaluate.py` on the 299-row random test split, against base FinBERT, a lexicon baseline and a classical ML baseline | Done |
 | Dashboard with overall and aspect sentiment, batch refreshed | Done, five tabs | Done |
 | Chatbot answering with supporting evidence | Done, with the grounding caveats in 4.3 | Partial |
 
@@ -215,12 +218,14 @@ and positive on the minority negative class; the report has to explain both
 
 Summarised from [STATUS.md](../STATUS.md), which is the authority.
 
-1. **The fine-tuned model doesn't beat base FinBERT on macro-F1** (0.547 ±
-   0.013 against 0.571, [evidence](../evidence/finetune-2026-09-30.md)). All stored sentiment is base
-   FinBERT, zero-shot.
-2. **Aspect assignment is not meaningful yet.** Plain factual sentences get
-   three or four aspects, and evaluative ones fall to `other`, so named-aspect
-   scores are nearly all neutral. Being replaced (T2).
+1. **The fine-tuned model leads base FinBERT only on macro-F1** (0.604 ±
+   0.035 against 0.571, about one seed standard deviation; accuracy 0.66
+   against 0.70; [evidence](../evidence/finetune-fixes-2026-10-01.md)). All
+   stored sentiment is base FinBERT, zero-shot.
+2. **Aspect assignment is not meaningful yet.** Embedding similarity gives a
+   sentence 6.4 of the ten aspects on average and picks the human's aspect
+   first 41% of the time. The LLM classifier that replaces it (T2) picks it
+   73% of the time but hasn't been run on the corpus.
 3. **Local models fabricate citations**, and the check detects rather than
    prevents.
 4. **Invented figures and citations are flagged, not prevented.** The local

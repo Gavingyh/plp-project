@@ -142,7 +142,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <span class="step">Test results</span><span class="arrow">→</span>
         <span class="step">Report and video</span>
       </div>
-      <p class="note">The rubric's deep-neural-network requirement is the fine-tuned classifier. Since 30 Sep it exists: trained on the team's first labelled round (1,277 rows), it scores macro-F1 0.547 ± 0.013 against base FinBERT's 0.571. What's left is improving it and interpreting the result.</p>
+      <p class="note">The rubric's deep-neural-network requirement is the fine-tuned classifier. Since 30 Sep it exists: trained on the team's first labelled round (1,277 rows), with the readable aspect label as input (1 Oct) it scores macro-F1 0.604 ± 0.035 over three seeds against base FinBERT's 0.571, and trails it on accuracy (0.66 against 0.70). What's left is deciding whether it scores the corpus, and interpreting the result.</p>
     </div>
   </div>
 
@@ -181,7 +181,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
       </div></li>
       <li class="item"><input type="checkbox" id="p-label"><div class="body">
         <div class="title"><label for="p-label">Label the data</label><span class="tag crit">Critical path · by ~16 Oct</span></div>
-        <div class="why">About 1,000 rows, aspect and sentiment per sentence. Test rows only from the blind sheet. Don't label the current <code>candidates.csv</code>: it's being replaced.</div>
+        <div class="why">First round done 27 Sep: 1,277 rows, aspect and sentiment per sentence, sentiment κ 0.93. Still owed: more rows for the five aspects below 80, and settling the Opus labeller's disagreements in <code>data/labeled/claude/review_*.csv</code> (202 aspect, 173 sentiment; 43 and 37 on the test split). Decide first where retail investment products belong, wealth or retail banking (63 rows).</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-ner"><div class="body">
         <div class="title"><label for="p-ner">Annotate the NER gold set</label><span class="tag when">Week 2</span></div>
@@ -233,20 +233,20 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
   <section aria-labelledby="h-ai">
     <div class="section-head">
       <div class="row"><h2 id="h-ai">AI can do these now</h2><span class="progress" data-progress="ai"></span></div>
-      <p>Decided and unblocked. Each is reviewable by a person afterwards. Already done on 26 Sep: chatbot memory, the advice and off-topic guards, and the number check (<code>docs/evidence/chatbot-harness-2026-09-26.md</code>).</p>
+      <p>Decided and unblocked. Each is reviewable by a person afterwards. Already done on 26 Sep: chatbot memory, the advice and off-topic guards, and the number check (<code>docs/evidence/chatbot-harness-2026-09-26.md</code>). On 30 Sep–1 Oct: the discovery sweep, the aspect classifier built and evaluated, fine-tuning fixes, a clean-copy install test, and Opus 5.5 as an additional labeller.</p>
     </div>
     <ul class="list" data-group="ai">
       <li class="item"><input type="checkbox" id="a-classifier"><div class="body">
         <div class="title"><label for="a-classifier">Build and run the LLM aspect classifier</label><span class="tag crit">Week 1</span></div>
-        <div class="why">A fixed prompt (role, task, the five aspect definitions, constraints, examples) returning one aspect per sentence; a 100-sentence validation sample for people to check; then the full run overnight. Decision 16.</div>
+        <div class="why">Built and evaluated 1 Oct against the 1,277 human aspect labels: <code>llama3.1:8b</code> 0.729 top-1 against 0.413 for seed-centroid (<code>docs/evidence/llm-aspect-classifier-2026-10-01.md</code>). The full corpus run (about 24 h) rewrites <code>sentence_aspects</code>, so it waits for a team call on whether to run it and what to do where two models disagree. Decision 16.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="a-redraw"><div class="body">
         <div class="title"><label for="a-redraw">Re-draw the candidate set and pre-label it</label><span class="tag crit">Week 1, after the classifier</span></div>
-        <div class="why">Stratified across Reddit, earnings and news and across banks; ≥ 200 per sentiment class overall and ~80 per aspect; a fresh random blind test split; LLM suggestions on train/dev rows only. Update the sheet export and <code>train/agreement.py</code> for aspect + sentiment.</div>
+        <div class="why">Stratified across Reddit, earnings and news and across banks; ≥ 200 per sentiment class overall and ~80 per aspect; a fresh random blind test split; LLM suggestions on train/dev rows only. Update the sheet export and <code>train/agreement.py</code> for aspect + sentiment. The 27 Sep round covered the first draw; still needed for a top-up round of the five aspects below 80 rows, and aspect agreement in <code>train/agreement.py</code> is still missing.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="a-discovery"><div class="body">
         <div class="title"><label for="a-discovery">Re-run aspect discovery with a sweep</label><span class="tag when">Week 2, after CNA</span></div>
-        <div class="why">Sweep <code>min_cluster_size</code> (the 281-cluster run used the default on a smaller corpus) and report whether <code>other</code> hides a missing aspect.</div>
+        <div class="why">Done 30 Sep on all 44,345 sentences (<code>docs/evidence/aspect-discovery-sweep-2026-09-30.md</code>).</div>
       </div></li>
       <li class="item"><input type="checkbox" id="a-ner"><div class="body">
         <div class="title"><label for="a-ner">Build and evaluate bank NER</label><span class="tag when">Week 2</span></div>
@@ -266,7 +266,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
       </div></li>
       <li class="item"><input type="checkbox" id="a-repro"><div class="body">
         <div class="title"><label for="a-repro">Test the submission from a clean copy</label><span class="tag when">Week 4, again in week 5</span></div>
-        <div class="why">Clone fresh, follow only the README, restore the snapshot, run the tests, start the dashboard.</div>
+        <div class="why">Clone fresh, follow only the README, restore the snapshot, run the tests, start the dashboard. First run done 1 Oct: works on Python 3.14; the README now names the Python version it needs (<code>docs/evidence/install-test-2026-10-01.md</code>).</div>
       </div></li>
     </ul>
   </section>

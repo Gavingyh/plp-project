@@ -55,21 +55,22 @@ criticise an app in consecutive sentences.
 |---|---|---|
 | `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection, news relevance filter and cross-source dedup | `arctic_shift`, `google_news`, `yahoo_news`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, `news_filter`, `cna_scraper` (RSS to a JSON file), `cna_archive` (CNA backfill into the database), plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
 | repository root | Batch entry points | `run_news_pull.py` (every news source, then a source × bank × month table; `--audit` re-checks stored news), `run_daily_batch.py` (news, Reddit, consensus) |
-| `preprocess/` | Documents to sentences; labelling exports | `pipeline`, `export_candidates`, `export_blind_test` |
-| `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison | `assign`, `discover`, `compare_taxonomies`, `embed_store` |
+| `preprocess/` | Documents to sentences; labelling exports; a dry-run debris filter | `pipeline`, `export_candidates`, `export_blind_test`, `fragments` (reports only) |
+| `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison, the LLM aspect classifier and assignment evaluation | `assign`, `discover`, `compare_taxonomies`, `embed_store`, `llm_classify` (evaluation only), `assignment_eval` |
 | `sentiment/` | Aspect-conditioned sentiment classification | `score` |
 | `aggregate/` | The sentiment index and continuous time series | `index` |
 | `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation | `agent`, `run_eval` |
-| `train/` | Fine-tuning, evaluation, pre-labelling, annotator agreement | `finetune`, `evaluate`, `llm_prelabel`, `agreement` |
+| `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `opus_labels` |
 | `api/` | FastAPI REST layer | `uvicorn api.main:app` |
 | `dashboard/` | Streamlit UI | `streamlit run dashboard/app.py` |
 | `config/` | Aspect taxonomy, logging configuration | — |
 | `scripts/` | Service lifecycle, overnight backfill, model comparison, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
 
-Planned (DESIGN decisions 16–18, not yet in the code): an LLM aspect
-classifier replacing `aspects/assign.py`'s seed-centroid matching, a bank
-entity recognition step, and aspect + sentiment labelling support in
-`preprocess/` and `train/agreement.py`. Decision 19's chatbot harness is
+The LLM aspect classifier of DESIGN decision 16 is built
+(`aspects/llm_classify.py`) and evaluated against the human aspect labels,
+but not yet wired into the pipeline: `aspects/assign.py`'s seed-centroid
+matching still fills `sentence_aspects`. Still planned (decisions 17–18): a
+bank entity recognition step, and aspect agreement in `train/agreement.py`. Decision 19's chatbot harness is
 built: `chatbot/guards.py` (advice, off-topic, figure and sentence-id checks)
 and `Conversation` / `answer_turn` in `chatbot/agent.py` (memory, state,
 per-turn record); `/chat` accepts earlier turns as `history`.
@@ -220,7 +221,7 @@ Local models available through Ollama:
 | `llama3.1:8b` | 4.9 GB | Fabricates at 13%; slower. The better default where it fits |
 | `phi4-mini` | 2.5 GB | Called a tool 0 of 16 times; fabricated in 83% of answers |
 | `gemma3:4b` | 3.3 GB | No Ollama tool-calling support; all 23 questions error |
-| `qwen3:4b` | 2.5 GB | Emits a hidden reasoning chain first; roughly 7x slower per call |
+| `qwen3:4b` | 2.5 GB | Emits a hidden reasoning chain first; roughly 7x slower per chatbot call. For aspect classification `--no-think` turns it off (1.3 s a sentence) |
 
 ---
 
@@ -375,7 +376,12 @@ the two models the test set exists to compare.
 
 **Agreement.** Two annotators label the same ~150 rows independently; Cohen's
 κ must reach 0.6 before the work is divided. Watch the gap between κ and raw
-agreement, since the corpus is 87% neutral under base FinBERT.
+agreement, since 70% of corpus sentences are neutral under base FinBERT.
+
+**Additional rater.** Opus 5.5 labelled the 1,277 sentences blind as one
+more rater (DESIGN decision 22); its agreement with the human labels (aspect
+κ 0.80, sentiment κ 0.79) is a human–LLM figure, and its disagreements are a
+review queue, never applied automatically.
 
 **Required baselines**, all on the same frozen test set: base FinBERT
 zero-shot, a lexicon method, and a classical ML method (TF-IDF plus logistic
@@ -387,26 +393,35 @@ F1 is seed noise at this data size.
 
 **Training configuration** in `train/finetune.py`: sentence-pair input
 `[CLS] sentence [SEP] aspect [SEP]` into a 3-way softmax, one model for all
-aspects rather than one per aspect, learning rate 2e-5, 3–5 epochs, batch 16,
-max length 128, 10% warmup, early stopping on dev macro-F1, per-batch
+aspects rather than one per aspect, learning rate 2e-5, batch 16, max length
+128, 10% warmup, early stopping on dev macro-F1 (patience 2), per-batch
 padding, and optional class or source weighting (`--class-weights`,
 `--source-weights`; off by default). Models trained before 2026-10-01 used
-plain cross-entropy: weights were computed but never applied.
+plain cross-entropy: weights were computed but never applied. The
+configuration chosen on 2026-10-01 by 5-fold cross-validation is up to 8
+epochs with the aspect's readable label (`--aspect-text label`) as the second
+segment.
 
-**Status: not run.** Zero rows are labelled.
+**Status (2026-10-01).** Trained on 1,277 labelled rows: test macro-F1 0.604
+± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT
+zero-shot's 0.571
+([evidence](../evidence/finetune-fixes-2026-10-01.md)). The aspect
+classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
+0.413 ([evidence](../evidence/llm-aspect-classifier-2026-10-01.md)).
 
 ---
 
 ## 10. Testing
 
-379 tests, no network calls. External APIs are mocked with captured real
+438 tests in `tests/` (479 from the repository root, adding the diagram and
+notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
 
 - `tests/conftest.py` provides `temp_db`, which redirects `ingest.db.DB_PATH`
   to a throwaway file and creates every table, so tests never touch
   `data/plp.db`.
-- Runtime is about 60 seconds idle. Roughly 35 seconds is `umap`/`hdbscan`
+- All 479 ran in 45 seconds on 2026-10-01; part of that is `umap`/`hdbscan`
   import cost from the discovery tests.
 - Several tests exist because of specific real bugs and say so in their
   docstrings: silent PDF extraction failure, the SQLite parameter ceiling, the

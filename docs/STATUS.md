@@ -7,9 +7,11 @@ For reasoning behind design choices, see [DESIGN.md](DESIGN.md). For how to
 run anything mentioned here, see [RUNBOOK.md](RUNBOOK.md). For what happens
 next, see [PLAN.md](PLAN.md).
 
-**Last updated 2026-09-26**, after the news backfill, a full pipeline run on
-the news, and the decisions recorded in PLAN.md section 2. Sections that still
-describe an earlier state carry a dated note saying so.
+**Last updated 2026-10-01**, after the fine-tuning fixes, the LLM aspect
+classifier's evaluation and the Opus 5.5 labeller; before that, 2026-09-26,
+after the news backfill, a full pipeline run on the news, and the decisions
+recorded in PLAN.md section 2. Sections that still describe an earlier state
+carry a dated note saying so.
 
 ---
 
@@ -18,8 +20,8 @@ describe an earlier state carry a dated note saying so.
 | claim you might make | why you can't, yet |
 |---|---|
 | "DBS/OCBC show more positive sentiment than UOB" | No longer an artifact of missing UOB data — all three banks now have earnings coverage (DBS 9,093 sentences, UOB 1,600, OCBC 1,561). DBS still carries ~6x the earnings volume of the other two, so check the per-source breakdown before making a blended claim. |
-| "Fine-tuning improved sentiment classification" | It didn't, on macro-F1: 0.547 ± 0.013 over three seeds against base FinBERT zero-shot's 0.571 on the 299-row test split. It does find far more negative sentences (recall 0.54 against 0.21). The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT ([evidence](evidence/finetune-2026-09-30.md)). |
-| "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
+| "Fine-tuning improved sentiment classification" | On macro-F1, modestly, and only since 2026-10-01: with the aspect's readable label as input, test macro-F1 0.604 ± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT zero-shot's 0.571 on the 299-row test split; the gap is about one seed standard deviation ([evidence](evidence/finetune-fixes-2026-10-01.md)). Base FinBERT still has the higher accuracy (0.70 against 0.66): the fine-tuned model calls neutral sentences positive or negative more often. The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT. |
+| "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16): an LLM classifier (`llama3.1:8b`) matches the human aspect on 0.729 of the 1,277 labelled sentences against 0.413 for the embedding match, but hasn't been run on the corpus ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
 | "The chatbot cites its sources" | Local models fabricate citations — 43–48% of answers on the default model, across two runs. A code check flags this, but it detects rather than prevents. See the evaluation below. |
 | "GPT / Gemini backends work" | Gemini works: verified live on 2026-09-30 on numbers-only questions ([evidence](evidence/gemini-backend-2026-09-30.md)). GPT has never been run: no OpenAI key exists. |
 | "The chatbot's answers are grounded" | The harness now flags invented figures and citations and answers advice and off-topic questions itself, but the local 3B model still invents citations in 43–48% of answers ([evidence](evidence/chatbot-harness-2026-09-26.md)). A flagged answer is flagged, not corrected. |
@@ -68,7 +70,8 @@ By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase: 12,600 lines of Python (8,670 excluding tests), 379 tests.
+Codebase on 2026-10-01: 14,400 lines of Python in git (9,800 excluding
+tests), 438 tests in `tests/` (479 with the diagram and notebook checks).
 
 These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
 loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
@@ -97,19 +100,30 @@ per-source cleaning, per-sentence bank attribution, near-duplicate removal.
 
 **Aspects.** FinBERT embeddings, offline clustering for taxonomy discovery,
 frozen-centroid assignment per batch, and a tool for comparing candidate
-taxonomies quantitatively.
+taxonomies quantitatively. An LLM aspect classifier on local Ollama models
+(`aspects/llm_classify.py`), evaluated against the human aspect labels but
+not yet applied to the corpus.
 
 **Sentiment & aggregation.** Base FinBERT scoring, per-bank/aspect index with
 volume shrinkage, 7d/30d/all-time windows, per-source breakdown.
+
+**Labels and the fine-tuned model.** One labelling round of 1,277 sentences
+(aspect and sentiment), cleaned of train/test leakage and duplicates. FinBERT
+fine-tuned on (sentence, readable aspect label) pairs, three seeds saved with
+checksums, evaluated against all three baselines; not used for scoring. Opus
+5.5 labelled the same sentences as an additional rater (DESIGN decision 22),
+giving the first aspect agreement figure.
 
 **Interfaces.** Streamlit dashboard (including a Chat tab), FastAPI REST API,
 chatbot with four pluggable model backends and RAG evidence retrieval.
 Suggested starter questions are generated from the index rather than
 hardcoded, so the UI never offers a question the data cannot answer.
 
-**Engineering.** 379 tests (external APIs mocked with captured payloads),
+**Engineering.** 438 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
-start/stop/status scripts for the dashboard and API.
+start/stop/status scripts for the dashboard and API. A clean copy installs
+and runs from the README on Python 3.14
+([evidence](evidence/install-test-2026-10-01.md)).
 
 ---
 
@@ -228,6 +242,16 @@ trustworthy than the check itself.
 
 ### 1. Labelling — the critical blocker
 
+> **Updated 2026-10-01.** Opus 5.5 labelled all 1,277 rows blind as an
+> additional rater (DESIGN decision 22). Against the human labels: aspect κ
+> 0.80, sentiment κ 0.79, every sentiment disagreement on the neutral
+> boundary. That is a human–LLM figure; human–human aspect agreement is still
+> unmeasured. The disagreements (202 aspect, 173 sentiment) wait in
+> `data/labeled/claude/review_*.csv` for people to settle, and the largest
+> group, 63 rows, is a guideline gap: whether a retail customer's investment
+> products are wealth or retail banking
+> ([evidence](evidence/opus-labeller-2026-10-01.md)).
+>
 > **Updated 2026-09-30.** The first round is done: 1,300 rows labelled by two
 > people on 2026-09-27 under the 10-aspect taxonomy, 1,277 after removing
 > duplicates and train/test leakage, sentiment κ 0.93 (test sheet 0.96).
@@ -322,6 +346,13 @@ The per-source breakdown remains the honest way to read blended figures.
 
 ### 3. Aspect taxonomy not validated
 
+> **Updated 2026-10-01.** The LLM classifier is built and evaluated:
+> `llama3.1:8b` top-1 0.729 and `qwen3:4b` 0.719 against the human aspect,
+> against 0.413 for embedding assignment; where the two models agree (76% of
+> sentences) they match the human 83.5% of the time. A corpus run would take
+> about 24 hours on the MacBook and rewrites `sentence_aspects`, so it waits
+> for the team ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
+>
 > **Updated 2026-09-30.** The taxonomy is now ten aspects derived from the
 > 338-cluster discovery run (DESIGN decision 21,
 > [evidence](evidence/aspect-taxonomy-2026-09-25.md)), and the corpus was

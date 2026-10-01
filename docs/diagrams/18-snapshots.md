@@ -39,7 +39,7 @@ Rendered for the report: [SVG](img/18-snapshots.svg) · [PNG](img/18-snapshots.p
 
 ## What this shows and doesn't show
 
-The database (about 103MB) is too large for GitHub, so it lives outside git as dated,
+The database (198.5 MB restored) is too large for GitHub, so it lives outside git as dated,
 compressed snapshots (DESIGN decision 15); the latest, `plp-2026-09-30.db.gz`, is the
 frozen corpus (PLAN D5), with CNA and the 10-aspect taxonomy. Checkpointing first matters: without it, recent writes can sit
 in the `-wal` file and be missing from the copy. Nothing automates the upload or the
@@ -55,15 +55,15 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| checkpoint | `docs/RUNBOOK.md:173` | `sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"` |
-| compress | `docs/RUNBOOK.md:174` | `gzip -9 -c data/plp.db > data/snapshots/plp-<date>-vN.db.gz` |
-| verify | `docs/RUNBOOK.md:175` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
-| record checksum in the README | `docs/RUNBOOK.md:176` | `# record name, size and checksum in the README` |
-| after a material change | `docs/RUNBOOK.md:170` | `### Snapshot the database after a material change` |
-| too large for git | `README.md:101` | `` `data/plp.db` (about 103MB) is too large for GitHub `` |
-| shared folder | `README.md:102` | `Download the latest snapshot from the team's shared folder` |
-| decompress | `README.md:105` | `gunzip -c plp-2026-09-30.db.gz > data/plp.db` |
-| compare checksum | `README.md:106` | `# should match the checksum below` |
-| snapshot table | `README.md:109` | `| snapshot | size | sha256 | contents |` |
-| embeddings rebuilt, not shared | `README.md:118` | `` `python -m aspects.embed_store` rebuilds from the database `` |
+| checkpoint | `docs/RUNBOOK.md:179` | `sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"` |
+| compress | `docs/RUNBOOK.md:180` | `gzip -9 -c data/plp.db > data/snapshots/plp-<date>-vN.db.gz` |
+| verify | `docs/RUNBOOK.md:181` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
+| record checksum in the README | `docs/RUNBOOK.md:182` | `# record name, size and checksum in the README` |
+| after a material change | `docs/RUNBOOK.md:176` | `### Snapshot the database after a material change` |
+| too large for git | `README.md:122` | `` `data/plp.db` (198.5 MB restored from the latest snapshot) is too large for GitHub `` |
+| shared folder | `README.md:123` | `Download the latest snapshot from the team's shared folder` |
+| decompress | `README.md:126` | `gunzip -c plp-2026-09-30.db.gz > data/plp.db` |
+| compare checksum | `README.md:127` | `# should match the checksum below` |
+| snapshot table | `README.md:130` | `| snapshot | size | sha256 | contents |` |
+| embeddings rebuilt, not shared | `README.md:139` | `` `python -m aspects.embed_store` rebuilds from the database `` |
 | decision | `docs/DESIGN.md:279` | `### 15. The database lives outside git, as dated snapshots` |

@@ -85,7 +85,9 @@ split is detailed in the checklist.
 - ~~Load the CNA feed through `ingest/news_filter.py`~~ Done 2026-09-26:
   207 articles from 2023 on (DESIGN decision 20)
 - Bank NER: gold set of ~200 sentences (people), the recognition and
-  resolution step and its evaluation (AI)
+  resolution step and its evaluation (AI). The step and the blank 201-row
+  sheet are done (1 Oct, [evidence](evidence/bank-ner-2026-10-01.md));
+  the labels are not
 - Final data snapshot and dataset description for submission (AI, reviewed)
 
 **Labelling** (critical path)
@@ -103,8 +105,9 @@ split is detailed in the checklist.
 **Interfaces**
 - Chatbot, from CNI: conversation memory, advice and off-topic guards, and
   the number check are **done** (26 Sep; [evidence](evidence/chatbot-harness-2026-09-26.md)).
-  Still to do: a larger frozen evaluation set with multi-turn scenarios,
-  retrieval metrics and a calibrated judge (AI)
+  The larger frozen set (v2, 32 questions), multi-turn scenarios, retrieval
+  metrics and the judge are built (1 Oct, [evidence](evidence/chatbot-eval-build-2026-10-01.md));
+  calibrating the judge needs people to fill `data/eval/ratings_sheet.csv`
 - SASSI user study and transcript reading (people)
 - ~~Dashboard: remove stale text, check every tab~~ The dashboard is now a
   teammate's separate project on the API (DESIGN decision 23); its contract
@@ -139,6 +142,14 @@ Overnight run, night 1 (1 Oct):
 [a clean-copy install test](evidence/install-test-2026-10-01.md).
 Also 1 Oct: [Opus 5.5 as an additional labeller](evidence/opus-labeller-2026-10-01.md)
 (DESIGN 22), which gives the first aspect agreement figure (human–LLM κ 0.80).
+1 Oct evening: [the fine-tuned model's errors and a neutral margin](evidence/error-analysis-2026-10-01.md),
+[bank entity recognition](evidence/bank-ner-2026-10-01.md) (built; its gold
+set is blank, for people), [the chatbot evaluation extended](evidence/chatbot-eval-build-2026-10-01.md)
+(gold set v2, conversations, retrieval metrics, a judge; retrieval is the
+weakest link), [what the two pending changes would do to the index](evidence/index-preview-2026-10-01.md),
+the dashboard handed to its own project (DESIGN 23, [api-integration.md](api-integration.md)),
+a [report draft](report/report-draft.md) of the factual sections and an
+[examiner's assessment](review/examiner-assessment-2026-10-01.md).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (D2 attaches sentiment to an aspect), so the aspect classifier comes first.

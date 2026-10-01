@@ -542,7 +542,15 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   Neutral sentences called polar remain the main error. The Mac slept
   12:22–13:29 (battery at 1%, then lid closed; `caffeinate -i` stops
   neither), pausing one CV fold; it resumed unharmed.
-- J2 (LLM aspect classifier): code and tests done; evaluation waits for the GPU
+- J2 (LLM aspect classifier): done
+  ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)). On the 1,277
+  human aspect labels, llama3.1:8b scores top-1 0.729 (macro-F1 0.679) and
+  qwen3:4b without thinking 0.719 (0.671), against 0.413 (0.296) for
+  seed-centroid assignment; no invalid answers. Full corpus: about 24 h
+  (llama) or 16 h (qwen) on this Mac. Where the two agree (76%), they match
+  the human label 83.5% of the time. Nothing written to the database.
+  qwen3:4b needed a `--no-think` option: thinking took 92–216 s a sentence.
+  The Mac slept again 15:51–17:20 (battery), pausing the qwen run.
 - J3 (preprocessing dry run): done, `606dde4`. 98 of 44,345 sentences
   (0.22%, all earnings PDFs) are debris; broader rules remove real
   sentiment, so preprocessing isn't where the model's errors are.

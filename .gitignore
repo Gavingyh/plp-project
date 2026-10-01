@@ -25,3 +25,6 @@ data/cna/
 
 # output of the scheduled daily batch (scripts/com.plp.dailybatch.plist)
 data/logs/daily_batch.log
+
+# LLM aspect-classifier answer cache (aspects/llm_classify.py)
+data/aspect_llm/

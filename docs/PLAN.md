@@ -131,6 +131,11 @@ Overnight experiments on 30 Sep–1 Oct:
 [centroid assignment against the human aspects](evidence/aspect-assignment-calibration-2026-09-30.md),
 [the discovery sweep](evidence/aspect-discovery-sweep-2026-09-30.md) and
 [the chatbot gold set on the rebuilt database](evidence/chatbot-eval-2026-09-30.md).
+Overnight run, night 1 (1 Oct):
+[fine-tuning fixes](evidence/finetune-fixes-2026-10-01.md),
+[the LLM aspect classifier against the human aspects](evidence/llm-aspect-classifier-2026-10-01.md),
+[a preprocessing dry run](evidence/preprocessing-dry-run-2026-10-01.md) and
+[a clean-copy install test](evidence/install-test-2026-10-01.md).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (D2 attaches sentiment to an aspect), so the aspect classifier comes first.

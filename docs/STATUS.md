@@ -52,7 +52,7 @@ to +0.23. The earlier published headlines were DBS +0.060, OCBC +0.071, UOB
 |---|---|
 | documents | 28,002 |
 | sentences | 44,345 |
-| (sentence, aspect) pairs scored | 92,498 |
+| (sentence, aspect) pairs scored | 281,744 (6.4 aspects per sentence under the ten-aspect taxonomy) |
 | date range | 6 Jan 2020 – 25 Sep 2026 |
 
 By source:

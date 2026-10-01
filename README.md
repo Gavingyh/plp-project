@@ -24,6 +24,7 @@ store. The dashboard is a separate project built on the API:
 | **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
 | **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
 | **[docs/api-integration.md](docs/api-integration.md)** | For whoever builds the dashboard: running the API, which endpoint feeds which view, example responses, the chat contract, and what the screen must say |
+| [docs/report/report-draft.md](docs/report/report-draft.md) | Draft of the report's factual sections, every figure linked to its evidence; conclusions and contributions left to the team |
 | **[docs/HANDOFF.md](docs/HANDOFF.md)** | Start here if you're new to the project — read order, open decisions, what needs a human |
 | [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | What the system does, for whom, with acceptance criteria and rubric traceability |
 | [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Data model, API contract, module map, configuration, testing |

@@ -559,6 +559,27 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   disagreement on the neutral boundary. Review queues: 202 aspect, 173
   sentiment rows in `data/labeled/claude/`; nothing applied to
   `candidates.csv` ([evidence](evidence/opus-labeller-2026-10-01.md)).
+- Verification: 479 tests pass (`pytest -q` from the root, slow tests
+  included); `docs/diagrams/check_sources.py` clean (moved line numbers
+  updated); PLAN section 5 points to the night 1 evidence.
+
+**Needs a human (night 1):**
+
+1. Whether the readable-label fine-tuned model should score the corpus in
+   place of base FinBERT, and if so the 3-model average (test macro-F1
+   0.615) rather than one seed. It calls fewer sentences neutral.
+2. Whether to run the LLM aspect classifier on the corpus (llama3.1:8b
+   about 24 h on this Mac, qwen3:4b about 16 h, both about 40 h) and what
+   to do where the two disagree (24% of sentences, each right under half the
+   time): keep llama's answer, `other`, or unassigned.
+3. The four README fixes in
+   [install-test-2026-10-01.md](evidence/install-test-2026-10-01.md),
+   above all naming Python 3.10 or newer.
+4. The Opus review queues (202 aspect, 173 sentiment rows; 43 and 37 on the
+   test split), and where a retail customer's investment products belong,
+   wealth or retail banking (63 rows), before the next labelling round.
+5. Long runs need the Mac plugged in with the lid open: it slept twice on
+   1 Oct (battery, then lid), pausing jobs for about an hour each time.
 - J3 (preprocessing dry run): done, `606dde4`. 98 of 44,345 sentences
   (0.22%, all earnings PDFs) are debris; broader rules remove real
   sentiment, so preprocessing isn't where the model's errors are.

@@ -212,4 +212,62 @@ live run exposed five false alarms in the new checks, one of which predated
 the work; each was fixed with a regression test, and the off-topic rule was
 added after seeing a failure, which is stated rather than hidden.
 
+**2026-09-26 — Claude Code (Opus 5.5), unattended: the system diagrams.**
+Twenty Mermaid diagrams drawn from the code and the live schema, each element
+tied to a `file:line` that `docs/diagrams/check_sources.py` re-checks, with a
+render script and a test. The checker it wrote first silently skipped three
+rows whose symbol contained backticks; the verification pass caught that, and
+it now reports any row it can't parse as a failure.
+
+**2026-09-26 to 2026-09-30 — Claude Code (Opus 5.5), interactive sessions.**
+CNA articles loaded as full text through the Wayback Machine (DESIGN decision
+20); the text-analytics workstream's labels, ten aspects and Colab notebooks
+integrated; the Gemini chatbot backend verified live.
+
+- *What it did well.* Building the training file found 5 train/dev copies of
+  test sentences and 18 duplicate rows, now dropped and refused by training.
+  It found that the index's headline rows counted a sentence once per aspect
+  it matched; counted once, the published headlines (DBS +0.060, OCBC +0.071,
+  UOB +0.036) gave way to the figures in STATUS. It moved the Gemini key from
+  the request URL into a header, so it can't reach a tracked log.
+- *Where people stayed in control.* Gemini's free-tier terms were checked
+  before use (Google may use free-tier prompts and responses, with human
+  review), and the team limited the key to the live chatbot.
+- *Other AI use to declare from this period.* The workstream's cluster labels
+  were drafted with an AI assistant and not checked by a second person (DESIGN
+  decision 21). Annotators labelled with a local `llama3.2:3b` suggestion in
+  view, and the final labels match it on 91.6% of rows.
+
+**2026-09-30 to 2026-10-01 — Claude Code (Opus 5.5), two unattended runs.**
+Fine-tuning experiments (longer training, the aspect input, 5-fold
+cross-validation), centroid assignment measured against the human aspects, a
+discovery sweep and the chatbot gold set on the rebuilt database; then
+fine-tuning fixes, an LLM aspect classifier on local models, a preprocessing
+dry run and a clean-copy install test.
+
+- *What it did well.* Reading the code before training, it found that the
+  class weights the docs and spec described had never been passed to the
+  loss: every model until then had trained with plain cross-entropy. The
+  install test found that the README never names the Python version it
+  needs. Configurations were chosen on cross-validation with the selection
+  rule fixed beforehand, never on the test split.
+- *What went wrong and was caught by checking.* The night 1 prompt it wrote
+  said the model made 48 of 115 test errors on neutral sentences; it made
+  102 errors in all. An explanation it drafted for why readable aspect labels
+  helped (tokenization) proved false when tested. A first draft listed wealth
+  among the aspects where Opus led the local classifier; Opus is behind
+  there. Each was corrected before it was committed.
+
+**2026-10-01 — Opus 5.5 as an additional labeller (DESIGN decision 22).** At
+the team's request, Claude Code subagents running Opus 5.5 labelled all 1,277
+sentences of the 27 Sep round, blind to the human labels: the aspect first,
+then sentiment given the human aspect, with the annotation guideline as their
+instructions. All 22 raters' transcripts were audited; none opened another
+file. Against the human labels: aspect κ 0.80, sentiment κ 0.79. The report
+must say: these are human–LLM agreement figures, not human–human; the Opus
+labels change no gold label, and their 202 aspect and 173 sentiment
+disagreements are queued for people to settle; the sentences, Reddit text
+included, were sent to Anthropic under the project's Claude subscription; the
+run can be inspected but not exactly reproduced.
+
 **Keep updating this section as work continues — needed verbatim-ish for the report's GenAI declaration.**

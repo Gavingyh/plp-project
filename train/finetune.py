@@ -11,16 +11,25 @@ One model for all aspects (aspect supplied as context), NOT a model-per-aspect
 — splitting ~1,000 examples across 6-10 aspects would leave ~100 each, too
 few to fine-tune anything.
 
-Training config: LR 2e-5, 3-5 epochs, batch 16, max_len 128,
-warmup 10%, early stopping on dev macro-F1, class-weighted loss, fixed seed
-(report mean +/- std across >=3 seeds — a single run's F1 can be seed noise
-at this data size).
+Training config: LR 2e-5, batch 16, max_len 128, warmup 10%, early stopping
+on dev macro-F1, fixed seed (report mean +/- std across >=3 seeds — a single
+run's F1 can be seed noise at this data size). Each batch is padded to its own
+longest sentence.
+
+Loss weighting (--class-weights): `none` (the default) is plain cross-entropy.
+Every model trained before 2026-10-01 was trained this way: class weights were
+computed and printed but never reached the loss, although this docstring said
+"class-weighted loss". `balanced` applies sklearn's balanced weights; `prior`
+reweights classes from the training mix towards the corpus mix (base FinBERT's
+per-sentence labels), because the train/dev rows were drawn to over-represent
+polarity. --source-weights does the same for the source mix.
 
 USAGE:
   python -m train.finetune --seed 42
   python -m train.finetune --seed 42 --no-aspect          # sentence only, to test the aspect input
   python -m train.finetune --seed 42 --folds 5 --fold 0   # cross-validation fold, dev score only
   python -m train.finetune --seed 42 --out-dir models/experiments
+  python -m train.finetune --seed 42 --class-weights prior --source-weights --aspect-text label
 """
 
 import argparse
@@ -36,7 +45,9 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_class_weight
 from torch.utils.data import Dataset
 from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
-                           EarlyStoppingCallback, Trainer, TrainingArguments)
+                          DataCollatorWithPadding, EarlyStoppingCallback, Trainer,
+                          TrainingArguments)
+import yaml
 
 from train.labels import check_splits
 
@@ -48,18 +59,95 @@ LABELS = ["negative", "neutral", "positive"]
 LABEL2ID = {l: i for i, l in enumerate(LABELS)}
 
 
+ASPECTS_CONFIG = os.path.join(BASE_DIR, "config", "aspects.yaml")
+
+
 class PairDataset(Dataset):
-    def __init__(self, encodings, labels):
+    """Unpadded encodings; the collator pads each batch. Optional per-row
+    weights travel with the row as `sample_weight`."""
+
+    def __init__(self, encodings, labels, weights=None):
         self.encodings = encodings
         self.labels = labels
+        self.weights = weights
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
         item = {k: v[idx] for k, v in self.encodings.items()}
-        item["labels"] = torch.tensor(self.labels[idx])
+        item["labels"] = int(self.labels[idx])
+        if self.weights is not None:
+            item["sample_weight"] = float(self.weights[idx])
         return item
+
+
+class WeightedCollator:
+    """Pads with DataCollatorWithPadding, carrying sample_weight alongside."""
+
+    def __init__(self, tokenizer):
+        self._pad = DataCollatorWithPadding(tokenizer)
+
+    def __call__(self, features):
+        weights = [f.pop("sample_weight", 1.0) for f in features]
+        batch = self._pad(features)
+        batch["sample_weight"] = torch.tensor(weights, dtype=torch.float)
+        return batch
+
+
+class WeightedTrainer(Trainer):
+    """Cross-entropy weighted per class and per row, normalised by the total
+    weight so the loss scale doesn't depend on the weighting."""
+
+    def __init__(self, *args, class_weights=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_weights = None if class_weights is None else torch.tensor(class_weights, dtype=torch.float)
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        labels = inputs.pop("labels")
+        row_w = inputs.pop("sample_weight", None)
+        outputs = model(**inputs)
+        logits = outputs.logits
+        per_row = torch.nn.functional.cross_entropy(logits, labels, reduction="none")
+        w = torch.ones_like(per_row) if row_w is None else row_w.to(per_row.device)
+        if self.class_weights is not None:
+            w = w * self.class_weights.to(per_row.device)[labels]
+        loss = (per_row * w).sum() / w.sum()
+        return (loss, outputs) if return_outputs else loss
+
+
+def aspect_labels() -> dict[str, str]:
+    """Aspect key -> readable label from config/aspects.yaml."""
+    with open(ASPECTS_CONFIG) as f:
+        return {k: v.get("label", k) for k, v in yaml.safe_load(f)["aspects"].items()}
+
+
+def corpus_shares(column: str) -> dict[str, float]:
+    """Corpus share of each label (base FinBERT, one per sentence) or source,
+    read from the database (read-only)."""
+    from ingest.db import get_connection
+    conn = get_connection()
+    try:
+        if column == "label":
+            rows = conn.execute("SELECT label, COUNT(*) FROM (SELECT sentence_id, MIN(label) AS label "
+                                "FROM aspect_sentiment GROUP BY sentence_id) GROUP BY label").fetchall()
+        elif column == "source":
+            rows = conn.execute("SELECT source, COUNT(*) FROM sentences GROUP BY source").fetchall()
+        else:
+            raise ValueError(column)
+    finally:
+        conn.close()
+    total = sum(n for _, n in rows) or 1
+    return {k: n / total for k, n in rows}
+
+
+def ratio_weights(train_values: list[str], target_share: dict[str, float]) -> dict[str, float]:
+    """Per-value weight = target share / training share, normalised so the
+    training rows' mean weight is 1. Values absent from the target get 1."""
+    counts = pd.Series(train_values).value_counts(normalize=True).to_dict()
+    raw = {v: (target_share.get(v, counts[v]) / counts[v]) for v in counts}
+    mean = sum(raw[v] * counts[v] for v in counts)
+    return {v: w / mean for v, w in raw.items()}
 
 
 def _load_labeled(split: str) -> pd.DataFrame:
@@ -84,29 +172,42 @@ def _load_labeled(split: str) -> pd.DataFrame:
 INPUT_FORMAT_FILE = "input_format.json"
 
 
-def write_input_format(model_dir: str, with_aspect: bool) -> None:
+def write_input_format(model_dir: str, with_aspect: bool, aspect_text: str = "key") -> None:
     """Record how the model was fed, so evaluation tokenizes the same way."""
     with open(os.path.join(model_dir, INPUT_FORMAT_FILE), "w") as f:
-        json.dump({"with_aspect": with_aspect}, f)
+        json.dump({"with_aspect": with_aspect, "aspect_text": aspect_text}, f)
+
+
+def read_input_spec(model_dir: str) -> dict:
+    """{"with_aspect": bool, "aspect_text": "key" | "label"}. Models saved
+    before the marker existed were all trained on (sentence, aspect key) pairs."""
+    path = os.path.join(model_dir, INPUT_FORMAT_FILE)
+    spec = {"with_aspect": True, "aspect_text": "key"}
+    if os.path.exists(path):
+        with open(path) as f:
+            spec.update(json.load(f))
+    return spec
 
 
 def read_input_format(model_dir: str) -> bool:
-    """True when the model takes (sentence, aspect) pairs. Models saved before
-    the marker existed were all trained on pairs."""
-    path = os.path.join(model_dir, INPUT_FORMAT_FILE)
-    if not os.path.exists(path):
-        return True
-    with open(path) as f:
-        return bool(json.load(f)["with_aspect"])
+    """True when the model takes (sentence, aspect) pairs."""
+    return bool(read_input_spec(model_dir)["with_aspect"])
 
 
-def _tokenize(tokenizer, df: pd.DataFrame, with_aspect: bool = True):
+def aspect_inputs(df: pd.DataFrame, aspect_text: str = "key") -> list[str]:
+    if aspect_text == "label":
+        labels = aspect_labels()
+        return [labels.get(a, a) for a in df["aspect"]]
+    return df["aspect"].tolist()
+
+
+def _tokenize(tokenizer, df: pd.DataFrame, with_aspect: bool = True, aspect_text: str = "key"):
+    """Unpadded encodings (the collator pads per batch)."""
     texts = df["text"].tolist()
     if with_aspect:   # sentence-pair: [CLS] sentence [SEP] aspect [SEP]
-        enc = tokenizer(texts, df["aspect"].tolist(), padding=True, truncation=True,
-                        max_length=128, return_tensors="pt")
+        enc = tokenizer(texts, aspect_inputs(df, aspect_text), truncation=True, max_length=128)
     else:             # sentence alone: [CLS] sentence [SEP]
-        enc = tokenizer(texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
+        enc = tokenizer(texts, truncation=True, max_length=128)
     labels = [LABEL2ID[l] for l in df["label"]]
     return enc, labels
 
@@ -133,7 +234,8 @@ def compute_metrics(eval_pred):
 
 def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
         with_aspect: bool = True, out_dir: str | None = None,
-        folds: int | None = None, fold: int | None = None):
+        folds: int | None = None, fold: int | None = None,
+        class_weights: str = "none", source_weights: bool = False, aspect_text: str = "key"):
     """Train one model. With folds/fold, train on K-1 folds of train_dev and
     return the dev score on the held-out fold, saving no model."""
     torch.manual_seed(seed)
@@ -152,11 +254,24 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
         train_df, dev_df = fold_split(train_dev_df, folds, fold, seed)
 
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-    train_enc, train_labels = _tokenize(tokenizer, train_df, with_aspect)
-    dev_enc, dev_labels = _tokenize(tokenizer, dev_df, with_aspect)
+    train_enc, train_labels = _tokenize(tokenizer, train_df, with_aspect, aspect_text)
+    dev_enc, dev_labels = _tokenize(tokenizer, dev_df, with_aspect, aspect_text)
 
-    class_weights = compute_class_weight("balanced", classes=np.arange(len(LABELS)), y=train_labels)
-    print(f"Class weights (neg/neu/pos): {class_weights}")
+    if class_weights == "balanced":
+        cw = compute_class_weight("balanced", classes=np.arange(len(LABELS)), y=train_labels).tolist()
+    elif class_weights == "prior":
+        by_label = ratio_weights(train_df["label"].tolist(), corpus_shares("label"))
+        cw = [by_label.get(l, 1.0) for l in LABELS]
+    elif class_weights == "none":
+        cw = None
+    else:
+        raise ValueError(f"class_weights must be none, balanced or prior, got {class_weights!r}")
+    row_weights = None
+    if source_weights:
+        by_source = ratio_weights(train_df["source"].tolist(), corpus_shares("source"))
+        row_weights = [by_source[s] for s in train_df["source"]]
+    print(f"Class weights (neg/neu/pos): {cw if cw is not None else 'none'}; "
+          f"source weights: {'on' if source_weights else 'off'}; aspect text: {aspect_text}")
 
     model = AutoModelForSequenceClassification.from_pretrained(
         BASE_MODEL, num_labels=len(LABELS), id2label={i: l for l, i in LABEL2ID.items()},
@@ -183,15 +298,20 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
         metric_for_best_model="macro_f1",
         seed=seed,
         report_to=[],
+        # Keep sample_weight in the batch: WeightedTrainer.compute_loss removes
+        # it before the model sees the inputs.
+        remove_unused_columns=False,
     )
 
-    trainer = Trainer(
+    trainer = WeightedTrainer(
         model=model,
         args=training_args,
-        train_dataset=PairDataset(train_enc, train_labels),
+        train_dataset=PairDataset(train_enc, train_labels, row_weights),
         eval_dataset=PairDataset(dev_enc, dev_labels),
+        data_collator=WeightedCollator(tokenizer),
         compute_metrics=compute_metrics,
         callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],
+        class_weights=cw,
     )
     trainer.train()
 
@@ -205,7 +325,7 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
     final_dir = os.path.join(out_root, run_name, "final")
     trainer.save_model(final_dir)
     tokenizer.save_pretrained(final_dir)
-    write_input_format(final_dir, with_aspect)
+    write_input_format(final_dir, with_aspect, aspect_text)
     # Per-epoch checkpoints carry optimizer state (~1.2 GB each); the best
     # epoch is already in final/, so they are only disk use once it is saved.
     for name in os.listdir(training_args.output_dir):
@@ -226,10 +346,16 @@ if __name__ == "__main__":
     parser.add_argument("--out-dir", default=None, help=f"default {MODEL_OUT_DIR}")
     parser.add_argument("--folds", type=int, default=None, help="K for K-fold on train_dev")
     parser.add_argument("--fold", type=int, default=None, help="which fold is dev (0..K-1)")
+    parser.add_argument("--class-weights", choices=["none", "balanced", "prior"], default="none")
+    parser.add_argument("--source-weights", action="store_true",
+                        help="weight rows so the source mix matches the corpus")
+    parser.add_argument("--aspect-text", choices=["key", "label"], default="key",
+                        help="feed the aspect key or its readable label")
     args = parser.parse_args()
     if (args.folds is None) != (args.fold is None):
         parser.error("--folds and --fold go together")
     metrics = run(seed=args.seed, epochs=args.epochs, lr=args.lr, batch_size=args.batch_size,
                   with_aspect=not args.no_aspect, out_dir=args.out_dir,
-                  folds=args.folds, fold=args.fold)
+                  folds=args.folds, fold=args.fold, class_weights=args.class_weights,
+                  source_weights=args.source_weights, aspect_text=args.aspect_text)
     print(metrics)

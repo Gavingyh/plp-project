@@ -50,7 +50,7 @@ Each row names the file and line an element comes from, and the text that line m
 | resolved | `docs/evidence/annotation-agreement-2026-09-27.md:16` | `the candidates after resolving disagreements` |
 | dropped: leakage | `train/labels.py:75` | `report["train_dev_rows_dropped_as_leaked"] = int(leaked.sum())` |
 | dropped: duplicates | `train/labels.py:78` | `cand, report["duplicate_rows_dropped"] = _dedupe(cand, candidates_path)` |
-| training rows | `train/finetune.py:74` | `df = df[df["split"] == split]` |
+| training rows | `train/finetune.py:162` | `df = df[df["split"] == split]` |
 | held-out test rows | `train/evaluate.py:41` | `df = df[(df["split"] == "test") & (df["label"].isin(LABELS))]` |
 | not-about-bank flag | `docs/annotation-guideline.md:18` | `` set `not_about_bank` and stop `` |
 

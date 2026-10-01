@@ -27,7 +27,7 @@ from sklearn.model_selection import train_test_split
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from config.device import best_device
-from train.finetune import read_input_format
+from train.finetune import aspect_inputs, read_input_spec
 from train.labels import check_splits
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,7 +50,7 @@ def eval_base_finbert_zeroshot(df: pd.DataFrame) -> dict:
     itself part of the case for fine-tuning)."""
     from sentiment.score import classify_sentences
     preds = [label for label, _ in classify_sentences(df["text"].tolist())]
-    return _report("base_finbert_zeroshot", df["label"].tolist(), preds)
+    return _report("base_finbert_zeroshot", df["label"].tolist(), preds, df.get("source"))
 
 
 def eval_lexicon(df: pd.DataFrame) -> dict:
@@ -65,7 +65,7 @@ def eval_lexicon(df: pd.DataFrame) -> dict:
     for text in df["text"]:
         compound = analyzer.polarity_scores(text)["compound"]
         preds.append("positive" if compound > 0.05 else "negative" if compound < -0.05 else "neutral")
-    return _report("vader_lexicon", df["label"].tolist(), preds)
+    return _report("vader_lexicon", df["label"].tolist(), preds, df.get("source"))
 
 
 def eval_tfidf_logreg(train_dev_df: pd.DataFrame, test_df: pd.DataFrame) -> dict:
@@ -76,38 +76,63 @@ def eval_tfidf_logreg(train_dev_df: pd.DataFrame, test_df: pd.DataFrame) -> dict
     clf = LogisticRegression(max_iter=1000, class_weight="balanced")
     clf.fit(X_train, train_dev_df["label"])
     preds = clf.predict(X_test)
-    return _report("tfidf_logreg", test_df["label"].tolist(), preds)
+    return _report("tfidf_logreg", test_df["label"].tolist(), preds, test_df.get("source"))
 
 
-def eval_finetuned(model_dir: str, df: pd.DataFrame) -> dict:
+def finetuned_probs(model_dir: str, df: pd.DataFrame) -> np.ndarray:
+    """(n, 3) class probabilities in LABELS order, fed the way the model was
+    trained (aspect or not, aspect key or readable label)."""
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     model = AutoModelForSequenceClassification.from_pretrained(model_dir).eval()
     device = best_device()
     model.to(device)
-    with_aspect = read_input_format(model_dir)   # as the model was trained
-    preds = []
+    spec = read_input_spec(model_dir)
+    order = [{v.lower(): int(k) for k, v in model.config.id2label.items()}[l] for l in LABELS]
+    out = []
     with torch.no_grad():
         for i in range(0, len(df), 32):
             batch = df.iloc[i:i + 32]
-            segments = ([batch["text"].tolist(), batch["aspect"].tolist()] if with_aspect
-                        else [batch["text"].tolist()])
+            segments = ([batch["text"].tolist(), aspect_inputs(batch, spec["aspect_text"])]
+                        if spec["with_aspect"] else [batch["text"].tolist()])
             enc = tokenizer(*segments, padding=True, truncation=True, max_length=128,
                             return_tensors="pt").to(device)
-            logits = model(**enc).logits
-            idx = logits.argmax(dim=-1).cpu().tolist()
-            preds.extend(model.config.id2label[i].lower() for i in idx)
-    return _report("finetuned_finbert_absa", df["label"].tolist(), preds)
+            probs = torch.softmax(model(**enc).logits, dim=-1).cpu().numpy()
+            out.append(probs[:, order])
+    return np.concatenate(out)
 
 
-def _report(name: str, y_true: list, y_pred: list) -> dict:
+def eval_finetuned(model_dir: str, df: pd.DataFrame, name: str = "finetuned_finbert_absa") -> dict:
+    probs = finetuned_probs(model_dir, df)
+    return _report(name, df["label"].tolist(), [LABELS[i] for i in probs.argmax(axis=1)], df.get("source"))
+
+
+def eval_ensemble(model_dirs: list[str], df: pd.DataFrame) -> dict:
+    """Average the models' probabilities, then take the most likely class."""
+    probs = np.mean([finetuned_probs(d, df) for d in model_dirs], axis=0)
+    return _report(f"finetuned_average_of_{len(model_dirs)}", df["label"].tolist(),
+                   [LABELS[i] for i in probs.argmax(axis=1)], df.get("source"))
+
+
+def accuracy_by_source(y_true: list, y_pred: list, sources: list) -> dict[str, tuple[float, int]]:
+    """{source: (accuracy, n)}, largest source first."""
+    df = pd.DataFrame({"ok": [t == p for t, p in zip(y_true, y_pred)], "source": list(sources)})
+    g = df.groupby("source")["ok"].agg(["mean", "size"]).sort_values("size", ascending=False)
+    return {s: (float(r["mean"]), int(r["size"])) for s, r in g.iterrows()}
+
+
+def _report(name: str, y_true: list, y_pred: list, sources=None) -> dict:
     macro_f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
     print(f"\n=== {name} ===")
     print(f"Macro-F1: {macro_f1:.4f}")
     print(classification_report(y_true, y_pred, labels=LABELS, zero_division=0))
+    if sources is not None:
+        by_source = accuracy_by_source(y_true, y_pred, sources)
+        print("Accuracy by source: " + ", ".join(f"{s} {a:.2f} (n={n})" for s, (a, n) in by_source.items()))
     return {"name": name, "macro_f1": macro_f1}
 
 
-def run(model_dir: str | None):
+def run(model_dir: str | list[str] | None):
+    model_dirs = [model_dir] if isinstance(model_dir, str) else list(model_dir or [])
     test_df = _load_test_set()
     full_df = pd.read_csv(CANDIDATES_PATH)
     train_dev_df = full_df[(full_df["split"] == "train_dev") & (full_df["label"].isin(LABELS))]
@@ -118,8 +143,11 @@ def run(model_dir: str | None):
         results.append(lex)
     if not train_dev_df.empty:
         results.append(eval_tfidf_logreg(train_dev_df, test_df))
-    if model_dir:
-        results.append(eval_finetuned(model_dir, test_df))
+    for i, d in enumerate(model_dirs):
+        results.append(eval_finetuned(d, test_df, "finetuned_finbert_absa" if len(model_dirs) == 1
+                                      else f"finetuned_{i + 1}"))
+    if len(model_dirs) > 1:
+        results.append(eval_ensemble(model_dirs, test_df))
 
     print("\n" + "=" * 50)
     print("SUMMARY (frozen random test set, n={})".format(len(test_df)))
@@ -127,7 +155,7 @@ def run(model_dir: str | None):
     for r in results:
         print(f"  {r['name']:28s} macro-F1 = {r['macro_f1']:.4f}")
 
-    if model_dir:
+    if len(model_dirs) == 1:
         fine = next(r for r in results if r["name"] == "finetuned_finbert_absa")
         base = results[0]
         if fine["macro_f1"] <= base["macro_f1"]:
@@ -139,6 +167,7 @@ def run(model_dir: str | None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-dir", default=None, help="Path to a fine-tuned model from train.finetune")
+    parser.add_argument("--model-dir", nargs="+", default=None,
+                        help="one or more fine-tuned models; with several, their average is reported too")
     args = parser.parse_args()
     run(model_dir=args.model_dir)

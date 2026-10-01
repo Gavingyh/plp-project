@@ -9,7 +9,7 @@ resume from the run log if interrupted.
 Four jobs, all local:
 
 - **J1. Fine-tuning fixes.** The 1 Oct error analysis found the model
-  predicts polarity on neutral sentences far too often (48 of 115 test
+  predicts polarity on neutral sentences far too often (48 of 102 test
   errors) and is weakest on Reddit. Test fixes for the train/population
   mismatch, plus cheap model changes.
 - **J2. LLM aspect classifier (DESIGN 16).** Build it on local Ollama and
@@ -51,8 +51,9 @@ dev or CV, never on test; stage own files by path, one commit per job, never
   seed 42 on test: neutral predicted polar 48, polar predicted neutral 41;
   accuracy Reddit 0.64 (base FinBERT 0.70), earnings 0.72 (0.73).
 - `train/finetune.py`: sentence-pair input with the raw aspect key, padding
-  to the longest sentence in the whole set (128 tokens), class-weighted loss
-  (`compute_class_weight("balanced")`), options `--epochs --no-aspect
+  to the longest sentence in the whole set (128 tokens), and class weights
+  computed (`compute_class_weight("balanced")`) and printed but **never
+  applied** (found on 1 Oct: plain cross-entropy), options `--epochs --no-aspect
   --out-dir --folds --fold`.
 - Seed-centroid aspect top-1 accuracy on the 1,277 labels: 0.413; always
   answering `retail_banking_sentiment`: 0.374
@@ -68,8 +69,8 @@ Code (with tests, before training), in `train/finetune.py` and
 1. **Dynamic padding** (pad each batch to its own longest sentence). Speed
    only; check on one seed that dev scores match the old padding within
    noise before relying on it.
-2. `--class-weights {balanced,none,prior}`: `balanced` is today's behaviour;
-   `none` drops weighting; `prior` weights each class by
+2. `--class-weights {none,balanced,prior}`: `none` is today's actual
+   behaviour; `balanced` applies the computed weights; `prior` weights each class by
    corpus-prior ÷ training-prior, the corpus prior being base FinBERT's
    per-sentence distribution above (an estimate; no test data used).
 3. `--source-weights`: weight each training row so the source mix matches the

@@ -92,8 +92,8 @@ Each row names the file and line an element comes from, and the text that line m
 | sentiment scoring | `sentiment/score.py:97` | `def run() -> dict:` |
 | zero-shot base FinBERT | `sentiment/score.py:38` | `MODEL_NAME = "ProsusAI/finbert"` |
 | index aggregation | `aggregate/index.py:252` | `def run() -> int:` |
-| fine-tuning code | `train/finetune.py:134` | `def run(seed: int = 42` |
-| first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:35` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |
+| fine-tuning code | `train/finetune.py:235` | `def run(seed: int = 42` |
+| first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:36` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |
 | evidence read by the chatbot | `chatbot/retrieval.py:103` | `all_ids, all_vecs = load_for_search()` |
 
 ## Planned elements

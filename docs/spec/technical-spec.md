@@ -388,8 +388,10 @@ F1 is seed noise at this data size.
 **Training configuration** in `train/finetune.py`: sentence-pair input
 `[CLS] sentence [SEP] aspect [SEP]` into a 3-way softmax, one model for all
 aspects rather than one per aspect, learning rate 2e-5, 3–5 epochs, batch 16,
-max length 128, 10% warmup, early stopping on dev macro-F1, class-weighted
-loss.
+max length 128, 10% warmup, early stopping on dev macro-F1, per-batch
+padding, and optional class or source weighting (`--class-weights`,
+`--source-weights`; off by default). Models trained before 2026-10-01 used
+plain cross-entropy: weights were computed but never applied.
 
 **Status: not run.** Zero rows are labelled.
 

@@ -518,3 +518,37 @@ Needs a human:
 4. **Model weights** exist only on this MacBook; copy them to the team
    folder and check the SHA-256 values in the experiments file.
 
+
+## Overnight run log — night 1 (2026-10-01)
+
+Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
+
+- Doc/code disagreement found before training: `train/finetune.py` computed
+  and printed balanced class weights but never passed them to the loss, while
+  its docstring, the technical spec and the 30 Sep evidence said
+  "class-weighted loss". Every model so far used plain cross-entropy. Fixed in
+  the docs; the weighting is now a real option (`--class-weights`), default
+  `none` so earlier results stay reproducible.
+- J1 (fine-tuning fixes): done
+  ([evidence](evidence/finetune-fixes-2026-10-01.md)). Per-batch padding
+  matches the old padding within noise (CV 0.621 against 0.622). On 5-fold
+  CV, balanced class weights (0.630), source weights (0.633) and the
+  readable aspect label (0.637) each lean ahead of the baseline (0.621),
+  all within the noise between two runs of the same configuration; prior
+  class weights collapse (0.525), which CV can't judge fairly. The three
+  combined scored 0.635, so the readable label alone was trained on seeds
+  42, 1, 7: test macro-F1 0.630, 0.617, 0.565 (0.604 ± 0.035; 3-model
+  average 0.615) against 0.577 ± 0.027 on 30 Sep and base FinBERT's 0.571.
+  Neutral sentences called polar remain the main error. The Mac slept
+  12:22–13:29 (battery at 1%, then lid closed; `caffeinate -i` stops
+  neither), pausing one CV fold; it resumed unharmed.
+- J2 (LLM aspect classifier): code and tests done; evaluation waits for the GPU
+- J3 (preprocessing dry run): done, `606dde4`. 98 of 44,345 sentences
+  (0.22%, all earnings PDFs) are debris; broader rules remove real
+  sentiment, so preprocessing isn't where the model's errors are.
+- J4 (install test): done, `1ff6c74`. With a Mac's default `python3`
+  (Apple's 3.9) the install fails on `torch>=2.9.0` and the README never
+  names the Python it needs; with 3.14 every step works, the snapshot
+  checksum matches, 421 tests pass, and the API and dashboard answer on free
+  ports ([evidence](evidence/install-test-2026-10-01.md), four README fixes
+  listed there).

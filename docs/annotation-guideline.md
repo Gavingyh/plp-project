@@ -58,6 +58,16 @@ sheets joined on `sentence_id` alone, which it doesn't do yet. The
 2026-09-27 round measured sentiment only: the aspects were corrected once and
 shared.
 
+On 2026-10-01 Opus 5.5 labelled the same rows as an additional rater, with
+this guideline as its instructions (DESIGN decision 22): against the human
+labels, aspect κ 0.80 and sentiment κ 0.79
+([evidence](evidence/opus-labeller-2026-10-01.md)). Its disagreements are in
+`data/labeled/claude/review_*.csv` for people to settle. The largest is a gap
+in the aspect table above: where a retail customer's investment products
+(brokerage trades, regular savings plans, gold, portfolio financing) belong,
+`wealth_business` or `retail_banking_sentiment` — 63 rows. Decide it before
+the next round.
+
 ---
 
 ## Version 1 (superseded)

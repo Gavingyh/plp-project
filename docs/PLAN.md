@@ -136,6 +136,8 @@ Overnight run, night 1 (1 Oct):
 [the LLM aspect classifier against the human aspects](evidence/llm-aspect-classifier-2026-10-01.md),
 [a preprocessing dry run](evidence/preprocessing-dry-run-2026-10-01.md) and
 [a clean-copy install test](evidence/install-test-2026-10-01.md).
+Also 1 Oct: [Opus 5.5 as an additional labeller](evidence/opus-labeller-2026-10-01.md)
+(DESIGN 22), which gives the first aspect agreement figure (human–LLM κ 0.80).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (D2 attaches sentiment to an aspect), so the aspect classifier comes first.

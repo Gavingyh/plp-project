@@ -551,6 +551,14 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   the human label 83.5% of the time. Nothing written to the database.
   qwen3:4b needed a `--no-think` option: thinking took 92–216 s a sentence.
   The Mac slept again 15:51–17:20 (battery), pausing the qwen run.
+- Opus 5.5 labeller (asked for on 1 Oct, outside the night 1 prompt; DESIGN
+  22): Opus subagents labelled all 1,277 rows blind, aspect then sentiment
+  given the human aspect, with the guideline as instructions; transcripts
+  audited, no rater opened another file. Against the human labels: aspect
+  κ 0.80 (0.842; llama3.1:8b 0.729), sentiment κ 0.79, every sentiment
+  disagreement on the neutral boundary. Review queues: 202 aspect, 173
+  sentiment rows in `data/labeled/claude/`; nothing applied to
+  `candidates.csv` ([evidence](evidence/opus-labeller-2026-10-01.md)).
 - J3 (preprocessing dry run): done, `606dde4`. 98 of 44,345 sentences
   (0.22%, all earnings PDFs) are debris; broader rules remove real
   sentiment, so preprocessing isn't where the model's errors are.

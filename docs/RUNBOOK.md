@@ -419,12 +419,13 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-438 tests in `tests/`; `pytest -q` from the repository root runs 479,
+500 tests in `tests/`; `pytest -q` from the repository root runs 541,
 adding the diagram and notebook checks. No network calls — external APIs are
 mocked with captured real payloads, so a provider changing its response shape
 surfaces as a failing test rather than a silent production break.
 
-On 2026-10-01 all 479 ran in 45 seconds on the MacBook Air; a fresh clone's
+On 2026-10-01, 479 ran in 45 seconds on a quiet MacBook Air, and 539 took
+2.1 minutes that evening alongside other jobs; a fresh clone's
 first run of `tests/` took 2.6 minutes. Part of every run is
 `umap`/`hdbscan` import cost (numba), paid once by the aspect-discovery
 tests.

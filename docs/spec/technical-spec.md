@@ -415,7 +415,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-438 tests in `tests/` (479 from the repository root, adding the diagram and
+500 tests in `tests/` (541 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
@@ -423,7 +423,7 @@ rather than a silent production break.
 - `tests/conftest.py` provides `temp_db`, which redirects `ingest.db.DB_PATH`
   to a throwaway file and creates every table, so tests never touch
   `data/plp.db`.
-- All 479 ran in 45 seconds on 2026-10-01; part of that is `umap`/`hdbscan`
+- 479 ran in 45 seconds on 2026-10-01 on a quiet machine; part of that is `umap`/`hdbscan`
   import cost from the discovery tests.
 - Several tests exist because of specific real bugs and say so in their
   docstrings: silent PDF extraction failure, the SQLite parameter ceiling, the

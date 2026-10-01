@@ -157,6 +157,33 @@ retrieved), the number check raises only the false alarm above, and the
 judge scores it 3. The retrieval section above predicts this failure; here
 it is in a live answer.
 
+### The 3B model on the same 32 questions
+
+```bash
+OLLAMA_MODEL=llama3.2:3b .venv-plp/bin/python3 -m chatbot.run_eval --backend ollama --set v2 --tag llama3b_v2
+```
+
+Run straight after, on the idle machine (23:34–23:46, 12 minutes against the
+8B's 27):
+
+| all 32 | `llama3.2:3b` | `llama3.1:8b` |
+|---|---|---|
+| backend errors | 0 | 0 |
+| correct tool | 18 / 24 | 20 / 24 |
+| advice and no-data behaviour | 8 / 8 | 8 / 8 |
+| citation warning | **15** | **11** |
+| answers with a figure no tool returned | 12 | 11 |
+
+On v1's 23 questions the 3B repeats 30 Sep exactly (12/16 tools, 10
+citation warnings). Read against the transcripts, 14 of its 15 warnings are
+real inventions (fake ids, URLs no tool returned, quotes no tool returned).
+The fifteenth, compare-3, is a failed answer: the model wrote a tool call out
+as text and the check fired on the JSON's quote marks. As with the 8B, none
+of the 15 called `search_evidence`. The 8B invents less and picks the right
+tool more often; on this set the gap is narrower than on 30 Sep's 23
+questions (11 against 15 here, 4 against 10 then), because the 8B invents on
+the new lookup questions too.
+
 ### Conversations
 
 7 of 9 turns correct, 2 of 4 conversations correct, the same as the first
@@ -198,8 +225,8 @@ answers, no judge output in it) is from this run.
 
 ### What this changes
 
-1. Invented evidence is the chatbot's main failure on the 8B model, and it
-   happens when no search was made. Since the harness knows that, it can
+1. Invented evidence is the chatbot's main failure on both local models, and
+   it happens when no search was made. Since the harness knows that, it can
    remove the evidence section, or run the search itself and show real
    quotes, instead of appending a warning. That is a code change, not a
    prompt change: the prompt already says it.

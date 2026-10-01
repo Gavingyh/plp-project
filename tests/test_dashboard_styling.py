@@ -104,7 +104,7 @@ def test_dashboard_routes_both_heatmaps_through_the_helper():
     import os
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "dashboard", "app.py")
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         source = f.read()
 
     # Exactly one background_gradient CALL, inside the helper. Counting the

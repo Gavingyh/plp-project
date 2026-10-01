@@ -41,3 +41,13 @@ def test_calibration_counts_agreement_and_direction():
     res = j.calibrate(ratings, judged)
     assert res["n"] == 3 and res["agreement"] == 2 / 3
     assert res["judge_too_lenient"] == 1 and res["judge_too_harsh"] == 0
+
+
+def test_against_checks_counts_judge_scores_on_flagged_answers():
+    results = [{"id": "a", "citation_fabricated": True}, {"id": "b", "citation_fabricated": True},
+               {"id": "c", "citation_fabricated": False}, {"id": "g", "citation_fabricated": False, "input_guard": "advice"},
+               {"id": "e", "error": "timeout", "citation_fabricated": False}]
+    judged = pd.DataFrame({"id": ["a", "b", "c", "g"], "judge_score": [3, 1, 3, 3]})
+    t = j.against_checks(results, judged)
+    assert t.loc["citation flagged"].tolist() == [1, 0, 1]
+    assert t.loc["not flagged"].tolist() == [0, 0, 1]                      # the guard answer is left out

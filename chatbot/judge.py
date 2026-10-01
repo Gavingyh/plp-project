@@ -18,6 +18,11 @@ USAGE:
   python -m chatbot.judge sheet  --results data/eval/chatbot_eval_results_v2.jsonl   # blank sheet for people
   python -m chatbot.judge judge  --results data/eval/chatbot_eval_results_v2.jsonl --model qwen3:4b --no-think
   python -m chatbot.judge calibrate --ratings data/eval/ratings_sheet.csv --judged data/eval/judge_qwen3_4b.jsonl
+  python -m chatbot.judge checks --results data/eval/chatbot_eval_results_v2.jsonl --judged data/eval/judge_qwen3_4b.jsonl
+
+`checks` needs no people: answers the harness flagged for citing evidence no
+search returned should score 1 on the judge's own scale, so the judge's
+scores on them are a floor on how much it misses.
 """
 
 import argparse
@@ -120,6 +125,17 @@ def calibrate(ratings: pd.DataFrame, judged: pd.DataFrame) -> dict:
             "judge_too_harsh": int((m["judge_score"] < m["human_score"]).sum())}
 
 
+def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:
+    """Judge score counts for answers the harness flagged for unverified
+    citations, and for the rest (errors and guard answers left out)."""
+    flag = {r["id"]: bool(r.get("citation_fabricated")) for r in results
+            if not r.get("error") and not r.get("input_guard")}
+    m = judged[judged["id"].isin(flag)].assign(
+        harness=lambda d: d["id"].map(flag).map({True: "citation flagged", False: "not flagged"}))
+    return (pd.crosstab(m["harness"], m["judge_score"].astype("Int64"))
+            .reindex(columns=[1, 2, 3], fill_value=0))
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -127,6 +143,7 @@ def main():
     j = sub.add_parser("judge"); j.add_argument("--results", required=True); j.add_argument("--model", default="qwen3:4b")
     j.add_argument("--no-think", action="store_true", help="turn off a reasoning model's thinking (qwen3)")
     c = sub.add_parser("calibrate"); c.add_argument("--ratings", required=True); c.add_argument("--judged", required=True)
+    k = sub.add_parser("checks"); k.add_argument("--results", required=True); k.add_argument("--judged", required=True)
     args = p.parse_args()
     os.makedirs(EVAL_DIR, exist_ok=True)
     if args.cmd == "sheet":
@@ -144,6 +161,8 @@ def main():
             for row in out:
                 f.write(json.dumps(row) + "\n")
         print(f"{len(out)} answers judged -> {path}; scores {pd.Series([o['judge_score'] for o in out]).value_counts().to_dict()}")
+    elif args.cmd == "checks":
+        print(against_checks(load_results(args.results), pd.DataFrame(load_results(args.judged))))
     else:
         judged = pd.DataFrame(load_results(args.judged))
         print(calibrate(pd.read_csv(args.ratings, keep_default_na=False), judged))

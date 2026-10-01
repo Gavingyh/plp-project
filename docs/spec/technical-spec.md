@@ -41,8 +41,8 @@ writes `aspect_sentiment` with a label, a confidence, and a `model_version`.
 and shrinkage. When a user later asks the chatbot about DBS margins,
 `search_evidence` retrieves it by cosine similarity over the cached embedding,
 and the answer cites it by that same `sentence_id` and the transcript's URL.
-A dashboard, built as a separate project, reads the same rows through the
-REST API ([api-integration.md](../api-integration.md)).
+The Streamlit dashboard reads the same rows from the database; any other
+frontend reads them through the REST API ([api-integration.md](../api-integration.md)).
 
 The invariant: **the sentence is the unit of analysis**, and every downstream
 artifact keys off `sentence_id`. Document-level sentiment would defeat the
@@ -63,7 +63,8 @@ criticise an app in consecutive sentences.
 | `aggregate/` | The sentiment index and continuous time series | `index` |
 | `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation, a terminal chat for testing | `chat`, `agent`, `run_eval` |
 | `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `opus_labels` |
-| `api/` | FastAPI REST API: the system's interface; the dashboard is a separate project on it (DESIGN decision 23) | `uvicorn api.main:app` |
+| `api/` | FastAPI REST API: the documented interface for any frontend (DESIGN decision 23) | `uvicorn api.main:app` |
+| `dashboard/` | Streamlit dashboard, maintained by a teammate; reads the database directly | `streamlit run dashboard/app.py` |
 | `config/` | Aspect taxonomy, logging configuration | — |
 | `scripts/` | Service lifecycle, overnight backfill, model comparison, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
 
@@ -416,7 +417,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-500 tests in `tests/` (541 from the repository root, adding the diagram and
+510 tests in `tests/` (551 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.

@@ -229,9 +229,10 @@ Progress: `data/backfill_overnight.log` and `data/.backfill_progress.txt`.
 
 ## Interfaces
 
-The system's interface is the REST API, with a terminal chat for testing the
-chatbot. The dashboard is a separate project that reads the API (DESIGN
-decision 23); [api-integration.md](api-integration.md) is its contract.
+The interfaces are the REST API, a terminal chat for testing the chatbot,
+and the Streamlit dashboard (`dashboard/`, a teammate's), which reads the
+database directly. The API is the documented interface for any frontend
+(DESIGN decision 23); [api-integration.md](api-integration.md) is its contract.
 
 ### Start and stop
 
@@ -448,7 +449,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-500 tests in `tests/`; `pytest -q` from the repository root runs 541,
+510 tests in `tests/`; `pytest -q` from the repository root runs 551,
 adding the diagram and notebook checks. No network calls — external APIs are
 mocked with captured real payloads, so a provider changing its response shape
 surfaces as a failing test rather than a silent production break.

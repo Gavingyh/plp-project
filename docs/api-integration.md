@@ -1,8 +1,8 @@
 # Building the dashboard on the API
 
-For whoever builds the dashboard. This repository no longer contains one
-(DESIGN decision 23): it exposes everything a dashboard needs through a
-read-only REST API. This page is how to run it, which endpoint feeds which
+For whoever builds a frontend on the API. The Streamlit dashboard in
+`dashboard/` (a teammate's) reads the database directly; everything it
+shows is also available through a read-only REST API (DESIGN decision 23). This page is how to run it, which endpoint feeds which
 view, what the responses look like, and what the screen must say about the
 numbers.
 

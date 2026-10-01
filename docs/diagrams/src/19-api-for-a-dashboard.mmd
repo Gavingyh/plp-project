@@ -1,8 +1,8 @@
 flowchart LR
   accTitle: The API behind a dashboard
-  accDescr: Each view a dashboard needs, the API endpoint that feeds it, and what that endpoint reads. The dashboard itself is a separate project.
+  accDescr: Each view a dashboard needs, the API endpoint that feeds it, and what that endpoint reads. The Streamlit dashboard in this repository reads the database directly; this is the contract for any frontend on the API.
 
-  subgraph views["Dashboard views: a separate project"]
+  subgraph views["Views a frontend needs"]
     v1["Headline score per bank"]
     v2["Bank × aspect grid"]
     v3["What the blend is made of"]

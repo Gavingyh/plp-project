@@ -1,4 +1,4 @@
-# Pipeline: from sources to the API
+# Pipeline: from sources to the dashboard
 
 How text becomes a sentiment score, stage by stage, and what each stage writes. For the report's solution-approach section.
 
@@ -7,7 +7,7 @@ How text becomes a sentiment score, stage by stage, and what each stage writes. 
 ```mermaid
 flowchart TB
   accTitle: Processing pipeline
-  accDescr: Sources are ingested into documents, split into sentences, embedded, tagged with aspects, scored and aggregated into an index that the API and chatbot serve, and a separate dashboard reads through the API. Planned replacements are dashed.
+  accDescr: Sources are ingested into documents, split into sentences, embedded, tagged with aspects, scored and aggregated into an index that the dashboard, API and chatbot read. Planned replacements are dashed.
 
   subgraph src["Sources"]
     reddit["Reddit<br/>ingest.arctic_shift"]
@@ -32,7 +32,7 @@ flowchart TB
   as[("aspect_sentiment")]
   agg["Index: windows, sources,<br/>shrinkage at low volume<br/>aggregate.index"]
   idx[("sentiment_index")]
-  ui["REST API, chatbot<br/>dashboard: separate project"]
+  ui["Dashboard, REST API, chatbot"]
 
   reddit --> docs
   news --> filt --> docs

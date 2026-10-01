@@ -109,9 +109,11 @@ split is detailed in the checklist.
   metrics and the judge are built (1 Oct, [evidence](evidence/chatbot-eval-build-2026-10-01.md));
   calibrating the judge needs people to fill `data/eval/ratings_sheet.csv`
 - SASSI user study and transcript reading (people)
-- ~~Dashboard: remove stale text, check every tab~~ The dashboard is now a
-  teammate's separate project on the API (DESIGN decision 23); its contract
-  is [api-integration.md](api-integration.md)
+- Dashboard: a teammate owns the Streamlit dashboard in `dashboard/`
+  (redesigned 1 Oct; DESIGN decision 23, amended). The API serves every view
+  too ([api-integration.md](api-integration.md)). Still to do: the consensus
+  panel hides UOB (one date for all banks), and every tab needs checking
+  after the redesign
 
 **Report and video** (everyone)
 - Structure, datasets and methods drafts, results tables, script (AI)
@@ -147,7 +149,7 @@ Also 1 Oct: [Opus 5.5 as an additional labeller](evidence/opus-labeller-2026-10-
 set is blank, for people), [the chatbot evaluation extended](evidence/chatbot-eval-build-2026-10-01.md)
 (gold set v2, conversations, retrieval metrics, a judge; retrieval is the
 weakest link), [what the two pending changes would do to the index](evidence/index-preview-2026-10-01.md),
-the dashboard handed to its own project (DESIGN 23, [api-integration.md](api-integration.md)),
+the API extended so a dashboard needs nothing else (DESIGN 23, [api-integration.md](api-integration.md); the Streamlit dashboard stays in this repository),
 a [report draft](report/report-draft.md) of the factual sections and an
 [examiner's assessment](review/examiner-assessment-2026-10-01.md).
 

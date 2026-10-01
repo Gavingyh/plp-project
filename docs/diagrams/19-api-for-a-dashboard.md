@@ -1,15 +1,15 @@
 # The API behind a dashboard
 
-Which endpoint feeds each view a dashboard needs, and what each endpoint reads. The dashboard is a separate project (DESIGN decision 23); this is its contract with this repository. For the report's system-design section and for whoever builds the dashboard.
+Which endpoint feeds each view a dashboard needs, and what each endpoint reads. The Streamlit dashboard in this repository (`dashboard/`, a teammate's) reads the database directly; this is the contract for any frontend built on the API instead (DESIGN decision 23). For the report's system-design section and for whoever moves a view onto the API.
 
 **Legend.** Solid shapes and arrows are built and running. Dashed shapes and arrows labelled *planned* are decided but not yet built, with the DESIGN.md decision that records them. Shapes marked *not installed* exist in the repository but aren't running anywhere.
 
 ```mermaid
 flowchart LR
   accTitle: The API behind a dashboard
-  accDescr: Each view a dashboard needs, the API endpoint that feeds it, and what that endpoint reads. The dashboard itself is a separate project.
+  accDescr: Each view a dashboard needs, the API endpoint that feeds it, and what that endpoint reads. The Streamlit dashboard in this repository reads the database directly; this is the contract for any frontend on the API.
 
-  subgraph views["Dashboard views: a separate project"]
+  subgraph views["Views a frontend needs"]
     v1["Headline score per bank"]
     v2["Bank × aspect grid"]
     v3["What the blend is made of"]

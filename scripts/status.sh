@@ -14,6 +14,7 @@ cd "$ROOT"
 
 RUN_DIR="$ROOT/data/run"
 LOG_DIR="$ROOT/data/logs"
+DASHBOARD_PORT="${PLP_DASHBOARD_PORT:-8501}"
 API_PORT="${PLP_API_PORT:-8000}"
 OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"
 
@@ -54,6 +55,7 @@ report() {
 
 printf '%-10s %-8s %-8s %s\n' SERVICE PID PORT STATE
 printf '%s\n' "-------------------------------------------------------------------"
+report dashboard "$DASHBOARD_PORT" "http://localhost:$DASHBOARD_PORT/_stcore/health"
 report api       "$API_PORT"       "http://localhost:$API_PORT/health"
 
 # Ollama is reported by reachability rather than pid, because it is usually

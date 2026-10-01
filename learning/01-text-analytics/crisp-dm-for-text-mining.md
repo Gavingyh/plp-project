@@ -45,7 +45,7 @@ sends you back to phase 1 because the data you assumed exists does not.
 | 3. Data preparation | Ingestion, segmentation, aspect assignment, labelling exports | `ingest/`, `preprocess/`, `aspects/` |
 | 4. Modeling | FinBERT embeddings and zero-shot scoring; fine-tuning run from 30 Sep (test macro-F1 0.604 ± 0.035 on 1 Oct); an LLM aspect classifier evaluated | `sentiment/`, `train/`, `aspects/` |
 | 5. Evaluation | Chatbot gold set done; classifier evaluation **blocked** | `chatbot/run_eval.py`, `train/evaluate.py` |
-| 6. Deployment | REST API (a separate project builds the dashboard on it), scripts, documentation | `api/`, `scripts/`, `docs/` |
+| 6. Deployment | REST API, Streamlit dashboard, scripts, documentation | `api/`, `dashboard/`, `scripts/`, `docs/` |
 
 ---
 

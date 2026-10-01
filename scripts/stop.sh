@@ -3,12 +3,13 @@
 # Stop services started by scripts/start.sh.
 #
 # Stops only what this project started, identified by PID file - never by
-# scanning a port and killing whatever answers. Port 8000 on a development
-# machine is as likely to be somebody else's server as it is to be ours,
-# and "stop my API" should never take down an unrelated project.
+# scanning a port and killing whatever answers. Port 8501 on a development
+# machine is as likely to be somebody else's Streamlit as it is to be ours,
+# and "stop my dashboard" should never take down an unrelated project.
 #
 # USAGE:
-#   scripts/stop.sh              # api + ollama (if we started it)
+#   scripts/stop.sh              # dashboard + api + ollama (if we started it)
+#   scripts/stop.sh dashboard
 #   scripts/stop.sh api
 #   scripts/stop.sh ollama
 
@@ -82,14 +83,16 @@ stop_ollama() {
 TARGET="${1:-all}"
 rc=0
 case "$TARGET" in
+    dashboard) stop_service dashboard || rc=1 ;;
     api)       stop_service api || rc=1 ;;
     ollama)    stop_ollama || rc=1 ;;
     all)
+        stop_service dashboard || rc=1
         stop_service api || rc=1
         stop_ollama || rc=1
         ;;
     *)
-        warn "ERROR: unknown target '$TARGET'. Use: all | api | ollama"
+        warn "ERROR: unknown target '$TARGET'. Use: all | dashboard | api | ollama"
         exit 1
         ;;
 esac

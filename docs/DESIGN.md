@@ -37,8 +37,8 @@ Ingests public text about DBS, OCBC and UOB from several sources, splits it
 into sentences, assigns each sentence to one or more financial aspects,
 scores sentiment per (sentence, aspect), aggregates into a per-bank index,
 and exposes the result through a REST API and a chatbot that answers
-questions by querying that store. The dashboard is a separate project built
-on the API (decision 23).
+questions by querying that store, and a Streamlit dashboard maintained by a
+teammate (decision 23).
 
 ```
  sources                  ingest/            preprocess/         aspects/
@@ -59,13 +59,13 @@ on the API (decision 23).
                                                                     ▼
                                                             aggregate/index
                                                                     │
-                                                    ┌───────────────┼────────────────┐
-                                                    ▼                                ▼
-                                                  api/  ─────────────────────────▶ chatbot/
-                                               (FastAPI)          POST /chat     (tools + RAG)
-                                                    ▲
-                                                    │ HTTP
-                                         dashboard (a separate project)
+                                    ┌───────────────────────────────┼────────────────┐
+                                    ▼                               ▼                ▼
+                              dashboard/                          api/  ──────▶  chatbot/
+                              (Streamlit,                      (FastAPI)  POST  (tools + RAG)
+                               a teammate's)                       ▲      /chat
+                                                                   │ HTTP
+                                                            any other frontend
 ```
 
 Everything is stored in one SQLite file (`data/plp.db`). Tables:
@@ -453,7 +453,7 @@ GenAI declaration lists it, and its agreement figures are human–LLM, not
 human–human.
 
 
-### 23. The dashboard is a separate project; this repository exposes the API
+### 23. The API serves every view a dashboard needs; the dashboard is a teammate's
 
 *2026-10-01, the team's call.* A teammate builds the dashboard as its own
 project, so the Streamlit dashboard here was removed (its last version is
@@ -468,6 +468,16 @@ machine-readable contract (a test fails if it drifts), and
 lists what the screen must say. The chatbot stays, reachable through
 `POST /chat` and, for testing, a terminal chat (`python -m chatbot.chat`).
 Streamlit and matplotlib left `requirements.txt` with the page.
+
+*Amended later on 2026-10-01, the team's call.* The teammate building the
+dashboard pushed a redesign of the Streamlit dashboard to this repository the
+same night, so it stays here: `dashboard/`, its styling test, Streamlit and
+matplotlib, and the start, stop and status scripts' `dashboard` target are
+back. The teammate owns it. It reads the database directly; the API remains
+the documented interface for any other frontend, and each view can move onto
+it. Its analyst-consensus panel still takes one date for all three banks,
+which hides UOB's consensus; `ingest.yahoo_analyst.latest_per_bank` is the
+fix the API uses.
 
 ---
 

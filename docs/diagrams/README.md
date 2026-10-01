@@ -21,7 +21,7 @@ All twenty are rendered.
 | 01 | [System context](01-system-context.md) | flowchart | Who uses the system, and which outside services does it depend on? | core |
 | 02 | [Runtime: what runs where](02-runtime.md) | flowchart | Which processes run, on which ports, reading and writing which files? | core |
 | 03 | [Data model](03-data-model.md) | ER | What are the six tables, their keys, and how do they relate? | core |
-| 04 | [Pipeline: from sources to the API](04-pipeline.md) | flowchart | How does text become a sentiment score, stage by stage? | core |
+| 04 | [Pipeline: from sources to the dashboard](04-pipeline.md) | flowchart | How does text become a sentiment score, stage by stage? | core |
 | 05 | [News ingestion, one run](05-news-ingestion.md) | sequence | What happens, in order, during a news pull? | core |
 | 06 | [A batch run, from ingestion to the index](06-batch-pipeline.md) | sequence | In what order are the batch steps run, and why is re-running safe? | core |
 | 07 | [Chatbot: one turn](07-chatbot-turn.md) | flowchart | Which paths can a question take, and where does code rather than the model decide? | core |

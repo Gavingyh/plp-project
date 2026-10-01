@@ -1,9 +1,9 @@
 flowchart TB
   accTitle: Runtime view
-  accDescr: The services started by scripts/start.sh, the separate dashboard that calls the API, the batch commands run by hand, and the local files each reads or writes.
+  accDescr: Three services started by scripts/start.sh, the batch commands run by hand, and the local files each reads or writes.
 
   subgraph services["Services: scripts/start.sh"]
-    ui["FastAPI REST API, port 8000"]
+    ui["Streamlit dashboard, port 8501<br/>FastAPI REST API, port 8000"]
     oll["Ollama<br/>port 11434"]
   end
 
@@ -20,9 +20,7 @@ flowchart TB
   end
 
   plist["launchd daily job<br/>not installed"]
-  dash["Dashboard<br/>separate project"]
 
-  dash -- "HTTP" --> ui
   ui -- "reads scores, evidence" --> db
   ui -- "evidence search" --> emb
   ui -- "chat" --> oll

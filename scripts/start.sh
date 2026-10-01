@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Start the REST API and (if needed) Ollama. The dashboard is a separate
-# project that reads this API (docs/api-integration.md).
+# Start the dashboard, the REST API, and (if needed) Ollama.
 #
 # WHY THIS EXISTS: the manual commands in docs/RUNBOOK.md are the reference
 # for what these services are, and they are easy to get subtly wrong - the
@@ -12,10 +11,12 @@
 # moment a process exists.
 #
 # USAGE:
-#   scripts/start.sh              # api + ollama if needed
-#   scripts/start.sh api          # just one service
+#   scripts/start.sh              # dashboard + api + ollama if needed
+#   scripts/start.sh dashboard    # just one service
+#   scripts/start.sh api
 #   scripts/start.sh ollama
 #
+#   PLP_DASHBOARD_PORT=8502 scripts/start.sh dashboard
 #   PLP_API_PORT=8100 scripts/start.sh api
 #
 # Stop what this starts with scripts/stop.sh; see scripts/status.sh for state.
@@ -31,6 +32,7 @@ cd "$ROOT"
 PY="$ROOT/.venv-plp/bin/python3"
 RUN_DIR="$ROOT/data/run"
 LOG_DIR="$ROOT/data/logs"
+DASHBOARD_PORT="${PLP_DASHBOARD_PORT:-8501}"
 API_PORT="${PLP_API_PORT:-8000}"
 OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"
 HEALTH_TIMEOUT="${PLP_HEALTH_TIMEOUT:-90}"
@@ -180,6 +182,14 @@ start_service() {
 }
 
 # --- Services ----------------------------------------------------------------
+start_dashboard() {
+    start_service dashboard "$DASHBOARD_PORT" \
+        "http://localhost:$DASHBOARD_PORT/_stcore/health" \
+        "$PY" -m streamlit run dashboard/app.py \
+            --server.port "$DASHBOARD_PORT" --server.headless true \
+    && log "  Dashboard: http://localhost:$DASHBOARD_PORT"
+}
+
 start_api() {
     start_service api "$API_PORT" \
         "http://localhost:$API_PORT/health" \
@@ -222,8 +232,8 @@ TARGET="${1:-all}"
 # torch, which costs several seconds; making a typo'd service name wait for
 # that before being told it is a typo is pure annoyance.
 case "$TARGET" in
-    all|api|ollama) ;;
-    *) die "unknown target '$TARGET'. Use: all | api | ollama" ;;
+    all|dashboard|api|ollama) ;;
+    *) die "unknown target '$TARGET'. Use: all | dashboard | api | ollama" ;;
 esac
 
 # Ollama needs neither the venv nor torch, so do not gate it on them.
@@ -231,13 +241,15 @@ esac
 
 rc=0
 case "$TARGET" in
+    dashboard) start_dashboard || rc=1 ;;
     api)       start_api || rc=1 ;;
     ollama)    start_ollama || rc=1 ;;
     all)
-        # Ollama first: the API's /chat needs it, and it is the slowest to
-        # become ready.
+        # Ollama first: the dashboard's Chat tab needs it, and it is the
+        # slowest to become ready.
         start_ollama || rc=1
         start_api || rc=1
+        start_dashboard || rc=1
         ;;
 esac
 

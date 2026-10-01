@@ -8,7 +8,8 @@ The system ingests public text about the three banks (Reddit, news, earnings
 releases, analyst consensus), splits it into sentences, assigns each sentence
 to a financial aspect, scores sentiment, and exposes the result through a
 REST API and a chatbot that answers questions by querying the sentiment
-store. The dashboard is a separate project built on the API:
+store, and a Streamlit dashboard (`dashboard/`, maintained by a teammate).
+The API is the documented interface for any frontend:
 [docs/api-integration.md](docs/api-integration.md) is its contract.
 
 ---
@@ -250,6 +251,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 500 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 541: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 510 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 551: adds the diagram and notebook checks
 ```

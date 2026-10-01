@@ -193,7 +193,7 @@ repository. One person can hold more than one role. Tasks per role are in
 | Data and NER | ingestion, news and CNA feeds, bank entity recognition, dataset packaging |
 | Labelling | annotation guideline, agreement round, the labelled set |
 | Modelling | aspect classifier, aspect discovery, fine-tuning and evaluation |
-| Interfaces | the API, the chatbot and its evaluation; the dashboard, as a separate project on the API |
+| Interfaces | the API, the chatbot and its evaluation; the Streamlit dashboard (`dashboard/`), a teammate's |
 | Report and video | everyone; each person writes their own contribution summary |
 
 ---
@@ -622,7 +622,9 @@ to the database.
   with alias matching on 714 sentences, mostly DBS Vickers (456) and UOB Kay
   Hian (132). A 201-row gold sheet is in `data/labeled/ner/`, blank: its
   labels are for people.
-- **Dashboard handed to its own project** (`36283da`, DESIGN 23). The API
+- **Dashboard handed to its own project** (`36283da`, DESIGN 23; reversed
+  the same night, when the teammate pushed a redesign to this repository:
+  the dashboard stays here, see the amendment to DESIGN 23). The API
   is the interface: `/evidence/latest`, `/analyst-consensus/latest` (which
   fixes UOB being hidden by a global latest date) and `/aspects` are new, and
   the contract is [api-integration.md](api-integration.md), with

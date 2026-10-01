@@ -47,7 +47,7 @@ refreshed, evidence-linked read of what is being said about the three banks.
 
 | user | what they need | served by |
 |---|---|---|
-| **Retail reader** | A quick read on sentiment per bank and aspect, with the evidence behind it and an honest signal when data is thin | the dashboard (a separate project, on the API), chatbot |
+| **Retail reader** | A quick read on sentiment per bank and aspect, with the evidence behind it and an honest signal when data is thin | the Streamlit dashboard (`dashboard/`, a teammate's), chatbot |
 | **Dashboard builder or API consumer** | Every number, its evidence and the chat, as JSON | FastAPI REST API ([api-integration.md](../api-integration.md)) |
 | **Teammate, marker, supervisor** | To reproduce every number, see what is unfinished, and judge what the numbers support | Docs, evidence files, verification ledger, test suite |
 
@@ -63,7 +63,7 @@ nicety.
 **In scope.** Batch ingestion of public text about the three banks;
 sentence-level aspect assignment and sentiment scoring; a per-bank, per-aspect
 index with time windows and a continuous series; a REST API and a grounded
-chatbot, on which a separate project builds the dashboard; a labelling workflow for the fine-tuning dataset.
+chatbot; a Streamlit dashboard maintained by a teammate; a labelling workflow for the fine-tuning dataset.
 
 **Explicit non-goals**, each a deliberate decision rather than an omission:
 
@@ -105,23 +105,23 @@ Each requirement has acceptance criteria that can be checked against the code,
 a test, or a running instance. Status values: **Done**, **Partial**,
 **Blocked**, and **Planned** (decided, not yet built).
 
-### 4.1 Dashboard (a separate project)
+### 4.1 Dashboard
 
-*Changed 2026-10-01 (DESIGN decision 23).* The dashboard is built by a
-teammate as a separate project on the REST API; the Streamlit dashboard that
-was here is removed (its last version is in git history before that date).
-The requirements stay, so they can be traced: this repository's part is the
-API support for each, and the UI is the other project's.
+*Changed 2026-10-01 (DESIGN decision 23, amended the same night).* A
+teammate maintains the Streamlit dashboard in `dashboard/`, redesigned on
+1 Oct; it reads the database directly. Every requirement also has API
+support, so a view can move onto the API. The UI column below was not
+re-checked after the redesign.
 
 | # | Requirement | API support here | Status |
 |---|---|---|---|
-| D1 | As a retail reader, I see an overall sentiment score per bank so I can compare the three at a glance | `GET /sentiment?bank=` returns a score with its sample size `n`; no score without `n` | API done; UI separate |
-| D2 | I see sentiment broken down by aspect so I can drill into what drives the headline | `GET /sentiment/index` returns the whole bank × aspect grid in one call | API done; UI separate |
-| D3 | I see how sentiment moved over time, not just a snapshot | `GET /sentiment/series` with a week/month/quarter bucket; thin buckets come back `sufficient: false`, never interpolated | API done; UI separate |
-| D4 | I can read the actual sentences behind a score | `GET /evidence/latest` and `GET /evidence` return sentences with `sentence_id`, source URL and date | API done; UI separate |
-| D5 | I can ask questions in natural language | `POST /chat` runs the same agent as the terminal chat and returns the verification flags; `GET /suggestions` gives starter questions | API done; UI separate |
-| D6 | I am told when the data cannot support a number | results below the volume floor carry `insufficient_data` | API done; UI separate |
-| D7 | I can see which sources produced a blended figure | `GET /sentiment/index?source=*` and `GET /sources` | API done; UI separate |
+| D1 | As a retail reader, I see an overall sentiment score per bank so I can compare the three at a glance | `GET /sentiment?bank=` returns a score with its sample size `n`; no score without `n` | API done; UI not re-checked |
+| D2 | I see sentiment broken down by aspect so I can drill into what drives the headline | `GET /sentiment/index` returns the whole bank × aspect grid in one call | API done; UI not re-checked |
+| D3 | I see how sentiment moved over time, not just a snapshot | `GET /sentiment/series` with a week/month/quarter bucket; thin buckets come back `sufficient: false`, never interpolated | API done; UI not re-checked |
+| D4 | I can read the actual sentences behind a score | `GET /evidence/latest` and `GET /evidence` return sentences with `sentence_id`, source URL and date | API done; UI not re-checked |
+| D5 | I can ask questions in natural language | `POST /chat` runs the same agent as the terminal chat and returns the verification flags; `GET /suggestions` gives starter questions | API done; UI not re-checked |
+| D6 | I am told when the data cannot support a number | results below the volume floor carry `insufficient_data` | API done; UI not re-checked |
+| D7 | I can see which sources produced a blended figure | `GET /sentiment/index?source=*` and `GET /sources` | API done; UI not re-checked |
 
 ### 4.2 REST API
 
@@ -216,7 +216,7 @@ positive or negative; the report has to explain both
 | Aspects: dividend policy, asset quality, NIM, management guidance | Kept within ten aspects derived from the corpus (DESIGN decision 21). Seed-centroid assignment failed validation; LLM assignment, one aspect per sentence, is built and evaluated (0.729 against 0.413) but not yet applied | Partial |
 | ~1,000 labelled examples, 200–300 per class | 1,277 labelled on 2026-09-27: 275 negative, 543 neutral, 459 positive (the target read as per sentiment class overall) | Done |
 | Accuracy, precision, recall, F1 per class, macro-F1 on a held-out split | `train/evaluate.py` on the 299-row random test split, against base FinBERT, a lexicon baseline and a classical ML baseline | Done |
-| Dashboard with overall and aspect sentiment, batch refreshed | A separate project builds it on the API, which serves every view (DESIGN decision 23) | API done; UI separate |
+| Dashboard with overall and aspect sentiment, batch refreshed | The Streamlit dashboard (`dashboard/`, a teammate's); the API also serves every view (DESIGN decision 23) | API done; UI not re-checked |
 | Chatbot answering with supporting evidence | Done, with the grounding caveats in 4.3 | Partial |
 
 ---

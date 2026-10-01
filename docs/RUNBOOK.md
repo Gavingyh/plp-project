@@ -532,8 +532,16 @@ Two annotators label the same ~150 rows independently, then:
 
 Target is Cohen's κ ≥ 0.6. Below that, the guideline is ambiguous somewhere
 rather than an annotator being careless — find the disagreements, tighten the
-guideline, re-label the sample. Watch the gap between raw agreement and κ:
-this corpus is 87% neutral under base FinBERT, so two annotators who both
+guideline, re-label the sample. For the aspect, add `--field aspect`: the
+sheets are then matched on `sentence_id` alone and compared over the eleven
+aspect keys.
+
+```bash
+.venv-plp/bin/python3 -m train.agreement --a sheet_a.csv --b sheet_b.csv --field aspect --show-disagreements 20
+```
+
+Watch the gap between raw agreement and κ:
+70% of corpus sentences are neutral under base FinBERT, so two annotators who both
 default to `neutral` will agree ~90% of the time while sharing no judgement
 at all. The tool prints both and warns when the gap is large.
 

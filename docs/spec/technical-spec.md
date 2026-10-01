@@ -70,7 +70,8 @@ The LLM aspect classifier of DESIGN decision 16 is built
 (`aspects/llm_classify.py`) and evaluated against the human aspect labels,
 but not yet wired into the pipeline: `aspects/assign.py`'s seed-centroid
 matching still fills `sentence_aspects`. Still planned (decisions 17–18): a
-bank entity recognition step, and aspect agreement in `train/agreement.py`. Decision 19's chatbot harness is
+bank entity recognition step. Aspect agreement is in `train/agreement.py`
+(`--field aspect`, 2026-10-01). Decision 19's chatbot harness is
 built: `chatbot/guards.py` (advice, off-topic, figure and sentence-id checks)
 and `Conversation` / `answer_turn` in `chatbot/agent.py` (memory, state,
 per-turn record); `/chat` accepts earlier turns as `history`.

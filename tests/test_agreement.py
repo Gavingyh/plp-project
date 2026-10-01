@@ -13,6 +13,7 @@ silently reported raw agreement.
 import pandas as pd
 import pytest
 
+import train.agreement as agreement
 from train.agreement import LABELS, interpret, load_pair, run, score
 
 
@@ -181,3 +182,26 @@ def test_a_pair_listed_twice_with_different_labels_is_refused(tmp_path):
     pd.DataFrame(rows).to_csv(a, index=False)
     with pytest.raises(ValueError, match="more than once"):
         load_pair(str(a), str(a))
+
+
+def test_aspect_agreement_joins_on_sentence_alone(tmp_path):
+    a = tmp_path / "a.csv"
+    b = tmp_path / "b.csv"
+    pd.DataFrame({"sentence_id": ["s1", "s2", "s3", "s4"],
+                  "aspect": ["dividend_policy", "other", "asset_quality", "other"]}).to_csv(a, index=False)
+    pd.DataFrame({"sentence_id": ["s1", "s2", "s3", "s5"],
+                  "aspect": ["dividend_policy", "wealth_business", "asset_quality", "other"]}).to_csv(b, index=False)
+    result = agreement.run(file_a=str(a), file_b=str(b), field="aspect")
+    assert result["n_compared"] == 3                       # s4 and s5 are in one sheet only
+    assert result["observed_agreement"] == pytest.approx(2 / 3, abs=1e-4)
+    assert result["labels"] == agreement.aspect_keys()
+    assert result["confusion"].shape == (11, 11)
+
+
+def test_aspect_mode_skips_values_that_are_not_aspect_keys(tmp_path):
+    a = tmp_path / "a.csv"
+    b = tmp_path / "b.csv"
+    pd.DataFrame({"sentence_id": ["s1", "s2"], "aspect": ["other", "not_an_aspect"]}).to_csv(a, index=False)
+    pd.DataFrame({"sentence_id": ["s1", "s2"], "aspect": ["other", "other"]}).to_csv(b, index=False)
+    result = agreement.run(file_a=str(a), file_b=str(b), field="aspect")
+    assert result["n_compared"] == 1 and result["n_skipped"] == 1

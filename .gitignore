@@ -28,3 +28,6 @@ data/logs/daily_batch.log
 
 # LLM aspect-classifier answer cache (aspects/llm_classify.py)
 data/aspect_llm/
+
+# index previews from aggregate/preview.py
+data/preview/

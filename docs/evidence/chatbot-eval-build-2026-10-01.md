@@ -4,7 +4,7 @@ PLAN section 3 asks for a frozen ~30-question gold set, multi-turn
 scenarios, retrieval Hit@K and MRR, and faithfulness via an LLM judge
 calibrated on human ratings. Built 2026-10-01. The retrieval results are
 below; the live runs of the gold set, the conversations and the judge are in
-[the next section](#live-runs) once they finish.
+[Live runs](#live-runs).
 
 ## What was built
 
@@ -92,5 +92,117 @@ aspect counts as a miss.
 
 ## Live runs
 
-Pending: the gold set v2, the conversations and the judge run after the
-GPU jobs ahead of them; results are added here when they finish.
+Run on the evening of 2026-10-01, `llama3.1:8b`, temperature 0.2, database
+as of 30 Sep. The first run shared Ollama with another job and lost 6 of 32
+questions to timeouts, so it was repeated on an otherwise idle machine
+(22:54–23:34). The repeat is the one reported; the first run's files are kept
+for the record (`*_llama8b_v2.*`, `*_multiturn_*_llama8b.*`).
+
+```bash
+OLLAMA_MODEL=llama3.1:8b .venv-plp/bin/python3 -m chatbot.run_eval --backend ollama --set v2 --tag llama8b_v2_idle
+OLLAMA_MODEL=llama3.1:8b .venv-plp/bin/python3 -m chatbot.run_eval --backend ollama --multi-turn --tag llama8b_idle
+.venv-plp/bin/python3 -m chatbot.judge sheet --results data/eval/chatbot_eval_results_llama8b_v2_idle.jsonl
+.venv-plp/bin/python3 -m chatbot.judge judge --results data/eval/chatbot_eval_results_llama8b_v2_idle.jsonl --model qwen3:4b --no-think
+.venv-plp/bin/python3 -m chatbot.judge checks --results data/eval/chatbot_eval_results_llama8b_v2_idle.jsonl --judged data/eval/judge_qwen3_4b.jsonl
+```
+
+### Gold set v2 (32 questions)
+
+| | v1's 23, 30 Sep | v1's 23, tonight | the 9 added, tonight | all 32, tonight |
+|---|---|---|---|---|
+| backend errors | 0 | 0 | 0 | 0 |
+| answered by an input guard | 7 | 7 | 1 | 8 |
+| correct tool | 13 / 16 | 13 / 16 | 7 / 8 | 20 / 24 |
+| advice and no-data behaviour | 7 / 7 | 7 / 7 | 1 / 1 | 8 / 8 |
+| citation warning | 4 | 5 | 6 | **11** |
+| answers with a figure no tool returned | 3 | 6 | 5 | 11 |
+
+On v1's 23 questions tonight's run is close to 30 Sep's (13/16 tools both
+times; 5 citation warnings against 4). The 9 new questions, mostly lookups on
+the aspects added on 30 Sep, are where the model invents most: 6 of the 8
+that reached it.
+
+**Every citation warning was read against the transcript.** All 11 are real
+inventions, none a false alarm: fake sentence ids (12345 and 67890 in five
+answers, 123456, 789012 and 345678 in one), URLs at Business Times, Straits
+Times, CNA, Bloomberg, Reuters or DBS's own site that no tool returned, and
+quotes attributed to Bloomberg, the Financial Times, Yahoo Finance and others
+that appear nowhere in the tool data. **None of the 11 answers called
+`search_evidence`.** Each looked up a score (`get_sentiment`,
+`compare_banks`, `get_trend`, `get_coverage` or `get_analyst_consensus`) and
+then wrote a "Supporting evidence" section anyway. Prompt rule 8 forbids
+exactly that ("If you have not called search_evidence in this conversation,
+do not write a supporting evidence section at all"), and rule 6 asks for that
+section in every answer; the model follows rule 6.
+
+**The figures.** 10 of the 11 answers with an unverified figure are among
+those 11, and every flagged figure sits in the invented evidence section,
+not in the answer's opening: the scores the answers lead with came from the
+tools. The eleventh, evidence-2's "a relevance score of at least 0.58", is
+a false alarm: the lowest relevance returned was 0.5853.
+
+**The tool misses** (4 of 24): lookup-2 called `get_coverage` twice instead
+of `get_sentiment`; thin-1 called `get_trend` instead of `get_sentiment`;
+evidence-1 searched without the bank; evidence-3 looked up
+the score and invented quotes instead of searching.
+
+**Off-topic evidence that every check passes.** evidence-2 asked for
+complaints about UOB's asset quality. `search_evidence` returned five
+negative sentences stored under `asset_quality`: card annual fees, a fall in
+a fund's value, account requirements, unauthorised card transactions and a
+housing-loan court case. They are retail-banking complaints that
+seed-centroid assignment filed under asset quality, and the model presented
+them as asset-quality complaints. The citation check passes (every quote was
+retrieved), the number check raises only the false alarm above, and the
+judge scores it 3. The retrieval section above predicts this failure; here
+it is in a live answer.
+
+### Conversations
+
+7 of 9 turns correct, 2 of 4 conversations correct, the same as the first
+run. Both failures are fixable outside the model:
+
+- mt-2, turn 3, "Has that improved lately?": refused by the scope guard
+  before the model saw it ("That's outside what I can help with"). The guard
+  looks only at the current message, which names no bank and no domain word,
+  so a follow-up is treated as off-topic even mid-conversation.
+- mt-3, turn 2, "Show me some evidence for DBS on that.": the model wrote
+  the `search_evidence` call out as text (`{"name": "search_evidence", ...}`)
+  instead of making it, the failure seen in lookup-2 on 30 Sep.
+
+The carry-over itself works: "And OCBC?" and "What about its asset
+quality?" were answered with the right bank and aspect.
+
+### The judge
+
+`qwen3:4b` without thinking scored all 32 answers 3 ("every figure and claim
+is supported"), including the 11 with citations confirmed by hand as
+invented, which its own scale scores 1, and evidence-2:
+
+| harness | judge 1 | judge 2 | judge 3 |
+|---|---|---|---|
+| citation flagged | 0 | 0 | 11 |
+| not flagged | 0 | 0 | 13 |
+
+(Guard answers left out.) The first run gave the same result on its 8
+flagged answers. Its reasons check the figures the answer leads with and
+ignore the evidence section. As configured, it can't be used as a
+faithfulness measure, alone or calibrated: a judge that never scores below
+3 has nothing for human ratings to calibrate. What to try instead, in order
+of cost: the same model with thinking on; a larger judge; or a judge asked
+one narrow question at a time ("does every quote in the answer appear in the
+tool data?"), which the harness already answers without a model.
+
+The blank ratings sheet for people (`data/eval/ratings_sheet.csv`, 32
+answers, no judge output in it) is from this run.
+
+### What this changes
+
+1. Invented evidence is the chatbot's main failure on the 8B model, and it
+   happens when no search was made. Since the harness knows that, it can
+   remove the evidence section, or run the search itself and show real
+   quotes, instead of appending a warning. That is a code change, not a
+   prompt change: the prompt already says it.
+2. The scope guard needs the conversation's context.
+3. The LLM judge is not yet a measurement; the harness's checks and people's
+   ratings are.

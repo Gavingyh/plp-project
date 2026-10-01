@@ -102,6 +102,15 @@ against 0.22) and has a mechanism. It changes the priority list: a cheap
 fix (rank by the aspect's name when the model passes an aspect) should be
 tried and re-measured before any further prompt work on grounding.
 
+*Updated 2026-10-01 (night).* The live runs add two findings
+([evidence](../../docs/evidence/chatbot-eval-build-2026-10-01.md#live-runs)).
+The 8B model invented citations in 11 of 32 answers, every one an answer
+that never searched, although the prompt forbids an evidence section without
+a search. And the judge (`qwen3:4b`, no thinking) scored all 32 answers 3,
+including those 11. A judge whose scores never vary has nothing for human
+ratings to calibrate, so checking a judge against known failures comes
+before calibrating it.
+
 What the evaluation does not show: whether users would notice; whether a
 better embedding model (one trained for sentence similarity) would fix
 question queries too; and how often the live chatbot sends question-like

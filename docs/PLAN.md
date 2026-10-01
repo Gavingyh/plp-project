@@ -152,6 +152,13 @@ weakest link), [what the two pending changes would do to the index](evidence/ind
 the API extended so a dashboard needs nothing else (DESIGN 23, [api-integration.md](api-integration.md); the Streamlit dashboard stays in this repository),
 a [report draft](report/report-draft.md) of the factual sections and an
 [examiner's assessment](review/examiner-assessment-2026-10-01.md).
+Overnight 1–2 Oct: [the chatbot's live runs](evidence/chatbot-eval-build-2026-10-01.md#live-runs)
+(invented citations come from answers that never searched; the judge never
+disagrees), [a blind top-up labelling sheet](evidence/labelling-topup-2026-10-01.md),
+[cross-validation on two more seeds](evidence/noise-floor-cv-2026-10-02.md)
+(the readable label is no better than the key), a second
+[examiner's assessment](review/examiner-assessment-2026-10-02.md) and the
+[team to-do list with reasons](briefs/team-todo-2026-10-02.html).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (D2 attaches sentiment to an aspect), so the aspect classifier comes first.

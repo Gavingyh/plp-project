@@ -130,7 +130,10 @@ Baseline: base FinBERT zero-shot, which scores everything in the database
 today. The deep neural network: FinBERT fine-tuned on (sentence, aspect)
 pairs, the aspect given as its readable name ("Dividend Policy"), up to 8
 epochs with early stopping, three seeds; the configuration was chosen by
-5-fold cross-validation, never on the test split. Other baselines: VADER
+5-fold cross-validation, never on the test split. Repeated on two more
+seeds, the chosen input (the readable name) proved no better than the aspect
+key: +0.005 dev macro-F1 over 15 paired folds
+([noise-floor-cv-2026-10-02.md](../evidence/noise-floor-cv-2026-10-02.md)). Other baselines: VADER
 (lexicon) and TF-IDF with logistic regression
 ([finetune-fixes-2026-10-01.md](../evidence/finetune-fixes-2026-10-01.md)).
 

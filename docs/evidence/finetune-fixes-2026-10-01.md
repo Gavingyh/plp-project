@@ -105,6 +105,12 @@ selection. It is reported, not chosen.
 
 ## Choosing the final configuration
 
+*Updated 2026-10-02.* Repeated on seeds 1 and 7, the readable label's lead
+over the baseline disappears (+0.005 over 15 paired folds, 8 better):
+[noise-floor-cv-2026-10-02.md](noise-floor-cv-2026-10-02.md). The choice
+below was made on seed 42 alone and stands as a configuration, not as an
+improvement.
+
 The rule, fixed before the combined run started: combine every change whose
 CV mean beat the baseline (balanced, source, label; `prior` can't join
 `balanced` anyway, both being class weights); cross-validate the

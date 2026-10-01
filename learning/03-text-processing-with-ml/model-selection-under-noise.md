@@ -180,6 +180,11 @@ real from one seed's CV.
   Supervised Classification Learning Algorithms", *Neural Computation*
   10(7). On why fold-level comparisons need care. **Not fetched.**
 
-**Not verified**
+**Measured in this repository (2026-10-02)**
 
-- The seed-to-seed spread in CV (exercise 6) has not been measured.
+- Exercise 6 was run: on seeds 1 and 7 the readable name's lead
+  disappears (−0.003 and +0.001; +0.005 over all 15 paired folds, 8 of 15
+  better), the paired differences vary with sd 0.026, and the baseline's CV
+  mean moves between seeds by sd 0.011
+  ([noise-floor-cv-2026-10-02.md](../../docs/evidence/noise-floor-cv-2026-10-02.md)).
+  Try the exercise before reading it.

@@ -663,3 +663,43 @@ to the database.
   message fields. Setup and the three-model gold-set loop are in the
   RUNBOOK. It is unverified until someone adds a Groq key: that's on the
   submission checklist.
+
+### Overnight, 1–2 October
+
+Run one job at a time on the MacBook from 22:54. Nothing was written to the
+database.
+
+- **Chatbot, gold set v2 and conversations** (`593dc96`, `e82f6a3`,
+  [evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). On an
+  idle machine `llama3.1:8b` chose the right tool for 20 of 24 questions,
+  handled 8 of 8 advice and no-data questions, and invented citations in
+  11 of 32 answers; `llama3.2:3b` 18/24, 8/8 and 15 of 32. Every flag was
+  read by hand: all of the 8B's are real, 14 of the 3B's 15. **None of them
+  called `search_evidence`**: the models write an evidence section after
+  looking up a score, against prompt rule 8. Conversations: 7 of 9 turns
+  right. The scope guard refused "Has that improved lately?" because it
+  doesn't see the conversation, and the 8B once wrote a tool call as text.
+  A first run that shared Ollama lost 6 questions to timeouts; it is kept,
+  not reported.
+- **The judge doesn't discriminate.** `qwen3:4b` without thinking scored all
+  32 answers 3, including the 11 inventions. `chatbot.judge checks`
+  (`1b665fb`) measures this against the harness's flags without people.
+- **Noise-floor cross-validation**
+  ([evidence](evidence/noise-floor-cv-2026-10-02.md)). Seeds 1 and 7, both
+  inputs, 20 folds, 23:46–03:04. The readable label's lead on seed 42
+  (+0.017) doesn't replicate (−0.003, +0.001; +0.005 over 15 paired folds).
+  The final models stand; the report must not credit the input change.
+- **Corpus aspect classification** started at 03:04 into the answer cache
+  (`aspects.llm_classify --corpus`), about 20 sentences a minute; stop it
+  with `pkill -f "llm_classify --corpus"` and it resumes from the cache.
+- **Dashboard merged back** (`d31da61`): a teammate pushed a redesign while
+  this branch had removed the dashboard; the team chose to keep it here
+  (DESIGN 23, amended).
+- **Verification:** 551 tests pass; `check_sources.py` clean.
+
+**Needs a human (1–2 Oct):** the full list, with reasons, is the team to-do
+page ([briefs/team-todo-2026-10-02.html](briefs/team-todo-2026-10-02.html)).
+The new items since night 1: label the top-up sheet; fix the dashboard's
+consensus panel (it hides UOB); get a free Groq key; decide whether evidence
+search ranks by the aspect's name; and the examiner's assessment
+([review/examiner-assessment-2026-10-02.md](review/examiner-assessment-2026-10-02.md)).

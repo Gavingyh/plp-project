@@ -12,9 +12,15 @@ where it is not (whether a stated number is actually correct, whether cited
 evidence is relevant).
 
 Real aspect names, matching config/aspects.yaml.
+
+Two frozen sets. GOLD_SET (v1, 23 questions) is unchanged since 26 Sep so
+runs stay comparable; it only covers the proposal's four aspects. GOLD_SET_V2
+(2026-10-01) adds nine questions on the aspects the ten-aspect taxonomy
+introduced and one more uncovered bank, for 32 in all. MULTI_TURN holds
+conversations whose later turns depend on earlier ones ("and OCBC?").
 """
 
-ASPECTS = ["dividend_policy", "asset_quality", "net_interest_margin", "management_guidance"]
+ASPECTS = ["dividend_policy", "asset_quality", "net_interest_margin", "management_guidance"]  # v1's four
 BANKS = ["DBS", "OCBC", "UOB"]
 
 GOLD_SET = [
@@ -86,6 +92,60 @@ GOLD_SET = [
      "expected_tool": "get_analyst_consensus", "expected_bank": "DBS"},
     {"id": "consensus-2", "category": "consensus", "question": "What's the average price target for OCBC?",
      "expected_tool": "get_analyst_consensus", "expected_bank": "OCBC"},
+]
+
+# --- v2 additions (2026-10-01): the aspects added on 30 Sep, and one more uncovered bank ---
+V2_ADDITIONS = [
+    {"id": "lookup-6", "category": "lookup", "question": "How do people feel about OCBC's wealth management business?",
+     "expected_tool": "get_sentiment", "expected_bank": "OCBC", "expected_aspect": "wealth_business"},
+    {"id": "lookup-7", "category": "lookup", "question": "What's the sentiment on UOB's cards and retail banking service?",
+     "expected_tool": "get_sentiment", "expected_bank": "UOB", "expected_aspect": "retail_banking_sentiment"},
+    {"id": "lookup-8", "category": "lookup", "question": "How is DBS's capital and liquidity position being discussed?",
+     "expected_tool": "get_sentiment", "expected_bank": "DBS", "expected_aspect": "capital_liquidity"},
+    {"id": "lookup-9", "category": "lookup", "question": "What's the sentiment on OCBC's reported profits?",
+     "expected_tool": "get_sentiment", "expected_bank": "OCBC", "expected_aspect": "income_profit_results"},
+    {"id": "compare-4", "category": "compare", "question": "Compare how investors feel about the three banks' shares.",
+     "expected_tool": "compare_banks", "expected_aspect": "investor_stock_sentiment"},
+    {"id": "compare-5", "category": "compare", "question": "Compare the banks on how the macro environment is discussed.",
+     "expected_tool": "compare_banks", "expected_aspect": "macro_market_environment"},
+    {"id": "trend-3", "category": "trend", "question": "Is sentiment on UOB's retail banking improving?",
+     "expected_tool": "get_trend", "expected_bank": "UOB", "expected_aspect": "retail_banking_sentiment"},
+    {"id": "evidence-3", "category": "evidence", "question": "Show me what people say about OCBC's wealth business.",
+     "expected_tool": "search_evidence", "expected_bank": "OCBC"},
+    {"id": "oos-4", "category": "out_of_scope", "question": "What's the sentiment on Maybank's dividend?",
+     "expected_behavior": "decline_or_no_data"},
+]
+
+GOLD_SET_V2 = GOLD_SET + V2_ADDITIONS
+
+# Conversations: each turn is checked like a single question, but asked within
+# one Conversation, so a turn that omits the bank or aspect must carry it over.
+MULTI_TURN = [
+    {"id": "mt-1", "turns": [
+        {"question": "What is the sentiment on DBS's dividend policy?",
+         "expected_tool": "get_sentiment", "expected_bank": "DBS", "expected_aspect": "dividend_policy"},
+        {"question": "And OCBC?",
+         "expected_tool": "get_sentiment", "expected_bank": "OCBC", "expected_aspect": "dividend_policy"},
+    ]},
+    {"id": "mt-2", "turns": [
+        {"question": "How is UOB doing overall?",
+         "expected_tool": "get_sentiment", "expected_bank": "UOB", "expected_aspect": None},
+        {"question": "What about its asset quality?",
+         "expected_tool": "get_sentiment", "expected_bank": "UOB", "expected_aspect": "asset_quality"},
+        {"question": "Has that improved lately?",
+         "expected_tool": "get_trend", "expected_bank": "UOB", "expected_aspect": "asset_quality"},
+    ]},
+    {"id": "mt-3", "turns": [
+        {"question": "Compare the three banks on net interest margin.",
+         "expected_tool": "compare_banks", "expected_aspect": "net_interest_margin"},
+        {"question": "Show me some evidence for DBS on that.",
+         "expected_tool": "search_evidence", "expected_bank": "DBS"},
+    ]},
+    {"id": "mt-4", "turns": [
+        {"question": "What do analysts think of OCBC?",
+         "expected_tool": "get_analyst_consensus", "expected_bank": "OCBC"},
+        {"question": "So should I buy it?", "expected_behavior": "decline_advice"},
+    ]},
 ]
 
 _ADVICE_DECLINE_MARKERS = (

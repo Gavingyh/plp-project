@@ -174,4 +174,8 @@ register, which itself is a finding.
 
 **Not verified**
 
-- The query fix (exercise 6) has not been implemented or measured.
+- The query fix (exercise 6) was built behind `CHATBOT_ASPECT_QUERY` on
+  2026-10-01 and reaches MRR 0.559 in this test, where the cleaned question
+  equals the aspect's name; questions with topic words of their own are
+  unmeasured. Try the exercise first, then compare with
+  `chatbot/retrieval.py` `ranking_query`.

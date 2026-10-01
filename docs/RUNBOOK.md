@@ -351,6 +351,7 @@ banks never reach the model: they get a fixed reply (`chatbot/guards.py`).
 |---|---|---|
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, guards, state |
+| `CHATBOT_ASPECT_QUERY` | unset (off) | `1` makes evidence search, when given an aspect, rank by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
 
 The terminal chat remembers the last three turns, so follow-ups like
 "and OCBC?" work. The API is stateless: send earlier turns in `history`:

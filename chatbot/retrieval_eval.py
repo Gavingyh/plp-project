@@ -23,7 +23,7 @@ from math import comb
 import numpy as np
 import pandas as pd
 
-from chatbot.retrieval import _LEXICAL_WEIGHT, _WORD, _cosine_sim, _lexical_overlap
+from chatbot.retrieval import _LEXICAL_WEIGHT, _WORD, _cosine_sim, _lexical_overlap, ranking_query
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LABELS_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
@@ -32,7 +32,7 @@ MIN_RELEVANT = 3
 
 
 def rank(query_vec: np.ndarray, query: str, vecs: np.ndarray, texts: list[str]) -> np.ndarray:
-    """Indices in the order search_evidence would return them."""
+    """Indices in the order search_evidence would return them (`query` feeds the word-overlap boost)."""
     words = set(_WORD.findall(query.lower()))
     score = _cosine_sim(query_vec, vecs) + _LEXICAL_WEIGHT * np.array([_lexical_overlap(words, t) for t in texts])
     return np.argsort(-score, kind="stable")
@@ -82,7 +82,10 @@ def evaluate(labels: pd.DataFrame, vec_by_id: dict, embed, aspect_label: dict,
                 continue
             vecs = np.stack([vec_by_id[s] for s in pool["sentence_id"]])
             label = aspect_label[aspect]
-            query = label if query_style == "label" else f"What do people say about {bank}'s {label.lower()}?"
+            question = f"What do people say about {bank}'s {label.lower()}?"
+            query = label if query_style == "label" else question
+            if query_style == "aspect-query":            # as search_evidence with CHATBOT_ASPECT_QUERY=1
+                query = ranking_query(question, aspect)
             order = rank(embed(query), query, vecs, pool["text"].tolist())
             rel = (pool["aspect"].values[order] == aspect).tolist()
             rows.append({"bank": bank, "aspect": aspect, "pool": len(pool), "relevant": r,
@@ -114,8 +117,10 @@ def main():
     cols = ["hit@1", "hit@5", "hit@10", "p@5", "rr"]
     table, per_aspect = {}, None
     for name, style, filt in (("question", "question", None), ("label", "label", None),
+                              ("aspect query (CHATBOT_ASPECT_QUERY)", "aspect-query", None),
                               ("question + stored-aspect filter", "question", stored),
-                              ("label + stored-aspect filter", "label", stored)):
+                              ("label + stored-aspect filter", "label", stored),
+                              ("aspect query + stored-aspect filter", "aspect-query", stored)):
         res = evaluate(labels, vec_by_id, embed, aspect_label, style, filt)
         table[name] = res[cols].mean()
         table[f"{name} (random)"] = res[[f"random_{c}" for c in cols]].mean().set_axis(cols)

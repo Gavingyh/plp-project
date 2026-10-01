@@ -18,11 +18,22 @@ Hybrid retrieval, matched to this corpus's actual scale rather than a generic
 Every result carries its source sentence_id, url, and date — the chatbot's
 citation requirement is enforced by what this
 function returns, not left to the model's discretion.
+
+Aspect query (CHATBOT_ASPECT_QUERY=1, off by default; 2026-10-01): when an
+aspect is given, the semantic score embeds the aspect's readable name plus
+the question's content words instead of the whole question. FinBERT's
+vectors carry a text's register strongly, so a question embeds like a
+Reddit question and ranks the asked topic no better than random, while the
+aspect's name ranks it well (docs/evidence/chatbot-eval-build-2026-10-01.md).
+The word-overlap boost uses the same cleaned text, since question words
+("what", "people", "say") also favour Reddit chatter.
 """
 
+import os
 import re
 
 import numpy as np
+import yaml
 
 from aspects.embed import embed_sentences
 from aspects.embed_store import load_for_search
@@ -45,9 +56,41 @@ def _lexical_overlap(query_words: set[str], text: str) -> float:
     return len(query_words & text_words) / len(query_words)
 
 
+_QUESTION_WORDS = {
+    "what", "whats", "how", "is", "are", "was", "were", "do", "does", "did", "the", "a", "an", "of", "on",
+    "about", "people", "say", "saying", "said", "think", "feel", "me", "show", "tell", "any", "there",
+    "s", "its", "it", "for", "to", "in", "and", "or", "with", "evidence", "some", "you", "can", "i",
+}
+_BANK_WORDS = {"dbs", "posb", "ocbc", "uob", "bank", "banks"}
+_ASPECTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "aspects.yaml")
+_aspect_labels: dict | None = None
+
+
+def aspect_query_enabled() -> bool:
+    return os.environ.get("CHATBOT_ASPECT_QUERY", "").strip().lower() in ("1", "true", "yes")
+
+
+def ranking_query(query: str, aspect: str | None) -> str:
+    """The text whose embedding ranks the candidates: the aspect's readable
+    name plus the question's content words when an aspect is given, else the
+    query unchanged."""
+    global _aspect_labels
+    if not aspect:
+        return query
+    if _aspect_labels is None:
+        with open(_ASPECTS_PATH) as f:
+            _aspect_labels = {k: v.get("label", k) for k, v in yaml.safe_load(f)["aspects"].items()}
+    label = _aspect_labels.get(aspect, aspect)
+    # Bank names are already applied as a filter, and words the label carries
+    # add nothing; what's left is the question's own topic ("cut", "complaints").
+    skip = _QUESTION_WORDS | _BANK_WORDS | set(_WORD.findall(label.lower()))
+    content = [w for w in _WORD.findall(query.lower()) if w not in skip]
+    return " ".join([label] + content)
+
+
 def search_evidence(query: str, bank: str | None = None, aspect: str | None = None,
                      sentiment: str | None = None, date_from: str | None = None,
-                     date_to: str | None = None, k: int = 5) -> list[dict]:
+                     date_to: str | None = None, k: int = 5, aspect_query: bool | None = None) -> list[dict]:
     """Semantic + lexical search over sentences, filtered by structured fields first.
 
     Returns up to k results: [{sentence_id, text, bank, aspect, sentiment,
@@ -104,15 +147,19 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     id_to_idx = {sid: i for i, sid in enumerate(all_ids) if sid in cand_ids}
 
     scored = candidates
+    use_aspect = aspect_query_enabled() if aspect_query is None else aspect_query
+    rank_text = ranking_query(query, aspect) if use_aspect else query
     if id_to_idx:
-        query_vec = embed_sentences([query])[0]
+        query_vec = embed_sentences([rank_text])[0]
         idxs = [id_to_idx[c["sentence_id"]] for c in candidates if c["sentence_id"] in id_to_idx]
         sims = _cosine_sim(query_vec, all_vecs[idxs]) if idxs else np.array([])
         sim_by_id = dict(zip([c["sentence_id"] for c in candidates if c["sentence_id"] in id_to_idx], sims))
     else:
         sim_by_id = {}
 
-    query_words = set(_WORD.findall(query.lower()))
+    # With the aspect query, the overlap boost uses the same cleaned text, so
+    # question words ("what", "people", "say") don't favour chatter.
+    query_words = set(_WORD.findall(rank_text.lower()))
     for c in scored:
         cosine = float(sim_by_id.get(c["sentence_id"], 0.0))
         lexical = _lexical_overlap(query_words, c["text"])

@@ -71,7 +71,7 @@ Each row names the file and line an element comes from, and the text that line m
 | embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")` |
 | news filter log location | `ingest/news_filter.py:53` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
 | API reads the database | `api/main.py:31` | `from ingest.db import get_connection` |
-| evidence search reads the embeddings | `chatbot/retrieval.py:103` | `all_ids, all_vecs = load_for_search()` |
+| evidence search reads the embeddings | `chatbot/retrieval.py:146` | `all_ids, all_vecs = load_for_search()` |
 | dashboard is a separate project | `docs/api-integration.md:3` | `This repository no longer contains one` |
 | API chat | `api/main.py:25` | `from chatbot.agent import Conversation` |
 | database not in git | `.gitignore:14` | `data/plp.db` |

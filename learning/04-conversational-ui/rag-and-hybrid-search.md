@@ -7,6 +7,12 @@ Prerequisites: [tfidf-versus-contextual-embeddings](../01-text-analytics/tfidf-v
 
 ## 1. Why it matters here (Understand)
 
+> **Updated 2026-10-01.** Measured against the human aspect labels, this
+> search ranks the asked-about topic no better than random when the query is
+> phrased as a question (MRR 0.217, random 0.217) and far better when the
+> query names the aspect (0.559). The why, and a proposed fix, are in
+> [evaluating-retrieval-and-chatbots](evaluating-retrieval-and-chatbots.md).
+
 The chatbot has two kinds of answer to give. "What is DBS's dividend
 sentiment?" is a **lookup**: a number from the index, fetched by a SQL query.
 "What are people actually saying about it?" is a **retrieval**: find the

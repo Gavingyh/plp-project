@@ -67,7 +67,7 @@ materially better and costs nothing.
 | Embedding, mean pooling, MPS device selection | `aspects/embed.py` |
 | Embedding cache (101 MB `.npz`) | `aspects/embed_store.py` |
 | Zero-shot classification, `model_version = finbert-base-zeroshot-v1` | `sentiment/score.py` |
-| Fine-tuning script; first real run 2026-09-30, three seeds ([results](../../docs/evidence/finetune-2026-09-30.md)) | `train/finetune.py` |
+| Fine-tuning script; first real run 2026-09-30, three seeds ([results](../../docs/evidence/finetune-2026-09-30.md)); on 2026-10-01 the readable aspect name as input, 0.604 ± 0.035 against base FinBERT's 0.571 ([results](../../docs/evidence/finetune-fixes-2026-10-01.md); selection in [model-selection-under-noise](model-selection-under-noise.md)) | `train/finetune.py` |
 | Baseline comparison harness | `train/evaluate.py` |
 
 The `model_version` column in `aspect_sentiment` is part of that table's

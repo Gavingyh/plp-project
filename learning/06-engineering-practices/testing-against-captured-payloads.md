@@ -102,9 +102,12 @@ broken generally or only past the ceiling. **A size-dependent query needs a
 test that exercises it above the size limit.**
 
 **3. The fine-tune pipeline had two bugs nobody could see.**
-`train/finetune.py` cannot run for real — it needs labelled data that does not
-exist. A smoke test with synthetic labels found two genuine bugs in code that
-had never executed.
+`train/finetune.py` could not run for real until labels existed (they did
+from 27 Sep). A smoke test with synthetic labels found two genuine bugs in
+code that had never executed. A third went unseen until 1 Oct because no
+test checked it: class weights were computed and printed but never passed
+to the loss; `tests/test_finetune_options.py` now checks the weighted loss
+by hand.
 
 **4. A start script could have killed an unrelated process.**
 `scripts/start.sh` refuses a port it does not own. `tests/test_scripts.py`

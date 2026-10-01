@@ -71,6 +71,8 @@ A file that only defines a term and shows where it is used would be level 2 or
 | [TF-IDF versus contextual embeddings](01-text-analytics/tfidf-versus-contextual-embeddings.md) | Bag-of-words against FinBERT embeddings; why mean pooling and not CLS | complete |
 | [Clustering with UMAP and HDBSCAN](01-text-analytics/clustering-with-umap-and-hdbscan.md) | What each does, noise points, why 281 clusters is not a taxonomy | complete |
 | [Annotation and inter-annotator agreement](01-text-analytics/annotation-and-inter-annotator-agreement.md) | Guideline design, Cohen's κ, the 0.6 target, LLM-assisted annotation | complete |
+| [LLMs as classifiers and raters](01-text-analytics/llms-as-classifiers-and-raters.md) | Zero-shot structured classification, an LLM as a blind second annotator, anchoring, two-model agreement as confidence | added 2026-10-01 |
+| [Entity recognition and resolution](01-text-analytics/entity-recognition-and-resolution.md) | spaCy NER with an entity ruler, a resolution table, a gazetteer fallback, evaluating at the sentence level | added 2026-10-01 |
 
 ### 02 · Sentiment Mining (course module 2)
 
@@ -86,6 +88,7 @@ A file that only defines a term and shows where it is used would be level 2 or
 |---|---|---|
 | [Transfer learning and FinBERT](03-text-processing-with-ml/transfer-learning-and-finbert.md) | BERT pre-training, what `ProsusAI/finbert` actually is, corrected benchmarks | complete |
 | [Evaluation, splits, leakage and macro-F1](03-text-processing-with-ml/evaluation-splits-and-leakage.md) | Why the test split is frozen, the leak that happened here, macro vs micro | complete |
+| [Model selection under noise](03-text-processing-with-ml/model-selection-under-noise.md) | Cross-validation, paired fold differences, the noise floor, class weighting, a dev-chosen threshold | added 2026-10-01 |
 
 ### 04 · Conversational UI (course module 4)
 
@@ -94,6 +97,7 @@ A file that only defines a term and shows where it is used would be level 2 or
 | [Tool-calling agents](04-conversational-ui/tool-calling-agents.md) | The loop, tool schemas, why no framework, backend message-format differences | complete |
 | [Retrieval-augmented generation and hybrid search](04-conversational-ui/rag-and-hybrid-search.md) | SQL pre-filter, cosine over cached embeddings, lexical boost, vs a vector DB | complete |
 | [Grounding, hallucination and citation verification](04-conversational-ui/grounding-and-citation-verification.md) | Why prompt rules failed, the two code-level enforcements, results by model | complete |
+| [Evaluating retrieval and chatbots](04-conversational-ui/evaluating-retrieval-and-chatbots.md) | Hit@K, MRR and an exact random baseline; why question-phrased retrieval fails here; multi-turn checks; a calibrated LLM judge | added 2026-10-01 |
 
 *No course context file exists for module 4 in this repository, so these three
 lean on the code and on primary documentation rather than lecture material.*
@@ -113,6 +117,20 @@ lean on the code and on primary documentation rather than lecture material.*
 | [Idempotent ingestion and resumable jobs](06-engineering-practices/idempotent-ingestion-and-resumable-jobs.md) | Deterministic IDs, checkpointing, the overnight run that was lost | complete |
 | [Testing against captured payloads](06-engineering-practices/testing-against-captured-payloads.md) | Why no network in tests, what each regression test is defending | complete |
 | [Data access ethics](06-engineering-practices/data-access-ethics.md) | The WAF, the Wayback route, unofficial APIs, what "public" does not mean | complete |
+
+---
+
+## Rehearsing for the examiners
+
+[docs/review/examiner-assessment-2026-10-01.md](../docs/review/examiner-assessment-2026-10-01.md)
+puts thirteen questions to the project at Bloom levels 4–6, each with what a
+strong answer would draw on, plus the threats to validity a marker will
+raise. Read it alongside the Analyze and Evaluate sections here; the topics
+added on 2026-10-01 answer most of its questions.
+
+Topics written before 26 September carry a dated **Updated 2026-10-01** note
+where a fact has since changed (labels now exist, results now exist); the
+text under the note is kept as written.
 
 ---
 

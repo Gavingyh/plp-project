@@ -115,8 +115,10 @@ go looking for a leak.
 sentence, its aspect and its provenance, and nothing else.
 
 **Be precise about what the repair does and does not do.** It prevents the
-leak for anyone labelling from the blind sheet, and since zero rows are
-labelled so far, nothing is yet contaminated. It does not undo the model's
+leak for anyone labelling from the blind sheet. *(Written before labelling.
+In the event the blind sheet appears to have been filled from the sheet that
+showed the suggestion, and the test labels match it on 89% of rows; see
+[annotation-agreement-2026-09-27.md](../../docs/evidence/annotation-agreement-2026-09-27.md).)* It does not undo the model's
 exposure to those rows, and it cannot help if someone opens `candidates.csv`
 and labels the test rows there anyway.
 

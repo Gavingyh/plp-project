@@ -602,3 +602,55 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   checksum matches, 421 tests pass, and the API and dashboard answer on free
   ports ([evidence](evidence/install-test-2026-10-01.md), four README fixes
   listed there).
+
+## 1 October, evening, and the night after (2026-10-01/02)
+
+Work asked for during the day on 1 Oct, after night 1. Nothing was written
+to the database.
+
+- **Measurement tools.** `train.agreement --field aspect` measures aspect
+  agreement (`302feb9`). `aspects.compare_taxonomies` now compares the live
+  ten-aspect config, not a hard-coded four (`60ec01f`).
+- **Fine-tuned model's errors** (`9d0be44`,
+  [evidence](evidence/error-analysis-2026-10-01.md)). Most errors are
+  neutral sentences called polar. A neutral margin chosen on dev lifts the
+  3-model average to test macro-F1 0.624 (accuracy 0.682); base FinBERT
+  scores 0.571 (accuracy 0.70).
+- **Bank entity recognition** (`861d205`,
+  [evidence](evidence/bank-ner-2026-10-01.md)). spaCy with an entity ruler,
+  a resolution table and a gazetteer fallback. On the corpus it disagrees
+  with alias matching on 714 sentences, mostly DBS Vickers (456) and UOB Kay
+  Hian (132). A 201-row gold sheet is in `data/labeled/ner/`, blank: its
+  labels are for people.
+- **Dashboard handed to its own project** (`36283da`, DESIGN 23). The API
+  is the interface: `/evidence/latest`, `/analyst-consensus/latest` (which
+  fixes UOB being hidden by a global latest date) and `/aspects` are new, and
+  the contract is [api-integration.md](api-integration.md), with
+  `docs/api/openapi.json` kept current by a test. The chatbot has a terminal
+  client, `python -m chatbot.chat`.
+- **Chatbot evaluation extended** (`701014d`,
+  [evidence](evidence/chatbot-eval-build-2026-10-01.md)): gold set v2 (32),
+  four multi-turn conversations, retrieval metrics and an LLM judge. Asked
+  as a question, evidence search ranks no better than random (MRR 0.217,
+  random 0.217); the aspect's name reaches 0.559. The fix is in place behind
+  `CHATBOT_ASPECT_QUERY=1`, off by default (`2b209d3`).
+- **Index preview** (`c7f21f1`,
+  [evidence](evidence/index-preview-2026-10-01.md)). On 1,000 sampled
+  sentences, LLM aspects leave the headline unchanged. The fine-tuned model
+  raises every headline by 0.06–0.19 and puts UOB ahead of DBS. On a
+  swapping Mac, the GPU returned all-zero probabilities without an error;
+  the preview now refuses them and was rerun on the CPU.
+- **Report draft** of the factual sections (`a65c4b4`) and an
+  **examiner's assessment** at Bloom levels 4–6, with the learning folder
+  brought up to 1 Oct (`814b65d`).
+- **Clean install retested** (`c7f21f1`): passes from a fresh clone with
+  Python 3.14.
+- **Top-up labelling sheet** (`092367c`,
+  [evidence](evidence/labelling-topup-2026-10-01.md)). 268 blind rows for the
+  five aspects under 80 labels. NIM may end near the floor: most Reddit rows
+  the LLM called NIM are customer rates.
+- **LLM aspect classifier corpus mode** (`5d7c591`). `--corpus` fills the
+  answer cache in a fixed random order and writes nothing to the database.
+- **Judge against the harness** (`1b665fb`). `chatbot.judge checks` scores
+  the judge on answers the harness flagged for invented citations, with no
+  human ratings needed.

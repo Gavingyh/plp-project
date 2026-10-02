@@ -268,6 +268,6 @@ was given the same rules NER encodes, so it can't test the rules (A5, A6).
 
 *Counts: `data/plp.db` on 2026-10-02, case-insensitive word matches over
 `sentences.text`. Examples are quoted from the corpus. Sources for model
-behaviour: `data/aspect_llm/llama3.1_8b.jsonl` (llama's cached answers),
+behaviour: `data/aspect_llm/llama3.1_8b.96efe244.jsonl` (llama's cached answers),
 `data/labeled/candidates.csv` (people, base FinBERT),
 `data/labeled/claude/` (Opus).*

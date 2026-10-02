@@ -125,11 +125,15 @@ team.*
 
 **Limitations**
 - Wealth, `other` and management guidance stay near 0.5 F1.
-- The full corpus takes about 24 hours on the MacBook; the cache was 25%
-  full on 2 Oct.
+- The full corpus takes about 33 hours on the MacBook (2.7 s a sentence,
+  measured on the corpus run); the cache was 38% full at 17:24 on 2 Oct.
+  Any change to the aspects, their definitions or the examples means a full
+  redo.
 
 **Solutions**
 - Built: the classifier and its corpus cache (resumable, no database writes).
+  The cache file is named by a hash of the prompt, so a changed wording
+  starts a new file instead of reusing answers to the old question.
 - Decision: apply it, with a rule for where the two models disagree.
 - Proposed: distil Opus's labels into a FinBERT aspect classifier, after
   checking Anthropic's terms on training with model outputs.

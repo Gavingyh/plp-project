@@ -449,7 +449,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-545 tests in `tests/`; `pytest -q` from the repository root runs 592,
+547 tests in `tests/`; `pytest -q` from the repository root runs 594,
 adding the diagram and notebook checks. No network calls — external APIs are
 mocked with captured real payloads, so a provider changing its response shape
 surfaces as a failing test rather than a silent production break.
@@ -629,20 +629,29 @@ the team folder with the checksums in the evidence, not git. Results:
 [evidence/finetune-fixes-2026-10-01.md](evidence/finetune-fixes-2026-10-01.md)
 (earlier: [finetune-experiments-2026-09-30.md](evidence/finetune-experiments-2026-09-30.md)).
 
-### The LLM aspect classifier (evaluation only)
+### The LLM aspect classifier
 
 ```bash
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval                              # llama3.1:8b
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval --model qwen3:4b --no-think
+caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # all 44,345 sentences
 ```
 
-Classifies the 1,277 labelled sentences through local Ollama and scores them
-against the human aspect: about 40 minutes for `llama3.1:8b`, 30 for
-`qwen3:4b`. `--no-think` is needed for qwen3, whose hidden reasoning
-otherwise takes minutes a sentence. Answers are cached in `data/aspect_llm/`
-(gitignored), so an interrupted run resumes. It writes nothing to the
-database; running it on the corpus is a team decision
-([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
+`--eval` classifies the 1,277 labelled sentences through local Ollama and
+scores them against the human aspect: about 40 minutes for `llama3.1:8b`, 30
+for `qwen3:4b`. `--no-think` is needed for qwen3, whose hidden reasoning
+otherwise takes minutes a sentence. `--corpus` classifies every corpus
+sentence in a fixed random order: about 33 hours for `llama3.1:8b` at the
+2.7 s a sentence measured on the corpus run (2 Oct).
+
+Answers are cached in `data/aspect_llm/<model>.<prompt>.jsonl` (gitignored),
+so an interrupted run resumes with the same command and new sentences are
+the only ones classified. `<prompt>` is a hash of the aspect keys,
+definitions, examples and instructions (`96efe244` on 2 Oct). Change any of
+them and the next run starts a new file, so the corpus needs a full redo;
+change them back and the old file is used again. Each run prints its cache
+file. Neither command writes to the database; applying the answers to it is a
+team decision ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
 
 ### The Opus labeller
 

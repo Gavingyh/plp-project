@@ -49,8 +49,8 @@ Each row names the file and line an element comes from, and the text that line m
 | HDBSCAN clustering | `aspects/discover.py:95` | `clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, metric="euclidean")` |
 | similarity floor | `config/aspects.yaml:213` | `similarity_floor: 0.65` |
 | calibration against human aspects | `aspects/assignment_eval.py:52` | `def label_metrics(sims: np.ndarray, aspects: list[str], human: list[str], floor: float) -> dict:` |
-| one aspect from a fixed list | `aspects/llm_classify.py:115` | `"format": {"type": "object", "properties": {"aspect": {"type": "string", "enum": keys}},` |
-| temperature 0 | `aspects/llm_classify.py:117` | `"options": {"temperature": 0},` |
-| corpus cache | `aspects/llm_classify.py:168` | `def corpus_rows(conn, seed: int = 2026, limit: int | None = None) -> pd.DataFrame:` |
+| one aspect from a fixed list | `aspects/llm_classify.py:119` | `"format": {"type": "object", "properties": {"aspect": {"type": "string", "enum": keys}},` |
+| temperature 0 | `aspects/llm_classify.py:121` | `"options": {"temperature": 0},` |
+| corpus cache | `aspects/llm_classify.py:182` | `def corpus_rows(conn, seed: int = 2026, limit: int | None = None) -> pd.DataFrame:` |
 | Opus rounds | `train/opus_labels.py:269` | `def extra_batches(name: str) -> list[str]:` |
 | top-up sheet | `preprocess/export_topup.py:93` | `def select(pool: pd.DataFrame, llm_aspect: pd.Series, targets: dict[str, int]) -> pd.DataFrame:` |

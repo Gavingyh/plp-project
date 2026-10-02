@@ -31,7 +31,6 @@ from sklearn.metrics import cohen_kappa_score, f1_score
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANDIDATES_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
 CLAUDE_DIR = os.path.join(BASE_DIR, "data", "labeled", "claude")
-LLM_CACHE = os.path.join(BASE_DIR, "data", "aspect_llm")
 RATER = "claude-opus-5-5"
 SENTIMENTS = ("negative", "neutral", "positive")
 
@@ -101,8 +100,9 @@ def score(with_centroid: bool = False):
     labels = pd.read_csv(f"{CLAUDE_DIR}/opus_labels.csv")
     d = pd.read_csv(CANDIDATES_PATH).merge(labels, on="sentence_id")
     raters = ["opus_aspect"]
-    for col, f in (("llama3.1_8b_aspect", "llama3.1_8b.jsonl"), ("qwen3_4b_aspect", "qwen3_4b-nothink.jsonl")):
-        path = os.path.join(LLM_CACHE, f)
+    from aspects.llm_classify import answer_cache_path
+    for col, path in (("llama3.1_8b_aspect", answer_cache_path("llama3.1:8b")),
+                      ("qwen3_4b_aspect", answer_cache_path("qwen3:4b", no_think=True))):
         if os.path.exists(path):
             d = d.merge(pd.DataFrame(_jsonl(path))[["sentence_id", "aspect"]].rename(columns={"aspect": col}), on="sentence_id")
             raters.append(col)

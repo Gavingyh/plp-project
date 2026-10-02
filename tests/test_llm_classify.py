@@ -79,3 +79,35 @@ def test_corpus_order_is_fixed_and_starts_with_the_preview_sample():
     base = pd.read_sql("SELECT sentence_id, text FROM sentences ORDER BY sentence_id", conn)
     assert rows["sentence_id"].head(30).tolist() == base.sample(n=30, random_state=2026)["sentence_id"].tolist()
     assert len(lc.corpus_rows(conn, seed=2026, limit=10)) == 10
+
+
+def test_cache_file_is_named_by_the_prompt(monkeypatch):
+    fp = lc.prompt_fingerprint(KEYS)
+    assert len(fp) == 8 and fp == lc.prompt_fingerprint(KEYS)
+    assert lc.answer_cache_path("llama3.1:8b", keys=KEYS).endswith(f"llama3.1_8b.{fp}.jsonl")
+    assert lc.answer_cache_path("qwen3:4b", no_think=True, keys=KEYS).endswith(f"qwen3_4b-nothink.{fp}.jsonl")
+    assert lc.prompt_fingerprint(KEYS + ["wealth_business"]) != fp           # an aspect added
+    monkeypatch.setattr(lc, "EXAMPLES", lc.EXAMPLES[:-1])
+    assert lc.prompt_fingerprint(KEYS) != fp                                 # an example dropped
+    monkeypatch.undo()
+    monkeypatch.setitem(lc.DEFINITIONS, "asset_quality", "loan quality only")
+    assert lc.prompt_fingerprint(KEYS) != fp                                 # a definition reworded
+
+
+def test_a_reworded_prompt_does_not_reuse_old_answers(tmp_path, monkeypatch):
+    monkeypatch.setattr(lc, "CACHE_DIR", str(tmp_path))
+    monkeypatch.setattr(lc, "aspect_keys", lambda: KEYS)
+    prompts = []
+
+    def chat(model, msgs, keys):
+        prompts.append(msgs[0]["content"])
+        return '{"aspect": "asset_quality"}'
+
+    rows = pd.DataFrame({"sentence_id": ["s1"], "text": ["a"]})
+    lc.classify_rows(rows, chat=chat)
+    lc.classify_rows(rows, chat=chat)
+    assert len(prompts) == 1                                                 # same prompt: cached
+    monkeypatch.setitem(lc.DEFINITIONS, "asset_quality", "loan quality only")
+    lc.classify_rows(rows, chat=chat)
+    assert len(prompts) == 2 and "loan quality only" in prompts[1]           # new prompt: asked again
+    assert len(list(tmp_path.glob("*.jsonl"))) == 2                          # old answers kept in their own file

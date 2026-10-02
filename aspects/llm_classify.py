@@ -11,7 +11,10 @@ is retried once and then recorded as `other` and counted.
 
 This module only classifies and evaluates. It writes nothing to the
 database: applying it to the corpus is a separate, approved step. Answers are
-cached in data/aspect_llm/<model>.jsonl (gitignored) so a run resumes.
+cached in data/aspect_llm/<model>.<prompt>.jsonl (gitignored) so a run
+resumes. <prompt> is a hash of everything the model is asked apart from the
+sentence, so changing an aspect, a definition or an example starts a new file
+instead of reusing answers to the old question.
 
 USAGE:
   python -m aspects.llm_classify --eval                    # the 1,277 labelled sentences
@@ -25,6 +28,7 @@ option): on 1 Oct qwen3:4b took 92-216 s a sentence thinking, against about
 
 import argparse
 import functools
+import hashlib
 import json
 import os
 import re
@@ -133,15 +137,25 @@ def classify(sentence: str, keys: list[str], model: str = DEFAULT_MODEL, chat=ol
     return OTHER, 0
 
 
-def _cache_path(model: str) -> str:
-    return os.path.join(CACHE_DIR, re.sub(r"[^A-Za-z0-9._-]", "_", model) + ".jsonl")
+def prompt_fingerprint(keys: list[str] | None = None) -> str:
+    """Eight hex characters naming the prompt: the aspect keys, definitions,
+    examples and instructions, everything but the sentence itself."""
+    messages = build_messages("{sentence}", keys if keys is not None else aspect_keys())
+    return hashlib.sha256(json.dumps(messages, sort_keys=True).encode("utf-8")).hexdigest()[:8]
+
+
+def answer_cache_path(model: str, no_think: bool = False, keys: list[str] | None = None) -> str:
+    """The cache for this model and this prompt. An answer is only valid for the
+    question that produced it, so a changed prompt gets a new file."""
+    name = re.sub(r"[^A-Za-z0-9._-]", "_", model) + ("-nothink" if no_think else "")
+    return os.path.join(CACHE_DIR, f"{name}.{prompt_fingerprint(keys)}.jsonl")
 
 
 def classify_rows(rows: pd.DataFrame, model: str = DEFAULT_MODEL, chat=ollama_chat,
                   cache_path: str | None = None) -> pd.DataFrame:
     """Classify each (sentence_id, text) row, reusing and appending to the cache."""
     keys = aspect_keys()
-    cache_path = cache_path or _cache_path(model)
+    cache_path = cache_path or answer_cache_path(model, keys=keys)
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     cached = {}
     if os.path.exists(cache_path):
@@ -203,7 +217,8 @@ def main():
         finally:
             conn.close()
         chat = functools.partial(ollama_chat, think=False) if args.no_think else ollama_chat
-        cache = _cache_path(args.model + ("-nothink" if args.no_think else ""))
+        cache = answer_cache_path(args.model, args.no_think)
+        print(f"cache: {cache}", flush=True)
         t = time.time()
         res = classify_rows(rows, args.model, chat, cache)
         print(f"corpus: {len(res)} of {len(rows)} sentences in the cache ({time.time() - t:.0f}s this run); "
@@ -215,7 +230,8 @@ def main():
         labels = labels.head(args.limit)
     t = time.time()
     chat = functools.partial(ollama_chat, think=False) if args.no_think else ollama_chat
-    cache = _cache_path(args.model + ("-nothink" if args.no_think else ""))
+    cache = answer_cache_path(args.model, args.no_think)
+    print(f"cache: {cache}", flush=True)
     res = classify_rows(labels[["sentence_id", "text"]], args.model, chat, cache)
     elapsed = time.time() - t
     gold, pred = labels["aspect"].tolist(), res["aspect"].tolist()

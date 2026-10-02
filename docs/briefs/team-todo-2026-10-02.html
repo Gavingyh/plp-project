@@ -157,7 +157,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Fri 2 Oct 2026, 17:30</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Fri 2 Oct 2026, 18:00</span></div>
   <h1>What the team has to do before 1 November</h1>
   <p class="lede">Every open item, in deadline order, with the reason it has to be done and what it unblocks. Decisions come first because most of the remaining work waits on them. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
   <div class="countdown"><b>30</b> days to submission · Sun 1 Nov</div>
@@ -187,7 +187,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-redo">
   <h2 id="h-redo">The corpus aspect run: when it has to be redone</h2>
-  <p class="sub"><code>llama3.1:8b</code> is giving each of the 44,345 sentences one aspect, saved to <code>data/aspect_llm/llama3.1_8b.jsonl</code>; nothing in the database changes. The answers are only good for the exact question the model was asked, so changing that question means starting again, which takes the MacBook about a day and a half.</p>
+  <p class="sub"><code>llama3.1:8b</code> is giving each of the 44,345 sentences one aspect, saved to <code>data/aspect_llm/llama3.1_8b.96efe244.jsonl</code>; nothing in the database changes. The answers are only good for the exact question the model was asked, so changing that question means starting again, which takes the MacBook about a day and a half.</p>
   <div class="tiles">
     <div><b>~21 h</b><span class="k">left on the current run</span><span>38% done at 17:24 on Fri 2 Oct; finishes about 14:00 on Sat 3 Oct if the Mac stays awake and plugged in.</span></div>
     <div><b>~33 h</b><span class="k">for a full redo</span><span>44,345 sentences at 2.7 s each, the rate of the current run. Longer if the Mac sleeps or runs other model jobs.</span></div>
@@ -200,8 +200,9 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <ul>
         <li>an aspect is added, removed or renamed in <code>config/aspects.yaml</code></li>
         <li>an aspect's definition or a worked example changes: <code>DEFINITIONS</code> and <code>EXAMPLES</code> in <code>aspects/llm_classify.py</code> are the prompt</li>
-        <li>the model changes (it gets its own cache file, so it starts from zero anyway)</li>
+        <li>the model changes</li>
       </ul>
+      <p class="muted" style="font-size:14px">The code notices all three by itself and starts a new file.</p>
     </div>
     <div>
       <h3>No redo for</h3>
@@ -212,13 +213,13 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       </ul>
     </div>
   </div>
-  <div class="note"><p><b>The trap:</b> the cache records which sentence was answered, not which prompt answered it, and <code>--eval</code> and <code>--corpus</code> share it. Edit the wording, run either command, and it silently reuses the old answers: the "new" score is the old one. Move the cache aside first, and never while the run is going, because it keeps writing to the moved file.</p></div>
-  <p>To change the wording safely, once the run has finished or been stopped:</p>
+  <div class="note"><p><b>Fixed on 2 Oct:</b> the cache file is named by a hash of the prompt (<code>96efe244</code> is today's wording). Before, a reworded prompt silently reused the old answers, so a "new" score was really the old one. Now a changed wording starts a new file, the old answers stay in theirs, and undoing the change picks the old file up again. Each run prints the file it uses.</p></div>
+  <p>To try a new wording:</p>
   <ol class="steps">
-    <li>Keep the old answers: <code>mv data/aspect_llm/llama3.1_8b.jsonl data/aspect_llm/llama3.1_8b.v1.jsonl</code></li>
+    <li>Stop the current run or let it finish: two jobs on the Mac's GPU slow each other.</li>
     <li>Edit the definitions or examples in <code>aspects/llm_classify.py</code>.</li>
     <li>Test, about 1 h: <code>.venv-plp/bin/python3 -m aspects.llm_classify --eval</code>. Compare with 0.729 top-1 and wealth F1 0.50 today.</li>
-    <li>Better: redo the corpus, about 33 h, with <code>caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b</code>. Not better: undo the edit and move <code>v1</code> back.</li>
+    <li>Better: redo the corpus, about 33 h, with <code>caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b</code>. Not better: undo the edit; the old answers are used again.</li>
   </ol>
   <p class="muted">A redo started by Fri 9 Oct still finishes before the 12–18 Oct re-score week. While it runs, other local-model jobs (chatbot evaluations, the judge) share the Mac's GPU: running them alongside slows both and has caused timeouts.</p>
 </section>
@@ -237,7 +238,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Wealth or retail for priority-banking products, and whether the classifier's wording follows <span class="chip decide">Decision</span></span>
       <span class="when">best by 3 Oct</span>
       <p class="why"><b>Why:</b> DBS Treasures, OCBC Premier and unit trusts bought at a bank are the boundary behind 63 of Opus's aspect disagreements, and wealth is one of the classifier's weakest aspects (F1 0.50). <b>"By product"</b> (recommended) is already close to the classifier's wording: premier and private banking are wealth; cards, savings accounts and fees are retail. It doesn't name unit trusts or other investment products, so adding them is a small edit to test (about 1 h) before deciding on a redo. <b>"By customer"</b> changes the definitions, so the corpus run has to be redone: <b>about 33 hours</b>. The current run finishes about 14:00 on Sat 3 Oct; if the team leans to "by customer", saying so before then and stopping the run saves up to 21 hours of machine time. Changing only the labelling guideline needs no redo, but the classifier is then scored against labels that follow a different rule on that boundary.</p>
-      <span class="meta">Decision 5 in the decision brief (due 5 Oct). Run times and safe steps: "The corpus aspect run" above. Source: llm-aspect-classifier, opus-labeller.</span>
+      <span class="meta">Decision 5 in the decision brief (due 5 Oct). Run times and steps: "The corpus aspect run" above. Source: llm-aspect-classifier, opus-labeller.</span>
     </li>
     <li data-o="decide">
       <span class="t">Decide whether to relabel the 299 test rows blind <span class="chip decide">Decision</span></span>
@@ -453,7 +454,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Figures are from the evidence files on <code>main</code>, 2 Oct 2026, 17:30. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+<footer>Figures are from the evidence files on <code>main</code>, 2 Oct 2026, 18:00. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
 
 </div>
 <script>

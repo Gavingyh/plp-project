@@ -24,7 +24,9 @@ constraint (JSON, one key), eleven invented example sentences (none from the
 data), then the sentence. Ollama's structured output constrains the answer to
 JSON whose `aspect` is one of the keys. An invalid answer is retried once,
 then recorded as `other` and counted. Answers are cached in
-`data/aspect_llm/<model>.jsonl` (gitignored), so a run resumes. The prompt
+`data/aspect_llm/<model>.jsonl` (gitignored), so a run resumes; since 2 Oct
+the name also carries a hash of the prompt, `<model>.96efe244.jsonl` for
+this one, so a changed prompt can't reuse these answers. The prompt
 was written once and not tuned on these labels.
 
 `--no-think` sends Ollama's `think: false`. qwen3:4b is a reasoning model:
@@ -98,6 +100,10 @@ hours**; qwen3:4b without thinking at 1.33 s (median 1.27, p95 1.72) about
 **16 hours**; both, for the agreement check, about 40. The qwen mean leaves
 out one request that took 5,312 s because the Mac slept during it (battery,
 15:51–17:20); its run's printed mean, 5.49 s, includes it.
+
+*Measured on the corpus run itself (2 Oct):* llama3.1:8b takes about 2.7 s a
+sentence there, slower than on the labelled set (the cause wasn't checked),
+so the whole corpus is about **33 hours**, not 24.
 
 ## Caveats
 

@@ -739,3 +739,20 @@ demo; the answers in `local-context-questions.md`, the bank-economist
 question (A8) first, since it decides whether macro can reach 80 labels;
 whether the PDF URLs in the database, which carry the macOS username, should
 become relative paths.
+
+### 2 October, evening
+
+- **The LLM aspect cache is named by its prompt:**
+  `data/aspect_llm/<model>.<prompt>.jsonl`, where `<prompt>` hashes the
+  aspect keys, definitions, examples and instructions (`96efe244`). Before,
+  `--eval` and `--corpus` silently reused cached answers after a wording
+  change. The three existing caches were renamed to `96efe244`: no edit after
+  the first cached answer (1 Oct 14:43) touched the prompt, and
+  `config/aspects.yaml` last changed on 30 Sep. The running corpus job kept
+  its file handle, so it appends to the renamed file.
+- **Corpus run times, measured:** 2.7 s a sentence, so a full redo is about
+  33 hours, not the 24 estimated from the labelled set. 38% done at 17:24;
+  finishes about 14:00 on 3 Oct.
+- **To-do page** (`2ee4597`): when the corpus run must be redone, with the
+  run times, and the wealth-or-retail decision with its redo cost.
+- **Verification:** 547 tests pass in `tests/`; `check_sources.py` clean.

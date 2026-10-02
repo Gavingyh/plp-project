@@ -156,6 +156,22 @@ criticism.
 
 ---
 
+### Keep the pretrained head's label order (3 Oct 2026)
+
+Fine-tuning reuses the pretrained classifier head when its shape fits. Base
+FinBERT's head is ordered positive 0, negative 1, neutral 2. This project
+loaded it with its own order, negative 0, neutral 1, positive 2. The shapes
+matched, so the weights were kept and only the names changed: every
+fine-tuned model started with each output answering for the wrong class, and
+had to unlearn that on 831 training rows.
+
+Two things make this easy to miss. Nothing fails: the model trains and
+scores reasonably. And the bias runs against the fine-tuned model, so the
+reported lead over base FinBERT (0.604 ± 0.035 against 0.571) is
+understated, not inflated. Training now reads the order from the base
+model's own config. The fix is cheap; the lesson is to check `id2label`
+whenever you pass `num_labels` to `from_pretrained`.
+
 ## 5. Evaluate
 
 **FinBERT was right for the constraints.** It matches the

@@ -167,6 +167,34 @@ fabricated citation stops being possible rather than merely being detected.
 
 ---
 
+### Checking that evidence exists is not checking what it says (3 Oct 2026)
+
+A review of the guards found that they verified the *presence* of a search,
+not the *content* of the answer. Once the model had called `search_evidence`,
+even a search that returned nothing, any quote it wrote passed: the check
+asked "was there a search?", never "did the search return this text?". The
+number check had the same shape of weakness. It compared absolute values, so
+a trend delta of −0.05 written as "+0.05" passed. It accepted a fraction 0.12
+written as "0.12%". And it let a figure match any ratio of any two numbers in
+the tool output, which on one recorded trend answer accepted 85 to 95 of the
+whole percentages from 1% to 99%. A check that accepts almost everything is
+not a check.
+
+The fixes compare content: a quote must appear in text a tool returned, a
+signed figure must have the right sign, a percentage must come from a
+fraction × 100 or a percentage field, and ratios pair only the counts inside
+one result. Strip mode also stopped keeping the opening paragraph untouched,
+which had left one-paragraph answers with their invented quote under a note
+saying it was removed.
+
+**The lesson for evaluation:** measure a detector's *acceptance rate* on
+invented inputs, not only its catch rate on recorded failures. The 2 Oct
+result (citation warnings 11 → 0 with strip) survived the stronger checks
+(8B 11 → 0, 3B 16 → 0), but only because those inventions all came from
+answers that never searched; the old checks would not have caught an
+invention after a search. Re-measured figures: `docs/evidence/chatbot-eval-build-2026-10-01.md`,
+"Third round".
+
 ## 5. Evaluate
 
 **Code-level enforcement was the right call, and the evidence is unusually

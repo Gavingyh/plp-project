@@ -162,6 +162,25 @@ actual job is scoring text that has not been written yet.
 
 ---
 
+### Near-copies under different ids, and dev rows that move (3 Oct 2026)
+
+Every leakage check compared `sentence_id`. But the same sentence can reach
+the corpus twice: a bank's results PDF and a news article quoting it. The
+unmerged top-up sheet held a CNA sentence that repeats a frozen test sentence
+from UOB's PDF word for word apart from the attribution (word overlap 0.93,
+different id). Merging the labelled sheet would have trained on test text.
+The checks now also compare words: a top-up row overlapping a test sentence
+by 0.8 or more is dropped, and the labelled file is refused if any pair
+remains.
+
+A quieter leak was waiting in the margin search. The neutral margin is
+chosen on each seed's dev rows, which the analysis rebuilt by reshuffling
+the labelled file as training had. Once top-up rows are added, the same
+reshuffle picks different rows, mostly ones the model trained on, and the
+"dev-chosen" margin would be chosen on training data. Training now saves its
+exact dev rows with the model. Anything that tunes on a split should read
+the split it was given, not recompute it.
+
 ## 5. Evaluate
 
 **The sampling design is the strongest piece of methodological thinking in the

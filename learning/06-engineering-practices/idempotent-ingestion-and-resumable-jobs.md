@@ -161,6 +161,27 @@ invisible in the code — nothing says "we prefer stale".
 
 ---
 
+### A fallback that looks like data (3 Oct 2026)
+
+Two bugs found on 3 Oct had the same shape: a failure replaced by a value
+that looked valid.
+
+- **Earnings dates.** When the parser couldn't read a period from a file
+  name ("cfo-slides-q1-2024.pdf"), the document was dated with the time it
+  was extracted. Six UOB files (114 sentences of 2023–24 text) landed in
+  September 2026 and made up 114 of the 230 sentences behind UOB's 30-day
+  score. A missing date should have stayed missing and been reported.
+- **Reddit pages.** A failed request returned an empty page, which the
+  pager read as "no more data": whole months of comments are missing (Sep
+  2021, May 2024, Mar 2025), each gap ending at a month boundary.
+
+Idempotence then kept the mistakes. Re-running the earnings extraction skips
+documents already stored (`INSERT OR IGNORE`), so fixing the parser does not
+repair the rows; that needs an explicit repair step
+(`scripts/fix_earnings_dates.py`, a dry run unless given `--apply`). When
+you design an idempotent writer, also design how to correct what it has
+already written.
+
 ## 5. Evaluate
 
 **Idempotent ingestion was unarguably the right foundation.** The proposal's

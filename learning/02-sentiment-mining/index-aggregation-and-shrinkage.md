@@ -176,6 +176,24 @@ answer.
 
 ---
 
+### Shrunk scores can't be compared across windows of different size (3 Oct 2026)
+
+Shrinkage multiplies a raw score by n/(n+5), which is right for reporting one
+cell: a thin cell is pulled towards neutral. It is wrong for *comparing* two
+cells of very different size, because the thin one is pulled much harder. The
+trend tool compared UOB's 7-day score (n = 7, factor 0.58) with its 30-day
+score (n = 230, factor 0.98): shrunk, 0.244 against 0.289, "declining"; raw,
+0.418 against 0.296, a rise of 0.12. Seven of 23 cells with a trend changed
+direction once the comparison used raw scores. The trend now compares the
+raw scores and returns them, so the delta can be checked.
+
+The same table taught a second lesson. `aspect_sentiment` and
+`sentiment_index` were designed to hold several models' scores side by side
+(the model version is in the key), but no reader filtered on it, so the
+first re-score with a fine-tuned model would have doubled every sentence.
+Every reader now asks for one version, named in `config/model_version.py`.
+A key that allows several versions is only safe if every query names one.
+
 ## 5. Evaluate
 
 **Shrinkage was the right call.** It is cheap, it is explainable in one

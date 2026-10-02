@@ -163,6 +163,25 @@ of this lifespan that is an acceptable gap worth naming.
 
 ---
 
+### A confirmed bug as a strict expected failure (3 Oct 2026)
+
+The project's `/validate` workflow has reviewer agents look for bugs and a
+tester agent write the smallest test that would fail if each bug is real.
+A test that confirms a bug is marked `@pytest.mark.xfail(strict=True)`:
+
+- the suite stays green while the bug is open, so it doesn't block other
+  work;
+- the test *fails* the moment the bug is fixed (an unexpected pass under
+  `strict`), which forces whoever fixed it to remove the marker in the same
+  commit. The test then guards against the bug coming back.
+
+Two rules came out of using it. Build such tests on synthetic data: one
+written against the live database could flip when the data changes, not
+when the code does. And keep them in files named for what they test
+(`test_validate_api_integrity.py`), not for a claim's code. On 3 Oct this
+recorded, and then retired, 13 confirmed bugs: five in the API and eight in
+the chatbot's grounding guards.
+
 ## 5. Evaluate
 
 **The testing approach is right.** No-network is correct for this project

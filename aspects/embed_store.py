@@ -1,7 +1,7 @@
 """
 Persisted cache of per-sentence FinBERT embeddings, shared by:
   - aspect discovery and assignment (aspects/discover.py, aspects/assign.py)
-  - chatbot evidence retrieval (chatbot/retrieval.py — the RAG piece)
+  - chatbot evidence retrieval (chatbot/retrieval.py - the RAG piece)
 
 One embedding space for both consumers rather than computing FinBERT vectors
 twice. Incremental: only embeds sentences not already in the cache, so
@@ -9,7 +9,7 @@ re-running after a new ingestion batch is cheap.
 
 At this corpus scale (hundreds to low thousands of sentences for an MVP),
 brute-force cosine similarity over an in-memory matrix is simpler and just as
-correct as a vector-DB — no FAISS/Chroma needed. Revisit only if the corpus
+correct as a vector-DB - no FAISS/Chroma needed. Revisit only if the corpus
 grows into the hundreds of thousands.
 
 USAGE:
@@ -47,7 +47,7 @@ def _save_store(sentence_ids: list[str], vectors: np.ndarray) -> None:
 def update() -> dict:
     """Embed any sentence in the DB not yet in the cache, and drop cache entries
     for sentences that no longer exist in the DB (e.g. purged after a data-quality
-    fix) — otherwise stale entries accumulate and consumers that look them back up
+    fix) - otherwise stale entries accumulate and consumers that look them back up
     against the `sentences` table (aspects/discover.py) hard-fail on a missing row.
     Returns a small stats dict."""
     existing_ids, existing_vecs = _load_store()
@@ -69,7 +69,7 @@ def update() -> dict:
         new_vecs = embed_sentences([r[1] for r in new_rows])
 
     # Rebuild the store from current DB rows only (existing ones reused from
-    # cache, new ones just embedded) — this is what prunes stale entries.
+    # cache, new ones just embedded) - this is what prunes stale entries.
     kept_ids = [sid for sid, _ in rows if sid in existing_map]
     kept_vecs = np.array([existing_map[sid] for sid in kept_ids]) if kept_ids else np.zeros((0, 768), dtype=np.float32)
     all_ids = kept_ids + new_ids

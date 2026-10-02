@@ -1,5 +1,5 @@
 """
-Ollama backend — runs entirely locally, no API key, no cost. Built for this
+Ollama backend - runs entirely locally, no API key, no cost. Built for this
 being a school project: a lecturer grading it should be able to run the
 chatbot with nothing but `ollama serve` and a pulled model.
 
@@ -7,15 +7,15 @@ Tool-calling contract, confirmed against a running Ollama instance rather
 than taken from documentation:
   - request:  POST /api/chat with a `tools` array in OpenAI function-calling
     shape ({"type": "function", "function": {name, description, parameters}})
-  - response: message.tool_calls[].function.{name, arguments} — arguments
+  - response: message.tool_calls[].function.{name, arguments} - arguments
     already parsed as a dict, not a JSON string (unlike OpenAI's own API)
   - a role="tool" message with the JSON result string sent back continues
     the conversation correctly
 
 Models confirmed working (any Ollama model tagged for tool use should also
-work): llama3.2:3b (~4s per tool call — recommended default) and qwen3:4b
+work): llama3.2:3b (~4s per tool call - recommended default) and qwen3:4b
 (tool-calling works identically, but ~7x slower per call because it emits a
-hidden `thinking` chain-of-thought field first — fine for accuracy-over-
+hidden `thinking` chain-of-thought field first - fine for accuracy-over-
 speed use, not a snappy default). Set OLLAMA_THINK=false to turn the
 thinking off; it is sent as Ollama's `think` field only when set.
 
@@ -65,7 +65,7 @@ class OllamaBackend(LLMBackend):
             ) from e
         if resp.status_code == 404:
             raise RuntimeError(
-                f"Ollama returned 404 for model '{self.model}' — pull it first: "
+                f"Ollama returned 404 for model '{self.model}'; pull it first: "
                 f"`ollama pull {self.model}`"
             )
         resp.raise_for_status()
@@ -82,7 +82,7 @@ class OllamaBackend(LLMBackend):
         for _ in range(MAX_TOOL_ITERATIONS):
             data = self._chat(messages, ollama_tools)
             message = data.get("message", {})
-            messages.append(message)  # store exactly what Ollama returned — keeps shape consistent
+            messages.append(message)  # store exactly what Ollama returned - keeps shape consistent
 
             tool_calls = message.get("tool_calls") or []
             if not tool_calls:
@@ -108,6 +108,6 @@ class OllamaBackend(LLMBackend):
                     **({"tool_call_id": call["id"]} if "id" in call else {}),
                 })
 
-        return ("I wasn't able to reach a final answer within the tool-call budget — "
+        return ("I wasn't able to reach a final answer within the tool-call budget: "
                 "this usually means the question needs to be narrowed down, or that this "
                 "local model is struggling with multi-step tool use (try a larger model).")

@@ -2,20 +2,20 @@
 Analyst consensus ingestion via Yahoo Finance's quoteSummary endpoint.
 
 WHY THIS SOURCE: full analyst report PDFs sit behind brokerage entitlements,
-and the free alternatives were tested and are bot-protected — sgx.com serves
+and the free alternatives were tested and are bot-protected - sgx.com serves
 an "unsupported browser" shell to any non-browser client, and sginvestors.io
 returns an empty Cloudflare challenge. The news-derived proxy in
 ingest/analyst_tag.py found 0 matches across the news corpus. This endpoint
-returns real, structured consensus for all three banks (verified live:
+returns real, structured consensus for all three banks (checked:
 D05.SI 16 analysts, O39.SI 16, U11.SI 15).
 
-IMPORTANT CAVEAT — DISCLOSE THIS IN THE REPORT: this is an *unofficial* API.
+A caveat the report must state: this is an *unofficial* API.
 It is the same endpoint the widely-used `yfinance` library wraps, but Yahoo
 publishes no public API terms blessing it, and it requires a cookie+crumb
 handshake that Yahoo added specifically to slow automated access. It may
 change or break without notice. It provides consensus *aggregates* (how many
 analysts, what average target), NOT the reasoning inside any analyst report.
-Do not describe this as "analyst reports" in the writeup — it is analyst
+Do not describe this as "analyst reports" in the writeup - it is analyst
 consensus data.
 
 USAGE:
@@ -71,7 +71,7 @@ def fetch_bank(session: requests.Session, crumb: str, bank: str, ticker: str) ->
     url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{ticker}"
     resp = session.get(url, params={"modules": _MODULES, "crumb": crumb}, timeout=_TIMEOUT)
     if resp.status_code != 200:
-        logger.info(f"{bank} ({ticker}): HTTP {resp.status_code} — {resp.text[:150]}")
+        logger.info(f"{bank} ({ticker}): HTTP {resp.status_code}: {resp.text[:150]}")
         return None
 
     result = (resp.json().get("quoteSummary") or {}).get("result")
@@ -110,7 +110,7 @@ def pull() -> list[dict]:
     try:
         session, crumb = _make_session()
     except Exception as e:
-        logger.warning(f"Skipped — could not establish a Yahoo session: {e}")
+        logger.warning(f"Skipped: could not establish a Yahoo session: {e}")
         return []
 
     rows = []
@@ -118,7 +118,7 @@ def pull() -> list[dict]:
         try:
             row = fetch_bank(session, crumb, bank, ticker)
         except Exception as e:
-            logger.error(f"{bank} ({ticker}): ERROR — {e}")
+            logger.error(f"{bank} ({ticker}): ERROR: {e}")
             row = None
         if row:
             logger.info(f"{bank}: {row['n_analysts']} analysts, "

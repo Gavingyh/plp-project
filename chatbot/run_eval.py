@@ -19,7 +19,7 @@ Automated checks:
 NOT automated, and left in the transcript for a human to grade: whether a
 stated number is correct, and whether cited evidence is actually relevant.
 Free-text number extraction is unreliable enough that a wrong automated
-check would be worse than an honest "read this yourself".
+check would be worse than a plain "read this yourself".
 
 USAGE:
   python -m chatbot.run_eval                       # default backend, gold set v1 (23)
@@ -130,12 +130,9 @@ def run(backend_name: str | None = None, limit: int | None = None,
         results.append({
             "id": item["id"], "category": item["category"], "question": item["question"],
             "answer": answer, "error": error,
-            # The result is kept, not just the call. Without it the transcript
-            # cannot answer the one question this suite deliberately does not
-            # automate - whether a number the model stated is the number the
-            # tool returned - which is exactly the human check docs/STATUS.md
-            # lists as outstanding. The tracker already records it
-            # (chatbot/agent.py); this used to drop it on the way to disk.
+            # Keep each call's result, not just the call: a person checking
+            # whether a stated number is the number the tool returned needs it
+            # (the check this suite leaves to people).
             "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
                              "result": c.get("result"), **({"by": c["by"]} if c.get("by") else {})}
                             for c in calls],
@@ -225,7 +222,7 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
 
     lines += [
         "",
-        "## Not automated — read the full transcript for these",
+        "## Not automated: read the full transcript for these",
         "",
         "Whether stated numbers are correct, and whether cited evidence is "
         "actually relevant to the question. See the results `.jsonl` beside this file "

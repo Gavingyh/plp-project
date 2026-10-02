@@ -49,4 +49,4 @@ Each row names the file and line an element comes from, and the text that line m
 | rebuild from messages | `api/main.py:251` | `conv = Conversation.from_messages(` |
 | one turn | `api/main.py:252` | `turn = conv.ask(req.message)` |
 | response fields | `api/main.py:253` | `return {"question": req.message, "answer": turn.answer, "guard": turn.guard,` |
-| state from banks named | `chatbot/agent.py:326` | `def from_messages(cls, messages: list[dict]` |
+| state from banks named | `chatbot/agent.py:322` | `def from_messages(cls, messages: list[dict]` |

@@ -1,14 +1,12 @@
 """
 Pluggable LLM backend for the chatbot's tool-calling loop.
 
-WHY THIS EXISTS: this is a school project, and grading it shouldn't require
-a lecturer to hold an ANTHROPIC_API_KEY. Each backend owns its FULL
-tool-calling loop rather than sharing one generic loop, because Claude and
-Ollama represent conversation history differently enough (Claude:
-content-block lists on assistant/user turns; Ollama/OpenAI-style: a flat
-tool_calls array plus one role="tool" message per result) that forcing them
-through a single shared loop would need its own abstraction layer just to
-paper over that — not worth it for two backends. Tool *schemas* stay in one
+Several backends exist so the chatbot runs without an API key (a local model)
+as well as with one. Each backend owns its whole tool-calling loop rather
+than sharing a generic one, because providers represent conversation history
+differently (Claude: content-block lists on assistant and user turns;
+Ollama and OpenAI: a flat tool_calls array plus one role="tool" message per
+result), and a shared loop would need its own layer to hide that. Tool *schemas* stay in one
 place (chatbot/tools.py's TOOL_SCHEMAS, Anthropic's native shape) and each
 backend converts them to whatever it needs internally.
 """
@@ -28,7 +26,7 @@ class LLMBackend(ABC):
     """One implementation per model provider. `ask()` runs the complete
     question -> [tool calls -> tool results]* -> final text answer loop."""
 
-    name: str  # short identifier, e.g. "claude", "ollama" — used in logs/errors
+    name: str  # short identifier, e.g. "claude", "ollama" - used in logs/errors
 
     temperature: float = DEFAULT_TEMPERATURE
 

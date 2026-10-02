@@ -1,4 +1,4 @@
-"""System prompt for the agentic chatbot — see docs/DESIGN.md (grounding rules)."""
+"""System prompt for the agentic chatbot - see docs/DESIGN.md (grounding rules)."""
 
 SYSTEM_PROMPT = """You are a research assistant for a retail investor sentiment dashboard \
 covering Singapore's three listed banks: DBS, OCBC, and UOB. You answer questions about \

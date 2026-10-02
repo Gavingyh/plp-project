@@ -92,17 +92,17 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:316` | `class Conversation:` |
-| state fields | `chatbot/agent.py:322` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:326` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:243` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:254` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:111` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:147` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:312` | `class Conversation:` |
+| state fields | `chatbot/agent.py:318` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:322` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:239` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:250` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:107` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:143` | `def answer_has_unverified_citation(self, answer: str)` |
 | guards | `chatbot/guards.py:66` | `def advice_reply(question: str` |
 | tools | `chatbot/tools.py:324` | `TOOL_FUNCTIONS = {` |
-| LLMBackend | `chatbot/backends/base.py:27` | `class LLMBackend(ABC):` |
-| temperature | `chatbot/backends/base.py:33` | `temperature: float = DEFAULT_TEMPERATURE` |
+| LLMBackend | `chatbot/backends/base.py:25` | `class LLMBackend(ABC):` |
+| temperature | `chatbot/backends/base.py:31` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:43` | `class OllamaBackend(LLMBackend):` |
 | ClaudeBackend | `chatbot/backends/claude_backend.py:19` | `class ClaudeBackend(LLMBackend):` |
 | OpenAIBackend | `chatbot/backends/openai_backend.py:51` | `class OpenAIBackend(LLMBackend):` |

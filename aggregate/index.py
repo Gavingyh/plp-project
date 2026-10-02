@@ -3,14 +3,14 @@ Aggregate per-sentence sentiment into the per-bank, per-aspect index
 the dashboard and chatbot read.
 
 Two requirements this implements, both from the original plan:
-  - shrinkage toward neutral at low volume: score * n/(n+k), k=5 — without
+  - shrinkage toward neutral at low volume: score * n/(n+k), k=5 - without
     this, one Reddit comment can swing the index to +/-1.0 on a single data
     point.
-  - `n` is ALWAYS stored and displayed alongside the score — a sentiment
+  - `n` is ALWAYS stored and displayed alongside the score - a sentiment
     number without its sample size is flagged in the plan as the main way
     this dashboard could mislead a retail investor.
 
-Source weighting is deliberately simple for the MVP: earnings and
+Source weighting is simple: earnings and
 analyst-flagged news outnumber a single Reddit comment. Confidence weighting
 is applied via the per-row `confidence` from aspect_sentiment.
 
@@ -18,12 +18,12 @@ Rolling windows (docs/DESIGN.md, step 3): computes '7d', '30d', and 'all_time'
 per (bank, aspect), so the dashboard's time-series view and the chatbot's
 get_trend tool have real data to show instead of a single snapshot.
 Window cutoffs are relative to actual wall-clock time (not the latest data
-point) — a live dashboard should show genuine recency, including a thin/empty
+point) - a live dashboard should show genuine recency, including a thin/empty
 7d window if a source hasn't been re-ingested recently, rather than silently
 redefining "recent" to hide that gap.
 
 KNOWN CAVEAT: window filtering compares `published_at` strings directly
-against an ISO cutoff string rather than parsing to datetime — this is
+against an ISO cutoff string rather than parsing to datetime - this is
 correct for day-granularity windows given every source's timestamps are UTC,
 but relies on comparing digits *before* any "Z" vs "+00:00" suffix
 difference between sources (NewsAPI uses "Z", our own now_iso() uses
@@ -58,18 +58,18 @@ _LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 # measurably far more positive than any other source: 24.7% of earnings
 # sentences score positive vs 2.3% of Reddit sentences. Triple-weighting
 # self-authored promotional prose amplified a known skew instead of damping
-# it. 1.0 counts it honestly without letting it dominate.
+# it. 1.0 counts it at face value without letting it dominate.
 _SOURCE_WEIGHT = {"earnings": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0,
                   "yahoo_news": 1.5, "google_news": 1.5, "cna": 1.5}
 
 WINDOWS = {"7d": 7, "30d": 30, "all_time": None}
 
-# 'ALL' means "blended across every source" — the headline number. Individual
+# 'ALL' means "blended across every source" - the headline number. Individual
 # source rows sit alongside it so the dashboard, API and write-up can show
 # what the blend is actually made of (retail chatter vs. management framing),
 # rather than presenting one opaque figure. This matters here: earnings
 # coverage is very unequal across banks (DBS 9,093 sentences, OCBC 1,561,
-# UOB 4 — UOB's IR site is WAF-blocked and its PDFs need adding by hand), so
+# UOB 4 - UOB's IR site is WAF-blocked and its PDFs need adding by hand), so
 # a blended cross-bank comparison is only trustworthy once a reader can see
 # the composition behind it.
 SOURCE_ALL = "ALL"
@@ -260,7 +260,7 @@ def run() -> int:
         out.extend(_compute_rows_for_window(all_rows, window_name, days))
 
     if out:
-        conn.execute("DELETE FROM sentiment_index")  # full recompute each run — cheap at this scale
+        conn.execute("DELETE FROM sentiment_index")  # full recompute each run - cheap at this scale
         conn.executemany(
             """INSERT INTO sentiment_index
                (bank, aspect, window, source, score, n, pos_n, neu_n, neg_n,

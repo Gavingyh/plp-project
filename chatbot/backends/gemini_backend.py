@@ -1,7 +1,7 @@
 """
-Gemini backend — a third frontier-model option alongside Claude and GPT.
+Gemini backend - a third frontier-model option alongside Claude and GPT.
 
-VERIFIED against the live API on 2026-09-30 with gemini-3.6-flash
+Verified against the live API on 2026-09-30 with gemini-3.6-flash
 (docs/evidence/gemini-backend-2026-09-30.md): tool calling and the
 functionResponse continuation both work. It was written before any key was
 available, and these were the risky parts:
@@ -19,7 +19,7 @@ available, and these were the risky parts:
 
 If you add a key: run with CHATBOT_BACKEND=gemini and treat the first real
 response as the actual verification this module hasn't had. If it 400s,
-the error body will usually say exactly which field is wrong — start there
+the error body will usually say exactly which field is wrong - start there
 before assuming the whole approach is broken.
 
 Default model (GEMINI_MODEL, or GEMINI_CHAT_MODEL, to override):
@@ -49,7 +49,7 @@ _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 def _uppercase_schema_types(node):
     """Recursively uppercases every JSON-Schema "type" value, to match
     Gemini's proto-enum convention (STRING/OBJECT/INTEGER/...). See module
-    docstring — this is the single riskiest, most-likely-wrong conversion
+    docstring - this is the single riskiest, most-likely-wrong conversion
     in this file."""
     if isinstance(node, dict):
         return {
@@ -113,12 +113,12 @@ class GeminiBackend(LLMBackend):
             time.sleep(_RETRY_WAITS[attempt])
         if resp.status_code == 400:
             raise RuntimeError(
-                f"Gemini API returned 400 (bad request) — the error body usually names the "
+                f"Gemini API returned 400 (bad request); the error body usually names the "
                 f"exact bad field, check it before assuming the whole approach is broken: "
                 f"{resp.text[:500]}"
             )
         if resp.status_code == 401 or resp.status_code == 403:
-            raise RuntimeError(f"Gemini API rejected the key ({resp.status_code}) — "
+            raise RuntimeError(f"Gemini API rejected the key ({resp.status_code}): "
                                 f"check GEMINI_API_KEY.")
         resp.raise_for_status()
         return resp.json()
@@ -136,7 +136,7 @@ class GeminiBackend(LLMBackend):
             data = self._generate(contents, system, gemini_tools)
             candidates = data.get("candidates") or []
             if not candidates:
-                return "(Gemini returned no candidates — possibly blocked by a safety filter.)"
+                return "(Gemini returned no candidates, possibly blocked by a safety filter.)"
 
             content = candidates[0].get("content", {})
             parts = content.get("parts", [])
@@ -159,5 +159,5 @@ class GeminiBackend(LLMBackend):
                 })
             contents.append({"role": "user", "parts": response_parts})
 
-        return ("I wasn't able to reach a final answer within the tool-call budget — "
+        return ("I wasn't able to reach a final answer within the tool-call budget: "
                 "this usually means the question needs to be narrowed down.")

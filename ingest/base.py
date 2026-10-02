@@ -37,7 +37,7 @@ def detect_banks(text: str) -> list[str]:
 def resolve_bank(text: str, fallback: str | None = None) -> str | None:
     """Single bank if exactly one is named; 'MULTI' if more than one; fallback otherwise.
 
-    Document-level attribution only — sentence-level re-attribution happens in
+    Document-level attribution only - sentence-level re-attribution happens in
     preprocess/, since a MULTI document usually has each bank named
     in a different sentence.
     """
@@ -51,7 +51,7 @@ def resolve_bank(text: str, fallback: str | None = None) -> str | None:
 
 def request_with_retries(url, params, timeout=15, headers=None):
     """GET with a few retries on transient failures (timeouts, 429, 5xx).
-    Does NOT retry on 4xx auth errors (401/403) — a bad key won't fix itself."""
+    Does NOT retry on 4xx auth errors (401/403) - a bad key won't fix itself."""
     last_exc = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -60,7 +60,7 @@ def request_with_retries(url, params, timeout=15, headers=None):
                 resp.raise_for_status()
             if resp.status_code == 429 or resp.status_code >= 500:
                 raise requests.exceptions.HTTPError(
-                    f"{resp.status_code} — retryable", response=resp
+                    f"{resp.status_code}, retryable", response=resp
                 )
             resp.raise_for_status()
             return resp

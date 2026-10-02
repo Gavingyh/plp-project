@@ -1,5 +1,5 @@
 """
-Claude backend — the frontier-model option. Requires ANTHROPIC_API_KEY.
+Claude backend - the frontier-model option. Requires ANTHROPIC_API_KEY.
 
 This is the original chatbot/agent.py loop, moved here unchanged when the
 backend abstraction was introduced so a local model (see ollama_backend.py)
@@ -59,5 +59,5 @@ class ClaudeBackend(LLMBackend):
                 })
             messages.append({"role": "user", "content": tool_results})
 
-        return ("I wasn't able to reach a final answer within the tool-call budget — "
+        return ("I wasn't able to reach a final answer within the tool-call budget: "
                 "this usually means the question needs to be narrowed down.")

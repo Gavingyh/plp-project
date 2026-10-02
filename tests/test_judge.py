@@ -81,3 +81,17 @@ def test_checklist_prompt_asks_for_lists_and_scores_them():
     out = j.judge(RESULTS[:1], "fake", chat=lambda m, msgs: seen.append(msgs) or reply, prompt="checklist")
     assert out[0]["judge_score"] == 1 and "made up" in out[0]["judge_reason"]
     assert "quotes_not_in_data" in seen[0][0]["content"]
+
+
+def test_a_timed_out_answer_is_recorded_and_the_run_goes_on():
+    import requests
+    replies = iter([requests.exceptions.ReadTimeout("slow"), '{"score": 3, "reason": "ok"}'])
+
+    def chat(model, msgs):
+        r = next(replies)
+        if isinstance(r, Exception):
+            raise r
+        return r
+    out = j.judge(RESULTS, "fake", chat=chat)
+    assert out[0] == {"id": "lookup-1", "judge_score": None, "judge_reason": "judge request failed: ReadTimeout"}
+    assert out[1]["judge_score"] == 3

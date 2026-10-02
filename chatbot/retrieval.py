@@ -3,19 +3,19 @@ RAG evidence retrieval for the chatbot (docs/DESIGN.md, `search_evidence` tool).
 
 Hybrid retrieval, matched to this corpus's actual scale rather than a generic
 "vector DB + reranker" template:
-  1. SQL pre-filter (bank / aspect / sentiment / date range) — cheap, exact,
+  1. SQL pre-filter (bank / aspect / sentiment / date range) - cheap, exact,
      and does most of the narrowing before any embedding math happens.
-  2. Semantic ranking — cosine similarity between the query and cached FinBERT
+  2. Semantic ranking - cosine similarity between the query and cached FinBERT
      sentence embeddings (aspects/embed_store.py) over whatever survives the
      filter.
-  3. Lexical boost — a small score bump for sentences sharing literal query
+  3. Lexical boost - a small score bump for sentences sharing literal query
      keywords, so exact terms (ticker codes, named products like "DBS
      Multiplier") aren't only found by semantic proximity. This is the
      "pure vector search won't reliably match specific identifiers" pattern
      from the RAG literature, right-sized: a keyword overlap term, not a full
      BM25 index, since the corpus doesn't warrant one yet.
 
-Every result carries its source sentence_id, url, and date — the chatbot's
+Every result carries its source sentence_id, url, and date - the chatbot's
 citation requirement is enforced by what this
 function returns, not left to the model's discretion.
 
@@ -95,7 +95,7 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
 
     Returns up to k results: [{sentence_id, text, bank, aspect, sentiment,
     score, url, published_at}, ...], ranked by combined score, highest first.
-    Empty list means no matching evidence — callers (the chatbot) must not
+    Empty list means no matching evidence - callers (the chatbot) must not
     fabricate an answer when this comes back empty.
     """
     where, params = ["1=1"], []

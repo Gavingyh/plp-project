@@ -1,10 +1,10 @@
 """
-Tool implementations for the agentic chatbot — see docs/DESIGN.md.
+Tool implementations for the agentic chatbot - see docs/DESIGN.md.
 
 Plain Python functions, not a framework: the agent loop is small enough that
 a framework would add abstraction without adding capability at this scale.
 
-Every tool that reports a score also reports `n` — the misleading-number
+Every tool that reports a score also reports `n` - the misleading-number
 defense is enforced HERE, in the data contract, not left to the model to
 remember to mention. `get_coverage` exists specifically so the agent can
 check "do I have data on this at all" before answering, rather than
@@ -49,7 +49,7 @@ ASPECT_KEYS = _load_aspect_keys()
 def normalize_aspect(aspect: str | None) -> str | None:
     """Best-effort correction for the failure mode above: lowercases and
     replaces spaces/hyphens with underscores, then only accepts the result if
-    it matches a real aspect key. A genuinely wrong aspect is left as-is
+    it matches a real aspect key. An unknown aspect is left as-is
     rather than guessed at, so it still surfaces as insufficient_data instead
     of silently mapping to the wrong aspect."""
     if aspect is None:
@@ -60,9 +60,9 @@ def normalize_aspect(aspect: str | None) -> str | None:
 
 def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time") -> dict:
     """Sentiment index for a bank, optionally filtered to one aspect ('ALL' aspect
-    = overall) and one window ('7d', '30d', or 'all_time' — see aggregate/index.py).
+    = overall) and one window ('7d', '30d', or 'all_time' - see aggregate/index.py).
     Returns insufficient_data=True below the volume floor, or if no row exists at
-    all for this window (e.g. genuinely nothing published in the last 7 days)."""
+    all for this window (e.g. nothing published in the last 7 days)."""
     conn = get_connection()
     try:
         aspect_filter = aspect or "ALL"
@@ -104,7 +104,7 @@ def compare_banks(aspect: str | None = None, window: str = "all_time") -> dict:
 def get_trend(bank: str, aspect: str | None = None) -> dict:
     """Direction/magnitude of sentiment change: compares the 7d window against
     the 30d window (both from aggregate/index.py's rolling windows). Falls back
-    to reporting all_time alone if either rolling window has insufficient data —
+    to reporting all_time alone if either rolling window has insufficient data -
     a trend computed from a handful of items either side is noise, not signal."""
     recent = get_sentiment(bank, aspect, window="7d")
     baseline = get_sentiment(bank, aspect, window="30d")
@@ -140,7 +140,7 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
 
 
 def get_coverage(bank: str | None = None, aspect: str | None = None) -> dict:
-    """What data actually exists — call this BEFORE answering a question the
+    """What data actually exists - call this BEFORE answering a question the
     other tools come back empty on, to distinguish 'no data' from 'zero
     sentiment'. This is the cheapest hallucination defense available; see
     docs/DESIGN.md, grounding rules."""
@@ -176,7 +176,7 @@ def get_analyst_consensus(bank: str) -> dict:
     """Latest analyst consensus (ratings + price targets) for one bank.
 
     This is consensus *aggregate* data from Yahoo Finance, NOT the contents of
-    any analyst report — say so when reporting it. Returns has_data=False when
+    any analyst report - say so when reporting it. Returns has_data=False when
     no snapshot exists yet.
     """
     conn = get_connection()
@@ -214,7 +214,7 @@ def get_analyst_consensus(bank: str) -> dict:
 
 def search_evidence(query: str, bank: str | None = None, aspect: str | None = None,
                      sentiment: str | None = None, k: int = 5) -> dict:
-    """RAG evidence search (chatbot/retrieval.py) — quotes with citations for
+    """RAG evidence search (chatbot/retrieval.py) - quotes with citations for
     any qualitative claim. See docs/DESIGN.md, 'Grounding rules': every
     qualitative claim must cite a sentence_id + url."""
     results = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k)
@@ -337,15 +337,12 @@ def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
     """Coerces string-typed arguments to the type declared in the tool's own
     input_schema (integer/number/boolean) before the tool function sees them.
 
-    WHY THIS EXISTS: local models called via Ollama don't reliably respect a
-    JSON schema's declared types — observed with llama3.2:3b, which called
-    search_evidence with k="5" (a string) instead of k=5, which crashed the
-    list-slice inside chatbot/retrieval.py with a TypeError. Claude has not
-    been observed doing this, but this coercion is cheap and harmless for a
-    backend that already sends correct types, so it runs for every backend
-    rather than only for local models.
+    Local models don't always respect a schema's declared types:
+    llama3.2:3b called search_evidence with k="5" (a string), which crashed
+    the list slice in chatbot/retrieval.py. The coercion costs nothing for a
+    backend that sends correct types, so it runs for every backend.
 
-    Also normalizes `aspect` (see normalize_aspect) — the same model called
+    Also normalizes `aspect` (see normalize_aspect) - the same model called
     get_sentiment with aspect="dividend policy" instead of "dividend_policy",
     silently producing insufficient_data on a valid question. The schema's
     enum constraint should prevent this going forward; this is the

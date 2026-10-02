@@ -236,7 +236,7 @@ team.*
 ## 7. Engineering and process
 
 **Findings**
-- 580 tests, an OpenAPI contract kept current by a test, two clean-copy
+- 590 tests, an OpenAPI contract kept current by a test, two clean-copy
   installs (the first found that the README never named its Python
   version), and every figure in the evidence traceable to a command.
 - Two read paths: the dashboard queries the database directly while other

@@ -1,26 +1,24 @@
 """
 Agentic chatbot: a tool-calling loop over the sentiment store.
 
-The loop is deliberately plain rather than framework-based (LangChain and
-similar). At this scale a framework adds abstraction without adding
+The loop is plain Python rather than a framework (LangChain and similar). At this scale a framework adds abstraction without adding
 capability, and the project report has to be able to explain whatever is
 used.
 
-The model backend is pluggable — a local model via Ollama (no API key, no
+The model backend is pluggable - a local model via Ollama (no API key, no
 cost) or a hosted model (Claude, GPT, Gemini). Backend selection is
 described in chatbot/backends/__init__.py. The local option exists so the
 chatbot can be run and graded without anyone needing to hold an API key.
 
-CITATION VERIFICATION
-Small local models fabricate supporting evidence. Observed failure modes
-include fully-invented source URLs and sentence_ids, and placeholder-style
+Citation verification. Small local models invent supporting evidence:
+failures seen include fully-invented source URLs and sentence_ids, and placeholder-style
 citations ("Sentence_id: [insert sentence_id]") that a URL-matching check
 alone would not catch. Prompt instructions alone did not prevent either.
 
 This module therefore enforces the invariant in code: if search_evidence was
 never called, any quoted evidence, sentence_id reference or URL in the
 answer is fabricated by definition, and the answer is flagged. This is the
-same approach used for the volume floor in chatbot/tools.py — grounding
+same approach used for the volume floor in chatbot/tools.py - grounding
 rules that matter are enforced rather than requested.
 
 Flagging still shows the invented evidence. CHATBOT_ENFORCE_EVIDENCE goes
@@ -33,15 +31,14 @@ system found them. Unset or `off` (the default) leaves answers as written.
 A search the harness makes is recorded with `"by": "harness"`, so the
 evaluation doesn't count it as the model's tool choice.
 
-THE HARNESS AROUND THE MODEL (docs/DESIGN.md decision 19)
+The harness around the model (docs/DESIGN.md decision 19).
 Each turn runs: input guards (chatbot/guards.py: advice-seeking and
 out-of-scope questions get a fixed reply without calling the model) -> the
 model's tool-calling loop -> output checks (citations, cited sentence ids,
 and every figure against the tools' results). `answer_turn` returns the whole
 record; `ask` keeps the old string-returning interface.
 
-MEMORY
-`Conversation` carries the last few turns, trimmed, plus an explicit state
+Memory. `Conversation` carries the last few turns, trimmed, plus an explicit state
 (banks, aspect, window) taken from the tools actually called, so a follow-up
 like "and OCBC?" resolves. Earlier tool calls are not replayed: the model is
 told to re-fetch rather than repeat an old number, and the number check only
@@ -81,10 +78,9 @@ _QUOTE_PATTERN = re.compile(r'(?:^|(?<=[\s(\[:—–-]))"[^"\s][^"\n]{8,}[^"\s]"
 _SENTENCE_ID_PATTERN = re.compile(r"sentence[_\s]?id", re.IGNORECASE)
 
 UNVERIFIED_CITATION_WARNING = (
-    "\n\n⚠️ VERIFICATION WARNING: this response appears to cite evidence "
-    "(a quote, sentence_id, or URL) that was not returned by any search_evidence call in "
-    "this conversation. Treat any quoted evidence above as UNVERIFIED — it may be fabricated. "
-    "(Seen from smaller local models; see chatbot/agent.py docstring.)"
+    "\n\n⚠️ VERIFICATION WARNING: this answer cites evidence (a quote, sentence_id or URL) "
+    "that no search_evidence call in this conversation returned. Treat that evidence as "
+    "unverified: it may be invented."
 )
 
 EMPTY_ANSWER_REPLY = (
@@ -110,7 +106,7 @@ HISTORY_ANSWER_CHARS = 1200  # earlier answers are trimmed so they don't crowd t
 
 class _ToolCallTracker:
     """Records what search_evidence actually returned, so the final answer can
-    be checked against what was truly retrieved — not what the model claims.
+    be checked against what was truly retrieved - not what the model claims.
     Also keeps a general call log (every tool, its arguments, and its result),
     used by chatbot/eval_gold_set.py to check whether the model called the
     tool a question actually calls for."""
@@ -151,10 +147,10 @@ class _ToolCallTracker:
         if unverified_sentence_ids(answer, self.verified_sentence_ids):
             return True
         if not self.search_evidence_called:
-            # No real evidence was retrieved at all this turn — any quoted
+            # No real evidence was retrieved at all this turn - any quoted
             # "evidence" or explicit sentence_id reference must be fabricated,
             # regardless of whether it's dressed up as a real URL or a
-            # placeholder like "[insert sentence_id]" (both observed live).
+            # placeholder like "[insert sentence_id]" (both seen in real answers).
             if _QUOTE_PATTERN.search(answer) or _SENTENCE_ID_PATTERN.search(answer):
                 return True
         return False
@@ -284,7 +280,7 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
 
     if flagged:
         if verbose:
-            logger.warning("citation check FAILED — answer contains evidence not "
+            logger.warning("citation check failed: answer contains evidence not "
                            "actually retrieved via search_evidence")
         result.citation_unverified = True
         result.answer += UNVERIFIED_CITATION_WARNING
@@ -292,7 +288,7 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
     figures = unverified_numbers(answer, [c.get("result") for c in tracker.calls], question)
     if figures:
         if verbose:
-            logger.warning("number check FAILED — %s not returned by any tool", figures)
+            logger.warning("number check failed: %s not returned by any tool", figures)
         result.unverified_numbers = figures
         result.answer += UNVERIFIED_NUMBER_WARNING.format(
             figures=", ".join(figures), them="it" if len(figures) == 1 else "them")
@@ -303,7 +299,7 @@ def ask(question: str, verbose: bool = True, backend_name: str | None = None,
         return_trace: bool = False):
     """Returns the answer string. With return_trace=True, returns
     (answer, calls) instead, where calls is the list of tools invoked while
-    answering — used by chatbot/eval_gold_set.py, not needed for normal use.
+    answering - used by chatbot/eval_gold_set.py, not needed for normal use.
     Single-turn; use Conversation for follow-ups."""
     r = answer_turn(question, backend_name=backend_name, verbose=verbose)
     return (r.answer, r.calls) if return_trace else r.answer

@@ -147,7 +147,13 @@ def judge(results: list[dict], model: str, chat=ollama_judge, prompt: str = "ful
         if r.get("error"):
             continue
         try:
-            parsed = json.loads(chat(model, build_messages(r, prompt)))
+            reply = chat(model, build_messages(r, prompt))
+        except requests.exceptions.RequestException as e:
+            # A slow or failed request is recorded for this answer; the run goes on.
+            out.append({"id": r["id"], "judge_score": None, "judge_reason": f"judge request failed: {type(e).__name__}"})
+            continue
+        try:
+            parsed = json.loads(reply)
             if prompt == "checklist":
                 score, reason = checklist_score(parsed)
             else:

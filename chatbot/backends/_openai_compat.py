@@ -1,9 +1,8 @@
 """
 Shared tool-schema conversion for backends using OpenAI's function-calling
-wire format — Ollama's /api/chat deliberately mirrors this shape (verified
-live, see ollama_backend.py), and OpenAI's own Chat Completions API is
-naturally this shape. Kept in one place so both backends convert identically
-rather than maintaining two copies that could drift apart.
+wire format: Ollama's /api/chat uses the same shape (checked against a running
+Ollama, see ollama_backend.py), as does OpenAI's Chat Completions API. One
+copy, so both backends convert the same way.
 """
 
 

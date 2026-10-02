@@ -1,10 +1,10 @@
 """
-OpenAI (GPT) backend — a second frontier-model option alongside Claude, and
+OpenAI (GPT) backend - a second frontier-model option alongside Claude, and
 the way in for any OpenAI-compatible provider: set OPENAI_BASE_URL (default
 https://api.openai.com/v1) to, say, https://api.groq.com/openai/v1, with that
 provider's key in OPENAI_API_KEY and its model name in OPENAI_MODEL.
 
-NOT VERIFIED AGAINST THE LIVE API — no OPENAI_API_KEY was available when
+Not yet run against the live API: no OPENAI_API_KEY was available when
 this was written. It implements OpenAI's documented Chat Completions
 tool-calling contract, which is long-stable and widely used, but that is a
 weaker guarantee than the Ollama backend has (whose contract was confirmed
@@ -13,11 +13,11 @@ against a running instance). With a key available, run
 successful response as this module's verification.
 
 Key contract detail that's easy to get wrong and IS specific to OpenAI
-(Ollama's version of this API pre-parses it for you — see ollama_backend.py):
+(Ollama's version of this API pre-parses it for you - see ollama_backend.py):
 tool_calls[].function.arguments comes back as a **JSON-encoded string**,
 not a dict. It must be json.loads()'d before use.
 
-Default model (OPENAI_MODEL env var to override): gpt-4o-mini — cheap and
+Default model (OPENAI_MODEL env var to override): gpt-4o-mini - cheap and
 tool-calling capable as of when this was written; check for a newer/cheaper
 option before relying on the default long-term, model naming moves fast.
 
@@ -82,7 +82,7 @@ class OpenAIBackend(LLMBackend):
             logger.warning("%s returned %s; retrying in %ss", self.model, resp.status_code, wait)
             time.sleep(wait)
         if resp.status_code == 401:
-            raise RuntimeError(f"{self.base_url} rejected the key (401) — check OPENAI_API_KEY.")
+            raise RuntimeError(f"{self.base_url} rejected the key (401); check OPENAI_API_KEY.")
         if resp.status_code == 400:
             raise RuntimeError(f"{self.base_url} returned 400 (bad request): {resp.text[:500]}")
         resp.raise_for_status()
@@ -122,7 +122,7 @@ class OpenAIBackend(LLMBackend):
                     "role": "tool", "tool_call_id": call["id"], "content": result_json,
                 })
 
-        return ("I wasn't able to reach a final answer within the tool-call budget — "
+        return ("I wasn't able to reach a final answer within the tool-call budget: "
                 "this usually means the question needs to be narrowed down.")
 
 

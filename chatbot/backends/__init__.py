@@ -11,15 +11,14 @@ Env vars (all optional):
                     default, while anyone with a key gets a frontier model
                     without having to configure anything.
   CLAUDE_MODEL      default "claude-sonnet-5"
-  OPENAI_MODEL      default "gpt-4o-mini" (NOT live-tested — see
-                    openai_backend.py docstring)
+  OPENAI_MODEL      default "gpt-4o-mini" (never run against the live API;
+                    see openai_backend.py)
   OPENAI_BASE_URL   default "https://api.openai.com/v1"; any OpenAI-compatible
                     provider, e.g. "https://api.groq.com/openai/v1"
   GEMINI_MODEL      default "gemini-3.8-flash"; GEMINI_CHAT_MODEL also read
-                    (NOT live-tested, and carries
-                    more real risk than the OpenAI backend — see
-                    gemini_backend.py docstring)
-  OLLAMA_MODEL      default "llama3.2:3b" (verified tool-calling support —
+                    (verified against the live API on 2026-09-30; see
+                    gemini_backend.py)
+  OLLAMA_MODEL      default "llama3.2:3b" (verified tool-calling support -
                     see ollama_backend.py docstring for other tested options)
   OLLAMA_BASE_URL   default "http://localhost:11434"
   OLLAMA_THINK      "false" turns a reasoning model's thinking off (qwen3);
@@ -99,5 +98,5 @@ def get_backend(name: str | None = None) -> LLMBackend:
             think=_think(),
         )
     raise ValueError(
-        f"Unknown CHATBOT_BACKEND {name!r} — expected 'claude', 'openai', 'gemini', or 'ollama'"
+        f"Unknown CHATBOT_BACKEND {name!r}: expected 'claude', 'openai', 'gemini', or 'ollama'"
     )

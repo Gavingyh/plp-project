@@ -20,7 +20,7 @@ flowchart TB
   retr["Retrieval: a question as the query ranks at chance<br/>(MRR 0.217); the aspect's name 0.559 (a setting)"]
   judge["LLM judge scores faithfulness 1-3<br/>chatbot.judge"]
   jcheck["Checked against the known inventions:<br/>scored all 32 answers 3, so not usable"]
-  jnext["Asked to list every unsupported quote,<br/>source and figure (checklist prompt):<br/>catches 11 of 11 with the same model"]
+  jnext["Asked to list every unsupported quote,<br/>source and figure (checklist prompt):<br/>catches all 25 known inventions, but its<br/>reasons are unreliable: it screens, not scores"]
 
   gold --> run --> flags --> read --> cause --> fix --> replay --> live
   gold --> retr
@@ -48,5 +48,5 @@ Each row names the file and line an element comes from, and the text that line m
 | scope guard reads the conversation | `chatbot/guards.py:106` | `def scope_reply(question: str, in_conversation: bool = False)` |
 | tool call written as text | `chatbot/backends/_text_tool_call.py:19` | `def text_tool_call(content: str, tool_names: set[str])` |
 | replay on recorded answers | `chatbot/replay.py:28` | `def replay(results: list[dict], mode: str) -> list[dict]:` |
-| judge checked against the flags | `chatbot/judge.py:194` | `def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:` |
-| checklist judge | `chatbot/judge.py:125` | `def checklist_score(parsed: dict) -> tuple[int, str]:` |
+| judge checked against the flags | `chatbot/judge.py:197` | `def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:` |
+| checklist judge | `chatbot/judge.py:128` | `def checklist_score(parsed: dict) -> tuple[int, str]:` |

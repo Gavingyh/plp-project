@@ -143,6 +143,39 @@ shasum -a 256 plp-2026-09-30.db.gz   # should match the checksum below
 `data/sentence_embeddings.npz` isn't shared either. It is a cache that
 `python -m aspects.embed_store` rebuilds from the database.
 
+### Sharing the data and models
+
+What a teammate needs, beyond `git clone` and the Quick start:
+
+| file | needed for | size |
+|---|---|---|
+| the latest snapshot (`plp-2026-09-30.db.gz`) | everything: unpack to `data/plp.db` | 41.5 MB |
+| `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 121 MB |
+| the three fine-tuned models | only to reproduce the sentiment results or re-score with them; the database holds base FinBERT's scores | 3 × 418 MB |
+
+`scripts/share_bundle.sh OUT_DIR [--with-models]` copies these into one
+folder with a `SHA256SUMS` file (check with `shasum -a 256 -c SHA256SUMS`);
+the models go to `models/experiments-2026-10-01/label/seed_*/final/` on the
+receiving side. FinBERT downloads from Hugging Face on first use, and each
+machine pulls its own Ollama models. Never share `.env` (API keys) or
+`data/cna/` (CNA's articles).
+
+The models can also live in a Hugging Face model repo, private to a team
+organisation; [docs/model-card.md](docs/model-card.md) is its `README.md`.
+Leave `training_args.bin` out (it records a local path):
+
+```bash
+for s in 42 1 7; do
+  hf upload <org>/plp-finbert-absa models/experiments-2026-10-01/label/seed_$s/final seed_$s/final \
+      --exclude "training_args.bin"
+done
+hf upload <org>/plp-finbert-absa docs/model-card.md README.md
+hf download <org>/plp-finbert-absa --local-dir models/experiments-2026-10-01/label   # on the receiving side
+```
+
+The database stays on the team drive: it holds CNA and Reddit text and isn't
+ours to publish.
+
 ---
 
 ## Pulling news

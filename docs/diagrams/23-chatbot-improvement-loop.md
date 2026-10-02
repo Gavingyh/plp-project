@@ -48,5 +48,5 @@ Each row names the file and line an element comes from, and the text that line m
 | scope guard reads the conversation | `chatbot/guards.py:106` | `def scope_reply(question: str, in_conversation: bool = False)` |
 | tool call written as text | `chatbot/backends/_text_tool_call.py:19` | `def text_tool_call(content: str, tool_names: set[str])` |
 | replay on recorded answers | `chatbot/replay.py:28` | `def replay(results: list[dict], mode: str) -> list[dict]:` |
-| judge checked against the flags | `chatbot/judge.py:191` | `def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:` |
-| checklist judge | `chatbot/judge.py:123` | `def checklist_score(parsed: dict) -> tuple[int, str]:` |
+| judge checked against the flags | `chatbot/judge.py:194` | `def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:` |
+| checklist judge | `chatbot/judge.py:125` | `def checklist_score(parsed: dict) -> tuple[int, str]:` |

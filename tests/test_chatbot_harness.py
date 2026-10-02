@@ -356,11 +356,15 @@ def test_an_answer_that_searched_is_left_alone(monkeypatch):
     assert r.evidence_enforced is None and "Margins held up" in r.answer and not r.citation_unverified
 
 
-def test_invented_evidence_in_the_opening_paragraph_is_still_flagged(fake_sentiment, monkeypatch):
+def test_invented_evidence_in_the_opening_paragraph_is_removed(fake_sentiment, monkeypatch):
+    # Until 3 Oct the opening paragraph was kept as written, so this quote stayed
+    # (and was flagged) under a note saying the quotes were removed.
     monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
     answer = 'DBS is positive, as "one analyst called the payout safe for years" (Reuters).\n\nEvidence:\n* "made up"'
     r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(answer), verbose=False)
-    assert r.evidence_enforced == "strip" and r.citation_unverified
+    assert r.evidence_enforced == "strip" and not r.citation_unverified
+    assert "payout safe for years" not in r.answer and "made up" not in r.answer
+    assert r.answer.startswith("DBS is positive")
 
 
 def test_tool_selection_ignores_searches_the_harness_made():

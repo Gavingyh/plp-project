@@ -139,10 +139,37 @@ _STRIP_FIRST = [
     re.compile(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTH},?\s+\d{{4}}\b", re.IGNORECASE),  # "24 September 2026"
     re.compile(rf"\b{_MONTH}\s+\d{{4}}\b", re.IGNORECASE),                                   # "September 2026"
     re.compile(r"\b[0-9a-f]{24}\b"),               # sentence ids
-    re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ][\d:.+Z-]*)?"),  # ISO dates and timestamps
+    re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?"),  # ISO dates and timestamps
     re.compile(r"^\s*\d+[.)]\s", re.MULTILINE),     # numbered-list markers
     re.compile(r"\b\d+\s*(?:-|\s)?(?:day|d|week|month|year)s?\b", re.IGNORECASE),  # "7-day", "30d"
 ]
+
+
+def _percent_fields(obj, out: list[float]) -> None:
+    """Values whose field name says they are already percentages ("implied_upside_pct": 0.9)."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if isinstance(v, (int, float)) and not isinstance(v, bool) and re.search(r"pct|percent", str(k)):
+                out.append(float(v))
+            else:
+                _percent_fields(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _percent_fields(v, out)
+
+
+def _count_ratios(obj, out: list[float]) -> None:
+    """100·a/b for the whole-number counts within one result object (positive_n
+    over n, say), the percentages an answer can honestly derive. Pairing every
+    number with every other accepted almost any percentage (3 Oct 2026)."""
+    if isinstance(obj, dict):
+        counts = [float(v) for v in obj.values() if isinstance(v, int) and not isinstance(v, bool)]
+        out.extend(100 * a / b for a, b in permutations(counts, 2) if b and 0 <= a <= b)
+        for v in obj.values():
+            _count_ratios(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _count_ratios(v, out)
 
 
 def _collect_numbers(obj, out: list[float], text_out: list[float]) -> None:
@@ -175,9 +202,17 @@ def _parse(token: str) -> tuple[float, int, bool]:
     return float(t), decimals, is_pct
 
 
-def _matches(value: float, decimals: int, candidates: list[float]) -> bool:
+def _matches(value: float, decimals: int, candidates: list[float], signed: bool = False) -> bool:
+    """A figure written with an explicit + or - must match the value's sign;
+    one written without a sign may be its size ("fell by 0.05" for -0.05)."""
     tol = 0.5 * 10 ** (-decimals) + 1e-9
-    return any(abs(abs(value) - abs(c)) <= tol for c in candidates)
+    step = 10 ** (-decimals)
+    for c in candidates:
+        v, c = (value, c) if signed else (abs(value), abs(c))
+        # rounded to the shown decimals, or cut off there ("at least 0.58" for 0.5853)
+        if abs(v - c) <= tol or (abs(c) >= abs(v) and abs(c) - abs(v) < step and v * c >= 0):
+            return True
+    return False
 
 
 def unverified_numbers(answer: str, tool_results: list, question: str = "") -> list[str]:
@@ -200,8 +235,13 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
     _collect_numbers(tool_results, values, quoted)
     values = list({round(v, 10) for v in values})
     candidates = values + [v * 100 for v in values] + quoted
-    small = [v for v in values if v != 0][:400]
-    ratios = [100 * a / b for a, b in permutations(small, 2) if b and abs(a) <= abs(b)]
+    # A percentage is a fraction times 100, or a value already above 1: 0.12
+    # written as "0.12%" is a hundred times too small.
+    percent_fields: list[float] = []
+    _percent_fields(tool_results, percent_fields)
+    percent_candidates = [v * 100 for v in values] + [v for v in values if abs(v) > 1] + percent_fields + quoted
+    ratios: list[float] = []
+    _count_ratios(tool_results, ratios)
 
     flagged = []
     for m in _NUMBER.finditer(text):
@@ -212,9 +252,10 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
             continue
         if decimals == 0 and not is_pct and (abs(value) < 10 or 1990 <= value <= 2100):
             continue
-        if _matches(value, decimals, candidates):
+        signed = token[0] in "+-−"
+        if _matches(value, decimals, percent_candidates if is_pct else candidates, signed):
             continue
-        if (is_pct or decimals > 0) and _matches(value, decimals, ratios):
+        if (is_pct or decimals > 0) and _matches(value, decimals, ratios, signed):
             continue
         flagged.append(token)
     return flagged

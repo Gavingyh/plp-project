@@ -1,6 +1,5 @@
-"""Validation tests for reviewer findings on the grounded chatbot (S3).
-
-Each test fails if its finding is real; confirmed findings carry a strict xfail.
+"""Validation tests for the grounded-chatbot claim: each was written for a
+confirmed weakness in the guards (3 Oct 2026) and passes since its fix.
 Synthetic answers and trackers only: no model calls, no database.
 """
 
@@ -17,14 +16,12 @@ def _tracker_with_results(results):
         [{"name": "search_evidence", "arguments": {"query": "q"}, "result": {"results": results}}])
 
 
-@pytest.mark.xfail(strict=True, reason="quote-text-unchecked: after any search, quote text is never compared with retrieved text")
 def test_quote_text_is_checked_against_search_results():
     tracker = _tracker_with_results([{"sentence_id": SID, "text": "X"}])
     answer = '"Completely invented quote here" [DBS, sentence_id ' + SID + "]"
     assert tracker.answer_has_unverified_citation(answer)
 
 
-@pytest.mark.xfail(strict=True, reason="strip-misses-first-paragraph: a one-paragraph answer keeps its quote and URL under the 'removed' note")
 def test_strip_removes_quote_and_url_from_first_paragraph():
     answer = 'DBS is positive, as one investor said "dividends are safe and growing" (https://x.com/a).'
     new, _ = enforce_evidence(answer, _ToolCallTracker(), "q", "strip")
@@ -33,12 +30,10 @@ def test_strip_removes_quote_and_url_from_first_paragraph():
     assert "https://x.com/a" not in new
 
 
-@pytest.mark.xfail(strict=True, reason="sign-ignored: _matches compares absolute values, so +0.05 matches -0.05")
 def test_number_check_respects_sign():
     assert unverified_numbers("Sentiment rose by +0.05", [{"delta_7d_vs_30d": -0.05}]) == ["+0.05"]
 
 
-@pytest.mark.xfail(strict=True, reason="curly-quotes-missed: _QUOTE_PATTERN only matches straight quotes on one line")
 @pytest.mark.parametrize("answer", [
     "One investor wrote “DBS will cut its dividend next quarter”.",
     'One investor wrote *"DBS will cut its dividend next quarter"*.',
@@ -53,7 +48,6 @@ def test_straight_quote_flagged_without_search_control():
         'One investor wrote "DBS will cut its dividend next quarter".')
 
 
-@pytest.mark.xfail(strict=True, reason="percent-vs-fraction: fraction 0.12 written as 0.12% counts as verified")
 def test_fraction_written_as_percent_is_flagged():
     assert unverified_numbers("Only 0.12% of mentions were negative", [{"share_negative": 0.12}]) == ["0.12%"]
 
@@ -83,20 +77,28 @@ _TREND_RESULT = {
 }
 
 
-@pytest.mark.xfail(strict=True, reason="ratio-set-too-wide: pairwise ratios accept most whole percentages 1-99% on a trend result")
 def test_ratio_set_does_not_accept_most_whole_percentages():
     accepted = [p for p in range(1, 100)
                 if unverified_numbers(f"About {p}% of mentions were positive", [_TREND_RESULT]) == []]
     assert len(accepted) < 50, f"{len(accepted)}/99 accepted"
 
 
-@pytest.mark.xfail(strict=True, reason="date-strip-swallows-number: ISO-date pattern eats the number after the date")
 def test_number_after_iso_date_is_still_checked():
     assert unverified_numbers("2026-09-21 0.99", []) == ["0.99"]
 
 
-@pytest.mark.xfail(strict=True, reason="schemeless-url: a URL without http(s):// is not checked")
 def test_schemeless_url_is_checked():
     tracker = _tracker_with_results([])
     assert tracker.search_evidence_called
     assert tracker.answer_has_unverified_citation("Source: www.reddit.com/r/singaporefi/abc")
+
+
+def test_percent_field_counts_as_a_percentage():
+    # get_analyst_consensus returns implied_upside_pct already in percent.
+    assert unverified_numbers("an implied upside of 0.9%", [{"implied_upside_pct": 0.9}]) == []
+    assert unverified_numbers("an implied upside of -0.9%", [{"implied_upside_pct": -0.9}]) == []
+
+
+def test_value_cut_off_at_the_shown_decimals_counts():
+    assert unverified_numbers("a relevance score of at least 0.58", [{"relevance": 0.5853}]) == []
+    assert unverified_numbers("a relevance score of 0.57", [{"relevance": 0.5853}]) == ["0.57"]

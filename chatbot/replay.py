@@ -33,12 +33,18 @@ def replay(results: list[dict], mode: str) -> list[dict]:
             continue
         before = model_answer(r)
         tracker = _ToolCallTracker.from_calls(r.get("tool_calls", []))
+        # Both columns use today's checks, so a difference comes from enforcement,
+        # not from a guard changed since the run; the run's own flags are kept apart.
+        model_results = [c.get("result") for c in tracker.calls if c.get("by") != "harness"]
+        flagged_before = tracker.answer_has_unverified_citation(before)
+        figures_before = unverified_numbers(before, model_results, r["question"])
         after, flagged = enforce_evidence(before, tracker, r["question"], mode)
         out.append({
             "id": r["id"], "question": r["question"], "changed": after != before,
-            "citation_flag_before": bool(r.get("citation_fabricated")), "citation_flag_after": flagged,
-            "figures_before": r.get("unverified_numbers", []),
-            "figures_after": unverified_numbers(after, [c.get("result") for c in tracker.calls], r["question"]),
+            "citation_flag_before": flagged_before, "citation_flag_after": flagged,
+            "citation_flag_recorded": bool(r.get("citation_fabricated")),
+            "figures_before": figures_before,
+            "figures_after": unverified_numbers(after, model_results, r["question"]),
             "answer_after": after,
             "harness_evidence": [item for c in tracker.calls if c.get("by") == "harness"
                                  for item in (c.get("result") or {}).get("results", [])],
@@ -54,7 +60,8 @@ def summary(rows: list[dict], source: str, mode: str) -> str:
              "| | before | after |", "|---|---|---|",
              f"| citation warning | {count('citation_flag_before')} | {count('citation_flag_after')} |",
              f"| answer with a figure no tool returned | {count('figures_before')} | {count('figures_after')} |",
-             "", f"Answers changed: {count('changed')}.", ""]
+             "", f"Both columns use today's checks; the run itself flagged {count('citation_flag_recorded')} "
+                 "citations with the checks it had.", "", f"Answers changed: {count('changed')}.", ""]
     for r in rows:
         if not r["changed"]:
             continue

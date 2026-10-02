@@ -30,8 +30,9 @@ team.*
    the design, not the model.** On both local models every invented citation
    (25 in 64 answers) came from an answer that never searched for evidence.
    Removing such evidence in code takes citation warnings from 11 to 0 (8B)
-   and 15 to 0 (3B) on the same answers, and to 0 real inventions in live
-   runs on both models, with tool choice unchanged.
+   and 16 to 0 (3B) on the same answers, re-measured on 3 Oct with guards
+   that also check quoted text, signs and percentages; live runs on 2 Oct
+   showed 0 real inventions on both models, with tool choice unchanged.
 5. **Evidence search ranks no better than random when the query is a
    question** (MRR 0.217, random 0.217), because FinBERT's vectors encode
    whether text sounds like a Reddit question more than what it is about.

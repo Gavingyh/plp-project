@@ -316,7 +316,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="decide">
       <span class="t">Decide the chatbot's settings: strip invented evidence, and rank evidence by the aspect's name <span class="chip decide">Decision</span></span>
       <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> both are built and off by default. <code>CHATBOT_ENFORCE_EVIDENCE=strip</code> took invented citations from 11 to 0 on the 8B and from 15 to 0 real ones on the 3B, live, with tool choice unchanged; answers that didn't search simply show no quotes. <code>CHATBOT_ASPECT_QUERY=1</code> makes evidence more on topic (MRR 0.559 against 0.217) but often returns report boilerplate.</p>
+      <p class="why"><b>Why:</b> both are built and off by default. <code>CHATBOT_ENFORCE_EVIDENCE=strip</code> takes citation warnings from 11 to 0 on the 8B and 16 to 0 on the 3B (replayed on 3 Oct with stricter guards that check quoted text, signs and percentages), with tool choice unchanged in the live runs; answers that didn't search simply show no quotes. <code>CHATBOT_ASPECT_QUERY=1</code> makes evidence more on topic (MRR 0.559 against 0.217) but often returns report boilerplate.</p>
       <span class="meta">Source: chatbot-eval-build, "Second round".</span>
     </li>
     <li data-o="decide">

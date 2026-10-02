@@ -210,11 +210,13 @@ def test_honest_answer_with_no_evidence_claim_not_flagged():
 
 
 def test_real_verified_citation_not_flagged():
-    tracker = _ToolCallTracker()
-    tracker.search_evidence_called = True
-    tracker.verified_urls.add("https://reddit.com/real-post")
+    # A citation is verified when its link and its quoted text were both returned.
+    tracker = _ToolCallTracker.from_calls([{"name": "search_evidence", "arguments": {"query": "fees"},
+                                            "result": {"results": [{"url": "https://reddit.com/real-post",
+                                                                    "text": "DBS raised fees again this year"}]}}])
     answer = 'See: "DBS raised fees again" (https://reddit.com/real-post)'
     assert not tracker.answer_has_unverified_citation(answer)
+    assert tracker.answer_has_unverified_citation('See: "DBS cut fees for everyone" (https://reddit.com/real-post)')
 
 
 def test_tracker_records_urls_from_real_search_evidence_call():
@@ -232,7 +234,8 @@ def test_tracker_records_urls_from_real_search_evidence_call():
         tools_module.TOOL_FUNCTIONS["search_evidence"] = orig
 
     assert tracker.search_evidence_called is True
-    assert "https://reddit.com/x" in tracker.verified_urls
+    assert tracker.unverified_urls("see https://reddit.com/x and www.reddit.com/x") == []
+    assert tracker.unverified_urls("see https://reddit.com/y") == ["https://reddit.com/y"]
 
 
 def test_ask_appends_warning_when_backend_fabricates(monkeypatch):

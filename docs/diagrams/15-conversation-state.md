@@ -47,12 +47,12 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| new conversation, empty state | `chatbot/agent.py:318` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| compare_banks sets all three | `chatbot/agent.py:211` | `if c["name"] == "compare_banks":` |
-| a tool call names a bank | `chatbot/agent.py:351` | `elif args.get("bank"):` |
-| window only if a tool passes one | `chatbot/agent.py:355` | `if args.get("window"):` |
-| guard-answered question names a bank | `chatbot/agent.py:357` | `if not r.calls:` |
-| state into the system prompt | `chatbot/agent.py:266` | `with_state(SYSTEM_PROMPT, state)` |
+| new conversation, empty state | `chatbot/agent.py:389` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| compare_banks sets all three | `chatbot/agent.py:267` | `if c["name"] == "compare_banks":` |
+| a tool call names a bank | `chatbot/agent.py:422` | `elif args.get("bank"):` |
+| window only if a tool passes one | `chatbot/agent.py:426` | `if args.get("window"):` |
+| guard-answered question names a bank | `chatbot/agent.py:428` | `if not r.calls:` |
+| state into the system prompt | `chatbot/agent.py:334` | `with_state(SYSTEM_PROMPT, state)` |
 | no window in get_sentiment's schema | `chatbot/tools.py:303` | `"required": ["bank"],` |
 | get_sentiment accepts a window in Python | `chatbot/tools.py:80` | `def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time")` |
 | Clear conversation | `chatbot/chat.py:66` | `conv, last = Conversation(backend_name=args.backend, trace_path=args.trace), None` |

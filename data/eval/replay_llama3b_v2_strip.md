@@ -4,10 +4,12 @@ Run: `chatbot_eval_results_llama3b_v2.jsonl`; 24 answers that reached the model.
 
 | | before | after |
 |---|---|---|
-| citation warning | 15 | 0 |
+| citation warning | 16 | 0 |
 | answer with a figure no tool returned | 12 | 2 |
 
-Answers changed: 15.
+Both columns use today's checks; the run itself flagged 15 citations with the checks it had.
+
+Answers changed: 16.
 
 ## lookup-1: What is the sentiment for DBS on dividend policy?
 
@@ -104,6 +106,24 @@ Caveats:
 - The data may be thin due to the limited number of observations.
 
 (No evidence search was made for this answer, so the quotes it gave were removed. Ask for the quotes behind the score to see real ones.)
+```
+
+## evidence-2: What specific complaints exist about UOB's asset quality?
+
+```
+There are specific complaints about UOB's asset quality, including:
+
+* Exposure to nature-related risks (20% of lending portfolio)
+* Issues with credit card processing and fees
+* Concerns about credit scoring and reapplying for different credit cards
+
+These concerns were found in search_evidence results from various sources, including news articles and Reddit discussions. The sentiment around these issues is generally neutral.
+
+{"sample_size": 5, "time_window":, "caveats": }
+
+Note: The sample size refers to the number of search_evidence results retrieved, which is 5 in this case. The time window refers to the period over which these results were obtained. Caveats include any limitations or potential biases in the data, such as thin data on specific credit card reapplication concerns.
+
+(Quotes or links in this answer that its searches didn't return were removed.)
 ```
 
 ## consensus-1: What do analysts think of DBS?

@@ -70,11 +70,17 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 logger = get_logger(__name__)
 
-_URL_PATTERN = re.compile(r"https?://[^\s)\]}\"']+")
+# A link, with or without its scheme ("www.reddit.com/r/...", "straitstimes.com/...").
+_URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
+                          r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|sg|net|org|io|co)(?:\.[a-z]{2})?/[^\s)\]}\"'“”]*",
+                          re.IGNORECASE)
 # A purported verbatim quote: opens after whitespace or punctuation and closes
 # before it, so the gap between two short quotes ('"buy". ... as "hold"')
-# isn't mistaken for one long quote.
-_QUOTE_PATTERN = re.compile(r'(?:^|(?<=[\s(\[:—–-]))"[^"\s][^"\n]{8,}[^"\s]"(?=[\s.,;:!?)\]]|$)')
+# isn't mistaken for one long quote. Straight or curly quotes, wrapped in
+# markdown emphasis or not, may run across a single line break.
+_QUOTE_PATTERN = re.compile(
+    r'(?:^|(?<=[\s(\[:—–*_-]))"[^"\s](?:[^"\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_]|$)'
+    r'|“[^”]{10,}?”')
 _SENTENCE_ID_PATTERN = re.compile(r"sentence[_\s]?id", re.IGNORECASE)
 
 UNVERIFIED_CITATION_WARNING = (
@@ -104,6 +110,29 @@ HISTORY_TURNS = 3            # earlier question/answer pairs passed to the model
 HISTORY_ANSWER_CHARS = 1200  # earlier answers are trimmed so they don't crowd the context
 
 
+def _norm_text(text: str) -> str:
+    """Lower case, straight quotes and apostrophes, single spaces: how quoted text is compared."""
+    text = (text or "").replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def _norm_url(url: str) -> str:
+    """A link without scheme, "www.", or trailing punctuation, for comparing cited and returned links."""
+    url = re.sub(r"^https?://", "", url.strip().rstrip(".,;)]}\"'“”"), flags=re.IGNORECASE)
+    return re.sub(r"^www\.", "", url, flags=re.IGNORECASE).rstrip("/").lower()
+
+
+def _collect_text(obj, out: list[str]) -> None:
+    if isinstance(obj, str):
+        out.append(_norm_text(obj))
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            _collect_text(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _collect_text(v, out)
+
+
 class _ToolCallTracker:
     """Records what search_evidence actually returned, so the final answer can
     be checked against what was truly retrieved - not what the model claims.
@@ -115,6 +144,7 @@ class _ToolCallTracker:
         self.search_evidence_called = False
         self.verified_urls: set[str] = set()
         self.verified_sentence_ids: set[str] = set()
+        self.retrieved_text: list[str] = []      # every string a tool returned, normalised
         self.calls: list[dict] = []
 
     def execute(self, name: str, tool_input: dict, by: str = "model") -> str:
@@ -128,23 +158,41 @@ class _ToolCallTracker:
         call = {"name": name, "arguments": tool_input, "result": result}
         if by != "model":
             call["by"] = by
-        self.calls.append(call)
-        if name == "search_evidence":
-            self.search_evidence_called = True
-            if isinstance(result, dict):
-                for item in result.get("results", []):
-                    url = item.get("url")
-                    if url:
-                        self.verified_urls.add(url)
-                    if item.get("sentence_id"):
-                        self.verified_sentence_ids.add(item["sentence_id"])
+        self._record(call)
         return json.dumps(result, default=str)
 
+    def _record(self, call: dict) -> None:
+        self.calls.append(call)
+        _collect_text(call.get("result"), self.retrieved_text)
+        if call["name"] == "search_evidence":
+            self.search_evidence_called = True
+            if isinstance(call.get("result"), dict):
+                for item in call["result"].get("results", []):
+                    if item.get("url"):
+                        self.verified_urls.add(_norm_url(item["url"]))
+                    if item.get("sentence_id"):
+                        self.verified_sentence_ids.add(item["sentence_id"])
+
+    def unverified_quotes(self, answer: str) -> list[str]:
+        """Quotes in the answer whose text no tool returned. A quote cut with an
+        ellipsis counts if each piece of three or more words was returned."""
+        out = []
+        for m in _QUOTE_PATTERN.finditer(answer or ""):
+            pieces = [p for p in re.split(r"\.{3}|…", _norm_text(m.group(0)[1:-1])) if len(p.split()) >= 3]
+            if pieces and not all(any(p in t for t in self.retrieved_text) for p in pieces):
+                out.append(m.group(0))
+        return out
+
+    def unverified_urls(self, answer: str) -> list[str]:
+        return [u for u in _URL_PATTERN.findall(answer or "")
+                if _norm_url(u) not in self.verified_urls]
+
     def answer_has_unverified_citation(self, answer: str) -> bool:
-        cited_urls = [u.rstrip(".,;)]}\"'") for u in _URL_PATTERN.findall(answer)]
-        if any(url not in self.verified_urls for url in cited_urls):
+        if self.unverified_urls(answer):
             return True
         if unverified_sentence_ids(answer, self.verified_sentence_ids):
+            return True
+        if self.search_evidence_called and self.unverified_quotes(answer):
             return True
         if not self.search_evidence_called:
             # No real evidence was retrieved at all this turn - any quoted
@@ -160,14 +208,7 @@ class _ToolCallTracker:
         """A tracker holding calls already made, e.g. from a recorded evaluation run."""
         t = cls()
         for c in calls:
-            t.calls.append(dict(c))
-            if c["name"] == "search_evidence":
-                t.search_evidence_called = True
-                for item in (c.get("result") or {}).get("results", []):
-                    if item.get("url"):
-                        t.verified_urls.add(item["url"])
-                    if item.get("sentence_id"):
-                        t.verified_sentence_ids.add(item["sentence_id"])
+            t._record(dict(c))
         return t
 
 
@@ -182,12 +223,27 @@ _SECTION_HEADING = re.compile(r"^[\W_]*(?:sample size|time window|caveats?|notes
                               re.IGNORECASE)
 
 
+def _remove_inline(text: str, quotes: list[str] | None = None, urls: list[str] | None = None) -> str:
+    """Delete quotes, links and sentence-id references from running text, then
+    tidy what's left ("as one investor said (https://...)." -> "as one investor said.")."""
+    for q in (quotes if quotes is not None else _QUOTE_PATTERN.findall(text)):
+        text = text.replace(q, "")
+    for u in (urls if urls is not None else _URL_PATTERN.findall(text)):
+        text = text.replace(u, "")
+    if quotes is None:
+        text = re.sub(r"\[?[^\[\]\n]{0,40}sentence[_\s]?id[^\[\]\n]{0,40}\]?", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\(\s*\)|\[\s*\]|\*\*|\*(?=\W)|(?<=\W)\*", "", text)
+    text = re.sub(r"[ \t]+([.,;:!?])", r"\1", text)
+    return re.sub(r"[ \t]{2,}", " ", text).strip()
+
+
 def strip_unsearched_evidence(answer: str) -> str:
     """The answer without the evidence a model wrote without searching: the
-    evidence section (from its heading to the next known section), and any later
-    line carrying a quote, URL or sentence id. The first paragraph, the direct
-    answer, is kept as written; every invented figure on 1 Oct sat after it."""
+    evidence section (from its heading to the next known section), any later
+    line carrying a quote, URL or sentence id, and any quote, URL or id inside
+    the first paragraph, which is otherwise kept as written."""
     head, _, rest = answer.partition("\n\n")
+    head = _remove_inline(head)
     kept, skipping = [], False
     for line in rest.split("\n"):
         if _EVIDENCE_HEADING.match(line):
@@ -224,11 +280,23 @@ def _harness_search(tracker: _ToolCallTracker, question: str) -> str:
     return EVIDENCE_FOUND_HEADING + "\n" + "\n".join(lines) if lines else ""
 
 
+EVIDENCE_UNMATCHED_NOTE = (
+    "\n\n(Quotes or links in this answer that its searches didn't return were removed.)"
+)
+
+
 def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode: str) -> tuple[str, bool]:
     """(new answer, whether the model's own text still cites unretrieved evidence).
-    Only for an answer that cites evidence with no search made; others pass unchanged."""
-    if mode == "off" or tracker.search_evidence_called or not tracker.answer_has_unverified_citation(answer):
+    With no search made, the answer's evidence goes (and in search mode the
+    harness finds real quotes); after a search, only the quotes and links the
+    searches didn't return go. Answers citing nothing unretrieved pass unchanged."""
+    if mode == "off" or not tracker.answer_has_unverified_citation(answer):
         return answer, tracker.answer_has_unverified_citation(answer)
+    if tracker.search_evidence_called:
+        cleaned = "\n".join(_remove_inline(line, tracker.unverified_quotes(line), tracker.unverified_urls(line))
+                            if (tracker.unverified_quotes(line) or tracker.unverified_urls(line)) else line
+                            for line in answer.split("\n"))
+        return cleaned + EVIDENCE_UNMATCHED_NOTE, tracker.answer_has_unverified_citation(cleaned)
     stripped = strip_unsearched_evidence(answer)
     still_flagged = tracker.answer_has_unverified_citation(stripped)  # checked before any harness search
     found = _harness_search(tracker, question) if mode == "search" else ""
@@ -285,7 +353,10 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
         result.citation_unverified = True
         result.answer += UNVERIFIED_CITATION_WARNING
 
-    figures = unverified_numbers(answer, [c.get("result") for c in tracker.calls], question)
+    # Only the model's own calls: a harness search run afterwards must not vouch
+    # for figures the model wrote before it.
+    figures = unverified_numbers(answer, [c.get("result") for c in tracker.calls if c.get("by") != "harness"],
+                                 question)
     if figures:
         if verbose:
             logger.warning("number check failed: %s not returned by any tool", figures)

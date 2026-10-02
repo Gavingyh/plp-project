@@ -43,8 +43,8 @@ Each row names the file and line an element comes from, and the text that line m
 | gold set v2 | `chatbot/eval_gold_set.py:119` | `GOLD_SET_V2 = ` |
 | conversations | `chatbot/run_eval.py:244` | `def run_multi_turn(` |
 | random baseline for retrieval | `chatbot/retrieval_eval.py:53` | `def random_baseline(` |
-| citation flag | `chatbot/agent.py:143` | `def answer_has_unverified_citation(self, answer: str) -> bool:` |
-| strip evidence written without a search | `chatbot/agent.py:185` | `def strip_unsearched_evidence(answer: str) -> str:` |
+| citation flag | `chatbot/agent.py:190` | `def answer_has_unverified_citation(self, answer: str) -> bool:` |
+| strip evidence written without a search | `chatbot/agent.py:240` | `def strip_unsearched_evidence(answer: str) -> str:` |
 | scope guard reads the conversation | `chatbot/guards.py:106` | `def scope_reply(question: str, in_conversation: bool = False)` |
 | tool call written as text | `chatbot/backends/_text_tool_call.py:19` | `def text_tool_call(content: str, tool_names: set[str])` |
 | replay on recorded answers | `chatbot/replay.py:28` | `def replay(results: list[dict], mode: str) -> list[dict]:` |

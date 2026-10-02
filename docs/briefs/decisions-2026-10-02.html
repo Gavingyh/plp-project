@@ -269,7 +269,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
   <h3>8. Chatbot settings: strip invented evidence; rank evidence by the aspect's name <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
   <p class="q">Both are built and off by default.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
-<tr><td><b><code>CHATBOT_ENFORCE_EVIDENCE=strip</code></b></td><td>Live: invented citations 11 → 0 on the 8B, 15 → 0 real on the 3B, tool choice unchanged. Answers that didn't search show no quotes and say why.</td></tr>
+<tr><td><b><code>CHATBOT_ENFORCE_EVIDENCE=strip</code></b></td><td>Replayed on 3 Oct with stricter guards (quoted text, signs and percentages now checked): citation warnings 11 → 0 on the 8B and 16 → 0 on the 3B; answers with a figure no tool returned 10 → 0 and 12 → 2, both inventions the check now catches. Live on 2 Oct, tool choice unchanged. Answers that didn't search show no quotes and say why.</td></tr>
 <tr><td><b><code>CHATBOT_ASPECT_QUERY=1</code></b></td><td>Offline MRR 0.559 against 0.217 for question-phrased queries. Live, evidence is more on topic but often report boilerplate.</td></tr>
   </tbody></table></div>
   <div class="rec"><p><b>Recommendation:</b> switch both on. Strip has no measured downside; the aspect query is better than chance-level retrieval even with the boilerplate.</p></div>

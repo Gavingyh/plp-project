@@ -92,13 +92,13 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:312` | `class Conversation:` |
-| state fields | `chatbot/agent.py:318` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:322` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:239` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:250` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:107` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:143` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:383` | `class Conversation:` |
+| state fields | `chatbot/agent.py:389` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:393` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:307` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:318` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:136` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:190` | `def answer_has_unverified_citation(self, answer: str)` |
 | guards | `chatbot/guards.py:66` | `def advice_reply(question: str` |
 | tools | `chatbot/tools.py:372` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:25` | `class LLMBackend(ABC):` |

@@ -860,3 +860,12 @@ become relative paths.
   ratio set accepts 85–95 of the whole percentages 1–99 on a trend answer;
   curly or wrapped quotes and URLs without http(s) go unchecked. The "11 → 0
   invented citations" in the decision brief was measured with these guards.
+- **Chatbot grounding guards fixed** (all eight; details and the re-measured
+  table in `docs/evidence/chatbot-eval-build-2026-10-01.md`, "Third round"):
+  strip still takes citation warnings to 0 on both models (8B 11 → 0, 3B
+  16 → 0) under checks that now also compare quoted text with what was
+  retrieved, respect signs and percentages, and pair counts only within one
+  result. Figures no tool returned: 8B 10 → 0, 3B 12 → 2 (two inventions the
+  old check missed). `chatbot.replay` now uses today's checks for both
+  columns. The decision brief and the to-do carry the new figures.
+

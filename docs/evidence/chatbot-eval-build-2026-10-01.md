@@ -401,3 +401,45 @@ them before any judge figure goes in the report.
    chatbot can show is limited by the embeddings.
 3. Use the checklist judge to choose which answers people read first in the
    calibration round, not as a score of its own.
+
+## Third round (3 Oct): the guards fixed, strip re-measured
+
+A review of the grounding guards (`chatbot/agent.py`, `chatbot/guards.py`)
+found eight weaknesses, each confirmed by a test in
+`tests/test_validate_chatbot_grounding.py`:
+
+- once any search had run, a quote's text was never compared with what was
+  retrieved, so an invented quote passed;
+- strip mode kept the first paragraph as written, so a one-paragraph answer
+  kept its invented quote and link under a note saying they were removed;
+- the number check ignored the sign, accepted a fraction 0.12 written as
+  "0.12%", skipped a number written after a date, and, by pairing every
+  number with every other, accepted 85 to 95 of the whole percentages 1–99
+  on a recorded trend answer;
+- curly or line-wrapped quotes and links without `http(s)://` went unchecked.
+
+All are fixed: a quote must appear in text a tool returned; strip removes
+inline quotes, links and ids from the first paragraph too, and after a
+search removes only the unreturned ones; an explicit sign must match;
+percentages come from fractions × 100, values above 1 or fields named
+`pct`; ratios pair counts within one result; and searches the harness makes
+no longer vouch for the model's figures. `chatbot.replay` now applies
+today's checks to both columns, so a difference comes from enforcement
+alone.
+
+Strip, replayed on the recorded 2 Oct answers with the fixed guards
+(`data/eval/replay_*_strip.md`):
+
+| gold set v2, answers that reached the model | before | after strip |
+|---|---|---|
+| `llama3.1:8b`: citation warnings | 11 | **0** |
+| `llama3.1:8b`: answers with a figure no tool returned | 10 | **0** |
+| `llama3.2:3b`: citation warnings | 16 | **0** |
+| `llama3.2:3b`: answers with a figure no tool returned | 12 | **2** |
+
+The 3B's two remaining figures are inventions the old check missed:
+"52,332 bank statements" (no tool returned it) and trend-3's three scores,
+written after only a coverage lookup. Strip's result stands on the stronger
+checks. The live figures above (2 Oct) were measured with the old guards,
+and the search-mode replays (`replay_*_search*`) are from 2 Oct too.
+

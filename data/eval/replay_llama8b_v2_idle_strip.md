@@ -5,7 +5,9 @@ Run: `chatbot_eval_results_llama8b_v2_idle.jsonl`; 24 answers that reached the m
 | | before | after |
 |---|---|---|
 | citation warning | 11 | 0 |
-| answer with a figure no tool returned | 11 | 1 |
+| answer with a figure no tool returned | 10 | 0 |
+
+Both columns use today's checks; the run itself flagged 11 citations with the checks it had.
 
 Answers changed: 11.
 

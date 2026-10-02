@@ -1,5 +1,5 @@
 """
-Tests for chatbot/tools.py — the structured-data tools the agent calls.
+Tests for chatbot/tools.py - the structured-data tools the agent calls.
 Includes a regression test for a previously-fixed defect:
 get_coverage's `where` clause list was built for one query (joined to
 sentence_aspects when `aspect` was given) and reused verbatim for a second
@@ -61,7 +61,7 @@ def test_get_sentiment_no_data_flags_insufficient(temp_db):
 
 
 # ---------------------------------------------------------------------------
-# Aspect normalization — regression coverage for a real bug found while
+# Aspect normalization - regression coverage for a real bug found while
 # building the chatbot evaluation harness: a model called get_sentiment with
 # aspect="dividend policy" (space) instead of "dividend_policy" (the real
 # key), silently getting insufficient_data on a perfectly valid question.
@@ -79,7 +79,7 @@ def test_normalize_aspect_case_insensitive():
 
 def test_normalize_aspect_leaves_unrecognised_value_untouched():
     from chatbot.tools import normalize_aspect
-    # A genuinely wrong aspect must not be silently mapped to something else -
+    # An unknown aspect must not be silently mapped to something else -
     # left as-is so it still surfaces as insufficient_data downstream.
     assert normalize_aspect("totally_wrong_aspect") == "totally_wrong_aspect"
 

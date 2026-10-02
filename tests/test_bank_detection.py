@@ -1,12 +1,12 @@
 """
-Tests for ingest/base.py's bank detection/resolution — the logic behind two
+Tests for ingest/base.py's bank detection/resolution - the logic behind two
 regressions this suite guards against:
   1. NewsAPI's bare "DBS" query term matched unrelated global news.
   2. preprocess/pipeline.py inheriting doc-level bank onto every sentence in
      a long Reddit thread produced noise ("Calling you for $8 transaction
      is a red flag itself." tagged as DBS).
 These tests don't re-test the query-construction or inheritance-source
-logic directly (that's preprocess/pipeline.py's job, tested separately) —
+logic directly (that's preprocess/pipeline.py's job, tested separately) -
 they lock down the underlying detect_banks/resolve_bank primitives both bugs
 ultimately depend on.
 """
@@ -40,7 +40,7 @@ def test_case_insensitive():
 
 
 def test_word_boundary_no_partial_match():
-    # "DBSK" (a K-pop group) or similar should NOT match bare "DBS" —
+    # "DBSK" (a K-pop group) or similar should NOT match bare "DBS" -
     # detect_banks must respect word boundaries, not substring search.
     assert detect_banks("DBSK reunion tour announced") == []
 

@@ -1,12 +1,12 @@
 """
 Tests for the minimal REST API (api/main.py). Every endpoint here is a thin
 pass-through to a chatbot/tools.py function already tested elsewhere
-(tests/test_chatbot_tools.py, tests/test_yahoo_analyst.py) — these tests
+(tests/test_chatbot_tools.py, tests/test_yahoo_analyst.py) - these tests
 check the HTTP plumbing (routing, query params, validation, status codes),
 not the underlying business logic again.
 
 /chat is mocked (no live Ollama/Claude call) so this suite stays fast and
-portable — the actual chatbot loop is covered by tests/test_chatbot_backends.py.
+portable - the actual chatbot loop is covered by tests/test_chatbot_backends.py.
 """
 
 from fastapi.testclient import TestClient

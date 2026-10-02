@@ -58,7 +58,7 @@ def test_agreement_at_exactly_chance_level_is_kappa_zero():
 
     Each rater uses one non-neutral label once, on different rows. Chance
     agreement (0.905) slightly exceeds observed (0.90), so kappa goes just
-    negative — the correct answer, and the one raw agreement cannot express.
+    negative - the correct answer, and the one raw agreement cannot express.
     """
     a = ["neutral"] * 19 + ["positive"]
     b = ["positive"] + ["neutral"] * 19

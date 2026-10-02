@@ -1,5 +1,5 @@
 """
-Tests for aggregate/index.py's shrinkage math — the mechanism that stops a
+Tests for aggregate/index.py's shrinkage math - the mechanism that stops a
 single Reddit comment from swinging the index to +/-1.0 (docs/DESIGN.md,
 "Sentiment aggregation"). Verifies against hand-computed expected values on
 a synthetic dataset, not just "it runs."
@@ -40,7 +40,7 @@ def test_single_positive_sentence_is_shrunk_toward_neutral(temp_db):
     conn.close()
     score, n = row
     assert n == 1
-    # aggregate/index.py rounds to 4dp — match that precision, not exact float equality.
+    # aggregate/index.py rounds to 4dp - match that precision, not exact float equality.
     assert abs(score - round(1.0 / 6, 4)) < 1e-4
 
 
@@ -100,9 +100,8 @@ def test_news_outweighs_reddit(temp_db):
 
 
 def test_earnings_no_longer_outweighs_reddit(temp_db):
-    # Regression guard for a deliberate change: earnings weight was
-    # dropped 3.0 -> 1.0 once the earnings corpus actually landed. It is
-    # management describing its own results (24.7% of its sentences score
+    # Earnings weight is 1.0, not 3.0: earnings text is management
+    # describing its own results (24.7% of its sentences score
     # positive vs 2.3% of Reddit's), so triple-weighting it amplified a known
     # skew. Equal-confidence earnings and Reddit items must now cancel out.
     _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "negative", 1.0, source="earnings")

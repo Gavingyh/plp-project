@@ -3,11 +3,11 @@ Tests for the pluggable chatbot backend (chatbot/backends/) and the
 fabrication-detection safety net in chatbot/agent.py.
 
 Three real bugs were caught live against a running Ollama instance
-(llama3.2:3b) before these tests were written — each test below
+(llama3.2:3b) before these tests were written - each test below
 exists because of one of them, not as generic coverage:
   1. The model fabricated a full "supporting evidence" section (fake URLs,
      fake sentence_ids) despite never calling search_evidence.
-  2. After a prompt fix, it still fabricated evidence — this time using
+  2. After a prompt fix, it still fabricated evidence - this time using
      placeholder tokens ("[insert sentence_id]") instead of a fake URL,
      which a naive URL-only check would miss entirely.
   3. It called search_evidence with k="5" (a string) instead of k=5,
@@ -195,7 +195,7 @@ def test_detects_fabricated_url_citation():
 
 
 def test_detects_placeholder_style_fabrication_with_no_url():
-    # The exact second failure mode observed live: no URL at all, just a
+    # A failure seen in real answers: no URL at all, just a
     # placeholder token and a fabricated quote.
     tracker = _ToolCallTracker()
     answer = ('Sentence_id: [insert sentence_id] from [url]\n'

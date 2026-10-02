@@ -1,13 +1,13 @@
 """
 Smoke test for train/finetune.py + train/evaluate.py using SYNTHETIC, clearly
-fake labels — not real annotation. Purpose: catch code/API bugs (Trainer
+fake labels - not real annotation. Purpose: catch code/API bugs (Trainer
 argument names, tokenizer calls, metric computation) before real labeled
 data exists tomorrow, since neither script has ever actually been run.
-transformers 5.16.1 is a very new major version — its TrainingArguments API
+transformers 5.16.1 is a very new major version - its TrainingArguments API
 has changed across versions before, worth confirming now rather than after
 a week of real labeling.
 
-This does NOT produce a usable model — 48 synthetic examples, 1 epoch, text
+This does NOT produce a usable model - 48 synthetic examples, 1 epoch, text
 that isn't even about banks. It only proves the pipeline runs end-to-end
 without crashing. Marked slow; skip with `-m "not slow"` if needed.
 """
@@ -74,5 +74,5 @@ def test_finetune_and_evaluate_pipeline_runs_without_crashing(tmp_path, monkeypa
     assert final_model_dir.exists(), "fine-tuned model was not saved where evaluate.py expects it"
 
     # evaluate.py's baselines (base FinBERT, TF-IDF+logreg) plus the fine-tuned
-    # model — confirms the whole comparison pipeline runs, not just training.
+    # model - confirms the whole comparison pipeline runs, not just training.
     evaluate_module.run(model_dir=str(final_model_dir))

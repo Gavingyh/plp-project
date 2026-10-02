@@ -1,6 +1,6 @@
 """
 Tests for ingest/yahoo_analyst.py and the get_analyst_consensus chatbot tool.
-No network calls — Yahoo's payload shape is pinned as a fixture so a change in
+No network calls - Yahoo's payload shape is pinned as a fixture so a change in
 their API surfaces as a real ingestion failure, not a silently-passing test.
 """
 
@@ -53,7 +53,7 @@ class _FakeSession:
 
 
 def test_raw_handles_empty_dict_fields():
-    # Yahoo sends absent numerics as {} — a naive ['raw'] read would KeyError.
+    # Yahoo sends absent numerics as {} - a naive ['raw'] read would KeyError.
     assert _raw({"ebitda": {}}, "ebitda") is None
     assert _raw({"targetMeanPrice": {"raw": 76.7}}, "targetMeanPrice") == 76.7
     assert _raw({}, "missing") is None

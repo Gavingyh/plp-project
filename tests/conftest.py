@@ -21,7 +21,7 @@ def temp_db(tmp_path, monkeypatch):
 
     # sentence_aspects / aspect_sentiment / sentiment_index are normally
     # created lazily the first time aspects.assign / sentiment.score /
-    # aggregate.index actually run — pull their schemas in here too so any
+    # aggregate.index actually run - pull their schemas in here too so any
     # test can insert directly into them without running the full pipeline.
     import aggregate.index as aggregate_module
     import sentiment.score as score_module

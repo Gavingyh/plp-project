@@ -798,3 +798,11 @@ become relative paths.
   model versions after the re-score, and `/coverage` and `/evidence` accept
   any bank. Each has a strict-xfail test in `tests/test_validate_api.py`;
   remove the marker in the commit that fixes it.
+- **Fine-tuned models on Hugging Face:** private repo
+  `plp-bank-sentiment/plp-finbert-absa` (organisation members only): the three
+  seeds without `training_args.bin`, and the model card as `README.md`.
+  Downloaded back and hashed on 2 Oct: all three match the model card's
+  SHA-256 values. Commands in README, "Sharing the data and models".
+- **Corpus run speed:** it slowed to 5–6 s a sentence while two external
+  monitors (DisplayLink) were on and the upload ran, and returned to about
+  2.5 s once both stopped. Keep external monitors off during long GPU jobs.

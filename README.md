@@ -160,17 +160,28 @@ receiving side. FinBERT downloads from Hugging Face on first use, and each
 machine pulls its own Ollama models. Never share `.env` (API keys) or
 `data/cna/` (CNA's articles).
 
-The models can also live in a Hugging Face model repo, private to a team
-organisation; [docs/model-card.md](docs/model-card.md) is its `README.md`.
-Leave `training_args.bin` out (it records a local path):
+The models are also in a private Hugging Face model repo,
+`plp-bank-sentiment/plp-finbert-absa`, open to the organisation's members
+(ask to be added); [docs/model-card.md](docs/model-card.md) is its
+`README.md`. `hf` is installed in the project's environment, not on your
+PATH. Log in with your own token, download, and check the checksums against
+the table at the end of the model card:
+
+```bash
+.venv-plp/bin/hf auth login
+.venv-plp/bin/hf download plp-bank-sentiment/plp-finbert-absa --local-dir models/experiments-2026-10-01/label
+shasum -a 256 models/experiments-2026-10-01/label/seed_*/final/model.safetensors
+```
+
+To upload a new version, leave `training_args.bin` out (it records a local
+path):
 
 ```bash
 for s in 42 1 7; do
-  hf upload <org>/plp-finbert-absa models/experiments-2026-10-01/label/seed_$s/final seed_$s/final \
-      --exclude "training_args.bin"
+  .venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa models/experiments-2026-10-01/label/seed_$s/final seed_$s/final \
+      --exclude "training_args.bin" --private
 done
-hf upload <org>/plp-finbert-absa docs/model-card.md README.md
-hf download <org>/plp-finbert-absa --local-dir models/experiments-2026-10-01/label   # on the receiving side
+.venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa docs/model-card.md README.md --private
 ```
 
 The database stays on the team drive: it holds CNA and Reddit text and isn't

@@ -73,6 +73,17 @@ OCBC Premier, Bank of Singapore, the DBS Insignia card?**
   DBS Vickers is DBS's own brokerage, which makes it the contestable one.
 - Answer goes into: `preprocess/bank_ner.py`, the `vickers` line of
   `RESOLUTION`.
+- Checked on the web (2 Oct): DBS Vickers Securities (Singapore) Pte Ltd is
+  a DBS subsidiary, listed with its holding company in DBS Group's list of
+  subsidiaries at 31 Dec 2024 ([DBS](https://www.dbs.com/iwov-resources/images/investors/other-materials/2025/list-of-subsi-and-assoc.pdf)). UOB Kay Hian Holdings is
+  separately listed on SGX (U10), and UOB is its largest shareholder with
+  about a third ([Simply Wall St](https://simplywall.st/stocks/sg/diversified-financials/sgx-u10/uob-kay-hian-holdings-shares/ownership)), so it is not part of UOB. Of
+  the 456 DBS Vickers sentences, 451 are from Reddit: customers using it as
+  their broker (fees, paying upfront, CDP, SRS, the app). None of the twelve
+  that use words such as "analyst" or "recommend" is research about another
+  bank. A6's rule, that subsidiaries count as the parent, puts DBS Vickers
+  in DBS.
+- Suggested answer: DBS Vickers is DBS; UOB Kay Hian is not UOB.
 - Team answer:
 
 **A6. Subsidiaries and apps count as the parent: POSB, PayLah! and digibank

@@ -249,7 +249,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="team">
       <span class="t">Answer the local-context questions <span class="chip team">People</span></span>
       <span class="when">by 5 Oct</span>
-      <p class="why"><b>Why:</b> the models were trained on general English and misread Singapore banking products: savings-account rate cuts ("UOB One nerf") read as bank margins, "Dividend+" accounts as dividends. Three answers change labels most: whether a bank economist's forecast is about the bank (it decides whether macro can reach 80 labels: about 49 otherwise), where Treasures and Premier products belong (wealth or retail), and whether DBS Vickers is DBS. The file also lists the Singlish and slang readings, and the judgements Claude made, for checking.</p>
+      <p class="why"><b>Why:</b> the models were trained on general English and misread Singapore banking products: savings-account rate cuts ("UOB One nerf") read as bank margins, "Dividend+" accounts as dividends. Three answers change labels most: whether a bank economist's forecast is about the bank (it decides whether macro can reach 80 labels: about 49 otherwise), where Treasures and Premier products belong (wealth or retail), and confirming that DBS Vickers, a DBS subsidiary, counts as DBS. The file also lists the Singlish and slang readings, and the judgements Claude made, for checking.</p>
       <span class="meta">File: <code>docs/local-context-questions.md</code>. Unblocks: the guideline for the top-up round.</span>
     </li>
     <li data-o="decide">
@@ -302,9 +302,9 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">File: <code>data/labeled/ner/gold_sheet.csv</code>. Source: bank-ner.</span>
     </li>
     <li data-o="decide">
-      <span class="t">Decide what "DBS Vickers" means: the bank, or a separate broker <span class="chip decide">Decision</span></span>
+      <span class="t">Confirm that DBS Vickers counts as DBS <span class="chip decide">Decision</span></span>
       <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> 456 sentences change attribution on this one rule, about three fifths of everything NER changes. It defines what "DBS" means in the index.</p>
+      <p class="why"><b>Why:</b> 456 sentences change attribution on this one rule, about three fifths of everything NER changes. Checked on 2 Oct: DBS Vickers is a DBS subsidiary (in DBS Group's own list of subsidiaries), and the 456 are customers using it as their broker. The rule already applied to POSB and PayLah!, that subsidiaries count as the parent, makes it DBS; the plan had grouped it with UOB Kay Hian, which is separately listed and stays out. One line in <code>preprocess/bank_ner.py</code> once confirmed.</p>
       <span class="meta">Source: bank-ner; local-context questions A5.</span>
     </li>
     <li data-o="decide">

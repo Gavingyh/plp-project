@@ -771,3 +771,11 @@ become relative paths.
 - **Decision brief:** decision 5 states the redo cost of "by customer".
 - **Verification:** 552 tests pass in `tests/` (599 from the root);
   `check_sources.py` clean.
+- **DBS Vickers checked on the web:** DBS Vickers Securities (Singapore) is
+  in DBS Group's list of subsidiaries (31 Dec 2024); UOB Kay Hian is
+  separately listed (SGX U10), UOB holding about a third. The 456 affected
+  sentences are customers using DBS Vickers as their broker, none research
+  about another bank. Recorded in local-context A5, the bank-NER evidence,
+  a note in PLAN section 7, decision 6 of the brief and the to-do; the
+  `vickers` rule in `preprocess/bank_ner.py` is unchanged until the team
+  confirms.

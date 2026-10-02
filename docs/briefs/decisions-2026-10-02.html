@@ -245,12 +245,12 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 
 <div class="dec" id="d-vickers">
   <h3>6. DBS Vickers: the bank, or a separate broker? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
-  <p class="q">456 sentences change attribution on this rule alone, about three fifths of everything NER changes.</p>
+  <p class="q">456 sentences change attribution on this rule alone, about three fifths of everything NER changes. Who owns it is settled: DBS Vickers Securities (Singapore) is in DBS Group's own list of subsidiaries (<a href="https://www.dbs.com/iwov-resources/images/investors/other-materials/2025/list-of-subsi-and-assoc.pdf" target="_blank" rel="noopener">31 Dec 2024</a>); UOB Kay Hian is separately listed on SGX, with UOB holding about a third.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
-<tr><td><b>A broker (current rule)</b></td><td>Groups it with UOB Kay Hian, a separate company. Removes 456 sentences from DBS.</td></tr>
-<tr><td><b>DBS</b></td><td>DBS Vickers is DBS's own brokerage; customers' complaints and praise about it are about a DBS service, and annotators treated its trades as banking.</td></tr>
+<tr><td><b>A broker (current rule)</b></td><td>Rests on the plan's "brokers, not the bank's own business", which is true of UOB Kay Hian but not of DBS Vickers. Removes 456 sentences from DBS.</td></tr>
+<tr><td><b>DBS</b></td><td>The rule already applied to POSB, PayLah! and Great Eastern: subsidiaries count as the parent. 451 of the 456 are Reddit customers on fees, paying upfront, CDP and the app, a DBS service; annotators treated its trades as banking. None is DBS research about another bank.</td></tr>
   </tbody></table></div>
-  <div class="rec"><p><b>Recommendation:</b> count DBS Vickers as DBS, and keep UOB Kay Hian out. The index measures sentiment toward the bank as people experience it. One line: the <code>vickers</code> entry in <code>preprocess/bank_ner.py</code>.</p></div>
+  <div class="rec"><p><b>Recommendation:</b> count DBS Vickers as DBS, and keep UOB Kay Hian out; with ownership settled, the team only needs to confirm. The index measures sentiment toward the bank as people experience it. One line: the <code>vickers</code> entry in <code>preprocess/bank_ner.py</code>.</p></div>
   <p class="ifnot">If not decided by the date: the current rule stands.</p>
 </div>
 

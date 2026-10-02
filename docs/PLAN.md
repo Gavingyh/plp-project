@@ -220,6 +220,11 @@ Singapore and Great Eastern (OCBC subsidiaries), and ambiguous "DBS"
 gold set weighted towards those cases, with alias matching as the baseline.
 Estimated at half a day of AI work plus about two hours of annotation.
 
+*Note, 2 Oct:* DBS Vickers is in fact a DBS subsidiary (DBS Group's list of
+subsidiaries, 31 Dec 2024); UOB Kay Hian is separately listed. The broker
+rule is therefore under review for DBS Vickers only: see
+`docs/evidence/bank-ner-2026-10-01.md` and local-context question A5.
+
 ---
 
 ## 8. Risks

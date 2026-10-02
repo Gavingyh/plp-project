@@ -1,7 +1,7 @@
 """
-Streamlit dashboard - see docs/DESIGN.md.
+Streamlit dashboard — see docs/DESIGN.md.
 
-Five pages in a side navigation: overview, topics, trends, evidence and chat. Every view carries the disclosures the design calls for - sample size
+Five pages in a side navigation: overview, topics, trends, evidence and chat. Every view carries the disclosures the design calls for — sample size
 (n), last-refresh timestamp, and a not-financial-advice notice. Those are the
 trust anchors, not decoration.
 
@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 BANKS = ["DBS", "OCBC", "UOB"]
 
 # pandas' Styler.background_gradient needs matplotlib, and it does not import it
-# until the Styler is RENDERED - inside st.dataframe, not where the Styler is
+# until the Styler is RENDERED — inside st.dataframe, not where the Styler is
 # built. So a missing matplotlib produced a dashboard that started cleanly,
 # answered its health check, and then crashed on the heatmap tables. It was
 # absent from requirements.txt from the first commit, so those two tables had

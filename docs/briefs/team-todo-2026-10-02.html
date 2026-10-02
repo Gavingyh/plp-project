@@ -101,7 +101,7 @@ code { font: 400 0.86em/1.4 var(--mono); background: var(--code-bg); padding: 1p
 .muted { color: var(--muted); }
 
 /* critical path */
-.path { list-style: none; padding: 0; margin: 10px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; counter-reset: step; }
+.path { list-style: none; padding: 0; margin: 10px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; counter-reset: step; }
 .path li { background: var(--surface); padding: 12px 14px; display: grid; gap: 3px; align-content: start; counter-increment: step; }
 .path li::before { content: counter(step); font: 500 11px/1 var(--mono); color: var(--muted); }
 .path .d { font: 500 12px/1.2 var(--mono); color: var(--accent); }
@@ -135,6 +135,15 @@ code { font: 400 0.86em/1.4 var(--mono); background: var(--code-bg); padding: 1p
 .chip.crit { color: var(--crit); background: var(--crit-bg); }
 .empty { color: var(--muted); font-size: 14px; padding: 10px 0; }
 
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin: 14px 0 18px; }
+.tiles div { background: var(--surface); padding: 14px; display: grid; gap: 5px; align-content: start; }
+.tiles b { font: 600 30px/1 var(--display); color: var(--decide); }
+.tiles .k { font-weight: 600; font-size: 14px; line-height: 1.3; }
+.tiles span:last-child { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 28px; }
+.twocol h3 { font: 600 16px/1.3 var(--display); margin: 0 0 6px; }
+.twocol ul, ol.steps { margin: 0 0 12px; padding-left: 20px; font-size: 14.5px; }
+.twocol li, ol.steps li { margin-bottom: 5px; max-width: 72ch; }
 .note { border-left: 3px solid var(--decide); background: var(--surface); padding: 12px 16px; margin: 14px 0; font-size: 14.5px; }
 .note p { margin: 0; }
 .refs { columns: 2 260px; column-gap: 28px; padding-left: 18px; margin: 6px 0 0; font-size: 14px; }
@@ -148,7 +157,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Fri 2 Oct 2026, midday</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Fri 2 Oct 2026, 17:30</span></div>
   <h1>What the team has to do before 1 November</h1>
   <p class="lede">Every open item, in deadline order, with the reason it has to be done and what it unblocks. Decisions come first because most of the remaining work waits on them. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
   <div class="countdown"><b>30</b> days to submission · Sun 1 Nov</div>
@@ -159,7 +168,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <p class="sub">Each step needs the one before it. A slip at the start lands on the report at the end.</p>
   <ol class="path">
     <li><span class="d">by 5 Oct</span><span class="s">Decide the aspect method</span></li>
-    <li><span class="d">5–9 Oct</span><span class="s">Classify the whole corpus (~24 h of machine time; 25% cached)</span></li>
+    <li><span class="d">3–10 Oct</span><span class="s">Corpus classified: done ~3 Oct, or redone by 10 Oct (~33 h) if the aspect wording changes</span></li>
     <li><span class="d">by 12 Oct</span><span class="s">Decide scoring model, attribution and chatbot settings</span></li>
     <li><span class="d">12–18 Oct</span><span class="s">Re-score once, re-run every evaluation</span></li>
     <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
@@ -176,6 +185,44 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <div class="counts" id="counts"></div>
 </section>
 
+<section aria-labelledby="h-redo">
+  <h2 id="h-redo">The corpus aspect run: when it has to be redone</h2>
+  <p class="sub"><code>llama3.1:8b</code> is giving each of the 44,345 sentences one aspect, saved to <code>data/aspect_llm/llama3.1_8b.jsonl</code>; nothing in the database changes. The answers are only good for the exact question the model was asked, so changing that question means starting again, which takes the MacBook about a day and a half.</p>
+  <div class="tiles">
+    <div><b>~21 h</b><span class="k">left on the current run</span><span>38% done at 17:24 on Fri 2 Oct; finishes about 14:00 on Sat 3 Oct if the Mac stays awake and plugged in.</span></div>
+    <div><b>~33 h</b><span class="k">for a full redo</span><span>44,345 sentences at 2.7 s each, the rate of the current run. Longer if the Mac sleeps or runs other model jobs.</span></div>
+    <div><b>~1 h</b><span class="k">to test a new wording first</span><span>The 1,277 labelled sentences at 2–2.7 s each, scored against the human aspects.</span></div>
+    <div><b>2.7 s</b><span class="k">per new sentence</span><span>New data needs no redo: only sentences not yet in the cache are classified.</span></div>
+  </div>
+  <div class="twocol">
+    <div>
+      <h3>Redo from scratch when</h3>
+      <ul>
+        <li>an aspect is added, removed or renamed in <code>config/aspects.yaml</code></li>
+        <li>an aspect's definition or a worked example changes: <code>DEFINITIONS</code> and <code>EXAMPLES</code> in <code>aspects/llm_classify.py</code> are the prompt</li>
+        <li>the model changes (it gets its own cache file, so it starts from zero anyway)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>No redo for</h3>
+      <ul>
+        <li>a stop, crash or reboot: the same command resumes where it stopped</li>
+        <li>new sentences: only they are classified</li>
+        <li>the scoring model, NER and DBS Vickers, passing mentions (O5), chatbot settings, how the index is blended (O2)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note"><p><b>The trap:</b> the cache records which sentence was answered, not which prompt answered it, and <code>--eval</code> and <code>--corpus</code> share it. Edit the wording, run either command, and it silently reuses the old answers: the "new" score is the old one. Move the cache aside first, and never while the run is going, because it keeps writing to the moved file.</p></div>
+  <p>To change the wording safely, once the run has finished or been stopped:</p>
+  <ol class="steps">
+    <li>Keep the old answers: <code>mv data/aspect_llm/llama3.1_8b.jsonl data/aspect_llm/llama3.1_8b.v1.jsonl</code></li>
+    <li>Edit the definitions or examples in <code>aspects/llm_classify.py</code>.</li>
+    <li>Test, about 1 h: <code>.venv-plp/bin/python3 -m aspects.llm_classify --eval</code>. Compare with 0.729 top-1 and wealth F1 0.50 today.</li>
+    <li>Better: redo the corpus, about 33 h, with <code>caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b</code>. Not better: undo the edit and move <code>v1</code> back.</li>
+  </ol>
+  <p class="muted">A redo started by Fri 9 Oct still finishes before the 12–18 Oct re-score week. While it runs, other local-model jobs (chatbot evaluations, the judge) share the Mac's GPU: running them alongside slows both and has caused timeouts.</p>
+</section>
+
 <section aria-labelledby="h-wk1">
   <h2 id="h-wk1">By Monday 5 October</h2>
   <p class="sub">The aspect decision starts the critical path; the rest of this week's items are quick or unblock labelling.</p>
@@ -184,7 +231,13 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Run the LLM aspect classifier on the whole corpus, and choose the disagreement rule <span class="chip decide">Decision</span></span>
       <span class="when">by 5 Oct</span>
       <p class="why"><b>Why:</b> the database's aspects come from seed centroids, which give a sentence about 6.4 aspects and match the human's aspect only 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. On an 11,000-sentence preview, switching separates the aspects: under centroids every aspect of every bank is positive; with the LLM, retail banking turns slightly negative for all three banks and DBS asset quality falls from +0.27 to +0.07. Every per-aspect claim in the report depends on this. Choose with it what happens to the 24% of sentences where the two models disagree: keep llama's answer, or mark them <code>other</code>.</p>
-      <span class="meta">Unblocks: the rest of the corpus run (resumable, 25% cached), then the re-score. Source: llm-aspect-classifier, index-preview.</span>
+      <span class="meta">Unblocks: the re-score. The corpus run is already under way (38% at 17:24 on 2 Oct) and finishes about 14:00 on 3 Oct. Source: llm-aspect-classifier, index-preview.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Wealth or retail for priority-banking products, and whether the classifier's wording follows <span class="chip decide">Decision</span></span>
+      <span class="when">best by 3 Oct</span>
+      <p class="why"><b>Why:</b> DBS Treasures, OCBC Premier and unit trusts bought at a bank are the boundary behind 63 of Opus's aspect disagreements, and wealth is one of the classifier's weakest aspects (F1 0.50). <b>"By product"</b> (recommended) is already close to the classifier's wording: premier and private banking are wealth; cards, savings accounts and fees are retail. It doesn't name unit trusts or other investment products, so adding them is a small edit to test (about 1 h) before deciding on a redo. <b>"By customer"</b> changes the definitions, so the corpus run has to be redone: <b>about 33 hours</b>. The current run finishes about 14:00 on Sat 3 Oct; if the team leans to "by customer", saying so before then and stopping the run saves up to 21 hours of machine time. Changing only the labelling guideline needs no redo, but the classifier is then scored against labels that follow a different rule on that boundary.</p>
+      <span class="meta">Decision 5 in the decision brief (due 5 Oct). Run times and safe steps: "The corpus aspect run" above. Source: llm-aspect-classifier, opus-labeller.</span>
     </li>
     <li data-o="decide">
       <span class="t">Decide whether to relabel the 299 test rows blind <span class="chip decide">Decision</span></span>
@@ -281,27 +334,22 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-ai">
   <h2 id="h-ai">Claude can do next, without waiting for anyone</h2>
-  <p class="sub">Each is tested, committed and written up. None writes to the database. Done on 2 Oct: the chatbot fixes, the checklist judge, the top-up merge, Opus on the top-up and NER sheets, the report's approach and findings documents.</p>
+  <p class="sub">Each is tested, committed and written up. None writes to the database. Done on 2 Oct: the chatbot fixes, the checklist judge, the top-up merge, Opus on the top-up and NER sheets, the report's approach and findings documents, the model card and sharing bundle for the fine-tuned models (<code>docs/model-card.md</code>, <code>scripts/share_bundle.sh</code>).</p>
   <ul class="items">
     <li data-o="ai">
       <span class="t">Finish the corpus aspect cache <span class="chip ai">Claude</span></span>
-      <span class="when">each night</span>
-      <p class="why"><b>Why:</b> 25% done; spreading the remaining ~18 hours over nights means the 5 Oct decision doesn't then wait for the run.</p>
+      <span class="when">running now</span>
+      <p class="why"><b>Why:</b> 38% at 17:24 on 2 Oct, about 2.7 s a sentence; it finishes about 14:00 on Sat 3 Oct if the Mac stays awake, so the 5 Oct decision doesn't wait for it.</p>
     </li>
     <li data-o="ai">
       <span class="t">Score the corpus with the fine-tuned models into a file, and preview the index on the full corpus <span class="chip ai">Claude</span></span>
       <span class="when">after the cache</span>
-      <p class="why"><b>Why:</b> the 1,000-sentence preview is thin per aspect (a median of 17 sentences a cell); the full preview shows the team exactly what each decision does, and applying the chosen model then takes minutes.</p>
+      <p class="why"><b>Why:</b> the 11,000-sentence preview shows the direction; the full corpus has four times the sentences in every bank, aspect and month, so the team sees exactly what each decision does, and applying the chosen model then takes minutes.</p>
     </li>
     <li data-o="ai">
       <span class="t">Re-export the ratings sheet for the final chatbot, ordered by the judge <span class="chip ai">Claude</span></span>
       <span class="when">after the re-score</span>
       <p class="why"><b>Why:</b> checked on two sets on 2 Oct, the checklist judge catches every known invention (25 of 25) but its reasons are often wrong, so it can't score answers on its own. It can put the answers most likely to be wrong at the top of the sheet people rate.</p>
-    </li>
-    <li data-o="ai">
-      <span class="t">A model card and sharing instructions for the fine-tuned models <span class="chip ai">Claude</span></span>
-      <span class="when">~1 h</span>
-      <p class="why"><b>Why:</b> the weights are only on one MacBook and the team folder. A Hugging Face model repo (private in a team organisation, or public after checking FinBERT's licence) needs a model card stating the input format, data and limits; the upload itself needs a person's account.</p>
     </li>
   </ul>
 </section>
@@ -405,7 +453,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Figures are from the evidence files on <code>main</code>, 2 Oct 2026, midday. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+<footer>Figures are from the evidence files on <code>main</code>, 2 Oct 2026, 17:30. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
 
 </div>
 <script>

@@ -19,6 +19,9 @@ top of each file point to what helps.
 
 If you are writing the report, sections 4 and 5 of each topic (Analyze,
 Evaluate) are the ones that turn "we used X" into a defensible justification.
+For the whole method on one page, with flow diagrams, settings, a short
+teaching note per technique and an evaluation of the approach, start with
+[docs/report/approach.md](../docs/report/approach.md).
 If you are revising for the exam, sections 1, 2 and 7 (Why, Concept,
 Self-check) are the fast path.
 

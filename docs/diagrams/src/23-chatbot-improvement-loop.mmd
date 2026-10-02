@@ -1,0 +1,21 @@
+flowchart TB
+  accTitle: Chatbot evaluation and improvement loop
+  accDescr: A frozen gold set, multi-turn conversations and retrieval metrics are run on each local model, recording every tool call and result. The harness flags invented citations and unverified figures; each flag is read by hand against the tool data. The cause found was that every invented citation came from an answer that never searched. Fixes went into code, were replayed on the recorded answers, then run live. The LLM judge was checked against the known inventions and failed, so other judges are being tested.
+
+  gold["Gold set v2 (32 questions) · 4 conversations<br/>retrieval Hit@K and MRR against human aspects<br/>chatbot.run_eval · chatbot.retrieval_eval"]
+  run["Run each local model; record every<br/>tool call and its result"]
+  flags["Harness flags: citations no search returned,<br/>figures no tool returned"]
+  read["Every flag read against the tool data:<br/>25 of 26 real inventions"]
+  cause["Cause: every invention came from an answer<br/>that never searched; the prompt rule was ignored"]
+  fix["Fixed in code: strip evidence written without a search<br/>(a setting) · scope guard reads the conversation ·<br/>run a tool call written as text"]
+  replay["Replay the fix on the recorded answers:<br/>citation warnings 11 to 0 (8B), 15 to 0 (3B)<br/>chatbot.replay"]
+  live["Run live again: 0 of 32 on the 8B;<br/>conversations 9 of 9 on both models"]
+  retr["Retrieval: a question as the query ranks at chance<br/>(MRR 0.217); the aspect's name 0.559 (a setting)"]
+  judge["LLM judge scores faithfulness 1-3<br/>chatbot.judge"]
+  jcheck["Checked against the known inventions:<br/>scored all 32 answers 3, so not usable"]
+  jnext["Checklist judge and other models<br/>(being tested)"]
+
+  gold --> run --> flags --> read --> cause --> fix --> replay --> live
+  gold --> retr
+  run --> judge --> jcheck --> jnext
+  live -. repeat .-> gold

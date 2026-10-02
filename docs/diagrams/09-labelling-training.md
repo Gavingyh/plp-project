@@ -7,7 +7,7 @@ How the labelled data was produced and turned into the fine-tuned model and its 
 ```mermaid
 flowchart TB
   accTitle: Labelling and training workflow
-  accDescr: The taxonomy came from labelling 338 discovery clusters. Candidates were assigned, exported with a blind test sheet, labelled by two people and resolved. The labels were cleaned, agreement measured, and FinBERT fine-tuned over three seeds and evaluated against baselines. An LLM aspect classifier and re-scoring the corpus are planned.
+  accDescr: The taxonomy came from labelling 338 discovery clusters. Candidates were assigned, exported with a blind test sheet, labelled by two people and resolved. The labels were cleaned, agreement measured, and FinBERT fine-tuned over three seeds and evaluated against baselines. An LLM aspect classifier is built and evaluated; applying it and re-scoring the corpus are planned.
 
   subgraph tax["Taxonomy, 25 Sep"]
     disc["Discovery: 338 clusters<br/>aspects.discover"]
@@ -31,7 +31,7 @@ flowchart TB
   end
 
   base["Baselines: base FinBERT zero-shot,<br/>VADER lexicon, TF-IDF + logistic regression"]
-  llm["LLM aspect classifier, evaluated<br/>on the human aspect labels<br/>(planned, DESIGN 16 and 21)"]
+  llm["LLM aspect classifier: built and evaluated<br/>on the human aspect labels; applying it<br/>is planned (DESIGN 16 and 21; diagram 22)"]
   rescore["Re-score the corpus with the fine-tuned model,<br/>only if it beats base FinBERT<br/>(planned, PLAN section 5)"]
 
   disc --> lab --> asg --> exp

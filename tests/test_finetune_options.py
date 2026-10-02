@@ -157,3 +157,27 @@ def test_accuracy_by_source_counts_each_source():
                                 ["reddit", "reddit", "earnings", "reddit"])
     assert list(acc) == ["reddit", "earnings"]                      # largest first
     assert acc["reddit"] == (1 / 3, 3) and acc["earnings"] == (1.0, 1)
+
+
+def test_training_uses_the_pretrained_heads_label_order(monkeypatch):
+    # ProsusAI/finbert's head is positive 0, negative 1, neutral 2. Training in
+    # another order starts every output answering for the wrong class.
+    import transformers
+
+    class Cfg:
+        def __init__(self, label2id):
+            self.label2id = label2id
+    monkeypatch.setattr(transformers.AutoConfig, "from_pretrained",
+                        lambda name: Cfg({"positive": 0, "negative": 1, "neutral": 2}))
+    assert ft.head_label2id() == {"positive": 0, "negative": 1, "neutral": 2}
+    monkeypatch.setattr(transformers.AutoConfig, "from_pretrained",
+                        lambda name: Cfg({"LABEL_0": 0, "LABEL_1": 1, "LABEL_2": 2}))
+    assert ft.head_label2id() == ft.LABEL2ID          # a head with no class meaning
+
+
+def test_real_finbert_head_order_is_used():
+    import os
+    if not os.path.isdir(os.path.expanduser("~/.cache/huggingface/hub/models--ProsusAI--finbert")):
+        pytest.skip("ProsusAI/finbert not in the local cache")
+    order = ft.head_label2id()
+    assert order["positive"] == 0 and order["negative"] == 1 and order["neutral"] == 2

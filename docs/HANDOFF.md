@@ -868,4 +868,19 @@ become relative paths.
   result. Figures no tool returned: 8B 10 → 0, 3B 12 → 2 (two inventions the
   old check missed). `chatbot.replay` now uses today's checks for both
   columns. The decision brief and the to-do carry the new figures.
+- **Training review** (`docs/evidence/training-review-2026-10-03.md`):
+  - **Fine-tuning relabelled FinBERT's head.** Base FinBERT orders its
+    outputs positive, negative, neutral; training loaded it as negative,
+    neutral, positive and kept the weights, so every model started with each
+    output answering for the wrong class. Fixed in `train/finetune.py`. It
+    biases the reported lead down, not up. **Retraining the three seeds is a
+    team decision** (GPU time; changes the reported results).
+  - **A top-up row nearly copies a test sentence** (word overlap 0.93,
+    different id). `prepare` now drops such rows and `check_splits` refuses
+    them.
+  - Training saves its dev rows (`dev_ids.json`); the margin search refuses
+    to reshuffle once train_dev has grown. The candidate export no longer
+    overwrites the labelled file without `--force`.
+  - The model card says these models weren't retrained; the copy on Hugging
+    Face predates that line.
 

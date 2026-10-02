@@ -42,7 +42,11 @@ def _make_synthetic_candidates(n_per_class_train=14, n_per_class_test=4) -> pd.D
                 template = rng.choice(_TEMPLATES[label])
                 rows.append({
                     "sentence_id": f"synthetic-{len(rows)}", "aspect": aspect,
-                    "text": template.format(bank=bank, aspect=aspect.replace("_", " ")),
+                    # Test rows get their own clause, so they aren't near-copies of
+                    # training rows (train.labels.check_splits refuses those).
+                    "text": template.format(bank=bank, aspect=aspect.replace("_", " "))
+                            + ("" if split == "train_dev"
+                               else f" Separately, held-out case {len(rows)} covers quite unrelated reporting only."),
                     "bank": bank, "source": "synthetic", "url": "", "published_at": "2026-01-01",
                     "split": split, "sampling_method": sampling_method,
                     "base_finbert_label": "", "base_finbert_confidence": "",

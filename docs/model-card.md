@@ -100,6 +100,12 @@ models this way.
   found no effect from the readable aspect label itself.
 - **Few negatives.** 39 negative test sentences: one sentence moves negative
   F1 by about 0.02.
+- **A relabelled starting point.** These models were trained after loading
+  base FinBERT's head in a different label order from its own (positive,
+  negative, neutral), so each output started out answering for the wrong
+  class and had to unlearn it. Training code fixed on 3 Oct 2026; these
+  three seeds were not retrained
+  (`docs/evidence/training-review-2026-10-03.md`).
 - **Local context.** Singapore product names are common: "UOB One" or
   "OCBC 360" appears in 82 of the 1,277 labelled sentences (55 train/dev,
   27 test), and descriptions of product features account for many of the

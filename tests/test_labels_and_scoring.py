@@ -174,3 +174,33 @@ def test_topup_refuses_a_sentence_already_labelled_or_an_invalid_label(tmp_path,
     pd.DataFrame([{"sentence_id": "t9", "aspect": "asset_quality", "label": "great"}]).to_csv(sheet, index=False)
     with pytest.raises(ValueError, match="invalid labels"):
         prepare(c, b, out, [str(sheet)], conn=conn)
+
+
+TEST_TEXT = ("This supplementary payout will be paid to about 6,000 employees across the Group "
+             "in the second quarter of this year")
+
+
+def test_topup_near_copy_of_a_test_sentence_is_dropped(tmp_path, temp_db):
+    # The same sentence can arrive twice under different ids (a bank's PDF and a
+    # news article quoting it); an id check misses it, a word-overlap check doesn't.
+    conn = _topup_db(temp_db, ["t1", "t2"])
+    sheet = tmp_path / "topup.csv"
+    pd.DataFrame([
+        {"sentence_id": "t1", "bank": "UOB", "source": "cna", "text": '"' + TEST_TEXT + '," said UOB.',
+         "aspect": "income_profit_results", "label": "neutral", "not_about_bank": "", "annotator": "A"},
+        {"sentence_id": "t2", "bank": "DBS", "source": "earnings", "text": "DBS raised its dividend by five cents",
+         "aspect": "dividend_policy", "label": "positive", "not_about_bank": "", "annotator": "A"},
+    ]).to_csv(sheet, index=False)
+    test_row = {**_row("s3", "income_profit_results", "test", "neutral"), "text": TEST_TEXT}
+    c, b, out = _write(tmp_path, [_row("s1", "dividend_policy", "train_dev", "positive"), test_row],
+                       [{"sentence_id": "s3", "aspect": "income_profit_results", "label": "neutral"}])
+    report = prepare(c, b, out, [str(sheet)], conn=conn)
+    assert report["topup_rows_dropped_as_near_test"] == 1 and report["topup_rows_added"] == 1
+    assert set(pd.read_csv(out)["sentence_id"]) == {"s1", "s3", "t2"}
+
+
+def test_check_splits_refuses_a_near_copy_across_splits():
+    rows = [{**_row("s1", "a", "train_dev", "neutral"), "text": TEST_TEXT + " said UOB"},
+            {**_row("s2", "a", "test", "neutral"), "text": TEST_TEXT}]
+    with pytest.raises(ValueError, match="near-copies of a test sentence"):
+        check_splits(pd.DataFrame(rows))

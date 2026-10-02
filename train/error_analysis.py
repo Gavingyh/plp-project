@@ -15,6 +15,7 @@ USAGE:
 """
 
 import argparse
+import json
 import os
 import re
 
@@ -29,8 +30,27 @@ LABELS = ["negative", "neutral", "positive"]
 MARGINS = np.round(np.arange(0.0, 0.61, 0.05), 2)
 
 
-def dev_split(train_dev: pd.DataFrame, seed: int) -> pd.DataFrame:
-    """The dev rows train/finetune.py held out for this seed."""
+# The 1 Oct models predate dev_ids.json; they were trained on this many
+# train_dev rows, and a reshuffle reproduces their dev rows only at that size.
+TRAIN_DEV_ROWS_AT_TRAINING = 978
+
+
+def dev_split(train_dev: pd.DataFrame, seed: int, model_dir: str | None = None) -> pd.DataFrame:
+    """The dev rows train/finetune.py held out for this seed: read from the
+    model's dev_ids.json when it has one, else rebuilt by the same reshuffle,
+    which is only right while train_dev is the size it was at training."""
+    path = os.path.join(model_dir, "dev_ids.json") if model_dir else None
+    if path and os.path.exists(path):
+        with open(path) as f:
+            keys = [tuple(k) for k in json.load(f)]
+        indexed = train_dev.set_index(["sentence_id", "aspect"])
+        missing = [k for k in keys if k not in indexed.index]
+        if missing:
+            raise KeyError(f"{len(missing)} dev rows of {model_dir} are no longer in train_dev, first: {missing[:2]}")
+        return indexed.loc[keys].reset_index()
+    if len(train_dev) != TRAIN_DEV_ROWS_AT_TRAINING:
+        raise ValueError(f"train_dev has {len(train_dev)} rows, not the {TRAIN_DEV_ROWS_AT_TRAINING} this model "
+                         "was trained on, so reshuffling no longer gives its dev rows; retrain to get dev_ids.json")
     shuffled = train_dev.sample(frac=1, random_state=seed).reset_index(drop=True)
     return shuffled[int(len(shuffled) * 0.85):]
 
@@ -83,7 +103,7 @@ def main():
     test_probs, rows = [], []
     for d in args.models:
         seed = int(re.search(r"seed_(\d+)", d).group(1))
-        dev = dev_split(train_dev, seed).reset_index(drop=True)
+        dev = dev_split(train_dev, seed, d).reset_index(drop=True)
         dev_probs = ev.finetuned_probs(d, dev)
         margin, dev_f1 = best_margin(dev_probs, dev["label"].tolist())
         tp = ev.finetuned_probs(d, test)

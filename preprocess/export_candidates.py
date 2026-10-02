@@ -56,7 +56,13 @@ def _all_candidates(conn) -> list[dict]:
     return [dict(zip(cols, r)) for r in rows]
 
 
-def export(train_dev_target: int, test_target: int, seed: int = 42) -> dict:
+def export(train_dev_target: int, test_target: int, seed: int = 42, force: bool = False) -> dict:
+    out_path = os.path.join(OUT_DIR, "candidates.csv")
+    if os.path.exists(out_path) and not force:
+        # The existing file holds the labels and the frozen test split; a fresh
+        # draw would replace both.
+        raise FileExistsError(f"{out_path} exists and holds the labelled data and the frozen test split; "
+                              "move it first, or pass --force to replace it")
     os.makedirs(OUT_DIR, exist_ok=True)
     conn = get_connection()
     try:
@@ -129,8 +135,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--train-dev", type=int, default=800)
     parser.add_argument("--test", type=int, default=200)
+    parser.add_argument("--force", action="store_true", help="replace an existing candidates.csv (and its labels)")
     args = parser.parse_args()
-    stats = export(args.train_dev, args.test)
+    stats = export(args.train_dev, args.test, force=args.force)
     logger.info("=" * 50)
     for k, v in stats.items():
         logger.info(f"  {k:28s} {v}")

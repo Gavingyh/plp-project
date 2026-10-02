@@ -37,6 +37,7 @@ USAGE:
 
 import argparse
 import os
+import re
 
 import pandas as pd
 
@@ -45,6 +46,27 @@ KEY = ["sentence_id", "aspect"]
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LABELED_DIR = os.path.join(BASE_DIR, "data", "labeled")
+
+
+NEAR_DUPLICATE = 0.8   # word overlap (Jaccard) at which two sentences count as the same text
+
+
+def _words(text) -> frozenset:
+    return frozenset(re.findall(r"\w+", str(text).lower()))
+
+
+def near_test_copies(train_texts, test_texts, threshold: float = NEAR_DUPLICATE) -> list[int]:
+    """Positions in train_texts whose words overlap some test text by at least
+    `threshold`. The same sentence can reach the corpus twice under different
+    ids (a bank's PDF and a news article quoting it), which an id check misses:
+    a top-up row matched a frozen test sentence at 0.93 on 3 Oct 2026."""
+    tests = [w for w in map(_words, test_texts) if len(w) >= 5]
+    out = []
+    for i, text in enumerate(train_texts):
+        w = _words(text)
+        if len(w) >= 5 and any(len(w & t) / len(w | t) >= threshold for t in tests):
+            out.append(i)
+    return out
 
 
 def check_splits(df: pd.DataFrame) -> None:
@@ -56,6 +78,12 @@ def check_splits(df: pd.DataFrame) -> None:
     leaked = set(df.loc[df["split"] == "train_dev", "sentence_id"]) & set(df.loc[df["split"] == "test", "sentence_id"])
     if leaked:
         problems.append(f"{len(leaked)} sentences are in both train_dev and test")
+    if "text" in df.columns:
+        train = df.loc[df["split"] == "train_dev", "text"].tolist()
+        copies = near_test_copies(train, df.loc[df["split"] == "test", "text"].tolist())
+        if copies:
+            problems.append(f"{len(copies)} train_dev sentences are near-copies of a test sentence, "
+                            f"first: {train[copies[0]][:60]!r}")
     if problems:
         raise ValueError("labelled data is not safe to use: " + "; ".join(problems)
                          + ". Rebuild it with `python -m train.labels`.")
@@ -112,6 +140,9 @@ def prepare(candidates_path: str, blind_path: str, out_path: str,
         clash = set(extra["sentence_id"]) & set(cand["sentence_id"])
         if clash:
             raise ValueError(f"{len(clash)} top-up sentences are already labelled, first: {sorted(clash)[:3]}")
+        copies = near_test_copies(extra["text"].tolist(), cand.loc[cand["split"] == "test", "text"].tolist())
+        report["topup_rows_dropped_as_near_test"] = len(copies)
+        extra = extra.drop(extra.index[copies])
         report["topup_rows_added"] = len(extra)
         cand = pd.concat([cand, extra], ignore_index=True)
 

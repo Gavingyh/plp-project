@@ -48,9 +48,9 @@ Each row names the file and line an element comes from, and the text that line m
 | blind sheet | `preprocess/export_blind_test.py:104` | `def export_blind(` |
 | two annotators | `docs/evidence/annotation-agreement-2026-09-27.md:14` | `each annotator's labels on the 1,300 candidates` |
 | resolved | `docs/evidence/annotation-agreement-2026-09-27.md:16` | `the candidates after resolving disagreements` |
-| dropped: leakage | `train/labels.py:121` | `report["train_dev_rows_dropped_as_leaked"] = int(leaked.sum())` |
-| dropped: duplicates | `train/labels.py:124` | `cand, report["duplicate_rows_dropped"] = _dedupe(cand, candidates_path)` |
-| training rows | `train/finetune.py:162` | `df = df[df["split"] == split]` |
+| dropped: leakage | `train/labels.py:152` | `report["train_dev_rows_dropped_as_leaked"] = int(leaked.sum())` |
+| dropped: duplicates | `train/labels.py:155` | `cand, report["duplicate_rows_dropped"] = _dedupe(cand, candidates_path)` |
+| training rows | `train/finetune.py:176` | `df = df[df["split"] == split]` |
 | held-out test rows | `train/evaluate.py:41` | `df = df[(df["split"] == "test") & (df["label"].isin(LABELS))]` |
 | not-about-bank flag | `docs/annotation-guideline.md:18` | `` set `not_about_bank` and stop `` |
 

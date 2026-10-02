@@ -51,14 +51,14 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| frozen test split | `train/labels.py:50` | `def check_splits(df: pd.DataFrame) -> None:` |
-| sentence and aspect pairs | `train/finetune.py:208` | `enc = tokenizer(texts, aspect_inputs(df, aspect_text), truncation=True, max_length=128)` |
-| early stopping | `train/finetune.py:312` | `callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],` |
-| chosen on dev macro-F1 | `train/finetune.py:297` | `metric_for_best_model="macro_f1",` |
-| 5-fold cross-validation | `train/finetune.py:215` | `def fold_split(train_dev_df: pd.DataFrame, folds: int, fold: int, seed: int):` |
-| class weights, now applied | `train/finetune.py:348` | `parser.add_argument("--class-weights", choices=["none", "balanced", "prior"], default="none")` |
-| readable aspect label | `train/finetune.py:351` | `parser.add_argument("--aspect-text", choices=["key", "label"], default="key",` |
+| frozen test split | `train/labels.py:72` | `def check_splits(df: pd.DataFrame) -> None:` |
+| sentence and aspect pairs | `train/finetune.py:225` | `enc = tokenizer(texts, aspect_inputs(df, aspect_text), truncation=True, max_length=128)` |
+| early stopping | `train/finetune.py:331` | `callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],` |
+| chosen on dev macro-F1 | `train/finetune.py:316` | `metric_for_best_model="macro_f1",` |
+| 5-fold cross-validation | `train/finetune.py:232` | `def fold_split(train_dev_df: pd.DataFrame, folds: int, fold: int, seed: int):` |
+| class weights, now applied | `train/finetune.py:372` | `parser.add_argument("--class-weights", choices=["none", "balanced", "prior"], default="none")` |
+| readable aspect label | `train/finetune.py:375` | `parser.add_argument("--aspect-text", choices=["key", "label"], default="key",` |
 | zero-shot baseline | `train/evaluate.py:47` | `def eval_base_finbert_zeroshot(df: pd.DataFrame) -> dict:` |
 | lexicon and TF-IDF baselines | `train/evaluate.py:71` | `def eval_tfidf_logreg(train_dev_df: pd.DataFrame, test_df: pd.DataFrame) -> dict:` |
-| neutral margin | `train/error_analysis.py:38` | `def apply_margin(` |
-| margin chosen on dev | `train/error_analysis.py:47` | `def best_margin(` |
+| neutral margin | `train/error_analysis.py:58` | `def apply_margin(` |
+| margin chosen on dev | `train/error_analysis.py:67` | `def best_margin(` |

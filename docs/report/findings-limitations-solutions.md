@@ -249,7 +249,7 @@ a first preview on 1,000 overstated both effects)
 ## 7. Engineering and process
 
 **Findings**
-- 590 tests, an OpenAPI contract kept current by a test, two clean-copy
+- 592 tests, an OpenAPI contract kept current by a test, two clean-copy
   installs (the first found that the README never named its Python
   version), and every figure in the evidence traceable to a command.
 - Two read paths: the dashboard queries the database directly while other

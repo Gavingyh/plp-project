@@ -159,6 +159,12 @@ disagrees), [a blind top-up labelling sheet](evidence/labelling-topup-2026-10-01
 (the readable label is no better than the key), a second
 [examiner's assessment](review/examiner-assessment-2026-10-02.md) and the
 [team to-do list with reasons](briefs/team-todo-2026-10-02.html).
+2 Oct: [the chatbot fixes, live](evidence/chatbot-eval-build-2026-10-01.md#second-round-2-oct-the-fixes-live)
+(conversations 9/9; strip enforcement ends invented citations; the checklist
+judge catches them), Opus as an extra rater on the top-up and NER sheets,
+[local-context questions](local-context-questions.md), and for the report,
+[the approach](report/approach.md) and
+[findings, limitations and solutions](report/findings-limitations-solutions.md).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (D2 attaches sentiment to an aspect), so the aspect classifier comes first.

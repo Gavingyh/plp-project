@@ -703,3 +703,37 @@ The new items since night 1: label the top-up sheet; fix the dashboard's
 consensus panel (it hides UOB); get a free Groq key; decide whether evidence
 search ranks by the aspect's name; and the examiner's assessment
 ([review/examiner-assessment-2026-10-02.md](review/examiner-assessment-2026-10-02.md)).
+
+### 2 October, morning
+
+Asked for after the night's results; nothing written to the database.
+
+- **Chatbot fixes** (`29dee6b`; [evidence](evidence/chatbot-eval-build-2026-10-01.md#second-round-2-oct-the-fixes-live)).
+  The scope guard reads the conversation, a tool call written as text is
+  run, and `CHATBOT_ENFORCE_EVIDENCE=strip` (off by default) removes evidence
+  written without a search. Live: conversations 9/9 on both models; invented
+  citations 11 → 0 (8B) and 15 → 2 false alarms (3B), tool choice unchanged.
+  `CHATBOT_ASPECT_QUERY=1` makes evidence more topical but often boilerplate.
+  `qwen3:4b` isn't a viable chatbot here (22 of 32 timed out).
+- **Judges.** The one-score judge passes everything; a checklist prompt
+  (list unsupported quotes, sources, figures) catches all 11 known
+  inventions with the same `qwen3:4b`, with about three false alarms (two
+  from the 4,000-character tool-data limit). `gemma3:4b` and thinking runs
+  are not usable.
+- **Labels.** The top-up merge is `train.labels --topup` (`a387f2a`); Opus
+  rated the top-up and NER sheets blind (`15238d8`): NER matches it on 200
+  of 201 after an "OCBC360" fix (`13897f6`); macro, not NIM, is the top-up
+  shortfall. The ratings sheet now hides the harness's warnings.
+- **For the report and team:** [local-context questions](local-context-questions.md),
+  [the approach](report/approach.md) with diagrams 21–23,
+  [findings, limitations and solutions](report/findings-limitations-solutions.md),
+  the AI usage declaration up to date.
+- **Code clean-up:** superseded scripts removed and `opus_extra` folded into
+  `opus_labels` (`553a742`); comments and messages made plain across the
+  code (no behaviour change); the teammate's dashboard left as written.
+
+**Needs a human (2 Oct):** whether to switch strip enforcement on for the
+demo; the answers in `local-context-questions.md`, the bank-economist
+question (A8) first, since it decides whether macro can reach 80 labels;
+whether the PDF URLs in the database, which carry the macOS username, should
+become relative paths.

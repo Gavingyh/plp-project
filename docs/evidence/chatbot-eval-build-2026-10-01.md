@@ -233,3 +233,133 @@ answers, no judge output in it) is from this run.
 2. The scope guard needs the conversation's context.
 3. The LLM judge is not yet a measurement; the harness's checks and people's
    ratings are.
+
+## Second round (2 Oct): the fixes, live
+
+The fixes from "What this changes" were built (`29dee6b`): the scope guard
+reads the conversation; a tool call written as text is run; and
+`CHATBOT_ENFORCE_EVIDENCE` (off by default) can strip evidence written
+without a search (`strip`) or replace it with quotes the harness finds
+(`search`). They were checked first by replaying the recorded 1 Oct answers
+(`chatbot.replay`, results in `data/eval/replay_*`), then live, 08:15–11:41
+on an otherwise idle machine.
+
+```bash
+OLLAMA_MODEL=llama3.1:8b .venv-plp/bin/python3 -m chatbot.run_eval --backend ollama --multi-turn --tag llama8b_fixed
+OLLAMA_MODEL=llama3.1:8b CHATBOT_ENFORCE_EVIDENCE=strip .venv-plp/bin/python3 -m chatbot.run_eval --backend ollama --set v2 --tag llama8b_v2_strip
+OLLAMA_MODEL=llama3.1:8b CHATBOT_ASPECT_QUERY=1 .venv-plp/bin/python3 -m chatbot.run_eval --backend ollama --set v2 --tag llama8b_v2_aspectquery
+OLLAMA_MODEL=qwen3:4b OLLAMA_THINK=false .venv-plp/bin/python3 -m chatbot.run_eval --backend ollama --set v2 --tag qwen3_4b_nothink_v2
+.venv-plp/bin/python3 -m chatbot.judge judge --results data/eval/chatbot_eval_results_llama8b_v2_idle.jsonl --model qwen3:4b --no-think --prompt checklist --tag checklist_nothink
+```
+
+(the 3B runs the same with `llama3.2:3b` and `llama3b_*` tags).
+
+### Conversations: 9 of 9 on both models
+
+| | 1 Oct | 2 Oct, with the fixes |
+|---|---|---|
+| `llama3.1:8b` | 7 / 9 turns, 2 / 4 conversations | **9 / 9, 4 / 4** |
+| `llama3.2:3b` | not run | **9 / 9, 4 / 4** |
+
+"Has that improved lately?" now reaches the model, and "Show me some
+evidence for DBS on that" was answered after the 8B again wrote the
+`search_evidence` call as text and the backend ran it. The text-call
+recovery fired three times across the live runs.
+
+### Strip enforcement, live
+
+| gold set v2, 32 questions | 8B, 1 Oct | **8B, strip** | 3B, 1 Oct | **3B, strip** |
+|---|---|---|---|---|
+| correct tool | 20 / 24 | 20 / 24 | 18 / 24 | 18 / 24 |
+| advice and no-data behaviour | 8 / 8 | 8 / 8 | 8 / 8 | 8 / 8 |
+| citation warning | 11 | **0** | 15 | **2** |
+| answers with a figure no tool returned | 11 | 1 | 12 | 3 |
+| answers whose evidence was removed | — | 10 | — | 16 |
+| backend errors | 0 | 1 (a timeout) | 0 | 0 |
+
+The replay predicted 0 and 0. The 3B's two live warnings are false alarms
+of the quote check, not inventions: consensus-1 and consensus-2 quote the
+rating label "strong buy" from the tool data, and a quoted phrase of ten or
+more characters reads as a claimed citation. Tool choice didn't change, so
+the fix removes invented evidence without changing what the model does
+before it answers. The remaining unverified figures (1 answer on the 8B, 3
+on the 3B) sit in the parts of the answer that strip keeps, and the number
+check still flags them.
+
+**What strip costs.** Answers that looked up a score lose their evidence
+section and say so ("No evidence search was made for this answer, so the
+quotes it gave were removed"). A sentence elsewhere can still refer to the
+removed evidence ("the evidence cited above"). The `search` mode, which would
+show real quotes instead, was replayed and not run live: with the question as
+the query it finds mostly other people's questions (about 10 of 33 quotes on
+topic, by Claude's reading), and with the aspect's name mostly report
+boilerplate (about 19 of 33 on topic). Retrieval has to improve first.
+
+### Ranking evidence by the aspect's name, live
+
+With `CHATBOT_ASPECT_QUERY=1` (enforcement off): tool choice 19 / 24, 10
+citation warnings, 6 answers with an unverified figure, all within the
+run-to-run spread of the 1 Oct run. Only 4 answers searched, so the effect
+shows only there. "Show me evidence of what people are saying about DBS's
+dividend" now returns dividend sentences ("Well DBS pays a quarterly
+dividend.", "Latest DBS dividend payment was due on 17th"); "How is OCBC's
+asset quality being discussed?" returns segment headings from the
+financial statements. More on topic, often not opinion: the same picture as
+the replay and the offline MRR (0.559 against 0.217).
+
+### qwen3:4b as the chatbot: not viable here
+
+With thinking turned off (`OLLAMA_THINK=false`), 22 of the 32 questions
+timed out at 120 seconds, and the two that finished open with the model's
+reasoning ("Okay, let's see. The user asked ..."). Turning thinking off
+stops the separate thinking field, not the reasoning. Tool choice 2 / 24.
+The conversation run was stopped early. On this MacBook the candidates for
+the demo stay `llama3.1:8b` and `llama3.2:3b`, plus the hosted models once a
+Groq key exists.
+
+### The judge: the prompt matters more than the model
+
+All judges scored the same 32 answers of the 8B's 1 Oct run, shown without
+the harness's warnings. A good judge scores the 11 answers with confirmed
+invented citations 1, and the rest mostly 3.
+
+| judge | flagged answers scored 1 | unflagged answers scored 1 | usable? |
+|---|---|---|---|
+| `qwen3:4b`, one score, no thinking | 0 / 11 (all 3) | 0 / 13 | no: passes everything |
+| `gemma3:4b`, one score | 1 / 11 (7 below 3) | 0 / 13 | no: too lenient |
+| **`qwen3:4b`, checklist, no thinking** | **11 / 11** | 5 / 13 | **yes, with care** |
+| `gemma3:4b`, checklist | 11 / 11 | 11 / 13 | no: flags almost everything |
+| `qwen3:4b` with thinking, either prompt | — | — | no: one answer took over 300 s |
+
+(Guard answers left out; "unflagged" means the harness raised no citation
+warning.)
+
+The checklist prompt asks the judge to list every quote, cited source or
+link, and figure the tool data doesn't contain, and every other unsupported
+claim; the score follows from the lists. With it, `qwen3:4b` catches every
+known invention. Of its 5 extra low scores, read by hand:
+
+- lookup-7: a **real error the harness can't catch**: it calls a score of
+  +0.0327 "slightly negative".
+- evidence-2: the off-topic complaints above; flagged for the wrong reason,
+  but the answer is bad.
+- evidence-1 and consensus-2: **false alarms caused by truncation**. The judge
+  sees the tool data cut at 4,000 characters (`MAX_RESULT_CHARS`), so quotes
+  and figures from later search results look invented.
+- compare-1: a false alarm; it listed "search_evidence did not find any
+  results" as a quote.
+
+So the checklist judge is the first worth calibrating against people's
+ratings, after raising the 4,000-character limit. The thinking runs also
+showed the judge stops at the first timeout instead of recording it per
+answer; that is fixed in the code clean-up (2 Oct).
+
+### What this changes, again
+
+1. The team can switch strip enforcement on for the demo: it removes invented
+   evidence on both local models without changing tool choice.
+2. Retrieval, not prompting, is now the chatbot's main weakness: ranking by
+   the aspect's name helps but returns boilerplate, so the evidence the
+   chatbot can show is limited by the embeddings.
+3. Use the checklist judge, with a longer tool-data limit, for the human
+   calibration round.

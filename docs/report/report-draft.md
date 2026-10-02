@@ -1,7 +1,9 @@
 # Report draft: Retail Investor Sentiment for DBS, OCBC and UOB
 
-*Draft of 2026-10-01, written from the repository's evidence for the team to
-edit and own. Every figure links to the evidence file it comes from; re-check
+*Draft of 2026-10-01, updated 2 October, written from the repository's
+evidence for the team to edit and own. The method in full, with diagrams, is
+in [approach.md](approach.md); findings, limits and fixes in one place, in
+[findings-limitations-solutions.md](findings-limitations-solutions.md). Every figure links to the evidence file it comes from; re-check
 each against the final database before submission (results will move when
 the team re-runs the pipeline). Sections marked **[team]** must be written
 by people. The submission limit is 20 pages.*
@@ -76,7 +78,9 @@ An independent rater, Claude Opus 5.5, labelled the same sentences blind
 (DESIGN decision 22): against the human labels, aspect κ 0.80 and sentiment
 κ 0.79, every sentiment disagreement on the neutral boundary
 ([opus-labeller-2026-10-01.md](../evidence/opus-labeller-2026-10-01.md)).
-These are human–LLM figures.
+These are human–LLM figures. A blind top-up sheet of 268 sentences for the
+five aspects with fewer than 80 labels is ready for people
+([labelling-topup-2026-10-01.md](../evidence/labelling-topup-2026-10-01.md)).
 
 ### 2.3 Reproducibility
 
@@ -152,8 +156,8 @@ search, analyst consensus) over the same store, with conversation memory,
 guards that answer advice and off-topic questions without the model, and
 checks that flag citations and figures the tools never returned (DESIGN
 decision 19). Local models through Ollama by default; hosted backends
-optional. The system's interface is a REST API that a separate dashboard
-project builds on (DESIGN decision 23,
+optional. A Streamlit dashboard presents the index, and a REST API serves
+every view to any other frontend (DESIGN decision 23,
 [api-integration.md](../api-integration.md)).
 
 ## 4. Test results
@@ -197,23 +201,36 @@ Sources: [llm-aspect-classifier-2026-10-01.md](../evidence/llm-aspect-classifier
 
 ### 4.3 Bank entity recognition
 
-On the corpus, NER and alias matching attribute 714 sentences differently,
-mostly DBS Vickers, UOB Kay Hian and POSB. **[team]** The precision, recall
-and F1 against alias matching come from the 201-sentence gold set once
-people label it (`python -m preprocess.bank_ner evaluate`).
+On the corpus, NER and alias matching attribute 763 sentences differently,
+mostly DBS Vickers, UOB Kay Hian and POSB. Against Opus 5.5 as a provisional
+reference on the 201-sentence gold sheet, NER names exactly the right banks
+for 200 sentences, alias matching for 126
+([bank-ner-2026-10-01.md](../evidence/bank-ner-2026-10-01.md)). **[team]**
+The figures to report come from the gold sheet once people label it
+(`python -m preprocess.bank_ner evaluate`).
 
 ### 4.4 The chatbot
 
-On the 23-question gold set on 30 September: `llama3.1:8b` chose the right
-tool in 13 of 16 checkable questions; 4 of 23 answers carried a citation
-warning and 3 of 23 an invented figure; the 3B model invented citations in
-43–48% of answers ([chatbot-eval-2026-09-30.md](../evidence/chatbot-eval-2026-09-30.md)).
-Retrieval: evidence search ranks the asked-about topic no better than
-random when the query is phrased as a question (MRR 0.217, random 0.217),
-and far better when it names the aspect (0.559)
-([chatbot-eval-build-2026-10-01.md](../evidence/chatbot-eval-build-2026-10-01.md)).
-**[team]** Add the gold set v2, multi-turn and judge results, and the SASSI
-user study.
+Gold set v2, 32 questions, on the two local models
+([chatbot-eval-build-2026-10-01.md](../evidence/chatbot-eval-build-2026-10-01.md)):
+
+| | `llama3.2:3b` | `llama3.1:8b` |
+|---|---|---|
+| correct tool | 18 / 24 | 20 / 24 |
+| advice and no-data questions handled | 8 / 8 | 8 / 8 |
+| answers citing evidence no tool returned | 15 | 11 |
+| the same, with evidence written without a search removed | 0 real (2 false alarms) | 0 |
+| conversations, every turn right (after two fixes) | 4 / 4 | 4 / 4 |
+
+Every invented citation came from an answer that never searched for
+evidence; removing such evidence in code (`CHATBOT_ENFORCE_EVIDENCE=strip`)
+ended them without changing tool choice. Retrieval ranks the asked-about
+topic no better than random when the query is phrased as a question (MRR
+0.217, random 0.217), and far better when it names the aspect (0.559). An
+LLM judge asked for one faithfulness score passed every answer; asked to list
+unsupported quotes, sources and figures, the same model caught all 11 known
+inventions. **[team]** Add the human faithfulness ratings and the SASSI user
+study.
 
 ## 5. Conclusions **[team]**
 

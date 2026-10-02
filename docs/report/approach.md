@@ -294,7 +294,10 @@ were tested by replaying the recorded answers, then run live.
 > faithfulness at scale, calibrated on human ratings. Checked first against
 > answers already known to contain invented evidence, it passed all of them.
 > A judge that never disagrees has nothing to calibrate; checking it cost
-> minutes and saved hours of rating.
+> minutes and saved hours of rating. The fix was in the question, not the
+> model: asked to *list* every quote, source and figure the tool data doesn't
+> contain, the same small model caught all 11 known inventions. Narrow,
+> checkable questions suit a small judge better than one overall score.
 
 > **Teaching note: replay to isolate a change.** The model samples at
 > temperature 0.2, so a fresh run changes its answers as well as the fix.

@@ -7,7 +7,7 @@ The loop that found the chatbot's failures and fixed them: run a frozen question
 ```mermaid
 flowchart TB
   accTitle: Chatbot evaluation and improvement loop
-  accDescr: A frozen gold set, multi-turn conversations and retrieval metrics are run on each local model, recording every tool call and result. The harness flags invented citations and unverified figures; each flag is read by hand against the tool data. The cause found was that every invented citation came from an answer that never searched. Fixes went into code, were replayed on the recorded answers, then run live. The LLM judge was checked against the known inventions and failed, so other judges are being tested.
+  accDescr: A frozen gold set, multi-turn conversations and retrieval metrics are run on each local model, recording every tool call and result. The harness flags invented citations and unverified figures; each flag is read by hand against the tool data. The cause found was that every invented citation came from an answer that never searched. Fixes went into code, were replayed on the recorded answers, then run live. The LLM judge was checked against the known inventions and failed; asked to list unsupported quotes, sources and figures instead, the same model caught all of them.
 
   gold["Gold set v2 (32 questions) · 4 conversations<br/>retrieval Hit@K and MRR against human aspects<br/>chatbot.run_eval · chatbot.retrieval_eval"]
   run["Run each local model; record every<br/>tool call and its result"]
@@ -20,7 +20,7 @@ flowchart TB
   retr["Retrieval: a question as the query ranks at chance<br/>(MRR 0.217); the aspect's name 0.559 (a setting)"]
   judge["LLM judge scores faithfulness 1-3<br/>chatbot.judge"]
   jcheck["Checked against the known inventions:<br/>scored all 32 answers 3, so not usable"]
-  jnext["Checklist judge and other models<br/>(being tested)"]
+  jnext["Asked to list every unsupported quote,<br/>source and figure (checklist prompt):<br/>catches 11 of 11 with the same model"]
 
   gold --> run --> flags --> read --> cause --> fix --> replay --> live
   gold --> retr

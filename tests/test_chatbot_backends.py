@@ -262,3 +262,61 @@ def test_ask_no_warning_when_backend_is_honest(monkeypatch):
     monkeypatch.setattr("chatbot.agent.get_backend", lambda name=None: _HonestBackend())
     answer = ask("test question", verbose=False)
     assert "VERIFICATION WARNING" not in answer
+
+
+# --- a tool call written as text (gold-set runs, 30 Sep and 1 Oct) ---------------------
+
+from chatbot.backends._text_tool_call import text_tool_call
+
+_NAMES = {"get_sentiment", "search_evidence"}
+
+
+def test_text_tool_call_after_a_preamble():
+    content = ('Since the question asks for evidence, I will call it. '
+               '{"name": "search_evidence", "parameters": {"query": "DBS NIM", "bank": "DBS"}}')
+    assert text_tool_call(content, _NAMES) == ("search_evidence", {"query": "DBS NIM", "bank": "DBS"})
+
+
+def test_text_tool_call_accepts_arguments_as_a_string():
+    content = '{"name": "get_sentiment", "arguments": "{\\"bank\\": \\"UOB\\"}"}'
+    assert text_tool_call(content, _NAMES) == ("get_sentiment", {"bank": "UOB"})
+
+
+@pytest.mark.parametrize("content", [
+    "DBS sentiment is neutral.",
+    '{"name": "delete_everything", "parameters": {}}',
+    'The tool returned {"score": 0.1, "n": 20}.',
+    '{"name": "get_sentiment", "parameters": "not json"}',
+])
+def test_text_tool_call_ignores_anything_else(content):
+    assert text_tool_call(content, _NAMES) is None
+
+
+def test_ollama_backend_runs_a_tool_call_written_as_text(monkeypatch):
+    written = {"message": {"role": "assistant", "content":
+               'Let me check. {"name": "get_sentiment", "parameters": {"bank": "UOB"}}'}, "done": True}
+    fake_post = _FakePost([written, _OLLAMA_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    calls = []
+    answer = OllamaBackend().ask("UOB?", "sys", TOOL_SCHEMAS,
+                                 lambda n, a: calls.append((n, a)) or "{}", verbose=False)
+    assert calls == [("get_sentiment", {"bank": "UOB"})]
+    assert answer == "The sentiment for DBS on dividend policy is neutral."
+    sent = fake_post.calls[1]["messages"]   # recorded by reference, so it holds the final answer too
+    made = [m for m in sent if m.get("tool_calls")]
+    assert len(made) == 1 and made[0]["tool_calls"][0]["function"]["name"] == "get_sentiment"
+    assert made[0]["content"] == "" and sent[sent.index(made[0]) + 1]["role"] == "tool"
+
+
+@pytest.mark.parametrize("env, expected", [(None, None), ("false", False), ("true", True), ("maybe", None)])
+def test_ollama_think_setting(monkeypatch, env, expected):
+    if env is None:
+        monkeypatch.delenv("OLLAMA_THINK", raising=False)
+    else:
+        monkeypatch.setenv("OLLAMA_THINK", env)
+    backend = get_backend("ollama")
+    assert backend.think is expected
+    fake_post = _FakePost([_OLLAMA_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    backend.ask("q", "sys", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert fake_post.calls[0].get("think") is expected

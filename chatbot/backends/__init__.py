@@ -22,6 +22,8 @@ Env vars (all optional):
   OLLAMA_MODEL      default "llama3.2:3b" (verified tool-calling support —
                     see ollama_backend.py docstring for other tested options)
   OLLAMA_BASE_URL   default "http://localhost:11434"
+  OLLAMA_THINK      "false" turns a reasoning model's thinking off (qwen3);
+                    unset leaves the model's default
 """
 
 import os
@@ -56,6 +58,12 @@ def _temperature() -> float:
         return DEFAULT_TEMPERATURE
 
 
+def _think() -> bool | None:
+    """OLLAMA_THINK as a bool, or None (unset or unrecognised) for the model's default."""
+    value = (os.environ.get("OLLAMA_THINK") or "").strip().lower()
+    return {"true": True, "1": True, "yes": True, "false": False, "0": False, "no": False}.get(value)
+
+
 def get_backend(name: str | None = None) -> LLMBackend:
     """Build the requested backend, or auto-detect one if name is None."""
     name = (name or os.environ.get("CHATBOT_BACKEND") or _auto_detect()).lower()
@@ -88,6 +96,7 @@ def get_backend(name: str | None = None) -> LLMBackend:
             model=os.environ.get("OLLAMA_MODEL", DEFAULT_MODEL),
             base_url=os.environ.get("OLLAMA_BASE_URL", DEFAULT_BASE_URL),
             temperature=temperature,
+            think=_think(),
         )
     raise ValueError(
         f"Unknown CHATBOT_BACKEND {name!r} — expected 'claude', 'openai', 'gemini', or 'ollama'"

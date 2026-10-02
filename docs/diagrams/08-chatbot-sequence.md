@@ -64,15 +64,15 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | chat client hands over the question | `chatbot/chat.py:77` | `last = conv.ask(q)` |
-| Conversation.ask | `chatbot/agent.py:258` | `def ask(self, question: str, verbose: bool = False)` |
-| last three turns and state | `chatbot/agent.py:259` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
-| guards first | `chatbot/agent.py:157` | `for guard, reply in (("advice", advice_reply(question, context_banks)),` |
-| backend chosen | `chatbot/agent.py:164` | `backend = backend or get_backend(backend_name)` |
-| model call | `chatbot/backends/ollama_backend.py:77` | `data = self._chat(messages, ollama_tools)` |
-| temperature sent | `chatbot/backends/ollama_backend.py:52` | `"options": {"temperature": self.temperature}` |
-| tool executed and recorded | `chatbot/agent.py:112` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
+| Conversation.ask | `chatbot/agent.py:366` | `def ask(self, question: str, verbose: bool = False)` |
+| last three turns and state | `chatbot/agent.py:367` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
+| guards first | `chatbot/agent.py:258` | `for guard, reply in (("advice", advice_reply(question, context_banks)),` |
+| backend chosen | `chatbot/agent.py:265` | `backend = backend or get_backend(backend_name)` |
+| model call | `chatbot/backends/ollama_backend.py:83` | `data = self._chat(messages, ollama_tools)` |
+| temperature sent | `chatbot/backends/ollama_backend.py:55` | `"options": {"temperature": self.temperature}` |
+| tool executed and recorded | `chatbot/agent.py:129` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
 | tools read the database | `chatbot/tools.py:61` | `def get_sentiment(bank: str` |
 | evidence search uses embeddings | `chatbot/retrieval.py:153` | `query_vec = embed_sentences([rank_text])[0]` |
-| figures checked against results | `chatbot/agent.py:184` | `figures = unverified_numbers(` |
-| state updated | `chatbot/agent.py:261` | `self._update_state(r)` |
-| turn kept | `chatbot/agent.py:262` | `self.turns.append(r)` |
+| figures checked against results | `chatbot/agent.py:292` | `figures = unverified_numbers(` |
+| state updated | `chatbot/agent.py:369` | `self._update_state(r)` |
+| turn kept | `chatbot/agent.py:370` | `self.turns.append(r)` |

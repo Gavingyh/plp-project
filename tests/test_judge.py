@@ -3,6 +3,7 @@
 import json
 
 import pandas as pd
+import pytest
 
 import chatbot.judge as j
 
@@ -51,3 +52,32 @@ def test_against_checks_counts_judge_scores_on_flagged_answers():
     t = j.against_checks(results, judged)
     assert t.loc["citation flagged"].tolist() == [1, 0, 1]
     assert t.loc["not flagged"].tolist() == [0, 0, 1]                      # the guard answer is left out
+
+
+def test_judge_and_raters_see_the_answer_without_the_harness_warnings():
+    r = {**RESULTS[0], "answer": "DBS scores +0.12.\n\n⚠️ VERIFICATION WARNING: this response cites ..."}
+    assert "VERIFICATION" not in j.build_messages(r)[1]["content"]
+    assert "VERIFICATION" not in j.ratings_sheet([r])["answer"][0]
+
+
+@pytest.mark.parametrize("parsed, score", [
+    ({"quotes_not_in_data": ["DBS raises payout"], "sources_not_in_data": [], "figures_not_in_data": [],
+      "claims_not_supported": []}, 1),
+    ({"quotes_not_in_data": [], "sources_not_in_data": ["Bloomberg"], "figures_not_in_data": [],
+      "claims_not_supported": []}, 1),
+    ({"quotes_not_in_data": [], "sources_not_in_data": [], "figures_not_in_data": [],
+      "claims_not_supported": ["driven by rate cuts"]}, 2),
+    ({"quotes_not_in_data": [], "sources_not_in_data": [], "figures_not_in_data": [],
+      "claims_not_supported": []}, 3),
+])
+def test_checklist_score_follows_what_the_judge_listed(parsed, score):
+    assert j.checklist_score(parsed)[0] == score
+
+
+def test_checklist_prompt_asks_for_lists_and_scores_them():
+    reply = json.dumps({"quotes_not_in_data": ["made up"], "sources_not_in_data": [],
+                        "figures_not_in_data": [], "claims_not_supported": []})
+    seen = []
+    out = j.judge(RESULTS[:1], "fake", chat=lambda m, msgs: seen.append(msgs) or reply, prompt="checklist")
+    assert out[0]["judge_score"] == 1 and "made up" in out[0]["judge_reason"]
+    assert "quotes_not_in_data" in seen[0][0]["content"]

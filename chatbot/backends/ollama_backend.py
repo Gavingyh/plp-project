@@ -16,7 +16,11 @@ Models confirmed working (any Ollama model tagged for tool use should also
 work): llama3.2:3b (~4s per tool call — recommended default) and qwen3:4b
 (tool-calling works identically, but ~7x slower per call because it emits a
 hidden `thinking` chain-of-thought field first — fine for accuracy-over-
-speed use, not a snappy default).
+speed use, not a snappy default). Set OLLAMA_THINK=false to turn the
+thinking off; it is sent as Ollama's `think` field only when set.
+
+A tool call the model writes out as text instead of making it is recognised
+and run (chatbot/backends/_text_tool_call.py).
 """
 
 import sys
@@ -24,6 +28,7 @@ import sys
 import requests
 
 from chatbot.backends._openai_compat import to_openai_function_tools as _to_ollama_tools
+from chatbot.backends._text_tool_call import text_tool_call
 from config.logging_config import get_logger
 from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
@@ -39,19 +44,19 @@ class OllamaBackend(LLMBackend):
     name = "ollama"
 
     def __init__(self, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_BASE_URL,
-                 temperature: float = DEFAULT_TEMPERATURE):
+                 temperature: float = DEFAULT_TEMPERATURE, think: bool | None = None):
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.temperature = temperature
+        self.think = think
 
     def _chat(self, messages: list[dict], tools: list[dict]) -> dict:
+        payload = {"model": self.model, "messages": messages, "tools": tools, "stream": False,
+                   "options": {"temperature": self.temperature}}
+        if self.think is not None:
+            payload["think"] = self.think
         try:
-            resp = requests.post(
-                f"{self.base_url}/api/chat",
-                json={"model": self.model, "messages": messages, "tools": tools, "stream": False,
-                      "options": {"temperature": self.temperature}},
-                timeout=_REQUEST_TIMEOUT,
-            )
+            resp = requests.post(f"{self.base_url}/api/chat", json=payload, timeout=_REQUEST_TIMEOUT)
         except requests.exceptions.ConnectionError as e:
             raise RuntimeError(
                 f"Could not reach Ollama at {self.base_url}. Is it running? "
@@ -70,6 +75,7 @@ class OllamaBackend(LLMBackend):
             tool_executor: ToolExecutor, verbose: bool = True,
             history: History | None = None) -> str:
         ollama_tools = _to_ollama_tools(tool_schemas)
+        tool_names = {t["name"] for t in tool_schemas}
         messages = ([{"role": "system", "content": system}] + list(history or [])
                     + [{"role": "user", "content": question}])
 
@@ -80,7 +86,15 @@ class OllamaBackend(LLMBackend):
 
             tool_calls = message.get("tool_calls") or []
             if not tool_calls:
-                return message.get("content", "")
+                written = text_tool_call(message.get("content", ""), tool_names)
+                if written is None:
+                    return message.get("content", "")
+                # Written out instead of made: run it, and keep the history in
+                # the shape a real call has.
+                name, arguments = written
+                logger.warning("%s wrote a %s call as text; running it", self.model, name)
+                tool_calls = [{"function": {"name": name, "arguments": arguments}}]
+                messages[-1] = {"role": "assistant", "content": "", "tool_calls": tool_calls}
 
             for call in tool_calls:
                 fn = call.get("function", {})

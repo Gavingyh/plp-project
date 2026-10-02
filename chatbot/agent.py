@@ -23,6 +23,16 @@ answer is fabricated by definition, and the answer is flagged. This is the
 same approach used for the volume floor in chatbot/tools.py — grounding
 rules that matter are enforced rather than requested.
 
+Flagging still shows the invented evidence. CHATBOT_ENFORCE_EVIDENCE goes
+further, for answers that cite evidence without having searched (every
+invented citation in the 1 Oct gold-set runs, on both local models):
+`strip` removes the evidence the model wrote and says so; `search` removes
+it and has the harness run search_evidence for the bank and aspect the
+model looked up, showing those real quotes under a heading that says the
+system found them. Unset or `off` (the default) leaves answers as written.
+A search the harness makes is recorded with `"by": "harness"`, so the
+evaluation doesn't count it as the model's tool choice.
+
 THE HARNESS AROUND THE MODEL (docs/DESIGN.md decision 19)
 Each turn runs: input guards (chatbot/guards.py: advice-seeking and
 out-of-scope questions get a fixed reply without calling the model) -> the
@@ -87,6 +97,13 @@ UNVERIFIED_NUMBER_WARNING = (
     "question. Treat {them} as unverified."
 )
 
+EVIDENCE_REMOVED_NOTE = (
+    "\n\n(No evidence search was made for this answer, so the quotes it gave were removed. "
+    "Ask for the quotes behind the score to see real ones.)"
+)
+EVIDENCE_FOUND_HEADING = "\n\nEvidence found by the system for this answer (search_evidence):"
+ENFORCE_MODES = ("off", "strip", "search")
+
 HISTORY_TURNS = 3            # earlier question/answer pairs passed to the model
 HISTORY_ANSWER_CHARS = 1200  # earlier answers are trimmed so they don't crowd the context
 
@@ -104,7 +121,7 @@ class _ToolCallTracker:
         self.verified_sentence_ids: set[str] = set()
         self.calls: list[dict] = []
 
-    def execute(self, name: str, tool_input: dict) -> str:
+    def execute(self, name: str, tool_input: dict, by: str = "model") -> str:
         fn = TOOL_FUNCTIONS.get(name)
         if fn is None:
             return json.dumps({"error": f"unknown tool: {name}"})
@@ -112,7 +129,10 @@ class _ToolCallTracker:
             result = fn(**coerce_tool_arguments(name, tool_input))
         except Exception as e:
             result = {"error": str(e)}
-        self.calls.append({"name": name, "arguments": tool_input, "result": result})
+        call = {"name": name, "arguments": tool_input, "result": result}
+        if by != "model":
+            call["by"] = by
+        self.calls.append(call)
         if name == "search_evidence":
             self.search_evidence_called = True
             if isinstance(result, dict):
@@ -139,6 +159,85 @@ class _ToolCallTracker:
                 return True
         return False
 
+    @classmethod
+    def from_calls(cls, calls: list[dict]) -> "_ToolCallTracker":
+        """A tracker holding calls already made, e.g. from a recorded evaluation run."""
+        t = cls()
+        for c in calls:
+            t.calls.append(dict(c))
+            if c["name"] == "search_evidence":
+                t.search_evidence_called = True
+                for item in (c.get("result") or {}).get("results", []):
+                    if item.get("url"):
+                        t.verified_urls.add(item["url"])
+                    if item.get("sentence_id"):
+                        t.verified_sentence_ids.add(item["sentence_id"])
+        return t
+
+
+def enforce_evidence_mode() -> str:
+    """CHATBOT_ENFORCE_EVIDENCE: off (default), strip or search."""
+    mode = (os.environ.get("CHATBOT_ENFORCE_EVIDENCE") or "off").strip().lower()
+    return mode if mode in ENFORCE_MODES else "off"
+
+
+_EVIDENCE_HEADING = re.compile(r"^[\W_]*(?:supporting\s+evidence|search\s+evidence|evidence)\b", re.IGNORECASE)
+_SECTION_HEADING = re.compile(r"^[\W_]*(?:sample size|time window|caveats?|notes?|limitations?)\b",
+                              re.IGNORECASE)
+
+
+def strip_unsearched_evidence(answer: str) -> str:
+    """The answer without the evidence a model wrote without searching: the
+    evidence section (from its heading to the next known section), and any later
+    line carrying a quote, URL or sentence id. The first paragraph, the direct
+    answer, is kept as written; every invented figure on 1 Oct sat after it."""
+    head, _, rest = answer.partition("\n\n")
+    kept, skipping = [], False
+    for line in rest.split("\n"):
+        if _EVIDENCE_HEADING.match(line):
+            skipping = True
+            continue
+        if skipping and _SECTION_HEADING.match(line):
+            skipping = False
+        if skipping or _URL_PATTERN.search(line) or _QUOTE_PATTERN.search(line) \
+                or _SENTENCE_ID_PATTERN.search(line):
+            continue
+        kept.append(line)
+    body = re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip()
+    return head.rstrip() + ("\n\n" + body if body else "")
+
+
+def _harness_search(tracker: _ToolCallTracker, question: str) -> str:
+    """Real quotes for the bank(s) and aspect the model looked up, searched by the harness."""
+    banks, aspect = [], None
+    for c in tracker.calls:
+        args = c.get("arguments") or {}
+        if c["name"] == "compare_banks":
+            banks = ["DBS", "OCBC", "UOB"]
+        elif args.get("bank") and args["bank"] not in banks:
+            banks.append(args["bank"])
+        aspect = aspect or args.get("aspect")
+    k = 3 if len(banks) <= 1 else 1
+    lines = []
+    for bank in (banks or [None])[:3]:
+        args = {"query": question, "k": k, **({"bank": bank} if bank else {}),
+                **({"aspect": aspect} if aspect else {})}
+        found = json.loads(tracker.execute("search_evidence", args, by="harness"))
+        for item in (found.get("results") or [])[:k]:
+            lines.append(f'- "{(item.get("text") or "").strip()}" {item.get("cite_as")}')
+    return EVIDENCE_FOUND_HEADING + "\n" + "\n".join(lines) if lines else ""
+
+
+def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode: str) -> tuple[str, bool]:
+    """(new answer, whether the model's own text still cites unretrieved evidence).
+    Only for an answer that cites evidence with no search made; others pass unchanged."""
+    if mode == "off" or tracker.search_evidence_called or not tracker.answer_has_unverified_citation(answer):
+        return answer, tracker.answer_has_unverified_citation(answer)
+    stripped = strip_unsearched_evidence(answer)
+    still_flagged = tracker.answer_has_unverified_citation(stripped)  # checked before any harness search
+    found = _harness_search(tracker, question) if mode == "search" else ""
+    return stripped + (found or EVIDENCE_REMOVED_NOTE), still_flagged
+
 
 @dataclass
 class TurnResult:
@@ -149,13 +248,15 @@ class TurnResult:
     guard: str | None = None                 # "advice" or "scope" if an input guard answered
     citation_unverified: bool = False
     unverified_numbers: list = field(default_factory=list)
+    evidence_enforced: str | None = None     # "strip" or "search" if CHATBOT_ENFORCE_EVIDENCE changed the answer
 
 
 def answer_turn(question: str, backend_name: str | None = None, history: list | None = None,
                 state: dict | None = None, verbose: bool = True, backend=None) -> TurnResult:
     context_banks = (state or {}).get("banks")
+    in_conversation = bool(context_banks or (state or {}).get("aspect"))
     for guard, reply in (("advice", advice_reply(question, context_banks)),
-                         ("scope", scope_reply(question))):
+                         ("scope", scope_reply(question, in_conversation))):
         if reply:
             if verbose:
                 logger.info("input guard: %s question answered with the fixed reply", guard)
@@ -174,7 +275,14 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
         return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls)
     result = TurnResult(question=question, answer=answer, calls=tracker.calls)
 
-    if tracker.answer_has_unverified_citation(answer):
+    mode = enforce_evidence_mode()
+    enforced, flagged = enforce_evidence(answer, tracker, question, mode)
+    if enforced != answer:
+        if verbose:
+            logger.warning("evidence written without a search was removed (%s)", mode)
+        answer, result.answer, result.evidence_enforced = enforced, enforced, mode
+
+    if flagged:
         if verbose:
             logger.warning("citation check FAILED — answer contains evidence not "
                            "actually retrieved via search_evidence")

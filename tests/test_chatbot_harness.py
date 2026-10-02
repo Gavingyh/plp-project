@@ -276,3 +276,105 @@ def test_advice_reply_uses_the_bank_from_the_conversation():
 
 def test_names_with_numbers_are_not_figures():
     assert unverified_numbers("Unlike the COVID-19 period, 3Q24 was calm.", [{"n": 5}]) == []
+
+
+# --- fixes from the gold-set runs of 2026-10-01 ---------------------------------------
+
+def test_follow_up_with_no_domain_word_is_not_refused_mid_conversation():
+    q = "Has that improved lately?"
+    assert "outside what I can help with" in scope_reply(q)
+    assert scope_reply(q, in_conversation=True) is None
+    assert "Maybank" in scope_reply("What about Maybank?", in_conversation=True)  # other banks still refused
+
+
+def test_follow_up_reaches_the_model_in_a_conversation(fake_sentiment, monkeypatch):
+    backend = _ToolUsingBackend("Neutral.")
+    monkeypatch.setattr(agent, "get_backend", lambda name=None: backend)
+    conv = Conversation()
+    conv.ask("What is sentiment on DBS dividends?")
+    r = conv.ask("Has that improved lately?")
+    assert r.guard is None and len(backend.seen) == 2
+
+
+INVENTED = ("DBS's dividend sentiment is positive, at 0.0291 on 13,452 sentences.\n\n"
+            "Supporting evidence:\n"
+            '* "DBS raises its payout ratio to 40%." (sentence_id: 12345, URL: https://example.com/dbs)\n'
+            '* "Analysts worry the dividend is unsustainable." (Bloomberg)\n\n'
+            "Sample size and time window: 13,452 sentences, all time.\n\n"
+            "Caveats: Reddit skews towards DBS.")
+
+
+def test_strip_removes_the_evidence_section_and_keeps_the_rest():
+    out = agent.strip_unsearched_evidence(INVENTED)
+    assert out.startswith("DBS's dividend sentiment is positive, at 0.0291")
+    assert "12345" not in out and "example.com" not in out and "Bloomberg" not in out
+    assert "Sample size and time window" in out and "Caveats" in out
+
+
+def test_enforcement_is_off_by_default(fake_sentiment, monkeypatch):
+    monkeypatch.delenv("CHATBOT_ENFORCE_EVIDENCE", raising=False)
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced is None and r.citation_unverified and "12345" in r.answer
+
+
+def test_strip_mode_removes_invented_evidence_and_says_so(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced == "strip" and not r.citation_unverified
+    assert "12345" not in r.answer and "VERIFICATION WARNING" not in r.answer
+    assert agent.EVIDENCE_REMOVED_NOTE.strip() in r.answer and r.unverified_numbers == []
+
+
+def test_search_mode_shows_real_quotes_found_by_the_harness(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "search")
+    seen = {}
+
+    def fake_search(**kw):
+        seen.update(kw)
+        return {"results": [{"sentence_id": "a" * 24, "text": "DBS kept its dividend at 60 cents.",
+                             "url": "u", "cite_as": f"[DBS, 2026-01-01, sentence_id {'a' * 24}]"}]}
+    monkeypatch.setitem(tools.TOOL_FUNCTIONS, "search_evidence", fake_search)
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced == "search" and not r.citation_unverified
+    assert '"DBS kept its dividend at 60 cents."' in r.answer and "12345" not in r.answer
+    assert seen["bank"] == "DBS" and seen["aspect"] == "dividend_policy"
+    assert [c.get("by") for c in r.calls] == [None, "harness"]
+
+
+def test_an_answer_that_searched_is_left_alone(monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
+    monkeypatch.setitem(tools.TOOL_FUNCTIONS, "search_evidence",
+                        lambda **kw: {"results": [{"sentence_id": "b" * 24, "url": "https://x.org/1",
+                                                   "text": "Margins held up well this quarter."}]})
+
+    class _Searching:
+        name, model = "fake", "fake"
+        def ask(self, question, system, schemas, execute, verbose=True, history=None):
+            execute("search_evidence", {"query": "q", "bank": "DBS"})
+            return 'Evidence:\n- "Margins held up well this quarter." (https://x.org/1)'
+    r = answer_turn("DBS margins?", backend=_Searching(), verbose=False)
+    assert r.evidence_enforced is None and "Margins held up" in r.answer and not r.citation_unverified
+
+
+def test_invented_evidence_in_the_opening_paragraph_is_still_flagged(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
+    answer = 'DBS is positive, as "one analyst called the payout safe for years" (Reuters).\n\nEvidence:\n* "made up"'
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(answer), verbose=False)
+    assert r.evidence_enforced == "strip" and r.citation_unverified
+
+
+def test_tool_selection_ignores_searches_the_harness_made():
+    from chatbot.run_eval import _check_tool_selection
+    item = {"expected_tool": "search_evidence", "expected_bank": "OCBC"}
+    harness_only = [{"name": "get_sentiment", "arguments": {"bank": "OCBC"}},
+                    {"name": "search_evidence", "arguments": {"bank": "OCBC"}, "by": "harness"}]
+    assert _check_tool_selection(item, harness_only)["correct"] is False
+    model_made = [{"name": "search_evidence", "arguments": {"bank": "OCBC"}}]
+    assert _check_tool_selection(item, model_made)["correct"] is True
+
+
+def test_tracker_rebuilt_from_recorded_calls():
+    t = agent._ToolCallTracker.from_calls([
+        {"name": "get_sentiment", "arguments": {"bank": "DBS"}, "result": {"score": 0.1}},
+        {"name": "search_evidence", "arguments": {}, "result": {"results": [{"sentence_id": "c" * 24, "url": "u1"}]}}])
+    assert t.search_evidence_called and t.verified_sentence_ids == {"c" * 24} and len(t.calls) == 2

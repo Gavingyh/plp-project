@@ -13,9 +13,11 @@ Input (before the model runs):
   - advice_reply(question): buy/sell/hold questions and price predictions get
     a fixed, reviewed reply. Templates for critical responses, generation for
     the rest.
-  - scope_reply(question): questions only about banks this system doesn't
-    cover, or about nothing it covers at all, get a fixed reply instead of an
-    answer from the model's memory.
+  - scope_reply(question, in_conversation): questions only about banks this
+    system doesn't cover, or about nothing it covers at all, get a fixed reply
+    instead of an answer from the model's memory. Mid-conversation, a question
+    with no domain word ("Has that improved lately?") is a follow-up, not off
+    topic, so only the other-bank check applies.
 
 Output (after the model answers):
   - unverified_numbers(answer, tool_results, question): figures in the answer
@@ -101,9 +103,11 @@ _DOMAIN = re.compile(
     r"evidence|quotes?|aspect|coverage|data)\b", re.IGNORECASE)
 
 
-def scope_reply(question: str) -> str | None:
+def scope_reply(question: str, in_conversation: bool = False) -> str | None:
     """A fixed reply if the question is about banks this system doesn't cover,
-    or about nothing it covers at all."""
+    or about nothing it covers at all. `in_conversation` is true when earlier
+    turns set a bank or aspect: a follow-up refers back to them, so it isn't
+    refused for naming neither (gold set mt-2, 2026-10-01)."""
     if detect_banks(question):
         return None  # at least one covered bank: let the model answer that part
     m = _OTHER_BANKS.search(question or "")
@@ -113,7 +117,7 @@ def scope_reply(question: str) -> str | None:
             f"on {m.group(0)}. I can show sentiment on any of the three, compare them, or find "
             "the quotes behind a score."
         )
-    if not _DOMAIN.search(question or ""):
+    if not in_conversation and not _DOMAIN.search(question or ""):
         return (
             "That's outside what I can help with. I answer questions about sentiment on "
             "Singapore's three listed banks, DBS, OCBC and UOB: how sentiment looks overall or on "

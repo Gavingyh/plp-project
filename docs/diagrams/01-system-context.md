@@ -81,11 +81,11 @@ Each row names the file and line an element comes from, and the text that line m
 | DBS investor relations | `ingest/earnings_fetch_ir.py:64` | `https://www.dbs.com/investors` |
 | OCBC investor relations | `ingest/earnings_fetch_ir.py:70` | `https://www.ocbc.com/group/investors` |
 | Wayback Machine | `ingest/earnings_fetch_uob.py:49` | `CDX_URL = "http://web.archive.org` |
-| Ollama | `chatbot/backends/ollama_backend.py:32` | `DEFAULT_BASE_URL = "http://localhost:11434"` |
+| Ollama | `chatbot/backends/ollama_backend.py:37` | `DEFAULT_BASE_URL = "http://localhost:11434"` |
 | Claude | `chatbot/backends/claude_backend.py:36` | `import anthropic` |
 | OpenAI, or any compatible provider via `OPENAI_BASE_URL` | `chatbot/backends/openai_backend.py:46` | `DEFAULT_BASE_URL = "https://api.openai.com/v1"` |
 | OpenAI unverified | `chatbot/backends/openai_backend.py:7` | `NOT VERIFIED AGAINST THE LIVE API` |
 | Gemini verified | `chatbot/backends/gemini_backend.py:4` | `VERIFIED against the live API on 2026-09-30` |
 | Gemini | `chatbot/backends/gemini_backend.py:46` | `generativelanguage.googleapis.com` |
-| Ollama is the default without a key | `chatbot/backends/__init__.py:48` | `return "ollama"` |
+| Ollama is the default without a key | `chatbot/backends/__init__.py:50` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

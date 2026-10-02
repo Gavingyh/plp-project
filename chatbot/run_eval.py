@@ -70,6 +70,7 @@ def _check_tool_selection(item: dict, calls: list[dict]) -> dict:
     expected_tool = item.get("expected_tool")
     if not expected_tool:
         return {"applicable": False}
+    calls = [c for c in calls if c.get("by", "model") == "model"]  # not a search the harness made
     matching = [c for c in calls if c["name"] == expected_tool]
     if not matching:
         return {"applicable": True, "correct": False, "reason": "expected tool never called"}
@@ -117,9 +118,9 @@ def run(backend_name: str | None = None, limit: int | None = None,
         try:
             turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)
             answer, calls, error = turn.answer, turn.calls, None
-            guard, numbers = turn.guard, turn.unverified_numbers
+            guard, numbers, enforced = turn.guard, turn.unverified_numbers, turn.evidence_enforced
         except Exception as e:
-            answer, calls, error, guard, numbers = "", [], str(e), None, []
+            answer, calls, error, guard, numbers, enforced = "", [], str(e), None, [], None
             logger.warning("[%s] FAILED: %s", item["id"], e)
 
         fabricated = "VERIFICATION WARNING" in answer
@@ -136,8 +137,10 @@ def run(backend_name: str | None = None, limit: int | None = None,
             # lists as outstanding. The tracker already records it
             # (chatbot/agent.py); this used to drop it on the way to disk.
             "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
-                             "result": c.get("result")} for c in calls],
+                             "result": c.get("result"), **({"by": c["by"]} if c.get("by") else {})}
+                            for c in calls],
             "citation_fabricated": fabricated,
+            "evidence_enforced": enforced,
             "input_guard": guard,
             "unverified_numbers": numbers,
             "tool_selection_check": tool_check,
@@ -173,6 +176,7 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
     behavior_correct = [r for r in behavior_checked if r["behavior_check"]["correct"]]
     n_guarded = sum(1 for r in results if r.get("input_guard"))
     n_numbers = sum(1 for r in results if r.get("unverified_numbers"))
+    n_enforced = sum(1 for r in results if r.get("evidence_enforced"))
 
     lines = [
         f"# Chatbot evaluation summary",
@@ -192,6 +196,8 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
         f"({100 * n_fabricated / n:.0f}%)",
         f"- Answered by an input guard without calling the model: {n_guarded}/{n}",
         f"- Answers carrying a figure no tool returned: {n_numbers}/{n}",
+        *([f"- Evidence written without a search, removed by CHATBOT_ENFORCE_EVIDENCE: {n_enforced}/{n}"]
+          if n_enforced else []),
         f"",
         f"## Failures needing a look",
         f"",
@@ -252,7 +258,9 @@ def run_multi_turn(backend_name: str | None = None, tag: str | None = None,
             except Exception as e:
                 check, error, answer, calls = {"correct": False}, str(e), "", []
             results.append({"scenario": sc["id"], "turn": i, "question": spec["question"], "answer": answer,
-                            "error": error, "tool_calls": [{"name": c["name"], "arguments": c["arguments"]} for c in calls],
+                            "error": error, "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
+                                                             **({"by": c["by"]} if c.get("by") else {})}
+                                                            for c in calls],
                             **check})
     turns_ok = sum(1 for r in results if r["correct"])
     by_scenario = {}

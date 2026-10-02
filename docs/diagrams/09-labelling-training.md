@@ -74,7 +74,7 @@ Each row names the file and line an element comes from, and the text that line m
 | export candidates | `preprocess/export_candidates.py:59` | `def export(train_dev_target: int` |
 | LLM suggestions | `train/llm_prelabel.py:146` | `def run(model: str = DEFAULT_MODEL` |
 | blind test sheet | `preprocess/export_blind_test.py:104` | `def export_blind(` |
-| clean the labels | `train/labels.py:67` | `def prepare(candidates_path: str, blind_path: str, out_path: str) -> dict:` |
+| clean the labels | `train/labels.py:102` | `def prepare(candidates_path: str, blind_path: str, out_path: str,` |
 | agreement | `train/agreement.py:128` | `def score(pairs: pd.DataFrame` |
 | kappa 0.93 | `docs/evidence/annotation-agreement-2026-09-27.md:34` | `| candidates, both splits | 1,277 | 0.952 | **0.926** |` |
 | fine-tune | `train/finetune.py:235` | `def run(seed: int = 42` |

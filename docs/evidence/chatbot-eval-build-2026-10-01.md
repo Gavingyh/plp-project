@@ -343,16 +343,54 @@ known invention. Of its 5 extra low scores, read by hand:
   +0.0327 "slightly negative".
 - evidence-2: the off-topic complaints above; flagged for the wrong reason,
   but the answer is bad.
-- evidence-1 and consensus-2: **false alarms caused by truncation**. The judge
-  sees the tool data cut at 4,000 characters (`MAX_RESULT_CHARS`), so quotes
-  and figures from later search results look invented.
+- evidence-1 and consensus-2: **false alarms, the judge misreading data it
+  could see.** evidence-1's quote ("DBS pays a quarterly dividend") and the
+  link it called unsourced are both in the tool data; consensus-2's "31.53"
+  is the tool's figure rounded, which the harness's number check accepts and
+  the judge doesn't. (*Corrected 2 Oct:* this said the tool data was cut at
+  4,000 characters; no answer's tool data in this run exceeds 2,826, so
+  nothing was cut.)
 - compare-1: a false alarm; it listed "search_evidence did not find any
   results" as a quote.
 
 So the checklist judge is the first worth calibrating against people's
-ratings, after raising the 4,000-character limit. The thinking runs also
+ratings; its false alarms come from misreading (rounded figures, quotes
+it overlooks). The next section tests it on a second set. The thinking runs also
 showed the judge stops at the first timeout instead of recording it per
 answer; that is fixed in the code clean-up (2 Oct).
+
+### The checklist judge on a second set (2 Oct, afternoon)
+
+The judge prompt was first checked on the 8B's answers, the set it was
+designed on. To see whether it holds, it was run on the 3B's 32 answers from
+1 Oct, which carry 14 confirmed inventions; and a change meant to cut false
+alarms (telling it that rounded figures and shortened quotes count) was
+tried on both sets. `qwen3:4b`, no thinking, tool data up to 12,000
+characters with an 8,192-token context (no answer's tool data exceeds 2,826
+characters, so the limit changes nothing here).
+
+| | 8B: flagged scored 1 | 8B: unflagged scored 1 | 3B: flagged scored 1 | 3B: unflagged scored 1 |
+|---|---|---|---|---|
+| checklist prompt | 11 / 11 | 5 / 13 | 15 / 15 | 7 / 9 |
+| checklist + "rounding and shortened quotes count" | 11 / 11 | 4 / 13 | 13 / 15 | 7 / 9 |
+
+Of the 3B's 15 flags, 14 are real inventions and one (compare-3) is a tool
+call written as text; the changed prompt passed compare-3, which is right,
+and consensus-2, a real invention with a fake sentence id, which is a miss.
+It cut no false alarms on the second set, so it was dropped; the checklist
+prompt stays as it was.
+
+**The judge's lists are unreliable.** Read by hand, the quotes it names as
+missing are often in the tool data: all four it listed for lookup-2 and for
+evidence-3, and the one it listed for evidence-1. Its low scores on the 3B's
+unflagged answers still often coincide with real problems (trend-3's invented
+trend figures, trend-2's unsupported "getting worse", trend-1 and lookup-2
+presenting off-topic evidence as relevant), but for the wrong stated reasons.
+
+So the checklist judge is a **screening tool**: every known invention so far
+(25 of 25) scores 1, which makes it useful for choosing which answers people
+read first. It is not a measurement: its scores need people's ratings beside
+them before any judge figure goes in the report.
 
 ### What this changes, again
 
@@ -361,5 +399,5 @@ answer; that is fixed in the code clean-up (2 Oct).
 2. Retrieval, not prompting, is now the chatbot's main weakness: ranking by
    the aspect's name helps but returns boilerplate, so the evidence the
    chatbot can show is limited by the embeddings.
-3. Use the checklist judge, with a longer tool-data limit, for the human
-   calibration round.
+3. Use the checklist judge to choose which answers people read first in the
+   calibration round, not as a score of its own.

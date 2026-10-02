@@ -35,10 +35,11 @@ team.*
    whether text sounds like a Reddit question more than what it is about.
    The same weakness explains finding 2.
 6. **An LLM judge passed every answer, including the invented ones; asking
-   it differently fixed that.** A judge told to list every unsupported quote,
-   source and figure caught all 11 known inventions with the same small
-   model. Checking the evaluator against known failures before calibrating it
-   found both the failure and the fix.
+   it differently fixed that, partly.** Told to list every unsupported quote,
+   source and figure, the same small model caught all 25 known inventions
+   across two runs, but its lists are often wrong, so it can screen answers
+   for people, not replace them. Checking the evaluator against known
+   failures found both the failure and the limit of the fix.
 
 ---
 
@@ -207,8 +208,12 @@ team.*
   including the 11 with invented evidence. Asked instead to list every quote,
   source and figure the tool data doesn't contain, the same model caught all
   11, plus one real error no rule catches (a score of +0.03 described as
-  "slightly negative"), with about three false alarms, two because it sees
-  the tool data cut at 4,000 characters. `gemma3:4b` was too lenient with one
+  "slightly negative"), with about three false alarms where it overlooked a
+  quote that is in the data or treated a rounded figure as invented. On a
+  second set (the 3B's answers) it caught all 14 known inventions too, but
+  also scored 7 of 9 other answers 1, often for reasons that are wrong (quotes
+  it calls missing are in the data): a screening tool for choosing which
+  answers people read, not a measurement. `gemma3:4b` was too lenient with one
   prompt and flagged almost everything with the other; with thinking on,
   `qwen3:4b` took over 5 minutes an answer.
 

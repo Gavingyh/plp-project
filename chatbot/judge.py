@@ -22,7 +22,12 @@ tool data doesn't contain, and every other unsupported claim, and derives the
 score from those lists in code (1 if any quote, source or figure is invented,
 2 if only a claim is unsupported, else 3). On 1 Oct the `full` prompt scored
 every answer 3, invented evidence included: it read the opening figures and
-not the evidence section.
+not the evidence section. The checklist prompt catches every known invention
+(11 of 11 and 14 of 14 on two runs), but its lists are unreliable (it names
+quotes as missing that are in the tool data), so use it to choose which
+answers people read first, not as a measurement. Telling it that rounded
+figures and shortened quotes count did not help on a second set and was
+dropped (docs/evidence/chatbot-eval-build-2026-10-01.md).
 
 Reads a results file from chatbot.run_eval; writes nothing else.
 
@@ -48,7 +53,7 @@ import requests
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EVAL_DIR = os.path.join(BASE_DIR, "data", "eval")
 OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-MAX_RESULT_CHARS = 4000
+MAX_RESULT_CHARS = 12000   # with num_ctx below, so the prompt isn't cut by the model's context
 SCALE = {3: "supported", 2: "minor unsupported detail", 1: "contradicted or invented"}
 
 JUDGE_SYSTEM = """You check a chatbot's answers about bank sentiment for faithfulness.
@@ -132,7 +137,8 @@ def checklist_score(parsed: dict) -> tuple[int, str]:
 def ollama_judge(model: str, messages: list[dict], think: bool | None = None,
                  schema: dict | None = None) -> str:
     """One deterministic call; `think=False` turns off a reasoning model's hidden thinking."""
-    payload = {"model": model, "messages": messages, "stream": False, "options": {"temperature": 0},
+    payload = {"model": model, "messages": messages, "stream": False,
+               "options": {"temperature": 0, "num_ctx": 8192},
                "format": schema or _SCORE_SCHEMA}
     if think is not None:
         payload["think"] = think

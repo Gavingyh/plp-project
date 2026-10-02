@@ -717,8 +717,8 @@ Asked for after the night's results; nothing written to the database.
   `qwen3:4b` isn't a viable chatbot here (22 of 32 timed out).
 - **Judges.** The one-score judge passes everything; a checklist prompt
   (list unsupported quotes, sources, figures) catches all 11 known
-  inventions with the same `qwen3:4b`, with about three false alarms (two
-  from the 4,000-character tool-data limit). `gemma3:4b` and thinking runs
+  inventions with the same `qwen3:4b`, with about three false alarms (a
+  quote it overlooked, a rounded figure; not truncation, as first written). `gemma3:4b` and thinking runs
   are not usable.
 - **Labels.** The top-up merge is `train.labels --topup` (`a387f2a`); Opus
   rated the top-up and NER sheets blind (`15238d8`): NER matches it on 200

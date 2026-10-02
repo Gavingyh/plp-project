@@ -171,6 +171,14 @@ Each has an empty `decision` column. A reviewer who changes a gold label
 records it there; applying those decisions to `candidates.csv` is a
 separate, reviewed step.
 
+## Two more rounds (2 Oct)
+
+The same procedure rated two sheets people haven't labelled yet, blind:
+the top-up sheet's aspects ([labelling-topup](labelling-topup-2026-10-01.md))
+and the bank-NER gold sheet ([bank-ner](bank-ner-2026-10-01.md)).
+`train/opus_extra.py` writes the batches, merges and scores them; the audit's
+allowed files now include the NER batch names.
+
 ## Caveats
 
 - Agreement with Opus is agreement with an LLM. Opus and the local models

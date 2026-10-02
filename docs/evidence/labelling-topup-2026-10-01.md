@@ -72,7 +72,7 @@ measurement of the LLM instead of a copy of it. Every row is `train_dev`.
 - Two rows per aspect read, and every Reddit row for NIM, dividend
   and macro, plus every news and earnings row for NIM.
 
-## What the reading found: NIM may end near the floor
+## What the reading found: NIM may end near the floor (corrected below)
 
 The guideline's own boundary says rates offered to customers belong under
 `retail_banking_sentiment`, not NIM. Earnings and news sentences about NIM
@@ -101,6 +101,39 @@ was skewed towards that confusion.
 The sheet is left as is. The mislabelled rows still get labelled, under
 retail banking. If NIM ends below 80, a second pass should draw NIM from
 earnings and news only.
+
+## Checked again by Opus 5.5 (2 Oct): macro, not NIM, is the risk
+
+Opus 5.5 labelled the sheet blind with the 1 Oct round's aspect instructions
+(four subagents of 67 rows; transcripts audited, 16 tool calls, none outside
+each rater's own files). It agrees with `llama3.1:8b` on 75% of rows (κ 0.70).
+On the rows llama called NIM it confirms the reading above: 20 NIM, 19 retail
+banking (the customer-rate rows), 3 other. It moves 5 dividend rows to retail
+banking (the "Dividend+" account).
+
+If people label like Opus, counting every row Opus gives an aspect and
+doesn't mark `not_about_bank`:
+
+| aspect | labelled | + top-up (Opus) | total |
+|---|---|---|---|
+| asset_quality | 78 | 32 | 110 |
+| net_interest_margin | 58 | 30 | 88 |
+| capital_liquidity | 49 | 41 | 90 |
+| dividend_policy | 33 | 60 | 93 |
+| macro_market_environment | 22 | 27 | **49** |
+
+**NIM is fine** (rows pooled for other targets that Opus reads as NIM make up
+for the customer-rate ones). **Macro falls short.** Opus gives 52 rows the
+macro aspect but marks 25 of them `not_about_bank`: the banks as
+commentators on the economy ("UOB revises up Vietnam's 2026 GDP growth
+forecast to 8.5%", "Malaysian SMEs face rising costs and regulatory
+pressures in 2026, OCBC warns"). Under the guideline's step 1 those are not
+about the bank. That makes it a question for the team before labelling:
+does a bank economist's view of the economy count as macro sentiment about
+the bank? If not, macro needs a lower floor or a different source.
+
+Opus's answers are in `data/labeled/claude/topup/opus_topup.csv`; like
+`llm_aspects.csv`, don't open it before labelling.
 
 ## For the people labelling
 

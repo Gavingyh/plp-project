@@ -158,7 +158,8 @@ def score(with_centroid: bool = False):
 
 
 _FORBIDDEN = re.compile(r"candidates|agreement|resolved|test_blind|aspect_llm|evidence|plp\.db|\.\./|\bls\b|\bfind\b|grep -r|curl|http")
-_OWN_FILE = re.compile(r"^(.*/)?((opus_)?(aspect|sentiment)_\d\d|input_(aspect|sentiment)|opus_(aspect|sentiment)|instructions_(aspect|sentiment))\.(csv|jsonl|md)$")
+_OWN_FILE = re.compile(r"^(.*/)?((opus_)?(aspect|sentiment|ner)_\d\d|input_(aspect|sentiment)|opus_(aspect|sentiment)"
+                       r"|instructions_(aspect|sentiment|ner))\.(csv|jsonl|md)$")
 
 
 def audit_call(name: str, inp: dict, root: str = CLAUDE_DIR) -> bool:

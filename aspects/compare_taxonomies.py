@@ -2,7 +2,7 @@
 Compares candidate aspect taxonomies quantitatively, using real cluster
 content from `python -m aspects.discover` (see
 docs/data-viability.md and config/aspects.yaml's header comment) as the
-source for candidate B/C's seed terms — not invented, drawn from actual
+source for candidate B/C's seed terms - not invented, drawn from actual
 cluster exemplar sentences.
 
 THIS DOES NOT DECIDE ANYTHING. It produces a comparison table so the team/
@@ -11,18 +11,18 @@ per the design notes' "Aspect taxonomy sign-off" open decision. Nothing here
 overwrites config/aspects.yaml.
 
 Candidates:
-  A — the live taxonomy: config/aspects.yaml's seed sentences, read at run
+  A - the live taxonomy: config/aspects.yaml's seed sentences, read at run
       time so this can't drift from what aspects/assign.py uses (ten aspects
       plus other since 2026-09-30, DESIGN decision 21).
-  P — the proposal's four a-priori aspects (dividend_policy, asset_quality,
+  P - the proposal's four a-priori aspects (dividend_policy, asset_quality,
       net_interest_margin, management_guidance), the taxonomy until
       2026-09-30, kept for comparison. Known issue (measured): centroids
       barely separate, most sentences match ~4 of 5 aspects near-equally.
       Until 2026-10-01 this was hard-coded as candidate A, so the tool kept
       describing the old taxonomy after the config changed.
-  B — data-derived coarse: the two real clusters that DID emerge cleanly
+  B - data-derived coarse: the two real clusters that DID emerge cleanly
       (investment_discussion vs. consumer_banking_service), plus other.
-  C — data-derived fine: B split further using the finer real clusters
+  C - data-derived fine: B split further using the finer real clusters
       (dividend_and_valuation, service_and_trust, banking_utility), plus other.
 
 Metrics reported per candidate:
@@ -33,7 +33,7 @@ Metrics reported per candidate:
   - avg_centroid_separation: mean pairwise cosine DISTANCE between aspect
     centroids (higher = aspects are more distinct from each other in
     embedding space, a proxy for how separable the taxonomy actually is).
-  - avg_top_similarity: mean best-match similarity score — how confidently
+  - avg_top_similarity: mean best-match similarity score - how confidently
     sentences fit their top aspect.
 
 THE FLOOR MATTERS AS MUCH AS THE TAXONOMY. Every metric except centroid

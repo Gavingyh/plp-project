@@ -7,7 +7,7 @@ history instead of replacing it.
 
 Known free-tier limitation (see docs/DESIGN.md): the `content` field is
 truncated to ~200 chars with a "[+N chars]" suffix. We therefore only rely on
-title + description as usable text — do not expect long-form content here.
+title + description as usable text - do not expect long-form content here.
 
 USAGE:
   python -m ingest.newsapi
@@ -32,7 +32,7 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY")
 
-# Free tier is 100 req/day. 4 pages x 3 banks = 12 requests per run — cheap
+# Free tier is 100 req/day. 4 pages x 3 banks = 12 requests per run - cheap
 # relative to quota, but paginating fully (DBS alone reported 349 totalResults
 # on a single-page pull) recovers volume the original single-page pull missed.
 MAX_PAGES = 4
@@ -45,13 +45,11 @@ def pull() -> list[dict]:
 
     docs = []
     for bank, queries in BANKS.items():
-        # Exclude the bare short alias (e.g. plain "DBS") from the query terms —
-        # confirmed live to pull in unrelated global news (US college football
-        # articles) that happen to contain the substring "DBS" with no
-        # Singapore/banking context at all. The bare alias is kept in BANKS for
-        # in-text detection on already-relevant text (Reddit etc.), just not
-        # for driving an unscoped global search. Also AND-gate on Singapore
-        # context to keep the query genuinely selective.
+        # Leave the bare alias (plain "DBS") out of the query: on its own it
+        # pulls in unrelated global news, such as US college football articles
+        # containing "DBS". BANKS keeps it for spotting the bank in text that
+        # is already relevant (Reddit), and the query also requires Singapore
+        # context.
         specific_terms = [q for q in queries if " " in q or "." in q]  # drops bare "DBS"/"OCBC"/"UOB"
         bank_query = " OR ".join(f'"{q}"' for q in specific_terms)
         query = f'({bank_query}) AND (Singapore OR SGX)'
@@ -103,7 +101,7 @@ def pull() -> list[dict]:
                     break
             except Exception as e:
                 logger.error(f"{bank} page {page}: ERROR — {e}")
-                break  # free-tier page-depth limits surface as errors here — stop, don't retry deeper pages
+                break  # free-tier page-depth limits surface as errors here - stop, don't retry deeper pages
             time.sleep(1)  # be polite to free tier
         time.sleep(1)
 

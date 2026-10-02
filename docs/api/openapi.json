@@ -598,7 +598,7 @@
     },
     "/sentiment/index": {
       "get": {
-        "description": "Raw rows from sentiment_index for the given window \u2014 one call to build\na full bank x aspect grid client-side, instead of one call per cell.\n\n`source` defaults to \"ALL\" (the blended headline number). Pass a specific\nsource (\"earnings\", \"arctic_shift\", \"newsapi\") to get that component\nalone, or \"*\" for every row including all per-source breakdowns \u2014 useful\nfor showing what the blend is made of, which matters here because\nearnings coverage is very unequal across banks (see /sources).",
+        "description": "Raw rows from sentiment_index for the given window - one call to build\na full bank x aspect grid client-side, instead of one call per cell.\n\n`source` defaults to \"ALL\" (the blended headline number). Pass a specific\nsource (\"earnings\", \"arctic_shift\", \"newsapi\") to get that component\nalone, or \"*\" for every row including all per-source breakdowns - useful\nfor showing what the blend is made of, which matters here because\nearnings coverage is very unequal across banks (see /sources).",
         "operationId": "sentiment_index_dump_sentiment_index_get",
         "parameters": [
           {
@@ -789,7 +789,7 @@
     },
     "/sources": {
       "get": {
-        "description": "Per-bank, per-source sentence counts \u2014 the composition behind the\nblended index. Exposed because earnings coverage is currently very\nunequal (UOB's IR site is WAF-blocked, so it has almost no earnings\nmaterial), which makes a naive cross-bank comparison misleading unless a\nreader can see this.",
+        "description": "Per-bank, per-source sentence counts - the composition behind the\nblended index. Exposed because earnings coverage is currently very\nunequal (UOB's IR site is WAF-blocked, so it has almost no earnings\nmaterial), which makes a naive cross-bank comparison misleading unless a\nreader can see this.",
         "operationId": "sources_breakdown_sources_get",
         "responses": {
           "200": {

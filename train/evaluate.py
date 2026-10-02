@@ -46,7 +46,7 @@ def _load_test_set() -> pd.DataFrame:
 
 def eval_base_finbert_zeroshot(df: pd.DataFrame) -> dict:
     """Baseline 1: base FinBERT, zero-shot, whole-sentence (not aspect-conditioned
-    — base FinBERT has no mechanism to condition on the aspect at all, which is
+ - base FinBERT has no mechanism to condition on the aspect at all, which is
     itself part of the case for fine-tuning)."""
     from sentiment.score import classify_sentences
     preds = [label for label, _ in classify_sentences(df["text"].tolist())]

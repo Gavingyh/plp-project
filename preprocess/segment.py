@@ -8,7 +8,7 @@ See docs/DESIGN.md, step 1.
 import spacy
 from spacy.language import Language
 
-_MIN_SENTENCE_LEN = 15  # chars — drops fragments a naive split can still produce
+_MIN_SENTENCE_LEN = 15  # chars - drops fragments a naive split can still produce
 
 # Abbreviations spaCy's default sentencizer doesn't know, common in bank
 # earnings/analyst text. Adding them as special-case tokenizer exceptions

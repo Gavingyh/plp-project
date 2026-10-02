@@ -72,7 +72,7 @@ def find_split_leakage(df: pd.DataFrame) -> list[str]:
 def repair_split_leakage(candidates_path: str = CANDIDATES_PATH) -> dict:
     """Drop the *train_dev* side of any sentence that straddles the split.
 
-    Dropping the train side rather than the test side is deliberate: the test
+    The train side goes, not the test side: the test
     split is 200 randomly-drawn rows and every one is expensive, while
     train_dev has 800 and losing a couple costs nothing. Only ever run this
     before labelling - it rewrites candidates.csv.

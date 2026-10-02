@@ -2,7 +2,7 @@
 LLM-assisted pre-labelling of data/labeled/candidates.csv, per the workflow
 described in docs/annotation-guideline.md: a local model proposes a label and
 a short rationale for each (sentence, aspect) pair, a human then corrects it.
-This fills the `llm_prelabel` / `llm_rationale` columns only — it never
+This fills the `llm_prelabel` / `llm_rationale` columns only - it never
 writes to `label`, which stays reserved for human judgement.
 
 MODEL CHOICE: default is llama3.2:3b, not a larger "reasoning" model. Tested
@@ -10,7 +10,7 @@ both on the same case (a rising NPL ratio, which the annotation guideline's
 own worked example labels `negative`): llama3.2:3b answered correctly in
 3-5 seconds; qwen3:4b took 65-97 seconds AND answered `positive`, while its
 own rationale described the same fact as "worsening risk exposure" and
-"a negative signal" — its chain-of-thought reasoning contradicted its final
+"a negative signal" - its chain-of-thought reasoning contradicted its final
 answer. Larger/slower was not more reliable for this task.
 
 RESUMABILITY: every result is appended to a JSONL progress file immediately

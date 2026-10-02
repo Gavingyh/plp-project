@@ -8,14 +8,14 @@ Design decisions here are backed by live testing against the real API
 
   - Keyword search (`&query=...`) times out (HTTP 422) on active subreddits.
     So: harvest whole subreddits by date window, filter for bank mentions locally.
-  - No page token exists — paginate by moving `after` to `last_row.created_utc + 1`,
+  - No page token exists - paginate by moving `after` to `last_row.created_utc + 1`,
     which requires `sort=asc`.
-  - r/SingaporeInvestments has had no posts since 2023-10-01 (effectively dead) —
+  - r/SingaporeInvestments has had no posts since 2023-10-01 (effectively dead) -
     kept only for pre-2023-10 historical pulls, not the daily batch.
-  - r/singapore returned 0/100 bank-mentioning posts in testing — general-interest
+  - r/singapore returned 0/100 bank-mentioning posts in testing - general-interest
     noise, dropped entirely.
   - r/singaporefi is the primary source: measured 775 bank-mentioning posts +
-    662+ bank-mentioning comments over 12 months (comments undercounted — see plan).
+    662+ bank-mentioning comments over 12 months (comments undercounted - see plan).
 
 USAGE:
   python -m ingest.arctic_shift                 # backfill + upsert into data/plp.db
@@ -39,10 +39,10 @@ logger = get_logger(__name__)
 
 BASE_URL = "https://arctic-shift.photon-reddit.com/api"
 
-# r/SingaporeInvestments is included for historical (pre-2023-10) pulls only —
+# r/SingaporeInvestments is included for historical (pre-2023-10) pulls only -
 # see module docstring. r/singapore and r/investing were both tested and
 # dropped: 0 bank-mentioning items out of 7,000+ fetched across two separate
-# samples (90-day and 12-day) — pure noise for this project, and r/investing's
+# samples (90-day and 12-day) - pure noise for this project, and r/investing's
 # comment volume in particular is large enough that fetching it for zero
 # payoff would dominate ingestion time.
 SUBREDDITS = ["singaporefi", "SingaporeInvestments"]
@@ -55,7 +55,7 @@ POLITE_DELAY_SECONDS = 0.3
 
 def _get(endpoint: str, **params) -> list[dict]:
     """GET one page from Arctic Shift. On the documented 422 "timeout" response,
-    return [] rather than raising — callers narrow the window and move on."""
+    return [] rather than raising - callers narrow the window and move on."""
     url = f"{BASE_URL}/{endpoint}/search"
     try:
         resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
@@ -99,7 +99,7 @@ def _to_documents(rows: list[dict], subreddit: str, doc_type: str, text_field: s
     for r in rows:
         if doc_type == "submission":
             # Link-only posts have an empty selftext but a bank can still be
-            # named in the title — build full_text from both rather than
+            # named in the title - build full_text from both rather than
             # requiring selftext, which would silently drop those posts.
             title = r.get("title") or ""
             selftext = (r.get("selftext") or "").strip()
@@ -111,7 +111,7 @@ def _to_documents(rows: list[dict], subreddit: str, doc_type: str, text_field: s
             continue
         bank = resolve_bank(full_text)
         if bank is None:
-            continue  # no bank mentioned at all — not useful for this project
+            continue  # no bank mentioned at all - not useful for this project
         native_id = r.get("id") or str(r.get("created_utc"))
         published_at = datetime.fromtimestamp(r["created_utc"], tz=timezone.utc).isoformat()
         if doc_type == "submission":
@@ -142,7 +142,7 @@ def pull(since: str | None = None, until: str | None = None) -> list[dict]:
     """Backfill (or incremental pull with `since`) across SUBREDDITS.
 
     Note per Arctic Shift's own docs: scores/comment counts are incomplete for
-    ~36h after posting — treat very recent engagement metrics as provisional.
+    ~36h after posting - treat very recent engagement metrics as provisional.
     """
     until = until or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     since = since or "2020-01-01"  # effectively "all history the archive has"

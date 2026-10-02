@@ -94,7 +94,7 @@ def load_pair(file_a: str, file_b: str, col: str = "label", key: list[str] = KEY
     """Two annotator sheets joined on `key`: (sentence_id, aspect) for
     sentiment, sentence_id alone for the aspect itself.
 
-    An inner join is deliberate: rows only one annotator labelled say nothing
+    The join is inner: rows only one annotator labelled say nothing
     about agreement, and silently treating a missing label as a disagreement
     would understate kappa.
     """

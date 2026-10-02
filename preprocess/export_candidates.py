@@ -2,7 +2,7 @@
 Export (sentence, aspect) candidates for human labeling.
 
 Implements the sampling design ("The sampling problem, and
-the trap in solving it") — this is NOT optional detail, it's the difference
+the trap in solving it") - this is NOT optional detail, it's the difference
 between a valid and an inflated evaluation:
 
   - TRAIN/DEV split: model-assisted stratified sampling, oversampling what
@@ -10,14 +10,14 @@ between a valid and an inflated evaluation:
     starving the positive/negative classes.
   - TEST split: sampled PURELY AT RANDOM, independent of any model
     screening, and frozen once exported. All headline metrics are
-    reported on this set. This cannot be retrofitted after the fact — if the
+    reported on this set. This cannot be retrofitted after the fact - if the
     test set is drawn from model-screened candidates, the fine-tuned model's
     reported F1 is inflated relative to the base-model baseline it's meant to
     be compared against.
 
 Requires sentence_aspects (aspects/assign.py) and, for stratification,
 aspect_sentiment (sentiment/score.py, which currently holds base-FinBERT
-zero-shot predictions — exactly the "model-assisted" signal this step wants).
+zero-shot predictions - exactly the "model-assisted" signal this step wants).
 
 USAGE:
   python -m preprocess.export_candidates --train-dev 800 --test 200
@@ -73,7 +73,7 @@ def export(train_dev_target: int, test_target: int, seed: int = 42) -> dict:
               "run more ingestion before treating this as the real labeling set.")
 
     # TEST FIRST, purely at random, before any model-assisted selection touches
-    # the pool — see module docstring. This is the frozen evaluation set.
+    # the pool - see module docstring. This is the frozen evaluation set.
     test_rows = candidates[:test_target]
     remaining = candidates[test_target:]
 

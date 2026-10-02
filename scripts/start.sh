@@ -2,13 +2,11 @@
 #
 # Start the dashboard, the REST API, and (if needed) Ollama.
 #
-# WHY THIS EXISTS: the manual commands in docs/RUNBOOK.md are the reference
-# for what these services are, and they are easy to get subtly wrong - the
-# wrong interpreter fails every import with a Python 3.9 syntax error, and a
-# missing HF_HUB_OFFLINE=1 makes FinBERT steps appear to hang on a network
-# wait. This script encodes both, refuses to start on a port somebody else is
-# using, and waits for a real health check rather than reporting success the
-# moment a process exists.
+# The commands in docs/RUNBOOK.md are easy to get wrong: the wrong Python
+# fails every import with a syntax error, and without HF_HUB_OFFLINE=1 the
+# FinBERT steps seem to hang on a network wait. This script sets both,
+# refuses a port another program is using, and reports success only after a
+# health check passes.
 #
 # USAGE:
 #   scripts/start.sh              # dashboard + api + ollama if needed
@@ -86,9 +84,8 @@ die()  { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 # --- Environment guard -------------------------------------------------------
 # A conda/miniforge Python 3.9 on PATH shadows the venv and fails every import
-# with `TypeError: unsupported operand type(s) for |`, because this codebase
-# uses PEP 604 syntax throughout. One overnight run was already lost this way,
-# so fail loudly here rather than in the middle of a service.
+# with `TypeError: unsupported operand type(s) for |` (the code uses PEP 604
+# syntax), so check before starting anything.
 check_environment() {
     [ -x "$PY" ] || die "no interpreter at $PY - create it with:
   python3 -m venv .venv-plp && .venv-plp/bin/python3 -m pip install -r requirements.txt"

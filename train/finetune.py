@@ -8,11 +8,11 @@ pairs or a sentence in both splits (see check_splits there).
 Sentence-pair (NLI-style) input formulation:
   [CLS] {sentence} [SEP] {aspect} [SEP]  ->  3-way softmax
 One model for all aspects (aspect supplied as context), NOT a model-per-aspect
-— splitting ~1,000 examples across 6-10 aspects would leave ~100 each, too
+- splitting ~1,000 examples across 6-10 aspects would leave ~100 each, too
 few to fine-tune anything.
 
 Training config: LR 2e-5, batch 16, max_len 128, warmup 10%, early stopping
-on dev macro-F1, fixed seed (report mean +/- std across >=3 seeds — a single
+on dev macro-F1, fixed seed (report mean +/- std across >=3 seeds - a single
 run's F1 can be seed noise at this data size). Each batch is padded to its own
 longest sentence.
 
@@ -278,9 +278,8 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
         label2id=LABEL2ID,
     )
 
-    # transformers 5.x dropped warmup_ratio from TrainingArguments (confirmed live,
-    # not assumed — a smoke test caught this before real labeled data existed) —
-    # compute the equivalent step count by hand to preserve the intended 10% warmup.
+    # transformers 5.x has no warmup_ratio in TrainingArguments, so compute the
+    # step count for a 10% warmup here.
     steps_per_epoch = max(1, len(train_df) // batch_size)
     total_steps = steps_per_epoch * epochs
     warmup_steps = max(1, round(0.10 * total_steps))

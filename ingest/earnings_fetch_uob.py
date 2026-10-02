@@ -20,7 +20,7 @@ capture. The bytes are UOB's own published PDF; only the transport differs.
 The archived URL is recorded so provenance stays traceable.
 
 LIMITS worth knowing before relying on this:
-  - Coverage thins out for recent quarters — the archive lags publication, so
+  - Coverage thins out for recent quarters - the archive lags publication, so
     the last quarter or two is usually missing. Check the per-year counts the
     dry run prints.
   - A capture can be a WAF stub rather than a PDF. Downloads are verified by

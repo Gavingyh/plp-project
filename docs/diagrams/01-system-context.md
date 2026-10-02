@@ -72,12 +72,12 @@ Each row names the file and line an element comes from, and the text that line m
 | Google News RSS | `ingest/google_news.py:55` | `RSS_URL = "https://news.google.com` |
 | Yahoo Finance news | `ingest/yahoo_news.py:93` | `yf.Ticker(ticker).get_news(` |
 | Yahoo Finance consensus | `ingest/yahoo_analyst.py:71` | `finance/quoteSummary/` |
-| NewsAPI | `ingest/newsapi.py:58` | `newsapi.org/v2/everything` |
+| NewsAPI | `ingest/newsapi.py:56` | `newsapi.org/v2/everything` |
 | CNA article pages | `ingest/cna_archive.py:69` | `SITE = "www.channelnewsasia.com"` |
 | Wayback index of CNA URLs | `ingest/cna_archive.py:68` | `CDX_URL = "https://web.archive.org/cdx/search/cdx"` |
 | archived CNA pages | `ingest/cna_archive.py:214` | `archived = f"https://web.archive.org/web/` |
-| Alpha Vantage | `ingest/alphavantage.py:51` | `alphavantage.co/query` |
-| Alpha Vantage returns nothing | `ingest/alphavantage.py:49` | `doesn't index SGX-listed names` |
+| Alpha Vantage | `ingest/alphavantage.py:50` | `alphavantage.co/query` |
+| Alpha Vantage returns nothing | `ingest/alphavantage.py:48` | `doesn't index SGX-listed names` |
 | DBS investor relations | `ingest/earnings_fetch_ir.py:64` | `https://www.dbs.com/investors` |
 | OCBC investor relations | `ingest/earnings_fetch_ir.py:70` | `https://www.ocbc.com/group/investors` |
 | Wayback Machine | `ingest/earnings_fetch_uob.py:49` | `CDX_URL = "http://web.archive.org` |

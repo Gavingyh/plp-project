@@ -7,7 +7,7 @@ The earnings pipeline is three modules, and this is the last of them:
                             investor-relations sites
     earnings_fetch_uob.py   downloads UOB's from the Wayback Machine, because
                             UOB's IR site is WAF-blocked
-    earnings_extract.py     THIS FILE — reads whatever is in
+    earnings_extract.py     THIS FILE - reads whatever is in
                             data/earnings_pdfs/<BANK>/, extracts prose,
                             discards numeric tables (FinBERT scores them as
                             noise), and upserts into `documents`
@@ -40,7 +40,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
 
 # A line that's mostly digits/punctuation is almost certainly a financial-
-# statement table row, not prose — drop it (see docs/DESIGN.md).
+# statement table row, not prose - drop it (see docs/DESIGN.md).
 _NUMERIC_LINE = re.compile(r"^[\d\s.,()%$SGDsgd/-]{10,}$")
 _MIN_PROSE_LEN = 40
 
@@ -59,7 +59,7 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
     sentiment. Approximate-but-right beats precise-and-wrong here; the day of
     month is nominal, the quarter is what actually matters for windowing.
     """
-    # UOB's IR naming: "ceo-presentation-2q-2021.pdf" — lowercase q, four-digit
+    # UOB's IR naming: "ceo-presentation-2q-2021.pdf" - lowercase q, four-digit
     # year. Checked BEFORE the two-digit form below, which would otherwise read
     # the "20" of "2021" as the year.
     m = re.search(r"([1-4])[qQ][-_ ]?(\d{4})", filename)
@@ -81,7 +81,7 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
         year = 2000 + yy
         return (f"{year:04d}-08-01T00:00:00+00:00" if half == 1
                 else f"{year + 1:04d}-02-01T00:00:00+00:00")
-    # FY25 — full-year results, announced early the following year
+    # FY25 - full-year results, announced early the following year
     m = re.search(r"FY(\d{2})", filename)
     if m:
         return f"{2000 + int(m.group(1)) + 1:04d}-02-01T00:00:00+00:00"

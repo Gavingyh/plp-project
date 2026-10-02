@@ -63,7 +63,7 @@ def clean_cna(text: str) -> str:
 
 
 def clean_reddit(text: str) -> str | None:
-    """Returns None for bot/AutoModerator comments — caller should drop them."""
+    """Returns None for bot/AutoModerator comments - caller should drop them."""
     lowered = text.lower()
     if any(marker in lowered for marker in _AUTOMOD_MARKERS):
         return None
@@ -71,7 +71,7 @@ def clean_reddit(text: str) -> str | None:
     text = _MARKDOWN_LINK.sub(r"\1", text)
     text = _MARKDOWN_EMPHASIS.sub(r"\1", text)
     text = _URL.sub("", text)
-    # Deliberately NOT lowercasing — FinBERT is cased-aware and casing/emphasis
+    # Deliberately NOT lowercasing - FinBERT is cased-aware and casing/emphasis
     # carries sentiment signal in this register (see docs/DESIGN.md, step 2).
     return _WHITESPACE.sub(" ", text).strip()
 

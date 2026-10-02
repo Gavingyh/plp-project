@@ -60,12 +60,12 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| dashboard port 8501 | `scripts/start.sh:35` | `DASHBOARD_PORT="${PLP_DASHBOARD_PORT:-8501}"` |
-| API port 8000 | `scripts/start.sh:36` | `API_PORT="${PLP_API_PORT:-8000}"` |
-| Ollama port 11434 | `scripts/start.sh:37` | `OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"` |
-| dashboard process | `scripts/start.sh:188` | `-m streamlit run dashboard/app.py` |
-| API process | `scripts/start.sh:196` | `-m uvicorn api.main:app` |
-| Ollama started if needed | `scripts/start.sh:204` | `start_ollama() {` |
+| dashboard port 8501 | `scripts/start.sh:33` | `DASHBOARD_PORT="${PLP_DASHBOARD_PORT:-8501}"` |
+| API port 8000 | `scripts/start.sh:34` | `API_PORT="${PLP_API_PORT:-8000}"` |
+| Ollama port 11434 | `scripts/start.sh:35` | `OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"` |
+| dashboard process | `scripts/start.sh:185` | `-m streamlit run dashboard/app.py` |
+| API process | `scripts/start.sh:193` | `-m uvicorn api.main:app` |
+| Ollama started if needed | `scripts/start.sh:201` | `start_ollama() {` |
 | plp.db location | `ingest/db.py:17` | `DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")` |
 | embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")` |
 | news filter log location | `ingest/news_filter.py:53` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |

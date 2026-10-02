@@ -1,10 +1,10 @@
 """
-Aspect discovery — run ONCE offline to derive the aspect taxonomy,
+Aspect discovery - run ONCE offline to derive the aspect taxonomy,
 then freeze it into config/aspects.yaml. This is the unsupervised text-mining
 deliverable: letting the data propose the aspect set rather than assuming it.
 
 After this, aspects/assign.py does the per-batch, deterministic nearest-
-centroid assignment against the frozen taxonomy — clustering itself does NOT
+centroid assignment against the frozen taxonomy - clustering itself does NOT
 re-run every batch (see docs/DESIGN.md, "The key architectural point":
 users can't be shown a renumbered cluster on Tuesday).
 
@@ -60,7 +60,7 @@ def run(min_cluster_size: int = 10) -> None:
     # One full scan, filtered in Python, rather than an `IN (?,?,...)` over
     # every cached sentence_id. That form binds one SQL variable per id and
     # dies with "too many SQL variables" once the corpus passes SQLite's
-    # SQLITE_MAX_VARIABLE_NUMBER (32,766 here) — which it did at 36,884
+    # SQLITE_MAX_VARIABLE_NUMBER (32,766 here) - which it did at 36,884
     # sentences, making this whole script unrunnable exactly when the corpus
     # finally got big enough to cluster meaningfully.
     wanted = set(sentence_ids)

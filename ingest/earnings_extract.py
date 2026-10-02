@@ -67,6 +67,13 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
         quarter, year = int(m.group(1)), int(m.group(2))
         month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
         return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
+    # The same with the q first: "ceo-slides-q1-2024.pdf". Missing until 3 Oct
+    # 2026, which left five UOB 2024 files stamped with their ingestion date.
+    m = re.search(r"[qQ]([1-4])[-_ ]?(\d{4})", filename)
+    if m:
+        quarter, year = int(m.group(1)), int(m.group(2))
+        month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
+        return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
     # 1Q26 / 2Q26 / 3Q26 / 4Q26
     m = re.search(r"([1-4])Q(\d{2})", filename)
     if m:
@@ -85,6 +92,11 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
     m = re.search(r"FY(\d{2})", filename)
     if m:
         return f"{2000 + int(m.group(1)) + 1:04d}-02-01T00:00:00+00:00"
+    # "cfo-presentation-2023-results.pdf": a year's results with no quarter
+    # are the full-year results, announced early the following year.
+    m = re.search(r"(20\d{2})[-_ ]results", filename, re.IGNORECASE)
+    if m:
+        return f"{int(m.group(1)) + 1:04d}-02-01T00:00:00+00:00"
     return None
 
 

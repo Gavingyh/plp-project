@@ -36,7 +36,10 @@ from ingest.db import get_connection, init_db, now_iso
 logger = get_logger(__name__)
 
 MODEL_NAME = "ProsusAI/finbert"
-from config.model_version import MODEL_VERSION  # noqa: E402  (change it there when the fine-tuned model replaces this)
+# The tag on every row this script writes. It names the model this script
+# runs (MODEL_NAME), so it stays fixed: a fine-tuned scorer writes its own
+# tag, and the readers pick a version through config/model_version.py.
+MODEL_VERSION = "finbert-base-zeroshot-v1"
 _BATCH_SIZE = 32
 _MAX_LENGTH = 128
 _CHUNK = 2000   # sentences classified and committed per step

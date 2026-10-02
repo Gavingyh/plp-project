@@ -79,8 +79,8 @@ Each row names the file and line an element comes from, and the text that line m
 | already assigned | `aspects/assign.py:83` | `already = {r[0] for r in conn.execute(` |
 | cosine to centroids | `aspects/assign.py:91` | `sims = {aspect: _cosine(vec, centroid)` |
 | insert aspects | `aspects/assign.py:105` | `INSERT OR IGNORE INTO sentence_aspects` |
-| pairs not yet scored | `sentiment/score.py:106` | `WHERE NOT EXISTS (` |
-| classify, once per sentence | `sentiment/score.py:132` | `predictions = classify_sentences([text_of[i] for i in chunk])` |
-| insert scores | `sentiment/score.py:138` | `INSERT OR IGNORE INTO aspect_sentiment` |
+| pairs not yet scored | `sentiment/score.py:109` | `WHERE NOT EXISTS (` |
+| classify, once per sentence | `sentiment/score.py:135` | `predictions = classify_sentences([text_of[i] for i in chunk])` |
+| insert scores | `sentiment/score.py:141` | `INSERT OR IGNORE INTO aspect_sentiment` |
 | full recompute | `aggregate/index.py:264` | `conn.execute("DELETE FROM sentiment_index")` |
 | insert index rows | `aggregate/index.py:266` | `INSERT INTO sentiment_index` |

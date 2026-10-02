@@ -840,3 +840,23 @@ become relative paths.
   and logged); `/evidence?k=-1` dropped the last result (`k` is now 1–50).
   Open: whether a 7-day window of 5 to 10 sentences is enough for a
   direction, and whether `source` and `aspect` should be validated.
+- **Misdated UOB earnings files** (found by two reviewers): the filename
+  parser in `ingest/earnings_extract.py` couldn't read `q1-2024` or
+  `2023-results`, so six UOB documents (114 sentences of 2023–24 management
+  prose) carry their ingestion date, 10 Sep 2026, and count as recent: 114 of
+  the 230 sentences behind UOB's 30-day headline. The parser is fixed and
+  tested. **Repairing the stored dates needs approval** (a database write):
+  `.venv-plp/bin/python3 scripts/fix_earnings_dates.py` shows the six
+  changes; add `--apply`, then re-run `aggregate.index`. Re-running the
+  extraction alone doesn't fix them, because existing documents are skipped.
+- **Scorer tag:** `sentiment/score.py` tags rows with the model it runs
+  again, independent of the version readers serve, so changing
+  `config/model_version.py` can't relabel base scores.
+- **Chatbot grounding guards: eight confirmed weaknesses** (tests marked
+  `xfail` in `tests/test_validate_chatbot_grounding.py`): an invented quote
+  passes once any search has run; strip mode leaves evidence in a one-
+  paragraph answer while saying it removed it; the number check ignores the
+  sign, accepts 0.12 written as 0.12%, skips a number after a date, and its
+  ratio set accepts 85–95 of the whole percentages 1–99 on a trend answer;
+  curly or wrapped quotes and URLs without http(s) go unchecked. The "11 → 0
+  invented citations" in the decision brief was measured with these guards.

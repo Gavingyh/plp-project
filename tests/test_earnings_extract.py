@@ -12,6 +12,8 @@ The lesson driving these tests: a function whose failure mode is "silently
 returns nothing" needs a test that asserts it returns something.
 """
 
+import os
+
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -107,6 +109,11 @@ def test_is_prose_accepts_a_real_sentence():
     ("OCBC FY25 Results Presentation.pdf", "2026-02"),  # FY reported the next year
     ("ceo-presentation-2q-2021.pdf", "2021-08"),  # UOB's lowercase, four-digit form
     ("cfo-presentation-1q-2023.pdf", "2023-05"),
+    ("ceo-slides-q1-2024.pdf", "2024-05"),         # UOB's 2024 naming, q first
+    ("cfo-slides-q2-2024.pdf", "2024-08"),
+    ("performance-highlights-q1-2024.pdf", "2024-05"),
+    ("cfo-presentation-2023-results.pdf", "2024-02"),     # full year, no quarter
+    ("ceo-presentation-2q-2023-results.pdf", "2023-08"),  # the quarter wins over "results"
 ])
 def test_period_parsed_to_announcement_date(filename, expected_prefix):
     assert _quarter_to_announcement_date(filename).startswith(expected_prefix)
@@ -115,3 +122,29 @@ def test_period_parsed_to_announcement_date(filename, expected_prefix):
 def test_unrecognised_filename_returns_none():
     # Caller falls back to ingestion time only in this case.
     assert _quarter_to_announcement_date("some_random_document.pdf") is None
+
+
+def test_fix_earnings_dates_finds_and_redates_only_misdated_documents(tmp_path):
+    import sqlite3
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "fix_earnings_dates", os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts", "fix_earnings_dates.py"))
+    fix = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fix)
+    conn = sqlite3.connect(tmp_path / "t.db")
+    conn.execute("CREATE TABLE documents (doc_id TEXT, source TEXT, title TEXT, published_at TEXT)")
+    conn.execute("CREATE TABLE sentences (sentence_id TEXT, doc_id TEXT, published_at TEXT)")
+    conn.executemany("INSERT INTO documents VALUES (?,?,?,?)", [
+        ("a", "earnings", "cfo-slides-q1-2024.pdf", "2026-09-10T09:54:27+00:00"),     # misdated
+        ("b", "earnings", "cfo-presentation-1q-2023.pdf", "2023-05-01T00:00:00+00:00"),  # already right
+        ("c", "cna", "cfo-slides-q1-2024.pdf", "2026-09-10T09:54:27+00:00"),          # not earnings
+    ])
+    conn.executemany("INSERT INTO sentences VALUES (?,?,?)", [
+        ("s1", "a", "2026-09-10T09:54:27+00:00"), ("s2", "a", "2026-09-10T09:54:27+00:00"),
+        ("s3", "b", "2023-05-01T00:00:00+00:00")])
+    rows = fix.misdated(conn)
+    assert [(r[0], r[3], r[4]) for r in rows] == [("a", "2024-05-01T00:00:00+00:00", 2)]
+    fix.apply(conn, rows)
+    assert conn.execute("SELECT published_at FROM documents WHERE doc_id='a'").fetchone()[0].startswith("2024-05")
+    assert {r[0] for r in conn.execute("SELECT published_at FROM sentences WHERE doc_id='a'")} == {"2024-05-01T00:00:00+00:00"}
+    assert fix.misdated(conn) == []

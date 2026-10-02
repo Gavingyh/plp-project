@@ -252,3 +252,14 @@ def test_r10_series_error_is_not_reported_as_no_data(temp_db, monkeypatch):
     trend = tools.get_trend("UOB")
     assert trend["trend_available"] is True
     assert trend["series_note"].startswith("monthly series unavailable: database is locked")
+
+
+# Scoring tag (fixed 3 Oct): the scorer tags rows with the model it runs, whatever
+# version the readers are set to serve.
+
+def test_scorer_tag_names_the_model_it_runs(monkeypatch):
+    import config.model_version
+    import sentiment.score as score
+    monkeypatch.setattr(config.model_version, "MODEL_VERSION", "finbert-finetuned-v2")
+    assert score.MODEL_NAME == "ProsusAI/finbert"
+    assert score.MODEL_VERSION == "finbert-base-zeroshot-v1"

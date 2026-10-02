@@ -41,7 +41,7 @@ sends you back to phase 1 because the data you assumed exists does not.
 | CRISP-DM phase | this project | artifacts |
 |---|---|---|
 | 1. Business understanding | Retail investors lack research access on three banks | `.project-context/proposal/`, `docs/spec/functional-spec.md` |
-| 2. Data understanding | Live testing of every candidate source | `docs/data-viability.md`, `run_data_survey.py` |
+| 2. Data understanding | Live testing of every candidate source | `docs/data-viability.md`, `ingest/` |
 | 3. Data preparation | Ingestion, segmentation, aspect assignment, labelling exports | `ingest/`, `preprocess/`, `aspects/` |
 | 4. Modeling | FinBERT embeddings and zero-shot scoring; fine-tuning run from 30 Sep (test macro-F1 0.604 ± 0.035 on 1 Oct); an LLM aspect classifier evaluated | `sentiment/`, `train/`, `aspects/` |
 | 5. Evaluation | Chatbot gold set done; classifier evaluation **blocked** | `chatbot/run_eval.py`, `train/evaluate.py` |

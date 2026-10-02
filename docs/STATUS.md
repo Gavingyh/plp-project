@@ -234,7 +234,8 @@ them. Detail in
 
 Per-model transcripts are in `data/eval/chatbot_eval_results_*.jsonl`,
 summaries in `data/eval/chatbot_eval_summary_*.md`. Reproduce with
-`scripts/compare_chatbot_models.sh`.
+`chatbot.run_eval --tag <model>` once per model (RUNBOOK, "Evaluating the
+chatbot").
 
 **Not automated:** whether the numbers a model states are actually correct,
 and whether cited evidence is relevant. That needs a human reading the

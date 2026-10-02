@@ -101,14 +101,12 @@ Reddit's API terms.
 
 ## Verifying it worked
 
-Run one script standalone before running the full survey, so a bad key
-fails fast and cheap:
+Run the NewsAPI pull on its own first, so a bad key fails fast and cheap:
 
 ```bash
-python news_pull.py
+.venv-plp/bin/python3 run_news_pull.py --source newsapi
 ```
 
-If a key is missing, the script prints a `Skipped — set <VAR> env var`
-message for that source instead of crashing — that's expected, not a bug.
-If a key is present but wrong, you'll see an `ERROR —` line with the
-underlying HTTP error (401/403 usually means a bad or not-yet-active key).
+A missing key is reported for that source rather than crashing. A key that
+is present but wrong shows the HTTP error (401 or 403 usually means a bad or
+not-yet-active key).

@@ -64,7 +64,7 @@ untrustworthy; it does not stop the model producing it.
 | Aspect-name validation against the real taxonomy | `chatbot/tools.py` |
 | 23-question gold set including 7 advice-seeking questions | `chatbot/eval_gold_set.py` |
 | Automated checks and per-model output | `chatbot/run_eval.py` |
-| Multi-model comparison runner | `scripts/compare_chatbot_models.sh` |
+| Runs per model, kept apart by tag | `chatbot/run_eval.py --tag` |
 | Transcripts and summaries | `data/eval/chatbot_eval_*` |
 
 ---

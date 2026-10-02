@@ -66,7 +66,7 @@ criticise an app in consecutive sentences.
 | `api/` | FastAPI REST API: the documented interface for any frontend (DESIGN decision 23) | `uvicorn api.main:app` |
 | `dashboard/` | Streamlit dashboard, maintained by a teammate; reads the database directly | `streamlit run dashboard/app.py` |
 | `config/` | Aspect taxonomy, logging configuration | — |
-| `scripts/` | Service lifecycle, overnight backfill, model comparison, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
+| `scripts/` | Service lifecycle, overnight backfill, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
 
 The LLM aspect classifier of DESIGN decision 16 is built
 (`aspects/llm_classify.py`) and evaluated against the human aspect labels,

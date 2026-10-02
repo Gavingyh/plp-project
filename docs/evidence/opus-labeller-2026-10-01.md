@@ -176,8 +176,9 @@ separate, reviewed step.
 The same procedure rated two sheets people haven't labelled yet, blind:
 the top-up sheet's aspects ([labelling-topup](labelling-topup-2026-10-01.md))
 and the bank-NER gold sheet ([bank-ner](bank-ner-2026-10-01.md)).
-`train/opus_extra.py` writes the batches, merges and scores them; the audit's
-allowed files now include the NER batch names.
+`python -m train.opus_labels extra batches|merge|score topup|ner` writes the
+batches, merges and scores them; the audit's allowed files now include the
+NER batch names.
 
 ## Caveats
 

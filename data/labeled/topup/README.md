@@ -18,6 +18,11 @@ centroid similarity and checked by `llama3.1:8b`, whose aspect is kept in
 annotators of the 27 Sep round kept the model's suggestion on 92% of rows,
 which is why it isn't shown here.
 
+When labelled, merge into `data/labeled/candidates.csv` (rows marked
+`not_about_bank` are left out):
+
+    .venv-plp/bin/python3 -m train.labels --topup data/labeled/topup/topup_sheet.csv
+
 Two people should label the same 40 rows first and check aspect agreement:
 
     .venv-plp/bin/python3 -m train.agreement --a sheet_a.csv --b sheet_b.csv --field aspect

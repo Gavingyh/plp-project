@@ -495,6 +495,14 @@ fails if a page and its `.mmd` differ; `pytest -q` from the repository root runs
 > .venv-plp/bin/python3 -m train.labels
 > ```
 >
+> A labelled top-up sheet (`preprocess.export_topup`) is added the same way;
+> its rows join train_dev, `not_about_bank` rows are left out, and a sentence
+> already labelled is refused:
+>
+> ```bash
+> .venv-plp/bin/python3 -m train.labels --topup data/labeled/topup/topup_sheet.csv
+> ```
+>
 > The commands below are for the next round.
 
 ```bash

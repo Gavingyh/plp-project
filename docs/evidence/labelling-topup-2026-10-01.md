@@ -113,9 +113,10 @@ aspect agreement:
 ```
 
 Don't open `llm_aspects.csv` until labelling is done; afterwards it gives the
-LLM's accuracy on a second, blind sample. Merging the labelled rows into
-`candidates.csv` needs `url` and `published_at` from the database; no merge
-script exists yet.
+LLM's accuracy on a second, blind sample. Merge the labelled rows with
+`python -m train.labels --topup <labelled sheet>` (added 2 Oct): rows with an
+aspect and a label join train_dev, `not_about_bank` rows are left out, and a
+sentence already labelled is refused.
 
 ## Code
 

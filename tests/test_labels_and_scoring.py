@@ -125,3 +125,52 @@ def test_classify_sentences_returns_results_in_input_order_despite_length_batchi
     texts = ["a long sentence", "hi", "another long one", "yo", "ok"]
     labels = [label for label, _ in score.classify_sentences(texts)]
     assert labels == ["positive", "negative", "positive", "negative", "negative"]
+
+
+# --- top-up sheets (2026-10-02) ------------------------------------------------------
+
+def _topup_db(temp_db, ids):
+    from ingest.db import now_iso
+    conn = temp_db.get_connection()
+    for sid in ids:
+        conn.execute("INSERT INTO sentences (sentence_id, doc_id, bank, text, published_at, source, url, "
+                     "norm_hash, processed_at) VALUES (?, 'd', 'DBS', ?, '2025-05-01', 'earnings', ?, ?, ?)",
+                     (sid, f"text {sid}", f"https://x/{sid}", f"h{sid}", now_iso()))
+    conn.commit()
+    return conn
+
+
+def test_topup_rows_join_train_dev_with_url_and_date(tmp_path, temp_db):
+    conn = _topup_db(temp_db, ["t1", "t2", "t3", "t4"])
+    sheet = tmp_path / "topup.csv"
+    pd.DataFrame([
+        {"sentence_id": "t1", "bank": "DBS", "source": "earnings", "text": "a", "aspect": "dividend_policy",
+         "label": "Positive", "not_about_bank": "", "annotator": "A"},
+        {"sentence_id": "t2", "bank": "DBS", "source": "earnings", "text": "b", "aspect": "asset_quality",
+         "label": "neutral", "not_about_bank": "yes", "annotator": "A"},          # not about the bank
+        {"sentence_id": "t3", "bank": "DBS", "source": "earnings", "text": "c", "aspect": "",
+         "label": "", "not_about_bank": "", "annotator": ""},                      # not labelled yet
+    ]).to_csv(sheet, index=False)
+    cand = [_row("s1", "dividend_policy", "train_dev", "positive"), _row("s3", "asset_quality", "test", "neutral")]
+    blind = [{"sentence_id": "s3", "aspect": "asset_quality", "label": "neutral"}]
+    c, b, out = _write(tmp_path, cand, blind)
+    report = prepare(c, b, out, [str(sheet)], conn=conn)
+    df = pd.read_csv(out)
+    added = df[df["sentence_id"] == "t1"].iloc[0]
+    assert report["topup_rows_added"] == 1 and set(df["sentence_id"]) == {"s1", "s3", "t1"}
+    assert added["split"] == "train_dev" and added["label"] == "positive" and added["url"] == "https://x/t1"
+    assert added["sampling_method"] == "topup" and added["published_at"] == "2025-05-01"
+
+
+def test_topup_refuses_a_sentence_already_labelled_or_an_invalid_label(tmp_path, temp_db):
+    conn = _topup_db(temp_db, ["s3", "t9"])
+    cand = [_row("s3", "asset_quality", "test", "neutral")]
+    blind = [{"sentence_id": "s3", "aspect": "asset_quality", "label": "neutral"}]
+    c, b, out = _write(tmp_path, cand, blind)
+    sheet = tmp_path / "topup.csv"
+    pd.DataFrame([{"sentence_id": "s3", "aspect": "asset_quality", "label": "neutral"}]).to_csv(sheet, index=False)
+    with pytest.raises(ValueError, match="already labelled"):
+        prepare(c, b, out, [str(sheet)], conn=conn)
+    pd.DataFrame([{"sentence_id": "t9", "aspect": "asset_quality", "label": "great"}]).to_csv(sheet, index=False)
+    with pytest.raises(ValueError, match="invalid labels"):
+        prepare(c, b, out, [str(sheet)], conn=conn)

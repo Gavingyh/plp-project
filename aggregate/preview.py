@@ -10,15 +10,26 @@ Four scenarios, each scored with the index's own `_summarize`:
   C  centroid aspects + fine-tuned average
   D  LLM aspect      + fine-tuned average
 
-Reads only. LLM answers go to the classifier's cache (data/aspect_llm/), and
-the per-sentence results to data/preview/ (gitignored) so a re-run resumes.
+Reads only. LLM answers go to the classifier's cache (data/aspect_llm/). The
+fine-tuned models' averaged probabilities go to data/preview/scores.<key>.jsonl,
+where <key> names the models and the device, a chunk at a time, so an
+interrupted run resumes and a second view of the same pairs (another neutral
+margin) costs minutes. Results go to data/preview/ (all gitignored).
+
+`--margin` applies the dev-chosen neutral margin to C and D: a sentence is
+neutral unless the stronger of negative and positive beats neutral by more
+than the margin, as in docs/model-card.md. The default, 0, is the plain most
+likely class used for the 11,000-sentence preview.
 
 USAGE:
   HF_HUB_OFFLINE=1 python -m aggregate.preview --n 1000 --cpu
+  HF_HUB_OFFLINE=1 python -m aggregate.preview --n 44345 --cpu --margin 0.13     # the whole corpus
   HF_HUB_OFFLINE=1 python -m aggregate.preview --n 2000 --models models/experiments-2026-10-01/label/seed_{42,1,7}/final
 """
 
 import argparse
+import hashlib
+import json
 import os
 from collections import defaultdict
 
@@ -40,27 +51,89 @@ def sample_sentences(conn, n: int, seed: int) -> pd.DataFrame:
 
 
 def stored_pairs(conn, ids: list[str]) -> pd.DataFrame:
-    """Today's (sentence, aspect) pairs with base FinBERT's label and confidence."""
-    q = ",".join("?" * len(ids))
-    return pd.read_sql(f"""
-        SELECT sa.sentence_id, sa.aspect, ase.label, ase.confidence
-        FROM sentence_aspects sa
-        JOIN aspect_sentiment ase ON ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect
-        WHERE sa.sentence_id IN ({q})""", conn, params=ids)
+    """Today's (sentence, aspect) pairs with base FinBERT's label and confidence.
+    Queried in batches: SQLite caps the parameters of one statement."""
+    parts = []
+    for i in range(0, len(ids), 10000):
+        batch = ids[i:i + 10000]
+        q = ",".join("?" * len(batch))
+        parts.append(pd.read_sql(f"""
+            SELECT sa.sentence_id, sa.aspect, ase.label, ase.confidence
+            FROM sentence_aspects sa
+            JOIN aspect_sentiment ase ON ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect
+            WHERE sa.sentence_id IN ({q})""", conn, params=batch))
+    return pd.concat(parts, ignore_index=True)
 
 
-def finetuned_labels(pairs: pd.DataFrame, model_dirs: list[str]) -> pd.DataFrame:
-    """The average of the models' probabilities for each (sentence, aspect) pair: label and its probability."""
-    from train.evaluate import finetuned_probs
-    probs = np.mean([finetuned_probs(d, pairs) for d in model_dirs], axis=0)
-    # On 2026-10-01 the GPU, under memory pressure, returned all-zero rows
-    # without an error, which argmax turned into "negative" everywhere.
-    if not np.allclose(probs.sum(axis=1), 1.0, atol=1e-3):
-        raise RuntimeError("model probabilities don't sum to 1: the device returned garbage; "
-                           "rerun with --cpu")
+def scores_cache_path(model_dirs: list[str]) -> str:
+    """The cache for this set of models on this device: each model's weights
+    (path, size, time) and input format, so retrained or different models
+    never reuse another set's probabilities."""
+    import train.evaluate
+    parts = [str(train.evaluate.best_device())]
+    for d in model_dirs:
+        st = os.stat(os.path.join(d, "model.safetensors"))
+        fmt_path = os.path.join(d, "input_format.json")
+        fmt = open(fmt_path).read() if os.path.exists(fmt_path) else ""
+        parts.append(f"{os.path.realpath(d)}|{st.st_size}|{st.st_mtime_ns}|{fmt}")
+    key = hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()[:8]
+    return os.path.join(OUT_DIR, f"scores.{key}.jsonl")
+
+
+def averaged_probs(pairs: pd.DataFrame, model_dirs: list[str], cache_path: str | None = None,
+                   chunk: int = 5000) -> np.ndarray:
+    """(n, 3) probabilities averaged over the models, one row per pair. With a
+    cache, only pairs not yet in it are scored, a chunk at a time, and each
+    chunk is appended once it is checked, so an interrupted run resumes."""
+    import train.evaluate
+
+    def score(df):
+        probs = np.mean([train.evaluate.finetuned_probs(d, df) for d in model_dirs], axis=0)
+        # On 2026-10-01 the GPU, under memory pressure, returned all-zero rows
+        # without an error, which argmax turned into "negative" everywhere.
+        if not np.allclose(probs.sum(axis=1), 1.0, atol=1e-3):
+            raise RuntimeError("model probabilities don't sum to 1: the device returned garbage; "
+                               "rerun with --cpu")
+        return probs
+
+    if cache_path is None:
+        return score(pairs)
+    done = {}
+    if os.path.exists(cache_path):
+        with open(cache_path) as f:
+            for line in f:
+                r = json.loads(line)
+                done[(r["sentence_id"], r["aspect"])] = r["probs"]
+    keys = list(zip(pairs["sentence_id"], pairs["aspect"]))
+    todo = pairs[[k not in done for k in keys]].drop_duplicates(["sentence_id", "aspect"])
+    if len(todo):
+        print(f"scoring {len(todo)} of {len(pairs)} pairs ({len(pairs) - len(todo)} cached) "
+              f"into {cache_path}", flush=True)
+    with open(cache_path, "a") as f:
+        for i in range(0, len(todo), chunk):
+            part = todo.iloc[i:i + chunk]
+            for sid, aspect, p in zip(part["sentence_id"], part["aspect"], score(part)):
+                done[(sid, aspect)] = [float(x) for x in p]
+                f.write(json.dumps({"sentence_id": sid, "aspect": aspect, "probs": done[(sid, aspect)]}) + "\n")
+            f.flush()
+            print(f"scored {min(i + chunk, len(todo))}/{len(todo)}", flush=True)
+    return np.array([done[k] for k in keys])
+
+
+def finetuned_labels(pairs: pd.DataFrame, model_dirs: list[str], cache_path: str | None = None,
+                     margin: float = 0.0) -> pd.DataFrame:
+    """Label and its probability for each (sentence, aspect) pair, from the
+    models' averaged probabilities. With a margin, the pair is neutral unless
+    the stronger of negative and positive beats neutral by more than it."""
+    probs = averaged_probs(pairs, model_dirs, cache_path)
     out = pairs[["sentence_id", "aspect"]].copy()
-    out["label"] = [LABELS[i] for i in probs.argmax(axis=1)]
-    out["confidence"] = probs.max(axis=1)
+    idx = probs.argmax(axis=1)
+    if margin > 0:
+        neg, neu, pos = probs[:, 0], probs[:, 1], probs[:, 2]
+        polar = np.where(pos >= neg, 2, 0)
+        idx = np.where(np.maximum(pos, neg) - neu > margin, polar, 1)
+    out["label"] = [LABELS[i] for i in idx]
+    out["confidence"] = probs[np.arange(len(probs)), idx]
     return out
 
 
@@ -115,6 +188,8 @@ def main():
     p.add_argument("--llm", default="llama3.1:8b")
     p.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
     p.add_argument("--cpu", action="store_true", help="run the fine-tuned models on the CPU")
+    p.add_argument("--margin", type=float, default=0.0,
+                   help="neutral margin for the fine-tuned models (0: the most likely class)")
     args = p.parse_args()
     if args.cpu:
         import train.evaluate
@@ -139,13 +214,17 @@ def main():
 
     a = stored[["sentence_id", "aspect", "label", "confidence"]]
     b = llm.merge(base_by_sentence, on="sentence_id")                     # base FinBERT is per sentence
-    c = finetuned_labels(stored[["sentence_id", "aspect"]].merge(texts, on="sentence_id"), args.models)
-    d = finetuned_labels(llm.merge(texts, on="sentence_id"), args.models)
+    cache = scores_cache_path(args.models)
+    c = finetuned_labels(stored[["sentence_id", "aspect"]].merge(texts, on="sentence_id"), args.models,
+                         cache, args.margin)
+    d = finetuned_labels(llm.merge(texts, on="sentence_id"), args.models, cache, args.margin)
+    tag = f"_margin{args.margin:g}" if args.margin else ""
     for name, df in (("A", a), ("B", b), ("C", c), ("D", d)):
-        df.to_csv(os.path.join(OUT_DIR, f"pairs_{name}.csv"), index=False)
+        df.to_csv(os.path.join(OUT_DIR, f"pairs_{name}{tag}.csv"), index=False)
 
     table = compare({k: summarize(v, meta) for k, v in (("A", a), ("B", b), ("C", c), ("D", d))})
-    table.to_csv(os.path.join(OUT_DIR, "index_preview.csv"), index=False)
+    table.to_csv(os.path.join(OUT_DIR, f"index_preview{tag}.csv"), index=False)
+    print(f"\nsample {len(meta)} sentences, neutral margin {args.margin:g}")
     print("\nHeadline (aspect ALL), per bank:\n" + _md(table[table["aspect"] == "ALL"]))
     print("\nPer bank and aspect:\n" + _md(table[table["aspect"] != "ALL"]))
 

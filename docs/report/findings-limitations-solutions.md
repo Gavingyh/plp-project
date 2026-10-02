@@ -125,10 +125,8 @@ team.*
 
 **Limitations**
 - Wealth, `other` and management guidance stay near 0.5 F1.
-- The full corpus takes about 33 hours on the MacBook (2.7 s a sentence,
-  measured on the corpus run); the cache was 38% full at 17:24 on 2 Oct.
-  Any change to the aspects, their definitions or the examples means a full
-  redo.
+- The full corpus takes about a day on the MacBook, and any change to the
+  aspects, their definitions or the examples means a full redo.
 
 **Solutions**
 - Built: the classifier and its corpus cache (resumable, no database writes).

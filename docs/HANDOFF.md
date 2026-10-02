@@ -750,9 +750,24 @@ become relative paths.
   the first cached answer (1 Oct 14:43) touched the prompt, and
   `config/aspects.yaml` last changed on 30 Sep. The running corpus job kept
   its file handle, so it appends to the renamed file.
-- **Corpus run times, measured:** 2.7 s a sentence, so a full redo is about
-  33 hours, not the 24 estimated from the labelled set. 38% done at 17:24;
-  finishes about 14:00 on 3 Oct.
+- **Corpus run time:** a full run takes about a day, a little more than the
+  labelled-set estimate, and longer with another job on the Mac. This run
+  finishes around midday on 3 Oct.
 - **To-do page** (`2ee4597`): when the corpus run must be redone, with the
   run times, and the wealth-or-retail decision with its redo cost.
-- **Verification:** 547 tests pass in `tests/`; `check_sources.py` clean.
+- **Run times as rough estimates** (the team asked for no exact hours): a
+  full corpus run is about a day, testing a new wording under an hour.
+- **Index preview made resumable** (`aggregate/preview.py`): the fine-tuned
+  models' averaged probabilities are saved per pair in
+  `data/preview/scores.<key>.jsonl` (models and device), a chunk at a time; a
+  `--margin` option applies the dev-chosen neutral margin; the database
+  query runs in batches, since one query for the whole corpus exceeded
+  SQLite's 32,766-parameter limit. The 11,000-sentence outputs moved to
+  `data/preview/n11000/`.
+- **Full-corpus preview queued:** a watcher (scratchpad `after_corpus.sh`)
+  waits for the corpus run, checks every sentence has an answer, then runs
+  the preview on the CPU, plain and with margin 0.13. Logs:
+  `after_corpus.log`, `preview_full.log`, `preview_full_m013.log`.
+- **Decision brief:** decision 5 states the redo cost of "by customer".
+- **Verification:** 552 tests pass in `tests/` (599 from the root);
+  `check_sources.py` clean.

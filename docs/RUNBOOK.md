@@ -449,7 +449,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-547 tests in `tests/`; `pytest -q` from the repository root runs 594,
+552 tests in `tests/`; `pytest -q` from the repository root runs 599,
 adding the diagram and notebook checks. No network calls — external APIs are
 mocked with captured real payloads, so a provider changing its response shape
 surfaces as a failing test rather than a silent production break.
@@ -641,8 +641,8 @@ caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model lla
 scores them against the human aspect: about 40 minutes for `llama3.1:8b`, 30
 for `qwen3:4b`. `--no-think` is needed for qwen3, whose hidden reasoning
 otherwise takes minutes a sentence. `--corpus` classifies every corpus
-sentence in a fixed random order: about 33 hours for `llama3.1:8b` at the
-2.7 s a sentence measured on the corpus run (2 Oct).
+sentence in a fixed random order: about a day for `llama3.1:8b`, longer with
+another job running on the Mac at the same time.
 
 Answers are cached in `data/aspect_llm/<model>.<prompt>.jsonl` (gitignored),
 so an interrupted run resumes with the same command and new sentences are
@@ -652,6 +652,24 @@ them and the next run starts a new file, so the corpus needs a full redo;
 change them back and the old file is used again. Each run prints its cache
 file. Neither command writes to the database; applying the answers to it is a
 team decision ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
+
+### The index preview (reads only)
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 11000 --cpu
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13   # whole corpus, neutral margin
+```
+
+Shows the index four ways: today's centroid aspects or the LLM's, each with
+base FinBERT or the fine-tuned average. It uses the LLM's cached answers for
+the sampled sentences and asks Ollama for any that are missing. The
+fine-tuned probabilities are saved in `data/preview/scores.<key>.jsonl`
+(`<key>` names the models and the device), so a stopped run resumes and a
+second margin takes minutes. Use `--cpu`: on 1 Oct the GPU returned garbage
+under memory pressure (the run now stops if that happens). The whole corpus
+takes about half a day on the CPU. Results go to
+`data/preview/index_preview*.csv`
+([evidence](evidence/index-preview-2026-10-01.md)).
 
 ### The Opus labeller
 

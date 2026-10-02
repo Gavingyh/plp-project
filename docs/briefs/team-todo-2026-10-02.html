@@ -157,7 +157,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Fri 2 Oct 2026, 17:45</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Fri 2 Oct 2026, evening</span></div>
   <h1>What the team has to do before 1 November</h1>
   <p class="lede">Every open item, in deadline order, with the reason it has to be done and what it unblocks. Decisions come first because most of the remaining work waits on them. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
   <div class="countdown"><b>30</b> days to submission · Sun 1 Nov</div>
@@ -168,7 +168,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <p class="sub">Each step needs the one before it. A slip at the start lands on the report at the end.</p>
   <ol class="path">
     <li><span class="d">by 5 Oct</span><span class="s">Decide the aspect method</span></li>
-    <li><span class="d">3–10 Oct</span><span class="s">Corpus classified: done ~3 Oct, or redone by 10 Oct (~33 h) if the aspect wording changes</span></li>
+    <li><span class="d">3–10 Oct</span><span class="s">Corpus classified: done ~3 Oct, or redone by 10 Oct (about a day) if the aspect wording changes</span></li>
     <li><span class="d">by 12 Oct</span><span class="s">Decide scoring model, attribution and chatbot settings</span></li>
     <li><span class="d">12–18 Oct</span><span class="s">Re-score once, re-run every evaluation</span></li>
     <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
@@ -187,12 +187,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-redo">
   <h2 id="h-redo">The corpus aspect run: when it has to be redone</h2>
-  <p class="sub"><code>llama3.1:8b</code> is giving each of the 44,345 sentences one aspect, saved to <code>data/aspect_llm/llama3.1_8b.96efe244.jsonl</code>; nothing in the database changes. The answers are only good for the exact question the model was asked, so changing that question means starting again, which takes the MacBook about a day and a half.</p>
+  <p class="sub"><code>llama3.1:8b</code> is giving each of the 44,345 sentences one aspect, saved to <code>data/aspect_llm/llama3.1_8b.96efe244.jsonl</code>; nothing in the database changes. The answers are only good for the exact question the model was asked, so changing that question means starting again, which takes the MacBook about a day.</p>
   <div class="tiles">
-    <div><b>~21 h</b><span class="k">left on the current run</span><span>38% done at 17:24 on Fri 2 Oct; finishes about 14:00 on Sat 3 Oct if the Mac stays awake and plugged in.</span></div>
-    <div><b>~33 h</b><span class="k">for a full redo</span><span>44,345 sentences at 2.7 s each, the rate of the current run. Longer if the Mac sleeps or runs other model jobs.</span></div>
-    <div><b>~1 h</b><span class="k">to test a new wording first</span><span>The 1,277 labelled sentences at 2–2.7 s each, scored against the human aspects.</span></div>
-    <div><b>2.7 s</b><span class="k">per new sentence</span><span>New data needs no redo: only sentences not yet in the cache are classified.</span></div>
+    <div><b>Sat midday</b><span class="k">the current run finishes</span><span>If the Mac stays awake and plugged in.</span></div>
+    <div><b>~1 day</b><span class="k">for a full redo</span><span>All 44,345 sentences again. Longer if other jobs run on the Mac at the same time.</span></div>
+    <div><b>&lt;1 h</b><span class="k">to test a new wording first</span><span>The 1,277 labelled sentences, scored against the human aspects.</span></div>
+    <div><b>Nothing</b><span class="k">lost on a stop or crash</span><span>The same command resumes, and new data only adds its own sentences.</span></div>
   </div>
   <div class="twocol">
     <div>
@@ -218,10 +218,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <ol class="steps">
     <li>Stop the current run or let it finish: two jobs on the Mac's GPU slow each other.</li>
     <li>Edit the definitions or examples in <code>aspects/llm_classify.py</code>.</li>
-    <li>Test, about 1 h: <code>.venv-plp/bin/python3 -m aspects.llm_classify --eval</code>. Compare with 0.729 top-1 and wealth F1 0.50 today.</li>
-    <li>Better: redo the corpus, about 33 h, with <code>caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b</code>. Not better: undo the edit; the old answers are used again.</li>
+    <li>Test, under an hour: <code>.venv-plp/bin/python3 -m aspects.llm_classify --eval</code>. Compare with 0.729 top-1 and wealth F1 0.50 today.</li>
+    <li>Better: redo the corpus, about a day, with <code>caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b</code>. Not better: undo the edit; the old answers are used again.</li>
   </ol>
-  <p class="muted">A redo started by Fri 9 Oct still finishes before the 12–18 Oct re-score week. While it runs, other local-model jobs (chatbot evaluations, the judge) share the Mac's GPU: running them alongside slows both and has caused timeouts.</p>
+  <p class="muted">A redo started by Fri 9 Oct still finishes before the 12–18 Oct re-score week. While it runs, other local-model jobs (chatbot evaluations, the judge) share the Mac: running them alongside slows both and has caused timeouts.</p>
 </section>
 
 <section aria-labelledby="h-wk1">
@@ -232,12 +232,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Run the LLM aspect classifier on the whole corpus, and choose the disagreement rule <span class="chip decide">Decision</span></span>
       <span class="when">by 5 Oct</span>
       <p class="why"><b>Why:</b> the database's aspects come from seed centroids, which give a sentence about 6.4 aspects and match the human's aspect only 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. On an 11,000-sentence preview, switching separates the aspects: under centroids every aspect of every bank is positive; with the LLM, retail banking turns slightly negative for all three banks and DBS asset quality falls from +0.27 to +0.07. Every per-aspect claim in the report depends on this. Choose with it what happens to the 24% of sentences where the two models disagree: keep llama's answer, or mark them <code>other</code>.</p>
-      <span class="meta">Unblocks: the re-score. The corpus run is already under way (38% at 17:24 on 2 Oct) and finishes about 14:00 on 3 Oct. Source: llm-aspect-classifier, index-preview.</span>
+      <span class="meta">Unblocks: the re-score. The corpus run is already under way and finishes around midday on 3 Oct. Source: llm-aspect-classifier, index-preview.</span>
     </li>
     <li data-o="decide">
       <span class="t">Wealth or retail for priority-banking products, and whether the classifier's wording follows <span class="chip decide">Decision</span></span>
       <span class="when">best by 3 Oct</span>
-      <p class="why"><b>Why:</b> DBS Treasures, OCBC Premier and unit trusts bought at a bank are the boundary behind 63 of Opus's aspect disagreements, and wealth is one of the classifier's weakest aspects (F1 0.50). <b>"By product"</b> (recommended) is already close to the classifier's wording: premier and private banking are wealth; cards, savings accounts and fees are retail. It doesn't name unit trusts or other investment products, so adding them is a small edit to test (about 1 h) before deciding on a redo. <b>"By customer"</b> changes the definitions, so the corpus run has to be redone: <b>about 33 hours</b>. The current run finishes about 14:00 on Sat 3 Oct; if the team leans to "by customer", saying so before then and stopping the run saves up to 21 hours of machine time. Changing only the labelling guideline needs no redo, but the classifier is then scored against labels that follow a different rule on that boundary.</p>
+      <p class="why"><b>Why:</b> DBS Treasures, OCBC Premier and unit trusts bought at a bank are the boundary behind 63 of Opus's aspect disagreements, and wealth is one of the classifier's weakest aspects (F1 0.50). <b>"By product"</b> (recommended) is already close to the classifier's wording: premier and private banking are wealth; cards, savings accounts and fees are retail. It doesn't name unit trusts or other investment products, so adding them is a small edit to test (under an hour) before deciding on a redo. <b>"By customer"</b> changes the definitions, so the corpus run has to be redone: <b>about a day</b> of the MacBook. The current run finishes around midday on Sat 3 Oct; if the team leans to "by customer", saying so before then and stopping the run saves the rest of it. Changing only the labelling guideline needs no redo, but the classifier is then scored against labels that follow a different rule on that boundary.</p>
       <span class="meta">Decision 5 in the decision brief (due 5 Oct). Run times and steps: "The corpus aspect run" above. Source: llm-aspect-classifier, opus-labeller.</span>
     </li>
     <li data-o="decide">
@@ -340,12 +340,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="ai">
       <span class="t">Finish the corpus aspect cache <span class="chip ai">Claude</span></span>
       <span class="when">running now</span>
-      <p class="why"><b>Why:</b> 38% at 17:24 on 2 Oct, about 2.7 s a sentence; it finishes about 14:00 on Sat 3 Oct if the Mac stays awake, so the 5 Oct decision doesn't wait for it.</p>
+      <p class="why"><b>Why:</b> under way; it finishes around midday on Sat 3 Oct if the Mac stays awake, so the 5 Oct decision doesn't wait for it.</p>
     </li>
     <li data-o="ai">
       <span class="t">Score the corpus with the fine-tuned models into a file, and preview the index on the full corpus <span class="chip ai">Claude</span></span>
-      <span class="when">after the cache</span>
-      <p class="why"><b>Why:</b> the 11,000-sentence preview shows the direction; the full corpus has four times the sentences in every bank, aspect and month, so the team sees exactly what each decision does, and applying the chosen model then takes minutes.</p>
+      <span class="when">starts by itself</span>
+      <p class="why"><b>Why:</b> set to start when the corpus run ends and take about half a day on the CPU, so it should be ready before the 5 Oct decision. It also shows the fine-tuned models with the dev-chosen neutral margin, which the 11,000-sentence preview left out. The 11,000-sentence preview shows the direction; the full corpus has four times the sentences in every bank, aspect and month, so the team sees exactly what each decision does, and applying the chosen model then takes minutes.</p>
     </li>
     <li data-o="ai">
       <span class="t">Re-export the ratings sheet for the final chatbot, ordered by the judge <span class="chip ai">Claude</span></span>
@@ -454,7 +454,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Figures are from the evidence files on <code>main</code>, 2 Oct 2026, 17:45. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+<footer>Figures are from the evidence files on <code>main</code>, 2 Oct 2026, evening. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
 
 </div>
 <script>

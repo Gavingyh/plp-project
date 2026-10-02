@@ -101,9 +101,10 @@ hours**; qwen3:4b without thinking at 1.33 s (median 1.27, p95 1.72) about
 out one request that took 5,312 s because the Mac slept during it (battery,
 15:51–17:20); its run's printed mean, 5.49 s, includes it.
 
-*Measured on the corpus run itself (2 Oct):* llama3.1:8b takes about 2.7 s a
-sentence there, slower than on the labelled set (the cause wasn't checked),
-so the whole corpus is about **33 hours**, not 24.
+*On the corpus run itself (2 Oct):* llama3.1:8b ran somewhat slower than on
+the labelled set, so the whole corpus takes a little over a day, and it slows
+markedly while another job (such as the index preview on the CPU) runs
+alongside.
 
 ## Caveats
 

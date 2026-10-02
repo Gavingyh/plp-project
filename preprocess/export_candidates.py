@@ -69,7 +69,7 @@ def export(train_dev_target: int, test_target: int, seed: int = 42) -> dict:
 
     if len(candidates) < train_dev_target + test_target:
         logger.warning(f"WARNING: only {len(candidates)} candidates available, "
-              f"requested {train_dev_target + test_target}. Exporting what exists — "
+              f"requested {train_dev_target + test_target}. Exporting what exists - "
               "run more ingestion before treating this as the real labeling set.")
 
     # TEST FIRST, purely at random, before any model-assisted selection touches

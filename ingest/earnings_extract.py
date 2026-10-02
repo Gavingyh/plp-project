@@ -116,7 +116,7 @@ def extract_prose(pdf_path: str) -> list[str]:
 def pull() -> list[dict]:
     if not os.path.isdir(PDF_DIR):
         logger.warning(f"No {PDF_DIR} directory found.")
-        logger.info("Create data/earnings_pdfs/<BANK>/*.pdf and re-run — "
+        logger.info("Create data/earnings_pdfs/<BANK>/*.pdf and re-run - "
               "see docs/DESIGN.md for where to source these (bank IR sites).")
         return []
 
@@ -134,7 +134,7 @@ def pull() -> list[dict]:
             try:
                 paragraphs = extract_prose(path)
             except Exception as e:
-                logger.error(f"{fname}: ERROR extracting text — {e}")
+                logger.error(f"{fname}: ERROR extracting text - {e}")
                 continue
             body = "\n".join(paragraphs)
             if not body.strip():

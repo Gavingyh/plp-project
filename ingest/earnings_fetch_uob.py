@@ -127,7 +127,7 @@ def download(entries: list[dict], out_dir: str = OUT_DIR) -> dict:
             resp = requests.get(wayback_url, timeout=120)
             resp.raise_for_status()
         except Exception as e:
-            logger.warning("%s: download failed — %s", entry["filename"], e)
+            logger.warning("%s: download failed - %s", entry["filename"], e)
             failed += 1
             continue
 
@@ -135,7 +135,7 @@ def download(entries: list[dict], out_dir: str = OUT_DIR) -> dict:
             # Usually a WAF stub or an archive error page captured as if it
             # were the document. Writing it would produce a file that fails
             # extraction much later, with a confusing message.
-            logger.warning("%s: not a PDF (%d bytes) — discarded",
+            logger.warning("%s: not a PDF (%d bytes) - discarded",
                            entry["filename"], len(resp.content))
             failed += 1
             continue

@@ -117,7 +117,7 @@ def _fetch_window(bank: str, query: str, start: date, end: date) -> list[dict]:
     try:
         entries = _fetch(q)
     except Exception as e:
-        logger.error(f"{bank} {q!r}: ERROR — {e}")
+        logger.error(f"{bank} {q!r}: ERROR - {e}")
         return []
     if len(entries) >= SPLIT_AT and (end - start).days > 1:
         mid = start + (end - start) / 2

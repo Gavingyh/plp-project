@@ -210,7 +210,7 @@ def _print_table(rows: list[dict], show_floor: bool) -> None:
 def run(floors: tuple[float, ...] | None = None, sweep: bool = False):
     sentence_ids, vectors = load_for_search()
     if len(sentence_ids) == 0:
-        print("No embedded sentences found — run `python -m aspects.embed_store` first.")
+        print("No embedded sentences found - run `python -m aspects.embed_store` first.")
         return
 
     live = configured_floor()
@@ -231,14 +231,14 @@ def run(floors: tuple[float, ...] | None = None, sweep: bool = False):
           f"says otherwise.")
     print("\nHow to read this:")
     print("  - avg_aspects_per_sentence closer to 1 = more discriminating (candidate P's known")
-    print("    problem, quantified here — most sentences matching ~4 of 5 aspects near-equally).")
+    print("    problem, quantified here - most sentences matching ~4 of 5 aspects near-equally).")
     print("  - A is the live config/aspects.yaml; P is the proposal's four, the taxonomy until 30 Sep.")
     print("  - avg_centroid_separation higher = the aspects are more distinct from each other.")
     print("    It does NOT move with the floor: it describes the taxonomy's geometry, so it is")
     print("    the one column a floor change cannot flatter.")
     print("  - pct_other very high or very low are both worth a second look: too high means the")
     print("    taxonomy doesn't fit the corpus; too low (~0%) means the floor never triggers.")
-    print("\nThis is decision support, not a decision — see config/aspects.yaml's header comment")
+    print("\nThis is decision support, not a decision - see config/aspects.yaml's header comment")
     print("and the design notes' 'Aspect taxonomy sign-off' open decision.")
 
 

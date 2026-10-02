@@ -79,7 +79,7 @@ def _check_environment():
         print(f"FATAL: running under Python {sys.version.split()[0]} ({sys.executable}), "
               "but this codebase requires 3.10+ (uses `X | None` type syntax throughout). "
               "This almost always means .venv-plp wasn't actually active when this script "
-              "was launched — a conda/miniforge base env auto-activating in your shell "
+              "was launched - a conda/miniforge base env auto-activating in your shell "
               "profile is a common cause, since it can run *after* `source "
               ".venv-plp/bin/activate` and silently take over `python3` on PATH.\n\n"
               "Fix: invoke the venv's interpreter by absolute path instead of relying on "
@@ -90,7 +90,7 @@ def _check_environment():
     try:
         import requests  # noqa: F401
     except ImportError:
-        print(f"FATAL: 'requests' isn't importable under {sys.executable} — this isn't the "
+        print(f"FATAL: 'requests' isn't importable under {sys.executable} - this isn't the "
               "project's venv. See the Python-version message above for the fix.", file=sys.stderr)
         sys.exit(1)
 
@@ -128,7 +128,7 @@ def run():
         else:
             log(f"ERROR {since} -> {until}  exit={result.returncode}  "
                 f"stderr_tail={result.stderr[-500:]!r}")
-            log("       Continuing to next chunk — Arctic Shift has no uptime guarantee, "
+            log("       Continuing to next chunk - Arctic Shift has no uptime guarantee, "
                 "a transient failure here doesn't need to stop the whole run. "
                 "Re-run this script later to retry unmarked chunks.")
 

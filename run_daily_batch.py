@@ -30,7 +30,7 @@ GOOGLE_DAYS = 45  # overlap generously; already-stored articles are skipped
 
 
 def main(reddit_since: str | None):
-    logger.info("DAILY BATCH RUN — %s", datetime.now(timezone.utc).isoformat())
+    logger.info("DAILY BATCH RUN - %s", datetime.now(timezone.utc).isoformat())
 
     total_inserted = 0
 

@@ -40,7 +40,7 @@ def _load_test_set() -> pd.DataFrame:
     check_splits(df)
     df = df[(df["split"] == "test") & (df["label"].isin(LABELS))]
     if df.empty:
-        raise ValueError("No labeled test rows found — Labeling must be complete first.")
+        raise ValueError("No labeled test rows found - Labeling must be complete first.")
     return df
 
 
@@ -58,7 +58,7 @@ def eval_lexicon(df: pd.DataFrame) -> dict:
     try:
         from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
     except ImportError:
-        print("vaderSentiment not installed (pip install vaderSentiment) — skipping lexicon baseline.")
+        print("vaderSentiment not installed (pip install vaderSentiment) - skipping lexicon baseline.")
         return {}
     analyzer = SentimentIntensityAnalyzer()
     preds = []
@@ -160,7 +160,7 @@ def run(model_dir: str | list[str] | None):
         base = results[0]
         if fine["macro_f1"] <= base["macro_f1"]:
             print("\nWARNING: fine-tuned model did NOT beat base FinBERT zero-shot. Per the plan, "
-                  "this is a reportable finding, not a defect to hide — investigate label quality "
+                  "this is a reportable finding, not a defect to hide - investigate label quality "
                   "(kappa), training set size, and whether aspect-conditioning is actually helping "
                   "before concluding the approach failed.")
 

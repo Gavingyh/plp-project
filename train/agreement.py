@@ -160,7 +160,7 @@ def report(result: dict, show_disagreements: int = 0) -> str:
         f"Rows compared:        {result['n_compared']}",
         f"Rows skipped:         {result['n_skipped']}  (a rater left it blank or non-standard)",
         f"Observed agreement:   {result['observed_agreement']:.3f}",
-        f"Cohen's kappa:        {result['cohen_kappa']:.3f}  — {result['interpretation']}",
+        f"Cohen's kappa:        {result['cohen_kappa']:.3f}  - {result['interpretation']}",
         "",
     ]
 
@@ -168,7 +168,7 @@ def report(result: dict, show_disagreements: int = 0) -> str:
     if gap > 0.3:
         lines += [
             f"NOTE: raw agreement exceeds kappa by {gap:.2f}. Much of the agreement here is",
-            "explained by the label distribution rather than by shared judgement — this is",
+            "explained by the label distribution rather than by shared judgement - this is",
             "what a heavily neutral corpus looks like. Trust kappa, not the raw figure.",
             "",
         ]

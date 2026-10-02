@@ -37,7 +37,7 @@ AV_KEY = os.environ.get("ALPHAVANTAGE_KEY")
 
 def pull() -> list[dict]:
     if not AV_KEY:
-        logger.warning("Skipped — set ALPHAVANTAGE_KEY in .env to run this.")
+        logger.warning("Skipped - set ALPHAVANTAGE_KEY in .env to run this.")
         return []
 
     docs = []
@@ -84,7 +84,7 @@ def pull() -> list[dict]:
                     "raw": a,
                 })
         except Exception as e:
-            logger.error(f"{bank}: ERROR — {e}")
+            logger.error(f"{bank}: ERROR - {e}")
         time.sleep(15)  # free tier is 25 req/day - space calls out, avoid burning quota fast
 
     return docs

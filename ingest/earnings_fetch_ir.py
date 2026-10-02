@@ -125,7 +125,7 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
     try:
         targets = discover(bank, since_year)
     except Exception as e:
-        logger.error(f"{bank}: could not read listing page — {e}")
+        logger.error(f"{bank}: could not read listing page - {e}")
         stats["failed"] += 1
         return stats
 
@@ -146,7 +146,7 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
             resp.raise_for_status()
             if not resp.content.startswith(b"%PDF"):
                 logger.warning(f"{bank}: {local_name} is not a PDF (got "
-                      f"{resp.content[:20]!r}) — skipping")
+                      f"{resp.content[:20]!r}) - skipping")
                 stats["failed"] += 1
                 continue
             with open(dest, "wb") as f:
@@ -154,7 +154,7 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
             logger.info(f"{bank}: {local_name} ({len(resp.content) // 1024}KB)")
             stats["downloaded"] += 1
         except Exception as e:
-            logger.error(f"{bank}: FAILED {local_name} — {e}")
+            logger.error(f"{bank}: FAILED {local_name} - {e}")
             stats["failed"] += 1
         time.sleep(_POLITE_DELAY_SECONDS)
     return stats
@@ -167,7 +167,7 @@ def run(since_year: int = 2023, dry_run: bool = False) -> dict:
         all_stats[bank] = fetch(bank, since_year=since_year, dry_run=dry_run)
 
     logger.info("--- UOB ---")
-    logger.info("UOB: not handled here — uobgroup.com sits behind a WAF that "
+    logger.info("UOB: not handled here - uobgroup.com sits behind a WAF that "
                 "rejects non-browser clients. Run "
                 "`python -m ingest.earnings_fetch_uob` instead; it fetches the "
                 "same PDFs from the Wayback Machine into "

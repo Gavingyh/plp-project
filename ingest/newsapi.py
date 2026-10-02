@@ -40,7 +40,7 @@ MAX_PAGES = 4
 
 def pull() -> list[dict]:
     if not NEWSAPI_KEY:
-        logger.warning("Skipped — set NEWSAPI_KEY in .env to run this.")
+        logger.warning("Skipped - set NEWSAPI_KEY in .env to run this.")
         return []
 
     docs = []
@@ -100,7 +100,7 @@ def pull() -> list[dict]:
                 if len(articles) < 100 or (isinstance(total_results, int) and total_this_bank >= total_results):
                     break
             except Exception as e:
-                logger.error(f"{bank} page {page}: ERROR — {e}")
+                logger.error(f"{bank} page {page}: ERROR - {e}")
                 break  # free-tier page-depth limits surface as errors here - stop, don't retry deeper pages
             time.sleep(1)  # be polite to free tier
         time.sleep(1)

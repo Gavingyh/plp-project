@@ -164,7 +164,7 @@ def _load_labeled(split: str) -> pd.DataFrame:
     if df.empty:
         raise ValueError(
             f"No labeled rows found for split='{split}'. Labeling needs to happen "
-            "before this script can run — see docs/annotation-guideline.md."
+            "before this script can run - see docs/annotation-guideline.md."
         )
     return df
 

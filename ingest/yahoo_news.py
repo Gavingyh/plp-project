@@ -92,7 +92,7 @@ def pull() -> list[dict]:
                 try:
                     items = yf.Ticker(ticker).get_news(count=COUNT, tab=tab)
                 except Exception as e:
-                    logger.error(f"{bank} {ticker} [{tab}]: ERROR — {e}")
+                    logger.error(f"{bank} {ticker} [{tab}]: ERROR - {e}")
                     items = []
                 for item in items:
                     doc = to_document(item, bank, ticker, tab)

@@ -52,7 +52,7 @@ def run(min_cluster_size: int = 10) -> None:
 
     sentence_ids, vectors = load_for_search()
     if len(sentence_ids) < min_cluster_size * 2:
-        print(f"\nOnly {len(sentence_ids)} sentences embedded — too few to cluster "
+        print(f"\nOnly {len(sentence_ids)} sentences embedded - too few to cluster "
               f"meaningfully yet (need several times min_cluster_size={min_cluster_size}). "
               "Run more ingestion/preprocessing first.")
         return
@@ -78,7 +78,7 @@ def run(min_cluster_size: int = 10) -> None:
     # aligned.
     missing = [i for i, sid in enumerate(sentence_ids) if sid not in text_by_id]
     if missing:
-        logger.warning("%d embedded sentence(s) no longer in the sentences table — dropping",
+        logger.warning("%d embedded sentence(s) no longer in the sentences table - dropping",
                        len(missing))
         keep = [i for i in range(len(sentence_ids)) if i not in set(missing)]
         sentence_ids = [sentence_ids[i] for i in keep]

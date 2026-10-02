@@ -15,8 +15,9 @@ assumed and by whom, and why the answer matters. Write the team's answer
 under each; where it changes a rule, the item says where the rule lives.
 
 **How much it matters, in one paragraph.** Singlish itself is rare: 121
-sentences (0.3%) carry a particle such as *lah*, *lor* or *liao*, and only 12
-of the 1,277 labelled sentences contain any Singlish, slang or emoji, so how
+sentences (0.3%) carry a particle such as *lah*, *lor* or *liao*, and only about
+a dozen of the 1,277 labelled sentences contain any Singlish, slang or emoji
+(12 by the 2 Oct word match, whose word list wasn't recorded), so how
 the models handle it is barely measured (on those 12, base FinBERT gave a
 different label from people on 2 and none on 3). Local **product** vocabulary is common: "UOB One" alone is in
 2,908 sentences, and the aspect a product sentence belongs to (retail

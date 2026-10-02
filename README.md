@@ -150,8 +150,8 @@ What a teammate needs, beyond `git clone` and the Quick start:
 | file | needed for | size |
 |---|---|---|
 | the latest snapshot (`plp-2026-09-30.db.gz`) | everything: unpack to `data/plp.db` | 41.5 MB |
-| `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 121 MB |
-| the three fine-tuned models | only to reproduce the sentiment results or re-score with them; the database holds base FinBERT's scores | 3 × 418 MB |
+| `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 127 MB |
+| the three fine-tuned models | only to reproduce the sentiment results or re-score with them; the database holds base FinBERT's scores | 3 × 438 MB |
 
 `scripts/share_bundle.sh OUT_DIR [--with-models]` copies these into one
 folder with a `SHA256SUMS` file (check with `shasum -a 256 -c SHA256SUMS`);

@@ -779,3 +779,13 @@ become relative paths.
   a note in PLAN section 7, decision 6 of the brief and the to-do; the
   `vickers` rule in `preprocess/bank_ner.py` is unchanged until the team
   confirms.
+- **Model card and report docs corrected after a fact-check** of
+  `docs/model-card.md` and then of the fix: averaging the seeds is
+  the safer choice, not the best (seed 42 alone scores 0.630); train/dev was
+  drawn in thirds by base FinBERT's label, not by aspect; product names are
+  common in the labels (82 of 1,277), Singlish barely measured; the anchoring
+  may favour the fine-tuned models, unmeasured; the margin is 0.133; the
+  test labels weren't blind in practice; file sizes in decimal MB (models
+  438 MB, embeddings 127 MB). Same fixes in `docs/report/approach.md`,
+  `findings-limitations-solutions.md`, `local-context-questions.md`, the
+  technical spec and the README.

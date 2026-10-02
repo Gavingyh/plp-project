@@ -191,7 +191,7 @@ re-measured during the 2026-09-11 documentation pass.
 Every step after ingestion needs `HF_HUB_OFFLINE=1`, or HuggingFace's
 rate-limited metadata check can stall with near-zero CPU and look like a hang.
 
-Embeddings are cached in `data/sentence_embeddings.npz` (101 MB) and reused by
+Embeddings are cached in `data/sentence_embeddings.npz` (127 MB) and reused by
 assignment, discovery, taxonomy comparison and chatbot retrieval.
 
 ---

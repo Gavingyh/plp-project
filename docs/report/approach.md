@@ -55,8 +55,12 @@ sentences after cleaning, de-duplication and a relevance filter for news
 **Labelling** ([diagram 09](../diagrams/09-labelling-training.md)). Two
 people labelled 1,300 sentences for aspect and sentiment; 1,277 remain after
 removing duplicates and sentences on both sides of the split. The split:
-978 train/dev, drawn stratified to over-sample the rarer aspects and
-polarities; 299 test, drawn at random and frozen, labelled on a blind sheet.
+978 train/dev, drawn in equal thirds by base FinBERT's predicted label so
+that positive and negative sentences aren't swamped by neutral ones (not
+stratified by aspect); 299 test, drawn at random and frozen. The test rows
+were meant to be labelled blind, but on all 299 each annotator's blind label
+matches the label they gave earlier on the sheet that showed the suggestion
+([annotation-agreement](../evidence/annotation-agreement-2026-09-27.md)).
 
 > **Teaching note: a frozen random test split.** Selection (which
 > configuration, which threshold) must never see the test split, or the test
@@ -148,11 +152,14 @@ or cross-validation, never on the test split:
 > weights are for. Judging them needs a dev set sampled like the corpus.
 
 **After the choice: errors and the threshold**
-([error-analysis](../evidence/error-analysis-2026-10-01.md)). Most errors are
-neutral sentences called positive or negative, typically Reddit descriptions
-of retail products. A neutral margin, chosen on dev, calls a sentence neutral
+([error-analysis](../evidence/error-analysis-2026-10-01.md)). Without the margin,
+most of the averaged model's errors (57 of 101) are neutral sentences called
+positive or negative, two thirds of them from Reddit and over half about
+retail banking. A neutral margin, chosen on dev, calls a sentence neutral
 unless the top polar class beats neutral by that margin. Averaging the three
-seeds' probabilities and applying the margin gives the best test result:
+seeds' probabilities and applying the margin is the configuration chosen
+without looking at the test split; seed 42 alone scores higher on test
+(0.630, or 0.641 with its own margin), within the spread between seeds:
 
 | model | macro-F1 | accuracy |
 |---|---|---|
@@ -313,7 +320,7 @@ measured improvements reach the product, and what it cost.
 
 | part | strengths | weaknesses | verdict |
 |---|---|---|---|
-| labels | frozen random test split; leakage removed in code; human κ 0.93; an audited LLM rater shows where the guideline is loose | test labels anchored on a model's suggestion (89% match); no human aspect agreement; 39 negative test rows | **adequate**: comparisons between models hold, absolute scores less so |
+| labels | frozen random test split; leakage removed in code; human κ 0.93; an audited LLM rater shows where the guideline is loose | test labels anchored on a model's suggestion (89% match); no human aspect agreement; 39 negative test rows | **adequate, with an untested caveat**: the anchoring may favour the fine-tuned models, which learned from these labels; scoring both against the Opus labels would test it |
 | sentiment model | sound procedure: dev-only selection, rules fixed in advance, three seeds, three baselines, error analysis, a dev-chosen threshold | selection on one seed was inside the noise; the gain over zero-shot is about one seed sd; worse accuracy | **sound method, modest result**, honestly reported |
 | aspect discovery | standard, appropriate unsupervised method; parameter sensitivity measured | taxonomy labels drafted with an AI assistant, checked by no second person; FinBERT embeddings encode register | **adequate as exploration** |
 | aspect classification | measured against human labels; centroid failure diagnosed, not tuned around; LLM classifier far better, with a confidence signal | not yet applied; weak on loose boundaries and local products; 24 h of compute | **right method, not yet deployed** |

@@ -65,7 +65,7 @@ team.*
   macro near 49, because about half the macro sentences on it (25 of 52) are
   a bank's economists talking about the economy, which the guideline counts
   as not about the bank ([labelling-topup](../evidence/labelling-topup-2026-10-01.md)).
-- Singlish is rare (121 sentences, 0.3%; 12 labelled), but Singapore product
+- Singlish is rare (121 sentences, 0.3%; about a dozen labelled), but Singapore product
   vocabulary is everywhere: "UOB One" in 2,908 sentences, "OCBC 360" in 670
   ([local-context-questions](../local-context-questions.md)).
 
@@ -73,8 +73,10 @@ team.*
 - Aspect agreement between two people has never been measured; there is
   only one human aspect column.
 - Anchored test labels inflate agreement with any model that resembles the
-  suggestion model; comparisons between models survive better than absolute
-  scores.
+  suggestion model. The fine-tuned models learned from these labels and base
+  FinBERT never saw them, so the anchoring may favour the fine-tuned models
+  in the comparison itself; that hasn't been measured (scoring both against
+  the Opus labels would).
 - 39 negative sentences in the test split: one sentence moves negative F1 by
   about 0.02.
 - Opus agreement is human–LLM, not human–human.

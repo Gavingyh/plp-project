@@ -71,7 +71,8 @@ By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
 Codebase on 2026-10-01 (evening): 15,900 lines of Python in git (10,900
-excluding tests), 552 tests in `tests/` (599 with the diagram and notebook checks).
+excluding tests), 589 tests in `tests/` (636 with the diagram and notebook checks); 8 of them
+are known bugs marked `xfail` (`tests/test_validate_api.py`).
 
 These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
 loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
@@ -124,7 +125,7 @@ Streamlit dashboard (`dashboard/`) is maintained by a teammate and reads the
 database directly; it was removed on 2026-10-01 and restored the same night
 with the teammate's redesign (DESIGN decision 23, amended).
 
-**Engineering.** 552 tests (external APIs mocked with captured payloads),
+**Engineering.** 589 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the API and Ollama. A clean copy installs
 and runs from the README on Python 3.14

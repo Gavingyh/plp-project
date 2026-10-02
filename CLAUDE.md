@@ -60,6 +60,42 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
   the to-do instead.
 - **Push only completed, tested features** to `main`.
 
+## Success claims
+
+The project must prove these; `/validate` reports each as PROVEN, DISPROVEN
+or UNTESTED. They come from `docs/spec/functional-spec.md`.
+
+- **S1 Fine-tuning lead** (T4, L6, L2): fine-tuned FinBERT scores above base FinBERT on the
+  frozen random test split (299 rows): three seeds' mean macro-F1
+  0.604 ± 0.035 against 0.571. The gap is about one seed standard deviation
+  and seed 7 is below base, so it is a modest lead, not a clear win. No test
+  row, and no test text, informs training, dev or any choice of threshold.
+- **S2 API integrity** (A1, A2): the index endpoints (`/sentiment`, `/sentiment/compare`,
+  `/sentiment/index`, `/sentiment/trend`, `/sentiment/series`) return the
+  stored index unchanged, and every endpoint that takes `bank`, `window` or
+  `bucket` rejects a bad value with HTTP 422. (Spec A2 also promises 400 for
+  an unknown bucket, which the API can't return; the spec needs correcting.)
+- **S3 Grounded chatbot** (C3, C10): the chatbot never presents evidence or a figure that no
+  tool call returned: such answers are flagged, and with
+  `CHATBOT_ENFORCE_EVIDENCE=strip` the evidence is removed.
+
+Add S4 (the aspect method against the human labels) once the team decides
+the aspect method.
+
+## Validation
+
+- `/validate <scope>` runs the reviewer and tester (code) or the auditor
+  (docs), then triage, and writes `VALIDATION.md` plus a copy in
+  `docs/validation/`. Run it on a feature before pushing it.
+- A `tests/test_validate_*.py` test marked `xfail(strict=True)` is a
+  confirmed bug. Remove the marker in the commit that fixes the bug; the
+  test then guards against its return.
+- The register of known issues is the team to-do page
+  (`docs/briefs/team-todo-*.html`) and the decision brief. An issue that is
+  in neither is not "known".
+- The `examiner` agent grades a report section or the whole submission
+  against the module's requirements; use it from mid-October.
+
 ## Long-running jobs
 
 - One local-model (Ollama) job at a time: two at once slow each other and

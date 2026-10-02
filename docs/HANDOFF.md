@@ -789,3 +789,12 @@ become relative paths.
   438 MB, embeddings 127 MB). Same fixes in `docs/report/approach.md`,
   `findings-limitations-solutions.md`, `local-context-questions.md`, the
   technical spec and the README.
+- **Validation workflow added** (`.claude/`, see `CLAUDE.md` "Validation"):
+  `reviewer`, `tester`, `triage`, `auditor` (docs) and `examiner` agents, and
+  `/validate <scope>`, which reports S1–S3 as PROVEN, DISPROVEN or UNTESTED
+  and keeps dated runs in `docs/validation/`. The first run (S2, `api/`)
+  found three medium bugs: the trend direction compares shrunk scores (UOB
+  reads "declining" though its unshrunk change is +0.12), readers will mix
+  model versions after the re-score, and `/coverage` and `/evidence` accept
+  any bank. Each has a strict-xfail test in `tests/test_validate_api.py`;
+  remove the marker in the commit that fixes it.

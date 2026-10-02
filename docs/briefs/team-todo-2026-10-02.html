@@ -183,7 +183,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="decide">
       <span class="t">Run the LLM aspect classifier on the whole corpus, and choose the disagreement rule <span class="chip decide">Decision</span></span>
       <span class="when">by 5 Oct</span>
-      <p class="why"><b>Why:</b> the database's aspects come from seed centroids, which give a sentence about 6.4 aspects and match the human's aspect only 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. On a 1,000-sentence preview, switching turns several aspects from positive to negative (DBS asset quality +0.26 → −0.26), so every per-aspect claim in the report depends on this. Choose with it what happens to the 24% of sentences where the two models disagree: keep llama's answer, or mark them <code>other</code>.</p>
+      <p class="why"><b>Why:</b> the database's aspects come from seed centroids, which give a sentence about 6.4 aspects and match the human's aspect only 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. On an 11,000-sentence preview, switching separates the aspects: under centroids every aspect of every bank is positive; with the LLM, retail banking turns slightly negative for all three banks and DBS asset quality falls from +0.27 to +0.07. Every per-aspect claim in the report depends on this. Choose with it what happens to the 24% of sentences where the two models disagree: keep llama's answer, or mark them <code>other</code>.</p>
       <span class="meta">Unblocks: the rest of the corpus run (resumable, 25% cached), then the re-score. Source: llm-aspect-classifier, index-preview.</span>
     </li>
     <li data-o="decide">
@@ -256,7 +256,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="decide">
       <span class="t">Decide the scoring model: the fine-tuned models, or base FinBERT <span class="chip decide">Decision</span></span>
       <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> the stored scores are base FinBERT's, so the DNN the rubric requires doesn't yet affect what the product shows. The measured best is the three fine-tuned seeds averaged with a dev-chosen neutral margin (test macro-F1 0.624, accuracy 0.682, against 0.571 and 0.70). Switching raises every headline by 0.06–0.19 and puts UOB ahead of DBS. State the criterion first. For the report: the input change chosen on 1 Oct proved no better on two more seeds, so credit no single change for the gain.</p>
+      <p class="why"><b>Why:</b> the stored scores are base FinBERT's, so the DNN the rubric requires doesn't yet affect what the product shows. The measured best is the three fine-tuned seeds averaged with a dev-chosen neutral margin (test macro-F1 0.624, accuracy 0.682, against 0.571 and 0.70). On an 11,000-sentence preview, switching (with LLM aspects) raises every headline by 0.04–0.09 and keeps the ranking DBS, OCBC, UOB. State the criterion first. For the report: the input change chosen on 1 Oct proved no better on two more seeds, so credit no single change for the gain.</p>
       <span class="meta">Source: finetune-fixes, error-analysis, index-preview, noise-floor-cv.</span>
     </li>
     <li data-o="decide">

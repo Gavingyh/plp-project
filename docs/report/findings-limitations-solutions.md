@@ -13,9 +13,11 @@ team.*
 
 1. **The system runs older methods than the ones it has measured to be
    better**, on all four parts that matter: sentiment, aspects, bank
-   attribution and evidence search. Switching changes the results: every
-   bank's headline score rises by 0.06–0.19, UOB moves ahead of DBS, and
-   several aspects turn from positive to negative.
+   attribution and evidence search. Switching changes the results: on an
+   11,000-sentence preview, the two pending changes together raise every
+   bank's headline by 0.04–0.09 (the ranking stays DBS, OCBC, UOB), and
+   retail banking and some NIM rows turn slightly negative where centroid
+   assignment made every aspect positive.
 2. **Assigning aspects by embedding similarity doesn't work; asking an LLM
    does.** Seed centroids pick the human's aspect 41% of the time, barely
    above always guessing the commonest aspect (37%); `llama3.1:8b` picks it
@@ -165,19 +167,25 @@ team.*
 
 ## 5. The sentiment index
 
-**Findings** (1,000 sampled sentences, [index-preview](../evidence/index-preview-2026-10-01.md))
+**Findings** (11,000 sampled sentences, [index-preview](../evidence/index-preview-2026-10-01.md);
+a first preview on 1,000 overstated both effects)
 - Switching the aspect method leaves the headline unchanged (one vote per
-  sentence) but moves the per-aspect rows: DBS asset quality goes from
-  +0.26 to −0.26, NIM turns negative for UOB and OCBC.
-- Switching the sentiment model raises every headline by 0.06–0.19 and puts
-  UOB ahead of DBS.
+  sentence) but moves the per-aspect rows: DBS asset quality falls from
+  +0.27 to +0.07, and retail banking turns slightly negative for all three
+  banks.
+- Switching the sentiment model raises every headline: by 0.10–0.19 with
+  centroid aspects, by 0.04–0.09 with LLM aspects. The ranking (DBS, OCBC,
+  UOB) doesn't change; the 1,000-sentence preview's UOB-ahead-of-DBS result
+  was sampling noise.
 - Under centroid assignment every named aspect of every bank scores
   positive: each aspect inherits the bank's overall tone.
 - On a memory-starved Mac the GPU returned all-zero probabilities without
   an error; a check now refuses them.
 
 **Limitations**
-- One sample of 1,000; per-aspect cells hold a median of 17 sentences.
+- A sample, not the corpus: 11,000 of 44,345 sentences; with LLM aspects a
+  bank-aspect cell holds a median of 182 sentences, and 3 of 30 hold fewer
+  than 30.
 
 **Solutions**
 - Proposed: the same preview on the full corpus once the aspect cache is

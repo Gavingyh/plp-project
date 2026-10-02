@@ -46,8 +46,8 @@ does not use. Breaking the index down by component:
 
 | component | in the database today | measured alternative | effect if switched | evidence |
 |---|---|---|---|---|
-| sentiment | base FinBERT, zero-shot (test macro-F1 0.571, accuracy 0.70) | 3 fine-tuned seeds averaged, dev-chosen neutral margin (0.624, accuracy 0.682) | every bank's headline rises 0.06–0.19; UOB moves ahead of DBS | `finetune-fixes`, `error-analysis`, `index-preview` |
-| aspects | seed centroids: about 6.4 aspects a sentence, the human's aspect 41% of the time | `llama3.1:8b`, one aspect: 0.729 (0.835 where `qwen3:4b` agrees) | headline unchanged; several aspects turn negative (DBS asset quality +0.258 → −0.255) | `llm-aspect-classifier`, `index-preview` |
+| sentiment | base FinBERT, zero-shot (test macro-F1 0.571, accuracy 0.70) | 3 fine-tuned seeds averaged, dev-chosen neutral margin (0.624, accuracy 0.682) | every bank's headline rises (0.04–0.09 with LLM aspects, on 11,000 sentences; the ranking holds) | `finetune-fixes`, `error-analysis`, `index-preview` |
+| aspects | seed centroids: about 6.4 aspects a sentence, the human's aspect 41% of the time | `llama3.1:8b`, one aspect: 0.729 (0.835 where `qwen3:4b` agrees) | headline unchanged; aspects separate (retail banking slightly negative for all three banks; DBS asset quality +0.27 → +0.07) | `llm-aspect-classifier`, `index-preview` |
 | bank attribution | alias matching | spaCy NER with a resolution table | 763 sentences (1.7%) attributed differently since a 2 Oct fix (714 before), 456 of them DBS Vickers | `bank-ner` |
 | evidence retrieval | the user's question as the query: MRR 0.217, equal to random | the aspect's name (`CHATBOT_ASPECT_QUERY=1`): 0.559 | evidence on the asked topic; see evidence-2 in §1.2 | `chatbot-eval-build` |
 
@@ -267,15 +267,18 @@ lesson: an evaluator needs its own evaluation.
 consensus for UOB. Trace why, and what architectural choice made it
 possible.
 
-**V4 (Evaluate).** Switching to the fine-tuned model puts UOB ahead of DBS.
-Which ranking would you publish, and on what criterion?
+**V4 (Evaluate).** A 1,000-sentence preview said the fine-tuned model puts
+UOB ahead of DBS; on 11,000 sentences it doesn't. What does that teach about
+reporting a ranking, and which would you publish?
 
 *A strong answer:* states the criterion first (macro-F1, since the index
 exists to surface non-neutral sentiment), notes the fine-tuned model's known
 bias towards polar labels and that the margin version reduces it, and
 publishes the margin version's ranking with the base model's as a
-sensitivity check, because a ranking that flips with the model is itself a
-finding.
+sensitivity check; and adds that a ranking which flipped on 1,000 sentences
+and not on 11,000 was sampling noise, so any reported ranking needs its
+sample size and, ideally, an interval. (*Updated 2 Oct, after the larger
+preview.*)
 
 **V5 (Evaluate).** On two more seeds, the readable label's cross-validation
 lead vanished. Was choosing it on seed 42 a mistake?

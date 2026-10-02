@@ -639,7 +639,9 @@ to the database.
 - **Index preview** (`c7f21f1`,
   [evidence](evidence/index-preview-2026-10-01.md)). On 1,000 sampled
   sentences, LLM aspects leave the headline unchanged. The fine-tuned model
-  raises every headline by 0.06–0.19 and puts UOB ahead of DBS. On a
+  raises every headline (by 0.06–0.19 on that sample; a second preview on
+  11,000 sentences on 2 Oct gives 0.04–0.09 with LLM aspects and no change
+  in ranking, so the UOB-ahead-of-DBS result was noise). On a
   swapping Mac, the GPU returned all-zero probabilities without an error;
   the preview now refuses them and was rerun on the CPU.
 - **Report draft** of the factual sections (`a65c4b4`) and an

@@ -15,7 +15,7 @@ The success claims are defined in CLAUDE.md, "Success claims": S1 Fine-tuning le
 4. Decide the `judgment` items yourself, reading the code or source where needed. A claim is DISPROVEN if any confirmed finding contradicts it, whatever the tester's checks showed. Consult the advisor, if it is on, when a finding would change the plan.
 5. Run `git status --short --untracked-files=all` again. Any change other than new `tests/test_validate_*.py` files, `VALIDATION.md` and the dated copy (ignore `data/logs/plp.log`, which every run appends to) is a failure of this run: report it.
 6. If the advisor is on, consult it once more before calling the run done.
-7. Write `VALIDATION.md` at the repository root, one screen, in this order, and the same text to `docs/validation/<YYYY-MM-DD>-<scope>.md`:
+7. Write `VALIDATION.md` at the repository root, one screen, in this order, and the same text to `docs/validation/<YYYY-MM-DD>-<scope>.md`, where `<scope>` is a plain name (`api-integrity`, `model-card`), never a claim code:
 
 ```
 # Validation: <scope>, <date>

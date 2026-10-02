@@ -29,6 +29,7 @@ The word-overlap boost uses the same cleaned text, since question words
 ("what", "people", "say") also favour Reddit chatter.
 """
 
+import config.model_version as current_model
 import os
 import re
 
@@ -109,6 +110,7 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     join = ""
     if aspect or sentiment:
         join = "JOIN aspect_sentiment a ON a.sentence_id = s.sentence_id"
+        where.append("a.model_version = ?"); params.append(current_model.MODEL_VERSION)
         if aspect:
             where.append("a.aspect = ?"); params.append(aspect)
         if sentiment:
@@ -166,4 +168,4 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
         c["score"] = round(cosine + _LEXICAL_WEIGHT * lexical, 4)
 
     scored.sort(key=lambda c: c["score"], reverse=True)
-    return scored[:k]
+    return scored[:max(int(k), 0)]   # a negative k would otherwise drop the last result

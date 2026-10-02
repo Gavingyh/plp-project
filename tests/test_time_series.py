@@ -12,6 +12,7 @@ import pytest
 
 from aggregate.index import compute_time_series
 from ingest.db import now_iso
+from config.model_version import MODEL_VERSION
 
 
 def _insert(temp_db, sentence_id, bank, aspect, label, published_at,
@@ -26,7 +27,7 @@ def _insert(temp_db, sentence_id, bank, aspect, label, published_at,
     conn.execute(
         "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, "
         "model_version, scored_at) VALUES (?,?,?,?,?,?)",
-        (sentence_id, aspect, label, confidence, "test-model", now_iso()),
+        (sentence_id, aspect, label, confidence, MODEL_VERSION, now_iso()),
     )
     conn.commit()
     conn.close()
@@ -143,7 +144,7 @@ def test_aspect_all_counts_a_multi_aspect_sentence_once(temp_db):
     _insert(temp_db, "a", "DBS", "dividend_policy", "positive", "2026-01-05T00:00:00+00:00")
     conn = temp_db.get_connection()
     conn.execute("INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, "
-                 "scored_at) VALUES ('a', 'asset_quality', 'positive', 0.9, 'test-model', ?)", (now_iso(),))
+                 "scored_at) VALUES ('a', 'asset_quality', 'positive', 0.9, ?, ?)", (MODEL_VERSION, now_iso()))
     conn.commit()
     conn.close()
     assert compute_time_series("DBS", "ALL", min_n=1)[0]["n"] == 1

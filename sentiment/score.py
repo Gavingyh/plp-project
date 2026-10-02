@@ -36,7 +36,7 @@ from ingest.db import get_connection, init_db, now_iso
 logger = get_logger(__name__)
 
 MODEL_NAME = "ProsusAI/finbert"
-MODEL_VERSION = "finbert-base-zeroshot-v1"  # bump when the fine-tuned model replaces this
+from config.model_version import MODEL_VERSION  # noqa: E402  (change it there when the fine-tuned model replaces this)
 _BATCH_SIZE = 32
 _MAX_LENGTH = 128
 _CHUNK = 2000   # sentences classified and committed per step

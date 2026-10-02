@@ -73,8 +73,7 @@ or UNTESTED. They come from `docs/spec/functional-spec.md`.
 - **S2 API integrity** (A1, A2): the index endpoints (`/sentiment`, `/sentiment/compare`,
   `/sentiment/index`, `/sentiment/trend`, `/sentiment/series`) return the
   stored index unchanged, and every endpoint that takes `bank`, `window` or
-  `bucket` rejects a bad value with HTTP 422. (Spec A2 also promises 400 for
-  an unknown bucket, which the API can't return; the spec needs correcting.)
+  `bucket` rejects a bad value with HTTP 422.
 - **S3 Grounded chatbot** (C3, C10): the chatbot never presents evidence or a figure that no
   tool call returned: such answers are flagged, and with
   `CHATBOT_ENFORCE_EVIDENCE=strip` the evidence is removed.

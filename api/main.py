@@ -18,6 +18,8 @@ USAGE:
 
 import os
 
+import config.model_version as current_model
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -26,8 +28,8 @@ from chatbot.agent import Conversation
 from aggregate.index import compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
-from chatbot.tools import (compare_banks, get_analyst_consensus, get_coverage,
-                            get_sentiment, get_trend, search_evidence)
+from chatbot.tools import (MIN_VOLUME_FOR_SCORE, compare_banks, get_analyst_consensus,
+                            get_coverage, get_sentiment, get_trend, search_evidence)
 from ingest.db import get_connection
 
 setup_logging()
@@ -93,17 +95,22 @@ def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_t
             rows = conn.execute(
                 "SELECT bank, aspect, source, score, n, pos_n, neu_n, neg_n, "
                 "confidence_mean, model_version, computed_at FROM sentiment_index "
-                "WHERE window = ?", (window,)).fetchall()
+                "WHERE window = ? AND model_version = ?",
+                (window, current_model.MODEL_VERSION)).fetchall()
         else:
             rows = conn.execute(
                 "SELECT bank, aspect, source, score, n, pos_n, neu_n, neg_n, "
                 "confidence_mean, model_version, computed_at FROM sentiment_index "
-                "WHERE window = ? AND source = ?", (window, source)).fetchall()
+                "WHERE window = ? AND source = ? AND model_version = ?",
+                (window, source, current_model.MODEL_VERSION)).fetchall()
     finally:
         conn.close()
     cols = ["bank", "aspect", "source", "score", "n", "pos_n", "neu_n", "neg_n",
             "confidence_mean", "model_version", "computed_at"]
-    return {"window": window, "source": source, "rows": [dict(zip(cols, r)) for r in rows]}
+    # Cells below the volume floor keep their score but say they're thin, as
+    # /sentiment does, so a grid built from this call can grey them out.
+    out = [{**dict(zip(cols, r)), "insufficient_data": r[4] < MIN_VOLUME_FOR_SCORE} for r in rows]
+    return {"window": window, "source": source, "rows": out}
 
 
 @app.get("/sources")
@@ -127,14 +134,15 @@ def sources_breakdown():
 
 
 @app.get("/coverage")
-def coverage(bank: str | None = None, aspect: str | None = None):
+def coverage(bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = None):
     return get_coverage(bank, aspect)
 
 
 @app.get("/evidence")
-def evidence(query: str, bank: str | None = None, aspect: str | None = None,
+def evidence(query: str, bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)$"),
+             aspect: str | None = None,
              sentiment: str | None = Query(None, pattern="^(positive|neutral|negative)$"),
-             k: int = 5):
+             k: int = Query(5, ge=1, le=50)):
     return search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k)
 
 
@@ -174,8 +182,9 @@ def evidence_latest(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: 
                 """SELECT s.sentence_id, s.text, s.source, s.url, s.published_at, ase.aspect,
                           ase.label, ase.confidence
                    FROM sentences s JOIN aspect_sentiment ase ON ase.sentence_id = s.sentence_id
-                   WHERE s.bank = ? AND ase.aspect = ? ORDER BY s.published_at DESC LIMIT ?""",
-                (bank, aspect, limit))
+                   WHERE s.bank = ? AND ase.aspect = ? AND ase.model_version = ?
+                   ORDER BY s.published_at DESC LIMIT ?""",
+                (bank, aspect, current_model.MODEL_VERSION, limit))
         else:
             cur = conn.execute(
                 """SELECT sentence_id, text, source, url, published_at FROM sentences
@@ -209,13 +218,10 @@ def sentiment_series(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
     rather than being dropped, so a chart can show a gap instead of
     interpolating across data that isn't there.
     """
-    try:
-        return {"bank": bank, "aspect": aspect or "ALL", "bucket": bucket,
-                "source": source,
-                "series": compute_time_series(bank, aspect, bucket=bucket,
-                                              source=source, min_n=min_n)}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return {"bank": bank, "aspect": aspect or "ALL", "bucket": bucket,
+            "source": source,
+            "series": compute_time_series(bank, aspect, bucket=bucket,
+                                          source=source, min_n=min_n)}
 
 
 @app.get("/suggestions")

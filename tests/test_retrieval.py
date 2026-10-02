@@ -5,6 +5,7 @@ model are replaced, so ranking falls back to lexical overlap.
 
 import chatbot.retrieval as retrieval
 from ingest.db import now_iso
+from config.model_version import MODEL_VERSION
 
 
 def test_sentiment_filter_returns_each_sentence_once(temp_db, monkeypatch):
@@ -15,7 +16,7 @@ def test_sentiment_filter_returns_each_sentence_once(temp_db, monkeypatch):
                  "'2026-01-01','cna','u','h1',?)", (now_iso(),))
     for aspect in ("dividend_policy", "income_profit_results", "wealth_business"):
         conn.execute("INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, "
-                     "scored_at) VALUES ('s1', ?, 'positive', 0.9, 'm', ?)", (aspect, now_iso()))
+                     "scored_at) VALUES ('s1', ?, 'positive', 0.9, ?, ?)", (aspect, MODEL_VERSION, now_iso()))
     conn.commit()
     conn.close()
     hits = retrieval.search_evidence("dividend", bank="DBS", sentiment="positive", k=5)
@@ -31,7 +32,7 @@ def _two_dividend_sentences(temp_db):
                      "norm_hash, processed_at) VALUES (?,'d','DBS',?,'2026-01-01','cna','u',?,?)",
                      (sid, text, f"h-{sid}", now_iso()))
         conn.execute("INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, "
-                     "scored_at) VALUES (?, 'dividend_policy', 'neutral', 0.9, 'm', ?)", (sid, now_iso()))
+                     "scored_at) VALUES (?, 'dividend_policy', 'neutral', 0.9, ?, ?)", (sid, MODEL_VERSION, now_iso()))
     conn.commit()
     conn.close()
 

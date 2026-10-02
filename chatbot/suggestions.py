@@ -16,7 +16,9 @@ that carries a not-financial-advice disclaimer. They live in
 chatbot/eval_gold_set.py, where the point is to test the refusal.
 """
 
-from chatbot.tools import MIN_VOLUME_FOR_SCORE
+import config.model_version as current_model
+from chatbot.tools import MIN_VOLUME_FOR_SCORE, version_has_rows
+from config.logging_config import get_logger
 from ingest.db import get_connection
 
 # Question-friendly phrasings. Deliberately not reusing the display labels in
@@ -37,6 +39,8 @@ _ASPECT_PHRASING = {
 }
 
 # Simplest and most reliable question types first.
+logger = get_logger(__name__)
+
 _CATEGORY_ORDER = ["overall", "aspect", "compare", "consensus", "trend", "evidence"]
 
 
@@ -46,8 +50,8 @@ def _available(window: str = "all_time") -> list[tuple[str, str, int]]:
     try:
         return conn.execute(
             "SELECT bank, aspect, n FROM sentiment_index "
-            "WHERE window = ? AND source = 'ALL' AND n >= ? ORDER BY n DESC",
-            (window, MIN_VOLUME_FOR_SCORE),
+            "WHERE window = ? AND source = 'ALL' AND n >= ? AND model_version = ? ORDER BY n DESC",
+            (window, MIN_VOLUME_FOR_SCORE, current_model.MODEL_VERSION),
         ).fetchall()
     except Exception:
         return []  # table may not exist on a fresh install
@@ -128,6 +132,9 @@ def get_suggestions(limit: int = 6) -> list[dict]:
     this takes one question per category in rotation, and within a category
     prefers a bank that hasn't appeared yet.
     """
+    if not version_has_rows():
+        logger.warning("no suggestions: sentiment_index has no rows for model version %r "
+                       "(config/model_version.py)", current_model.MODEL_VERSION)
     by_category: dict[str, list[dict]] = {}
     for c in sorted(build_candidates(), key=lambda c: -c["support"]):
         by_category.setdefault(c["category"], []).append(c)

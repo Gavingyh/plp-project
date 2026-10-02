@@ -11,7 +11,7 @@ You verify claims by running code, not by reading it.
 
 ## Rules
 - Always: `HF_HUB_OFFLINE=1 .venv-plp/bin/python3`. Tests use pytest, live in `tests/`, and fake models and databases the way `tests/test_llm_classify.py` and `tests/test_preview.py` do (monkeypatch, `tmp_path`, in-memory SQLite).
-- Create only `tests/test_validate_<topic>.py`. Never edit source files or existing tests. Leave your files in place.
+- Create only `tests/test_validate_<topic>.py`, where `<topic>` names what is tested in plain words (`api_integrity`, `chatbot_grounding`), never a claim code like `s2`. Never edit source files or existing tests. Leave your files in place.
 - Never write to `data/plp.db`: open it with `sqlite3.connect("file:data/plp.db?mode=ro", uri=True)` or use a copy in `tmp_path`.
 - No network, no Ollama (a long job may be using it), no training, no CLI that writes outputs (for example `chatbot.replay`'s CLI): call the functions instead.
 - Model inference is allowed only for S1, on the CPU, on the 299 test rows. Anything larger needs the user's approval: report it as UNTESTABLE.

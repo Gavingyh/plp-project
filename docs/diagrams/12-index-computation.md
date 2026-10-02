@@ -49,18 +49,18 @@ Each row names the file and line an element comes from, and the text that line m
 | read every scored pair | `aggregate/index.py:100` | `FROM aspect_sentiment ase` |
 | joined to sentences | `aggregate/index.py:101` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
 | windows | `aggregate/index.py:65` | `WINDOWS = {"7d": 7, "30d": 30, "all_time": None}` |
-| window cutoff | `aggregate/index.py:221` | `if cutoff is not None and published_at < cutoff:` |
+| window cutoff | `aggregate/index.py:222` | `if cutoff is not None and published_at < cutoff:` |
 | label scores | `aggregate/index.py:49` | `_LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}` |
 | source weights | `aggregate/index.py:62` | `_SOURCE_WEIGHT = {"earnings": 1.0` |
-| each item weighted | `aggregate/index.py:223` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, 1.0))` |
-| group: aspect and source | `aggregate/index.py:224` | `groups[(bank, aspect, source, model_version)].append(item)` |
-| group: headline, once per sentence | `aggregate/index.py:227` | `_one_per_sentence(across_aspects, sentence_id, (bank, "ALL", SOURCE_ALL, model_version), item)` |
+| each item weighted | `aggregate/index.py:224` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, 1.0))` |
+| group: aspect and source | `aggregate/index.py:225` | `groups[(bank, aspect, source, model_version)].append(item)` |
+| group: headline, once per sentence | `aggregate/index.py:228` | `_one_per_sentence(across_aspects, sentence_id, (bank, "ALL", SOURCE_ALL, model_version), item)` |
 | keep the most confident pair | `aggregate/index.py:117` | `if current is None or item[1] > current[1]:` |
 | weighted mean | `aggregate/index.py:128` | `raw_score = weighted_sum / weight_total` |
 | shrinkage | `aggregate/index.py:129` | `shrunk = raw_score * (n / (n + SHRINKAGE_K))` |
 | shrinkage constant | `aggregate/index.py:48` | `SHRINKAGE_K = 5` |
-| deleted and rewritten | `aggregate/index.py:263` | `conn.execute("DELETE FROM sentiment_index")` |
-| volume floor, applied when read | `chatbot/tools.py:22` | `MIN_VOLUME_FOR_SCORE = 5` |
+| deleted and rewritten | `aggregate/index.py:264` | `conn.execute("DELETE FROM sentiment_index")` |
+| volume floor, applied when read | `chatbot/tools.py:27` | `MIN_VOLUME_FOR_SCORE = 5` |
 | time-series floor | `aggregate/index.py:145` | `min_n: int = 5` |
 | thin buckets left off the chart | `docs/api-integration.md:85` | `gap, not a line through them, and not a zero.` |
-| insufficient data reported | `chatbot/tools.py:87` | `if n < MIN_VOLUME_FOR_SCORE:` |
+| insufficient data reported | `chatbot/tools.py:112` | `if n < MIN_VOLUME_FOR_SCORE:` |

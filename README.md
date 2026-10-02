@@ -295,6 +295,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 589 tests; 8 are known bugs marked xfail
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 636: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 779 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 826: adds the diagram and notebook checks
 ```

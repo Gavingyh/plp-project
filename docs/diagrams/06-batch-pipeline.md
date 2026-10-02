@@ -82,5 +82,5 @@ Each row names the file and line an element comes from, and the text that line m
 | pairs not yet scored | `sentiment/score.py:106` | `WHERE NOT EXISTS (` |
 | classify, once per sentence | `sentiment/score.py:132` | `predictions = classify_sentences([text_of[i] for i in chunk])` |
 | insert scores | `sentiment/score.py:138` | `INSERT OR IGNORE INTO aspect_sentiment` |
-| full recompute | `aggregate/index.py:263` | `conn.execute("DELETE FROM sentiment_index")` |
-| insert index rows | `aggregate/index.py:265` | `INSERT INTO sentiment_index` |
+| full recompute | `aggregate/index.py:264` | `conn.execute("DELETE FROM sentiment_index")` |
+| insert index rows | `aggregate/index.py:266` | `INSERT INTO sentiment_index` |

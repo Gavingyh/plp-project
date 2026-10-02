@@ -248,6 +248,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "pattern": "^(DBS|OCBC|UOB)$",
                   "type": "string"
                 },
                 {
@@ -317,6 +318,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "pattern": "^(DBS|OCBC|UOB)$",
                   "type": "string"
                 },
                 {
@@ -365,6 +367,8 @@
             "required": false,
             "schema": {
               "default": 5,
+              "maximum": 50,
+              "minimum": 1,
               "title": "K",
               "type": "integer"
             }

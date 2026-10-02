@@ -12,12 +12,17 @@ confabulating when it doesn't.
 """
 
 import os
+import sqlite3
 
 import yaml
 
-from aggregate.index import compute_time_series
+import config.model_version as current_model
+from aggregate.index import SHRINKAGE_K, compute_time_series
+from config.logging_config import get_logger
 from ingest.db import get_connection
 from chatbot.retrieval import search_evidence as _search_evidence
+
+logger = get_logger(__name__)
 
 MIN_VOLUME_FOR_SCORE = 5  # below this, report insufficient data rather than a number
 
@@ -58,6 +63,20 @@ def normalize_aspect(aspect: str | None) -> str | None:
     return candidate if candidate in ASPECT_KEYS else aspect
 
 
+def version_has_rows() -> bool:
+    """Whether sentiment_index holds any row for the configured model version.
+    False means config/model_version.py names a version the index was never
+    computed for, which every reader would otherwise report as "no data"."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM sentiment_index WHERE model_version = ? LIMIT 1",
+                            (current_model.MODEL_VERSION,)).fetchone() is not None
+    except sqlite3.OperationalError:
+        return False   # the table doesn't exist before the first aggregation
+    finally:
+        conn.close()
+
+
 def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time") -> dict:
     """Sentiment index for a bank, optionally filtered to one aspect ('ALL' aspect
     = overall) and one window ('7d', '30d', or 'all_time' - see aggregate/index.py).
@@ -72,13 +91,19 @@ def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time"
             # alongside it (see aggregate/index.py) and must not be picked up
             # here by accident.
             "FROM sentiment_index WHERE bank = ? AND aspect = ? AND window = ? "
-            "AND source = 'ALL' ORDER BY computed_at DESC LIMIT 1",
-            (bank, aspect_filter, window),
+            "AND source = 'ALL' AND model_version = ? ORDER BY computed_at DESC LIMIT 1",
+            (bank, aspect_filter, window, current_model.MODEL_VERSION),
         ).fetchone()
     finally:
         conn.close()
 
     if row is None:
+        if not version_has_rows():
+            version = current_model.MODEL_VERSION
+            logger.warning("sentiment_index has no rows for model version %r (config/model_version.py)", version)
+            return {"bank": bank, "aspect": aspect_filter, "window": window, "insufficient_data": True,
+                    "reason": f"the index has no rows for model version {version!r}: re-run "
+                              "aggregate.index after re-scoring, or check config/model_version.py"}
         return {"bank": bank, "aspect": aspect_filter, "window": window, "insufficient_data": True,
                 "reason": f"no sentiment data computed for this bank/aspect/window combination "
                           f"(window={window!r} may genuinely have zero items, or the pipeline "
@@ -101,6 +126,12 @@ def compare_banks(aspect: str | None = None, window: str = "all_time") -> dict:
     return {"aspect": aspect or "ALL", "window": window, "banks": results}
 
 
+def _unshrunk(result: dict) -> float:
+    """The window's score before aggregate/index.py's n/(n+k) shrinkage."""
+    n = result["n"]
+    return result["score"] * (n + SHRINKAGE_K) / n
+
+
 def get_trend(bank: str, aspect: str | None = None) -> dict:
     """Direction/magnitude of sentiment change: compares the 7d window against
     the 30d window (both from aggregate/index.py's rolling windows). Falls back
@@ -117,26 +148,43 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
                         f"30d insufficient={baseline['insufficient_data']}) — "
                         "showing the all-time snapshot instead."}
 
-    delta = round(recent["score"] - baseline["score"], 4)
+    # The stored scores are shrunk towards 0 by n/(n+k) (aggregate/index.py).
+    # The 7d window is far thinner than the 30d one, so comparing the shrunk
+    # scores reads a thin week as a fall: on 2 Oct, UOB showed "declining"
+    # (-0.045) when its unshrunk 7d score was 0.12 above the 30d one. Undo
+    # the shrinkage on both before comparing; both windows are at or above
+    # the volume floor here, so neither is a handful of items.
+    recent_unshrunk, baseline_unshrunk = round(_unshrunk(recent), 4), round(_unshrunk(baseline), 4)
+    delta = round(recent_unshrunk - baseline_unshrunk, 4)
     direction = "improving" if delta > 0.02 else "declining" if delta < -0.02 else "stable"
 
     # A two-point comparison can only say "up" or "down". The monthly series
     # gives the shape behind that. Capped at 12 points and trimmed to
     # period/score/n on purpose: this goes into the model's context, and a
     # long table of numbers is more surface to misquote, not more insight.
+    series_error = None
     try:
         series = [{"period": p["period"], "score": p["score"], "n": p["n"]}
                   for p in compute_time_series(bank, aspect, bucket="month")
                   if p["sufficient"]][-12:]
-    except Exception:
-        series = []
+    except sqlite3.Error as e:
+        # A database error is not "no data": log it and say so in the note.
+        logger.warning("monthly series failed for %s/%s: %s", bank, aspect or "ALL", e)
+        series, series_error = [], str(e)
 
     return {"bank": bank, "aspect": aspect or "ALL", "trend_available": True,
             "direction": direction, "delta_7d_vs_30d": delta,
             "recent_7d": recent, "baseline_30d": baseline,
             "monthly_series": series,
-            "series_note": "monthly, same weighting and shrinkage as the index; "
-                           "thin months omitted" if series else "no monthly series available"}
+            "recent_7d_unshrunk_score": recent_unshrunk,
+            "baseline_30d_unshrunk_score": baseline_unshrunk,
+            "delta_basis": "recent_7d_unshrunk_score minus baseline_30d_unshrunk_score: the "
+                           "scores before the index's n/(n+5) shrinkage, which pulls a thin "
+                           "window towards 0",
+            "series_note": ("monthly, same weighting and shrinkage as the index; thin months omitted"
+                            if series else
+                            f"monthly series unavailable: {series_error}" if series_error else
+                            "no monthly series available")}
 
 
 def get_coverage(bank: str | None = None, aspect: str | None = None) -> dict:

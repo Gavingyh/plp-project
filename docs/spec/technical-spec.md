@@ -132,7 +132,11 @@ One classification per (sentence, aspect, model version).
 (`positive` \| `neutral` \| `negative`), `confidence`, `scored_at`. The
 `model_version` in the key is what will let a fine-tuned model's scores
 coexist with the current `finbert-base-zeroshot-v1` rather than overwrite
-them.
+them. Every reader (the API, the chatbot's tools, evidence search,
+suggestions and the time series) returns only the version named in
+`config/model_version.py`, so two models' rows never mix; change it in the
+commit that re-scores the corpus. If that version has no rows,
+`get_sentiment` says so and a warning is logged.
 
 ### `sentiment_index`
 The aggregate the API and chatbot read, and a dashboard through the API.
@@ -285,7 +289,7 @@ is open for local frontend development.
 | GET | `/banks` | — | Supported bank codes |
 | GET | `/sentiment` | `bank*`, `aspect`, `window` | Score, `n`, class counts |
 | GET | `/sentiment/compare` | `aspect`, `window` | All three banks side by side |
-| GET | `/sentiment/trend` | `bank*`, `aspect` | Direction, 7d vs 30d delta, up to 12 monthly points |
+| GET | `/sentiment/trend` | `bank*`, `aspect` | Direction from the 7d vs 30d delta of the unshrunk scores, up to 12 monthly points |
 | GET | `/sentiment/index` | `window`, `source` | Full index rows |
 | GET | `/sentiment/series` | `bank*`, `aspect`, `bucket`, `source`, `min_n` | Continuous series; each point carries `sufficient` |
 | GET | `/sources` | — | Sources present, for per-source breakdowns |
@@ -417,8 +421,8 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-589 tests in `tests/` (636 from the repository root, adding the diagram and
-notebook checks; 8 are known bugs marked `xfail`), no network calls. External APIs are mocked with captured real
+779 tests in `tests/` (826 from the repository root, adding the diagram and
+notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
 

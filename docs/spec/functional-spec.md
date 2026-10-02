@@ -133,9 +133,9 @@ machine-readable contract (a test keeps it current).
 | # | Requirement | Acceptance criteria | Status |
 |---|---|---|---|
 | A1 | A dashboard can fetch every number it shows | `/sentiment`, `/sentiment/compare`, `/sentiment/index`, `/sentiment/trend`, `/sentiment/series` return JSON matching the stored index | Done |
-| A2 | Invalid input is rejected, not guessed at | `bank` is validated against `^(DBS\|OCBC\|UOB)$`, `window` against `^(7d\|30d\|all_time)$`, `bucket` against `^(week\|month\|quarter)$`; bad values give HTTP 422, and an unknown bucket gives 400 | Done, covered in `tests/test_api.py` |
+| A2 | Invalid input is rejected, not guessed at | `bank` is validated against `^(DBS\|OCBC\|UOB)$`, `window` against `^(7d\|30d\|all_time)$`, `bucket` against `^(week\|month\|quarter)$`; bad values give HTTP 422 on every endpoint that takes them | Done, covered in `tests/test_api.py` and `tests/test_validate_api.py` (3 Oct: `/coverage` and `/evidence` now check `bank` too) |
 | A3 | A chat UI can offer questions the data can actually answer | `/suggestions?limit=N` returns questions generated from the index, never hardcoded, excluding advice-seeking and out-of-scope framings | Done |
-| A4 | A caller can distinguish "no data" from "neutral sentiment" | `/coverage` reports `has_data`; thin results carry `insufficient_data` | Done |
+| A4 | A caller can distinguish "no data" from "neutral sentiment" | `/coverage` reports `has_data`; thin results carry `insufficient_data`, including each `/sentiment/index` row (3 Oct) | Done |
 | A5 | A caller can retrieve evidence with provenance | `/evidence` returns `sentence_id`, `url`, `published_at` per hit | Done |
 | A6 | A caller can reach the chatbot | `POST /chat` accepts a message and optional backend | Done |
 | A7 | Service health is checkable | `GET /health` returns `{"status": "ok"}` | Done |

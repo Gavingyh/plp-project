@@ -161,8 +161,9 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
     if bucket not in _BUCKET_SQL:
         raise ValueError(f"bucket must be one of {sorted(_BUCKET_SQL)}, got {bucket!r}")
 
-    where = ["sa.bank = ?", "sa.published_at IS NOT NULL"]
-    params: list = [bank]
+    import config.model_version as current_model
+    where = ["sa.bank = ?", "sa.published_at IS NOT NULL", "ase.model_version = ?"]
+    params: list = [bank, current_model.MODEL_VERSION]
     if aspect and aspect != "ALL":
         where.append("ase.aspect = ?")
         params.append(aspect)

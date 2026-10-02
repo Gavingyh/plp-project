@@ -32,14 +32,14 @@ scripts/stop.sh
 | dashboard view | endpoint | notes |
 |---|---|---|
 | headline score per bank | `GET /sentiment?bank=DBS` | `window` = `all_time` (default), `30d`, `7d`; `insufficient_data` is true when too few sentences |
-| bank × aspect grid | `GET /sentiment/index?window=all_time` | one call, 36 rows (3 banks × 11 aspects + `ALL`); `aspect = "ALL"` is the bank's headline |
+| bank × aspect grid | `GET /sentiment/index?window=all_time` | one call, 36 rows (3 banks × 11 aspects + `ALL`); `aspect = "ALL"` is the bank's headline; each row's `insufficient_data` is true below 5 sentences |
 | what the blend is made of | `GET /sentiment/index?window=all_time&source=*` and `GET /sources` | every per-source row (249), and sentence counts by bank and source |
 | comparing the banks | `GET /sentiment/compare?aspect=dividend_policy` | all three banks for one aspect, or overall without `aspect` |
 | sentiment over time | `GET /sentiment/series?bank=UOB&bucket=month` | `bucket` = `week`, `month`, `quarter`; optional `aspect`, `source`, `min_n` (default 5) |
-| up or down lately | `GET /sentiment/trend?bank=DBS` | the last 7 days against the last 30 |
+| up or down lately | `GET /sentiment/trend?bank=DBS` | the last 7 days against the last 30, compared before the small-sample shrinkage: `delta_7d_vs_30d` is `recent_7d_unshrunk_score` minus `baseline_30d_unshrunk_score`, both returned; no direction when either window has fewer than 5 sentences |
 | analyst consensus | `GET /analyst-consensus/latest` (all banks) or `GET /analyst-consensus?bank=DBS` | Yahoo Finance aggregates: rating, number of analysts, mean target, price |
 | evidence drill-down | `GET /evidence/latest?bank=OCBC&aspect=dividend_policy&limit=30` | newest sentences with their stored label |
-| evidence search | `GET /evidence?query=dividend+cut&bank=DBS&k=5` | semantic search, as the chatbot uses |
+| evidence search | `GET /evidence?query=dividend+cut&bank=DBS&k=5` | semantic search, as the chatbot uses; `k` from 1 to 50 |
 | data behind a cell | `GET /coverage?bank=DBS&aspect=dividend_policy` | count, date range and sources |
 | labels for the UI | `GET /banks`, `GET /aspects` | aspect keys with readable names ("Dividend Policy") |
 | chat | `POST /chat` | below |
@@ -159,8 +159,13 @@ near the numbers they qualify.
   time. An LLM classifier that picks it 73% of the time is built but not yet
   applied; when it is, the same endpoints return the new rows.
 - **Scores come from base FinBERT, zero-shot.** `model_version` says which
-  model produced a row; it changes if the team switches to the fine-tuned
-  model.
+  model produced a row. Every endpoint returns only the current model's rows,
+  so when the team switches to the fine-tuned model the old rows stay in the
+  database for comparison but stop appearing. If the configured model has no
+  rows yet, `/sentiment` says so in its `reason` (and the server logs a
+  warning) rather than reporting ordinary missing data.
+- **`bank` must be exactly `DBS`, `OCBC` or `UOB`** on every endpoint that
+  takes it; anything else (including `dbs`) gets HTTP 422.
 - **News volume rises towards the present** because of how Google News
   ranks results: compare periods by score, not by count.
 - **Analyst figures are Yahoo consensus aggregates**, not analyst reports.

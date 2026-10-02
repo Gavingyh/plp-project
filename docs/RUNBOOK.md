@@ -449,10 +449,11 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-589 tests in `tests/`; `pytest -q` from the repository root runs 636,
-adding the diagram and notebook checks. Eight are confirmed bugs marked
-`xfail(strict=True)` in `tests/test_validate_api.py`: they pass as "xfailed"
-and fail once the bug is fixed, when the marker comes off. No network calls — external APIs are
+779 tests in `tests/`; `pytest -q` from the repository root runs 826,
+adding the diagram and notebook checks. A bug that `/validate` confirms gets a
+test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
+"xfailed" until the bug is fixed; the marker comes off in the fixing commit.
+None is open on 3 Oct 2026. No network calls — external APIs are
 mocked with captured real payloads, so a provider changing its response shape
 surfaces as a failing test rather than a silent production break.
 

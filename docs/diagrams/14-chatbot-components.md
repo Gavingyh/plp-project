@@ -100,7 +100,7 @@ Each row names the file and line an element comes from, and the text that line m
 | ToolCallTracker | `chatbot/agent.py:107` | `class _ToolCallTracker:` |
 | citation check | `chatbot/agent.py:143` | `def answer_has_unverified_citation(self, answer: str)` |
 | guards | `chatbot/guards.py:66` | `def advice_reply(question: str` |
-| tools | `chatbot/tools.py:324` | `TOOL_FUNCTIONS = {` |
+| tools | `chatbot/tools.py:372` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:25` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:31` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:43` | `class OllamaBackend(LLMBackend):` |

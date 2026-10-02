@@ -91,10 +91,10 @@ Each row names the file and line an element comes from, and the text that line m
 | assignment from seed centroids | `aspects/assign.py:61` | `vecs = embed_sentences(cfg["seed_terms"])` |
 | sentiment scoring | `sentiment/score.py:97` | `def run() -> dict:` |
 | zero-shot base FinBERT | `sentiment/score.py:38` | `MODEL_NAME = "ProsusAI/finbert"` |
-| index aggregation | `aggregate/index.py:252` | `def run() -> int:` |
+| index aggregation | `aggregate/index.py:253` | `def run() -> int:` |
 | fine-tuning code | `train/finetune.py:235` | `def run(seed: int = 42` |
 | first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:36` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |
-| evidence read by the chatbot | `chatbot/retrieval.py:146` | `all_ids, all_vecs = load_for_search()` |
+| evidence read by the chatbot | `chatbot/retrieval.py:148` | `all_ids, all_vecs = load_for_search()` |
 
 ## Planned elements
 

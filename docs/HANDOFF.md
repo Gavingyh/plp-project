@@ -806,3 +806,37 @@ become relative paths.
 - **Corpus run speed:** it slowed to 5–6 s a sentence while two external
   monitors (DisplayLink) were on and the upload ran, and returned to about
   2.5 s once both stopped. Keep external monitors off during long GPU jobs.
+
+### 3 October
+
+- **The three API bugs from the S2 validation run are fixed**, and three
+  low ones with them; every `test_validate_api.py` test now passes, with no
+  `xfail` left (592 tests in `tests/`, 639 from the root):
+  - **Trend direction (R1):** `get_trend` compares the 7d and 30d scores
+    before the n/(n+5) shrinkage. UOB no longer reads "declining" when its
+    week was better than its month.
+  - **Model versions (R2):** the current version lives in
+    `config/model_version.py` (out of `sentiment/score.py`, which imports
+    torch). The API, the chatbot's tools, evidence search, suggestions, the
+    time series and the preview read only that version, so fine-tuned scores
+    can sit beside the base ones at the re-score without doubling anything.
+    **The dashboard still reads every version** (`dashboard/app.py` lines 72,
+    89 and 103): its owner should add `AND model_version = ?` with
+    `config.model_version.MODEL_VERSION` before the 12 Oct re-score.
+  - **Bank names (R3):** `/coverage` and `/evidence` reject a bad `bank` with
+    422, like the other endpoints; `docs/api/openapi.json` regenerated.
+  - **Low ones:** the spec's promised 400 for a bad bucket, which the API
+    couldn't return, is gone, with its dead code (R4); `/sentiment/index`
+    rows carry `insufficient_data` (R6); a database error in the trend's
+    monthly series is logged and reported, not shown as "no data" (R10).
+- **API integrity validated after the fixes** (`/validate`, record in
+  `docs/validation/2026-10-03-api-integrity.md`): every index endpoint equals
+  the stored rows and every bad `bank`, `window` or `bucket` gets 422
+  (`tests/test_validate_api_integrity.py`, which reads a copy of the live
+  database). It found three more problems, now fixed: the trend response
+  returned shrunk scores beside a delta computed from unshrunk ones (it now
+  returns `recent_7d_unshrunk_score` and `baseline_30d_unshrunk_score`); a
+  model version with no rows looked like ordinary missing data (now reported
+  and logged); `/evidence?k=-1` dropped the last result (`k` is now 1–50).
+  Open: whether a 7-day window of 5 to 10 sentences is enough for a
+  direction, and whether `source` and `aspect` should be validated.

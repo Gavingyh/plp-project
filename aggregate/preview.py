@@ -36,6 +36,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 
+import config.model_version as current_model
 from aggregate.index import _SOURCE_WEIGHT, _summarize
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -61,7 +62,8 @@ def stored_pairs(conn, ids: list[str]) -> pd.DataFrame:
             SELECT sa.sentence_id, sa.aspect, ase.label, ase.confidence
             FROM sentence_aspects sa
             JOIN aspect_sentiment ase ON ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect
-            WHERE sa.sentence_id IN ({q})""", conn, params=batch))
+            WHERE sa.sentence_id IN ({q}) AND ase.model_version = ?""",
+            conn, params=batch + [current_model.MODEL_VERSION]))
     return pd.concat(parts, ignore_index=True)
 
 

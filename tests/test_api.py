@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from api.main import app
 from ingest.db import now_iso
+from config.model_version import MODEL_VERSION
 
 
 def _insert_scored_sentence(temp_db, sentence_id, bank, aspect, label, confidence):
@@ -30,7 +31,7 @@ def _insert_scored_sentence(temp_db, sentence_id, bank, aspect, label, confidenc
     conn.execute(
         "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, scored_at) "
         "VALUES (?,?,?,?,?,?)",
-        (sentence_id, aspect, label, confidence, "test-model", now_iso()),
+        (sentence_id, aspect, label, confidence, MODEL_VERSION, now_iso()),
     )
     conn.commit()
     conn.close()

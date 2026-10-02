@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import aggregate.preview as pv
+from config.model_version import MODEL_VERSION
 
 
 def test_headline_counts_each_sentence_once_with_its_most_confident_pair():
@@ -71,10 +72,11 @@ def test_stored_pairs_beyond_sqlites_parameter_limit():
     import sqlite3
     conn = sqlite3.connect(":memory:")
     conn.execute("CREATE TABLE sentence_aspects (sentence_id TEXT, aspect TEXT)")
-    conn.execute("CREATE TABLE aspect_sentiment (sentence_id TEXT, aspect TEXT, label TEXT, confidence REAL)")
+    conn.execute("CREATE TABLE aspect_sentiment (sentence_id TEXT, aspect TEXT, label TEXT, confidence REAL, "
+                 "model_version TEXT)")
     ids = [f"s{i:05d}" for i in range(35000)]
     conn.executemany("INSERT INTO sentence_aspects VALUES (?, 'a')", [(i,) for i in ids])
-    conn.executemany("INSERT INTO aspect_sentiment VALUES (?, 'a', 'neutral', 0.9)", [(i,) for i in ids])
+    conn.executemany("INSERT INTO aspect_sentiment VALUES (?, 'a', 'neutral', 0.9, ?)", [(i, MODEL_VERSION) for i in ids])
     assert len(pv.stored_pairs(conn, ids)) == 35000
 
 

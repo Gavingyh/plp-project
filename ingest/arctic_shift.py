@@ -53,28 +53,44 @@ REQUEST_TIMEOUT = 60
 POLITE_DELAY_SECONDS = 0.3
 
 
+RETRY_WAITS = (2, 5, 15)   # seconds between attempts at one page
+
+# Windows that stopped early because a page kept failing; pull() reports them.
+INCOMPLETE_WINDOWS: list[str] = []
+
+
+class PageFailed(Exception):
+    """A page could not be fetched after every retry."""
+
+
 def _get(endpoint: str, **params) -> list[dict]:
-    """GET one page from Arctic Shift. On the documented 422 "timeout" response,
-    return [] rather than raising - callers narrow the window and move on."""
+    """GET one page from Arctic Shift: the rows, [] only when the archive has no
+    more. A failed request, a server error, the documented 422 "timeout" or
+    unreadable JSON is retried, then raised as PageFailed. Until 3 Oct 2026 a
+    failure returned [], which the caller read as the end of the window: whole
+    months of comments were lost that way (Sep 2021, May 2024, Mar 2025)."""
     url = f"{BASE_URL}/{endpoint}/search"
-    try:
-        resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"request error: {e}")
-        return []
-    if resp.status_code == 429:
-        wait = int(resp.headers.get("Retry-After", 5))
-        logger.info(f"rate limited, waiting {wait}s")
-        time.sleep(wait)
-        return _get(endpoint, **params)
-    if resp.status_code != 200:
-        # Includes the documented 422 timeout case for keyword search / heavy queries.
-        logger.info(f"{endpoint} search returned {resp.status_code}: {resp.text[:120]}")
-        return []
-    try:
-        return resp.json().get("data") or []
-    except json.JSONDecodeError:
-        return []
+    problem = ""
+    for attempt, wait in enumerate((0,) + RETRY_WAITS):
+        if wait:
+            time.sleep(wait)
+        try:
+            resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+        except requests.exceptions.RequestException as e:
+            problem = f"request error: {e}"
+            continue
+        if resp.status_code == 429:
+            time.sleep(int(resp.headers.get("Retry-After", 5)))
+            problem = "rate limited"
+            continue
+        if resp.status_code != 200:
+            problem = f"{endpoint} search returned {resp.status_code}: {resp.text[:120]}"
+            continue
+        try:
+            return resp.json().get("data") or []
+        except json.JSONDecodeError:
+            problem = "unreadable JSON"
+    raise PageFailed(f"{problem} (after {len(RETRY_WAITS) + 1} attempts)")
 
 
 def _harvest_window(endpoint: str, subreddit: str, after: str, before: str, fields: str) -> list[dict]:
@@ -82,8 +98,14 @@ def _harvest_window(endpoint: str, subreddit: str, after: str, before: str, fiel
     (no page token exists in this API)."""
     rows, cursor = [], after
     for _ in range(MAX_PAGES_PER_WINDOW):
-        page = _get(endpoint, subreddit=subreddit, after=cursor, before=before,
-                    limit=PAGE_LIMIT, sort="asc", fields=f"{fields},created_utc")
+        try:
+            page = _get(endpoint, subreddit=subreddit, after=cursor, before=before,
+                        limit=PAGE_LIMIT, sort="asc", fields=f"{fields},created_utc")
+        except PageFailed as e:
+            gap = f"r/{subreddit} {endpoint} from {cursor} to {before}"
+            logger.warning(f"window incomplete, {gap}: {e}")
+            INCOMPLETE_WINDOWS.append(gap)
+            break
         if not page:
             break
         rows.extend(page)
@@ -162,6 +184,9 @@ def pull(since: str | None = None, until: str | None = None) -> list[dict]:
         all_docs.extend(post_docs)
         all_docs.extend(comment_docs)
 
+    if INCOMPLETE_WINDOWS:
+        logger.warning(f"{len(INCOMPLETE_WINDOWS)} windows stopped early and need a re-pull: "
+                       + "; ".join(INCOMPLETE_WINDOWS))
     return all_docs
 
 

@@ -883,4 +883,19 @@ become relative paths.
     overwrites the labelled file without `--force`.
   - The model card says these models weren't retrained; the copy on Hugging
     Face predates that line.
+- **Reddit fetcher no longer reads a failure as the end of the data.**
+  `ingest/arctic_shift.py` returned an empty page on any request error,
+  server error, 422 timeout or bad JSON, and the window loop stopped there:
+  comments are missing for 4–30 Sep 2021, 14–31 May 2024 and 5–31 Mar 2025,
+  each gap ending at a month boundary while posts for the same months are
+  normal. It now retries, then logs the window as incomplete. **Refilling the
+  three gaps needs approval** (network pulls and database writes):
+  `python -m ingest.arctic_shift --since <start> --until <end>` per gap, then
+  preprocessing, embedding, aspects, scoring and the index for the new rows.
+- **Still open from the reviews, for the team:** `ingest/cna_articles.json`
+  (committed with the CNA scraper) holds the full text of 15 CNA articles,
+  against the rule that CNA text is never committed; removing it is one
+  `git rm`, but teammates lose their copy on the next pull and the text stays
+  in git history. 118 "Kay Hian" sentences are attributed to UOB until NER
+  is applied (known, decision brief).
 

@@ -29,7 +29,7 @@ The API is the documented interface for any frontend:
 | **[docs/HANDOFF.md](docs/HANDOFF.md)** | Start here if you're new to the project — read order, open decisions, what needs a human |
 | [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | What the system does, for whom, with acceptance criteria and rubric traceability |
 | [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Data model, API contract, module map, configuration, testing |
-| [docs/diagrams/README.md](docs/diagrams/README.md) | Twenty diagrams of the system (data model, pipeline, sequences, chatbot, labelling, plan), each traced to the code, with a shortlist for the report |
+| [docs/diagrams/README.md](docs/diagrams/README.md) | Twenty-three diagrams of the system (data model, pipeline, sequences, chatbot, labelling, plan), each traced to the code, with a shortlist for the report |
 | [learning/](learning/) | Study material on the concepts and techniques used, by subject |
 | [docs/data-viability.md](docs/data-viability.md) | Evidence appendix — per-source findings from testing each data source |
 | [docs/news-data.md](docs/news-data.md) | News dataset: sources, coverage, filter and dedup rules, known gaps, counts by month |
@@ -271,12 +271,12 @@ train/        Fine-tuning, evaluation, pre-labelling, annotator agreement, the O
 api/          FastAPI REST API: the interface a dashboard builds on (docs/api-integration.md)
 chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends, a terminal chat for testing
 config/       Aspect taxonomy, logging configuration
-scripts/      start/stop/status, resumable overnight backfill, model comparison
+scripts/      start/stop/status, resumable overnight backfill, the sharing bundle
 notebooks/    The text-analytics workstream's Colab notebooks (outputs cleared)
 learning/     Study material on the concepts and techniques used
 docs/spec/    Functional and technical specifications
 docs/evidence/  Dated outputs backing claims in the docs
-docs/diagrams/  Twenty diagrams, each traced to the code
+docs/diagrams/  Twenty-three diagrams, each traced to the code
 data/labeled/ Human labels; data/labeled/claude/ holds the Opus labeller's answers
 data/plp.db   SQLite store (gitignored; see Getting the database)
 ```

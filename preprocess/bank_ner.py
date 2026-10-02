@@ -103,7 +103,9 @@ def mentions(doc) -> list[tuple[str, str, str]]:
 # "D05.SI", "www.ocbc.com") become one token that neither the ruler nor the
 # statistical model sees. Any such name outside an entity already resolved
 # still counts, unless it sits inside a not-the-bank entity ("DBS Vickers").
-_FALLBACK = re.compile(r"\b(?:posb|dbs|d05|ocbc|o39|uob|u11)\b", re.IGNORECASE)
+# A digit may follow the name: products such as "OCBC360" are written as one
+# word (62 corpus sentences on 2 Oct; the Opus rater caught one in the gold sheet).
+_FALLBACK = re.compile(r"\b(?:posb|dbs|d05|ocbc|o39|uob|u11)(?=\d|\b)", re.IGNORECASE)
 # Not-the-bank names found in the raw text for the same reason: "DBS Vickers/"
 # tokenizes as "DBS" + "Vickers/", so the ruler never sees the broker.
 _NOT_BANK_TEXT = re.compile(r"\bdbs\W{0,2}vickers|\buob\W{0,2}kay\W{0,2}hian|\bkay\W{0,2}hian|\buobkh\b"

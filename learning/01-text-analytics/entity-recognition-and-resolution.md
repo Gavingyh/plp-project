@@ -69,6 +69,12 @@ matching name a different set of banks for 714 (1.6%): DBS Vickers 456,
 UOB Kay Hian 132 (including "KayHian" and "UOBKH"), POSB 88, Great Eastern
 19, Bank of Singapore 9, tickers in portfolio lists 9, Aston Martin 1.
 
+*Updated 2026-10-02.* An Opus 5.5 rater, labelling the gold sheet blind as
+a stand-in until people do, found a gap the same kind as the one below:
+"OCBC360" (a product written as one word) defeated the fallback too. With a
+digit allowed after the name, NER finds 49 more sentences, and the corpus
+diff is 763.
+
 **A failure found by looking at the disagreements.** A first version
 dropped 18 OCBC sentences such as "www.ocbc.com" and "OCBC+Sti": the
 tokenizer had made one token of the name and its punctuation, so neither

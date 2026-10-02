@@ -83,3 +83,9 @@ def test_evaluate_needs_labelled_rows_and_compares_both_methods():
 ])
 def test_fallback_catches_names_glued_to_punctuation(text, expected):
     assert ner.banks_in(text) == expected
+
+
+def test_a_bank_name_joined_to_a_number_is_found():
+    """'OCBC360' is the OCBC 360 account (Opus reference rater, 2026-10-02)."""
+    assert ner.banks_in("Transferring money from DBS/POSB into OCBC360.") == ["DBS", "OCBC"]
+    assert ner.banks_in("already maxing out on my ocbc360") == ["OCBC"]

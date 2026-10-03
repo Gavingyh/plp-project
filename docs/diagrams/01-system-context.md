@@ -86,6 +86,6 @@ Each row names the file and line an element comes from, and the text that line m
 | OpenAI, or any compatible provider via `OPENAI_BASE_URL` | `chatbot/backends/openai_backend.py:46` | `DEFAULT_BASE_URL = "https://api.openai.com/v1"` |
 | OpenAI unverified | `chatbot/backends/openai_backend.py:7` | `Not yet run against the live API` |
 | Gemini verified | `chatbot/backends/gemini_backend.py:4` | `Verified against the live API on 2026-09-30` |
-| Gemini | `chatbot/backends/gemini_backend.py:46` | `generativelanguage.googleapis.com` |
+| Gemini | `chatbot/backends/gemini_backend.py:47` | `generativelanguage.googleapis.com` |
 | Ollama is the default without a key | `chatbot/backends/__init__.py:49` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

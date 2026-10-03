@@ -12,8 +12,8 @@ You need the database (README, "Getting the database") and the Python
 environment (README, "Quick start"). Then:
 
 ```bash
-scripts/start.sh            # the API on port 8000, plus Ollama for /chat
-PLP_API_PORT=8100 scripts/start.sh api     # another port, API only
+scripts/start.sh            # Ollama for /chat, the API on port 8000 and the dashboard on 8501
+PLP_API_PORT=8100 scripts/start.sh api     # another port, API only (PLP_DASHBOARD_PORT for the dashboard)
 scripts/status.sh
 scripts/stop.sh
 ```
@@ -123,7 +123,11 @@ see "per-aspect scores" below.
 ```
 
 `backend` is `ollama`, `gemini`, `claude`, `openai`, or `null` to use the
-server's default (`CHATBOT_BACKEND` in `.env`). The response:
+server's default (`CHATBOT_BACKEND` in `.env`); anything else, or a message
+`role` other than `user` or `assistant`, gets HTTP 422. If the backend fails
+(Ollama not running, a missing or rejected key) the reply is HTTP 503 with
+the reason in `detail`. The Gemini backend never receives Reddit evidence
+text. The response:
 
 ```json
 {"question": "And OCBC?", "answer": "…", "guard": null,
@@ -166,6 +170,9 @@ near the numbers they qualify.
   warning) rather than reporting ordinary missing data.
 - **`bank` must be exactly `DBS`, `OCBC` or `UOB`** on every endpoint that
   takes it; anything else (including `dbs`) gets HTTP 422.
+- **`aspect` must be a known aspect** (`GET /aspects` lists them; a readable
+  name such as `dividend policy` is accepted, and `ALL` or no value means
+  every aspect); an unknown one gets HTTP 422 rather than an empty result.
 - **News volume rises towards the present** because of how Google News
   ranks results: compare periods by score, not by count.
 - **Analyst figures are Yahoo consensus aggregates**, not analyst reports.

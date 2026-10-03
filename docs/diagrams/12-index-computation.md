@@ -63,4 +63,4 @@ Each row names the file and line an element comes from, and the text that line m
 | volume floor, applied when read | `chatbot/tools.py:27` | `MIN_VOLUME_FOR_SCORE = 5` |
 | time-series floor | `aggregate/index.py:163` | `min_n: int = 5` |
 | thin buckets left off the chart | `docs/api-integration.md:85` | `gap, not a line through them, and not a zero.` |
-| insufficient data reported | `chatbot/tools.py:112` | `if n < MIN_VOLUME_FOR_SCORE:` |
+| insufficient data reported | `chatbot/tools.py:114` | `if n < MIN_VOLUME_FOR_SCORE:` |

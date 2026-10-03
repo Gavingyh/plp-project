@@ -8,7 +8,8 @@ repeated. Commands live in [RUNBOOK.md](../RUNBOOK.md). Current state and
 caveats live in [STATUS.md](../STATUS.md).
 
 Verified against the code and database on 2026-09-11; the module map,
-operations and open decisions were updated on 2026-09-26. Planned components
+operations and open decisions were updated on 2026-09-26, and the whole
+document checked against the code again on 2026-10-04. Planned components
 are marked as such and sequenced in [PLAN.md](../PLAN.md).
 
 ---
@@ -17,7 +18,7 @@ are marked as such and sequenced in [PLAN.md](../PLAN.md).
 
 The pipeline diagram is in [DESIGN.md](../DESIGN.md#what-the-system-does).
 Rather than redraw it, here is one sentence's journey through the system, with
-`sentence_id` as the thread that ties it together. Twenty more diagrams, each
+`sentence_id` as the thread that ties it together. Twenty-three diagrams, each
 traced to the code, are in [docs/diagrams](../diagrams/README.md).
 
 A DBS analyst-call transcript PDF is downloaded to
@@ -57,22 +58,24 @@ criticise an app in consecutive sentences.
 |---|---|---|
 | `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection, news relevance filter and cross-source dedup | `arctic_shift`, `google_news`, `yahoo_news`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, `news_filter`, `cna_scraper` (RSS to a JSON file), `cna_archive` (CNA backfill into the database), plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
 | repository root | Batch entry points | `run_news_pull.py` (every news source, then a source × bank × month table; `--audit` re-checks stored news), `run_daily_batch.py` (news, Reddit, consensus) |
-| `preprocess/` | Documents to sentences; labelling exports; a dry-run debris filter | `pipeline`, `export_candidates`, `export_blind_test`, `fragments` (reports only) |
-| `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison, the LLM aspect classifier and assignment evaluation | `assign`, `discover`, `compare_taxonomies`, `embed_store`, `llm_classify` (evaluation only), `assignment_eval` |
-| `sentiment/` | Aspect-conditioned sentiment classification | `score` |
-| `aggregate/` | The sentiment index and continuous time series | `index` |
+| `preprocess/` | Documents to sentences; labelling exports; a dry-run debris filter; bank entity recognition | `pipeline`, `export_candidates`, `export_blind_test`, `export_topup`, `bank_ner` (evaluated, not applied), `fragments` (reports only) |
+| `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison, the LLM aspect classifier and assignment evaluation | `assign`, `discover`, `compare_taxonomies`, `embed_store`, `llm_classify` (evaluation and the corpus run), `assignment_eval` |
+| `sentiment/` | Aspect-conditioned sentiment classification | `score` (base FinBERT; also scores new pairs with a served fine-tuned version through `finetuned`) |
+| `aggregate/` | The sentiment index, continuous time series, and the read-only preview of pending changes | `index`, `preview` |
 | `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation, a terminal chat for testing | `chat`, `agent`, `run_eval` |
 | `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `opus_labels` |
 | `api/` | FastAPI REST API: the documented interface for any frontend (DESIGN decision 23) | `uvicorn api.main:app` |
 | `dashboard/` | Streamlit dashboard, maintained by a teammate; reads the database directly | `streamlit run dashboard/app.py` |
-| `config/` | Aspect taxonomy, logging configuration | — |
-| `scripts/` | Service lifecycle, overnight backfill, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
+| `config/` | Aspect taxonomy and assignment method, the served model version and the fine-tuned models behind it, logging configuration | — |
+| `scripts/` | Service lifecycle, overnight backfill, scheduling template, data repairs, the re-score step, the sharing bundle | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `rescore.py`, `fix_earnings_dates.py`, `share_bundle.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
 
 The LLM aspect classifier of DESIGN decision 16 is built
-(`aspects/llm_classify.py`) and evaluated against the human aspect labels,
-but not yet wired into the pipeline: `aspects/assign.py`'s seed-centroid
-matching still fills `sentence_aspects`. Still planned (decisions 17–18): a
-bank entity recognition step. Aspect agreement is in `train/agreement.py`
+(`aspects/llm_classify.py`), evaluated against the human aspect labels, and
+has classified the whole corpus (3 Oct). It isn't applied: seed-centroid
+matching still fills `sentence_aspects` until the team decides, after which
+`scripts/rescore.py` replaces it and `aspects/assign.py` follows
+`assignment_method`. Bank entity recognition (decisions 17–18) is built and
+evaluated (`preprocess/bank_ner.py`, 1 Oct) but not applied either. Aspect agreement is in `train/agreement.py`
 (`--field aspect`, 2026-10-01). Decision 19's chatbot harness is
 built: `chatbot/guards.py` (advice, off-topic, figure and sentence-id checks)
 and `Conversation` / `answer_turn` in `chatbot/agent.py` (memory, state,
@@ -85,7 +88,7 @@ Run every module as `.venv-plp/bin/python3 -m <module>`. Never plain
 
 ## 3. Data model
 
-One SQLite file, `data/plp.db`, 83 MB. Six tables. WAL journal mode.
+One SQLite file, `data/plp.db`, 198.5 MB (4 Oct). Six tables. WAL journal mode.
 
 ### `documents`
 One row per ingested item, before segmentation.
@@ -232,8 +235,8 @@ Local models available through Ollama:
 
 | model | size | notes |
 |---|---|---|
-| `llama3.2:3b` | 2.0 GB | Current default. Fast; fabricates citations at 43–48% |
-| `llama3.1:8b` | 4.9 GB | Fabricates at 13%; slower. The better default where it fits |
+| `llama3.2:3b` | 2.0 GB | Current default. Fast; on gold set v2 (1 Oct) 15 of 32 answers carried a citation warning |
+| `llama3.1:8b` | 4.9 GB | 11 of 32 on the same set; slower. The better default where it fits |
 | `phi4-mini` | 2.5 GB | Called a tool 0 of 16 times; fabricated in 83% of answers |
 | `gemma3:4b` | 3.3 GB | No Ollama tool-calling support; all 23 questions error |
 | `qwen3:4b` | 2.5 GB | Emits a hidden reasoning chain first; roughly 7x slower per chatbot call. For aspect classification `--no-think` turns it off (1.3 s a sentence) |
@@ -258,6 +261,9 @@ Local models available through Ollama:
 | `DEBUG` | `false` | DEBUG level plus un-silencing third-party libraries |
 | `LOG_FILE` | `data/logs/plp.log` | `none` disables file logging |
 | `PLP_API_PORT` | 8000 | `scripts/start.sh`, `stop.sh`, `status.sh` |
+| `PLP_DASHBOARD_PORT` | 8501 | the same scripts, for the dashboard |
+| `CHATBOT_ENFORCE_EVIDENCE` | `off` | `strip` removes evidence no search returned; `search` also adds real quotes the harness finds |
+| `OLLAMA_THINK` | unset | `false` turns a reasoning model's hidden thinking off (qwen3) |
 
 `.env.example` is tracked, so every value in it must be a placeholder. Real
 keys were committed there from the first commit until 2026-09-11 and must be
@@ -302,18 +308,21 @@ is open for local frontend development.
 | GET | `/sentiment/series` | `bank*`, `aspect`, `bucket`, `source`, `min_n` | Continuous series; each point carries `sufficient` |
 | GET | `/sources` | — | Sources present, for per-source breakdowns |
 | GET | `/coverage` | `bank`, `aspect` | `has_data`, so callers can tell absence from neutrality |
-| GET | `/evidence` | `query*`, `bank`, `aspect`, `sentiment`, `k` | Sentences with `sentence_id`, `url`, `published_at` |
+| GET | `/evidence` | `query*`, `bank`, `aspect`, `sentiment`, `k` (1–50) | Sentences with `sentence_id`, `source`, `url`, `published_at` |
+| GET | `/evidence/latest` | `bank*`, `aspect`, `limit` | The newest sentences with their stored label, for a drill-down list |
 | GET | `/analyst-consensus` | `bank*` | Latest Yahoo snapshot, with its unofficial-API caveat |
+| GET | `/analyst-consensus/latest` | — | Every bank's newest consensus row |
+| GET | `/aspects` | — | Aspect keys and readable labels |
 | GET | `/suggestions` | `limit` (1–20) | Starter questions generated from the index |
-| POST | `/chat` | `{message, backend?}` | Chatbot answer |
+| POST | `/chat` | `{message, backend?, history?}` | Chatbot answer with its verification flags |
 
-`*` marks required. Validation is by regex on the query parameter, so a bad
-`bank`, `window` or `bucket` returns **HTTP 422** from FastAPI before the
-handler runs — verified against a live instance on 2026-09-11. The handler's
-own `ValueError` to 400 path on `/sentiment/series` is therefore unreachable
-through the API, since the regex admits only the three valid buckets; it still
-guards `compute_time_series` when called directly from Python. Covered by
-`tests/test_api.py`.
+`*` marks required. A bad `bank`, `window` or `bucket` returns **HTTP 422**
+from FastAPI before the handler runs (regex on the query parameter), and so
+does an unknown `aspect` on every endpoint that takes one (a readable name
+such as "dividend policy" is accepted; 4 Oct). On `/chat`, an unknown
+`backend` or message `role` is a 422, an empty message a 400, and a backend
+that fails (Ollama not running, a missing or rejected key) a 503. Covered by
+`tests/test_api.py` and `tests/test_validate_api*.py`.
 
 ### Chatbot tools
 
@@ -365,9 +374,11 @@ instructions alone failed in testing:
    twice, once as plausible URLs and once as placeholder tokens a URL-matching
    check alone would have missed.
 
-**Evaluation.** A 23-question gold set in `chatbot/eval_gold_set.py` covering
-lookups, comparisons, trends, out-of-scope questions, thin data, evidence
-requests and advice-seeking. `chatbot/run_eval.py --tag <name>` writes a
+**Evaluation.** A gold set in `chatbot/eval_gold_set.py` covering lookups,
+comparisons, trends, out-of-scope questions, thin data, evidence requests and
+advice-seeking: 23 questions in v1, 32 in v2 (`--set v2`, 1 Oct), plus four
+multi-turn conversations (`--multi-turn`), retrieval MRR and an LLM judge
+([evidence](../evidence/chatbot-eval-build-2026-10-01.md)). `chatbot/run_eval.py --tag <name>` writes a
 transcript and a summary per model. Tool selection, advice-declining and
 citation fabrication are automated. Whether a stated number is *correct* is
 not, and deliberately so: verifying a number by extracting it with another
@@ -418,7 +429,9 @@ configuration chosen on 2026-10-01 by 5-fold cross-validation is up to 8
 epochs with the aspect's readable label (`--aspect-text label`) as the second
 segment.
 
-**Status (2026-10-01).** Trained on 1,277 labelled rows: test macro-F1 0.604
+**Status (2026-10-01).** Trained on the 978 train/dev rows of the 1,277
+labelled (831 for training, 147 for early stopping) and tested on the other
+299: test macro-F1 0.604
 ± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT
 zero-shot's 0.571
 ([evidence](../evidence/finetune-fixes-2026-10-01.md)). The aspect
@@ -429,7 +442,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-850 tests in `tests/` (897 from the repository root, adding the diagram and
+879 tests in `tests/` (926 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
@@ -517,9 +530,10 @@ was assessed as disproportionate and in greyer territory than reading a public
 feed.
 
 **Not financial advice.** The chatbot is required to decline buy/sell framing
-and state that it does not give investment advice. It currently manages this
-in 3 of 7 gold-set cases on every model tested, which is a known and
-report-relevant gap.
+and state that it does not give investment advice. Prompt instructions alone
+managed this in 2–3 of 7 gold-set cases on every model tested; since 26 Sep
+an input guard (`chatbot/guards.py`) answers advice-seeking questions with a
+fixed reply before the model runs, and declines 7 of 7.
 
 **Personal data.** Reddit content is public but user-authored. Documents store
 the source URL rather than building user profiles, and no analysis is done per
@@ -542,7 +556,7 @@ personal names are kept in the repository.
 | # | Decision | Evidence available | Who decides |
 |---|---|---|---|
 | 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source. *Decided 2026-09-30: ten data-derived aspects (DESIGN decision 21)* | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team plus supervisor. It changes what was proposed. |
-| 2 | **Default local model.** `llama3.1:8b` fabricates citations at 13% against `llama3.2:3b`'s 43–48%, but is noticeably slower | STATUS chatbot evaluation | Team |
-| 3 | **Advice-declining fix.** 3 of 7 at best on every model, so it is a prompt and design problem, not a model choice | `data/eval/chatbot_eval_results_*.jsonl` | Whoever owns the chatbot |
+| 2 | **Default local model.** On gold set v2 (1 Oct) `llama3.1:8b` carried a citation warning on 11 of 32 answers against `llama3.2:3b`'s 15, but is noticeably slower | `docs/evidence/chatbot-eval-build-2026-10-01.md` | Team |
+| 3 | **Advice-declining fix.** *Done 2026-09-26:* the input guard declines 7 of 7, where prompts alone managed 2–3 of 7 | `docs/evidence/chatbot-harness-2026-09-26.md` | — |
 | 4 | **Whether blending is right at all.** Management commentary and retail chatter in one index is a legitimate methodological question, currently resolved in favour of the proposal with composition made visible | Per-source rows in `sentiment_index` | Team plus supervisor |
 | 5 | **Labelling split across four people**, and whether to reduce the per-class target given `asset_quality` has only 58 candidate rows | `docs/STATUS.md` labelling section | Team |

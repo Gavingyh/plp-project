@@ -83,7 +83,7 @@ Each row names the file and line an element comes from, and the text that line m
 | consensus writes analyst_consensus | `ingest/yahoo_analyst.py:146` | `def upsert(rows` |
 | preprocessing | `preprocess/pipeline.py:90` | `def run() -> dict:` |
 | bank attribution per sentence | `preprocess/pipeline.py:62` | `def _resolve_sentence_bank(` |
-| sentence splitting | `preprocess/segment.py:35` | `def segment(text: str)` |
+| sentence splitting | `preprocess/segment.py:62` | `def segment(text: str)` |
 | embeddings | `aspects/embed_store.py:47` | `def update() -> dict:` |
 | FinBERT embedding model | `aspects/embed.py:17` | `MODEL_NAME = "ProsusAI/finbert"` |
 | discovery: UMAP | `aspects/discover.py:90` | `reducer = umap.UMAP(` |

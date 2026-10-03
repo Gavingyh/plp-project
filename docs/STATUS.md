@@ -7,8 +7,11 @@ For reasoning behind design choices, see [DESIGN.md](DESIGN.md). For how to
 run anything mentioned here, see [RUNBOOK.md](RUNBOOK.md). For what happens
 next, see [PLAN.md](PLAN.md).
 
-**Last updated 2026-10-01**, after the fine-tuning fixes, the LLM aspect
-classifier's evaluation and the Opus 5.5 labeller; before that, 2026-09-26,
+**Last updated 2026-10-04**, after the LLM's corpus aspect run, the
+full-corpus index preview, the re-score step (`scripts/rescore.py`, tested on
+a copy) and two rounds of bug fixes (HANDOFF, 3 and 4 Oct); before that,
+2026-10-01, after the fine-tuning fixes, the LLM aspect classifier's
+evaluation and the Opus 5.5 labeller; and 2026-09-26,
 after the news backfill, a full pipeline run on the news, and the decisions
 recorded in PLAN.md section 2. Sections that still describe an earlier state
 carry a dated note saying so.
@@ -21,10 +24,10 @@ carry a dated note saying so.
 |---|---|
 | "DBS/OCBC show more positive sentiment than UOB" | No longer an artifact of missing UOB data — all three banks now have earnings coverage (DBS 9,093 sentences, UOB 1,600, OCBC 1,561). DBS still carries ~6x the earnings volume of the other two, so check the per-source breakdown before making a blended claim. |
 | "Fine-tuning improved sentiment classification" | On macro-F1, modestly, and only since 2026-10-01: with the aspect's readable label as input, test macro-F1 0.604 ± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT zero-shot's 0.571 on the 299-row test split; the gap is about one seed standard deviation ([evidence](evidence/finetune-fixes-2026-10-01.md)). Don't credit the readable label for it: on two more seeds' cross-validation it is no better than the aspect key (+0.005 over 15 paired folds; [evidence](evidence/noise-floor-cv-2026-10-02.md)). Base FinBERT still has the higher accuracy (0.70 against 0.66): the fine-tuned model calls neutral sentences positive or negative more often. The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT. |
-| "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16): an LLM classifier (`llama3.1:8b`) matches the human aspect on 0.729 of the 1,277 labelled sentences against 0.413 for the embedding match, but hasn't been run on the corpus ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
-| "The chatbot cites its sources" | Local models invent citations: on gold set v2 (1 Oct), 15 of 32 answers on the default `llama3.2:3b`, 11 of 32 on `llama3.1:8b`, every one from an answer that never searched for evidence ([evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). A code check flags this; since 2 Oct `CHATBOT_ENFORCE_EVIDENCE=strip` (off by default) removes such evidence, which took live warnings to 0 on the 8B and to 2 false alarms on the 3B. |
-| "GPT / Gemini backends work" | Gemini works: verified live on 2026-09-30 on numbers-only questions ([evidence](evidence/gemini-backend-2026-09-30.md)). The OpenAI backend has never been run: no key exists. Since 1 Oct it also reaches OpenAI-compatible providers such as Groq (`OPENAI_BASE_URL`), equally unverified. |
-| "The chatbot's answers are grounded" | The harness now flags invented figures and citations and answers advice and off-topic questions itself, but the local 3B model still invents citations in 43–48% of answers ([evidence](evidence/chatbot-harness-2026-09-26.md)). A flagged answer is flagged, not corrected. |
+| "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16): an LLM classifier (`llama3.1:8b`) matches the human aspect on 0.729 of the 1,277 labelled sentences against 0.413 for the embedding match; it classified the whole corpus on 3 Oct but isn't applied to the database yet ([evidence](evidence/llm-aspect-classifier-2026-10-01.md), [index preview](evidence/index-preview-2026-10-01.md)). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
+| "The chatbot cites its sources" | Local models invent citations: on gold set v2 (1 Oct), 15 of 32 answers on the default `llama3.2:3b`, 11 of 32 on `llama3.1:8b`, every one from an answer that never searched for evidence ([evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). A code check flags this; since 2 Oct `CHATBOT_ENFORCE_EVIDENCE=strip` (off by default) removes such evidence: replayed under the stricter checks of 3 Oct, citation warnings fell to 0 on both models (8B 11 → 0, 3B 16 → 0) and answers with a figure no tool returned to 0 on the 8B and 2 on the 3B, both real inventions ([evidence](evidence/chatbot-eval-build-2026-10-01.md)). |
+| "GPT / Gemini backends work" | Gemini works: verified live on 2026-09-30 on numbers-only questions ([evidence](evidence/gemini-backend-2026-09-30.md)). Since 4 Oct its backend withholds Reddit evidence text, so Reddit posts never reach it. The OpenAI backend has never been run: no key exists. Since 1 Oct it also reaches OpenAI-compatible providers such as Groq (`OPENAI_BASE_URL`), equally unverified. |
+| "The chatbot's answers are grounded" | The harness flags invented figures and citations and answers advice and off-topic questions itself, but the local models still invent: on gold set v2 (32 questions, 1 Oct), 15 answers on the 3B and 11 on the 8B carried a citation warning ([evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). Without `strip`, a flagged answer is flagged, not corrected. |
 | "News volume rose sharply in 2026" | An artefact of Google News ranking recent articles higher. Normalise per month before comparing periods ([news-data.md](news-data.md)). |
 | "CNA covered the banks more in 2023–24 than in 2025–26" | CNA articles are those the Wayback Machine happened to capture, with a bank in the URL: 0 to 13 a month. Use CNA for its full text, not its volume ([news-data.md](news-data.md)). |
 
@@ -70,8 +73,8 @@ By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase on 2026-10-01 (evening): 15,900 lines of Python in git (10,900
-excluding tests), 850 tests in `tests/` (897 with the diagram and notebook checks).
+Codebase on 2026-10-04: 20,669 lines of Python in git (13,153 excluding
+tests), 879 tests in `tests/` (926 with the diagram and notebook checks).
 
 These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
 loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
@@ -101,8 +104,9 @@ per-source cleaning, per-sentence bank attribution, near-duplicate removal.
 **Aspects.** FinBERT embeddings, offline clustering for taxonomy discovery,
 frozen-centroid assignment per batch, and a tool for comparing candidate
 taxonomies quantitatively. An LLM aspect classifier on local Ollama models
-(`aspects/llm_classify.py`), evaluated against the human aspect labels but
-not yet applied to the corpus.
+(`aspects/llm_classify.py`), evaluated against the human aspect labels; it
+classified the whole corpus on 3 Oct, but its answers aren't applied to the
+database yet (`scripts/rescore.py` does that once the team decides).
 
 **Sentiment & aggregation.** Base FinBERT scoring, per-bank/aspect index with
 volume shrinkage, 7d/30d/all-time windows, per-source breakdown.
@@ -124,7 +128,7 @@ Streamlit dashboard (`dashboard/`) is maintained by a teammate and reads the
 database directly; it was removed on 2026-10-01 and restored the same night
 with the teammate's redesign (DESIGN decision 23, amended).
 
-**Engineering.** 850 tests (external APIs mocked with captured payloads),
+**Engineering.** 879 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the API and Ollama. A clean copy installs
 and runs from the README on Python 3.14
@@ -352,6 +356,11 @@ The per-source breakdown remains the honest way to read blended figures.
 
 ### 3. Aspect taxonomy not validated
 
+> **Updated 2026-10-03.** The corpus run finished: `llama3.1:8b` gave all
+> 44,345 sentences one aspect each, none invalid. Applying them waits for the
+> team; on a copy, `scripts/rescore.py` applied them in seconds
+> ([evidence](evidence/index-preview-2026-10-01.md)).
+>
 > **Updated 2026-10-01.** The LLM classifier is built and evaluated:
 > `llama3.1:8b` top-1 0.729 and `qwen3:4b` 0.719 against the human aspect,
 > against 0.413 for embedding assignment; where the two models agree (76% of

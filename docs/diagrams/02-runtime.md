@@ -70,10 +70,10 @@ Each row names the file and line an element comes from, and the text that line m
 | embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")` |
 | news filter log location | `ingest/news_filter.py:53` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
 | dashboard reads the database | `dashboard/app.py:22` | `from ingest.db import get_connection` |
-| API reads the database | `api/main.py:33` | `from ingest.db import get_connection` |
+| API reads the database | `api/main.py:36` | `from ingest.db import get_connection` |
 | evidence search reads the embeddings | `chatbot/retrieval.py:148` | `all_ids, all_vecs = load_for_search()` |
 | dashboard chat | `dashboard/app.py:473` | `from chatbot.agent import Conversation` |
-| API chat | `api/main.py:27` | `from chatbot.agent import Conversation` |
+| API chat | `api/main.py:30` | `from chatbot.agent import Conversation` |
 | database not in git | `.gitignore:14` | `data/plp.db` |
 | embeddings not in git | `.gitignore:17` | `data/sentence_embeddings.npz` |
 | snapshots not in git | `.gitignore:18` | `data/snapshots/` |

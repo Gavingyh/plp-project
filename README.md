@@ -60,8 +60,10 @@ The API is the documented interface for any frontend:
   labelled rows. LLM classification is the replacement: `llama3.1:8b`
   matches the human aspect on 73% of the 1,277 labelled sentences against
   41% for the embedding match
-  ([evidence](docs/evidence/llm-aspect-classifier-2026-10-01.md)), but it
-  hasn't been run on the corpus yet (DESIGN decisions 16 and 21).
+  ([evidence](docs/evidence/llm-aspect-classifier-2026-10-01.md)). It has
+  classified the whole corpus (3 Oct) but isn't applied to the database yet:
+  that is a team decision, and `scripts/rescore.py` is ready for it (DESIGN
+  decisions 16 and 21).
 - **News volume over time is a sampling artefact.** Google News favours recent
   articles; normalise per month before comparing periods.
 
@@ -93,7 +95,7 @@ the environment with it, e.g. `python3.14 -m venv .venv-plp`.
 3. Start the interfaces:
 
    ```bash
-   scripts/start.sh     # the REST API + Ollama, with health checks
+   scripts/start.sh     # Ollama, the REST API and the dashboard, with health checks
    scripts/status.sh    # what's up, on which port
    scripts/stop.sh      # stop it again
    ```
@@ -281,8 +283,9 @@ aggregate/    Per-bank/aspect index, volume shrinkage, time series
 train/        Fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller
 api/          FastAPI REST API: the interface a dashboard builds on (docs/api-integration.md)
 chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends, a terminal chat for testing
-config/       Aspect taxonomy, logging configuration
-scripts/      start/stop/status, resumable overnight backfill, the sharing bundle
+config/       Aspect taxonomy, the served model version, logging configuration
+scripts/      start/stop/status, resumable overnight backfill, the sharing bundle,
+              the re-score step (rescore.py) and the earnings-date repair
 notebooks/    The text-analytics workstream's Colab notebooks (outputs cleared)
 learning/     Study material on the concepts and techniques used
 docs/spec/    Functional and technical specifications
@@ -295,6 +298,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 850 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 897: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 879 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 926: adds the diagram and notebook checks
 ```

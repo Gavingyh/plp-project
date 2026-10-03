@@ -9,7 +9,8 @@ adjacent ground and are not repeated here: [DESIGN.md](../DESIGN.md) explains
 states a limitation, STATUS is the authority and this is a summary.
 
 Current as of 2026-09-26, with labelling, the fine-tuned model and aspect
-categorisation updated on 2026-10-01. Corpus figures are from the database on
+categorisation updated on 2026-10-01, and checked against the code again on
+2026-10-04. Corpus figures are from the database on
 2026-09-26 (the corpus is frozen from then); requirements marked **Planned**
 were decided on 2026-09-26 and are sequenced in [PLAN.md](../PLAN.md).
 
@@ -133,11 +134,11 @@ machine-readable contract (a test keeps it current).
 | Requirement | Acceptance criteria | Status |
 |---|---|---|
 | A dashboard can fetch every number it shows | `/sentiment`, `/sentiment/compare`, `/sentiment/index`, `/sentiment/trend`, `/sentiment/series` return JSON matching the stored index | Done |
-| Invalid input is rejected, not guessed at | `bank` is validated against `^(DBS\|OCBC\|UOB)$`, `window` against `^(7d\|30d\|all_time)$`, `bucket` against `^(week\|month\|quarter)$`; bad values give HTTP 422 on every endpoint that takes them | Done, covered in `tests/test_api.py` and `tests/test_validate_api.py` (3 Oct: `/coverage` and `/evidence` now check `bank` too) |
+| Invalid input is rejected, not guessed at | `bank` is validated against `^(DBS\|OCBC\|UOB)$`, `window` against `^(7d\|30d\|all_time)$`, `bucket` against `^(week\|month\|quarter)$`; bad values give HTTP 422 on every endpoint that takes them, as does an unknown `aspect` (4 Oct; readable names like "dividend policy" are accepted) | Done, covered in `tests/test_api.py` and `tests/test_validate_api.py` (3 Oct: `/coverage` and `/evidence` now check `bank` too) |
 | A chat UI can offer questions the data can actually answer | `/suggestions?limit=N` returns questions generated from the index, never hardcoded, excluding advice-seeking and out-of-scope framings | Done |
 | A caller can distinguish "no data" from "neutral sentiment" | `/coverage` reports `has_data`; thin results carry `insufficient_data`, including each `/sentiment/index` row (3 Oct) | Done |
 | A caller can retrieve evidence with provenance | `/evidence` returns `sentence_id`, `url`, `published_at` per hit | Done |
-| A caller can reach the chatbot | `POST /chat` accepts a message and optional backend | Done |
+| A caller can reach the chatbot | `POST /chat` accepts a message, an optional backend and the earlier turns (`history`); an unknown backend or role is a 422, a failing backend a 503 | Done |
 | Service health is checkable | `GET /health` returns `{"status": "ok"}` | Done |
 
 ### 4.3 Chatbot
@@ -146,19 +147,19 @@ machine-readable contract (a test keeps it current).
 |---|---|---|
 | Answers questions about sentiment by querying the store, not from model memory | Six tools: `get_sentiment`, `compare_banks`, `get_trend`, `get_coverage`, `search_evidence`, `get_analyst_consensus` | Done |
 | Never states a number it did not retrieve | Enforced in code by the volume floor, and by prompt rule 1; every figure is checked against the tools' results (the number check below) | **Partial** — invented figures are now detected and flagged, not prevented |
-| Never cites evidence it did not retrieve | If `search_evidence` was not called, any quoted evidence, `sentence_id` or URL is fabricated by definition and the answer is flagged | **Partial** — detection works; local models still fabricate at 43–48% (3B) and 13% (8B) |
+| Never cites evidence it did not retrieve | If `search_evidence` was not called, any quoted evidence, `sentence_id` or URL is fabricated by definition and the answer is flagged | **Partial** — detection works; on gold set v2 (1 Oct) 15 of 32 answers on the 3B and 11 of 32 on the 8B carried a citation warning, and `CHATBOT_ENFORCE_EVIDENCE=strip` removes such evidence |
 | Declines investment advice | Advice-seeking questions are declined with a not-financial-advice statement | Done through the advice guard below — prompt-only was 2–3 of 7 on every model tested |
 | Says so plainly when data is thin | Tools return `insufficient_data` below 5 observations | Done |
 | Runs without any API key | Ollama backend auto-selected when no key is present | Done |
-| Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude and Gemini verified (Gemini on 2026-09-30, [evidence](../evidence/gemini-backend-2026-09-30.md)); GPT never run |
+| Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Gemini verified on 2026-09-30 ([evidence](../evidence/gemini-backend-2026-09-30.md)); the Claude backend has no recorded run, and GPT has never been run |
 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | Done — terminal chat and API (`history`); verified live in a three-turn conversation |
 | Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | Done — 7 of 7, by guards; off-topic questions get a scope reply too |
 | Every number in an answer matches a tool result | An output guard compares each figure with the tools' results and flags a mismatch, as the citation check does | Done — 18 of 19 flagged figures in the final run were invented; the one false alarm is fixed |
-| Evaluated on a frozen, sliced gold set | About 30 questions with expected behaviour written before tuning; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; multi-turn scenarios; SASSI questionnaire with 5–8 users | **Planned** — today 23 single-turn questions, also used during tuning |
+| Evaluated on a frozen, sliced gold set | About 30 questions with expected behaviour written before tuning; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; multi-turn scenarios; SASSI questionnaire with 5–8 users | **Partial** — gold set v2 (32 questions), four multi-turn conversations, retrieval MRR and an LLM judge since 1 Oct ([evidence](../evidence/chatbot-eval-build-2026-10-01.md)); the questions were also used during tuning, and the SASSI sessions are still to come |
 
 Numbers and citations remain the honest weak points: the harness detects invented
-figures and citations but a small local model keeps producing them (43–48% of
-answers). The last four (conversation, advice guard, number check, gold-set
+figures and citations but the local models keep producing them (on gold set
+v2, 15 of 32 answers on the 3B and 11 of 32 on the 8B). The last four (conversation, advice guard, number check, gold-set
 evaluation) apply the Conversational UIs module and are DESIGN decision
 19; results in [evidence/chatbot-harness-2026-09-26.md](../evidence/chatbot-harness-2026-09-26.md).
 
@@ -166,10 +167,10 @@ evaluation) apply the Conversational UIs module and are DESIGN decision
 
 | Requirement | Acceptance criteria | Status |
 |---|---|---|
-| Export a stratified candidate set for annotation | `preprocess/export_candidates.py` writes the candidate set: currently 997 rows, 797 `train_dev` and 200 `test` (one removed with off-topic news on 2026-09-24) | Done, to be re-drawn (last row) |
+| Export a stratified candidate set for annotation | `preprocess/export_candidates.py` writes the candidate set: re-drawn on 2026-09-27 to 1,277 rows, 978 `train_dev` and 299 `test` (the first draw had 997) | Done (see the last row) |
 | The test split is drawn at random before any model screening, and frozen | `split=test` rows are randomly sampled independently of model output | Done |
 | Annotators are not shown model opinions when labelling the test set | `preprocess/export_blind_test.py` writes a sheet carrying sentence, aspect and provenance only | Done |
-| Pre-labelling reduces annotation to correction | `train/llm_prelabel.py` fills `llm_prelabel` and `llm_rationale`, never `label`; checkpointed and resumable | Done, 997 of 998 rows |
+| Pre-labelling reduces annotation to correction | `train/llm_prelabel.py` fills `llm_prelabel` and `llm_rationale`, never `label`; checkpointed and resumable | Done, all 1,277 rows |
 | Agreement between annotators is measured before dividing the work | `train/agreement.py` reports Cohen's κ against a 0.6 target | Done |
 | A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Met**: with the readable aspect label, three seeds score macro-F1 0.604 ± 0.035 (0.615 averaged) against base FinBERT's 0.571, which keeps the higher accuracy ([evidence](../evidence/finetune-fixes-2026-10-01.md)); the 30 Sep configuration scored 0.547 ± 0.013 |
 | Annotators choose the aspect and the sentiment for each sentence | Re-drawn candidate set across Reddit, earnings and news; ≥ 200 rows per sentiment class overall, ~80 per aspect; blind test sheet; κ reported for aspect and for sentiment | **Partly met** by the 2026-09-27 round: 1,277 rows (617 Reddit, 477 earnings, 183 news), 275 / 543 / 459 negative / neutral / positive, sentiment κ 0.93. Not met: five aspects below 80 rows, and aspect κ between people (only human–LLM, 0.80, DESIGN decision 22) |
@@ -183,7 +184,7 @@ five smallest aspects.
 |---|---|---|
 | Aspect discovery by clustering | FinBERT embeddings, UMAP, HDBSCAN over the full corpus; cluster count, noise share and correspondence to the aspects reported | Done on 36,884 sentences (2026-09-11, 281 clusters, 67% noise); swept over `min_cluster_size` on all 44,345 sentences on 2026-09-30 (10: 358 clusters, 65% noise; 100: 25 clusters, 52% noise; [evidence](../evidence/aspect-discovery-sweep-2026-09-30.md)) |
 | Aspect categorisation | A local LLM assigns each sentence one of the ten aspects (DESIGN decision 21) or `other`; accuracy and macro-F1 against the human aspect labels, with seed-centroid assignment as baseline | **Evaluated, not applied** (2026-10-01): `llama3.1:8b` top-1 0.729, macro-F1 0.679, against seed-centroid 0.413 and 0.296 ([evidence](../evidence/llm-aspect-classifier-2026-10-01.md)); the whole corpus classified on 3 Oct, applying it waits for the team |
-| Bank entity recognition and resolution | Organisation mentions recognised and resolved to DBS, OCBC, UOB or not the bank; precision, recall and F1 on a ~200-sentence gold set against alias matching | **Planned** — DESIGN decision 18 |
+| Bank entity recognition and resolution | Organisation mentions recognised and resolved to DBS, OCBC, UOB or not the bank; precision, recall and F1 on a ~200-sentence gold set against alias matching | **Evaluated, not applied** (2026-10-01): against Opus as a provisional reference on 201 sentences, F1 0.997 for NER against 0.772 for alias matching; the gold set awaits human labels ([evidence](../evidence/bank-ner-2026-10-01.md)) |
 | Sentiment classification (fine-tuned FinBERT) | As for the fine-tuned classifier (4.4): per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Done**: 0.604 ± 0.035 against base FinBERT's 0.571 (see 4.4) |
 
 ---
@@ -195,9 +196,9 @@ five smallest aspects.
 | Requirement | Satisfied by | Code | Status |
 |---|---|---|---|
 | Conversational user interface | Tool-calling chatbot with RAG evidence retrieval, in the terminal chat and through the API (the dashboard's chat uses `POST /chat`) | `chatbot/` | Done |
-| At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, `aspects/llm_classify.py`, planned NER module, `train/finetune.py` | Aspect discovery and sentiment classification done; aspect categorisation evaluated, not applied; bank entity recognition planned |
+| At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, `aspects/llm_classify.py`, `preprocess/bank_ner.py`, `train/finetune.py` | Aspect discovery and sentiment classification done; aspect categorisation and bank entity recognition evaluated, not applied |
 | A sentiment mining component | Overall and aspect-based sentiment index across four sources | `sentiment/`, `aggregate/` | Done |
-| At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Met**: trained on 1,277 labelled rows, three seeds; ahead of base FinBERT on macro-F1, behind on accuracy |
+| At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Met**: trained on the 978 train/dev rows of 1,277 labelled, tested on the other 299, three seeds; ahead of base FinBERT on macro-F1, behind on accuracy |
 
 The DNN requirement is met since 2026-09-30: FinBERT fine-tuned on the
 team's labels, evaluated over three seeds against three baselines. With the
@@ -235,8 +236,9 @@ Summarised from [STATUS.md](../STATUS.md), which is the authority.
    yet.
 3. **Local models fabricate citations**, and the check detects rather than
    prevents.
-4. **Invented figures and citations are flagged, not prevented.** The local
-   3B model still produces them in 43–48% of answers.
+4. **Invented figures and citations are flagged, and removed only with
+   `strip`.** On gold set v2, 15 of 32 answers on the local 3B model carried
+   a citation warning.
 5. **Blended cross-bank figures track earnings coverage.** DBS carries roughly
    six times the earnings volume of the other two banks.
 6. **Relevance filtering is weak.** Sentences mentioning a bank incidentally
@@ -251,7 +253,7 @@ Summarised from [STATUS.md](../STATUS.md), which is the authority.
 
 | term | meaning |
 |---|---|
-| **Aspect** | A financial topic a sentence is about. Currently one of `dividend_policy`, `asset_quality`, `net_interest_margin`, `management_guidance`, or `other`. |
+| **Aspect** | A financial topic a sentence is about: one of ten derived from the corpus (DESIGN decision 21; keys in `config/aspects.yaml`, readable labels from `GET /aspects`), or `other`. |
 | **Sentence** | The unit of analysis. Everything downstream keys off `sentence_id`. A document is split into sentences before anything is scored. |
 | **Sentiment index** | The aggregated score per (bank, aspect, window, source), in the range −1 to +1. |
 | **Volume floor** | The minimum number of observations, 5, below which the system reports insufficient data instead of a score. |

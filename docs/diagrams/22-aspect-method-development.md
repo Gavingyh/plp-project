@@ -53,4 +53,4 @@ Each row names the file and line an element comes from, and the text that line m
 | temperature 0 | `aspects/llm_classify.py:121` | `"options": {"temperature": 0},` |
 | corpus cache | `aspects/llm_classify.py:182` | `def corpus_rows(conn, seed: int = 2026, limit: int | None = None) -> pd.DataFrame:` |
 | Opus rounds | `train/opus_labels.py:269` | `def extra_batches(name: str) -> list[str]:` |
-| top-up sheet | `preprocess/export_topup.py:93` | `def select(pool: pd.DataFrame, llm_aspect: pd.Series, targets: dict[str, int]) -> pd.DataFrame:` |
+| top-up sheet | `preprocess/export_topup.py:97` | `def select(pool: pd.DataFrame, llm_aspect: pd.Series, targets: dict[str, int]) -> pd.DataFrame:` |

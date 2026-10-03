@@ -92,18 +92,18 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:383` | `class Conversation:` |
-| state fields | `chatbot/agent.py:389` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:393` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:307` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:318` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:136` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:190` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:424` | `class Conversation:` |
+| state fields | `chatbot/agent.py:430` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:434` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:346` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:357` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:143` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:222` | `def answer_has_unverified_citation(self, answer: str)` |
 | guards | `chatbot/guards.py:66` | `def advice_reply(question: str` |
-| tools | `chatbot/tools.py:372` | `TOOL_FUNCTIONS = {` |
+| tools | `chatbot/tools.py:374` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:25` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:31` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:43` | `class OllamaBackend(LLMBackend):` |
 | ClaudeBackend | `chatbot/backends/claude_backend.py:19` | `class ClaudeBackend(LLMBackend):` |
 | OpenAIBackend | `chatbot/backends/openai_backend.py:51` | `class OpenAIBackend(LLMBackend):` |
-| GeminiBackend | `chatbot/backends/gemini_backend.py:77` | `class GeminiBackend(LLMBackend):` |
+| GeminiBackend | `chatbot/backends/gemini_backend.py:107` | `class GeminiBackend(LLMBackend):` |

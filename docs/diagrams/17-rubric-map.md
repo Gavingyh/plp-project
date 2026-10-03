@@ -80,9 +80,9 @@ Each row names the file and line an element comes from, and the text that line m
 | conversational UI: chatbot | `docs/PLAN.md:70` | `| **Chatbot** (tool calling over the index and evidence) | conversational UI |` |
 | module abbreviations | `docs/PLAN.md:72` | `Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,` |
 | aspect discovery is built | `aspects/discover.py:49` | `def run(min_cluster_size: int = 10)` |
-| segmentation is built | `preprocess/segment.py:35` | `def segment(text: str)` |
+| segmentation is built | `preprocess/segment.py:62` | `def segment(text: str)` |
 | fine-tuning is built | `train/finetune.py:252` | `def run(seed: int = 42` |
-| base FinBERT scores today | `docs/api-integration.md:161` | `**Scores come from base FinBERT, zero-shot.**` |
+| base FinBERT scores today | `docs/api-integration.md:165` | `**Scores come from base FinBERT, zero-shot.**` |
 | annotation done | `docs/evidence/annotation-agreement-2026-09-27.md:34` | `| candidates, both splits | 1,277 | 0.952 | **0.926** |` |
 | fine-tuned, below base | `docs/evidence/finetune-2026-09-30.md:28` | `| fine-tuned FinBERT, 3 seeds |` |
 

@@ -225,8 +225,8 @@ Not running since 2026-09-26. To run the ingestion daily on a Mac, install
 remove commands. Replace its `/path/to/plp-project` placeholders with the
 checkout's path first. It ingests only; run the pipeline steps afterwards.
 `run_daily_batch.py` logs failed Reddit or Google News windows at error
-level but still exits 0; `run_news_pull.py` and the backfill below exit
-non-zero.
+level but still exits 0; `run_news_pull.py` exits non-zero, and the
+backfill below records such a month as incomplete and moves on.
 
 ### UOB earnings — fetched from the Wayback Machine
 
@@ -283,12 +283,14 @@ database directly. The API is the documented interface for any frontend
 ### Start and stop
 
 ```bash
-scripts/start.sh              # Ollama (if needed) and the API
+scripts/start.sh              # Ollama (if needed), the API and the dashboard
 scripts/status.sh             # what's running, on which port, healthy or not
 scripts/stop.sh               # stop everything this project started
 ```
 
-Each takes an optional service name — `api` or `ollama` — to act on just one.
+Each takes an optional service name — `api`, `ollama` or `dashboard` — to act
+on just one. Ports come from `PLP_API_PORT` (default 8000) and
+`PLP_DASHBOARD_PORT` (default 8501); the script refuses a port already in use.
 The scripts work from any directory.
 
 The API's port comes from `PLP_API_PORT` (default 8000):
@@ -379,9 +381,10 @@ model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
 demand) while `gemini-3.6-flash` worked, so set that if 3.8 is busy. The
 backend retries a 503 or 429 three times. On the free tier Google may use prompts and responses to improve its
 products and people may review them, and its terms say not to send
-sensitive, confidential or personal information: test with questions whose
-tool results are numbers, and keep evidence searches (which return Reddit
-text) to the local model. Check the terms again before wider use:
+sensitive, confidential or personal information. Since 4 Oct the Gemini
+backend withholds Reddit evidence (text, link and citation) and quoted text
+from earlier answers, so Reddit text never reaches it; it still sees news
+and earnings evidence. Check the terms again before wider use:
 https://ai.google.dev/gemini-api/terms.
 
 **Any OpenAI-compatible provider** (Groq, NVIDIA NIM, OpenRouter, …) goes
@@ -419,6 +422,8 @@ banks never reach the model: they get a fixed reply (`chatbot/guards.py`).
 |---|---|---|
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, guards, state |
+| `CHATBOT_ENFORCE_EVIDENCE` | `off` | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds |
+| `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
 | `CHATBOT_ASPECT_QUERY` | unset (off) | `1` makes evidence search, when given an aspect, rank by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
 
 The terminal chat remembers the last three turns, so follow-ups like
@@ -495,7 +500,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-850 tests in `tests/`; `pytest -q` from the repository root runs 897,
+879 tests in `tests/`; `pytest -q` from the repository root runs 926,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.
@@ -717,9 +722,16 @@ fine-tuned probabilities are saved in `data/preview/scores.<key>.jsonl`
 (`<key>` names the models and the device), so a stopped run resumes and a
 second margin takes minutes. Use `--cpu`: on 1 Oct the GPU returned garbage
 under memory pressure (the run now stops if that happens). The whole corpus
-takes about half a day on the CPU. Results go to
-`data/preview/index_preview*.csv`
+takes about half a day on the CPU. `--llm-only` skips the centroid pairs
+with the fine-tuned models (the slow scenario); `--per-seed` also scores the
+LLM-aspect pairs with each model alone and prints the spread between seeds;
+`--models` takes another set of models, whose output files carry their
+experiment date. Results go to `data/preview/index_preview*.csv`
 ([evidence](evidence/index-preview-2026-10-01.md)).
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13 --llm-only --per-seed
+```
 
 ### The Opus labeller
 

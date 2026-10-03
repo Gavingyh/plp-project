@@ -947,9 +947,13 @@ become relative paths.
   `/team-message` (`CLAUDE.md`, "Validation").
 - Three reviewer runs found the bugs above; every fix has a test that failed
   before it. 850 tests in `tests/` (848 pass, 2 skipped), 897 from the root.
-- **Running**: the per-seed index preview on the CPU (`data/preview/`,
-  `index_preview_per_seed_margin0.13.csv` when done); write it up in the
-  index-preview evidence.
+- **Seed-to-seed spread measured** (index-preview evidence, last section):
+  each fine-tuned seed alone gives DBS +0.113 to +0.235, OCBC +0.116 to
+  +0.210, UOB +0.105 to +0.149. With seed 1 alone OCBC stays ahead of DBS
+  and both fall below base FinBERT, so "DBS moves ahead" and "every
+  headline rises" hold for the three-seed average only; 8 of 30 named cells
+  (NIM and macro for every bank) change sign between seeds. Corrected in
+  the findings, the decision brief and the to-do.
 
 **Needs a human (3 Oct, evening):** approve the three data repairs on the
 to-do (earnings dates; the Reddit gaps, whose three markers in

@@ -204,7 +204,8 @@ would have caught it: compare a "no change" claim against the stored figures,
 not against memory; and before calling an order a finding, ask how much it
 moves between runs. A gap of 0.018 from one average of three seeds is not a
 ranking until the seed-to-seed spread is measured
-(`aggregate.preview --per-seed`).
+(`aggregate.preview --per-seed`). Measured the same evening, it is 0.044 to
+0.122 per bank, and one seed alone keeps OCBC ahead.
 
 ### Compare instants, not timestamp strings (3 Oct 2026)
 

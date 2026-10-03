@@ -18,7 +18,9 @@ team.*
    margin) raise every bank's headline by 0.04–0.07 and swap the top two (DBS moves just ahead of OCBC;
    both gaps under 0.02, UOB last either way), and retail banking and some
    NIM rows turn negative where centroid assignment made every aspect
-   positive.
+   positive. Those are properties of the three-seed average: each seed
+   alone moves a headline by up to 0.12, and with one of the three OCBC
+   stays ahead and both DBS and OCBC fall below base FinBERT.
 2. **Assigning aspects by embedding similarity doesn't work; asking an LLM
    does.** Seed centroids pick the human's aspect 41% of the time, barely
    above always guessing the commonest aspect (37%); `llama3.1:8b` picks it
@@ -199,6 +201,10 @@ a first preview on 1,000 overstated both effects)
   OCBC is just ahead of DBS; with both changes DBS is just ahead of OCBC
   (both gaps under 0.02); UOB is last either way. The
   1,000-sentence preview's UOB-ahead-of-DBS result was sampling noise.
+- All of that is the three-seed average. Scored by each seed alone, the
+  headlines spread by 0.04 (UOB) to 0.12 (DBS); with seed 1, OCBC stays
+  ahead and both DBS and OCBC fall below base FinBERT. Retail banking stays
+  negative for DBS and OCBC under every seed; NIM and macro change sign.
 - Under centroid assignment every named aspect of every bank scores
   positive: each aspect inherits the bank's overall tone.
 - On a memory-starved Mac the GPU returned all-zero probabilities without
@@ -207,8 +213,12 @@ a first preview on 1,000 overstated both effects)
 **Limitations**
 - With LLM aspects a named bank-aspect cell holds a median of 699 sentences
   (smallest 59). The fine-tuned models are the 1 Oct seeds, trained from a
-  relabelled head; retrained ones could move the figures, and how much the
-  index moves from seed to seed isn't measured.
+  relabelled head; retrained ones could move the figures.
+- The seeds disagree: each seed alone gives DBS +0.113 to +0.235, OCBC
+  +0.116 to +0.210, UOB +0.105 to +0.149, and 8 of the 30 named cells
+  (NIM and macro for every bank among them) change sign between seeds.
+  Retail banking for DBS and OCBC, dividends and wealth hold under every
+  seed.
 
 **Solutions**
 - Built: the full-corpus preview, with the fine-tuned scores saved to a

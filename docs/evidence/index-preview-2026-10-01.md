@@ -242,6 +242,48 @@ cells holds 699 sentences (smallest: UOB dividends, 59); none has fewer than
 fine-tuned models are the 1 Oct seeds, trained from a relabelled head
 ([training-review-2026-10-03.md](training-review-2026-10-03.md)); retrained
 models could move column D. Columns C and D come from one average of three
-seeds; how much the index moves from seed to seed isn't measured, so a
-0.018 gap between DBS and OCBC is not a firm ranking.
+seeds; the next section measures how far each seed alone moves the index.
+
+## How far the index moves from seed to seed (3 Oct)
+
+The same 44,345 LLM-aspect pairs scored by each of the three fine-tuned
+models alone, with the same 0.13 margin (chosen on dev for the average; a
+single seed's best margin may differ). Run 3 Oct on the CPU:
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13 --per-seed
+```
+
+| bank | base FinBERT | seed 1 | seed 42 | seed 7 | the average (D, margin) |
+|---|---|---|---|---|---|
+| DBS | +0.122 | +0.113 | +0.216 | +0.235 | +0.192 |
+| OCBC | +0.136 | +0.116 | +0.198 | +0.210 | +0.174 |
+| UOB | +0.074 | +0.105 | +0.135 | +0.149 | +0.137 |
+
+**What it shows.**
+
+1. **The seeds disagree by more than the effects reported above.** The
+   spread between seeds is 0.122 for DBS, 0.094 for OCBC and 0.044 for UOB,
+   far more than the 0.018 between DBS and OCBC. With seed 1 alone, OCBC
+   stays just ahead of DBS (+0.116 against +0.113) and both fall below base
+   FinBERT; with seed 42 or seed 7, DBS leads and every headline rises by
+   0.06–0.11. UOB is last under every seed. "DBS moves ahead of OCBC" and
+   "every headline rises" are properties of the three-seed average, not of
+   fine-tuning as such.
+2. **Test macro-F1 doesn't predict the level.** Seed 1 (test macro-F1
+   0.617) gives the lowest headlines and seed 7 (0.565, below base) the
+   highest ([finetune-fixes](finetune-fixes-2026-10-01.md)).
+3. **Per aspect, signs are settled only where the evidence is strong.**
+   Across the 30 named bank-aspect cells the median spread is 0.183 (the
+   largest 0.438, DBS NIM). Eight cells change sign between seeds: NIM for
+   all three banks (positive under seed 42, negative under the other two),
+   macro for all three, OCBC asset quality, and UOB retail banking (−0.038
+   to +0.002). Retail banking is negative for DBS and OCBC under every seed
+   (spreads 0.058 and 0.053), and dividends and wealth are strongly
+   positive under every seed.
+4. **What to report.** The average, which is the setting chosen, with the
+   per-seed range beside each headline; the DBS–OCBC order as unsettled;
+   NIM and macro signs as unsettled. The seeds were trained from a
+   relabelled head (training review, 3 Oct); retrained seeds may spread
+   differently, which only a retrain can show.
 

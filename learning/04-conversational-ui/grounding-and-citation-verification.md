@@ -223,6 +223,14 @@ nothing stopped evidence going to it. The backend now withholds Reddit
 text, links and citations, and quoted text in earlier answers. A rule that
 only a person can follow will be broken by a default.
 
+The first fix for the echoed query was a list of fields that must not vouch
+(`query`, `window`, timestamps). A review the same night found four more
+that still did: dates, a sentence id's digits, and a `reason` string that
+repeated the model's own argument. The second fix turned the list around:
+only numeric data fields and the text of retrieved evidence may vouch, and
+everything else is ignored by default. **The lesson:** when the safe set is
+small and the unsafe set keeps growing, list the safe set.
+
 ## 5. Evaluate
 
 **Code-level enforcement was the right call, and the evidence is unusually

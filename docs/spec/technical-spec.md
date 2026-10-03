@@ -77,9 +77,12 @@ matching still fills `sentence_aspects` until the team decides, after which
 `assignment_method`. Bank entity recognition (decisions 17–18) is built and
 evaluated (`preprocess/bank_ner.py`, 1 Oct) but not applied either. Aspect agreement is in `train/agreement.py`
 (`--field aspect`, 2026-10-01). Decision 19's chatbot harness is
-built: `chatbot/guards.py` (advice, off-topic, figure and sentence-id checks)
-and `Conversation` / `answer_turn` in `chatbot/agent.py` (memory, state,
-per-turn record); `/chat` accepts earlier turns as `history`.
+built: `chatbot/intent.py` with `config/intents.yaml` (a local model sorts each
+question into an intent; all but in_scope get a fixed reply, decision 24),
+`chatbot/guards.py` (figure and sentence-id checks), and `Conversation` /
+`answer_turn` in `chatbot/agent.py` (memory, state, per-turn record); `/chat`
+accepts earlier turns as `history`. Chatbot settings: `config/chatbot.yaml`
+through `chatbot/settings.py`.
 
 Run every module as `.venv-plp/bin/python3 -m <module>`. Never plain
 `python3`; see RUNBOOK for why.
@@ -442,7 +445,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-879 tests in `tests/` (926 from the repository root, adding the diagram and
+1099 tests in `tests/` (1146 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
@@ -531,9 +534,10 @@ feed.
 
 **Not financial advice.** The chatbot is required to decline buy/sell framing
 and state that it does not give investment advice. Prompt instructions alone
-managed this in 2–3 of 7 gold-set cases on every model tested; since 26 Sep
-an input guard (`chatbot/guards.py`) answers advice-seeking questions with a
-fixed reply before the model runs, and declines 7 of 7.
+managed this in 2–3 of 7 gold-set cases on every model tested. From 26 Sep a
+regex input guard answered advice-seeking questions with a fixed reply and
+declined 7 of 7; since 4 Oct the intent classifier (decision 24) does, with
+its advice recall measured by `chatbot/eval_intent.py`.
 
 **Personal data.** Reddit content is public but user-authored. Documents store
 the source URL rather than building user profiles, and no analysis is done per

@@ -47,13 +47,13 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| new conversation, empty state | `chatbot/agent.py:430` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| compare_banks sets all three | `chatbot/agent.py:461` | `if c["name"] == "compare_banks":` |
-| a tool call names a bank | `chatbot/agent.py:463` | `elif args.get("bank"):` |
-| window only if a tool passes one | `chatbot/agent.py:467` | `if args.get("window"):` |
-| guard-answered question names a bank | `chatbot/agent.py:469` | `if not r.calls:` |
-| state into the system prompt | `chatbot/agent.py:374` | `with_state(SYSTEM_PROMPT, state)` |
-| no window in get_sentiment's schema | `chatbot/tools.py:305` | `"required": ["bank"],` |
-| get_sentiment accepts a window in Python | `chatbot/tools.py:82` | `def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time")` |
+| new conversation, empty state | `chatbot/agent.py:463` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| compare_banks sets all three | `chatbot/agent.py:495` | `if c["name"] == "compare_banks":` |
+| a tool call names a bank | `chatbot/agent.py:497` | `elif args.get("bank"):` |
+| window only if a tool passes one | `chatbot/agent.py:501` | `if args.get("window"):` |
+| guard-answered question names a bank | `chatbot/agent.py:503` | `if not r.calls:` |
+| state into the system prompt | `chatbot/agent.py:404` | `with_state(SYSTEM_PROMPT, state)` |
+| no window in get_sentiment's schema | `chatbot/tools.py:303` | `"required": ["bank"],` |
+| get_sentiment accepts a window in Python | `chatbot/tools.py:79` | `def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time")` |
 | Clear conversation | `chatbot/chat.py:66` | `conv, last = Conversation(backend_name=args.backend, trace_path=args.trace), None` |
 | DESIGN claims the window is tracked | `docs/DESIGN.md:353` | `tracks the current bank, aspect and time window` |

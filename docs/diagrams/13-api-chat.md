@@ -43,10 +43,10 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| POST /chat | `api/main.py:271` | `@app.post("/chat")` |
-| request carries history | `api/main.py:268` | `history: list[ChatMessage] = []` |
-| empty message rejected | `api/main.py:274` | `detail="message must not be empty"` |
-| rebuild from messages | `api/main.py:275` | `conv = Conversation.from_messages(` |
-| one turn | `api/main.py:277` | `turn = conv.ask(req.message)` |
-| response fields | `api/main.py:281` | `return {"question": req.message, "answer": turn.answer, "guard": turn.guard,` |
-| state from banks named | `chatbot/agent.py:434` | `def from_messages(cls, messages: list[dict]` |
+| POST /chat | `api/main.py:295` | `@app.post("/chat")` |
+| request carries history | `api/main.py:292` | `history: list[ChatMessage] = []` |
+| empty message rejected | `api/main.py:298` | `detail="message must not be empty"` |
+| rebuild from messages | `api/main.py:299` | `conv = Conversation.from_messages(` |
+| one turn | `api/main.py:301` | `turn = conv.ask(req.message)` |
+| response fields | `api/main.py:305` | `return {"question": req.message, "answer": turn.answer, "guard": turn.guard,` |
+| state from banks named | `chatbot/agent.py:467` | `def from_messages(cls, messages: list[dict]` |

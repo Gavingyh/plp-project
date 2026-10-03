@@ -136,8 +136,10 @@ text. The response:
 
 The UI must show the flags, not just the answer:
 
-- `guard` is `"advice"` or `"scope"` when the bot declined (investment
-  advice, or off-topic) without asking the model;
+- `guard` names the intent whose fixed reply answered, without the chatbot
+  model: `advice`, `other_bank`, `off_topic`, `greeting`, `thanks`,
+  `goodbye`, `help`, `service`, `injection` or `feedback`; `null` when the
+  model answered (`config/intents.yaml` has the replies);
 - `citation_unverified: true` means the answer cites evidence the tools
   never returned: mark the answer as not to be trusted;
 - `unverified_numbers` lists figures in the answer that match nothing the

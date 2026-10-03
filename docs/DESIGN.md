@@ -481,6 +481,39 @@ fix the API uses.
 
 ---
 
+### 24. The chatbot's input is sorted by a model, not by word lists
+
+*2026-10-04, at the project owner's request.* Since 26 Sep (decision 19) the
+chatbot answered advice-seeking and off-topic questions with fixed replies,
+chosen by regular expressions and keyword lists in `chatbot/guards.py`. The
+lists declined all 7 advice questions in the gold set, but on 4 Oct a probe
+found what word lists can't do well: a weather question asked mid-conversation
+went to the model; "hi" and "what can you do?" got "That's outside what I can
+help with"; "any news on the weather?" and "football results" passed because
+"news" and "results" are bank words; and "what's my DBS account balance?"
+reached a model with no tool for it. Extending the lists would only move the
+edge, and they can't read paraphrases or other languages.
+
+Decided: a local model sorts each question into one intent from
+`config/intents.yaml` (in_scope, advice, other_bank, greeting, thanks,
+goodbye, help, service, injection, feedback, off_topic), given the
+conversation's bank, aspect and previous question, through Ollama's
+structured output, the same pattern as the aspect classifier (decision 16).
+Only in_scope reaches the chatbot model; every other intent gets its reviewed
+fixed reply from the same file. The definitions, few-shot examples and
+replies live in the YAML, not the code. A prompt rule covers questions that
+mix an unrelated part with a real one.
+
+Costs and how they are handled. A second model call per turn (about a second
+or two locally): measured by `chatbot/eval_intent.py`, which scores the
+classifier on every labelled question (accuracy, each intent's precision and
+recall, real questions wrongly blocked, questions let through, latency). It
+is no longer deterministic: an advice question could reach the model, whose
+prompt still says to decline, so advice recall is reported on its own. If
+the classifier is down it fails open: the question goes to the model and the
+turn records no intent. The output checks (decision 19) stay rules, since
+they compare the answer with what the tools returned.
+
 ## Notable implementation details
 
 **Idempotent ingestion.** Every document has a deterministic `doc_id` hashed

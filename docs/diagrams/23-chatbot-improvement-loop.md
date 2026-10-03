@@ -14,7 +14,7 @@ flowchart TB
   flags["Harness flags: citations no search returned,<br/>figures no tool returned"]
   read["Every flag read against the tool data:<br/>25 of 26 real inventions"]
   cause["Cause: every invention came from an answer<br/>that never searched; the prompt rule was ignored"]
-  fix["Fixed in code: strip evidence written without a search<br/>(a setting) · scope guard reads the conversation ·<br/>run a tool call written as text"]
+  fix["Fixed in code: strip evidence written without a search<br/>(a setting) · the scope check reads the conversation<br/>(an intent classifier since 4 Oct) · run a tool call written as text"]
   replay["Replay the fix on the recorded answers:<br/>citation warnings 11 to 0 (8B), 15 to 0 (3B)<br/>chatbot.replay"]
   live["Run live again: 0 of 32 on the 8B;<br/>conversations 9 of 9 on both models"]
   retr["Retrieval: a question as the query ranks at chance<br/>(MRR 0.217); the aspect's name 0.559 (a setting)"]
@@ -41,12 +41,12 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | gold set v2 | `chatbot/eval_gold_set.py:119` | `GOLD_SET_V2 = ` |
-| conversations | `chatbot/run_eval.py:244` | `def run_multi_turn(` |
+| conversations | `chatbot/run_eval.py:265` | `def run_multi_turn(` |
 | random baseline for retrieval | `chatbot/retrieval_eval.py:53` | `def random_baseline(` |
-| citation flag | `chatbot/agent.py:222` | `def answer_has_unverified_citation(self, answer: str) -> bool:` |
-| strip evidence written without a search | `chatbot/agent.py:278` | `def strip_unsearched_evidence(answer: str) -> str:` |
-| scope guard reads the conversation | `chatbot/guards.py:106` | `def scope_reply(question: str, in_conversation: bool = False)` |
+| citation flag | `chatbot/agent.py:225` | `def answer_has_unverified_citation(self, answer: str) -> bool:` |
+| strip evidence written without a search | `chatbot/agent.py:307` | `def strip_unsearched_evidence(answer: str) -> str:` |
+| scope check reads the conversation | `chatbot/intent.py:59` | `def describe_context(state` |
 | tool call written as text | `chatbot/backends/_text_tool_call.py:19` | `def text_tool_call(content: str, tool_names: set[str])` |
 | replay on recorded answers | `chatbot/replay.py:28` | `def replay(results: list[dict], mode: str) -> list[dict]:` |
-| judge checked against the flags | `chatbot/judge.py:197` | `def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:` |
-| checklist judge | `chatbot/judge.py:128` | `def checklist_score(parsed: dict) -> tuple[int, str]:` |
+| judge checked against the flags | `chatbot/judge.py:203` | `def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:` |
+| checklist judge | `chatbot/judge.py:134` | `def checklist_score(parsed: dict) -> tuple[int, str]:` |

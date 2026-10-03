@@ -415,13 +415,29 @@ can be appended to an answer, and both mean "don't trust this part":
   for that question. The check is strict: a figure the model derived
   legitimately in an unusual way can also trip it, so read the flagged one.
 
-Buy/sell/hold questions, price predictions and questions only about other
-banks never reach the model: they get a fixed reply (`chatbot/guards.py`).
+Before the model runs, a local model sorts the question into an intent
+(`chatbot/intent.py`, DESIGN decision 24): buy/sell/hold and price
+predictions, other banks, greetings and thanks, "what can you do?",
+banking-service requests, attempts to change the instructions, complaints
+and off-topic questions get a reviewed fixed reply from
+`config/intents.yaml`; only questions about the three banks' sentiment reach
+the chatbot model. It needs Ollama; if the classifier can't answer, the
+question goes to the model and the turn records no intent. Measure it:
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.eval_intent --model llama3.1:8b --tag llama8b
+```
+
+Every chatbot setting has its default in `config/chatbot.yaml`, with the
+environment variable that overrides it (models, Ollama address, temperature,
+timeouts, retries, history length, the trend threshold). The ones most often
+changed:
 
 | setting | default | effect |
 |---|---|---|
+| `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
-| `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, guards, state |
+| `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
 | `CHATBOT_ENFORCE_EVIDENCE` | `off` | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
 | `CHATBOT_ASPECT_QUERY` | unset (off) | `1` makes evidence search, when given an aspect, rank by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
@@ -500,7 +516,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-879 tests in `tests/`; `pytest -q` from the repository root runs 926,
+1099 tests in `tests/`; `pytest -q` from the repository root runs 1146,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.

@@ -20,7 +20,7 @@ Check the three success claims (defined in CLAUDE.md, "Success claims") first, w
 - Train/test separation: `split == "test"` rows of `data/labeled/candidates.csv` reaching training, dev, top-up merges (`topup_rows`) or a margin/threshold choice; the same text in two splits; Opus labels (`data/labeled/claude/`) used as gold.
 - Metrics: macro-F1 as stated; class imbalance (39 negative of 299 test rows); a number in the docs that the code cannot produce.
 - Index: `aggregate/index.py` (volume floor, n/(n+5) shrinkage, one pair per sentence in the headline, source weights); derived values (deltas, directions) that contradict the stored scores; readers that ignore `model_version`.
-- Chatbot guards: `enforce_evidence`, `strip_unsearched_evidence`, `unverified_numbers`, `scope_reply`, `chatbot/backends/_text_tool_call.py`.
+- Chatbot guards: `enforce_evidence`, `strip_unsearched_evidence`, `unverified_numbers`, `chatbot/backends/_text_tool_call.py`; the intent classifier (`chatbot/intent.py`, `config/intents.yaml`): a real question it blocks, a reply that names the wrong bank, a question blocked or lost when Ollama is down (it must fail open).
 - Caches: `aspects/llm_classify.py` (cache named by a prompt hash), `aggregate/preview.py` (scores cache; probabilities must sum to 1).
 - Input handling: query parameters without a pattern; `except Exception` or defaults that turn an error into "no data".
 - Data: `published_at` timezones (CNA is +08:00, others UTC), week buckets, duplicate sentences, SQLite's 32,766-parameter limit.

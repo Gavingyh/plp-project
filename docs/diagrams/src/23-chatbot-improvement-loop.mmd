@@ -7,7 +7,7 @@ flowchart TB
   flags["Harness flags: citations no search returned,<br/>figures no tool returned"]
   read["Every flag read against the tool data:<br/>25 of 26 real inventions"]
   cause["Cause: every invention came from an answer<br/>that never searched; the prompt rule was ignored"]
-  fix["Fixed in code: strip evidence written without a search<br/>(a setting) · scope guard reads the conversation ·<br/>run a tool call written as text"]
+  fix["Fixed in code: strip evidence written without a search<br/>(a setting) · the scope check reads the conversation<br/>(an intent classifier since 4 Oct) · run a tool call written as text"]
   replay["Replay the fix on the recorded answers:<br/>citation warnings 11 to 0 (8B), 15 to 0 (3B)<br/>chatbot.replay"]
   live["Run live again: 0 of 32 on the 8B;<br/>conversations 9 of 9 on both models"]
   retr["Retrieval: a question as the query ranks at chance<br/>(MRR 0.217); the aspect's name 0.559 (a setting)"]

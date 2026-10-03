@@ -7,13 +7,14 @@ Which component calls which, in order, when someone asks a question in the termi
 ```mermaid
 sequenceDiagram
   accTitle: Chatbot sequence from a chat client
-  accDescr: The chat client hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
+  accDescr: The chat client hands the question to the conversation, which asks a local intent classifier first, then runs the model's tool loop against the database, then the output checks, and updates its state.
 
   actor user as Investor
   participant ui as Chat client (terminal chat)
   participant conv as Conversation
   participant turn as answer_turn
-  participant g as chatbot.guards
+  participant ic as Intent classifier (local model)
+  participant g as chatbot.guards (output checks)
   participant be as Backend (Ollama)
   participant llm as Language model
   participant tools as Tools
@@ -22,10 +23,11 @@ sequenceDiagram
   user->>ui: types a question
   ui->>conv: ask(question)
   conv->>turn: question, last three turns, state
-  turn->>g: advice_reply, scope_reply
-  alt a guard matches
-    g-->>turn: fixed reply
-  else the model answers
+  turn->>ic: question, state, previous question
+  ic-->>turn: one intent (none if unavailable)
+  alt any intent but in scope
+    turn->>turn: fixed reply from config/intents.yaml
+  else in scope, or no intent
     turn->>be: question, system prompt with state, tools, history
     loop until a final answer, at most eight model calls
       be->>llm: messages, tool schemas, temperature 0.2
@@ -54,8 +56,9 @@ Rendered for the report: [SVG](img/08-chatbot-sequence.svg) · [PNG](img/08-chat
 The REST API follows the same path from `Conversation` onwards, rebuilding the
 conversation from the `history` the client sends ([13](13-api-chat.md)). With a
 hosted-model key, the backend calls that service instead of Ollama; the loop is the same.
-The citation check that runs alongside the guards' checks lives in the tool-call tracker
-in `chatbot/agent.py`. The model's own reasoning between calls is not shown.
+The intent classifier is a separate Ollama call (`chatbot/intent.py`), made whichever
+backend answers. The citation check that runs alongside the figure check lives in the
+tool-call tracker in `chatbot/agent.py`. The model's own reasoning between calls is not shown.
 
 ## Sources
 
@@ -64,15 +67,16 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | chat client hands over the question | `chatbot/chat.py:77` | `last = conv.ask(q)` |
-| Conversation.ask | `chatbot/agent.py:474` | `def ask(self, question: str, verbose: bool = False)` |
-| last three turns and state | `chatbot/agent.py:476` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
-| guards first | `chatbot/agent.py:362` | `for guard, reply in (("advice", advice_reply(question, context_banks)),` |
-| backend chosen | `chatbot/agent.py:369` | `backend = backend or get_backend(backend_name)` |
-| model call | `chatbot/backends/ollama_backend.py:83` | `data = self._chat(messages, ollama_tools)` |
-| temperature sent | `chatbot/backends/ollama_backend.py:55` | `"options": {"temperature": self.temperature}` |
-| tool executed and recorded | `chatbot/agent.py:174` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
-| tools read the database | `chatbot/tools.py:82` | `def get_sentiment(bank: str` |
-| evidence search uses embeddings | `chatbot/retrieval.py:155` | `query_vec = embed_sentences([rank_text])[0]` |
-| figures checked against results | `chatbot/agent.py:399` | `figures = unverified_numbers(` |
-| state updated | `chatbot/agent.py:478` | `self._update_state(r)` |
-| turn kept | `chatbot/agent.py:479` | `self.turns.append(r)` |
+| Conversation.ask | `chatbot/agent.py:508` | `def ask(self, question: str, verbose: bool = False)` |
+| last three turns and state | `chatbot/agent.py:510` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
+| intent classifier first | `chatbot/agent.py:392` | `intent = intents.classify_intent(question, state, previous)` |
+| fixed reply | `chatbot/agent.py:393` | `reply = intents.reply_for(intent, question, state)` |
+| backend chosen | `chatbot/agent.py:399` | `backend = backend or get_backend(backend_name)` |
+| model call | `chatbot/backends/ollama_backend.py:85` | `data = self._chat(messages, ollama_tools)` |
+| temperature sent | `chatbot/backends/ollama_backend.py:57` | `"options": {"temperature": self.temperature}` |
+| tool executed and recorded | `chatbot/agent.py:177` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
+| tools read the database | `chatbot/tools.py:79` | `def get_sentiment(bank: str` |
+| evidence search uses embeddings | `chatbot/retrieval.py:156` | `query_vec = embed_sentences([rank_text])[0]` |
+| figures checked against results | `chatbot/agent.py:430` | `figures = unverified_numbers(` |
+| state updated | `chatbot/agent.py:512` | `self._update_state(r)` |
+| turn kept | `chatbot/agent.py:513` | `self.turns.append(r)` |

@@ -182,6 +182,31 @@ model sizes failing identically.
 
 ---
 
+### Deciding what a question asks for: word lists, then a classifier (4 Oct 2026)
+
+Before the agent loop runs, something decides whether the model should
+answer at all: "should I buy DBS?" gets a fixed not-advice reply, "how is
+the weather?" a polite out-of-scope one. Until 4 Oct that was regular
+expressions and keyword lists. They were predictable and declined all 7
+advice questions in the gold set, but a probe found the edges a list always
+has. "How is the weather?" asked after a DBS question went to the model,
+because mid-conversation any question was assumed to be a follow-up. "Hi"
+got "that's outside what I can help with". "Any news on the weather?"
+passed, because "news" is a bank word. And "what's my DBS account balance?"
+reached a model with no tool to answer it.
+
+Intent classification is the standard answer in conversational UIs: a model
+reads the question, with the conversation so far, and picks one intent from
+a fixed list, each with a reviewed reply. Here a local model does it through
+Ollama's structured output (the answer must be one of the intent names), the
+definitions, examples and replies sit in `config/intents.yaml`, and only
+`in_scope` reaches the chatbot model. What it costs: an extra model call per
+turn, and decisions that are no longer guaranteed, so they have to be
+measured (`chatbot/eval_intent.py`: accuracy, recall per intent, real
+questions wrongly blocked, latency). One rule keeps the measurement honest:
+none of the few-shot examples may be an evaluation question, and a test
+enforces it.
+
 ## 5. Evaluate
 
 **The plain loop was right on the report-explainability criterion**, and

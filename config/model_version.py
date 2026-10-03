@@ -15,3 +15,14 @@ that the API and the chatbot can read it cheaply.
 """
 
 MODEL_VERSION = "finbert-base-zeroshot-v1"
+
+# The models and neutral margin behind each fine-tuned version, so that once
+# MODEL_VERSION names one, sentiment/score.py scores new sentences with it too
+# (scripts/rescore.py scores the existing corpus). Paths are relative to the
+# repository. The tag is scripts/rescore.py's: experiment, seeds, margin.
+FINETUNED = {
+    "finbert-finetuned-2026-10-01-3seed-m0.13": {
+        "models": [f"models/experiments-2026-10-01/label/seed_{s}/final" for s in (42, 1, 7)],
+        "margin": 0.13,
+    },
+}

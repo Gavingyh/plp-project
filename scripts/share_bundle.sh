@@ -9,12 +9,14 @@
 # Contents (see "Sharing the data and models" in README.md):
 #   plp-<date>.db.gz             the latest database snapshot   -> gunzip to data/plp.db
 #   sentence_embeddings.npz      the evidence-search cache       -> data/
+#   aspect_llm/<model>.<prompt>.jsonl  the LLM's aspect per sentence for the
+#                                current prompt (ids and labels, no text) -> data/aspect_llm/
 #   models/seed_*/               fine-tuned FinBERT, without training_args.bin
 #                                -> models/experiments-2026-10-01/label/
 #   SHA256SUMS                   check with: shasum -a 256 -c SHA256SUMS
 #
 # Never included: .env (API keys), data/cna/ (CNA's articles stay within the
-# team's own copies), logs and caches.
+# team's own copies), logs, and caches other than the aspect answers.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:?usage: scripts/share_bundle.sh OUT_DIR [--with-models]}"
@@ -26,6 +28,15 @@ snapshot="$(ls -1 "$ROOT"/data/snapshots/plp-*.db.gz 2>/dev/null | sort | tail -
 mkdir -p "$OUT"
 cp "$snapshot" "$OUT/"
 [ -f "$ROOT/data/sentence_embeddings.npz" ] && cp "$ROOT/data/sentence_embeddings.npz" "$OUT/"
+# Only the current prompt's answers: an older prompt's file would be ignored by the code anyway.
+aspects="$(cd "$ROOT" && .venv-plp/bin/python3 -c \
+    "from aspects.llm_classify import answer_cache_path; print(answer_cache_path('llama3.1:8b'))")"
+if [ -f "$aspects" ]; then
+    mkdir -p "$OUT/aspect_llm"
+    cp "$aspects" "$OUT/aspect_llm/"
+else
+    echo "note: no LLM aspect answers for the current prompt ($aspects)" >&2
+fi
 
 if [ "$WITH_MODELS" = "--with-models" ]; then
     for s in seed_42 seed_1 seed_7; do

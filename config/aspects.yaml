@@ -211,3 +211,11 @@ aspects:
 # very broad aspects (retail_banking_sentiment) and narrow ones
 # (macro_market_environment) may not want one floor for all of them.
 similarity_floor: 0.65
+
+# How aspects/assign.py assigns aspects to sentences it hasn't seen:
+# `centroid`, every aspect above similarity_floor (what the database holds
+# today), or `llm`, one aspect per sentence from aspects/llm_classify.py
+# (DESIGN decision 16). Switch to `llm` in the same change that applies the
+# LLM's aspects to the database (scripts/rescore.py), so new sentences are
+# assigned the way the corpus was.
+assignment_method: centroid

@@ -15,6 +15,12 @@ A sentence may be assigned to more than one aspect if it clears the
 similarity floor for more than one non-OTHER aspect - docs/DESIGN.md, step 6:
 "NIM held up but provisions rose" is about two aspects.
 
+`assignment_method` in config/aspects.yaml chooses the method for sentences
+not yet assigned: `centroid` (above) or `llm`, one aspect per sentence from
+the local LLM (aspects/llm_classify.py, which needs Ollama running). An LLM
+row's `similarity` is 1.0: the LLM gives no score. Once the corpus has the
+LLM's aspects, centroid assignment of new sentences would mix the methods.
+
 USAGE:
   python -m aspects.assign
 """
@@ -67,10 +73,31 @@ def _cosine(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
 
 
+def _assign_llm(conn, sentence_ids: list[str]) -> list[tuple]:
+    """One (sentence_id, aspect, 1.0, assigned_at) row per sentence, from the LLM."""
+    import pandas as pd
+    from aspects.llm_classify import classify_rows
+    if not sentence_ids:
+        return []
+    texts = {}
+    for start in range(0, len(sentence_ids), 10000):          # under SQLite's parameter limit
+        part = sentence_ids[start:start + 10000]
+        texts.update(conn.execute(f"SELECT sentence_id, text FROM sentences WHERE sentence_id IN "
+                                  f"({','.join('?' * len(part))})", part).fetchall())
+    rows = pd.DataFrame({"sentence_id": [s for s in sentence_ids if s in texts]})
+    rows["text"] = rows["sentence_id"].map(texts)
+    answers = classify_rows(rows)
+    ts = now_iso()
+    return [(sid, aspect, 1.0, ts) for sid, aspect in zip(answers["sentence_id"], answers["aspect"])]
+
+
 def run() -> dict:
     config = _load_config()
+    method = config.get("assignment_method", "centroid")
+    if method not in ("centroid", "llm"):
+        raise ValueError(f"assignment_method must be 'centroid' or 'llm', got {method!r}")
     floor = config.get("similarity_floor", 0.35)
-    centroids = _build_centroids(config)
+    centroids = _build_centroids(config) if method == "centroid" else {}
 
     logger.info("Ensuring all sentences are embedded...")
     logger.info("Embedding cache: %s", update_embeddings())
@@ -83,22 +110,27 @@ def run() -> dict:
     already = {r[0] for r in conn.execute("SELECT DISTINCT sentence_id FROM sentence_aspects").fetchall()}
     todo_idx = [i for i, sid in enumerate(sentence_ids) if sid not in already]
 
-    stats = {"already_assigned": len(already), "newly_assigned": 0, "assignments_written": 0,
-              "fell_to_other": 0}
-    rows = []
-    for i in todo_idx:
-        sid, vec = sentence_ids[i], vectors[i]
-        sims = {aspect: _cosine(vec, centroid) for aspect, centroid in centroids.items()}
-        matched = {a: s for a, s in sims.items() if s >= floor}
-        ts = now_iso()
-        if matched:
-            for aspect, sim in matched.items():
-                rows.append((sid, aspect, sim, ts))
-        else:
-            best_aspect, best_sim = max(sims.items(), key=lambda x: x[1])
-            rows.append((sid, "other", best_sim, ts))
-            stats["fell_to_other"] += 1
-        stats["newly_assigned"] += 1
+    stats = {"method": method, "already_assigned": len(already), "newly_assigned": 0,
+             "assignments_written": 0, "fell_to_other": 0}
+    if method == "llm":
+        rows = _assign_llm(conn, [sentence_ids[i] for i in todo_idx])
+        stats["newly_assigned"] = len(rows)
+        stats["fell_to_other"] = sum(r[1] == "other" for r in rows)
+    else:
+        rows = []
+        for i in todo_idx:
+            sid, vec = sentence_ids[i], vectors[i]
+            sims = {aspect: _cosine(vec, centroid) for aspect, centroid in centroids.items()}
+            matched = {a: s for a, s in sims.items() if s >= floor}
+            ts = now_iso()
+            if matched:
+                for aspect, sim in matched.items():
+                    rows.append((sid, aspect, sim, ts))
+            else:
+                best_aspect, best_sim = max(sims.items(), key=lambda x: x[1])
+                rows.append((sid, "other", best_sim, ts))
+                stats["fell_to_other"] += 1
+            stats["newly_assigned"] += 1
 
     if rows:
         conn.executemany(

@@ -24,25 +24,21 @@ def test_number_check_control_flags_56_percent_without_coverage():
     assert unverified_numbers("About 56% of mentions were negative.", [SENTIMENT]) == ["56%"]
 
 
-@pytest.mark.xfail(strict=True, reason="Timestamp digits still vouch figures: get_coverage earliest/latest digits accept 56%")
 def test_coverage_timestamps_do_not_vouch_for_a_percentage():
     coverage = {"bank": "DBS", "earliest": "2023-01-05T12:34:56+00:00", "latest": "2026-09-29T17:45:00+08:00"}
     assert unverified_numbers("About 56% of mentions were negative.", [SENTIMENT, coverage]) == ["56%"]
 
 
-@pytest.mark.xfail(strict=True, reason="Timestamp digits still vouch figures: a search result's date 2026-09-27 accepts 27%")
 def test_search_result_date_does_not_vouch_for_a_percentage():
     search = {"results": [{"sentence_id": "f" * 24, "date": "2026-09-27", "text": "Fees went up again."}]}
     assert unverified_numbers("27% of posts complained about fees.", [search]) == ["27%"]
 
 
-@pytest.mark.xfail(strict=True, reason="Timestamp digits still vouch figures: a sentence_id's leading digit accepts 6.0%")
 def test_sentence_id_digits_do_not_vouch_for_a_figure():
     search = {"results": [{"sentence_id": "6a1b2c3d4e5f6a7b8c9d0e1f", "text": "Fees went up again."}]}
     assert unverified_numbers("Fees rose 6.0% this year.", [search]) == ["6.0%"]
 
 
-@pytest.mark.xfail(strict=True, reason="Timestamp digits still vouch figures: consensus as_of_date accepts 15%")
 def test_consensus_as_of_date_does_not_vouch_for_a_percentage():
     consensus = {"bank": "DBS", "as_of_date": "2026-09-15", "n_analysts": 12}
     assert unverified_numbers("Analysts expect 15% upside.", [consensus]) == ["15%"]
@@ -69,14 +65,12 @@ def tracker_with_echoed_window(temp_db):
     return t
 
 
-@pytest.mark.xfail(strict=True, reason="Window argument echoed in reason: the model's window text vouches for 37.5%")
 def test_echoed_window_does_not_vouch_for_a_number(tracker_with_echoed_window):
     results = [c["result"] for c in tracker_with_echoed_window.calls]
     assert WINDOW in str(results[-1])        # the reason does repeat it
     assert unverified_numbers("About 37.5% of OCBC posts were negative.", results) == ["37.5%"]
 
 
-@pytest.mark.xfail(strict=True, reason="Window argument echoed in reason: the model's window text vouches for a quote")
 def test_echoed_window_does_not_vouch_for_a_quote(tracker_with_echoed_window):
     answer = 'One user wrote "customers are fleeing to rivals".'
     assert tracker_with_echoed_window.unverified_quotes(answer) == ['"customers are fleeing to rivals"']

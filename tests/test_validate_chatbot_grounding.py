@@ -100,8 +100,13 @@ def test_percent_field_counts_as_a_percentage():
 
 
 def test_value_cut_off_at_the_shown_decimals_counts():
+    assert unverified_numbers("a score of at least 0.58", [{"score": 0.5853}]) == []
+    assert unverified_numbers("a score of 0.57", [{"score": 0.5853}]) == ["0.57"]
+
+
+def test_the_retrieval_score_vouches_as_written_but_not_as_a_percentage():
+    assert unverified_numbers("81% of investors are worried.", [{"relevance": 0.81}]) == ["81%"]
     assert unverified_numbers("a relevance score of at least 0.58", [{"relevance": 0.5853}]) == []
-    assert unverified_numbers("a relevance score of 0.57", [{"relevance": 0.5853}]) == ["0.57"]
 
 
 # --- second review, 4 Oct 2026 ------------------------------------------------------

@@ -61,7 +61,7 @@ from dotenv import load_dotenv
 from chatbot.backends import get_backend
 from config.logging_config import get_logger, setup_logging
 from chatbot import intent as intents
-from chatbot.guards import is_echo_key, unverified_numbers, unverified_sentence_ids
+from chatbot.guards import is_evidence_text_key, unverified_numbers, unverified_sentence_ids
 from chatbot.prompts import SYSTEM_PROMPT, with_state
 from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments
 from ingest.base import detect_banks
@@ -126,18 +126,18 @@ def _norm_url(url: str) -> str:
     return re.sub(r"^www\.", "", url, flags=re.IGNORECASE).rstrip("/").lower()
 
 
-def _collect_text(obj, out: list[str]) -> None:
-    """Every string a tool returned, except what the model itself asked for
-    (its search query, echoed back) and links and timestamps."""
+def _collect_text(obj, out: list[str], key=None) -> None:
+    """The text of retrieved evidence, the only thing a quote may come from
+    (not the system's own wording or the model's arguments echoed back)."""
     if isinstance(obj, str):
-        out.append(_norm_text(obj))
+        if is_evidence_text_key(key):
+            out.append(_norm_text(obj))
     elif isinstance(obj, dict):
         for k, v in obj.items():
-            if not is_echo_key(k):
-                _collect_text(v, out)
+            _collect_text(v, out, k)
     elif isinstance(obj, (list, tuple)):
         for v in obj:
-            _collect_text(v, out)
+            _collect_text(v, out, key)
 
 
 class _ToolCallTracker:

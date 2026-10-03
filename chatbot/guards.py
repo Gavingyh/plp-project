@@ -1,130 +1,22 @@
 """
-Deterministic checks around the model: one before it runs, two after.
+Deterministic checks on the model's answer, after it runs: the output half of
+the guardrails of the Conversational UIs module (DESIGN decision 19).
 
-The Conversational UIs module puts guardrails at three points: input and
-intent, context and action, output and outcome. The tools already bound the
-context (they only read this project's own store). This module covers the
-other two, in code rather than in the prompt, because the prompt alone was
-measured not to hold: advice-seeking questions were declined 3 of 7 times on
-every model tested, and nothing checked that a number in an answer was a
-number a tool returned. See docs/DESIGN.md decision 19.
-
-Input (before the model runs):
-  - advice_reply(question): buy/sell/hold questions and price predictions get
-    a fixed, reviewed reply. Templates for critical responses, generation for
-    the rest.
-  - scope_reply(question, in_conversation): questions only about banks this
-    system doesn't cover, or about nothing it covers at all, get a fixed reply
-    instead of an answer from the model's memory. Mid-conversation, a question
-    with no domain word ("Has that improved lately?") is a follow-up, not off
-    topic, so only the other-bank check applies.
-
-Output (after the model answers):
   - unverified_numbers(answer, tool_results, question): figures in the answer
     that match nothing the tools returned.
   - unverified_sentence_ids(answer, retrieved_ids): sentence ids the answer
     cites that were never retrieved.
 
-Both input checks are pattern-based. They will miss some phrasings and catch
-the occasional false positive; the point is that the common cases are
-handled the same way every time, which the prompt alone did not achieve.
+They compare the answer with what the tools returned, so they are rules by
+design. The input side, deciding what a question asks for (advice, small
+talk, off-topic, a banking-service request), moved to a model-based intent
+classifier on 4 Oct 2026 (chatbot/intent.py, config/intents.yaml); the
+regex lists that did it before were brittle with paraphrases and other
+languages.
 """
 
 import re
 from itertools import permutations
-
-from ingest.base import detect_banks
-
-# --- input: advice and prediction ------------------------------------------
-
-_ACTION = r"(?:buy|sell|hold|invest|get in|get out|enter|exit|add to|average down|accumulate|dump|keep|load up|top up|go long|short)"
-_ADVICE_PATTERNS = [
-    rf"\bshould (?:i|we)\b[^?.!]*\b{_ACTION}\b",
-    rf"\b(?:is it|is now|now is|would it be) (?:a |the )?(?:good|right|bad|wise|smart|great) (?:time|idea|moment|point) to {_ACTION}\b",
-    r"\b(?:buy|sell|hold)\s*(?:,|/|or)\s*(?:buy|sell|hold)\b",
-    r"\bworth (?:buying|investing|holding|selling|a buy|getting)\b",
-    rf"\b(?:recommend|recommendation|advise|advice)\b[^?.!]*\b(?:{_ACTION}|stock|stocks|shares?|position)\b",
-    r"\bwhich (?:bank|stock|one|of (?:them|the three|these))\b[^?.!]*\b(?:should (?:i|we)|to buy|best (?:buy|investment|pick))\b",
-    r"\b(?:best|better|good|safest) (?:investment|buy|pick|stock to (?:buy|own))\b",
-    r"\bwhat (?:should|would) (?:i|you) do with my\b",
-    r"\bam i (?:right|wrong|safe|smart|crazy) to\b",
-    r"\bis (?:dbs|ocbc|uob|it|the stock) (?:a )?(?:buy|sell|good buy|bargain)\b",
-]
-# Forecasts are the same request in another form: acting on a predicted price.
-_PREDICTION_PATTERNS = [
-    r"\bwill (?:dbs|ocbc|uob|it|the (?:stock|shares?|share price|price))\b[^?.!]*\b(?:go up|go down|rise|fall|drop|crash|rally|recover|hit|reach|double|outperform)\b",
-    r"\b(?:predict|forecast)\b[^?.!]*\b(?:price|share|stock|return)",
-    r"\bwhere (?:will|is) (?:dbs|ocbc|uob|the (?:stock|share price))[^?.!]*\b(?:head|going|be)\b",
-]
-_ADVICE_RES = [re.compile(p, re.IGNORECASE) for p in _ADVICE_PATTERNS + _PREDICTION_PATTERNS]
-
-
-def is_advice_seeking(question: str) -> bool:
-    return any(p.search(question or "") for p in _ADVICE_RES)
-
-
-def advice_reply(question: str, context_banks: list[str] | None = None) -> str | None:
-    """A fixed reply if the question asks what to do with the stock, else None.
-    `context_banks` names the subject when the question doesn't ("Should I buy it?")."""
-    if not is_advice_seeking(question):
-        return None
-    banks = detect_banks(question) or list(context_banks or [])
-    subject = " / ".join(banks) if banks else "these banks"
-    example_bank = banks[0] if banks else "DBS"
-    return (
-        f"I can't tell you whether to buy, sell or hold {subject}, or where the share price is "
-        "heading. This assistant reports what retail investors, the news and the banks "
-        "themselves are saying, and none of it is financial advice.\n\n"
-        "What I can show you instead:\n"
-        f"- the overall sentiment on {subject} and how it has moved recently\n"
-        "- sentiment on one aspect, such as dividends, net interest margin, asset quality, "
-        "the wealth business, retail banking or the share price\n"
-        "- how the three banks compare\n"
-        "- the quotes behind any of these\n\n"
-        f"For example: \"How has sentiment on {example_bank}'s dividends changed recently?\""
-    )
-
-
-# --- input: scope ------------------------------------------------------------
-
-_OTHER_BANKS = re.compile(
-    r"\b(?:maybank|hsbc|standard chartered|stanchart|citi(?:bank|group)?|cimb|rhb|"
-    r"bank of china|icbc|jp ?morgan|chase|bank of america|wells fargo|goldman|"
-    r"hang seng|public bank|bangkok bank|kasikorn|mandiri|bca|sbi|hdfc|trust bank|gxs|maribank)\b",
-    re.IGNORECASE)
-
-
-# Words that make a question plausibly about this system's subject even when
-# no bank is named ("how is sentiment on dividends?").
-_DOMAIN = re.compile(
-    r"\b(?:sentiment|dividend|payout|margin|nim|asset quality|provision|npl|guidance|outlook|"
-    r"bank|banks|banking|analyst|consensus|rating|target price|earnings|results?|profit|"
-    r"interest|loan|deposit|shares?|stock|investor|compare|comparison|trend|news|reddit|"
-    r"evidence|quotes?|aspect|coverage|data)\b", re.IGNORECASE)
-
-
-def scope_reply(question: str, in_conversation: bool = False) -> str | None:
-    """A fixed reply if the question is about banks this system doesn't cover,
-    or about nothing it covers at all. `in_conversation` is true when earlier
-    turns set a bank or aspect: a follow-up refers back to them, so it isn't
-    refused for naming neither (gold set mt-2, 2026-10-01)."""
-    if detect_banks(question):
-        return None  # at least one covered bank: let the model answer that part
-    m = _OTHER_BANKS.search(question or "")
-    if m:
-        return (
-            f"I only cover Singapore's three listed banks, DBS, OCBC and UOB, so I have no data "
-            f"on {m.group(0)}. I can show sentiment on any of the three, compare them, or find "
-            "the quotes behind a score."
-        )
-    if not in_conversation and not _DOMAIN.search(question or ""):
-        return (
-            "That's outside what I can help with. I answer questions about sentiment on "
-            "Singapore's three listed banks, DBS, OCBC and UOB: how sentiment looks overall or on "
-            "an aspect such as dividends, margins, asset quality, wealth or retail banking, how it has "
-            "changed, how the banks compare, and the quotes behind a score."
-        )
-    return None
 
 
 # --- output: numbers -----------------------------------------------------------

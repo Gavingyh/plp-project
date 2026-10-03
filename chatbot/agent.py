@@ -60,8 +60,8 @@ from dotenv import load_dotenv
 
 from chatbot.backends import get_backend
 from config.logging_config import get_logger, setup_logging
-from chatbot.guards import (advice_reply, is_echo_key, scope_reply, unverified_numbers,
-                            unverified_sentence_ids)
+from chatbot import intent as intents
+from chatbot.guards import is_echo_key, unverified_numbers, unverified_sentence_ids
 from chatbot.prompts import SYSTEM_PROMPT, with_state
 from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments
 from ingest.base import detect_banks
@@ -348,7 +348,8 @@ class TurnResult:
     question: str
     answer: str
     calls: list = field(default_factory=list)
-    guard: str | None = None                 # "advice" or "scope" if an input guard answered
+    guard: str | None = None                 # the intent whose fixed reply answered (config/intents.yaml), if any
+    intent: str | None = None                # the classifier's intent; None if it couldn't run
     citation_unverified: bool = False
     unverified_numbers: list = field(default_factory=list)
     evidence_enforced: str | None = None     # "strip" or "search" if CHATBOT_ENFORCE_EVIDENCE changed the answer
@@ -357,14 +358,13 @@ class TurnResult:
 def answer_turn(question: str, backend_name: str | None = None, history: list | None = None,
                 state: dict | None = None, verbose: bool = True, backend=None,
                 earlier_calls: list | None = None) -> TurnResult:
-    context_banks = (state or {}).get("banks")
-    in_conversation = bool(context_banks or (state or {}).get("aspect"))
-    for guard, reply in (("advice", advice_reply(question, context_banks)),
-                         ("scope", scope_reply(question, in_conversation))):
-        if reply:
-            if verbose:
-                logger.info("input guard: %s question answered with the fixed reply", guard)
-            return TurnResult(question=question, answer=reply, guard=guard)
+    previous = next((h["content"] for h in reversed(history or []) if h.get("role") == "user"), None)
+    intent = intents.classify_intent(question, state, previous)
+    reply = intents.reply_for(intent, question, state)
+    if reply:
+        if verbose:
+            logger.info("intent %s: answered with its fixed reply", intent)
+        return TurnResult(question=question, answer=reply, guard=intent, intent=intent)
 
     backend = backend or get_backend(backend_name)
     if verbose:
@@ -377,7 +377,7 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
         # An empty answer, or a bare "{}" from a model that tried to emit a tool call
         # as text. The replacement is the harness's own text, so it skips the checks.
         return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls)
-    result = TurnResult(question=question, answer=answer, calls=tracker.calls)
+    result = TurnResult(question=question, answer=answer, calls=tracker.calls, intent=intent)
 
     mode = enforce_evidence_mode()
     enforced, flagged = enforce_evidence(answer, tracker, question, mode)

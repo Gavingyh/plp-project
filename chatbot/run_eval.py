@@ -35,7 +35,8 @@ from datetime import datetime, timezone
 
 from chatbot.agent import Conversation, answer_turn
 from chatbot.eval_gold_set import (GOLD_SET, GOLD_SET_V2, MULTI_TURN, looks_like_advice_decline,
-                                   looks_like_no_data_response)
+                                   looks_like_no_data_response,
+                               SCOPE_SET, MULTI_TURN_SCOPE, looks_like_declining_unrelated_part)
 from config.logging_config import get_logger, setup_logging
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -100,12 +101,26 @@ def _check_behavior(item: dict, answer: str) -> dict:
         ok = looks_like_advice_decline(answer) or looks_like_no_data_response(answer)
         return {"applicable": True, "correct": ok,
                 "reason": None if ok else "answered without declining or flagging no data"}
+    if expected == "decline_unrelated_part":
+        ok = looks_like_declining_unrelated_part(answer)
+        return {"applicable": True, "correct": ok,
+                "reason": None if ok else "didn't say it can't help with the unrelated part"}
     return {"applicable": False}
+
+
+def _check_guard(item: dict, guard: str | None) -> dict:
+    """Whether the right input guard answered: `expected_guard` names it, or is
+    None for a question that must reach the model."""
+    if "expected_guard" not in item:
+        return {"applicable": False}
+    ok = guard == item["expected_guard"]
+    return {"applicable": True, "correct": ok,
+            "reason": None if ok else f"guard {guard!r}, expected {item['expected_guard']!r}"}
 
 
 def run(backend_name: str | None = None, limit: int | None = None,
         tag: str | None = None, gold: str = "v1") -> dict:
-    gold_set = {"v1": GOLD_SET, "v2": GOLD_SET_V2}[gold]
+    gold_set = {"v1": GOLD_SET, "v2": GOLD_SET_V2, "scope": SCOPE_SET}[gold]
     items = gold_set[:limit] if limit else gold_set
     results_path, summary_path = _output_paths(tag)
     os.makedirs(EVAL_DIR, exist_ok=True)
@@ -124,8 +139,9 @@ def run(backend_name: str | None = None, limit: int | None = None,
             logger.warning("[%s] FAILED: %s", item["id"], e)
 
         fabricated = "VERIFICATION WARNING" in answer
-        tool_check = _check_tool_selection(item, calls)
+        tool_check = _check_tool_selection(item, calls) if not guard or "expected_tool" in item else {"applicable": False}
         behavior_check = _check_behavior(item, answer)
+        guard_check = _check_guard(item, guard)
 
         results.append({
             "id": item["id"], "category": item["category"], "question": item["question"],
@@ -142,6 +158,7 @@ def run(backend_name: str | None = None, limit: int | None = None,
             "unverified_numbers": numbers,
             "tool_selection_check": tool_check,
             "behavior_check": behavior_check,
+            "guard_check": guard_check,
         })
 
     with open(results_path, "w") as f:
@@ -236,8 +253,9 @@ def check_turn(spec: dict, turn) -> dict:
     """The single-question checks applied to one turn of a conversation."""
     tool = _check_tool_selection(spec, turn.calls)
     behavior = _check_behavior(spec, turn.answer)
-    checked = [c for c in (tool, behavior) if c["applicable"]]
-    return {"tool_selection_check": tool, "behavior_check": behavior,
+    guard = _check_guard(spec, getattr(turn, "guard", None))
+    checked = [c for c in (tool, behavior, guard) if c["applicable"]]
+    return {"tool_selection_check": tool, "behavior_check": behavior, "guard_check": guard,
             "correct": all(c["correct"] for c in checked) if checked else None}
 
 
@@ -268,7 +286,8 @@ def run_multi_turn(backend_name: str | None = None, tag: str | None = None,
              f"Turns correct: {turns_ok}/{len(results)}; conversations with every turn correct: "
              f"{scen_ok}/{len(by_scenario)}", "", "| scenario | turn | question | correct | reason |", "|---|---|---|---|---|"]
     for r in results:
-        reason = r.get("error") or (r.get("tool_selection_check") or {}).get("reason") or (r.get("behavior_check") or {}).get("reason") or ""
+        reason = (r.get("error") or (r.get("tool_selection_check") or {}).get("reason")
+                  or (r.get("behavior_check") or {}).get("reason") or (r.get("guard_check") or {}).get("reason") or "")
         lines.append(f"| {r['scenario']} | {r['turn']} | {r['question']} | {r['correct']} | {reason} |")
     os.makedirs(EVAL_DIR, exist_ok=True)
     suffix = f"_{tag}" if tag else ""
@@ -286,14 +305,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend", default=None)
     parser.add_argument("--limit", type=int, default=None)
-    parser.add_argument("--set", dest="gold", choices=["v1", "v2"], default="v1",
-                        help="gold set: v1 (23, frozen 26 Sep) or v2 (32, adds the newer aspects)")
+    parser.add_argument("--set", dest="gold", choices=["v1", "v2", "scope"], default="v1",
+                        help="gold set: v1 (23, frozen 26 Sep), v2 (32, adds the newer aspects) or scope "
+                             "(small talk, off-topic, service and controls, 4 Oct; with --multi-turn, "
+                             "its conversations)")
     parser.add_argument("--multi-turn", action="store_true", help="run the multi-turn conversations instead")
     parser.add_argument("--tag", default=None,
                         help="suffix for the output files, so one run doesn't "
                              "overwrite another (e.g. the model name)")
     args = parser.parse_args()
     if args.multi_turn:
-        print(run_multi_turn(backend_name=args.backend, tag=args.tag))
+        print(run_multi_turn(backend_name=args.backend, tag=args.tag,
+                             scenarios=MULTI_TURN_SCOPE if args.gold == "scope" else MULTI_TURN))
     else:
         print(run(backend_name=args.backend, limit=args.limit, tag=args.tag, gold=args.gold))

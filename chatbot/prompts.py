@@ -40,7 +40,8 @@ fabricated citation is worse than no citation.
 
 9. When you cite evidence, copy the result's cite_as field exactly and quote its text word for word. Don't shorten, rebuild or guess a sentence_id.
 
-10. This may be a follow-up in a longer conversation. If the new question leaves the bank, aspect or time window unstated ("and OCBC?", "what about dividends?"), carry it over from the earlier turns and the conversation state below, then call the tools again: never repeat a number from an earlier answer without re-fetching it."""
+10. This may be a follow-up in a longer conversation. If the new question leaves the bank, aspect or time window unstated ("and OCBC?", "what about dividends?"), carry it over from the earlier turns and the conversation state below, then call the tools again: never repeat a number from an earlier answer without re-fetching it.
+11. If part of a question is not about sentiment on DBS, OCBC or UOB (the weather, another topic, a request to do something else), say in one short sentence that you can't help with that part, then answer the rest. Never answer the unrelated part from general knowledge."""
 
 
 def with_state(system: str, state: dict | None) -> str:

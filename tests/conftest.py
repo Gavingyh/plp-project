@@ -11,6 +11,23 @@ import pytest
 os.environ.setdefault("HF_HUB_OFFLINE", "1")  # model is cached locally; avoids the HF rate-limit hang
 
 
+@pytest.fixture(autouse=True)
+def intent_in_scope(monkeypatch):
+    """The chatbot's intent classifier calls Ollama; in tests it answers
+    "in_scope" unless a test sets another answer, so no test reaches a model."""
+    monkeypatch.setattr("chatbot.intent.ollama_chat", lambda model, messages, names: '{"intent": "in_scope"}')
+
+
+@pytest.fixture(autouse=True)
+def no_real_chatbot_backend(monkeypatch):
+    """A test that reaches the chatbot model must give it a fake backend: the
+    auto-detected one is a real service (Gemini, when its key is set), and on
+    4 Oct 2026 a test reached it. Tests that set agent.get_backend replace this."""
+    def refuse(*a, **k):
+        raise RuntimeError("tests must not reach a real chatbot backend: pass a fake one")
+    monkeypatch.setattr("chatbot.agent.get_backend", refuse)
+
+
 @pytest.fixture
 def temp_db(tmp_path, monkeypatch):
     import ingest.db as db_module

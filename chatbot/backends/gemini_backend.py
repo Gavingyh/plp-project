@@ -36,7 +36,7 @@ import time
 import requests
 
 from config.logging_config import get_logger
-from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
+from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -84,7 +84,6 @@ def _to_gemini_tools(claude_tool_schemas: list[dict]) -> list[dict]:
 # exists, its bank, date, sentiment and id, and can't quote it: a quote it
 # writes is then invented, and the citation check flags it.
 WITHHELD = "[Reddit text withheld from the hosted model]"
-_QUOTED = re.compile(r'"[^"\n]{10,}"|“[^”]{10,}”|^[ \t]*>.*$', re.MULTILINE)
 
 
 def withhold_reddit(name: str, content):
@@ -99,11 +98,16 @@ def withhold_reddit(name: str, content):
     return {**content, "results": items}
 
 
+EARLIER_ANSWER = "[an earlier answer, not shown: it may quote Reddit posts]"
+
+
 def history_for_gemini(history: list | None) -> list:
-    """Earlier turns with quoted text withheld: an earlier answer may quote
-    Reddit evidence that another model, or the harness, retrieved."""
-    return [{**h, "content": _QUOTED.sub("[quote withheld]", h.get("content") or "")}
-            if h.get("role") == "assistant" else h for h in history or []]
+    """Earlier turns with each earlier answer replaced by a placeholder: an
+    answer may quote or paraphrase Reddit posts that another model, or the
+    harness, retrieved, and picking quotes out of it missed cut, wrapped and
+    nested ones (4 Oct 2026). The user's own questions stay, and the bank and
+    aspect travel in the conversation state, so follow-ups still resolve."""
+    return [{**h, "content": EARLIER_ANSWER} if h.get("role") == "assistant" else h for h in history or []]
 
 
 class GeminiBackend(LLMBackend):
@@ -112,7 +116,7 @@ class GeminiBackend(LLMBackend):
     def __init__(self, api_key: str, model: str = DEFAULT_MODEL,
                  temperature: float = DEFAULT_TEMPERATURE):
         if not api_key:
-            raise RuntimeError(
+            raise BackendUnavailable(
                 "GEMINI_API_KEY not set. Set it in .env to use Gemini, or use "
                 "CHATBOT_BACKEND=ollama for a free local model instead."
             )
@@ -137,20 +141,20 @@ class GeminiBackend(LLMBackend):
                 resp = requests.post(url, headers={"x-goog-api-key": self._api_key},
                                      json=payload, timeout=_REQUEST_TIMEOUT)
             except requests.exceptions.ConnectionError as e:
-                raise RuntimeError(f"Could not reach the Gemini API: {e}") from e
+                raise BackendUnavailable(f"Could not reach the Gemini API: {e}") from e
             if resp.status_code not in (429, 503) or attempt == len(_RETRY_WAITS):
                 break
             logger.warning("Gemini %s returned %s; retrying in %ss", self.model,
                            resp.status_code, _RETRY_WAITS[attempt])
             time.sleep(_RETRY_WAITS[attempt])
         if resp.status_code == 400:
-            raise RuntimeError(
+            raise BackendUnavailable(
                 f"Gemini API returned 400 (bad request); the error body usually names the "
                 f"exact bad field, check it before assuming the whole approach is broken: "
                 f"{resp.text[:500]}"
             )
         if resp.status_code == 401 or resp.status_code == 403:
-            raise RuntimeError(f"Gemini API rejected the key ({resp.status_code}): "
+            raise BackendUnavailable(f"Gemini API rejected the key ({resp.status_code}): "
                                 f"check GEMINI_API_KEY.")
         resp.raise_for_status()
         return resp.json()

@@ -108,7 +108,7 @@ _LEAKS = {
 
 
 def _cases():
-    return [pytest.param(c, marks=pytest.mark.xfail(strict=True, reason=f"Gemini gets Reddit text: {_LEAKS[c]}"))
+    return [pytest.param(c)
             if c in _LEAKS else c for c in EARLIER_ANSWERS]
 
 

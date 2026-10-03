@@ -25,9 +25,10 @@ from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from chatbot.agent import Conversation
+from chatbot.backends.base import BackendUnavailable
 from aggregate.index import compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
@@ -76,6 +77,25 @@ def valid_aspect(aspect: str | None = Query(
     return key
 
 
+def valid_source(source: str = Query(
+        "ALL", description="ALL (blended), * (every source) or one source in the index, e.g. arctic_shift")) -> str:
+    """A source the index holds, ALL or *. An unknown one is a 422, not an empty
+    result that reads as "no data" (4 Oct 2026)."""
+    if source in ("ALL", "*"):
+        return source
+    conn = get_connection()
+    try:
+        known = {r[0] for r in conn.execute("SELECT DISTINCT source FROM sentiment_index WHERE source != 'ALL'")}
+    except sqlite3.OperationalError:
+        known = set()
+    finally:
+        conn.close()
+    if source not in known:
+        raise HTTPException(status_code=422, detail=f"unknown source {source!r}; one of ALL, *, "
+                                                    f"{', '.join(sorted(known)) or '(none yet)'}")
+    return source
+
+
 @app.get("/sentiment")
 def sentiment(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
               aspect: str | None = Depends(valid_aspect),
@@ -96,7 +116,7 @@ def sentiment_trend(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: 
 
 @app.get("/sentiment/index")
 def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_time)$"),
-                          source: str = "ALL"):
+                          source: str = Depends(valid_source)):
     """Raw rows from sentiment_index for the given window - one call to build
     a full bank x aspect grid client-side, instead of one call per cell.
 
@@ -227,7 +247,7 @@ def aspects():
 def sentiment_series(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
                      aspect: str | None = Depends(valid_aspect),
                      bucket: str = Query("month", pattern="^(week|month|quarter)$"),
-                     source: str = "ALL",
+                     source: str = Depends(valid_source),
                      min_n: int = Query(5, ge=1)):
     """Continuous sentiment series for charting.
 
@@ -263,6 +283,11 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     backend: Literal["claude", "openai", "gemini", "ollama"] | None = None  # None: auto-detect
+
+    @field_validator("backend", mode="before")
+    @classmethod
+    def _lower_backend(cls, value):
+        return value.strip().lower() if isinstance(value, str) else value
     # Earlier turns, oldest first, so a follow-up ("and OCBC?") resolves. The API
     # stays stateless: the client sends the conversation back each time.
     history: list[ChatMessage] = []
@@ -275,8 +300,8 @@ def chat(req: ChatRequest):
     conv = Conversation.from_messages([m.model_dump() for m in req.history], backend_name=req.backend)
     try:
         turn = conv.ask(req.message)
-    except Exception as e:   # no Ollama running, a missing or rejected key: the backend, not the request
-        logger.warning("chat backend failed: %s", e)
+    except BackendUnavailable as e:   # no Ollama running, a missing or rejected key: the service, not the request
+        logger.warning("chat backend unavailable: %s", e)
         raise HTTPException(status_code=503, detail=f"chat backend unavailable: {e}")
     return {"question": req.message, "answer": turn.answer, "guard": turn.guard,
             "citation_unverified": turn.citation_unverified,

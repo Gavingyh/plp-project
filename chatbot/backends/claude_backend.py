@@ -9,7 +9,7 @@ could be swapped in for school-project use without needing an API key.
 import sys
 
 from config.logging_config import get_logger
-from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
+from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -25,7 +25,7 @@ class ClaudeBackend(LLMBackend):
     def __init__(self, api_key: str, model: str = "claude-sonnet-5",
                  temperature: float = DEFAULT_TEMPERATURE):
         if not api_key:
-            raise RuntimeError(
+            raise BackendUnavailable(
                 "ANTHROPIC_API_KEY not set. Either set it in .env to use Claude, or use the "
                 "local Ollama backend instead (see chatbot/backends/ollama_backend.py / README)."
             )

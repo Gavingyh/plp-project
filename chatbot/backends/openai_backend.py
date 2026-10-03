@@ -36,7 +36,7 @@ import requests
 
 from chatbot.backends._openai_compat import to_openai_function_tools
 from config.logging_config import get_logger
-from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
+from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -56,7 +56,7 @@ class OpenAIBackend(LLMBackend):
     def __init__(self, api_key: str, model: str = DEFAULT_MODEL,
                  temperature: float = DEFAULT_TEMPERATURE, base_url: str | None = None):
         if not api_key:
-            raise RuntimeError(
+            raise BackendUnavailable(
                 "OPENAI_API_KEY not set. Set it in .env to use GPT, or use CHATBOT_BACKEND=ollama "
                 "for a free local model instead."
             )
@@ -77,16 +77,16 @@ class OpenAIBackend(LLMBackend):
                     timeout=_REQUEST_TIMEOUT,
                 )
             except requests.exceptions.ConnectionError as e:
-                raise RuntimeError(f"Could not reach {self.base_url}: {e}") from e
+                raise BackendUnavailable(f"Could not reach {self.base_url}: {e}") from e
             if resp.status_code not in (429, 503) or attempt == len(_RETRY_WAITS):
                 break
             wait = _retry_wait(resp, _RETRY_WAITS[attempt])
             logger.warning("%s returned %s; retrying in %ss", self.model, resp.status_code, wait)
             time.sleep(wait)
         if resp.status_code == 401:
-            raise RuntimeError(f"{self.base_url} rejected the key (401); check OPENAI_API_KEY.")
+            raise BackendUnavailable(f"{self.base_url} rejected the key (401); check OPENAI_API_KEY.")
         if resp.status_code == 400:
-            raise RuntimeError(f"{self.base_url} returned 400 (bad request): {resp.text[:500]}")
+            raise BackendUnavailable(f"{self.base_url} returned 400 (bad request): {resp.text[:500]}")
         resp.raise_for_status()
         return resp.json()
 

@@ -33,6 +33,7 @@ import json
 import os
 from datetime import datetime, timezone
 
+from chatbot import settings
 from chatbot.agent import Conversation, answer_turn
 from chatbot.eval_gold_set import (GOLD_SET, GOLD_SET_V2, MULTI_TURN, looks_like_advice_decline,
                                    looks_like_no_data_response,
@@ -138,14 +139,14 @@ def run(backend_name: str | None = None, limit: int | None = None,
             answer, calls, error, guard, numbers, enforced = "", [], str(e), None, [], None
             logger.warning("[%s] FAILED: %s", item["id"], e)
 
-        fabricated = "VERIFICATION WARNING" in answer
+        fabricated = bool(turn.citation_unverified) if error is None else False
         tool_check = _check_tool_selection(item, calls) if not guard or "expected_tool" in item else {"applicable": False}
         behavior_check = _check_behavior(item, answer)
         guard_check = _check_guard(item, guard)
 
         results.append({
             "id": item["id"], "category": item["category"], "question": item["question"],
-            "answer": answer, "error": error,
+            "answer": answer, "model_answer": (turn.model_answer if error is None else None), "error": error,
             # Keep each call's result, not just the call: a person checking
             # whether a stated number is the number the tool returned needs it
             # (the check this suite leaves to people).
@@ -155,6 +156,7 @@ def run(backend_name: str | None = None, limit: int | None = None,
             "citation_fabricated": fabricated,
             "evidence_enforced": enforced,
             "input_guard": guard,
+            "intent": (turn.intent if error is None else None),
             "unverified_numbers": numbers,
             "tool_selection_check": tool_check,
             "behavior_check": behavior_check,
@@ -196,6 +198,7 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
         f"# Chatbot evaluation summary",
         f"",
         f"Model: `{model_desc or 'auto-detected'}`  ",
+        f"Intent classifier: `{settings.get('models.intent')}`  ",
         f"Run at: {datetime.now(timezone.utc).isoformat()}  ",
         f"Questions: {n}  ",
         f"Errors (backend/network failures): {n_errors}",

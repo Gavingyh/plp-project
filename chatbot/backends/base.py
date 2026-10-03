@@ -24,6 +24,12 @@ from chatbot import settings
 DEFAULT_TEMPERATURE = settings.get("temperature")
 
 
+class BackendUnavailable(RuntimeError):
+    """The model service can't answer: not running, unreachable, a missing or
+    rejected key, or an error status after retries. The API reports it as 503;
+    anything else raised while answering is a bug, reported as 500."""
+
+
 class LLMBackend(ABC):
     """One implementation per model provider. `ask()` runs the complete
     question -> [tool calls -> tool results]* -> final text answer loop."""

@@ -84,7 +84,9 @@ _QUOTE_PATTERN = re.compile(
     r'(?:^|(?<=[\s(\[:—–*_-]))"[^"\s](?:[^"\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_]|$)'
     r'|“[^”]{10,}?”')
 # A markdown blockquote line ("> OCBC has the worst app..."): quoted text without quote marks.
-_BLOCKQUOTE = re.compile(r"^[ \t]*>[ \t]*(\S.{9,})$", re.MULTILINE)
+# A line opening with a label and a colon ("> **Note:** ...") is the model's own
+# aside, not quoted evidence (4 Oct 2026: notes were flagged as invented quotes).
+_BLOCKQUOTE = re.compile(r"^[ \t]*>[ \t]*(?![*_]*[A-Z][\w ]{0,20}[*_]*:)(\S.{9,})$", re.MULTILINE)
 _SENTENCE_ID_PATTERN = re.compile(r"sentence[_\s]?id", re.IGNORECASE)
 _SENTENCE_ID = re.compile(r"\b[0-9a-f]{24}\b")
 
@@ -276,6 +278,32 @@ def _remove_inline(text: str, quotes: list[str] | None = None, urls: list[str] |
     return re.sub(r"[ \t]{2,}", " ", text).strip()
 
 
+_CITATION_MARK = re.compile(r"\[E\d+\]|\[[^\[\]\n]*sentence[_\s]?id[^\[\]\n]*\]", re.IGNORECASE)
+
+
+def _remove_spans(text: str, spans: list[str], ids: list[str]) -> str:
+    """Remove these quotes, links and sentence ids, editing only the lines they
+    are on: the rest of the answer keeps its markdown (4 Oct 2026: a whole-answer
+    tidy-up took bold and bullets from correct lines). A removed quote's own
+    citation mark ("[E9]") goes with it; a line left empty goes too."""
+    mark = "\x00"
+    for span in sorted(set(spans), key=len, reverse=True):      # a quote may wrap a line
+        text = text.replace(span, mark)
+    for sid in ids:
+        text = re.sub(rf"(?:sentence[_\s]?id[:\s]*)?{sid}", mark, text, flags=re.IGNORECASE)
+    out = []
+    for line in text.split("\n"):
+        if mark not in line:
+            out.append(line)
+            continue
+        line = re.sub(rf"{mark}\s*(?:{_CITATION_MARK.pattern})?", "", line, flags=re.IGNORECASE)
+        line = re.sub(r"\(\s*\)|\[\s*\]", "", line)
+        line = re.sub(r"(?<=\S)[ \t]+([.,;:!?])", r"\1", line).rstrip()
+        if line.strip(" \t-*•>:"):
+            out.append(line)
+    return "\n".join(out)
+
+
 def strip_unsearched_evidence(answer: str) -> str:
     """The answer without the evidence a model wrote without searching: the
     evidence section (from its heading to the next known section), any later
@@ -334,8 +362,8 @@ def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode
     if tracker.search_evidence_called:
         # The whole answer at once: a quote can wrap onto the next line, and an
         # invented sentence id must go too (4 Oct 2026: both survived).
-        cleaned = _remove_inline(answer, tracker.unverified_quotes(answer), tracker.unverified_urls(answer),
-                                 unverified_sentence_ids(answer, tracker.known_ids()))
+        cleaned = _remove_spans(answer, tracker.unverified_quotes(answer) + tracker.unverified_urls(answer),
+                                unverified_sentence_ids(answer, tracker.known_ids()))
         return cleaned + EVIDENCE_UNMATCHED_NOTE, tracker.answer_has_unverified_citation(cleaned)
     stripped = strip_unsearched_evidence(answer)
     still_flagged = tracker.answer_has_unverified_citation(stripped)  # checked before any harness search
@@ -351,6 +379,7 @@ class TurnResult:
     calls: list = field(default_factory=list)
     guard: str | None = None                 # the intent whose fixed reply answered (config/intents.yaml), if any
     intent: str | None = None                # the classifier's intent; None if it couldn't run
+    model_answer: str | None = None          # the answer before the harness's warnings were appended
     citation_unverified: bool = False
     unverified_numbers: list = field(default_factory=list)
     evidence_enforced: str | None = None     # "strip" or "search" if CHATBOT_ENFORCE_EVIDENCE changed the answer
@@ -387,6 +416,7 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
             logger.warning("evidence written without a search was removed (%s)", mode)
         answer, result.answer, result.evidence_enforced = enforced, enforced, mode
 
+    result.model_answer = answer
     if flagged:
         if verbose:
             logger.warning("citation check failed: answer contains evidence not "
@@ -419,6 +449,8 @@ def ask(question: str, verbose: bool = True, backend_name: str | None = None,
 
 
 def _strip_warnings(answer: str) -> str:
+    """For turns rebuilt from plain messages (the API's history), which carry no
+    model_answer: the text before the first warning the harness appends."""
     return answer.split("\n\n⚠️")[0]
 
 
@@ -453,7 +485,8 @@ class Conversation:
         for t in self.turns[-HISTORY_TURNS:]:
             out.append({"role": "user", "content": t.question})
             out.append({"role": "assistant",
-                        "content": _strip_warnings(t.answer)[:HISTORY_ANSWER_CHARS]})
+                        "content": (t.model_answer if t.model_answer is not None
+                                    else _strip_warnings(t.answer))[:HISTORY_ANSWER_CHARS]})
         return out
 
     def _update_state(self, r: TurnResult) -> None:

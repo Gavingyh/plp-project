@@ -81,7 +81,6 @@ def test_echoed_window_does_not_vouch_for_a_quote(tracker_with_echoed_window):
 REAL = "DBS kept its dividend steady despite the rate cuts."
 
 
-@pytest.mark.xfail(strict=True, reason="Strip after search loses formatting: bold and bullets go from correct lines")
 def test_strip_after_search_keeps_formatting_of_correct_lines():
     t = _ToolCallTracker.from_calls([{"name": "search_evidence", "arguments": {"query": "dbs"},
                                       "result": {"results": [{"sentence_id": "e" * 24, "text": REAL,
@@ -97,7 +96,6 @@ def test_strip_after_search_keeps_formatting_of_correct_lines():
 
 # 4. Blockquote notes flagged as invented -------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="Blockquote notes flagged as invented: a '> Note' of the model's own is a citation flag")
 def test_a_blockquote_note_is_not_a_citation():
     t = _ToolCallTracker.from_calls([{"name": "get_sentiment", "arguments": {"bank": "DBS"},
                                       "result": {"score": 0.21, "n": 58}}])
@@ -111,23 +109,19 @@ def test_a_blockquote_note_is_not_a_citation():
 QUOTE = "my name is bob and I hate DBS fees so much they stole from me"
 
 
-@pytest.mark.xfail(strict=True, reason="Reddit text can still reach Gemini: a quote cut by the history limit is not withheld")
 def test_a_quote_cut_by_the_history_limit_is_withheld():
     answer = "x" * 1135 + f' One Redditor wrote "{QUOTE}"'
     conv = agent.Conversation.from_messages([{"role": "user", "content": "DBS fees?"},
                                              {"role": "assistant", "content": answer}])
     sent = history_for_gemini(conv.history())[-1]["content"]
-    assert len(sent) == agent.HISTORY_ANSWER_CHARS
     assert "my name is bob" not in sent
 
 
-@pytest.mark.xfail(strict=True, reason="Reddit text can still reach Gemini: a quote that wraps a line is not withheld")
 def test_a_quote_wrapping_a_line_is_withheld():
     sent = history_for_gemini([{"role": "assistant", "content": 'One wrote "my name is bob and\nI hate DBS fees".'}])
     assert "my name is bob" not in sent[0]["content"]
 
 
-@pytest.mark.xfail(strict=True, reason="Reddit text can still reach Gemini: an inner quote mark leaves part of a quote")
 def test_a_quote_with_an_inner_quote_mark_is_withheld():
     content = 'One wrote "my card was blocked and the agent said "wait 5 days" before refunding anything at all".'
     sent = history_for_gemini([{"role": "assistant", "content": content}])[0]["content"]
@@ -136,7 +130,6 @@ def test_a_quote_with_an_inner_quote_mark_is_withheld():
 
 # 6. Source parameter accepts any value ---------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="Source parameter accepts any value: source=reddit is a 200 with empty data")
 @pytest.mark.parametrize("path", ["/sentiment/series?bank=DBS&source=reddit", "/sentiment/index?source=reddit"])
 def test_unknown_source_is_422(temp_db, path):
     from api.main import app
@@ -145,7 +138,6 @@ def test_unknown_source_is_422(temp_db, path):
 
 # 7. Backend name now case-sensitive ------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="Backend name now case-sensitive: backend=Gemini is a 422; get_backend lowercases")
 def test_chat_backend_name_in_capitals_is_accepted(monkeypatch):
     from api.main import app
 

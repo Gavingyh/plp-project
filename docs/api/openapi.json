@@ -637,11 +637,13 @@
             }
           },
           {
+            "description": "ALL (blended), * (every source) or one source in the index, e.g. arctic_shift",
             "in": "query",
             "name": "source",
             "required": false,
             "schema": {
               "default": "ALL",
+              "description": "ALL (blended), * (every source) or one source in the index, e.g. arctic_shift",
               "title": "Source",
               "type": "string"
             }
@@ -698,16 +700,6 @@
           },
           {
             "in": "query",
-            "name": "source",
-            "required": false,
-            "schema": {
-              "default": "ALL",
-              "title": "Source",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
             "name": "min_n",
             "required": false,
             "schema": {
@@ -733,6 +725,18 @@
               ],
               "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
               "title": "Aspect"
+            }
+          },
+          {
+            "description": "ALL (blended), * (every source) or one source in the index, e.g. arctic_shift",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "default": "ALL",
+              "description": "ALL (blended), * (every source) or one source in the index, e.g. arctic_shift",
+              "title": "Source",
+              "type": "string"
             }
           }
         ],

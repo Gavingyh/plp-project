@@ -241,11 +241,24 @@ def test_a_failing_chat_backend_is_a_503_not_a_500(monkeypatch):
     from fastapi.testclient import TestClient
     import api.main as api_main
 
+    from chatbot.backends.base import BackendUnavailable
+
     def down(self, question, verbose=False):
-        raise ConnectionError("Ollama isn't running")
+        raise BackendUnavailable("Ollama isn't running")
     monkeypatch.setattr(api_main.Conversation, "ask", down)
     r = TestClient(api_main.app).post("/chat", json={"message": "How is DBS doing?"})
     assert r.status_code == 503 and "Ollama" in r.json()["detail"]
+
+
+def test_a_bug_while_answering_is_a_500_not_backend_unavailable(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as api_main
+
+    def broken(self, question, verbose=False):
+        raise KeyError("a harness bug")
+    monkeypatch.setattr(api_main.Conversation, "ask", broken)
+    r = TestClient(api_main.app, raise_server_exceptions=False).post("/chat", json={"message": "How is DBS doing?"})
+    assert r.status_code == 500 and "harness bug" not in r.text
 
 
 def test_a_database_error_is_not_read_as_no_consensus(temp_db, monkeypatch):

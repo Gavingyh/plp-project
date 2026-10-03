@@ -115,7 +115,11 @@ def tool_summary(result: dict, limit: int = MAX_RESULT_CHARS) -> str:
 
 
 def model_answer(result: dict) -> str:
-    """The answer as the model wrote it, without the warnings the harness appended."""
+    """The answer as the model wrote it, without the warnings the harness
+    appended: the recorded field, or, for runs recorded before it existed
+    (4 Oct 2026), the text before the first warning."""
+    if result.get("model_answer") is not None:
+        return result["model_answer"]
     return (result.get("answer") or "").split("\n\n⚠️")[0]
 
 

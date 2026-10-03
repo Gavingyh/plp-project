@@ -30,7 +30,7 @@ import requests
 from chatbot.backends._openai_compat import to_openai_function_tools as _to_ollama_tools
 from chatbot.backends._text_tool_call import text_tool_call
 from config.logging_config import get_logger
-from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
+from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
 logger = get_logger(__name__)
 
@@ -60,13 +60,13 @@ class OllamaBackend(LLMBackend):
         try:
             resp = requests.post(f"{self.base_url}/api/chat", json=payload, timeout=_REQUEST_TIMEOUT)
         except requests.exceptions.ConnectionError as e:
-            raise RuntimeError(
+            raise BackendUnavailable(
                 f"Could not reach Ollama at {self.base_url}. Is it running? "
                 f"Start it with `ollama serve` and make sure the model is pulled "
                 f"(`ollama pull {self.model}`). Original error: {e}"
             ) from e
         if resp.status_code == 404:
-            raise RuntimeError(
+            raise BackendUnavailable(
                 f"Ollama returned 404 for model '{self.model}'; pull it first: "
                 f"`ollama pull {self.model}`"
             )

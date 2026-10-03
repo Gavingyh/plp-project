@@ -21,6 +21,10 @@ neutral unless the stronger of negative and positive beats neutral by more
 than the margin, as in docs/model-card.md. The default, 0, is the plain most
 likely class used for the 11,000-sentence preview.
 
+`--llm-only` skips C, which scores every centroid pair (about six a
+sentence) with the fine-tuned models: the slow part, and beside the point
+once the LLM aspects are chosen.
+
 `--per-seed` also scores D with each model on its own (LLM aspects only, one
 pair per sentence, each model in its own scores cache) and prints every
 bank's headline per model and the spread, to show how far the index moves
@@ -166,6 +170,14 @@ def summarize(pairs: pd.DataFrame, meta: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _models_tag(model_dirs: list[str]) -> str:
+    """A file-name tag for a non-default set of models: their experiment
+    folder (experiments-2026-10-03 -> 2026-10-03), else a short hash."""
+    parts = os.path.normpath(model_dirs[0]).split(os.sep)
+    exp = next((p.removeprefix("experiments-") for p in parts if p.startswith("experiments-")), None)
+    return exp or hashlib.sha256("|".join(model_dirs).encode()).hexdigest()[:8]
+
+
 def per_seed(pairs: pd.DataFrame, meta: pd.DataFrame, model_dirs: list[str], margin: float = 0.0,
              cache: bool = True) -> pd.DataFrame:
     """Each model's own index on these (sentence, aspect, text) pairs: one row
@@ -228,6 +240,8 @@ def main():
     p.add_argument("--cpu", action="store_true", help="run the fine-tuned models on the CPU")
     p.add_argument("--margin", type=float, default=0.0,
                    help="neutral margin for the fine-tuned models (0: the most likely class)")
+    p.add_argument("--llm-only", action="store_true",
+                   help="skip C (centroid pairs with the fine-tuned models), the slow scenario")
     p.add_argument("--per-seed", action="store_true",
                    help="also score D with each model on its own and print the spread between them")
     args = p.parse_args()
@@ -255,14 +269,19 @@ def main():
     a = stored[["sentence_id", "aspect", "label", "confidence"]]
     b = llm.merge(base_by_sentence, on="sentence_id")                     # base FinBERT is per sentence
     cache = scores_cache_path(args.models)
-    c = finetuned_labels(stored[["sentence_id", "aspect"]].merge(texts, on="sentence_id"), args.models,
-                         cache, args.margin)
     d = finetuned_labels(llm.merge(texts, on="sentence_id"), args.models, cache, args.margin)
+    scenarios = {"A": a, "B": b, "D": d}
+    if not args.llm_only:
+        scenarios["C"] = finetuned_labels(stored[["sentence_id", "aspect"]].merge(texts, on="sentence_id"),
+                                          args.models, cache, args.margin)
+    scenarios = {k: scenarios[k] for k in sorted(scenarios)}
     tag = f"_margin{args.margin:g}" if args.margin else ""
-    for name, df in (("A", a), ("B", b), ("C", c), ("D", d)):
+    if args.models != DEFAULT_MODELS:            # don't overwrite the 1 Oct models' files
+        tag += "_" + _models_tag(args.models)
+    for name, df in scenarios.items():
         df.to_csv(os.path.join(OUT_DIR, f"pairs_{name}{tag}.csv"), index=False)
 
-    table = compare({k: summarize(v, meta) for k, v in (("A", a), ("B", b), ("C", c), ("D", d))})
+    table = compare({k: summarize(v, meta) for k, v in scenarios.items()})
     table.to_csv(os.path.join(OUT_DIR, f"index_preview{tag}.csv"), index=False)
     print(f"\nsample {len(meta)} sentences, neutral margin {args.margin:g}")
     print("\nHeadline (aspect ALL), per bank:\n" + _md(table[table["aspect"] == "ALL"]))
@@ -271,7 +290,7 @@ def main():
     print("\nAspect distribution: centroid pairs vs LLM (one per sentence)")
     dist = pd.DataFrame({"centroid_pairs": a["aspect"].value_counts(), "llm_sentences": llm["aspect"].value_counts()}).fillna(0).astype(int)
     print(_md(dist.reset_index().rename(columns={"index": "aspect"})))
-    for name, df in (("A", a), ("B", b), ("C", c), ("D", d)):
+    for name, df in scenarios.items():
         one = df.sort_values("confidence", ascending=False).drop_duplicates("sentence_id")
         shares = one["label"].value_counts(normalize=True).reindex(LABELS, fill_value=0)
         print(f"labels per sentence, {name}: " + ", ".join(f"{k} {v:.1%}" for k, v in shares.items()))

@@ -121,3 +121,9 @@ def test_per_seed_keeps_same_named_seeds_from_two_experiments_apart(monkeypatch)
     assert len([c for c in spread.columns if c not in ("bank", "aspect", "min", "max", "spread", "n")]) == 2
     assert spread.loc[spread["aspect"] == "ALL", "spread"].iloc[0] > 0
 
+
+
+def test_other_models_write_their_own_files():
+    dirs = [f"models/experiments-2026-10-03/label/seed_{s}/final" for s in (42, 1, 7)]
+    assert pv._models_tag(dirs) == "2026-10-03"
+    assert len(pv._models_tag(["somewhere/else/final"])) == 8

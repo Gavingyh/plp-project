@@ -75,6 +75,33 @@ def test_extract_prose_drops_table_rows():
     assert "Net interest income" in lines[0]
 
 
+def test_extract_prose_keeps_the_short_last_line_of_a_wrapped_sentence():
+    """A wrapped sentence's last line is often under the length floor. Dropping
+    it spliced the kept part into the next sentence, as in the stored corpus:
+    "Markets trading income rose to Expenses increased 10%, ..."."""
+    text = ("Markets trading income for the quarter rose 12% from a year ago to\n"
+            "S$1.23 billion.\n"
+            "Expenses increased 10%, driven by higher staff and technology costs,\n"
+            "and fell in the quarter\n"
+            "Net profit was a record for the group in the first half of the year.\n")
+    with patch("pdfplumber.open", return_value=_pdf_with_pages(text)):
+        lines = extract_prose("ignored.pdf")
+    joined = " ".join(lines)
+    assert "rose 12% from a year ago to S$1.23 billion. Expenses increased 10%" in joined
+    assert "technology costs, and fell in the quarter" in joined   # a lowercase continuation
+
+
+def test_extract_prose_still_drops_headers_page_numbers_and_table_fragments():
+    unfinished = "Net interest income rose on the back of higher loan volumes in"
+    finished = "Fee income grew across wealth management and card products."
+    text = "\n".join([unfinished, "Financial Highlights", "12", "1,234.5 6,789.0",
+                      unfinished, "Key drivers:", unfinished, "bps",
+                      finished, "Outlook", "for the year ahead.", ""])
+    with patch("pdfplumber.open", return_value=_pdf_with_pages(text)):
+        lines = extract_prose("ignored.pdf")
+    assert lines == [unfinished, unfinished, unfinished, finished]
+
+
 def test_is_prose_rejects_short_lines():
     assert _is_prose("Too short") is False
 
@@ -148,3 +175,21 @@ def test_fix_earnings_dates_finds_and_redates_only_misdated_documents(tmp_path):
     assert conn.execute("SELECT published_at FROM documents WHERE doc_id='a'").fetchone()[0].startswith("2024-05")
     assert {r[0] for r in conn.execute("SELECT published_at FROM sentences WHERE doc_id='a'")} == {"2024-05-01T00:00:00+00:00"}
     assert fix.misdated(conn) == []
+
+
+def test_fix_earnings_dates_refuses_a_database_that_does_not_exist(tmp_path, monkeypatch, capsys):
+    """--apply opens the database read-write, which creates a missing file: a
+    mistyped --db left an empty database behind before failing."""
+    import importlib.util
+    import sys
+    spec = importlib.util.spec_from_file_location(
+        "fix_earnings_dates", os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts", "fix_earnings_dates.py"))
+    fix = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fix)
+    typo = tmp_path / "pl.db"
+    monkeypatch.setattr(sys, "argv", ["fix_earnings_dates.py", "--apply", "--db", str(typo)])
+    with pytest.raises(SystemExit) as exit_info:
+        fix.main()
+    assert exit_info.value.code != 0
+    assert not typo.exists()
+    assert "pl.db" in capsys.readouterr().err

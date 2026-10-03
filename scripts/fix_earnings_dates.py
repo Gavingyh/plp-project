@@ -55,6 +55,10 @@ def main():
     p.add_argument("--db", default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                                 "data", "plp.db"))
     args = p.parse_args()
+    # Checked before connecting: --apply opens read-write, which would create
+    # an empty database at a mistyped path before failing on it.
+    if not os.path.isfile(args.db):
+        p.error(f"no database at {args.db}")
     uri = f"file:{args.db}" + ("" if args.apply else "?mode=ro")
     conn = sqlite3.connect(uri, uri=True)
     try:

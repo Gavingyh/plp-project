@@ -227,13 +227,31 @@ def load_cache(path: str = CACHE_PATH) -> dict[str, dict]:
         return {r["id"]: r for r in (json.loads(l) for l in f if l.strip())}
 
 
+# Statuses that mean the page is gone for good. Any other failure (a network
+# error, a 5xx, a page that yielded no text) may be a blip, so it is fetched
+# again on the next run rather than kept as final.
+_GONE_STATUSES = {"404", "410"}
+_LIVE_STATUS = re.compile(r"live status (\w+)")
+
+
+def _settled(record: dict) -> bool:
+    """True when a cached record needs no further fetch: it has the article,
+    or its failure was a page that no longer exists."""
+    if not record.get("error"):
+        return True
+    m = _LIVE_STATUS.search(record["error"])
+    return bool(m) and m.group(1) in _GONE_STATUSES
+
+
 def fetch_all(candidates: dict[str, dict], path: str = CACHE_PATH,
               delay: float = CRAWL_DELAY) -> dict[str, dict]:
     """Fetch every candidate not already cached, newest first, appending each
-    as it lands."""
+    as it lands. A cached failure other than a missing page is fetched again;
+    the new record is appended and, read later, replaces the old one."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     cache = load_cache(path)
-    todo = [c for k, c in sorted(candidates.items(), key=lambda kv: -int(kv[0])) if k not in cache]
+    todo = [c for k, c in sorted(candidates.items(), key=lambda kv: -int(kv[0]))
+            if k not in cache or not _settled(cache[k])]
     logger.info("%d candidates, %d cached, %d to fetch (~%.0f min at %.0fs each)",
                 len(candidates), len(cache), len(todo), len(todo) * delay / 60, delay)
     with open(path, "a", encoding="utf-8") as f:

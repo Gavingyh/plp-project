@@ -4,6 +4,7 @@ Sources differ enough in register that a shared cleaner would either
 under-clean Reddit or over-clean news. See docs/DESIGN.md, step 2.
 """
 
+import html
 import re
 
 _NEWSAPI_TRUNCATION = re.compile(r"\[\+\d+\s*chars\]\s*$")
@@ -13,6 +14,13 @@ _REDDIT_QUOTE_LINE = re.compile(r"^>.*$", re.MULTILINE)
 _MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(https?://[^)]+\)")
 _MARKDOWN_EMPHASIS = re.compile(r"[*_]{1,3}([^*_]+)[*_]{1,3}")
 _WHITESPACE = re.compile(r"\s+")
+# Reddit spacers: "&#x200B;" unescapes to a zero-width space.
+_ZERO_WIDTH = re.compile("[\u200b\u200c\u200d\u2060\ufeff]")
+# Reddit markdown escapes a literal character with a backslash: "\-", "\~", "\#".
+_MARKDOWN_ESCAPE = re.compile(r"\\([\\`*_{}\[\]()#+\-.!~>|^])")
+# Escaped "*" and "_" are parked on these stand-ins while the emphasis rule
+# runs, so "a\_b\_c" stays "a_b_c" instead of losing its underscores.
+_PARKED = {"*": "\x00", "_": "\x01"}
 
 _AUTOMOD_MARKERS = ("i am a bot", "this action was performed automatically",
                      "contact the moderators of this subreddit")
@@ -64,12 +72,20 @@ def clean_cna(text: str) -> str:
 
 def clean_reddit(text: str) -> str | None:
     """Returns None for bot/AutoModerator comments - caller should drop them."""
+    # Reddit sends text HTML-escaped: a quoted parent line arrives as "&gt;..."
+    # and "&" as "&amp;". Unescape first, or the quote rule below never fires.
+    text = _ZERO_WIDTH.sub("", html.unescape(text))
     lowered = text.lower()
     if any(marker in lowered for marker in _AUTOMOD_MARKERS):
         return None
     text = _REDDIT_QUOTE_LINE.sub("", text)          # quoted parent text isn't the commenter's own view
     text = _MARKDOWN_LINK.sub(r"\1", text)
+    # Backslash escapes come after the quote rule ("\>" is a literal ">", not a
+    # quote) and around the emphasis rule (an escaped "*" or "_" is not emphasis).
+    text = _MARKDOWN_ESCAPE.sub(lambda m: _PARKED.get(m.group(1), m.group(1)), text)
     text = _MARKDOWN_EMPHASIS.sub(r"\1", text)
+    for char, stand_in in _PARKED.items():
+        text = text.replace(stand_in, char)
     text = _URL.sub("", text)
     # Deliberately NOT lowercasing - FinBERT is cased-aware and casing/emphasis
     # carries sentiment signal in this register (see docs/DESIGN.md, step 2).

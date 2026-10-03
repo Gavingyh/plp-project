@@ -14,7 +14,8 @@ starts, so:
   - re-running skips completed months (a marker file), and repeating one is
     harmless anyway, because doc_id makes inserts idempotent (ingest/db.py)
   - a failed or slow month (Arctic Shift has no uptime guarantee) is logged
-    and skipped
+    and skipped, and so is a month where some pages kept failing (the child
+    exits non-zero): neither is marked done, so the next run retries it
 
 USAGE:
   # From your own terminal; caffeinate keeps a Mac awake for the run:
@@ -40,6 +41,9 @@ logger = get_logger(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
 MARKER_FILE = BASE_DIR / "data" / ".backfill_progress.txt"
 LOG_FILE = BASE_DIR / "data" / "backfill_overnight.log"
+# ingest/arctic_shift.py's exit code when a window stopped early on a failing
+# page (its EXIT_INCOMPLETE; not imported, so _check_environment runs first).
+INCOMPLETE_EXIT = 3
 
 
 def month_chunks(since: str, until: str):
@@ -84,7 +88,7 @@ def _check_environment():
               ".venv-plp/bin/activate` and silently take over `python3` on PATH.\n\n"
               "Fix: invoke the venv's interpreter by absolute path instead of relying on "
               "shell activation:\n"
-              "  caffeinate -i /Users/gavin/Projects/plp-project/.venv-plp/bin/python3 "
+              f"  caffeinate -i {BASE_DIR / '.venv-plp' / 'bin' / 'python3'} "
               "scripts/overnight_backfill.py", file=sys.stderr)
         sys.exit(1)
     try:
@@ -125,6 +129,11 @@ def run():
             summary = next((l for l in result.stdout.splitlines() if "attempted" in l), "")
             log(f"DONE  {since} -> {until}  {summary}")
             mark_completed(chunk_key)
+        elif result.returncode == INCOMPLETE_EXIT:
+            # Some pages kept failing. What was fetched is stored, but the
+            # month stays unmarked so the next run fetches it again.
+            reason = next((l for l in reversed(result.stderr.splitlines()) if "INCOMPLETE" in l), "")
+            log(f"INCOMPLETE {since} -> {until}  not marked done, re-run to retry. {reason}")
         else:
             log(f"ERROR {since} -> {until}  exit={result.returncode}  "
                 f"stderr_tail={result.stderr[-500:]!r}")

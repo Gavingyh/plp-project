@@ -58,6 +58,10 @@ RETRY_WAITS = (2, 5, 15)   # seconds between attempts at one page
 # Windows that stopped early because a page kept failing; pull() reports them.
 INCOMPLETE_WINDOWS: list[str] = []
 
+# The entry point's exit code when any window stopped early. Not 0, so
+# scripts/overnight_backfill.py does not mark the month done and retries it.
+EXIT_INCOMPLETE = 3
+
 
 class PageFailed(Exception):
     """A page could not be fetched after every retry."""
@@ -190,15 +194,29 @@ def pull(since: str | None = None, until: str | None = None) -> list[dict]:
     return all_docs
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> int:
+    """Pull, store what was fetched, and return the exit code: 0 only when
+    every window was fetched in full, EXIT_INCOMPLETE otherwise."""
     setup_logging()
     parser = argparse.ArgumentParser(description="Ingest Reddit data via Arctic Shift")
     parser.add_argument("--since", default=None, help="YYYY-MM-DD, default = full backfill")
     parser.add_argument("--until", default=None, help="YYYY-MM-DD, default = today")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     logger.info(f"Run started: {datetime.now().isoformat()}")
     docs = pull(since=args.since, until=args.until)
+    # What was fetched is kept (doc_id makes a re-pull harmless); the exit
+    # code below is what tells a caller the run is not complete.
     attempted, inserted = upsert_documents(docs)
     logger.info(f"{'=' * 50}\nDocuments attempted: {attempted}  |  newly inserted: {inserted}  "
           f"|  already-seen (skipped): {attempted - inserted}\n{'=' * 50}")
+    if INCOMPLETE_WINDOWS:
+        logger.error(f"INCOMPLETE, exit code {EXIT_INCOMPLETE}: {len(INCOMPLETE_WINDOWS)} window(s) "
+                     "stopped early on a failing page; re-run to fetch them: "
+                     + "; ".join(INCOMPLETE_WINDOWS))
+        return EXIT_INCOMPLETE
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

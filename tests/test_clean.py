@@ -25,6 +25,20 @@ def test_clean_reddit_strips_quoted_parent_text():
     assert "DBS" in result
 
 
+def test_clean_reddit_unescapes_html_so_a_quoted_parent_line_is_dropped():
+    # Reddit text arrives HTML-escaped, so a quoted parent line starts "&gt;"
+    # and slipped past the quote rule, kept as the commenter's own words.
+    result = clean_reddit("&gt; someone else's quoted comment\nDBS &amp; OCBC both cut rates &lt;3")
+    assert result == "DBS & OCBC both cut rates <3"
+
+
+def test_clean_reddit_drops_zero_width_spaces_and_markdown_escapes():
+    text = ("&#x200B;\n\nRates fell \\~0.5%&nbsp;at DBS\\-OCBC, \\#1 is a\\_b\\_c 2\\*3\\*4\n"
+            "\\> not a quote, an escaped bracket")
+    assert clean_reddit(text) == ("Rates fell ~0.5% at DBS-OCBC, #1 is a_b_c 2*3*4 "
+                                  "> not a quote, an escaped bracket")
+
+
 def test_clean_reddit_strips_markdown_links():
     result = clean_reddit("check [this article](https://example.com) about DBS")
     assert "this article" in result

@@ -67,6 +67,10 @@ QUERIES = {
 SPLIT_AT = 90         # Google caps a response at 100 items; a window this full may be truncated, so split it
 REQUEST_DELAY = 2.0   # seconds between requests. Google has no published limit; stay well clear
 
+# Windows whose request still failed after retries: missing, not quiet.
+# iter_batches lists them at the end; the entry points then exit non-zero.
+FAILED_WINDOWS: list[str] = []
+
 
 def _clean_title(title: str, publisher: str | None) -> str:
     """Google appends " - Publisher" to every headline; strip it."""
@@ -118,6 +122,7 @@ def _fetch_window(bank: str, query: str, start: date, end: date) -> list[dict]:
         entries = _fetch(q)
     except Exception as e:
         logger.error(f"{bank} {q!r}: ERROR - {e}")
+        FAILED_WINDOWS.append(f"{bank} {start.isoformat()} to {end.isoformat()} {query!r}: {e}")
         return []
     if len(entries) >= SPLIT_AT and (end - start).days > 1:
         mid = start + (end - start) / 2
@@ -155,6 +160,9 @@ def iter_batches(since: str, until: str | None = None, query_filter: str | None 
                         docs.append(d)
         logger.info(f"{start:%Y-%m}: {len(docs)} unique Google News items")
         yield f"{start:%Y-%m}", docs
+    if FAILED_WINDOWS:
+        logger.error(f"{len(FAILED_WINDOWS)} Google News window(s) failed and were not fetched; "
+                     "re-run them: " + "; ".join(FAILED_WINDOWS))
 
 
 def pull(since: str, until: str | None = None) -> list[dict]:
@@ -176,3 +184,5 @@ if __name__ == "__main__":
         kept, stats = filter_and_dedup(docs, index)
         _, inserted = upsert_documents(kept)
         logger.info(f"{month}: inserted {inserted}  filter={stats}")
+    if FAILED_WINDOWS:
+        raise SystemExit(f"{len(FAILED_WINDOWS)} window(s) failed and were not fetched (listed above)")

@@ -43,6 +43,11 @@ PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
 # statement table row, not prose - drop it (see docs/DESIGN.md).
 _NUMERIC_LINE = re.compile(r"^[\d\s.,()%$SGDsgd/-]{10,}$")
 _MIN_PROSE_LEN = 40
+# A line ending in one of these (then any closing quote or bracket) has
+# finished its sentence. The colon counts for the line above but not for a
+# short line below, where "Key drivers:" is a header, not a sentence's end.
+_FINISHED = re.compile(r"""[.!?:]["'”’)\]]*$""")
+_ENDS_SENTENCE = re.compile(r"""[.!?]["'”’)\]]*$""")
 
 
 # Filename -> announcement date. Lives here, with extraction, because that is
@@ -112,6 +117,21 @@ def _is_prose(line: str) -> bool:
     return True
 
 
+def _finishes_sentence(kept_above: str | None, line: str) -> bool:
+    """A line too short for _is_prose that is the wrapped end of the sentence
+    on the kept line just above it. Dropping such a tail spliced the kept part
+    into the next sentence ("Markets trading income rose to Expenses increased
+    10%, ..."). Headers, page numbers and table fragments don't qualify: they
+    neither end a sentence nor run on in lowercase."""
+    line = line.strip()
+    if not kept_above or not line or _FINISHED.search(kept_above):
+        return False
+    if _ENDS_SENTENCE.search(line):
+        return True
+    # A run-on in lowercase, more than one word: "and lower allowances", not "bps".
+    return line[0].islower() and len(line.split()) > 1
+
+
 def extract_prose(pdf_path: str) -> list[str]:
     import pdfplumber  # imported here so a missing dependency doesn't block other ingest modules
 
@@ -119,9 +139,13 @@ def extract_prose(pdf_path: str) -> list[str]:
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
+            kept_above = None   # the line just above, if it was kept
             for line in text.split("\n"):
-                if _is_prose(line):
-                    paragraphs.append(line.strip())
+                if _is_prose(line) or _finishes_sentence(kept_above, line):
+                    kept_above = line.strip()
+                    paragraphs.append(kept_above)
+                else:
+                    kept_above = None
     return paragraphs
 
 

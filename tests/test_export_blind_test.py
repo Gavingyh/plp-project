@@ -66,6 +66,22 @@ def test_blind_sheet_contains_only_test_rows(candidates_csv, tmp_path):
     assert set(blind.sentence_id) == {"s0", "s1", "s2", "s3"}
 
 
+def test_export_refuses_to_replace_a_filled_blind_sheet(candidates_csv, tmp_path):
+    # The real sheet holds the human test labels; a re-export blanks them.
+    out = tmp_path / "test_blind.csv"
+    out.write_text("sentence_id,aspect,label\ns0,dividend_policy,positive\n")
+    with pytest.raises(FileExistsError, match="--force"):
+        export_blind(candidates_csv, str(out))
+    assert out.read_text() == "sentence_id,aspect,label\ns0,dividend_policy,positive\n"
+
+
+def test_export_replaces_the_sheet_when_forced(candidates_csv, tmp_path):
+    out = tmp_path / "test_blind.csv"
+    out.write_text("sentence_id,aspect,label\ns0,dividend_policy,positive\n")
+    assert export_blind(candidates_csv, str(out), force=True)["rows"] == 4
+    assert pd.read_csv(out)["label"].isna().all()
+
+
 def test_blind_sheet_label_column_starts_empty(candidates_csv, tmp_path):
     out = str(tmp_path / "test_blind.csv")
     export_blind(candidates_csv, out)
@@ -128,7 +144,7 @@ def test_merge_writes_labels_back(candidates_csv, tmp_path):
 
     blind = pd.read_csv(blind_path)
     blind["label"] = ["positive", "negative", "neutral", "positive"]
-    blind["annotator"] = "gavin"
+    blind["annotator"] = "annotator-a"
     blind.to_csv(blind_path, index=False)
 
     result = merge_labels(blind_path, candidates_csv)

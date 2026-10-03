@@ -62,6 +62,13 @@ team.*
   Opus 5.5, labelling blind, agrees with them at κ 0.80 on aspect and 0.79
   on sentiment, every sentiment disagreement on the neutral boundary
   ([opus-labeller](../evidence/opus-labeller-2026-10-01.md)).
+- Where Opus and the people disagree (202 aspects and 173 sentiments, 80
+  of them on the test split), the human labels are kept: a team decision of
+  4 Oct 2026, after a spot check found the human labels sound. The
+  disagreements are about boundaries, not plain mistakes: every sentiment
+  disagreement is about where neutral ends, and 63 of the aspect ones are a
+  single guideline question (a retail customer's investment products:
+  wealth or retail banking).
 - The test labels match the suggestion model shown to annotators on 89% of
   the 299 rows (92% on train/dev): the labels are anchored.
 - Five aspects have fewer than 80 labels. A blind top-up sheet of 268 rows
@@ -84,6 +91,11 @@ team.*
 - 39 negative sentences in the test split: one sentence moves negative F1 by
   about 0.02.
 - Opus agreement is human–LLM, not human–human.
+- The kept labels keep their anchoring: in 118 of the 173 sentiment
+  disagreements the human label is the suggestion the annotators were
+  shown. A spot check can't show which side of the neutral boundary is
+  right, so the reported scores rest on the human side of 80 contested test
+  labels.
 - Some stored text is damaged by the extraction, found on 3 Oct and fixed
   in the code for future data only (re-cleaning stored text would change
   sentence ids and orphan their labels and scores): earnings PDFs lost
@@ -103,6 +115,10 @@ team.*
 **Solutions**
 - Built: a blind top-up sheet and its merge (`preprocess.export_topup`,
   `train.labels --topup`); Opus as an extra rater on it.
+- Decided (4 Oct): keep the human labels where Opus disagrees; Opus stays
+  a second rater, reported beside them.
+- Proposed: one person checks the 80 test-split disagreements without
+  seeing either label, and the result is reported with this decision.
 - Decision: relabel the 299 test rows blind; settle the wealth/retail and
   bank-economist questions in the guideline before labelling.
 - Proposed: two people label the same 40 top-up rows first, giving the first

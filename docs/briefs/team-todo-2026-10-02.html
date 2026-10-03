@@ -277,10 +277,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Unblocks: the three-model evaluation (Claude, about 45 min each).</span>
     </li>
     <li data-o="team">
-      <span class="t">Review the Opus disagreements on the test split first (80 rows) <span class="chip team">People</span></span>
-      <span class="when">start this week</span>
-      <p class="why"><b>Why:</b> Opus disagreed with our labels on 202 aspects and 173 sentiments. The 80 on the test split decide whether test labels need correcting before the models are re-evaluated. Fill the <code>decision</code> column in <code>data/labeled/claude/review_*.csv</code>.</p>
-      <span class="meta">Source: opus-labeller.</span>
+      <span class="t">Opus disagreements: the human labels stay. Optional: check the 80 test rows without seeing either label <span class="chip team">People</span></span>
+      <span class="when">decided 4 Oct; check by 12 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> where Opus disagreed with our labels (202 aspects, 173 sentiments), the human labels are kept, and the findings say so. Nobody needs to relabel those 375 rows. <b>Why the check:</b> the disagreements are on boundaries, not plain mistakes (every sentiment one is about where neutral ends, and in 118 of the 173 our label is the suggestion we were shown), so a spot check can't settle them. For the report to say the labels were reviewed, one person goes through the 80 on the test split without seeing our label or Opus's, about an hour. If they mostly side with our labels, say so; if not, raise it before the models are re-evaluated. The 63 wealth-or-retail rows follow the wealth/retail decision, whatever it is.</p>
+      <span class="meta">Source: opus-labeller; findings, section 1. Claude can make the blind sheet of the 80 rows on request.</span>
     </li>
   </ul>
 </section>
@@ -334,7 +334,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="team">
       <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>
       <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> the re-score adds the fine-tuned scores beside the base ones, and the dashboard's queries don't filter on <code>model_version</code>, so it would count every sentence twice. Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot now do.</p>
+      <p class="why"><b>Why:</b> the re-score adds the fine-tuned scores beside the base ones, and the dashboard's queries don't filter on <code>model_version</code>, so it would count every sentence twice, and both "See the numbers" panels would crash (their pivots meet duplicate rows). Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot now do.</p>
       <span class="meta"><code>dashboard/app.py</code> lines 72, 89 and 103. Source: API-integrity validation, 2 Oct.</span>
     </li>
     <li data-o="decide">
@@ -347,7 +347,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-ai">
   <h2 id="h-ai">Claude can do next, without waiting for anyone</h2>
-  <p class="sub">Each is tested, committed and written up. None writes to the database. Done on 2 Oct: the chatbot fixes, the checklist judge, the top-up merge, Opus on the top-up and NER sheets, the report's approach and findings documents, the model card and sharing bundle for the fine-tuned models (<code>docs/model-card.md</code>, <code>scripts/share_bundle.sh</code>). Done on 3 Oct: the corpus aspect run and the full-corpus index preview, with the fine-tuned scores saved to a file (<code>docs/evidence/index-preview-2026-10-01.md</code>); the re-score step, tested on a copy (<code>scripts/rescore.py</code>); fixes to the index's weeks and time zones, the scorer's probability check and eight ingestion and cleaning bugs (HANDOFF, 3 Oct).</p>
+  <p class="sub">Each is tested, committed and written up. None writes to the database. Done on 2 Oct: the chatbot fixes, the checklist judge, the top-up merge, Opus on the top-up and NER sheets, the report's approach and findings documents, the model card and sharing bundle for the fine-tuned models (<code>docs/model-card.md</code>, <code>scripts/share_bundle.sh</code>). Done on 3 Oct: the corpus aspect run and the full-corpus index preview, with the fine-tuned scores saved to a file (<code>docs/evidence/index-preview-2026-10-01.md</code>); the re-score step, tested on a copy (<code>scripts/rescore.py</code>); fixes to the index's weeks and time zones, the scorer's probability check and eight ingestion and cleaning bugs (HANDOFF, 3 Oct). Done on 4 Oct: seven gaps in the chatbot's evidence and number checks closed, Reddit text kept from Gemini in code, and the API rejecting unknown aspects and backends (HANDOFF, 4 Oct).</p>
   <ul class="items">
     <li data-o="ai">
       <span class="t">Re-export the ratings sheet for the final chatbot, ordered by the judge <span class="chip ai">Claude</span></span>
@@ -389,7 +389,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="team">
       <span class="t">Check every dashboard tab, and choose how it reads data <span class="chip team">Dashboard owner</span></span>
       <span class="when">by 19 Oct</span>
-      <p class="why"><b>Why:</b> the dashboard reads the database directly while everything else uses the API, and the two have already disagreed once. It has only a styling test. Move its views onto the API, or add tests that compare what it shows with what the API returns.</p>
+      <p class="why"><b>Why:</b> the dashboard reads the database directly while everything else uses the API, and the two have already disagreed once. It has only a styling test. Move its views onto the API, or add tests that compare what it shows with what the API returns. <b>Found in a review on 4 Oct</b> (<code>dashboard/app.py</code>): "Last refreshed" shows the time the page was opened, not when the data was computed (the data ends on 25 Sep); the trend charts drop thin months and draw the line straight across them, though the page says a gap means too little data; the 7- and 30-day scores and the per-source bars show figures from fewer than 5 sentences, which the API calls insufficient; the method note says base FinBERT and several aspects per sentence, which the re-score changes; the Topics count table crashes when a bank has no row for an aspect (line 383; the Overview one fills the gap first); and the Ask page uses Gemini whenever its key is the one set (Reddit text is now withheld from Gemini in code, but pinning <code>CHATBOT_BACKEND=ollama</code> in <code>scripts/start.sh</code> is safer).</p>
     </li>
   </ul>
 </section>

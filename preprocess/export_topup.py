@@ -38,7 +38,11 @@ POOL_FACTOR = 3    # pooled sentences per quota row, before the LLM check
 
 
 def quotas(labels: pd.DataFrame, floor: int = FLOOR) -> dict[str, int]:
-    """Rows to add per aspect below the floor: the shortfall plus a margin, at least MIN_QUOTA."""
+    """Rows to add per aspect below the floor: the shortfall plus a margin, at
+    least MIN_QUOTA. Counted on train_dev rows only: the frozen test split's
+    labels must not decide what training gets (4 Oct 2026)."""
+    if "split" in labels.columns:
+        labels = labels[labels["split"] == "train_dev"]
     counts = labels["aspect"].value_counts()
     return {a: max(MIN_QUOTA, floor - int(n) + MARGIN) for a, n in counts.items() if a != "other" and n < floor}
 
@@ -134,7 +138,7 @@ def main():
     from ingest.db import get_connection
     labels = pd.read_csv(LABELS_PATH)
     targets = quotas(labels, args.floor)
-    current = labels["aspect"].value_counts()
+    current = labels[labels["split"] == "train_dev"]["aspect"].value_counts()
     print("targets: " + ", ".join(f"{a} {int(current[a])} labelled -> add up to {q}" for a, q in targets.items()))
     conn = get_connection()
     try:

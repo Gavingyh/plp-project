@@ -185,3 +185,21 @@ def test_merge_into_csv_only_touches_successful_rows(tmp_path, monkeypatch):
     result = merge_into_csv(df, progress)
     assert result.loc[0, "llm_prelabel"] == "positive"
     assert result.loc[1, "llm_prelabel"] == ""  # failed row left untouched, not blanked-with-garbage
+
+
+def test_a_row_that_failed_before_is_tried_again(tmp_path, monkeypatch):
+    candidates = tmp_path / "candidates.csv"
+    progress = tmp_path / "progress.jsonl"
+    _write_candidates(candidates, [
+        {"sentence_id": "s1", "aspect": "dividend_policy", "text": "t1", "bank": "DBS",
+         "source": "x", "url": "", "published_at": "", "split": "test", "sampling_method": "random",
+         "base_finbert_label": "", "base_finbert_confidence": "", "label": "", "annotator": "",
+         "labeled_at": "", "llm_prelabel": "", "was_corrected": ""},
+    ])
+    progress.write_text(json.dumps({"sentence_id": "s1", "aspect": "dividend_policy", "status": "failed",
+                                     "error": "timeout"}) + "\n")
+    monkeypatch.setattr("train.llm_prelabel.CANDIDATES_PATH", str(candidates))
+    monkeypatch.setattr("train.llm_prelabel.PROGRESS_PATH", str(progress))
+    monkeypatch.setattr("requests.post", lambda *a, **kw: _fake_ollama_response("positive", "retried"))
+    assert run(model="llama3.2:3b") == {"processed": 1, "ok": 1, "failed": 0}
+    assert pd.read_csv(candidates, keep_default_na=False).iloc[0]["llm_prelabel"] == "positive"

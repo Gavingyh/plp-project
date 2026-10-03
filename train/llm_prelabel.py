@@ -151,7 +151,10 @@ def run(model: str = DEFAULT_MODEL, limit: int | None = None) -> dict:
     df = pd.read_csv(CANDIDATES_PATH, keep_default_na=False)
     progress = _load_progress()
 
-    todo = df[~df.apply(lambda r: (r["sentence_id"], r["aspect"]) in progress, axis=1)]
+    # A row whose last attempt failed is tried again: a failure recorded as done
+    # would leave its llm_prelabel empty for good (4 Oct 2026).
+    todo = df[~df.apply(lambda r: progress.get((r["sentence_id"], r["aspect"]), {}).get("status") == "ok",
+                        axis=1)]
     if limit:
         todo = todo.head(limit)
 

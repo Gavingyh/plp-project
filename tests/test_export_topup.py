@@ -59,3 +59,8 @@ def test_build_pool_drops_labelled_fragments_and_repeats(temp_db):
     assert by_target["asset_quality"] == {"s7"}                            # s5 already pooled, s6 repeats a text
     assert not {"s2", "s3"} & set(pool["sentence_id"])                     # labelled; a table row
     assert pool["sentence_id"].is_unique
+
+
+def test_quotas_ignore_the_test_split():
+    labels = pd.DataFrame({"aspect": ["capital_liquidity"] * 49, "split": ["train_dev"] * 39 + ["test"] * 10})
+    assert tu.quotas(labels) == {"capital_liquidity": 61}          # 80 - 39 + 20, not 80 - 49 + 20

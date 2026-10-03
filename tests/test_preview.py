@@ -93,3 +93,31 @@ def test_scores_cache_is_named_by_models_and_device(tmp_path, monkeypatch):
     monkeypatch.setattr(train.evaluate, "best_device", lambda: "cpu")
     (d / "model.safetensors").write_bytes(b"retrained")
     assert pv.scores_cache_path([str(d)]) != cpu                  # new weights, new file
+
+
+def test_per_seed_scores_each_model_alone_and_reports_the_spread(monkeypatch):
+    import train.evaluate
+    probs = {"m/seed_1/final": [0.1, 0.2, 0.7], "m/seed_2/final": [0.7, 0.2, 0.1]}
+    monkeypatch.setattr(train.evaluate, "finetuned_probs",
+                        lambda d, df: np.array([probs[d]] * len(df)))
+    meta = pd.DataFrame({"sentence_id": ["s1", "s2"], "bank": ["DBS", "DBS"], "source": ["arctic_shift"] * 2})
+    pairs = pd.DataFrame({"sentence_id": ["s1", "s2"], "aspect": ["a", "a"], "text": ["t1", "t2"]})
+    table = pv.per_seed(pairs, meta, list(probs), cache=False)
+    assert sorted(table["model"].unique()) == ["seed_1", "seed_2"]
+    head = table[table["aspect"] == "ALL"].set_index("model")["score"]
+    assert head["seed_1"] > 0 > head["seed_2"]                     # each model scored on its own
+    spread = pv.seed_spread(table).set_index("aspect")
+    assert spread.loc["ALL", "spread"] == pytest.approx(head["seed_1"] - head["seed_2"])
+    assert spread.loc["ALL", "n"] == 2
+
+
+def test_per_seed_keeps_same_named_seeds_from_two_experiments_apart(monkeypatch):
+    import train.evaluate
+    probs = {"a/seed_1/final": [0.1, 0.2, 0.7], "b/seed_1/final": [0.7, 0.2, 0.1]}
+    monkeypatch.setattr(train.evaluate, "finetuned_probs", lambda d, df: np.array([probs[d]] * len(df)))
+    meta = pd.DataFrame({"sentence_id": ["s1"], "bank": ["DBS"], "source": ["arctic_shift"]})
+    pairs = pd.DataFrame({"sentence_id": ["s1"], "aspect": ["a"], "text": ["t1"]})
+    spread = pv.seed_spread(pv.per_seed(pairs, meta, list(probs), cache=False))
+    assert len([c for c in spread.columns if c not in ("bank", "aspect", "min", "max", "spread", "n")]) == 2
+    assert spread.loc[spread["aspect"] == "ALL", "spread"].iloc[0] > 0
+

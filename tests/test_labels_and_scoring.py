@@ -127,6 +127,24 @@ def test_classify_sentences_returns_results_in_input_order_despite_length_batchi
     assert labels == ["positive", "negative", "positive", "negative", "negative"]
 
 
+def test_scorer_refuses_garbage_probabilities(monkeypatch):
+    # The 1 Oct GPU failure mode: an error-free batch whose numbers are garbage. Nothing may be written.
+    import torch
+
+    class Enc(dict):
+        def to(self, device):
+            return self
+
+    class Model:
+        def __call__(self, n):
+            return type("Out", (), {"logits": torch.full((int(n), 3), float("nan"))})()
+
+    monkeypatch.setattr(score, "_get_model", lambda: (lambda batch, **kw: Enc(n=len(batch)), Model(), "cpu",
+                                                      {0: "positive", 1: "negative", 2: "neutral"}))
+    with pytest.raises(RuntimeError, match="sum to 1"):
+        score.classify_sentences(["one", "two"])
+
+
 # --- top-up sheets (2026-10-02) ------------------------------------------------------
 
 def _topup_db(temp_db, ids):

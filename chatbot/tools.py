@@ -167,8 +167,8 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
         series = [{"period": p["period"], "score": p["score"], "n": p["n"]}
                   for p in compute_time_series(bank, aspect, bucket="month")
                   if p["sufficient"]][-12:]
-    except sqlite3.Error as e:
-        # A database error is not "no data": log it and say so in the note.
+    except (sqlite3.Error, ValueError) as e:
+        # A database error or a bad stored label is not "no data": log it and say so in the note.
         logger.warning("monthly series failed for %s/%s: %s", bank, aspect or "ALL", e)
         series, series_error = [], str(e)
 

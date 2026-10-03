@@ -241,6 +241,7 @@ def test_series_single_bucket_reproduces_stored_score(temp_db):
             (f"s{i}", f"d{i}", "OCBC", f"t{i}", f"2025-03-{10 + i:02d}T00:00:00+00:00",
              "newsapi" if i % 2 else "arctic_shift", "http://x", f"h{i}", now_iso()))
         for aspect in ("asset_quality", "dividend_policy"):
+            conn.execute("INSERT OR IGNORE INTO sentence_aspects (sentence_id, aspect, similarity, assigned_at) VALUES (?,?,1.0,?)", (f"s{i}", aspect, now_iso()))
             conn.execute(
                 "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, "
                 "model_version, scored_at) VALUES (?,?,?,?,?,?)",
@@ -373,6 +374,7 @@ def _add_scored(temp_db, sid, bank, aspect, days_ago, label, version=None):
         "norm_hash, processed_at) VALUES (?,?,?,?,?,?,?,?,?)",
         (sid, f"doc-{sid}", bank, f"text {sid}", published, "arctic_shift", "http://x",
          f"hash-{sid}", now_iso()))
+    conn.execute("INSERT OR IGNORE INTO sentence_aspects (sentence_id, aspect, similarity, assigned_at) VALUES (?,?,1.0,?)", (sid, aspect, now_iso()))
     conn.execute(
         "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, "
         "scored_at) VALUES (?,?,?,?,?,?)",

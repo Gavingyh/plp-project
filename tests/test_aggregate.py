@@ -19,6 +19,7 @@ def _insert_scored_sentence(temp_db, sentence_id, bank, aspect, label, confidenc
         (sentence_id, f"doc-{sentence_id}", bank, "some text", published_at,
          source, "http://example.com", f"hash-{sentence_id}", now_iso()),
     )
+    conn.execute("INSERT OR IGNORE INTO sentence_aspects (sentence_id, aspect, similarity, assigned_at) VALUES (?,?,1.0,?)", (sentence_id, aspect, now_iso()))
     conn.execute(
         "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, scored_at) "
         "VALUES (?,?,?,?,?,?)",
@@ -167,6 +168,7 @@ def test_recent_data_included_in_7d_window(temp_db):
 
 def _add_aspect(temp_db, sentence_id, aspect, label, confidence, model_version="test-model"):
     conn = temp_db.get_connection()
+    conn.execute("INSERT OR IGNORE INTO sentence_aspects (sentence_id, aspect, similarity, assigned_at) VALUES (?,?,1.0,?)", (sentence_id, aspect, now_iso()))
     conn.execute(
         "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, scored_at) "
         "VALUES (?,?,?,?,?,?)", (sentence_id, aspect, label, confidence, model_version, now_iso()))
@@ -195,3 +197,45 @@ def test_rows_across_aspects_count_each_sentence_once(temp_db):
     assert rows == {"ALL": 2, "arctic_shift": 2}
     assert headline == (0.0, 1, 1)          # one positive, one negative sentence: balanced
     assert per_aspect == 1
+
+
+def test_7d_cutoff_compares_instants_not_strings(temp_db):
+    # 7 days and 4 hours ago, written in Singapore time: the string's digits read 4 hours
+    # inside the window, but the instant is outside it. A "Z" timestamp an hour inside counts.
+    from datetime import datetime, timedelta, timezone
+    sgt = timezone(timedelta(hours=8))
+    outside = (datetime.now(timezone.utc) - timedelta(days=7, hours=4)).astimezone(sgt).isoformat()
+    inside = (datetime.now(timezone.utc) - timedelta(days=6, hours=23)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "positive", 1.0,
+                            source="cna", published_at=outside)
+    _insert_scored_sentence(temp_db, "s2", "DBS", "dividend_policy", "positive", 1.0,
+                            source="newsapi", published_at=inside)
+    run_aggregate()
+    conn = temp_db.get_connection()
+    n_7d = conn.execute(
+        "SELECT n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' AND window='7d' AND source='ALL'"
+    ).fetchone()
+    conn.close()
+    assert n_7d == (1,)
+
+
+def test_pairs_no_longer_assigned_are_not_counted(temp_db):
+    # After a change of aspect method a sentence's old pair can keep its score; it must not count.
+    _add_aspect(temp_db, "s1", "dividend_policy", "positive", 0.9)
+    _add_aspect(temp_db, "s1", "asset_quality", "negative", 0.99)
+    conn = temp_db.get_connection()
+    conn.execute("INSERT INTO sentences (sentence_id, doc_id, bank, text, published_at, source, url, norm_hash, "
+                 "processed_at) VALUES ('s1','d1','DBS','t','2026-01-01T00:00:00+00:00','arctic_shift','u','h',?)",
+                 (now_iso(),))
+    conn.execute("DELETE FROM sentence_aspects WHERE sentence_id='s1' AND aspect='asset_quality'")
+    conn.commit()
+    conn.close()
+    run_aggregate()
+    conn = temp_db.get_connection()
+    rows = dict(conn.execute("SELECT aspect, n FROM sentiment_index WHERE bank='DBS' AND window='all_time' "
+                             "AND source='ALL'").fetchall())
+    head = conn.execute("SELECT pos_n, neg_n FROM sentiment_index WHERE bank='DBS' AND aspect='ALL' "
+                        "AND window='all_time' AND source='ALL'").fetchone()
+    conn.close()
+    assert rows == {"dividend_policy": 1, "ALL": 1}
+    assert head == (1, 0)                    # the stale, more confident negative pair is ignored

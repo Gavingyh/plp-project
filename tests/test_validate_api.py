@@ -122,6 +122,7 @@ def _add_scored(temp_db, sid, bank, aspect, days_ago, labels_by_version, source=
         (sid, f"doc-{sid}", bank, f"text {sid}", published, source, "http://example.com",
          f"hash-{sid}", now_iso()))
     for version, label in labels_by_version.items():
+        conn.execute("INSERT OR IGNORE INTO sentence_aspects (sentence_id, aspect, similarity, assigned_at) VALUES (?,?,1.0,?)", (sid, aspect, now_iso()))
         conn.execute(
             "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, "
             "scored_at) VALUES (?,?,?,?,?,?)", (sid, aspect, label, 1.0, version, now_iso()))

@@ -24,6 +24,7 @@ def _insert(temp_db, sentence_id, bank, aspect, label, published_at,
         (sentence_id, f"doc-{sentence_id}", bank, "text", published_at, source,
          "http://example.com", f"hash-{sentence_id}", now_iso()),
     )
+    conn.execute("INSERT OR IGNORE INTO sentence_aspects (sentence_id, aspect, similarity, assigned_at) VALUES (?,?,1.0,?)", (sentence_id, aspect, now_iso()))
     conn.execute(
         "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, "
         "model_version, scored_at) VALUES (?,?,?,?,?,?)",
@@ -143,9 +144,35 @@ def test_counts_reconcile_with_the_bucket_totals(temp_db):
 def test_aspect_all_counts_a_multi_aspect_sentence_once(temp_db):
     _insert(temp_db, "a", "DBS", "dividend_policy", "positive", "2026-01-05T00:00:00+00:00")
     conn = temp_db.get_connection()
+    conn.execute("INSERT INTO sentence_aspects VALUES ('a', 'asset_quality', 1.0, ?)", (now_iso(),))
     conn.execute("INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, "
                  "scored_at) VALUES ('a', 'asset_quality', 'positive', 0.9, ?, ?)", (MODEL_VERSION, now_iso()))
     conn.commit()
     conn.close()
     assert compute_time_series("DBS", "ALL", min_n=1)[0]["n"] == 1
     assert compute_time_series("DBS", "dividend_policy", min_n=1)[0]["n"] == 1
+
+
+def test_weeks_are_iso_weeks(temp_db):
+    _insert(temp_db, "a", "DBS", "dividend_policy", "positive", "2025-01-01T12:00:00+00:00")   # a Wednesday
+    _insert(temp_db, "b", "DBS", "dividend_policy", "positive", "2024-12-30T12:00:00+00:00")   # its Monday
+    _insert(temp_db, "c", "DBS", "dividend_policy", "positive", "2026-01-04T12:00:00+00:00")   # a Sunday
+    series = compute_time_series("DBS", "dividend_policy", bucket="week", min_n=1)
+    assert [(p["period"], p["n"]) for p in series] == [("2025-W01", 2), ("2026-W01", 1)]   # never W00
+
+
+def test_cna_local_time_is_bucketed_by_its_utc_date(temp_db):
+    # 05:00 in Singapore on 1 March is 21:00 UTC on 28 February, like every other source's clock
+    _insert(temp_db, "a", "DBS", "dividend_policy", "positive", "2025-03-01T05:00:00+08:00", source="cna")
+    _insert(temp_db, "b", "DBS", "dividend_policy", "positive", "2025-03-31T20:00:00Z", source="newsapi")
+    months = [p["period"] for p in compute_time_series("DBS", "dividend_policy", min_n=1)]
+    assert months == ["2025-02", "2025-03"]
+    quarters = [p["period"] for p in compute_time_series("DBS", "dividend_policy", bucket="quarter", min_n=1)]
+    assert quarters == ["2025-Q1"]
+
+
+
+def test_unknown_label_fails_loudly_rather_than_reading_as_no_data(temp_db):
+    _insert(temp_db, "a", "DBS", "dividend_policy", "Positive", "2026-01-05T00:00:00+00:00")
+    with pytest.raises(ValueError, match="unknown sentiment label"):
+        compute_time_series("DBS", "dividend_policy", min_n=1)

@@ -21,9 +21,15 @@ neutral unless the stronger of negative and positive beats neutral by more
 than the margin, as in docs/model-card.md. The default, 0, is the plain most
 likely class used for the 11,000-sentence preview.
 
+`--per-seed` also scores D with each model on its own (LLM aspects only, one
+pair per sentence, each model in its own scores cache) and prints every
+bank's headline per model and the spread, to show how far the index moves
+from one seed to another.
+
 USAGE:
   HF_HUB_OFFLINE=1 python -m aggregate.preview --n 1000 --cpu
   HF_HUB_OFFLINE=1 python -m aggregate.preview --n 44345 --cpu --margin 0.13     # the whole corpus
+  HF_HUB_OFFLINE=1 python -m aggregate.preview --n 44345 --cpu --margin 0.13 --per-seed
   HF_HUB_OFFLINE=1 python -m aggregate.preview --n 2000 --models models/experiments-2026-10-01/label/seed_{42,1,7}/final
 """
 
@@ -160,6 +166,36 @@ def summarize(pairs: pd.DataFrame, meta: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def per_seed(pairs: pd.DataFrame, meta: pd.DataFrame, model_dirs: list[str], margin: float = 0.0,
+             cache: bool = True) -> pd.DataFrame:
+    """Each model's own index on these (sentence, aspect, text) pairs: one row
+    per (model, bank, aspect), the model named by its directory (`seed_42`
+    for `.../seed_42/final`). Each model has its own scores cache."""
+    def short(d):
+        path = os.path.normpath(d)
+        return os.path.basename(os.path.dirname(path) if os.path.basename(path) == "final" else path)
+    names = [short(d) for d in model_dirs]
+    if len(set(names)) < len(names):           # e.g. seed_1 from two experiments: keep them apart
+        names = [os.path.normpath(d) for d in model_dirs]
+    rows = []
+    for d, name in zip(model_dirs, names):
+        labelled = finetuned_labels(pairs, [d], scores_cache_path([d]) if cache else None, margin)
+        rows.append(summarize(labelled, meta).assign(model=name))
+    return pd.concat(rows, ignore_index=True)[["model", "bank", "aspect", "score", "n"]]
+
+
+def seed_spread(table: pd.DataFrame) -> pd.DataFrame:
+    """Per (bank, aspect): each model's score side by side, then the lowest,
+    the highest and the spread between them."""
+    wide = table.pivot_table(index=["bank", "aspect"], columns="model", values="score").reset_index()
+    models = [c for c in wide.columns if c not in ("bank", "aspect")]
+    wide["min"] = wide[models].min(axis=1)
+    wide["max"] = wide[models].max(axis=1)
+    wide["spread"] = wide["max"] - wide["min"]
+    n = table.groupby(["bank", "aspect"])["n"].first().rename("n").reset_index()
+    return wide.merge(n, on=["bank", "aspect"]).sort_values(["bank", "aspect"]).reset_index(drop=True)
+
+
 def compare(scenarios: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """One row per (bank, aspect): each scenario's score and n side by side."""
     out = None
@@ -192,6 +228,8 @@ def main():
     p.add_argument("--cpu", action="store_true", help="run the fine-tuned models on the CPU")
     p.add_argument("--margin", type=float, default=0.0,
                    help="neutral margin for the fine-tuned models (0: the most likely class)")
+    p.add_argument("--per-seed", action="store_true",
+                   help="also score D with each model on its own and print the spread between them")
     args = p.parse_args()
     if args.cpu:
         import train.evaluate
@@ -237,6 +275,14 @@ def main():
         one = df.sort_values("confidence", ascending=False).drop_duplicates("sentence_id")
         shares = one["label"].value_counts(normalize=True).reindex(LABELS, fill_value=0)
         print(f"labels per sentence, {name}: " + ", ".join(f"{k} {v:.1%}" for k, v in shares.items()))
+
+    if args.per_seed:
+        seeds = per_seed(llm.merge(texts, on="sentence_id"), meta, args.models, args.margin)
+        spread = seed_spread(seeds)
+        spread.to_csv(os.path.join(OUT_DIR, f"index_preview_per_seed{tag}.csv"), index=False)
+        print("\nD per model (LLM aspects, each model alone), headline per bank:\n"
+              + _md(spread[spread["aspect"] == "ALL"]))
+        print("\nD per model, per bank and aspect:\n" + _md(spread[spread["aspect"] != "ALL"]))
 
 
 if __name__ == "__main__":

@@ -98,7 +98,7 @@ One row per ingested item, before segmentation.
 | `bank` | TEXT | `DBS` \| `OCBC` \| `UOB` \| `MULTI` |
 | `doc_type` | TEXT | `article` \| `submission` \| `comment` \| `earnings_release` |
 | `title`, `body` | TEXT | `body` is NOT NULL |
-| `published_at` | TEXT | ISO 8601 UTC |
+| `published_at` | TEXT | ISO 8601 with offset: UTC, except CNA's +08:00 |
 | `url` | TEXT | Provenance, surfaced in every citation |
 | `ingested_at` | TEXT | Batch provenance |
 | `raw` | TEXT | Original payload as JSON, for auditability |
@@ -125,6 +125,11 @@ aspects.
 
 `(sentence_id, aspect)` primary key, plus `similarity` and `assigned_at`.
 
+`assignment_method` in `config/aspects.yaml` decides how new sentences are
+assigned: `centroid` (the above, today) or `llm`, one aspect per sentence from
+the local LLM, stored with `similarity` 1.0 since the LLM gives no score.
+Switch it in the same change that applies the LLM's aspects to the corpus.
+
 ### `aspect_sentiment`
 One classification per (sentence, aspect, model version).
 
@@ -136,7 +141,10 @@ them. Every reader (the API, the chatbot's tools, evidence search,
 suggestions and the time series) returns only the version named in
 `config/model_version.py`, so two models' rows never mix; change it in the
 commit that re-scores the corpus. If that version has no rows,
-`get_sentiment` says so and a warning is logged.
+`get_sentiment` says so and a warning is logged. The index and the time
+series count a row only while its pair is in `sentence_aspects`, so scores
+left from an earlier aspect method never count; `scripts/rescore.py`, which
+applies the LLM aspects and the fine-tuned scores, also deletes them.
 
 ### `sentiment_index`
 The aggregate the API and chatbot read, and a dashboard through the API.
@@ -165,11 +173,11 @@ sell) scale, and price target statistics.
   `INSERT OR IGNORE`. Re-running any adapter is a no-op.
 - **Deduplication** is by `norm_hash` on the normalised sentence text, which
   catches syndicated wire copy republished across outlets.
-- **Window filtering compares `published_at` strings** against an ISO cutoff
-  string rather than parsed datetimes. Correct at day granularity given every
-  source is UTC, but it relies on comparing digits before any `Z` versus
-  `+00:00` suffix difference. Switch to parsed datetimes before adding
-  sub-day windows. Documented in `aggregate/index.py`.
+- **Windows and series buckets use parsed UTC instants.** CNA's timestamps
+  carry +08:00 and NewsAPI's `Z`, so comparing the strings put CNA rows up to
+  eight hours on the wrong side of a cutoff or month edge (fixed 3 Oct).
+  Weeks are ISO weeks (`2025-W01`, never `W00`). Documented in
+  `aggregate/index.py`.
 - **SQLite binds at most 32,766 parameters.** Never build `IN (?,?,...)` over
   a per-row list; this crashed `aspects/discover.py` once the corpus passed
   that size.
@@ -421,7 +429,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-809 tests in `tests/` (856 from the repository root, adding the diagram and
+850 tests in `tests/` (897 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.

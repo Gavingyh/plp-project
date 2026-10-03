@@ -82,6 +82,21 @@ team.*
 - 39 negative sentences in the test split: one sentence moves negative F1 by
   about 0.02.
 - Opus agreement is human–LLM, not human–human.
+- Some stored text is damaged by the extraction, found on 3 Oct and fixed
+  in the code for future data only (re-cleaning stored text would change
+  sentence ids and orphan their labels and scores): earnings PDFs lost
+  short wrapped lines, splicing sentences ("Markets trading income rose to
+  Expenses increased 10%, ..."); Reddit text was never HTML-unescaped, so
+  54 sentences keep `&gt;`, `&amp;` or `&#x200B;`, and in 6 documents a
+  quoted parent comment survived as the commenter's own words.
+- Three Reddit months lost most of their comments to failing pages (Sep
+  2021: 10 against 107 and 82 either side; May 2024: 167 against 513 and
+  385; Mar 2025: 89 against 497 and 377). Refilling them needs approval.
+- Six UOB earnings documents (114 sentences of 2023–2024 results) are dated
+  by their extraction day, 10 Sep 2026, so they count as recent; in the
+  index recomputed on the evening of 3 Oct they were 114 of the 211 sentences
+  in UOB's 30-day window. The parser
+  is fixed; repairing the rows needs approval.
 
 **Solutions**
 - Built: a blind top-up sheet and its merge (`preprocess.export_topup`,

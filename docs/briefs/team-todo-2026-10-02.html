@@ -326,6 +326,18 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Source: PLAN, passing-mentions decision.</span>
     </li>
     <li data-o="decide">
+      <span class="t">Approve three data repairs, so they go into the one re-score <span class="chip decide">Decision</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> each changes the database or git, so each needs a yes. (1) <b>Earnings dates:</b> 6 UOB earnings documents (114 sentences, 2023–2024 results) are dated 10 Sep 2026, their extraction day, so they count in the 7- and 30-day windows; the parser is fixed and <code>scripts/fix_earnings_dates.py --apply</code> repairs the rows. Rehearsed on a copy on 3 Oct: UOB's 30-day headline goes from +0.315 on 211 sentences to +0.251 on 97, because 114 of those 211 are these old results; nothing else changes. (2) <b>Reddit gaps:</b> three months lost most of their comments when a page kept failing: Sep 2021 has 10 (neighbours 107 and 82), May 2024 has 167 (513 and 385), Mar 2025 has 89 (497 and 377). The fetcher no longer marks such a month done; refilling means a network pull and new rows. (3) <b>CNA text in git:</b> <code>ingest/cna_articles.json</code> holds the full text of 15 CNA articles, against the rule that CNA text is never committed; removing it is one <code>git rm</code>, but teammates lose their copy on the next pull and it stays in git history.</p>
+      <span class="meta">Source: HANDOFF, 3 Oct; <code>scripts/fix_earnings_dates.py</code> (dry run by default).</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> the re-score adds the fine-tuned scores beside the base ones, and the dashboard's queries don't filter on <code>model_version</code>, so it would count every sentence twice. Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot now do.</p>
+      <span class="meta"><code>dashboard/app.py</code> lines 72, 89 and 103. Source: API-integrity validation, 2 Oct.</span>
+    </li>
+    <li data-o="decide">
       <span class="t">Store earnings-PDF links as relative paths? <span class="chip decide">Decision</span></span>
       <span class="when">by 12 Oct</span>
       <p class="why"><b>Why:</b> 12,254 earnings sentences store a local file path as their URL, which carries the developer's macOS username into the database, every snapshot and 25 committed files. Rewriting them is a database change, so it belongs in the same re-score.</p>
@@ -335,7 +347,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-ai">
   <h2 id="h-ai">Claude can do next, without waiting for anyone</h2>
-  <p class="sub">Each is tested, committed and written up. None writes to the database. Done on 2 Oct: the chatbot fixes, the checklist judge, the top-up merge, Opus on the top-up and NER sheets, the report's approach and findings documents, the model card and sharing bundle for the fine-tuned models (<code>docs/model-card.md</code>, <code>scripts/share_bundle.sh</code>). Done on 3 Oct: the corpus aspect run and the full-corpus index preview, with the fine-tuned scores saved to a file (<code>docs/evidence/index-preview-2026-10-01.md</code>).</p>
+  <p class="sub">Each is tested, committed and written up. None writes to the database. Done on 2 Oct: the chatbot fixes, the checklist judge, the top-up merge, Opus on the top-up and NER sheets, the report's approach and findings documents, the model card and sharing bundle for the fine-tuned models (<code>docs/model-card.md</code>, <code>scripts/share_bundle.sh</code>). Done on 3 Oct: the corpus aspect run and the full-corpus index preview, with the fine-tuned scores saved to a file (<code>docs/evidence/index-preview-2026-10-01.md</code>); the re-score step, tested on a copy (<code>scripts/rescore.py</code>); fixes to the index's weeks and time zones, the scorer's probability check and eight ingestion and cleaning bugs (HANDOFF, 3 Oct).</p>
   <ul class="items">
     <li data-o="ai">
       <span class="t">Re-export the ratings sheet for the final chatbot, ordered by the judge <span class="chip ai">Claude</span></span>
@@ -351,7 +363,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="ai">
       <span class="t">Re-assign aspects, re-score, re-aggregate, snapshot <span class="chip ai">Claude</span> <span class="chip decide">needs approval</span></span>
       <span class="when">12–18 Oct</span>
-      <p class="why"><b>Why:</b> one combined re-run is cheaper and easier to explain than three separate ones. It changes the database, so it runs only on the team's go-ahead.</p>
+      <p class="why"><b>Why:</b> one combined re-run is cheaper and easier to explain than three separate ones. It changes the database, so it runs only on the team's go-ahead. <b>Ready since 3 Oct:</b> <code>scripts/rescore.py</code> applies the LLM aspects and the fine-tuned scores; on a fresh copy of the database it took seconds and reproduced the full-corpus preview cell for cell (all 36 bank-aspect cells, scores within 0.0001). Afterwards set <code>MODEL_VERSION</code> in <code>config/model_version.py</code> and <code>assignment_method: llm</code> in <code>config/aspects.yaml</code>.</p>
     </li>
     <li data-o="ai">
       <span class="t">Re-run every evaluation on the new snapshot <span class="chip ai">Claude</span></span>

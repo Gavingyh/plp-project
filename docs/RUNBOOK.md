@@ -114,6 +114,42 @@ Steps 3 and 4 only process *new* work, so subsequent runs are fast. Progress
 appears in the logs; the log file also captures DEBUG detail
 (`data/logs/plp.log`).
 
+Step 3 assigns new sentences by `assignment_method` in `config/aspects.yaml`:
+`centroid` (today) or `llm`, one aspect per sentence from `llama3.1:8b`,
+which needs Ollama running. Step 4 stops with "probabilities don't sum to 1"
+if the GPU returns garbage; rerun it with `--cpu`.
+
+### Apply the aspect and sentiment decisions (the re-score)
+
+`scripts/rescore.py` replaces the centroid aspects with the LLM's one aspect
+per sentence and adds the fine-tuned models' scores (three seeds averaged,
+neutral margin) beside base FinBERT's, then recomputes the index. It reads
+the LLM's answers and the fine-tuned probabilities from the caches the
+corpus run and the full-corpus preview left, so on this Mac it takes
+seconds. It refuses `data/plp.db` unless given `--real-db`: rehearse on a
+copy first.
+
+```bash
+# a fresh copy, a dry run, then the copy changed
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.db --fresh-copy \
+    --aspects llm --finetuned --margin 0.13 --cpu
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.db --fresh-copy \
+    --aspects llm --finetuned --margin 0.13 --cpu --apply
+```
+
+It prints its checks (one aspect per sentence, no scored pair without an
+assignment) and every bank's headline per model version, which should match
+the preview's columns B and D. On 3 Oct the copy matched all 36 bank-aspect
+cells of the full-corpus preview (scores within 0.0001). After the real run,
+which only the team can approve: set `MODEL_VERSION` in
+`config/model_version.py` to the version it prints, set `assignment_method:
+llm`, take a snapshot (below), and run the evaluations again. On another
+device (a CUDA PC, or the Mac's GPU without `--cpu`) the fine-tuned pairs
+are scored again, since the cache is kept per device.
+
+`aggregate.preview --per-seed` scores the LLM-aspect pairs with each model
+alone and prints the spread of every bank's headline between seeds.
+
 ---
 
 ## One-off ingestion tasks
@@ -186,7 +222,11 @@ shasum -a 256 data/snapshots/plp-<date>-vN.db.gz   # record name, size and check
 
 Not running since 2026-09-26. To run the ingestion daily on a Mac, install
 `scripts/com.plp.dailybatch.plist`; its header has the install, run-now and
-remove commands. It ingests only; run the pipeline steps afterwards.
+remove commands. Replace its `/path/to/plp-project` placeholders with the
+checkout's path first. It ingests only; run the pipeline steps afterwards.
+`run_daily_batch.py` logs failed Reddit or Google News windows at error
+level but still exits 0; `run_news_pull.py` and the backfill below exit
+non-zero.
 
 ### UOB earnings — fetched from the Wayback Machine
 
@@ -224,6 +264,12 @@ caffeinate -i .venv-plp/bin/python3 scripts/overnight_backfill.py
 ```
 
 Progress: `data/backfill_overnight.log` and `data/.backfill_progress.txt`.
+A month in which a page kept failing after its retries ends with exit code 3
+and an `INCOMPLETE` line naming the lost windows, and is not marked done, so
+the next run retries it. Before 3 Oct such months were marked done: Sep 2021,
+May 2024 and Mar 2025 are in the progress file with most of their comments
+missing (see the to-do). To refill them, once approved, delete those three
+lines from `data/.backfill_progress.txt` and run the script again.
 
 ---
 
@@ -449,7 +495,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-809 tests in `tests/`; `pytest -q` from the repository root runs 856,
+850 tests in `tests/`; `pytest -q` from the repository root runs 897,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.
@@ -549,7 +595,8 @@ the test set exists to compare. Labelling next to either column measures
 agreement with a model rather than establishing ground truth.
 
 ```bash
-.venv-plp/bin/python3 -m preprocess.export_blind_test               # write the blind sheet
+.venv-plp/bin/python3 -m preprocess.export_blind_test               # write the blind sheet (refuses to
+                                                                    # replace a filled one without --force)
 .venv-plp/bin/python3 -m preprocess.export_blind_test --check-leakage  # what's withheld, and why
 .venv-plp/bin/python3 -m preprocess.export_blind_test --merge       # merge the filled sheet back
 ```

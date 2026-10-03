@@ -77,5 +77,5 @@ Each row names the file and line an element comes from, and the text that line m
 | database not in git | `.gitignore:14` | `data/plp.db` |
 | embeddings not in git | `.gitignore:17` | `data/sentence_embeddings.npz` |
 | snapshots not in git | `.gitignore:18` | `data/snapshots/` |
-| launchd job runs the daily batch | `scripts/com.plp.dailybatch.plist:24` | `<string>run_daily_batch.py</string>` |
+| launchd job runs the daily batch | `scripts/com.plp.dailybatch.plist:26` | `<string>run_daily_batch.py</string>` |
 | launchd job not running | `docs/PLAN.md:41` | `The daily ingestion job is not running on any machine` |

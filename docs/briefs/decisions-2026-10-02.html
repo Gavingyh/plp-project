@@ -261,7 +261,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 <tr><td><b>Base FinBERT</b></td><td>Test macro-F1 0.571, accuracy 0.70. Calls most sentences neutral; finds few of the negatives.</td></tr>
 <tr><td><b>Fine-tuned, three seeds averaged, neutral margin</b></td><td>Test macro-F1 0.624, accuracy 0.682. On the full corpus with LLM aspects, every headline rises by 0.04–0.07 and DBS moves just ahead of OCBC (today OCBC is just ahead; both gaps under 0.02; UOB last either way); 52% of sentences come out neutral, against 70%. These are the 1 Oct seeds, trained from a relabelled head; retraining could change them.</td></tr>
   </tbody></table></div>
-  <div class="rec"><p><b>Recommendation:</b> the fine-tuned average with the margin, on the stated criterion that the index exists to surface positive and negative sentiment (macro-F1). Report base FinBERT's ranking beside it as a sensitivity check.</p></div>
+  <div class="rec"><p><b>Recommendation:</b> the fine-tuned average with the margin, on the stated criterion that the index exists to surface positive and negative sentiment (macro-F1). Report base FinBERT's ranking beside it as a sensitivity check. Either way, applying it is quick: <code>scripts/rescore.py</code>, tested on a copy on 3 Oct, applies both changes in seconds and reproduces the preview cell for cell.</p></div>
   <p class="ifnot">If not decided by the date: the DNN stays an offline result, and the system the report describes doesn't use it.</p>
 </div>
 

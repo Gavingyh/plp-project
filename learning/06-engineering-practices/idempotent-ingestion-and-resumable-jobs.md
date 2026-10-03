@@ -182,6 +182,20 @@ repair the rows; that needs an explicit repair step
 you design an idempotent writer, also design how to correct what it has
 already written.
 
+### A loss that is logged is not a loss that is handled (3 Oct 2026)
+
+The first fix to the Reddit pager retried a failing page and, if it still
+failed, logged the lost window. The pull still exited 0, so the overnight
+backfill, which marks a month done when its pull exits 0, marked the month
+done and would never fetch it again. The three gap months were already in
+its progress file. Now a pull that lost a window exits 3 and the month stays
+unmarked. Two more of the same kind were found the same evening: a Google
+News window that failed after its retries returned an empty list, which
+reads exactly like a quiet month, and the CNA fetcher cached a network error
+like a missing page, so one blip lost an article for good. In a resumable
+job, "done" must mean "complete", and a temporary failure must stay
+retryable.
+
 ## 5. Evaluate
 
 **Idempotent ingestion was unarguably the right foundation.** The proposal's

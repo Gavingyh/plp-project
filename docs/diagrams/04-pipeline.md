@@ -88,10 +88,10 @@ Each row names the file and line an element comes from, and the text that line m
 | FinBERT embedding model | `aspects/embed.py:17` | `MODEL_NAME = "ProsusAI/finbert"` |
 | discovery: UMAP | `aspects/discover.py:90` | `reducer = umap.UMAP(` |
 | discovery: HDBSCAN | `aspects/discover.py:95` | `clusterer = hdbscan.HDBSCAN(` |
-| assignment from seed centroids | `aspects/assign.py:61` | `vecs = embed_sentences(cfg["seed_terms"])` |
-| sentiment scoring | `sentiment/score.py:100` | `def run() -> dict:` |
-| zero-shot base FinBERT | `sentiment/score.py:38` | `MODEL_NAME = "ProsusAI/finbert"` |
-| index aggregation | `aggregate/index.py:253` | `def run() -> int:` |
+| assignment from seed centroids | `aspects/assign.py:67` | `vecs = embed_sentences(cfg["seed_terms"])` |
+| sentiment scoring | `sentiment/score.py:109` | `def run() -> dict:` |
+| zero-shot base FinBERT | `sentiment/score.py:42` | `MODEL_NAME = "ProsusAI/finbert"` |
+| index aggregation | `aggregate/index.py:298` | `def run() -> int:` |
 | fine-tuning code | `train/finetune.py:252` | `def run(seed: int = 42` |
 | first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:36` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |
 | evidence read by the chatbot | `chatbot/retrieval.py:148` | `all_ids, all_vecs = load_for_search()` |

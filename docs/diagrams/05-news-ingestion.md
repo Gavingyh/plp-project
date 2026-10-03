@@ -79,11 +79,11 @@ Each row names the file and line an element comes from, and the text that line m
 | INSERT OR IGNORE | `ingest/db.py:131` | `INSERT OR IGNORE INTO documents` |
 | flagged articles written | `ingest/news_filter.py:316` | `_append_flagged(flagged)` |
 | Google month loop | `run_news_pull.py:59` | `for month, docs in google_news.iter_batches(since, until):` |
-| each calendar month | `ingest/google_news.py:146` | `for start, end in _months(s, u):` |
-| each bank and query | `ingest/google_news.py:148` | `for bank, queries in QUERIES.items():` |
-| RSS request | `ingest/google_news.py:109` | `resp = request_with_retries(RSS_URL` |
+| each calendar month | `ingest/google_news.py:151` | `for start, end in _months(s, u):` |
+| each bank and query | `ingest/google_news.py:153` | `for bank, queries in QUERIES.items():` |
+| RSS request | `ingest/google_news.py:113` | `resp = request_with_retries(RSS_URL` |
 | split threshold | `ingest/google_news.py:67` | `SPLIT_AT = 90` |
-| split and re-query | `ingest/google_news.py:122` | `if len(entries) >= SPLIT_AT and (end - start).days > 1:` |
+| split and re-query | `ingest/google_news.py:127` | `if len(entries) >= SPLIT_AT and (end - start).days > 1:` |
 | NewsAPI next | `run_news_pull.py:64` | `_ingest("newsapi", newsapi.pull(), index)` |
 | Alpha Vantage last | `run_news_pull.py:67` | `_ingest("alphavantage", alphavantage.pull(), index)` |
 | count table printed | `run_news_pull.py:119` | `print(count_table())` |

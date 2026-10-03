@@ -98,6 +98,10 @@ labels), once the team decides the aspect method.
   in neither is not "known".
 - The `examiner` agent grades a report section or the whole submission
   against the module's requirements; use it from mid-October.
+- Other commands: `/sync-docs` (test counts, diagram line numbers, the API
+  contract after a code change), `/handoff` (end of session: HANDOFF entry,
+  team pages, commit and push), `/jobs` (long-running jobs' progress),
+  `/examine` (the examiner on a scope), `/team-message` (a WhatsApp draft).
 
 ## Long-running jobs
 

@@ -918,4 +918,49 @@ become relative paths.
   questions. Agents now name each finding in a few words instead of
   numbering it. `CLAUDE.md` ("Writing docs") says so. Two tables in the
   functional spec, split by a stray blank line, are whole again.
+- **The re-score step is ready** (`040ed26`). `scripts/rescore.py` applies
+  the LLM aspects and the fine-tuned scores (three seeds averaged, margin
+  0.13) in one transaction with its checks and the index rebuild, refuses
+  `data/plp.db` without `--real-db`, and backs it up first. On a fresh copy
+  it took seconds and matched the full-corpus preview in all 36 bank-aspect
+  cells (scores within 0.0001). Afterwards: set `MODEL_VERSION` (the version
+  `finbert-finetuned-2026-10-01-3seed-m0.13` is already listed in
+  `FINETUNED`) and `assignment_method: llm`. While a fine-tuned version is
+  served, `sentiment.score` scores new pairs with it too. RUNBOOK, "Apply
+  the aspect and sentiment decisions".
+- **Index and scorer fixes** (`244b7c0`): windows and series buckets use
+  UTC instants and ISO weeks; the index counts a score only while its pair
+  is assigned; the series raises on an unknown label; `sentiment.score`
+  refuses probabilities that don't sum to 1 and takes `--cpu`;
+  `aggregate.preview --per-seed` measures the spread between seeds.
+- **Ingestion fixes** (`bf0357f`), future data only: failed Reddit and
+  Google News windows no longer pass as done or quiet, CNA retries
+  temporary failures, PDF extraction keeps wrapped sentence ends, Reddit
+  text is unescaped before quotes are removed, the blind-sheet export needs
+  `--force` to overwrite, no home paths in code.
+- **Earnings-date repair rehearsed on two copies**: only UOB's 30-day rows
+  change (24 rows); its headline goes from +0.315 on 211 sentences to
+  +0.251 on 97.
+- **Hugging Face**: the model card is re-uploaded and matches
+  `docs/model-card.md`. It has no metadata block, so the Hub warns; cosmetic.
+- **New commands**: `/sync-docs`, `/handoff`, `/jobs`, `/examine`,
+  `/team-message` (`CLAUDE.md`, "Validation").
+- Three reviewer runs found the bugs above; every fix has a test that failed
+  before it. 850 tests in `tests/` (848 pass, 2 skipped), 897 from the root.
+- **Running**: the per-seed index preview on the CPU (`data/preview/`,
+  `index_preview_per_seed_margin0.13.csv` when done); write it up in the
+  index-preview evidence.
+
+**Needs a human (3 Oct, evening):** approve the three data repairs on the
+to-do (earnings dates; the Reddit gaps, whose three markers in
+`data/.backfill_progress.txt` must be deleted before a rerun; CNA text in
+git); the dashboard owner adds the `model_version` filter, and should check
+that the series' week labels, now ISO weeks, still plot; retraining stays on
+hold. Known and not fixed: `run_daily_batch.py` still exits 0 when a window
+fails (it logs it; the daily job is stopped); a short PDF tail that starts
+with a capital (say "S$1.2 billion") still splices; Reddit spoiler lines
+(`>!`) are now removed as quotes; a few news sentences reach a bank only
+through a venue name (UOB Plaza, OCBC Cycle), which NER's resolution table
+doesn't cover yet; the LLM aspect cache has two duplicate lines (same
+answers, harmless).
 

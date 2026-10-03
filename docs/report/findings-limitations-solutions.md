@@ -106,6 +106,13 @@ team.*
 - Three Reddit months lost most of their comments to failing pages (Sep
   2021: 10 against 107 and 82 either side; May 2024: 167 against 513 and
   385; Mar 2025: 89 against 497 and 377). Refilling them needs approval.
+- Duplicate sentences are dropped across the whole corpus, not within one
+  outlet's copy of a story: a sentence repeated in a later quarter's report,
+  or in another bank's, is kept once. "Asset quality remained resilient."
+  is in 17 earnings documents (DBS and OCBC, 10 dates) and stored once, for
+  DBS. That removes syndicated copies as intended, but also thins the
+  repeated statements a time series should count. Changing it means
+  re-segmenting the corpus, so it is recorded, not fixed.
 - Six UOB earnings documents (114 sentences of 2023–2024 results) are dated
   by their extraction day, 10 Sep 2026, so they count as recent; in the
   index recomputed on the evening of 3 Oct they were 114 of the 211 sentences

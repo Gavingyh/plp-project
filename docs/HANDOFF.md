@@ -898,4 +898,15 @@ become relative paths.
   `git rm`, but teammates lose their copy on the next pull and the text stays
   in git history. 118 "Kay Hian" sentences are attributed to UOB until NER
   is applied (known, decision brief).
+- **Corpus aspect run done** (14:04, 3 Oct): all 44,345 sentences answered by
+  `llama3.1:8b`, none invalid. Retail banking 19,089, investor stock 5,545,
+  wealth 4,252, other 4,235, income and profit 3,602, guidance 2,023, asset
+  quality 1,530, NIM 1,332, capital 1,222, macro 906, dividends 609.
+- **Full-corpus index preview** (14:04–19:19,
+  `docs/evidence/index-preview-2026-10-01.md`, last section): with LLM
+  aspects and the fine-tuned models (margin 0.13) every headline rises by
+  0.04–0.07 and DBS moves just ahead of OCBC (today OCBC is just ahead; both
+  gaps under 0.02); UOB is last either way. **Correction:** the 11,000-sentence
+  preview said the ranking was unchanged; today's index has OCBC first.
+  Corrected in the evidence, findings, decision brief and to-do.
 

@@ -13,11 +13,12 @@ team.*
 
 1. **The system runs older methods than the ones it has measured to be
    better**, on all four parts that matter: sentiment, aspects, bank
-   attribution and evidence search. Switching changes the results: on an
-   11,000-sentence preview, the two pending changes together raise every
-   bank's headline by 0.04–0.09 (the ranking stays DBS, OCBC, UOB), and
-   retail banking and some NIM rows turn slightly negative where centroid
-   assignment made every aspect positive.
+   attribution and evidence search. Switching changes the results: on the
+   full corpus (3 Oct), the two pending changes together (with the neutral
+   margin) raise every bank's headline by 0.04–0.07 and swap the top two (DBS moves just ahead of OCBC;
+   both gaps under 0.02, UOB last either way), and retail banking and some
+   NIM rows turn negative where centroid assignment made every aspect
+   positive.
 2. **Assigning aspects by embedding similarity doesn't work; asking an LLM
    does.** Seed centroids pick the human's aspect 41% of the time, barely
    above always guessing the commonest aspect (37%); `llama3.1:8b` picks it
@@ -172,29 +173,33 @@ team.*
 
 ## 5. The sentiment index
 
-**Findings** (11,000 sampled sentences, [index-preview](../evidence/index-preview-2026-10-01.md);
+**Findings** (all 44,345 sentences, 3 Oct, [index-preview](../evidence/index-preview-2026-10-01.md);
 a first preview on 1,000 overstated both effects)
 - Switching the aspect method leaves the headline unchanged (one vote per
   sentence) but moves the per-aspect rows: DBS asset quality falls from
   +0.27 to +0.07, and retail banking turns slightly negative for all three
   banks.
-- Switching the sentiment model raises every headline: by 0.10–0.19 with
-  centroid aspects, by 0.04–0.09 with LLM aspects. The ranking (DBS, OCBC,
-  UOB) doesn't change; the 1,000-sentence preview's UOB-ahead-of-DBS result
-  was sampling noise.
+- Switching the sentiment model raises every headline: by 0.12–0.18 with
+  centroid aspects, by 0.04–0.07 with LLM aspects and the margin. Today
+  OCBC is just ahead of DBS; with both changes DBS is just ahead of OCBC
+  (both gaps under 0.02); UOB is last either way. The
+  1,000-sentence preview's UOB-ahead-of-DBS result was sampling noise.
 - Under centroid assignment every named aspect of every bank scores
   positive: each aspect inherits the bank's overall tone.
 - On a memory-starved Mac the GPU returned all-zero probabilities without
   an error; a check now refuses them.
 
 **Limitations**
-- A sample, not the corpus: 11,000 of 44,345 sentences; with LLM aspects a
-  bank-aspect cell holds a median of 182 sentences, and 3 of 30 hold fewer
-  than 30.
+- With LLM aspects a named bank-aspect cell holds a median of 699 sentences
+  (smallest 59). The fine-tuned models are the 1 Oct seeds, trained from a
+  relabelled head; retrained ones could move the figures, and how much the
+  index moves from seed to seed isn't measured.
 
 **Solutions**
-- Proposed: the same preview on the full corpus once the aspect cache is
-  complete; then one combined re-score.
+- Built: the full-corpus preview, with the fine-tuned scores saved to a
+  file, so applying the chosen setting takes minutes.
+- Decision: which aspect method and sentiment model score the corpus; then
+  one combined re-score.
 
 ## 6. The chatbot
 

@@ -1,8 +1,10 @@
 # What the two pending changes would do to the index: a preview
 
-*Updated 2026-10-02: a second preview on 11,000 sentences (below) overturns
-two findings of this 1,000-sentence one: UOB does not move ahead of DBS, and
-DBS asset quality does not turn negative. Read the second section first.*
+*Updated 2026-10-03: the full corpus (44,345 sentences), in the last section,
+supersedes both samples; read it first. The 11,000-sentence preview overturned
+two findings of this 1,000-sentence one (UOB does not move ahead of DBS; DBS
+asset quality does not turn negative), and itself wrongly said its order
+matched today's index: see the last section.*
 
 Two changes wait for a team decision: aspects from the LLM classifier
 instead of seed-centroid matching (DESIGN decision 16), and sentiment from
@@ -145,7 +147,9 @@ than the first one did (OCBC was 0.08 off there).
 1. **The ranking does not flip.** On 1,000 sentences UOB moved clearly ahead
    of DBS under the fine-tuned models. On 11,000, under C the three are level
    (+0.245 to +0.257), and under D, the combination of the two pending
-   changes, the order is DBS, OCBC, UOB, as it is today.
+   changes, the order is DBS, OCBC, UOB. (Corrected 3 Oct: this said "as it
+   is today", but today's index puts OCBC just ahead of DBS; the full-corpus
+   run below confirms the swap.)
 2. **The headlines rise less.** The fine-tuned models raise them by 0.10–0.19
    with centroid aspects (C) and by 0.04–0.09 with LLM aspects (D), not by
    0.06–0.19 as first reported.
@@ -172,4 +176,72 @@ sentences (centroid pairs: 1,817), and 3 of 30 cells hold fewer than 30.
 noise from 1,000 sentences, at most a few hundred per bank. Both appeared in
 the team to-do page, the findings document, HANDOFF and the examiner's
 assessment before this run, and are corrected there.
+
+## Full corpus: 44,345 sentences (3 Oct)
+
+Run 2026-10-03 14:04–19:19 on the CPU, on every sentence, after the
+`llama3.1:8b` corpus run finished (all 44,345 answered, none invalid). 281,744
+centroid pairs (6.4 a sentence); the fine-tuned models' probabilities are
+saved in `data/preview/scores.1a38d71a.jsonl`, so the margin version reused
+them. Scenario A reproduces the stored index exactly (DBS +0.122, OCBC
++0.136, UOB +0.074), as it should with every sentence in.
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13
+```
+
+**The headline per bank**
+
+| bank | sentences | A: centroid, base | B: LLM, base | C: centroid, fine-tuned | D: LLM, fine-tuned | D with margin 0.13 |
+|---|---|---|---|---|---|---|
+| DBS | 24,431 | +0.122 | +0.122 | +0.242 | +0.204 | **+0.192** |
+| OCBC | 7,412 | +0.136 | +0.136 | +0.268 | +0.188 | **+0.174** |
+| UOB | 12,502 | +0.074 | +0.074 | +0.250 | +0.151 | **+0.137** |
+
+Labels per sentence: base FinBERT 70.0% neutral, 20.3% positive, 9.7%
+negative; fine-tuned with LLM aspects 47.0%, 35.4%, 17.6%; with the margin
+51.9%, 32.0%, 16.1%.
+
+**What it shows.**
+
+1. **The aspect method still doesn't move the headline** (A = B): each
+   sentence counts once.
+2. **The two changes together raise every headline by 0.04–0.07** with the
+   recommended scoring (D with the margin; 0.05–0.08 without it), and **swap
+   the top two banks**: today OCBC is just ahead of DBS (+0.136 against
+   +0.122); with both changes DBS is just ahead of OCBC (+0.192 against
+   +0.174). Both gaps are under 0.02; UOB is last either way. The
+   11,000-sentence preview had the same order under D but wrongly called it
+   unchanged.
+3. **With centroid aspects the fine-tuned models raise the headlines more**
+   (0.12–0.18, C) and put all three banks within 0.03 of each other, because
+   every pair of a sentence is scored and the most confident wins.
+4. **Per aspect, LLM aspects separate what centroids blur.** Under centroids
+   (A and C) every named aspect of every bank is positive. With LLM aspects
+   and base FinBERT (B), four cells are negative: retail banking for all
+   three banks (−0.020 to −0.049) and OCBC asset quality (−0.026). DBS asset
+   quality falls from +0.265 to +0.065. With LLM aspects and the fine-tuned
+   models (D, margin), six are negative: retail banking for all three (DBS
+   −0.086, OCBC −0.118, UOB −0.005), net interest margin for OCBC (−0.110)
+   and UOB (−0.046), and OCBC macro (−0.040, 95 sentences); dividends turn
+   strongly positive (+0.70 to +0.80).
+5. **The 11,000-sentence sample held up on the headlines**: its D headlines
+   were within 0.01 of these. Some smaller cells moved: in column B, UOB
+   investor sentiment is +0.010 here (sample −0.009); in column D without
+   the margin, UOB macro is +0.046 (sample −0.026) and OCBC macro −0.030
+   (sample +0.127 on 23 sentences), and OCBC NIM is −0.113 on 141 sentences,
+   not −0.323 on 31.
+
+**Cell sizes.** Under LLM aspects the median of the 30 named bank-aspect
+cells holds 699 sentences (smallest: UOB dividends, 59); none has fewer than
+30. Centroid pairs: median 7,361.
+
+**Caveats.** All-time scores, so the six misdated UOB earnings documents
+(fixed in the parser, repair pending) don't affect this table. The
+fine-tuned models are the 1 Oct seeds, trained from a relabelled head
+([training-review-2026-10-03.md](training-review-2026-10-03.md)); retrained
+models could move column D. Columns C and D come from one average of three
+seeds; how much the index moves from seed to seed isn't measured, so a
+0.018 gap between DBS and OCBC is not a firm ranking.
 

@@ -161,7 +161,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 <body>
 <div class="wrap">
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>Decision brief</span><span>Fri 2 Oct 2026, evening</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>Decision brief</span><span>Sat 3 Oct 2026, evening</span></div>
   <h1>Eleven decisions, with the evidence and a recommendation each</h1>
   <p class="lede">For a team meeting before Monday 5 October. Each decision lists the options, what the evidence says about each, a recommendation, and what happens by default if nobody decides. The recommendations are Claude's reading of the evidence; the decisions are the team's.</p>
   <div class="countdown"><b>5</b> decisions are due by Mon 5 Oct</div>
@@ -188,10 +188,10 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 
 <div class="dec" id="d-aspects">
   <h3>1. Aspect method: switch to the LLM classifier? <span class="chip decide">Team decision</span> <span class="when">by 5 Oct</span></h3>
-  <p class="q">The database assigns aspects by similarity to seed-term centroids. A local LLM (<code>llama3.1:8b</code>) picking one aspect per sentence is built and measured. Its corpus run is under way and finishes around midday on 3 Oct.</p>
+  <p class="q">The database assigns aspects by similarity to seed-term centroids. A local LLM (<code>llama3.1:8b</code>) picking one aspect per sentence is built and measured. Its corpus run is complete: all 44,345 sentences, 3 Oct.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Keep centroids</b></td><td>Matches the human aspect 41% of the time (always guessing the commonest: 37%); 6.4 aspects a sentence; every named aspect of every bank comes out positive, because each inherits the bank's overall tone.</td></tr>
-<tr><td><b>LLM, llama alone</b></td><td>73% against the human aspects (macro-F1 0.68); one aspect a sentence; the rest of the corpus run (under way, done around midday on 3 Oct) is all it costs. On an 11,000-sentence preview the headline is unchanged and the aspects separate: retail banking (43% of sentences) turns slightly negative for all three banks; DBS asset quality falls from +0.27 to +0.07.</td></tr>
+<tr><td><b>LLM, llama alone</b></td><td>73% against the human aspects (macro-F1 0.68); one aspect a sentence; already run on the whole corpus, so it costs nothing more. On the full corpus the headline is unchanged and the aspects separate: retail banking (43% of sentences) turns slightly negative for all three banks; DBS asset quality falls from +0.27 to +0.07.</td></tr>
 <tr><td><b>LLM, two models, disagreements to <code>other</code></b></td><td>84% where llama and qwen agree (76% of sentences); needs a second corpus run (most of a day); a quarter of sentences lose their aspect, and where the two disagree llama is right 40% of the time, qwen 36%.</td></tr>
   </tbody></table></div>
   <div class="rec"><p><b>Recommendation:</b> llama alone. It nearly doubles accuracy, needs no second run, and keeps every sentence's aspect. Report the two-model agreement on the labelled set as the confidence evidence, not as a rule on the corpus.</p></div>
@@ -259,7 +259,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
   <p class="q">Every stored sentiment score comes from base FinBERT, used zero-shot; the fine-tuned model is the DNN the rubric requires.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Base FinBERT</b></td><td>Test macro-F1 0.571, accuracy 0.70. Calls most sentences neutral; finds few of the negatives.</td></tr>
-<tr><td><b>Fine-tuned, three seeds averaged, neutral margin</b></td><td>Test macro-F1 0.624, accuracy 0.682. On an 11,000-sentence preview with LLM aspects, every headline rises by 0.04–0.09 and the ranking (DBS, OCBC, UOB) is unchanged; 47% of sentences come out neutral, against 70%. (A 1,000-sentence preview had UOB moving ahead of DBS; that was sampling noise.)</td></tr>
+<tr><td><b>Fine-tuned, three seeds averaged, neutral margin</b></td><td>Test macro-F1 0.624, accuracy 0.682. On the full corpus with LLM aspects, every headline rises by 0.04–0.07 and DBS moves just ahead of OCBC (today OCBC is just ahead; both gaps under 0.02; UOB last either way); 52% of sentences come out neutral, against 70%. These are the 1 Oct seeds, trained from a relabelled head; retraining could change them.</td></tr>
   </tbody></table></div>
   <div class="rec"><p><b>Recommendation:</b> the fine-tuned average with the margin, on the stated criterion that the index exists to surface positive and negative sentiment (macro-F1). Report base FinBERT's ranking beside it as a sensitivity check.</p></div>
   <p class="ifnot">If not decided by the date: the DNN stays an offline result, and the system the report describes doesn't use it.</p>

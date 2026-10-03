@@ -9,6 +9,7 @@ not the underlying business logic again.
 portable - the actual chatbot loop is covered by tests/test_chatbot_backends.py.
 """
 
+import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
@@ -209,3 +210,54 @@ def test_committed_openapi_spec_matches_the_app():
     path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs", "api", "openapi.json")
     with open(path) as f:
         assert json.load(f) == json.loads(json.dumps(app.openapi(), sort_keys=True))
+
+
+# --- 4 Oct 2026: input that used to read as "no data" -------------------------------
+
+@pytest.mark.parametrize("path", ["/coverage?bank=DBS&aspect=dividend%20polcy", "/evidence?query=x&aspect=nope",
+                                  "/evidence/latest?bank=DBS&aspect=nope", "/sentiment?bank=DBS&aspect=nope"])
+def test_an_unknown_aspect_is_rejected(temp_db, path):
+    from fastapi.testclient import TestClient
+    from api.main import app
+    assert TestClient(app).get(path).status_code == 422
+
+
+def test_a_readable_aspect_name_still_works(temp_db):
+    from fastapi.testclient import TestClient
+    from api.main import app
+    r = TestClient(app).get("/coverage?bank=DBS&aspect=dividend%20policy")
+    assert r.status_code == 200
+
+
+@pytest.mark.parametrize("body", [{"message": "hi", "backend": "nope"},
+                                  {"message": "hi", "history": [{"role": "system", "content": "x"}]}])
+def test_chat_rejects_an_unknown_backend_or_role(body):
+    from fastapi.testclient import TestClient
+    from api.main import app
+    assert TestClient(app).post("/chat", json=body).status_code == 422
+
+
+def test_a_failing_chat_backend_is_a_503_not_a_500(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as api_main
+
+    def down(self, question, verbose=False):
+        raise ConnectionError("Ollama isn't running")
+    monkeypatch.setattr(api_main.Conversation, "ask", down)
+    r = TestClient(api_main.app).post("/chat", json={"message": "How is DBS doing?"})
+    assert r.status_code == 503 and "Ollama" in r.json()["detail"]
+
+
+def test_a_database_error_is_not_read_as_no_consensus(temp_db, monkeypatch):
+    import sqlite3
+    from fastapi.testclient import TestClient
+    import api.main as api_main
+
+    class Broken:
+        def execute(self, *a):
+            raise sqlite3.OperationalError("database is locked")
+
+        def close(self):
+            pass
+    monkeypatch.setattr(api_main, "get_connection", lambda: Broken())
+    assert TestClient(api_main.app, raise_server_exceptions=False).get("/analyst-consensus/latest").status_code == 500

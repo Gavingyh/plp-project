@@ -132,7 +132,11 @@ def scope_reply(question: str, in_conversation: bool = False) -> str | None:
 # A figure: not glued to a preceding word, so names like "COVID-19" or "3Q24" aren't figures.
 _NUMBER = re.compile(r"(?<![\w.])(?<![A-Za-z]-)[-+−]?\d{1,3}(?:,\d{3})+(?:\.\d+)?%?"
                      r"|(?<![\w.])(?<![A-Za-z]-)[-+−]?\d+(?:\.\d+)?%?")
-_MONTH = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
+# Month names and their abbreviations only: "[a-z]*" also took "market 1234" and
+# "declined 4321" for dates and hid the figures (4 Oct 2026).
+_MONTH = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?"
+          r"|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?")
+
 _STRIP_FIRST = [
     re.compile(r"https?://\S+"),                   # URLs carry ids and dates
     re.compile(rf"\b{_MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}\b", re.IGNORECASE),  # "September 24th, 2026"
@@ -145,10 +149,25 @@ _STRIP_FIRST = [
 ]
 
 
+# Fields a tool returns that aren't evidence: what the model asked for, echoed
+# back ("query" holds the model's own search words), and timestamps and links,
+# whose digits are not figures. Neither may vouch for text or numbers in an
+# answer (4 Oct 2026: a quote or "37.5%" written into the search query passed).
+ECHO_KEYS = frozenset({"query", "question", "bank", "aspect", "window", "source", "bucket",
+                       "sentiment", "url", "cite_as"})
+
+
+def is_echo_key(key) -> bool:
+    key = str(key)
+    return key in ECHO_KEYS or key.endswith("_at")
+
+
 def _percent_fields(obj, out: list[float]) -> None:
     """Values whose field name says they are already percentages ("implied_upside_pct": 0.9)."""
     if isinstance(obj, dict):
         for k, v in obj.items():
+            if is_echo_key(k):
+                continue
             if isinstance(v, (int, float)) and not isinstance(v, bool) and re.search(r"pct|percent", str(k)):
                 out.append(float(v))
             else:
@@ -187,8 +206,9 @@ def _collect_numbers(obj, out: list[float], text_out: list[float]) -> None:
             except ValueError:
                 pass
     elif isinstance(obj, dict):
-        for v in obj.values():
-            _collect_numbers(v, out, text_out)
+        for k, v in obj.items():
+            if not is_echo_key(k):
+                _collect_numbers(v, out, text_out)
     elif isinstance(obj, (list, tuple)):
         for v in obj:
             _collect_numbers(v, out, text_out)
@@ -235,11 +255,13 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
     _collect_numbers(tool_results, values, quoted)
     values = list({round(v, 10) for v in values})
     candidates = values + [v * 100 for v in values] + quoted
-    # A percentage is a fraction times 100, or a value already above 1: 0.12
-    # written as "0.12%" is a hundred times too small.
+    # A percentage is a fraction times 100, a field named as a percentage, a
+    # ratio of two counts (below) or a figure in retrieved text: 0.12 written
+    # as "0.12%" is a hundred times too small, and a count of 23 written as
+    # "23%" is not a share (accepting any value above 1 let counts pass, 4 Oct).
     percent_fields: list[float] = []
     _percent_fields(tool_results, percent_fields)
-    percent_candidates = [v * 100 for v in values] + [v for v in values if abs(v) > 1] + percent_fields + quoted
+    percent_candidates = [v * 100 for v in values] + percent_fields + quoted
     ratios: list[float] = []
     _count_ratios(tool_results, ratios)
 

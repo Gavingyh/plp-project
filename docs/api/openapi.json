@@ -8,6 +8,10 @@
             "type": "string"
           },
           "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
             "title": "Role",
             "type": "string"
           }
@@ -24,6 +28,12 @@
           "backend": {
             "anyOf": [
               {
+                "enum": [
+                  "claude",
+                  "openai",
+                  "gemini",
+                  "ollama"
+                ],
                 "type": "string"
               },
               {
@@ -259,6 +269,7 @@
             }
           },
           {
+            "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
             "in": "query",
             "name": "aspect",
             "required": false,
@@ -271,6 +282,7 @@
                   "type": "null"
                 }
               ],
+              "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
               "title": "Aspect"
             }
           }
@@ -330,22 +342,6 @@
           },
           {
             "in": "query",
-            "name": "aspect",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Aspect"
-            }
-          },
-          {
-            "in": "query",
             "name": "sentiment",
             "required": false,
             "schema": {
@@ -371,6 +367,24 @@
               "minimum": 1,
               "title": "K",
               "type": "integer"
+            }
+          },
+          {
+            "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
+              "title": "Aspect"
             }
           }
         ],
@@ -414,6 +428,19 @@
           },
           {
             "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
+            "in": "query",
             "name": "aspect",
             "required": false,
             "schema": {
@@ -425,19 +452,8 @@
                   "type": "null"
                 }
               ],
+              "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
               "title": "Aspect"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 30,
-              "maximum": 200,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
             }
           }
         ],
@@ -496,6 +512,18 @@
           },
           {
             "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "all_time",
+              "pattern": "^(7d|30d|all_time)$",
+              "title": "Window",
+              "type": "string"
+            }
+          },
+          {
+            "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
+            "in": "query",
             "name": "aspect",
             "required": false,
             "schema": {
@@ -507,18 +535,8 @@
                   "type": "null"
                 }
               ],
+              "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
               "title": "Aspect"
-            }
-          },
-          {
-            "in": "query",
-            "name": "window",
-            "required": false,
-            "schema": {
-              "default": "all_time",
-              "pattern": "^(7d|30d|all_time)$",
-              "title": "Window",
-              "type": "string"
             }
           }
         ],
@@ -551,6 +569,18 @@
         "parameters": [
           {
             "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "all_time",
+              "pattern": "^(7d|30d|all_time)$",
+              "title": "Window",
+              "type": "string"
+            }
+          },
+          {
+            "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
+            "in": "query",
             "name": "aspect",
             "required": false,
             "schema": {
@@ -562,18 +592,8 @@
                   "type": "null"
                 }
               ],
+              "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
               "title": "Aspect"
-            }
-          },
-          {
-            "in": "query",
-            "name": "window",
-            "required": false,
-            "schema": {
-              "default": "all_time",
-              "pattern": "^(7d|30d|all_time)$",
-              "title": "Window",
-              "type": "string"
             }
           }
         ],
@@ -667,22 +687,6 @@
           },
           {
             "in": "query",
-            "name": "aspect",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Aspect"
-            }
-          },
-          {
-            "in": "query",
             "name": "bucket",
             "required": false,
             "schema": {
@@ -711,6 +715,24 @@
               "minimum": 1,
               "title": "Min N",
               "type": "integer"
+            }
+          },
+          {
+            "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
+            "in": "query",
+            "name": "aspect",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
+              "title": "Aspect"
             }
           }
         ],
@@ -752,6 +774,7 @@
             }
           },
           {
+            "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
             "in": "query",
             "name": "aspect",
             "required": false,
@@ -764,6 +787,7 @@
                   "type": "null"
                 }
               ],
+              "description": "An aspect key such as dividend_policy (\"dividend policy\" also works), or ALL / empty for every aspect",
               "title": "Aspect"
             }
           }

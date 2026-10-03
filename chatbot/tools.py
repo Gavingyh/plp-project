@@ -71,7 +71,9 @@ def version_has_rows() -> bool:
     try:
         return conn.execute("SELECT 1 FROM sentiment_index WHERE model_version = ? LIMIT 1",
                             (current_model.MODEL_VERSION,)).fetchone() is not None
-    except sqlite3.OperationalError:
+    except sqlite3.OperationalError as e:
+        if "no such table" not in str(e):
+            raise          # a locked or broken database must not read as "no rows for this version"
         return False   # the table doesn't exist before the first aggregation
     finally:
         conn.close()
@@ -274,7 +276,7 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     for i, r in enumerate(results, start=1):
         date = (r.get("published_at") or "")[:10]
         item = {"evidence_id": f"E{i}", "sentence_id": r["sentence_id"], "bank": r.get("bank"),
-                "date": date, "text": r.get("text"), "url": r.get("url"),
+                "source": r.get("source"), "date": date, "text": r.get("text"), "url": r.get("url"),
                 "cite_as": f"[{r.get('bank')}, {date}, sentence_id {r['sentence_id']}]",
                 "relevance": r.get("score")}
         if "aspect" in r:

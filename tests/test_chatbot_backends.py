@@ -323,3 +323,30 @@ def test_ollama_think_setting(monkeypatch, env, expected):
     monkeypatch.setattr("requests.post", fake_post)
     backend.ask("q", "sys", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
     assert fake_post.calls[0].get("think") is expected
+
+
+def test_gemini_never_receives_reddit_text_or_earlier_quotes(monkeypatch):
+    # CLAUDE.md: the free Gemini tier is never sent Reddit evidence text (4 Oct 2026: nothing enforced it).
+    from chatbot.backends.gemini_backend import WITHHELD, GeminiBackend
+    sent = []
+    replies = iter([
+        {"candidates": [{"content": {"parts": [{"functionCall": {"name": "search_evidence",
+                                                                 "args": {"query": "q"}}}]}}]},
+        {"candidates": [{"content": {"parts": [{"text": "Done."}]}}]},
+    ])
+
+    def fake_generate(self, contents, system, tools):
+        sent.append(json.dumps(contents))
+        return next(replies)
+    monkeypatch.setattr(GeminiBackend, "_generate", fake_generate)
+    evidence = {"query": "q", "results": [
+        {"sentence_id": "a" * 24, "source": "arctic_shift", "text": "my OCBC app keeps crashing lol",
+         "url": "https://www.reddit.com/r/singaporefi/comments/x/", "cite_as": "[OCBC, 2025-01-01]"},
+        {"sentence_id": "b" * 24, "source": "cna", "text": "OCBC raised its dividend.", "url": "https://cna.sg/1"}]}
+    history = [{"role": "user", "content": "quotes on OCBC?"},
+               {"role": "assistant", "content": 'One user wrote "my OCBC app keeps crashing lol".'}]
+    answer = GeminiBackend(api_key="k").ask("more?", "system", [], lambda n, a: json.dumps(evidence),
+                                            verbose=False, history=history)
+    assert answer == "Done."
+    assert not any("keeps crashing" in s or "reddit.com" in s for s in sent)
+    assert WITHHELD in sent[-1] and "OCBC raised its dividend." in sent[-1]       # news evidence still goes

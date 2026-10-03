@@ -29,6 +29,7 @@ deprecations page), so check that page when this starts failing with 404.
 """
 
 import json
+import re
 import sys
 import time
 
@@ -72,6 +73,35 @@ def _to_gemini_tools(claude_tool_schemas: list[dict]) -> list[dict]:
             for t in claude_tool_schemas
         ]
     }]
+
+
+# Gemini's free tier may have its inputs read by people, so Reddit evidence
+# text (other people's posts) never goes to it (CLAUDE.md). Enforced here, not
+# left to the caller: the API and the dashboard pick Gemini by default when its
+# key is the one set (4 Oct 2026). The model still sees that a Reddit sentence
+# exists, its bank, date, sentiment and id, and can't quote it: a quote it
+# writes is then invented, and the citation check flags it.
+WITHHELD = "[Reddit text withheld from the hosted model]"
+_QUOTED = re.compile(r'"[^"\n]{10,}"|“[^”]{10,}”|^[ \t]*>.*$', re.MULTILINE)
+
+
+def withhold_reddit(name: str, content):
+    """A tool result as Gemini may see it: Reddit evidence without its text,
+    link or citation."""
+    if name != "search_evidence" or not isinstance(content, dict):
+        return content
+    items = []
+    for item in content.get("results") or []:
+        reddit = item.get("source") == "arctic_shift" or "reddit.com" in str(item.get("url") or "")
+        items.append({**item, "text": WITHHELD, "url": None, "cite_as": None} if reddit else item)
+    return {**content, "results": items}
+
+
+def history_for_gemini(history: list | None) -> list:
+    """Earlier turns with quoted text withheld: an earlier answer may quote
+    Reddit evidence that another model, or the harness, retrieved."""
+    return [{**h, "content": _QUOTED.sub("[quote withheld]", h.get("content") or "")}
+            if h.get("role") == "assistant" else h for h in history or []]
 
 
 class GeminiBackend(LLMBackend):
@@ -129,7 +159,7 @@ class GeminiBackend(LLMBackend):
         gemini_tools = _to_gemini_tools(tool_schemas)
         # Gemini names the assistant role "model".
         contents = [{"role": "model" if h["role"] == "assistant" else "user",
-                     "parts": [{"text": h["content"]}]} for h in (history or [])]
+                     "parts": [{"text": h["content"]}]} for h in history_for_gemini(history)]
         contents.append({"role": "user", "parts": [{"text": question}]})
 
         for _ in range(MAX_TOOL_ITERATIONS):
@@ -155,7 +185,7 @@ class GeminiBackend(LLMBackend):
                 response_parts.append({
                     "functionResponse": {"name": name,
                                           "response": {"name": name,
-                                                       "content": json.loads(result_json)}},
+                                                       "content": withhold_reddit(name, json.loads(result_json))}},
                 })
             contents.append({"role": "user", "parts": response_parts})
 

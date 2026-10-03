@@ -118,7 +118,7 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
 
     conn = get_connection()
     try:
-        cols = "s.sentence_id, s.text, s.bank, s.url, s.published_at"
+        cols = "s.sentence_id, s.text, s.bank, s.url, s.published_at, s.source"
         if aspect or sentiment:
             cols += ", a.aspect, a.label"
         rows = conn.execute(
@@ -139,9 +139,9 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
         if r[0] in seen:
             continue
         seen.add(r[0])
-        d = {"sentence_id": r[0], "text": r[1], "bank": r[2], "url": r[3], "published_at": r[4]}
+        d = {"sentence_id": r[0], "text": r[1], "bank": r[2], "url": r[3], "published_at": r[4], "source": r[5]}
         if has_aspect_cols:
-            d["aspect"], d["sentiment"] = r[5], r[6]
+            d["aspect"], d["sentiment"] = r[6], r[7]
         candidates.append(d)
 
     cand_ids = {c["sentence_id"] for c in candidates}

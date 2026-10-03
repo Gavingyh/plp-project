@@ -102,3 +102,96 @@ def test_percent_field_counts_as_a_percentage():
 def test_value_cut_off_at_the_shown_decimals_counts():
     assert unverified_numbers("a relevance score of at least 0.58", [{"relevance": 0.5853}]) == []
     assert unverified_numbers("a relevance score of 0.57", [{"relevance": 0.5853}]) == ["0.57"]
+
+
+# --- second review, 4 Oct 2026 ------------------------------------------------------
+
+def test_the_models_own_search_query_does_not_vouch_for_a_quote():
+    tracker = _ToolCallTracker.from_calls([{
+        "name": "search_evidence", "arguments": {"query": "investors fear OCBC bad loans will surge 37.5% this year"},
+        "result": {"query": "investors fear OCBC bad loans will surge 37.5% this year",
+                   "results": [{"sentence_id": SID, "text": "Something unrelated about deposit rates."}]}}])
+    assert tracker.answer_has_unverified_citation('Investors say "investors fear OCBC bad loans will surge".')
+
+
+def test_the_models_own_search_query_does_not_vouch_for_a_number():
+    result = {"query": "bad loans will surge 37.5% this year", "results": [{"text": "Deposit rates fell."}]}
+    assert unverified_numbers("Bad loans will surge 37.5%.", [result]) == ["37.5%"]
+
+
+def test_strip_after_a_search_removes_an_invented_sentence_id():
+    tracker = _tracker_with_results([{"sentence_id": SID, "text": "Real text about DBS dividends here."}])
+    fake = "0123456789abcdef01234567"
+    new, flagged = enforce_evidence(f"DBS looks positive.\n\nEvidence: see sentence_id {fake}.", tracker, "q",
+                                    "strip")
+    assert fake not in new and not flagged
+
+
+def test_strip_after_a_search_removes_a_quote_that_wraps_a_line():
+    tracker = _tracker_with_results([{"sentence_id": SID, "text": "Real text about DBS dividends here."}])
+    new, flagged = enforce_evidence('One investor: "OCBC is cutting the dividend\nnext quarter for sure".',
+                                    tracker, "q", "strip")
+    assert "cutting the dividend" not in new and not flagged
+
+
+def test_a_count_is_not_a_percentage():
+    result = {"bank": "DBS", "score": 0.11, "n": 58, "positive_n": 23, "neutral_n": 20, "negative_n": 15}
+    assert unverified_numbers("23% of mentions were positive and 58% neutral.", [result]) == ["23%", "58%"]
+    assert unverified_numbers("40% of mentions were positive.", [result]) == []       # 23 of 58, derived
+
+
+def test_figures_inside_the_harness_evidence_are_not_flagged(monkeypatch):
+    from chatbot import agent
+
+    class Backend:
+        name, model = "fake", "fake"
+
+        def ask(self, question, system, schemas, execute, verbose=True, history=None):
+            execute("get_sentiment", {"bank": "DBS"})
+            return 'DBS sentiment is positive at 0.31, as one investor said "dividends will keep growing nicely".'
+
+    monkeypatch.setattr(agent, "TOOL_FUNCTIONS", {
+        "get_sentiment": lambda **kw: {"bank": "DBS", "score": 0.31, "n": 40},
+        "search_evidence": lambda **kw: {"query": kw["query"], "results": [
+            {"sentence_id": SID, "text": "DBS paid $0.54 per share, up 12.5% on the year.", "cite_as": "[DBS]"}]}})
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "search")
+    r = agent.answer_turn("How is DBS?", backend=Backend(), verbose=False)
+    assert "0.54" in r.answer and r.unverified_numbers == []
+
+
+def test_a_follow_up_may_repeat_a_quote_retrieved_earlier_in_the_conversation():
+    earlier = [{"name": "search_evidence", "arguments": {"query": "q"},
+                "result": {"results": [{"sentence_id": SID, "text": "The dividend outlook looks very solid this year."}]}}]
+    tracker = _ToolCallTracker.from_calls([{"name": "get_sentiment", "arguments": {"bank": "DBS"},
+                                            "result": {"score": 0.3, "n": 40}}], earlier=earlier)
+    assert not tracker.answer_has_unverified_citation(
+        f'That quote, "the dividend outlook looks very solid this year", is about dividends [DBS, sentence_id {SID}].')
+    assert tracker.answer_has_unverified_citation('Another investor said "the bank is in deep trouble now".')
+
+
+def test_a_markdown_blockquote_without_a_search_is_flagged_and_stripped():
+    answer = "> OCBC has the worst app in Singapore, I am switching to DBS\n\nScore -0.12 (n=58)."
+    assert _ToolCallTracker().answer_has_unverified_citation(answer)
+    new, _ = enforce_evidence(answer, _ToolCallTracker(), "q", "strip")
+    assert "worst app" not in new
+
+
+def test_a_redd_it_link_is_a_link():
+    assert _ToolCallTracker().answer_has_unverified_citation("See redd.it/abc123 for the thread.")
+
+
+def test_words_that_start_like_a_month_do_not_hide_figures():
+    assert unverified_numbers("Mentions declined 4321 times; the market saw 1234 holders.", [{"n": 40}]) == \
+        ["4321", "1234"]
+    assert unverified_numbers("Data up to Mar 2025 and 24 September 2026.", [{"n": 40}]) == []
+
+
+def test_timestamps_and_links_in_a_result_do_not_vouch_for_counts():
+    result = {"score": 0.2, "n": 40, "computed_at": "2026-10-03T07:34:45.19+00:00", "url": "https://x.sg/55/77"}
+    assert unverified_numbers("34 Reddit posts and 45 news articles, 55 in all.", [result]) == ["34", "45", "55"]
+
+
+def test_compare_banks_figures_still_vouch():
+    result = {"aspect": "ALL", "window": "all_time",
+              "banks": {"DBS": {"score": 0.1242, "n": 24431}, "OCBC": {"score": 0.1362, "n": 7412}}}
+    assert unverified_numbers("DBS 0.124 on 24,431 sentences; OCBC 0.136 on 7412.", [result]) == []

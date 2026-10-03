@@ -20,7 +20,10 @@ import os
 
 import config.model_version as current_model
 
-from fastapi import FastAPI, HTTPException, Query
+import sqlite3
+from typing import Literal
+
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -28,8 +31,8 @@ from chatbot.agent import Conversation
 from aggregate.index import compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
-from chatbot.tools import (MIN_VOLUME_FOR_SCORE, compare_banks, get_analyst_consensus,
-                            get_coverage, get_sentiment, get_trend, search_evidence)
+from chatbot.tools import (ASPECT_KEYS, MIN_VOLUME_FOR_SCORE, compare_banks, get_analyst_consensus,
+                            get_coverage, get_sentiment, get_trend, normalize_aspect, search_evidence)
 from ingest.db import get_connection
 
 setup_logging()
@@ -60,21 +63,34 @@ def banks():
     return {"banks": BANKS}
 
 
+def valid_aspect(aspect: str | None = Query(
+        None, description="An aspect key such as dividend_policy (\"dividend policy\" also works), "
+                          "or ALL / empty for every aspect")) -> str | None:
+    """The aspect as a key, or None for all aspects. An unknown aspect is a 422,
+    not an empty result that reads as "no data" (4 Oct 2026)."""
+    if aspect is None or aspect.strip().upper() in ("", "ALL"):
+        return None
+    key = normalize_aspect(aspect)
+    if key not in ASPECT_KEYS:
+        raise HTTPException(status_code=422, detail=f"unknown aspect {aspect!r}; one of {', '.join(ASPECT_KEYS)}")
+    return key
+
+
 @app.get("/sentiment")
 def sentiment(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
-              aspect: str | None = None,
+              aspect: str | None = Depends(valid_aspect),
               window: str = Query("all_time", pattern="^(7d|30d|all_time)$")):
     return get_sentiment(bank, aspect, window)
 
 
 @app.get("/sentiment/compare")
-def sentiment_compare(aspect: str | None = None,
+def sentiment_compare(aspect: str | None = Depends(valid_aspect),
                        window: str = Query("all_time", pattern="^(7d|30d|all_time)$")):
     return compare_banks(aspect, window)
 
 
 @app.get("/sentiment/trend")
-def sentiment_trend(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = None):
+def sentiment_trend(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = Depends(valid_aspect)):
     return get_trend(bank, aspect)
 
 
@@ -134,13 +150,13 @@ def sources_breakdown():
 
 
 @app.get("/coverage")
-def coverage(bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = None):
+def coverage(bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = Depends(valid_aspect)):
     return get_coverage(bank, aspect)
 
 
 @app.get("/evidence")
 def evidence(query: str, bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)$"),
-             aspect: str | None = None,
+             aspect: str | None = Depends(valid_aspect),
              sentiment: str | None = Query(None, pattern="^(positive|neutral|negative)$"),
              k: int = Query(5, ge=1, le=50)):
     return search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k)
@@ -162,7 +178,9 @@ def analyst_consensus_latest():
         cur = conn.execute(LATEST_PER_BANK_SQL)
         cols = [c[0] for c in cur.description]
         rows = [dict(zip(cols, r)) for r in cur.fetchall()]
-    except Exception:
+    except sqlite3.OperationalError as e:
+        if "no such table" not in str(e):
+            raise           # a locked or broken database is an error, not "no consensus yet"
         rows = []   # the table doesn't exist before the first consensus pull
     finally:
         conn.close()
@@ -170,7 +188,7 @@ def analyst_consensus_latest():
 
 
 @app.get("/evidence/latest")
-def evidence_latest(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = None,
+def evidence_latest(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = Depends(valid_aspect),
                     limit: int = Query(30, ge=1, le=200)):
     """The newest sentences for a bank, optionally one aspect, with their stored
     sentiment label: a drill-down list for a dashboard. (`/evidence` is the
@@ -207,7 +225,7 @@ def aspects():
 
 @app.get("/sentiment/series")
 def sentiment_series(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
-                     aspect: str | None = None,
+                     aspect: str | None = Depends(valid_aspect),
                      bucket: str = Query("month", pattern="^(week|month|quarter)$"),
                      source: str = "ALL",
                      min_n: int = Query(5, ge=1)):
@@ -238,13 +256,13 @@ def suggestions(limit: int = Query(6, ge=1, le=20)):
 
 
 class ChatMessage(BaseModel):
-    role: str      # "user" | "assistant"
+    role: Literal["user", "assistant"]
     content: str
 
 
 class ChatRequest(BaseModel):
     message: str
-    backend: str | None = None  # "claude" | "openai" | "gemini" | "ollama" | None (auto-detect)
+    backend: Literal["claude", "openai", "gemini", "ollama"] | None = None  # None: auto-detect
     # Earlier turns, oldest first, so a follow-up ("and OCBC?") resolves. The API
     # stays stateless: the client sends the conversation back each time.
     history: list[ChatMessage] = []
@@ -255,7 +273,11 @@ def chat(req: ChatRequest):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="message must not be empty")
     conv = Conversation.from_messages([m.model_dump() for m in req.history], backend_name=req.backend)
-    turn = conv.ask(req.message)
+    try:
+        turn = conv.ask(req.message)
+    except Exception as e:   # no Ollama running, a missing or rejected key: the backend, not the request
+        logger.warning("chat backend failed: %s", e)
+        raise HTTPException(status_code=503, detail=f"chat backend unavailable: {e}")
     return {"question": req.message, "answer": turn.answer, "guard": turn.guard,
             "citation_unverified": turn.citation_unverified,
             "unverified_numbers": turn.unverified_numbers}

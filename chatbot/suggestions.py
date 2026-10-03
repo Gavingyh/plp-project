@@ -16,6 +16,7 @@ that carries a not-financial-advice disclaimer. They live in
 chatbot/eval_gold_set.py, where the point is to test the refusal.
 """
 
+import sqlite3
 import config.model_version as current_model
 from chatbot.tools import MIN_VOLUME_FOR_SCORE, version_has_rows
 from config.logging_config import get_logger
@@ -53,7 +54,9 @@ def _available(window: str = "all_time") -> list[tuple[str, str, int]]:
             "WHERE window = ? AND source = 'ALL' AND n >= ? AND model_version = ? ORDER BY n DESC",
             (window, MIN_VOLUME_FOR_SCORE, current_model.MODEL_VERSION),
         ).fetchall()
-    except Exception:
+    except sqlite3.OperationalError as e:
+        if "no such table" not in str(e):
+            raise      # a locked or broken database is an error, not "nothing to suggest"
         return []  # table may not exist on a fresh install
     finally:
         conn.close()
@@ -64,7 +67,9 @@ def _banks_with_consensus() -> list[str]:
     try:
         return [r[0] for r in conn.execute(
             "SELECT DISTINCT bank FROM analyst_consensus ORDER BY bank").fetchall()]
-    except Exception:
+    except sqlite3.OperationalError as e:
+        if "no such table" not in str(e):
+            raise
         return []
     finally:
         conn.close()

@@ -60,7 +60,8 @@ from dotenv import load_dotenv
 
 from chatbot.backends import get_backend
 from config.logging_config import get_logger, setup_logging
-from chatbot.guards import advice_reply, scope_reply, unverified_numbers, unverified_sentence_ids
+from chatbot.guards import (advice_reply, is_echo_key, scope_reply, unverified_numbers,
+                            unverified_sentence_ids)
 from chatbot.prompts import SYSTEM_PROMPT, with_state
 from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments
 from ingest.base import detect_banks
@@ -72,7 +73,7 @@ logger = get_logger(__name__)
 
 # A link, with or without its scheme ("www.reddit.com/r/...", "straitstimes.com/...").
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
-                          r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|sg|net|org|io|co)(?:\.[a-z]{2})?/[^\s)\]}\"'“”]*",
+                          r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|sg|net|org|io|co|it|ly)(?:\.[a-z]{2})?/[^\s)\]}\"'“”]*",
                           re.IGNORECASE)
 # A purported verbatim quote: opens after whitespace or punctuation and closes
 # before it, so the gap between two short quotes ('"buy". ... as "hold"')
@@ -81,7 +82,10 @@ _URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
 _QUOTE_PATTERN = re.compile(
     r'(?:^|(?<=[\s(\[:—–*_-]))"[^"\s](?:[^"\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_]|$)'
     r'|“[^”]{10,}?”')
+# A markdown blockquote line ("> OCBC has the worst app..."): quoted text without quote marks.
+_BLOCKQUOTE = re.compile(r"^[ \t]*>[ \t]*(\S.{9,})$", re.MULTILINE)
 _SENTENCE_ID_PATTERN = re.compile(r"sentence[_\s]?id", re.IGNORECASE)
+_SENTENCE_ID = re.compile(r"\b[0-9a-f]{24}\b")
 
 UNVERIFIED_CITATION_WARNING = (
     "\n\n⚠️ VERIFICATION WARNING: this answer cites evidence (a quote, sentence_id or URL) "
@@ -123,11 +127,14 @@ def _norm_url(url: str) -> str:
 
 
 def _collect_text(obj, out: list[str]) -> None:
+    """Every string a tool returned, except what the model itself asked for
+    (its search query, echoed back) and links and timestamps."""
     if isinstance(obj, str):
         out.append(_norm_text(obj))
     elif isinstance(obj, dict):
-        for v in obj.values():
-            _collect_text(v, out)
+        for k, v in obj.items():
+            if not is_echo_key(k):
+                _collect_text(v, out)
     elif isinstance(obj, (list, tuple)):
         for v in obj:
             _collect_text(v, out)
@@ -140,12 +147,24 @@ class _ToolCallTracker:
     used by chatbot/eval_gold_set.py to check whether the model called the
     tool a question actually calls for."""
 
-    def __init__(self):
+    def __init__(self, earlier: list[dict] | None = None):
         self.search_evidence_called = False
         self.verified_urls: set[str] = set()
         self.verified_sentence_ids: set[str] = set()
         self.retrieved_text: list[str] = []      # every string a tool returned, normalised
         self.calls: list[dict] = []
+        # Evidence earlier turns of the conversation retrieved: a follow-up may
+        # repeat it ("explain that second quote") without searching again.
+        self.earlier_text: list[str] = []
+        self.earlier_ids: set[str] = set()
+        for c in earlier or []:
+            if c.get("name") == "search_evidence" and isinstance(c.get("result"), dict):
+                for item in c["result"].get("results", []):
+                    _collect_text(item, self.earlier_text)
+                    if item.get("url"):
+                        self.verified_urls.add(_norm_url(item["url"]))
+                    if item.get("sentence_id"):
+                        self.earlier_ids.add(item["sentence_id"])
 
     def execute(self, name: str, tool_input: dict, by: str = "model") -> str:
         fn = TOOL_FUNCTIONS.get(name)
@@ -154,6 +173,7 @@ class _ToolCallTracker:
         try:
             result = fn(**coerce_tool_arguments(name, tool_input))
         except Exception as e:
+            logger.warning("tool %s failed: %s", name, e)   # the model sees the error; so does the log
             result = {"error": str(e)}
         call = {"name": name, "arguments": tool_input, "result": result}
         if by != "model":
@@ -173,40 +193,52 @@ class _ToolCallTracker:
                     if item.get("sentence_id"):
                         self.verified_sentence_ids.add(item["sentence_id"])
 
-    def unverified_quotes(self, answer: str) -> list[str]:
-        """Quotes in the answer whose text no tool returned. A quote cut with an
-        ellipsis counts if each piece of three or more words was returned."""
+    def unverified_quotes(self, answer: str, strict: bool = False) -> list[str]:
+        """Quotes in the answer (in quote marks, or a markdown blockquote line)
+        whose text neither this turn's tools nor an earlier turn's search
+        returned. A quote cut with an ellipsis counts if each piece of three or
+        more words was returned. A quote with no such piece can't be checked:
+        `strict` counts it as unverified."""
+        known = self.retrieved_text + self.earlier_text
+        spans = [(m.group(0), m.group(0)[1:-1]) for m in _QUOTE_PATTERN.finditer(answer or "")]
+        spans += [(m.group(0), m.group(1)) for m in _BLOCKQUOTE.finditer(answer or "")]
         out = []
-        for m in _QUOTE_PATTERN.finditer(answer or ""):
-            pieces = [p for p in re.split(r"\.{3}|…", _norm_text(m.group(0)[1:-1])) if len(p.split()) >= 3]
-            if pieces and not all(any(p in t for t in self.retrieved_text) for p in pieces):
-                out.append(m.group(0))
+        for span, inner in spans:
+            pieces = [p for p in re.split(r"\.{3}|…", _norm_text(inner)) if len(p.split()) >= 3]
+            if not pieces:
+                if strict:
+                    out.append(span)
+            elif not all(any(p in t for t in known) for p in pieces):
+                out.append(span)
         return out
 
     def unverified_urls(self, answer: str) -> list[str]:
         return [u for u in _URL_PATTERN.findall(answer or "")
                 if _norm_url(u) not in self.verified_urls]
 
+    def known_ids(self) -> set[str]:
+        return self.verified_sentence_ids | self.earlier_ids
+
     def answer_has_unverified_citation(self, answer: str) -> bool:
         if self.unverified_urls(answer):
             return True
-        if unverified_sentence_ids(answer, self.verified_sentence_ids):
+        if unverified_sentence_ids(answer, self.known_ids()):
             return True
-        if self.search_evidence_called and self.unverified_quotes(answer):
+        if self.search_evidence_called:
+            return bool(self.unverified_quotes(answer))
+        # No search this turn: evidence is real only if an earlier turn's search
+        # returned it, word for word. Otherwise any quote, and any sentence_id
+        # reference without a retrieved id (a placeholder like "[insert
+        # sentence_id]"), is fabricated: both were seen in real answers.
+        if self.unverified_quotes(answer, strict=True):
             return True
-        if not self.search_evidence_called:
-            # No real evidence was retrieved at all this turn - any quoted
-            # "evidence" or explicit sentence_id reference must be fabricated,
-            # regardless of whether it's dressed up as a real URL or a
-            # placeholder like "[insert sentence_id]" (both seen in real answers).
-            if _QUOTE_PATTERN.search(answer) or _SENTENCE_ID_PATTERN.search(answer):
-                return True
-        return False
+        mentions = len(_SENTENCE_ID_PATTERN.findall(answer or ""))
+        return mentions > len([i for i in _SENTENCE_ID.findall(answer or "") if i in self.earlier_ids])
 
     @classmethod
-    def from_calls(cls, calls: list[dict]) -> "_ToolCallTracker":
+    def from_calls(cls, calls: list[dict], earlier: list[dict] | None = None) -> "_ToolCallTracker":
         """A tracker holding calls already made, e.g. from a recorded evaluation run."""
-        t = cls()
+        t = cls(earlier)
         for c in calls:
             t._record(dict(c))
         return t
@@ -223,13 +255,19 @@ _SECTION_HEADING = re.compile(r"^[\W_]*(?:sample size|time window|caveats?|notes
                               re.IGNORECASE)
 
 
-def _remove_inline(text: str, quotes: list[str] | None = None, urls: list[str] | None = None) -> str:
+def _remove_inline(text: str, quotes: list[str] | None = None, urls: list[str] | None = None,
+                   ids: list[str] | None = None) -> str:
     """Delete quotes, links and sentence-id references from running text, then
-    tidy what's left ("as one investor said (https://...)." -> "as one investor said.")."""
+    tidy what's left ("as one investor said (https://...)." -> "as one investor said.").
+    With lists given, only those; without, every one."""
     for q in (quotes if quotes is not None else _QUOTE_PATTERN.findall(text)):
         text = text.replace(q, "")
+    if quotes is None:
+        text = _BLOCKQUOTE.sub("", text)
     for u in (urls if urls is not None else _URL_PATTERN.findall(text)):
         text = text.replace(u, "")
+    for sid in ids or []:
+        text = re.sub(rf"(?:sentence[_\s]?id[:\s]*)?{sid}", "", text, flags=re.IGNORECASE)
     if quotes is None:
         text = re.sub(r"\[?[^\[\]\n]{0,40}sentence[_\s]?id[^\[\]\n]{0,40}\]?", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\(\s*\)|\[\s*\]|\*\*|\*(?=\W)|(?<=\W)\*", "", text)
@@ -252,7 +290,7 @@ def strip_unsearched_evidence(answer: str) -> str:
         if skipping and _SECTION_HEADING.match(line):
             skipping = False
         if skipping or _URL_PATTERN.search(line) or _QUOTE_PATTERN.search(line) \
-                or _SENTENCE_ID_PATTERN.search(line):
+                or _BLOCKQUOTE.search(line) or _SENTENCE_ID_PATTERN.search(line):
             continue
         kept.append(line)
     body = re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip()
@@ -293,9 +331,10 @@ def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode
     if mode == "off" or not tracker.answer_has_unverified_citation(answer):
         return answer, tracker.answer_has_unverified_citation(answer)
     if tracker.search_evidence_called:
-        cleaned = "\n".join(_remove_inline(line, tracker.unverified_quotes(line), tracker.unverified_urls(line))
-                            if (tracker.unverified_quotes(line) or tracker.unverified_urls(line)) else line
-                            for line in answer.split("\n"))
+        # The whole answer at once: a quote can wrap onto the next line, and an
+        # invented sentence id must go too (4 Oct 2026: both survived).
+        cleaned = _remove_inline(answer, tracker.unverified_quotes(answer), tracker.unverified_urls(answer),
+                                 unverified_sentence_ids(answer, tracker.known_ids()))
         return cleaned + EVIDENCE_UNMATCHED_NOTE, tracker.answer_has_unverified_citation(cleaned)
     stripped = strip_unsearched_evidence(answer)
     still_flagged = tracker.answer_has_unverified_citation(stripped)  # checked before any harness search
@@ -316,7 +355,8 @@ class TurnResult:
 
 
 def answer_turn(question: str, backend_name: str | None = None, history: list | None = None,
-                state: dict | None = None, verbose: bool = True, backend=None) -> TurnResult:
+                state: dict | None = None, verbose: bool = True, backend=None,
+                earlier_calls: list | None = None) -> TurnResult:
     context_banks = (state or {}).get("banks")
     in_conversation = bool(context_banks or (state or {}).get("aspect"))
     for guard, reply in (("advice", advice_reply(question, context_banks)),
@@ -330,7 +370,7 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
     if verbose:
         logger.info("backend: %s (%s)", backend.name, getattr(backend, "model", "?"))
 
-    tracker = _ToolCallTracker()
+    tracker = _ToolCallTracker(earlier_calls)
     answer = backend.ask(question, with_state(SYSTEM_PROMPT, state), TOOL_SCHEMAS,
                          tracker.execute, verbose=verbose, history=history)
     if not (answer or "").strip(" \n{}[]\"'"):
@@ -353,10 +393,11 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
         result.citation_unverified = True
         result.answer += UNVERIFIED_CITATION_WARNING
 
-    # Only the model's own calls: a harness search run afterwards must not vouch
-    # for figures the model wrote before it.
-    figures = unverified_numbers(answer, [c.get("result") for c in tracker.calls if c.get("by") != "harness"],
-                                 question)
+    # Only the model's own text and calls: a harness search run afterwards must
+    # not vouch for figures the model wrote before it, and the real quotes the
+    # harness added are not the model's figures.
+    figures = unverified_numbers(answer.split(EVIDENCE_FOUND_HEADING)[0],
+                                 [c.get("result") for c in tracker.calls if c.get("by") != "harness"], question)
     if figures:
         if verbose:
             logger.warning("number check failed: %s not returned by any tool", figures)
@@ -431,8 +472,9 @@ class Conversation:
                 self.state["banks"] = banks
 
     def ask(self, question: str, verbose: bool = False) -> TurnResult:
+        earlier = [c for t in self.turns[-HISTORY_TURNS:] for c in t.calls if c.get("name") == "search_evidence"]
         r = answer_turn(question, backend_name=self.backend_name, history=self.history(),
-                        state=self.state, verbose=verbose)
+                        state=self.state, verbose=verbose, earlier_calls=earlier)
         self._update_state(r)
         self.turns.append(r)
         if self.trace_path:

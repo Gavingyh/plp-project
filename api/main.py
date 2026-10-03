@@ -120,11 +120,11 @@ def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_t
     """Raw rows from sentiment_index for the given window - one call to build
     a full bank x aspect grid client-side, instead of one call per cell.
 
-    `source` defaults to "ALL" (the blended headline number). Pass a specific
-    source ("earnings", "arctic_shift", "newsapi") to get that component
-    alone, or "*" for every row including all per-source breakdowns - useful
-    for showing what the blend is made of, which matters here because
-    earnings coverage is very unequal across banks (see /sources)."""
+    `source` defaults to "ALL" (the blended headline number). Pass one source
+    the index holds (an unknown one is a 422; /sources lists them) to get that
+    component alone, or "*" for every row including all per-source
+    breakdowns - useful for showing what the blend is made of, which matters
+    because the source mix differs between banks (see /sources)."""
     conn = get_connection()
     try:
         if source == "*":
@@ -152,10 +152,9 @@ def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_t
 @app.get("/sources")
 def sources_breakdown():
     """Per-bank, per-source sentence counts - the composition behind the
-    blended index. Exposed because earnings coverage is currently very
-    unequal (UOB's IR site is WAF-blocked, so it has almost no earnings
-    material), which makes a naive cross-bank comparison misleading unless a
-    reader can see this."""
+    blended index. Exposed because the source mix differs between banks (DBS
+    has several times the earnings text of the other two), which makes a
+    naive cross-bank comparison misleading unless a reader can see it."""
     conn = get_connection()
     try:
         rows = conn.execute(

@@ -74,7 +74,7 @@ logger = get_logger(__name__)
 
 # A link, with or without its scheme ("www.reddit.com/r/...", "straitstimes.com/...").
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
-                          r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|sg|net|org|io|co|it|ly)(?:\.[a-z]{2})?/[^\s)\]}\"'“”]*",
+                          r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/[^\s)\]}\"'“”]*",
                           re.IGNORECASE)
 # A purported verbatim quote: opens after whitespace or punctuation and closes
 # before it, so the gap between two short quotes ('"buy". ... as "hold"')

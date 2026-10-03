@@ -179,8 +179,8 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
             "recent_7d_unshrunk_score": recent_unshrunk,
             "baseline_30d_unshrunk_score": baseline_unshrunk,
             "delta_basis": "recent_7d_unshrunk_score minus baseline_30d_unshrunk_score: the "
-                           "scores before the index's n/(n+5) shrinkage, which pulls a thin "
-                           "window towards 0",
+                           f"scores before the index's n/(n+{SHRINKAGE_K}) shrinkage, which pulls a "
+                           "thin window towards 0",
             "series_note": ("monthly, same weighting and shrinkage as the index; thin months omitted"
                             if series else
                             f"monthly series unavailable: {series_error}" if series_error else

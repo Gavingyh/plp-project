@@ -622,7 +622,7 @@
     },
     "/sentiment/index": {
       "get": {
-        "description": "Raw rows from sentiment_index for the given window - one call to build\na full bank x aspect grid client-side, instead of one call per cell.\n\n`source` defaults to \"ALL\" (the blended headline number). Pass a specific\nsource (\"earnings\", \"arctic_shift\", \"newsapi\") to get that component\nalone, or \"*\" for every row including all per-source breakdowns - useful\nfor showing what the blend is made of, which matters here because\nearnings coverage is very unequal across banks (see /sources).",
+        "description": "Raw rows from sentiment_index for the given window - one call to build\na full bank x aspect grid client-side, instead of one call per cell.\n\n`source` defaults to \"ALL\" (the blended headline number). Pass one source\nthe index holds (an unknown one is a 422; /sources lists them) to get that\ncomponent alone, or \"*\" for every row including all per-source\nbreakdowns - useful for showing what the blend is made of, which matters\nbecause the source mix differs between banks (see /sources).",
         "operationId": "sentiment_index_dump_sentiment_index_get",
         "parameters": [
           {
@@ -821,7 +821,7 @@
     },
     "/sources": {
       "get": {
-        "description": "Per-bank, per-source sentence counts - the composition behind the\nblended index. Exposed because earnings coverage is currently very\nunequal (UOB's IR site is WAF-blocked, so it has almost no earnings\nmaterial), which makes a naive cross-bank comparison misleading unless a\nreader can see this.",
+        "description": "Per-bank, per-source sentence counts - the composition behind the\nblended index. Exposed because the source mix differs between banks (DBS\nhas several times the earnings text of the other two), which makes a\nnaive cross-bank comparison misleading unless a reader can see it.",
         "operationId": "sources_breakdown_sources_get",
         "responses": {
           "200": {

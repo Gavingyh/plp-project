@@ -34,10 +34,12 @@ from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, Tool
 
 logger = get_logger(__name__)
 
-DEFAULT_BASE_URL = "http://localhost:11434"
-DEFAULT_MODEL = "llama3.2:3b"
-MAX_TOOL_ITERATIONS = 8
-_REQUEST_TIMEOUT = 120  # local generation, esp. "thinking" models, can be slow on CPU
+from chatbot import settings
+
+DEFAULT_BASE_URL = settings.get("ollama_url")
+DEFAULT_MODEL = settings.get("models.ollama")
+MAX_TOOL_ITERATIONS = settings.get("max_tool_iterations")
+_REQUEST_TIMEOUT = settings.get("timeouts_seconds.ollama")  # local generation can be slow on a CPU
 
 
 class OllamaBackend(LLMBackend):

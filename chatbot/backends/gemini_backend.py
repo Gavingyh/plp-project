@@ -40,10 +40,12 @@ from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, Tool
 
 logger = get_logger(__name__)
 
-DEFAULT_MODEL = "gemini-3.8-flash"
-MAX_TOOL_ITERATIONS = 8
-_REQUEST_TIMEOUT = 60
-_RETRY_WAITS = (2, 5, 15)   # seconds before each retry on 429 / 503
+from chatbot import settings
+
+DEFAULT_MODEL = settings.get("models.gemini")
+MAX_TOOL_ITERATIONS = settings.get("max_tool_iterations")
+_REQUEST_TIMEOUT = settings.get("timeouts_seconds.hosted")
+_RETRY_WAITS = tuple(settings.get("retry_waits_seconds.gemini"))   # before each retry on 429 / 503
 _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 

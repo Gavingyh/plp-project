@@ -19,7 +19,9 @@ History = list[dict]  # earlier turns: [{"role": "user" | "assistant", "content"
 
 # Factual, grounded answers want near-greedy decoding (TPML Day 3 decoding guide:
 # temperature 0.1-0.3 for factual QA). Ollama's own default is tuned for chat.
-DEFAULT_TEMPERATURE = 0.2
+from chatbot import settings
+
+DEFAULT_TEMPERATURE = settings.get("temperature")
 
 
 class LLMBackend(ABC):

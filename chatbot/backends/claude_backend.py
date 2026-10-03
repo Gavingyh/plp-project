@@ -13,7 +13,10 @@ from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, Tool
 
 logger = get_logger(__name__)
 
-MAX_TOOL_ITERATIONS = 8  # safety cap so a confused loop can't run forever
+from chatbot import settings
+
+MAX_TOOL_ITERATIONS = settings.get("max_tool_iterations")  # a confused loop can't run forever
+MAX_OUTPUT_TOKENS = settings.get("max_output_tokens")
 
 
 class ClaudeBackend(LLMBackend):
@@ -40,7 +43,7 @@ class ClaudeBackend(LLMBackend):
 
         for _ in range(MAX_TOOL_ITERATIONS):
             response = client.messages.create(
-                model=self.model, max_tokens=1024, system=system, temperature=self.temperature,
+                model=self.model, max_tokens=MAX_OUTPUT_TOKENS, system=system, temperature=self.temperature,
                 tools=tool_schemas, messages=messages,
             )
             messages.append({"role": "assistant", "content": response.content})

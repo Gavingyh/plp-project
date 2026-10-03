@@ -15,8 +15,8 @@ system prompt still says to decline advice and unrelated questions, and the
 turn records that no intent was found. Failing open keeps the chatbot usable;
 the evaluation (chatbot/eval_intent.py) measures how often it would matter.
 
-Settings: CHATBOT_INTENT_MODEL (default llama3.1:8b), CHATBOT_INTENT_THINK
-("false" turns a reasoning model's thinking off), OLLAMA_BASE_URL.
+Settings in config/chatbot.yaml: models.intent (CHATBOT_INTENT_MODEL),
+intent_think (CHATBOT_INTENT_THINK), ollama_url, timeouts_seconds.intent.
 """
 
 import functools
@@ -26,6 +26,7 @@ import os
 import requests
 import yaml
 
+from chatbot import settings
 from config.logging_config import get_logger
 from ingest.base import detect_banks
 
@@ -34,7 +35,6 @@ logger = get_logger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "intents.yaml")
 IN_SCOPE = "in_scope"
-TIMEOUT_SECONDS = 60
 
 
 @functools.cache
@@ -48,12 +48,12 @@ def intent_names() -> list[str]:
 
 
 def default_model() -> str:
-    return os.environ.get("CHATBOT_INTENT_MODEL") or "llama3.1:8b"
+    return settings.get("models.intent")
 
 
 def _think_setting() -> bool | None:
-    value = (os.environ.get("CHATBOT_INTENT_THINK") or "").strip().lower()
-    return {"false": False, "true": True}.get(value)
+    value = settings.get("intent_think")
+    return value if isinstance(value, bool) else None
 
 
 def describe_context(state: dict | None, previous_question: str | None) -> str:
@@ -97,8 +97,8 @@ def ollama_chat(model: str, messages: list[dict], names: list[str]) -> str:
     think = _think_setting()
     if think is not None:
         payload["think"] = think
-    url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434"
-    resp = requests.post(f"{url}/api/chat", timeout=TIMEOUT_SECONDS, json=payload)
+    resp = requests.post(f"{settings.get('ollama_url')}/api/chat", timeout=settings.get("timeouts_seconds.intent"),
+                         json=payload)
     resp.raise_for_status()
     return resp.json()["message"]["content"]
 

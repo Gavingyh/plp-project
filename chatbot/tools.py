@@ -12,6 +12,8 @@ confabulating when it doesn't.
 """
 
 import os
+
+from chatbot import settings
 import sqlite3
 
 import yaml
@@ -158,7 +160,8 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
     # the volume floor here, so neither is a handful of items.
     recent_unshrunk, baseline_unshrunk = round(_unshrunk(recent), 4), round(_unshrunk(baseline), 4)
     delta = round(recent_unshrunk - baseline_unshrunk, 4)
-    direction = "improving" if delta > 0.02 else "declining" if delta < -0.02 else "stable"
+    stable = settings.get("trend.stable_within")
+    direction = "improving" if delta > stable else "declining" if delta < -stable else "stable"
 
     # A two-point comparison can only say "up" or "down". The monthly series
     # gives the shape behind that. Capped at 12 points and trimmed to
@@ -168,7 +171,7 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
     try:
         series = [{"period": p["period"], "score": p["score"], "n": p["n"]}
                   for p in compute_time_series(bank, aspect, bucket="month")
-                  if p["sufficient"]][-12:]
+                  if p["sufficient"]][-settings.get("trend.monthly_points"):]
     except (sqlite3.Error, ValueError) as e:
         # A database error or a bad stored label is not "no data": log it and say so in the note.
         logger.warning("monthly series failed for %s/%s: %s", bank, aspect or "ALL", e)

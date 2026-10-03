@@ -61,6 +61,7 @@ from dotenv import load_dotenv
 from chatbot.backends import get_backend
 from config.logging_config import get_logger, setup_logging
 from chatbot import intent as intents
+from chatbot import settings
 from chatbot.guards import is_evidence_text_key, unverified_numbers, unverified_sentence_ids
 from chatbot.prompts import SYSTEM_PROMPT, with_state
 from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments
@@ -110,8 +111,8 @@ EVIDENCE_REMOVED_NOTE = (
 EVIDENCE_FOUND_HEADING = "\n\nEvidence found by the system for this answer (search_evidence):"
 ENFORCE_MODES = ("off", "strip", "search")
 
-HISTORY_TURNS = 3            # earlier question/answer pairs passed to the model
-HISTORY_ANSWER_CHARS = 1200  # earlier answers are trimmed so they don't crowd the context
+HISTORY_TURNS = settings.get("history.turns")                # earlier question/answer pairs passed to the model
+HISTORY_ANSWER_CHARS = settings.get("history.answer_chars")  # earlier answers are trimmed so they don't crowd the context
 
 
 def _norm_text(text: str) -> str:
@@ -246,7 +247,7 @@ class _ToolCallTracker:
 
 def enforce_evidence_mode() -> str:
     """CHATBOT_ENFORCE_EVIDENCE: off (default), strip or search."""
-    mode = (os.environ.get("CHATBOT_ENFORCE_EVIDENCE") or "off").strip().lower()
+    mode = (settings.get("enforce_evidence") or "off").strip().lower()
     return mode if mode in ENFORCE_MODES else "off"
 
 
@@ -307,7 +308,7 @@ def _harness_search(tracker: _ToolCallTracker, question: str) -> str:
         elif args.get("bank") and args["bank"] not in banks:
             banks.append(args["bank"])
         aspect = aspect or args.get("aspect")
-    k = 3 if len(banks) <= 1 else 1
+    k = settings.get("harness_search.k_one_bank") if len(banks) <= 1 else settings.get("harness_search.k_each_bank")
     lines = []
     for bank in (banks or [None])[:3]:
         args = {"query": question, "k": k, **({"bank": bank} if bank else {}),
@@ -428,7 +429,7 @@ class Conversation:
         self.backend_name = backend_name
         self.turns: list[TurnResult] = []
         self.state: dict = {"banks": [], "aspect": None, "window": None}
-        self.trace_path = trace_path or os.environ.get("CHATBOT_TRACE_FILE") or None
+        self.trace_path = trace_path or settings.get("trace_file") or None
 
     @classmethod
     def from_messages(cls, messages: list[dict], backend_name: str | None = None) -> "Conversation":

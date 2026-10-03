@@ -50,9 +50,11 @@ import os
 import pandas as pd
 import requests
 
+from chatbot import settings
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EVAL_DIR = os.path.join(BASE_DIR, "data", "eval")
-OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_URL = settings.get("ollama_url")
 MAX_RESULT_CHARS = 12000   # with num_ctx below, so the prompt isn't cut by the model's context
 SCALE = {3: "supported", 2: "minor unsupported detail", 1: "contradicted or invented"}
 
@@ -142,7 +144,7 @@ def ollama_judge(model: str, messages: list[dict], think: bool | None = None,
                "format": schema or _SCORE_SCHEMA}
     if think is not None:
         payload["think"] = think
-    resp = requests.post(f"{OLLAMA_URL}/api/chat", timeout=300, json=payload)
+    resp = requests.post(f"{OLLAMA_URL}/api/chat", timeout=settings.get("timeouts_seconds.judge"), json=payload)
     resp.raise_for_status()
     return resp.json()["message"]["content"]
 
@@ -209,7 +211,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("sheet"); s.add_argument("--results", required=True)
-    j = sub.add_parser("judge"); j.add_argument("--results", required=True); j.add_argument("--model", default="qwen3:4b")
+    j = sub.add_parser("judge"); j.add_argument("--results", required=True); j.add_argument("--model", default=settings.get("models.judge"))
     j.add_argument("--no-think", action="store_true", help="turn off a reasoning model's thinking (qwen3)")
     j.add_argument("--prompt", choices=["full", "checklist"], default="full")
     j.add_argument("--tag", default=None, help="added to the output file name, to keep variants apart")

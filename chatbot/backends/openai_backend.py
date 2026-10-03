@@ -40,12 +40,14 @@ from chatbot.backends.base import DEFAULT_TEMPERATURE, History, LLMBackend, Tool
 
 logger = get_logger(__name__)
 
-DEFAULT_MODEL = "gpt-4o-mini"
-MAX_TOOL_ITERATIONS = 8
-_REQUEST_TIMEOUT = 60
-DEFAULT_BASE_URL = "https://api.openai.com/v1"
-_RETRY_WAITS = (5, 15, 30, 60)   # seconds before each retry on 429 / 503, unless Retry-After says
-_MAX_RETRY_AFTER = 60
+from chatbot import settings
+
+DEFAULT_MODEL = settings.get("models.openai")
+MAX_TOOL_ITERATIONS = settings.get("max_tool_iterations")
+_REQUEST_TIMEOUT = settings.get("timeouts_seconds.hosted")
+DEFAULT_BASE_URL = settings.get("openai_base_url")
+_RETRY_WAITS = tuple(settings.get("retry_waits_seconds.openai"))  # before each retry on 429 / 503, unless Retry-After says
+_MAX_RETRY_AFTER = settings.get("max_retry_after_seconds")
 
 
 class OpenAIBackend(LLMBackend):

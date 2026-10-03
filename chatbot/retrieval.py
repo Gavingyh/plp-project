@@ -36,6 +36,7 @@ import re
 import numpy as np
 import yaml
 
+from chatbot import settings
 from aspects.embed import embed_sentences
 from aspects.embed_store import load_for_search
 from ingest.db import get_connection
@@ -68,7 +69,7 @@ _aspect_labels: dict | None = None
 
 
 def aspect_query_enabled() -> bool:
-    return os.environ.get("CHATBOT_ASPECT_QUERY", "").strip().lower() in ("1", "true", "yes")
+    return bool(settings.get("aspect_query"))
 
 
 def ranking_query(query: str, aspect: str | None) -> str:

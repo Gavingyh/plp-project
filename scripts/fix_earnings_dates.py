@@ -26,6 +26,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import ingest.db  # noqa: E402
 from ingest.earnings_extract import _quarter_to_announcement_date  # noqa: E402
 
 
@@ -52,8 +53,7 @@ def apply(conn, rows) -> None:
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--apply", action="store_true", help="write the corrected dates (needs team approval)")
-    p.add_argument("--db", default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                                "data", "plp.db"))
+    p.add_argument("--db", default=ingest.db.DB_PATH)
     args = p.parse_args()
     # Checked before connecting: --apply opens read-write, which would create
     # an empty database at a mistyped path before failing on it.

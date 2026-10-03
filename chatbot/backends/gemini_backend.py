@@ -29,12 +29,11 @@ deprecations page), so check that page when this starts failing with 404.
 """
 
 import json
-import re
-import sys
 import time
 
 import requests
 
+from config import sources
 from config.logging_config import get_logger
 from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
 
@@ -83,18 +82,23 @@ def _to_gemini_tools(claude_tool_schemas: list[dict]) -> list[dict]:
 # key is the one set (4 Oct 2026). The model still sees that a Reddit sentence
 # exists, its bank, date, sentiment and id, and can't quote it: a quote it
 # writes is then invented, and the citation check flags it.
-WITHHELD = "[Reddit text withheld from the hosted model]"
+WITHHELD = "[text by a member of the public (Reddit), withheld from the hosted model]"
 
 
 def withhold_reddit(name: str, content):
-    """A tool result as Gemini may see it: Reddit evidence without its text,
-    link or citation."""
+    """A tool result as Gemini may see it: evidence written by members of the
+    public (config/sources.yaml, personal_text) without its text, link or
+    citation. Evidence from a source the config doesn't list, or with no
+    source, is withheld too: unknown text is treated as personal."""
     if name != "search_evidence" or not isinstance(content, dict):
         return content
+    personal, known = sources.personal_text_sources(), sources.weights().keys()
     items = []
     for item in content.get("results") or []:
-        reddit = item.get("source") == "arctic_shift" or "reddit.com" in str(item.get("url") or "")
-        items.append({**item, "text": WITHHELD, "url": None, "cite_as": None} if reddit else item)
+        source = item.get("source")
+        withhold = (source in personal or source not in known
+                    or "reddit.com" in str(item.get("url") or ""))
+        items.append({**item, "text": WITHHELD, "url": None, "cite_as": None} if withhold else item)
     return {**content, "results": items}
 
 

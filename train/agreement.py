@@ -33,7 +33,6 @@ USAGE:
 """
 
 import argparse
-import os
 
 import pandas as pd
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
@@ -42,7 +41,6 @@ from config.logging_config import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LABELS = ["negative", "neutral", "positive"]
 KEY = ["sentence_id", "aspect"]
 ASPECT_KEY = ["sentence_id"]   # aspect agreement: the aspect is the thing compared
@@ -76,9 +74,8 @@ def _clean(series: pd.Series) -> pd.Series:
 
 
 def aspect_keys() -> list[str]:
-    import yaml
-    with open(os.path.join(BASE_DIR, "config", "aspects.yaml")) as f:
-        return list(yaml.safe_load(f)["aspects"].keys())
+    from config import aspect_taxonomy
+    return aspect_taxonomy.keys()
 
 
 def _one_row_per_pair(df: pd.DataFrame, col: str, name: str, key: list[str] = KEY) -> pd.DataFrame:

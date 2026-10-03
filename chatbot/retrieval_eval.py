@@ -95,11 +95,10 @@ def evaluate(labels: pd.DataFrame, vec_by_id: dict, embed, aspect_label: dict,
 
 def main():
     argparse.ArgumentParser(description=__doc__.split("\n\n")[0]).parse_args()
-    import yaml
     from aspects.embed import embed_sentences
     from aspects.embed_store import load_for_search
-    with open(os.path.join(BASE_DIR, "config", "aspects.yaml")) as f:
-        aspect_label = {k: v.get("label", k) for k, v in yaml.safe_load(f)["aspects"].items()}
+    from config import aspect_taxonomy
+    aspect_label = aspect_taxonomy.labels()
     labels = pd.read_csv(LABELS_PATH)
     ids, vecs = load_for_search()
     wanted = set(labels["sentence_id"])

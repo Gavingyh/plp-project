@@ -75,8 +75,8 @@ Each row names the file and line an element comes from, and the text that line m
 | model call | `chatbot/backends/ollama_backend.py:85` | `data = self._chat(messages, ollama_tools)` |
 | temperature sent | `chatbot/backends/ollama_backend.py:57` | `"options": {"temperature": self.temperature}` |
 | tool executed and recorded | `chatbot/agent.py:177` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
-| tools read the database | `chatbot/tools.py:79` | `def get_sentiment(bank: str` |
-| evidence search uses embeddings | `chatbot/retrieval.py:156` | `query_vec = embed_sentences([rank_text])[0]` |
+| tools read the database | `chatbot/tools.py:74` | `def get_sentiment(bank: str` |
+| evidence search uses embeddings | `chatbot/retrieval.py:149` | `query_vec = embed_sentences([rank_text])[0]` |
 | figures checked against results | `chatbot/agent.py:430` | `figures = unverified_numbers(` |
 | state updated | `chatbot/agent.py:512` | `self._update_state(r)` |
 | turn kept | `chatbot/agent.py:513` | `self.turns.append(r)` |

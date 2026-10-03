@@ -30,11 +30,10 @@ The word-overlap boost uses the same cleaned text, since question words
 """
 
 import config.model_version as current_model
-import os
+from config import aspect_taxonomy
 import re
 
 import numpy as np
-import yaml
 
 from chatbot import settings
 from aspects.embed import embed_sentences
@@ -64,8 +63,6 @@ _QUESTION_WORDS = {
     "s", "its", "it", "for", "to", "in", "and", "or", "with", "evidence", "some", "you", "can", "i",
 }
 _BANK_WORDS = {"dbs", "posb", "ocbc", "uob", "bank", "banks"}
-_ASPECTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "aspects.yaml")
-_aspect_labels: dict | None = None
 
 
 def aspect_query_enabled() -> bool:
@@ -76,13 +73,9 @@ def ranking_query(query: str, aspect: str | None) -> str:
     """The text whose embedding ranks the candidates: the aspect's readable
     name plus the question's content words when an aspect is given, else the
     query unchanged."""
-    global _aspect_labels
     if not aspect:
         return query
-    if _aspect_labels is None:
-        with open(_ASPECTS_PATH) as f:
-            _aspect_labels = {k: v.get("label", k) for k, v in yaml.safe_load(f)["aspects"].items()}
-    label = _aspect_labels.get(aspect, aspect)
+    label = aspect_taxonomy.labels().get(aspect, aspect)
     # Bank names are already applied as a filter, and words the label carries
     # add nothing; what's left is the question's own topic ("cut", "complaints").
     skip = _QUESTION_WORDS | _BANK_WORDS | set(_WORD.findall(label.lower()))

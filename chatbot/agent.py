@@ -65,7 +65,7 @@ from chatbot import settings
 from chatbot.guards import is_evidence_text_key, unverified_numbers, unverified_sentence_ids
 from chatbot.prompts import SYSTEM_PROMPT, with_state
 from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments
-from ingest.base import detect_banks
+from ingest.base import BANK_NAMES, detect_banks
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -332,7 +332,7 @@ def _harness_search(tracker: _ToolCallTracker, question: str) -> str:
     for c in tracker.calls:
         args = c.get("arguments") or {}
         if c["name"] == "compare_banks":
-            banks = ["DBS", "OCBC", "UOB"]
+            banks = list(BANK_NAMES)
         elif args.get("bank") and args["bank"] not in banks:
             banks.append(args["bank"])
         aspect = aspect or args.get("aspect")
@@ -493,7 +493,7 @@ class Conversation:
         for c in r.calls:
             args = c.get("arguments") or {}
             if c["name"] == "compare_banks":
-                self.state["banks"] = ["DBS", "OCBC", "UOB"]
+                self.state["banks"] = list(BANK_NAMES)
             elif args.get("bank"):
                 self.state["banks"] = [args["bank"]]
             if c["name"] in ("get_sentiment", "compare_banks", "get_trend", "get_coverage"):

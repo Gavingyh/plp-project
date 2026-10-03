@@ -11,25 +11,21 @@ check "do I have data on this at all" before answering, rather than
 confabulating when it doesn't.
 """
 
-import os
-
-from chatbot import settings
 import sqlite3
 
-import yaml
-
 import config.model_version as current_model
-from aggregate.index import SHRINKAGE_K, compute_time_series
-from config.logging_config import get_logger
-from ingest.db import get_connection
+from aggregate.index import MIN_N, SHRINKAGE_K, compute_time_series
+from chatbot import settings
 from chatbot.retrieval import search_evidence as _search_evidence
+from config import aspect_taxonomy
+from config.logging_config import get_logger
+from ingest.base import BANK_NAMES
+from ingest.db import get_connection
 
 logger = get_logger(__name__)
 
-MIN_VOLUME_FOR_SCORE = 5  # below this, report insufficient data rather than a number
+MIN_VOLUME_FOR_SCORE = MIN_N  # below this, report insufficient data rather than a number
 
-_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_ASPECTS_CONFIG_PATH = os.path.join(_BASE_DIR, "config", "aspects.yaml")
 
 
 def _load_aspect_keys() -> list[str]:
@@ -41,8 +37,7 @@ def _load_aspect_keys() -> list[str]:
     valid question. A missing or broken file is an error: falling back to a
     built-in list (the proposal's four, until 4 Oct 2026) made the API reject
     real aspects without saying why."""
-    with open(_ASPECTS_CONFIG_PATH) as f:
-        return list(yaml.safe_load(f)["aspects"].keys())
+    return aspect_taxonomy.keys()
 
 
 ASPECT_KEYS = _load_aspect_keys()
@@ -121,7 +116,7 @@ def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time"
 
 def compare_banks(aspect: str | None = None, window: str = "all_time") -> dict:
     """Side-by-side sentiment across DBS/OCBC/UOB for one aspect (or overall)."""
-    results = {bank: get_sentiment(bank, aspect, window) for bank in ("DBS", "OCBC", "UOB")}
+    results = {bank: get_sentiment(bank, aspect, window) for bank in BANK_NAMES}
     return {"aspect": aspect or "ALL", "window": window, "banks": results}
 
 
@@ -294,7 +289,7 @@ TOOL_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS,
                            "description": "One of the frozen aspect keys, using underscores "
                                           "(e.g. \"dividend_policy\", not \"dividend policy\"), "
@@ -319,7 +314,7 @@ TOOL_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS},
             },
             "required": ["bank"],
@@ -333,7 +328,7 @@ TOOL_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS},
             },
         },
@@ -347,7 +342,7 @@ TOOL_SCHEMAS = [
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "What to search for, in natural language."},
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS},
                 "sentiment": {"type": "string", "enum": ["positive", "neutral", "negative"]},
                 "k": {"type": "integer", "description": "Max results, default 5"},
@@ -363,7 +358,7 @@ TOOL_SCHEMAS = [
                         "analyst report — do not claim to know why analysts hold that view.",
         "input_schema": {
             "type": "object",
-            "properties": {"bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]}},
+            "properties": {"bank": {"type": "string", "enum": list(BANK_NAMES)}},
             "required": ["bank"],
         },
     },

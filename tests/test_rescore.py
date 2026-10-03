@@ -88,6 +88,13 @@ def test_refuses_the_real_database(db, monkeypatch):
     assert rescore.main(["--db", db, "--aspects", "llm", "--apply"]) == 2
 
 
+def test_refuses_data_plp_db_even_when_another_database_is_served(db, monkeypatch):
+    # With PLP_DB_PATH set, REAL_DB is the served copy; data/plp.db stays protected too.
+    import ingest.db
+    monkeypatch.setattr(ingest.db, "DEFAULT_DB_PATH", db)
+    assert rescore.main(["--db", db, "--aspects", "llm", "--apply"]) == 2
+
+
 def test_refuses_when_a_sentence_has_no_llm_answer(db, tmp_path):
     (tmp_path / "answers.jsonl").write_text(json.dumps({"sentence_id": "s1", "aspect": "dividend_policy"}) + "\n")
     with pytest.raises(SystemExit, match="2 of 3 sentences have no answer"):

@@ -47,7 +47,7 @@ import numpy as np
 import pandas as pd
 
 import config.model_version as current_model
-from aggregate.index import _SOURCE_WEIGHT, _summarize
+from aggregate.index import _DEFAULT_WEIGHT, _SOURCE_WEIGHT, _summarize
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(BASE_DIR, "data", "preview")
@@ -156,7 +156,7 @@ def summarize(pairs: pd.DataFrame, meta: pd.DataFrame) -> pd.DataFrame:
     m = pairs.merge(meta[["sentence_id", "bank", "source"]], on="sentence_id")
     groups, best = defaultdict(list), {}
     for r in m.itertuples(index=False):
-        item = (r.label, float(r.confidence), _SOURCE_WEIGHT.get(r.source, 1.0))
+        item = (r.label, float(r.confidence), _SOURCE_WEIGHT.get(r.source, _DEFAULT_WEIGHT))
         groups[(r.bank, r.aspect)].append(item)
         key = (r.bank, r.sentence_id)
         if key not in best or item[1] > best[key][1]:

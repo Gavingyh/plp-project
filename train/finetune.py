@@ -47,7 +47,6 @@ from torch.utils.data import Dataset
 from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
                           DataCollatorWithPadding, EarlyStoppingCallback, Trainer,
                           TrainingArguments)
-import yaml
 
 from train.labels import check_splits
 
@@ -73,7 +72,6 @@ def head_label2id(model_name: str = None) -> dict[str, int]:
     return order if set(order) == set(LABELS) else dict(LABEL2ID)
 
 
-ASPECTS_CONFIG = os.path.join(BASE_DIR, "config", "aspects.yaml")
 
 
 class PairDataset(Dataset):
@@ -132,8 +130,8 @@ class WeightedTrainer(Trainer):
 
 def aspect_labels() -> dict[str, str]:
     """Aspect key -> readable label from config/aspects.yaml."""
-    with open(ASPECTS_CONFIG) as f:
-        return {k: v.get("label", k) for k, v in yaml.safe_load(f)["aspects"].items()}
+    from config import aspect_taxonomy
+    return aspect_taxonomy.labels()
 
 
 def corpus_shares(column: str) -> dict[str, float]:

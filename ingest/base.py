@@ -17,6 +17,7 @@ BANKS = {
     "OCBC": ["OCBC Bank", "Oversea-Chinese Banking", "O39.SI", "OCBC"],
     "UOB": ["United Overseas Bank", "UOB Bank", "U11.SI", "UOB"],
 }
+BANK_NAMES = tuple(BANKS)   # ("DBS", "OCBC", "UOB"): the only banks the project covers
 
 _BANK_PATTERNS = {
     bank: re.compile(r"\b(?:" + "|".join(re.escape(a) for a in aliases) + r")\b", re.IGNORECASE)

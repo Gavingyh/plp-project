@@ -76,7 +76,7 @@ Each row names the file and line an element comes from, and the text that line m
 | each tab | `ingest/yahoo_news.py:91` | `for tab in TABS:` |
 | filter then insert | `run_news_pull.py:44` | `kept, stats = filter_and_dedup(docs, index)` |
 | insert | `run_news_pull.py:45` | `_, inserted = upsert_documents(kept)` |
-| INSERT OR IGNORE | `ingest/db.py:131` | `INSERT OR IGNORE INTO documents` |
+| INSERT OR IGNORE | `ingest/db.py:132` | `INSERT OR IGNORE INTO documents` |
 | flagged articles written | `ingest/news_filter.py:316` | `_append_flagged(flagged)` |
 | Google month loop | `run_news_pull.py:59` | `for month, docs in google_news.iter_batches(since, until):` |
 | each calendar month | `ingest/google_news.py:151` | `for start, end in _months(s, u):` |

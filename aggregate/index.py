@@ -36,27 +36,20 @@ from datetime import datetime, timedelta, timezone
 
 from ingest.db import get_connection, init_db, now_iso
 
+from config import sources
 from config.logging_config import get_logger, setup_logging
 
 
 logger = get_logger(__name__)
 
 SHRINKAGE_K = 5
+MIN_N = 5          # below this many sentences a score is reported as insufficient data
 _LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 
-# Source weight: how much one item from this source counts relative to a
-# baseline Reddit comment (weight 1.0).
-#
-# earnings WAS 3.0, dropped to 1.0 after the earnings corpus
-# actually landed. That 3.0 was set when earnings was assumed to be a handful
-# of high-signal documents; it became the second-largest source (10,658
-# sentences), and it is management describing its own results, which is
-# measurably far more positive than any other source: 24.7% of earnings
-# sentences score positive vs 2.3% of Reddit sentences. Triple-weighting
-# self-authored promotional prose amplified a known skew instead of damping
-# it. 1.0 counts it at face value without letting it dominate.
-_SOURCE_WEIGHT = {"earnings": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0,
-                  "yahoo_news": 1.5, "google_news": 1.5, "cna": 1.5}
+# How much one sentence from each source counts, relative to a Reddit
+# comment: config/sources.yaml, which also records why earnings counts 1.0.
+_SOURCE_WEIGHT = sources.weights()
+_DEFAULT_WEIGHT = sources.default_weight()
 
 WINDOWS = {"7d": 7, "30d": 30, "all_time": None}
 
@@ -160,7 +153,7 @@ _BUCKETS = ("week", "month", "quarter")
 
 
 def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "month",
-                        source: str = SOURCE_ALL, min_n: int = 5) -> list[dict]:
+                        source: str = SOURCE_ALL, min_n: int = MIN_N) -> list[dict]:
     """Sentiment per time bucket, as a continuous series.
 
     The stored index holds three fixed windows (7d/30d/all_time), which is
@@ -212,7 +205,7 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
         period = _period(published_at, bucket)
         if period is None:
             continue
-        item = (label, confidence, _SOURCE_WEIGHT.get(row_source, 1.0))
+        item = (label, confidence, _SOURCE_WEIGHT.get(row_source, _DEFAULT_WEIGHT))
         if across:   # same rule as the stored index: each sentence once
             _one_per_sentence(per_sentence, sentence_id, period, item)
         else:
@@ -244,7 +237,7 @@ def _compute_rows_for_window(all_rows, window_name: str, days: int | None):
             t = _utc(published_at)
             if t is None or t < cutoff:
                 continue
-        item = (label, confidence, _SOURCE_WEIGHT.get(source, 1.0))
+        item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))
         groups[(bank, aspect, source, model_version)].append(item)          # per aspect, per source
         groups[(bank, aspect, SOURCE_ALL, model_version)].append(item)      # per aspect, blended
         _one_per_sentence(across_aspects, sentence_id, (bank, "ALL", source, model_version), item)      # per source, all aspects

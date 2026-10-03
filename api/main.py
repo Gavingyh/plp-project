@@ -16,9 +16,9 @@ USAGE:
   # interactive docs at http://localhost:8000/docs
 """
 
-import os
 
 import config.model_version as current_model
+from config import aspect_taxonomy
 
 import sqlite3
 from typing import Literal
@@ -29,18 +29,18 @@ from pydantic import BaseModel, field_validator
 
 from chatbot.agent import Conversation
 from chatbot.backends.base import BackendUnavailable
-from aggregate.index import compute_time_series
+from aggregate.index import MIN_N, compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
 from chatbot.tools import (ASPECT_KEYS, MIN_VOLUME_FOR_SCORE, compare_banks, get_analyst_consensus,
                             get_coverage, get_sentiment, get_trend, normalize_aspect, search_evidence)
+from ingest.base import BANK_NAMES
 from ingest.db import get_connection
 
 setup_logging()
 logger = get_logger(__name__)
 
-BANKS = ["DBS", "OCBC", "UOB"]
-ASPECTS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "aspects.yaml")
+BANKS = list(BANK_NAMES)
 
 app = FastAPI(
     title="SG Bank Sentiment API",
@@ -236,10 +236,7 @@ def evidence_latest(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: 
 @app.get("/aspects")
 def aspects():
     """The aspect keys with their readable labels, from config/aspects.yaml, for labelling a UI."""
-    import yaml
-    with open(ASPECTS_PATH) as f:
-        cfg = yaml.safe_load(f)["aspects"]
-    return {"aspects": [{"key": k, "label": v.get("label", k)} for k, v in cfg.items()]}
+    return {"aspects": [{"key": k, "label": label} for k, label in aspect_taxonomy.labels().items()]}
 
 
 @app.get("/sentiment/series")
@@ -247,7 +244,7 @@ def sentiment_series(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
                      aspect: str | None = Depends(valid_aspect),
                      bucket: str = Query("month", pattern="^(week|month|quarter)$"),
                      source: str = Depends(valid_source),
-                     min_n: int = Query(5, ge=1)):
+                     min_n: int = Query(MIN_N, ge=1)):
     """Continuous sentiment series for charting.
 
     /sentiment/trend answers "up or down" from two fixed windows; this returns

@@ -215,9 +215,10 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
 
     db = os.path.realpath(args.db)
-    real = db == os.path.realpath(REAL_DB)
+    # The database the project serves: data/plp.db, and PLP_DB_PATH's if that is set.
+    real = db in {os.path.realpath(REAL_DB), os.path.realpath(ingest.db.DEFAULT_DB_PATH)}
     if real and not args.real_db:
-        print(f"refusing to change {REAL_DB}: work on a copy (--fresh-copy), or add --real-db once the "
+        print(f"refusing to change {args.db}: work on a copy (--fresh-copy), or add --real-db once the "
               f"team has decided", file=sys.stderr)
         return 2
     if args.fresh_copy:

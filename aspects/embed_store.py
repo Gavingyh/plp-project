@@ -29,7 +29,7 @@ from config.logging_config import get_logger, setup_logging
 logger = get_logger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STORE_PATH = os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")
+STORE_PATH = os.environ.get("PLP_EMBEDDINGS_PATH") or os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")
 
 
 def _load_store() -> tuple[list[str], np.ndarray]:

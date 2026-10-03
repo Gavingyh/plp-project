@@ -1,9 +1,13 @@
 """Tests for chatbot/settings.py: config/chatbot.yaml defaults, environment overrides."""
 
+import os
+
 import pytest
 import yaml
 
 from chatbot import settings
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _paths(node, prefix=""):
@@ -73,3 +77,18 @@ def test_the_prompt_names_every_tool_that_returns_figures_and_the_floor():
         if t["name"] != "search_evidence":
             assert t["name"] in SYSTEM_PROMPT.split("2. Every")[0]
     assert f"n is below {MIN_VOLUME_FOR_SCORE}" in SYSTEM_PROMPT
+
+
+def test_database_and_embeddings_paths_can_be_overridden(tmp_path):
+    # PLP_DB_PATH / PLP_EMBEDDINGS_PATH let the API serve a copy (a rescored one,
+    # say) without touching data/plp.db. Checked in a fresh interpreter, so
+    # this process's modules keep their paths.
+    import subprocess
+    import sys
+    env = {**os.environ, "PLP_DB_PATH": str(tmp_path / "copy.db"), "PLP_EMBEDDINGS_PATH": str(tmp_path / "e.npz")}
+    out = subprocess.run([sys.executable, "-c", "import ingest.db, aspects.embed_store as e; "
+                          "print(ingest.db.DB_PATH); print(ingest.db.DEFAULT_DB_PATH); print(e.STORE_PATH)"],
+                         env=env, capture_output=True, text=True, check=True, cwd=ROOT).stdout.split("\n")
+    assert out[0] == str(tmp_path / "copy.db")
+    assert out[1].endswith(os.path.join("data", "plp.db"))
+    assert out[2] == str(tmp_path / "e.npz")

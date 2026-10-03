@@ -283,7 +283,7 @@ aggregate/    Per-bank/aspect index, volume shrinkage, time series
 train/        Fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller
 api/          FastAPI REST API: the interface a dashboard builds on (docs/api-integration.md)
 chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends, a terminal chat for testing
-config/       Aspect taxonomy, the served model version, the chatbot's settings and intents, logging
+config/       Aspect taxonomy, source weights, the served model version, the chatbot's settings and intents, logging
 scripts/      start/stop/status, resumable overnight backfill, the sharing bundle,
               the re-score step (rescore.py) and the earnings-date repair
 notebooks/    The text-analytics workstream's Colab notebooks (outputs cleared)
@@ -298,6 +298,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 1099 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 1146: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 1107 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 1154: adds the diagram and notebook checks
 ```

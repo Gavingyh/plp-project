@@ -6,6 +6,10 @@ two findings of this 1,000-sentence one (UOB does not move ahead of DBS; DBS
 asset quality does not turn negative), and itself wrongly said its order
 matched today's index: see the last section.*
 
+*Updated 2026-10-04: every fine-tuned column here uses the 1 Oct models.
+The retrained models' average changes the picture (much smaller moves,
+the same aspect signs as base FinBERT): [retrain-2026-10-04.md](retrain-2026-10-04.md).*
+
 Two changes wait for a team decision: aspects from the LLM classifier
 instead of seed-centroid matching (DESIGN decision 16), and sentiment from
 the fine-tuned models instead of base FinBERT. This previews both on a
@@ -286,4 +290,12 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --ma
    NIM and macro signs as unsettled. The seeds were trained from a
    relabelled head (training review, 3 Oct); retrained seeds may spread
    differently, which only a retrain can show.
+
+**Retrained models (4 Oct).** With the head-order fix, the average of the
+three retrained seeds moves the headlines much less (within 0.015 of base
+FinBERT with the margin) and agrees with base FinBERT on every aspect's
+sign; single seeds still differ (seed 42 raises every headline; 5 of 30
+cells change sign between seeds), and the seeds spread less on the DBS and
+OCBC headlines: [retrain-2026-10-04.md](retrain-2026-10-04.md).
+The findings above describe the 1 Oct models.
 

@@ -29,7 +29,7 @@ Rendered for the report: [SVG](img/12-index-computation.svg) · [PNG](img/12-ind
 ## What this shows and doesn't show
 
 Label scores are +1, 0 and -1. Source weights are 1.5 for news sources and 1.0 for
-Reddit and earnings (earnings was reduced from 3.0; DESIGN decision 6). Shrinkage pulls a
+Reddit and earnings (`config/sources.yaml`; earnings was reduced from 3.0, DESIGN decision 6). Shrinkage pulls a
 score based on few sentences toward neutral, and every row stores `n` so a reader can see
 the sample size. A sentence matched to several aspects has a pair per aspect; the per-aspect
 rows count each pair, but the rows spanning aspects (each source's ALL row and the headline)
@@ -46,21 +46,23 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| read every scored pair | `aggregate/index.py:98` | `FROM aspect_sentiment ase` |
-| joined to sentences | `aggregate/index.py:99` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
-| windows | `aggregate/index.py:61` | `WINDOWS = {"7d": 7, "30d": 30, "all_time": None}` |
-| window cutoff | `aggregate/index.py:245` | `if t is None or t < cutoff:` |
-| label scores | `aggregate/index.py:45` | `_LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}` |
-| source weights | `aggregate/index.py:58` | `_SOURCE_WEIGHT = {"earnings": 1.0` |
-| each item weighted | `aggregate/index.py:247` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, 1.0))` |
-| group: aspect and source | `aggregate/index.py:248` | `groups[(bank, aspect, source, model_version)].append(item)` |
-| group: headline, once per sentence | `aggregate/index.py:251` | `_one_per_sentence(across_aspects, sentence_id, (bank, "ALL", SOURCE_ALL, model_version), item)` |
-| keep the most confident pair | `aggregate/index.py:116` | `if current is None or item[1] > current[1]:` |
-| weighted mean | `aggregate/index.py:127` | `raw_score = weighted_sum / weight_total` |
-| shrinkage | `aggregate/index.py:128` | `shrunk = raw_score * (n / (n + SHRINKAGE_K))` |
-| shrinkage constant | `aggregate/index.py:44` | `SHRINKAGE_K = 5` |
-| deleted and rewritten | `aggregate/index.py:287` | `conn.execute("DELETE FROM sentiment_index")` |
-| volume floor, applied when read | `chatbot/tools.py:29` | `MIN_VOLUME_FOR_SCORE = 5` |
-| time-series floor | `aggregate/index.py:163` | `min_n: int = 5` |
+| read every scored pair | `aggregate/index.py:91` | `FROM aspect_sentiment ase` |
+| joined to sentences | `aggregate/index.py:92` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
+| windows | `aggregate/index.py:54` | `WINDOWS = {"7d": 7, "30d": 30, "all_time": None}` |
+| window cutoff | `aggregate/index.py:238` | `if t is None or t < cutoff:` |
+| label scores | `aggregate/index.py:47` | `_LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}` |
+| source weights | `config/sources.yaml:23` | `earnings:     {weight: 1.0` |
+| weights read by the index | `aggregate/index.py:51` | `_SOURCE_WEIGHT = sources.weights()` |
+| each item weighted | `aggregate/index.py:240` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))` |
+| group: aspect and source | `aggregate/index.py:241` | `groups[(bank, aspect, source, model_version)].append(item)` |
+| group: headline, once per sentence | `aggregate/index.py:244` | `_one_per_sentence(across_aspects, sentence_id, (bank, "ALL", SOURCE_ALL, model_version), item)` |
+| keep the most confident pair | `aggregate/index.py:109` | `if current is None or item[1] > current[1]:` |
+| weighted mean | `aggregate/index.py:120` | `raw_score = weighted_sum / weight_total` |
+| shrinkage | `aggregate/index.py:121` | `shrunk = raw_score * (n / (n + SHRINKAGE_K))` |
+| shrinkage constant | `aggregate/index.py:45` | `SHRINKAGE_K = 5` |
+| deleted and rewritten | `aggregate/index.py:280` | `conn.execute("DELETE FROM sentiment_index")` |
+| volume floor | `aggregate/index.py:46` | `MIN_N = 5` |
+| volume floor, applied when read | `chatbot/tools.py:27` | `MIN_VOLUME_FOR_SCORE = MIN_N` |
+| time-series floor | `aggregate/index.py:156` | `min_n: int = MIN_N` |
 | thin buckets left off the chart | `docs/api-integration.md:85` | `gap, not a line through them, and not a zero.` |
-| insufficient data reported | `chatbot/tools.py:111` | `if n < MIN_VOLUME_FOR_SCORE:` |
+| insufficient data reported | `chatbot/tools.py:106` | `if n < MIN_VOLUME_FOR_SCORE:` |

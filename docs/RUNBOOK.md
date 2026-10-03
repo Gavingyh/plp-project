@@ -288,7 +288,7 @@ scripts/status.sh             # what's running, on which port, healthy or not
 scripts/stop.sh               # stop everything this project started
 ```
 
-Each takes an optional service name — `api`, `ollama` or `dashboard` — to act
+Each takes an optional service name (`api`, `ollama` or `dashboard`) to act
 on just one. Ports come from `PLP_API_PORT` (default 8000) and
 `PLP_DASHBOARD_PORT` (default 8501); the script refuses a port already in use.
 The scripts work from any directory.
@@ -298,6 +298,17 @@ The API's port comes from `PLP_API_PORT` (default 8000):
 ```bash
 PLP_API_PORT=8100 scripts/start.sh api
 ```
+
+To serve another database, such as a rescored copy, without touching
+`data/plp.db`, set `PLP_DB_PATH`, and `PLP_EMBEDDINGS_PATH` if its sentence
+embeddings differ. The API and the dashboard both read it:
+
+```bash
+PLP_DB_PATH=data/plp_rescored.db PLP_API_PORT=8100 scripts/start.sh api
+```
+
+`scripts/rescore.py` refuses to change `data/plp.db`, or the database
+`PLP_DB_PATH` names, without `--real-db`.
 
 What the scripts do that the raw commands below don't:
 
@@ -516,7 +527,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-1099 tests in `tests/`; `pytest -q` from the repository root runs 1146,
+1107 tests in `tests/`; `pytest -q` from the repository root runs 1154,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.

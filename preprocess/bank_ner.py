@@ -32,9 +32,11 @@ import re
 
 import pandas as pd
 
+from ingest.base import BANK_NAMES
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GOLD_DIR = os.path.join(BASE_DIR, "data", "labeled", "ner")
-BANKS = ("DBS", "OCBC", "UOB")
+BANKS = BANK_NAMES
 NOT_BANK = "NOT_BANK"
 
 # Longest names first: the first rule whose pattern is found in a mention

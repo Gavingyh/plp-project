@@ -350,3 +350,15 @@ def test_gemini_never_receives_reddit_text_or_earlier_quotes(monkeypatch):
     assert answer == "Done."
     assert not any("keeps crashing" in s or "reddit.com" in s for s in sent)
     assert WITHHELD in sent[-1] and "OCBC raised its dividend." in sent[-1]       # news evidence still goes
+
+
+def test_gemini_withholds_evidence_from_an_unknown_or_missing_source():
+    # Unknown text is treated as personal: only sources config/sources.yaml marks
+    # as not written by the public reach the hosted model.
+    from chatbot.backends.gemini_backend import WITHHELD, withhold_reddit
+    content = {"results": [
+        {"source": "cna", "text": "OCBC raised its dividend.", "url": "https://cna.sg/1"},
+        {"source": "telegram", "text": "my DBS card got blocked", "url": "https://t.me/x"},
+        {"text": "someone's own words", "url": None}]}
+    out = [r["text"] for r in withhold_reddit("search_evidence", content)["results"]]
+    assert out == ["OCBC raised its dividend.", WITHHELD, WITHHELD]

@@ -24,9 +24,10 @@ explain part of the spread between seeds (seed 7 scored 0.565, below base).
 **Fixed:** `train/finetune.py` now trains in the head's own order
 (`head_label2id`), with class weights in the same order. Every reader
 already maps outputs through the saved `id2label`, so models trained either
-way load correctly. **Not done:** retraining the three seeds, which needs
-the GPU (busy with the corpus aspect run until 3 Oct) and changes the
-reported results; it is a team decision.
+way load correctly. **Retrained** overnight 3 to 4 Oct
+([retrain-2026-10-04.md](retrain-2026-10-04.md)): every seed now beats base
+FinBERT (mean 0.621 ± 0.027 against 0.571). Adopting the retrained models
+changes the reported results, so it is a team decision.
 
 ## A top-up row is a near-copy of a frozen test sentence
 

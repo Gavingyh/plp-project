@@ -118,17 +118,17 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| documents, created | `ingest/db.py:20` | `CREATE TABLE IF NOT EXISTS documents (` |
-| sentences, created | `ingest/db.py:41` | `CREATE TABLE IF NOT EXISTS sentences (` |
-| sentences key to documents | `ingest/db.py:43` | `doc_id         TEXT NOT NULL REFERENCES documents(doc_id)` |
-| analyst_consensus, created | `ingest/db.py:61` | `CREATE TABLE IF NOT EXISTS analyst_consensus (` |
+| documents, created | `ingest/db.py:21` | `CREATE TABLE IF NOT EXISTS documents (` |
+| sentences, created | `ingest/db.py:42` | `CREATE TABLE IF NOT EXISTS sentences (` |
+| sentences key to documents | `ingest/db.py:44` | `doc_id         TEXT NOT NULL REFERENCES documents(doc_id)` |
+| analyst_consensus, created | `ingest/db.py:62` | `CREATE TABLE IF NOT EXISTS analyst_consensus (` |
 | sentence_aspects, created | `aspects/assign.py:46` | `CREATE TABLE IF NOT EXISTS sentence_aspects (` |
 | aspect_sentiment, created | `sentiment/score.py:52` | `CREATE TABLE IF NOT EXISTS aspect_sentiment (` |
-| sentiment_index, created | `aggregate/index.py:74` | `CREATE TABLE IF NOT EXISTS sentiment_index (` |
+| sentiment_index, created | `aggregate/index.py:67` | `CREATE TABLE IF NOT EXISTS sentiment_index (` |
 | has_analyst_view added later | `ingest/analyst_tag.py:77` | `ALTER TABLE documents ADD COLUMN has_analyst_view` |
 | join by sentence_id and aspect | `sentiment/score.py:120` | `ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect` |
-| index derived from aspect_sentiment | `aggregate/index.py:98` | `FROM aspect_sentiment ase` |
-| index joins sentences | `aggregate/index.py:99` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
+| index derived from aspect_sentiment | `aggregate/index.py:91` | `FROM aspect_sentiment ase` |
+| index joins sentences | `aggregate/index.py:92` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
 | foreign keys not enforced | `docs/diagrams/schema-2026-09-26.txt:114` | `PRAGMA foreign_keys (enforcement on this connection): 0` |
 | sentence_aspects key to sentences | `aspects/assign.py:47` | `sentence_id  TEXT NOT NULL REFERENCES sentences(sentence_id)` |
 | aspect_sentiment key to sentences | `sentiment/score.py:53` | `sentence_id   TEXT NOT NULL REFERENCES sentences(sentence_id)` |

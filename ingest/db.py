@@ -14,7 +14,8 @@ import sqlite3
 from datetime import datetime, timezone
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")
+DB_PATH = os.environ.get("PLP_DB_PATH") or DEFAULT_DB_PATH   # e.g. serve a rescored copy
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (

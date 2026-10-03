@@ -175,11 +175,14 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
     <li><a href="#d-econ">Bank economists</a>: not about the bank; macro stays a thin aspect.</li>
     <li><a href="#d-wealth">Wealth or retail</a>: decide by product.</li>
     <li><a href="#d-vickers">DBS Vickers</a>: count it as DBS.</li>
-    <li><a href="#d-scoring">Scoring model</a>: the fine-tuned average with the margin.</li>
+    <li><a href="#d-scoring">Scoring model</a>: the retrained fine-tuned average, with the margin chosen on dev; argmax reported beside it.</li>
     <li><a href="#d-chat">Chatbot</a>: strip enforcement and the aspect query both on.</li>
     <li><a href="#d-o5">Passing mentions</a>: keep them; report the 6%.</li>
     <li><a href="#d-paths">PDF links</a>: rewrite to relative paths in the re-score.</li>
     <li><a href="#d-o3">Demo model</a>: <code>llama3.1:8b</code> with strip on.</li>
+    <li><a href="#d-window">Recent windows</a>: anchor them to the newest sentence.</li>
+    <li><a href="#d-hosted">Hosted backends</a>: withhold Reddit and CNA text from all of them.</li>
+    <li><a href="#d-posb">POSB</a>: count it as DBS at collection.</li>
   </ol>
   <p class="sub">Also needed, not decisions: confirm the aspect approach with the supervisor (by 5 Oct), and the OpenAI-compatible backend (by 19 Oct) needs a Groq key to be verified or the claim dropped.</p>
 </section>
@@ -260,9 +263,10 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
   <p class="q">Every stored sentiment score comes from base FinBERT, used zero-shot; the fine-tuned model is the DNN the rubric requires.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Base FinBERT</b></td><td>Test macro-F1 0.571, accuracy 0.70. Calls most sentences neutral; finds few of the negatives.</td></tr>
-<tr><td><b>Fine-tuned, three seeds averaged, neutral margin</b></td><td>Test macro-F1 0.624, accuracy 0.682. On the full corpus with LLM aspects, every headline rises by 0.04–0.07 and DBS moves just ahead of OCBC (today OCBC is just ahead; both gaps under 0.02; UOB last either way); 52% of sentences come out neutral, against 70%. These are the 1 Oct seeds, trained from a relabelled head; retraining could change them. The seeds disagree: each alone gives DBS +0.113 to +0.235 and OCBC +0.116 to +0.210, and with seed 1 alone OCBC stays ahead and both fall below base, so the order and the rise belong to the average, not to fine-tuning as such.</td></tr>
+<tr><td><b>Fine-tuned, 1 Oct seeds, averaged, margin 0.13</b></td><td>Test macro-F1 0.624, accuracy 0.682. Trained from a relabelled head (a bug, fixed 3 Oct). On the full corpus with LLM aspects, every headline rises by 0.04–0.07 and DBS moves just ahead of OCBC; 52% of sentences come out neutral, against 70%. The seeds disagree: each alone gives DBS +0.113 to +0.235.</td></tr>
+<tr><td><b>Fine-tuned, retrained 4 Oct, averaged</b></td><td>Every seed beats base: test macro-F1 0.646, 0.592, 0.625 (mean 0.621 ± 0.027). The average scores 0.634 (accuracy 0.702) without a margin and 0.612 with the dev-chosen margin 0.12: the margin now lowers the test score, for every seed. On the full corpus the average stays within 0.015 of base FinBERT's headlines with the margin (DBS +0.132, OCBC +0.122, UOB +0.084; DBS just ahead of OCBC, under every seed) and agrees with base on every aspect's sign; 62% of sentences come out neutral. Seed 42 alone still raises every headline (DBS +0.171), and the seeds disagree in sign on 5 of 30 aspect cells.</td></tr>
   </tbody></table></div>
-  <div class="rec"><p><b>Recommendation:</b> the fine-tuned average with the margin, on the stated criterion that the index exists to surface positive and negative sentiment (macro-F1). Report base FinBERT's ranking and the per-seed range beside it, and call the DBS–OCBC order unsettled. Either way, applying it is quick: <code>scripts/rescore.py</code>, tested on a copy on 3 Oct, applies both changes in seconds and reproduces the preview cell for cell.</p></div>
+  <div class="rec"><p><b>Recommendation:</b> the retrained average, on the stated criterion that the index exists to surface positive and negative sentiment (macro-F1): the 1 Oct seeds carry a known bug. Keep the margin as chosen on dev (0.12) and report the argmax score beside it, saying the dev choice didn't carry over to test; dropping the margin because of the test result would be choosing on the test split. Report base FinBERT's ranking and the per-seed range beside the headlines, and call the DBS–OCBC order unsettled. Adopting the retrained models changes the reported fine-tuning result (0.604 ± 0.035 to 0.621 ± 0.027) everywhere it appears. Either way, applying it is quick: <code>scripts/rescore.py</code>, tested on a copy on 3 Oct, applies both changes in seconds and reproduces the preview cell for cell.</p></div>
   <p class="ifnot">If not decided by the date: the DNN stays an offline result, and the system the report describes doesn't use it.</p>
 </div>
 
@@ -303,12 +307,37 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
   <h3>11. The demo chatbot model <span class="chip decide">Team decision</span> <span class="when">by 19 Oct</span></h3>
   <p class="q">With strip enforcement on, neither local model shows invented citations.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
-<tr><td><b><code>llama3.1:8b</code></b></td><td>Right tool 20 of 24; about 27 minutes for the 32-question set.</td></tr>
+<tr><td><b><code>llama3.1:8b</code></b></td><td>Right tool 20 of 24 on 1 Oct; 21 and 22 of 24 on 4 Oct with the intent classifier, which sorts 100 of 103 labelled questions correctly with the same model. About 25 minutes for the 32-question set.</td></tr>
 <tr><td><b><code>llama3.2:3b</code></b></td><td>Right tool 18 of 24; about twice as fast.</td></tr>
 <tr><td><b>Groq (hosted)</b></td><td>Untested; needs a free key and the Zero Data Retention setting. <code>qwen3:4b</code> is out: 22 of 32 questions timed out.</td></tr>
   </tbody></table></div>
   <div class="rec"><p><b>Recommendation:</b> <code>llama3.1:8b</code> with strip on, unless response time in the demo is a problem; test Groq if someone gets a key.</p></div>
   <p class="ifnot">If not decided by the date: the default stays <code>llama3.2:3b</code>.</p>
+</div>
+
+<div class="dec" id="d-window">
+  <h3>12. Recent windows: anchor to the newest data, or collect up to the re-score? <span class="chip decide">Team decision</span> <span class="when">before the re-score</span></h3>
+  <p class="q">The 7-day and 30-day windows count back from the moment the index is rebuilt. The newest sentence is from 25 Sep and collection is stopped, so a rebuild during 12–18 Oct leaves the 7-day window empty and the 30-day one nearly so.</p>
+  <div class="tbl"><table><thead><tr><th>option</th><th>what it means</th></tr></thead><tbody>
+<tr><td><b>Anchor to the newest sentence</b></td><td>A small code change; "lately" means the week before 25 Sep, and the screen and the chatbot must say "as of" that date.</td></tr>
+<tr><td><b>Collect up to the re-score</b></td><td>Run the collection before 12 Oct (the daily job stays stopped on the development Mac); windows stay as they are, but go stale again after the demo date.</td></tr>
+  </tbody></table></div>
+  <div class="rec"><p><b>Recommendation:</b> anchor to the newest sentence, so the figures can't empty out before the demo; collect as well if time allows.</p></div>
+  <p class="ifnot">If not decided by the date: every recent score and trend reads "not enough data".</p>
+</div>
+
+<div class="dec" id="d-hosted">
+  <h3>13. Reddit and CNA text to the paid hosted backends? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <p class="q">Since 4 Oct the Gemini backend never receives Reddit text, CNA text or text from an unlisted source (<code>config/sources.yaml</code>). The Claude and OpenAI backends still do.</p>
+  <div class="rec"><p><b>Recommendation:</b> apply the same rule to every hosted backend unless CNA's terms allow sending its text to an outside service; Reddit text is other people's posts either way.</p></div>
+  <p class="ifnot">If not decided by the date: only Gemini withholds them.</p>
+</div>
+
+<div class="dec" id="d-posb">
+  <h3>14. Count POSB as DBS at collection? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <p class="q">The news filter and the bank tagging count POSB as DBS; the aliases used at collection (<code>ingest/base.py</code>) don't, so a Reddit post naming only POSB gets no bank.</p>
+  <div class="rec"><p><b>Recommendation:</b> add it; it changes future attribution only.</p></div>
+  <p class="ifnot">If not decided by the date: POSB-only posts stay unattributed.</p>
 </div>
 </section>
 <footer>Evidence: the files in <code>docs/evidence/</code>, summarised in <code>docs/report/findings-limitations-solutions.md</code>; the full to-do list is the team to-do page. Once decided, record each in <code>docs/DESIGN.md</code> or <code>docs/PLAN.md</code>.</footer>

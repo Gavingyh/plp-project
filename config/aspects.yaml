@@ -51,6 +51,7 @@
 aspects:
   asset_quality:
     label: "Asset Quality / Provisioning"
+    llm_definition: "loan quality: non-performing loans, allowances and provisions, credit costs, exposure to troubled borrowers"
     seed_terms:
       - "Specific allowances were SGD 157 million or 14 basis points of loans."
       - "Asset quality was resilient, with the NPL ratio stable at 1.0% and specific allowances at 14 basis points of loans."
@@ -65,6 +66,7 @@ aspects:
 
   capital_liquidity:
     label: "Capital & Liquidity"
+    llm_definition: "capital and liquidity: CET1 and capital ratios, leverage, LCR/NSFR, Basel rules, capital instruments, bond issuance"
     seed_terms:
       - "OCBC prices US$750m in Tier 2 notes at 4.602%"
       - "We guided previously that under Basel IV, our CET-1 ratio will go up."
@@ -78,6 +80,7 @@ aspects:
 
   dividend_policy:
     label: "Dividend Policy"
+    llm_definition: "dividends declared or expected, dividend per share, payout ratio, dividend yield, capital returned to shareholders"
     seed_terms:
       - "For 2022, OCBC's full year dividends amounted to $0.68, including interim dividends of $0.28."
       - "DBS declares dividend payout of 81 cents as Q2 profit comes in better than expected."
@@ -91,6 +94,7 @@ aspects:
 
   net_interest_margin:
     label: "Net Interest Margin"
+    llm_definition: "net interest margin and net interest income, loan and deposit growth as their driver, effect of interest-rate moves on the bank's earnings"
     seed_terms:
       - "Record total income and profit before tax, ROE at 17.3%. Group NII up YoY on higher loan and deposit volumes."
       - "Group net interest income was little changed on a day-adjusted basis at SGD 3.49 billion."
@@ -105,6 +109,7 @@ aspects:
 
   management_guidance:
     label: "Management Guidance"
+    llm_definition: "forward-looking statements by the bank: targets, outlook, guidance, strategy, earnings-call answers"
     seed_terms:
       - "Piyush Gupta: the short answer is no."
       - "Tan Yong Hong (Citi): I have three broad questions."
@@ -119,6 +124,7 @@ aspects:
 
   income_profit_results:
     label: "Income & Profit Results"
+    llm_definition: "reported income and profit: total income, net profit, fee and trading income, quarterly or annual results"
     seed_terms:
       - "Expenses increased 4% to SGD 9.25 billion, led by higher staff costs."
       - "Fee income and treasury customer sales reached new highs, led by wealth management, while deposit growth was tempered."
@@ -133,6 +139,7 @@ aspects:
 
   wealth_business:
     label: "Wealth Management / Private Banking"
+    llm_definition: "wealth management and private or premier banking: assets under management, wealth fee income, wealth targets"
     seed_terms:
       - "The increase was led by wealth management fees, which reached a record SGD 907 million driven by higher investment activity."
       - "It was broad-based — we had 22% growth in wealth management and 21% growth in cards."
@@ -145,6 +152,7 @@ aspects:
 
   investor_stock_sentiment:
     label: "Investor / Retail Stock Sentiment"
+    llm_definition: "the bank's stock: buy, sell or hold views, share price, valuation, analyst target prices, returns against alternatives"
     seed_terms:
       - "DBS breaks new barrier at S$52.75 as STI soars to a new high of 4,346.68 points."
       - "DBS raises STI year-end target to 5,850 after earnings lift."
@@ -160,6 +168,7 @@ aspects:
 
   retail_banking_sentiment:
     label: "Retail Banking Products & Customer Experience"
+    llm_definition: "products and service as customers experience them: cards, cashback, savings accounts, fees, app or service outages, scams, applications"
     seed_terms:
       - "I received a call today from a guy claiming to be from DBS."
       - "I have a UOB account with a foreign residential and mailing address."
@@ -175,6 +184,7 @@ aspects:
 
   macro_market_environment:
     label: "Macro & Market Environment"
+    llm_definition: "GDP, interest-rate cuts and hikes, geopolitics and trade, the macro outlook as it affects the banks"
     seed_terms:
       - "The IMF recently upped its global growth forecast."
       - "Recent escalations in trade tensions have heightened macroeconomic risks and market volatility."
@@ -189,6 +199,7 @@ aspects:
     # human-readable description of what tends to land there. Editing
     # seed_terms here has no effect on assignment; it's documentation only.
     label: "Other / Not an investment aspect"
+    llm_definition: "anything else: appointments and pay, awards, M&A and partnerships, CSR, careers, regulatory boilerplate, or no clear investment topic"
     seed_terms:
       - "leadership and executive appointments, pay and job cuts"
       - "brand awards and rankings"
@@ -219,3 +230,23 @@ similarity_floor: 0.65
 # LLM's aspects to the database (scripts/rescore.py), so new sentences are
 # assigned the way the corpus was.
 assignment_method: centroid
+
+# The LLM classifier (aspects/llm_classify.py): the model, and the examples
+# its prompt shows. Each aspect's llm_definition above is its line in the
+# prompt. Changing any of these changes the prompt's fingerprint, so the
+# answers cached in data/aspect_llm/ under the old one are no longer used
+# (a corpus run takes about a day). Examples are invented, so none can
+# appear in the evaluation set.
+llm_model: "llama3.1:8b"
+llm_examples:
+  - {sentence: "The bank set aside more allowances as bad loans rose in its SME book.", aspect: asset_quality}
+  - {sentence: "Its CET1 ratio stayed comfortably above the regulatory minimum.", aspect: capital_liquidity}
+  - {sentence: "They declared a final dividend of 60 cents a share.", aspect: dividend_policy}
+  - {sentence: "Margins narrowed as interest rates fell, weighing on net interest income.", aspect: net_interest_margin}
+  - {sentence: "Management expects mid-single-digit loan growth next year.", aspect: management_guidance}
+  - {sentence: "Quarterly net profit rose 8% on higher fee income.", aspect: income_profit_results}
+  - {sentence: "Wealth management fees hit a record as assets under management grew.", aspect: wealth_business}
+  - {sentence: "I'm holding the shares for the yield; the price looks fair at 1.5x book.", aspect: investor_stock_sentiment}
+  - {sentence: "The app has been down all morning and I can't transfer money.", aspect: retail_banking_sentiment}
+  - {sentence: "Rate cuts by the Fed will squeeze all three Singapore banks.", aspect: macro_market_environment}
+  - {sentence: "The bank named a new chief technology officer.", aspect: other}

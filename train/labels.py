@@ -41,7 +41,7 @@ import re
 
 import pandas as pd
 
-LABELS = ["negative", "neutral", "positive"]
+LABELS = ["negative", "neutral", "positive"]   # the order every model's outputs are read in
 KEY = ["sentence_id", "aspect"]
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

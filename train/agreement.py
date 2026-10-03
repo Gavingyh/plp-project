@@ -38,10 +38,10 @@ import pandas as pd
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 
 from config.logging_config import get_logger, setup_logging
+from train.labels import LABELS
 
 logger = get_logger(__name__)
 
-LABELS = ["negative", "neutral", "positive"]
 KEY = ["sentence_id", "aspect"]
 ASPECT_KEY = ["sentence_id"]   # aspect agreement: the aspect is the thing compared
 

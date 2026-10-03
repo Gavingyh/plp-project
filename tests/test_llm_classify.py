@@ -111,3 +111,13 @@ def test_a_reworded_prompt_does_not_reuse_old_answers(tmp_path, monkeypatch):
     lc.classify_rows(rows, chat=chat)
     assert len(prompts) == 2 and "loan quality only" in prompts[1]           # new prompt: asked again
     assert len(list(tmp_path.glob("*.jsonl"))) == 2                          # old answers kept in their own file
+
+
+def test_the_prompt_is_the_one_the_corpus_was_classified_with():
+    # The definitions, examples and model moved to config/aspects.yaml (4 Oct
+    # 2026) unchanged: the corpus answers in data/aspect_llm/ (about a day of
+    # compute) are cached under this fingerprint. A deliberate prompt change
+    # updates this number and starts a new cache.
+    import aspects.llm_classify as llm
+    assert llm.prompt_fingerprint() == "96efe244"
+    assert llm.DEFAULT_MODEL == "llama3.1:8b"

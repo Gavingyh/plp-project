@@ -48,12 +48,12 @@ import pandas as pd
 
 import config.model_version as current_model
 from aggregate.index import _DEFAULT_WEIGHT, _SOURCE_WEIGHT, _summarize
+from config.model_version import DEFAULT_FINETUNED, FINETUNED
+from train.labels import LABELS
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(BASE_DIR, "data", "preview")
-DEFAULT_MODELS = [os.path.join(BASE_DIR, "models", "experiments-2026-10-01", "label", f"seed_{s}", "final")
-                  for s in (42, 1, 7)]
-LABELS = ["negative", "neutral", "positive"]
+DEFAULT_MODELS = [os.path.join(BASE_DIR, d) for d in FINETUNED[DEFAULT_FINETUNED]["models"]]
 
 
 def sample_sentences(conn, n: int, seed: int) -> pd.DataFrame:
@@ -235,7 +235,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--n", type=int, default=2000)
     p.add_argument("--seed", type=int, default=2026)
-    p.add_argument("--llm", default="llama3.1:8b")
+    from aspects.llm_classify import DEFAULT_MODEL as LLM_MODEL
+    p.add_argument("--llm", default=LLM_MODEL)
     p.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
     p.add_argument("--cpu", action="store_true", help="run the fine-tuned models on the CPU")
     p.add_argument("--margin", type=float, default=0.0,

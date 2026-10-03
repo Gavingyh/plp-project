@@ -14,7 +14,9 @@ another model's. Kept apart from sentiment/score.py, which imports torch, so
 that the API and the chatbot can read it cheaply.
 """
 
-MODEL_VERSION = "finbert-base-zeroshot-v1"
+# Base FinBERT's tag (sentiment/score.py writes it on every row it scores).
+BASE_VERSION = "finbert-base-zeroshot-v1"
+MODEL_VERSION = BASE_VERSION
 
 # The models and neutral margin behind each fine-tuned version, so that once
 # MODEL_VERSION names one, sentiment/score.py scores new sentences with it too
@@ -26,3 +28,7 @@ FINETUNED = {
         "margin": 0.13,
     },
 }
+
+# The fine-tuned version experiments use unless told otherwise (aggregate.preview,
+# train.error_analysis, scripts/rescore.py).
+DEFAULT_FINETUNED = "finbert-finetuned-2026-10-01-3seed-m0.13"

@@ -92,3 +92,15 @@ def test_database_and_embeddings_paths_can_be_overridden(tmp_path):
     assert out[0] == str(tmp_path / "copy.db")
     assert out[1].endswith(os.path.join("data", "plp.db"))
     assert out[2] == str(tmp_path / "e.npz")
+
+
+
+def test_a_bare_database_file_name_is_taken_from_the_working_directory(tmp_path):
+    # PLP_DB_PATH=copy.db once made os.makedirs('') fail on every connection.
+    import subprocess
+    import sys
+    env = {**os.environ, "PLP_DB_PATH": "copy.db"}
+    out = subprocess.run([sys.executable, "-c", f"import sys; sys.path.insert(0, {ROOT!r}); import ingest.db; "
+                          "c = ingest.db.get_connection(); c.close(); print(ingest.db.DB_PATH)"],
+                         env=env, capture_output=True, text=True, check=True, cwd=tmp_path).stdout.strip()
+    assert out == os.path.realpath(tmp_path / "copy.db") or out == str(tmp_path / "copy.db")

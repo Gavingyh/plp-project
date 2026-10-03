@@ -28,11 +28,10 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from config.device import best_device
 from train.finetune import aspect_inputs, read_input_spec
-from train.labels import check_splits
+from train.labels import LABELS, check_splits
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANDIDATES_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
-LABELS = ["negative", "neutral", "positive"]
 
 
 def _load_test_set() -> pd.DataFrame:
@@ -98,7 +97,13 @@ def finetuned_probs(model_dir: str, df: pd.DataFrame) -> np.ndarray:
                             return_tensors="pt").to(device)
             probs = torch.softmax(model(**enc).logits, dim=-1).cpu().numpy()
             out.append(probs[:, order])
-    return np.concatenate(out)
+    probs = np.concatenate(out)
+    # On 2026-10-01 the GPU, under memory pressure, returned all-zero rows
+    # without an error, which argmax turned into "negative" everywhere.
+    if not np.allclose(probs.sum(axis=1), 1.0, atol=1e-3):
+        raise RuntimeError(f"{model_dir}: probabilities don't sum to 1: the device returned garbage; "
+                           "rerun with --cpu")
+    return probs
 
 
 def eval_finetuned(model_dir: str, df: pd.DataFrame, name: str = "finetuned_finbert_absa") -> dict:
@@ -169,5 +174,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-dir", nargs="+", default=None,
                         help="one or more fine-tuned models; with several, their average is reported too")
+    parser.add_argument("--cpu", action="store_true", help="run every model on the CPU instead of the GPU")
     args = parser.parse_args()
+    if args.cpu:
+        import sentiment.score
+        best_device = sentiment.score.best_device = lambda: "cpu"  # noqa: E731  (read at call time)
     run(model_dir=args.model_dir)

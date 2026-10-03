@@ -350,3 +350,27 @@ def test_tracker_rebuilt_from_recorded_calls():
         {"name": "get_sentiment", "arguments": {"bank": "DBS"}, "result": {"score": 0.1}},
         {"name": "search_evidence", "arguments": {}, "result": {"results": [{"sentence_id": "c" * 24, "url": "u1"}]}}])
     assert t.search_evidence_called and t.verified_sentence_ids == {"c" * 24} and len(t.calls) == 2
+
+
+def test_shares_of_an_analyst_breakdown_are_derivable():
+    # 1, 7, 8 and 1 of 17 analysts are 6%, 41%, 47% and 6%: flagged as unverified
+    # in the 4 Oct live run although they were right.
+    result = {"bank": "DBS", "n_analysts": 17, "target_mean": 78.14,
+              "rating_breakdown": {"strong_buy": 1, "buy": 7, "hold": 8, "sell": 1, "strong_sell": 0}}
+    answer = "Strong buy (6%), buy (41%), hold (47%), sell (6%)."
+    assert unverified_numbers(answer, [result]) == []
+    assert unverified_numbers("Buy (52%).", [result]) == ["52%"]
+
+
+def test_shares_of_the_total_are_only_for_objects_made_of_counts():
+    # A sentiment row mixes counts with a score, so 20% is not "a count over the sum of everything".
+    result = {"score": 0.12, "n": 10, "positive_n": 2, "neutral_n": 6, "negative_n": 2}
+    assert unverified_numbers("10% were negative.", [result]) == ["10%"]
+    assert unverified_numbers("20% were negative.", [result]) == []
+
+
+def test_a_plain_decline_counts_as_declining_an_uncovered_bank():
+    from chatbot.run_eval import _check_behavior
+    item = {"expected_behavior": "decline_or_no_data"}
+    assert _check_behavior(item, "I can't help with that part of your question. I cover DBS, OCBC and UOB.")["correct"]
+    assert not _check_behavior(item, "HSBC sentiment is broadly positive this month.")["correct"]

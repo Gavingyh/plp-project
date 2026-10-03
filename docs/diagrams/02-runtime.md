@@ -67,13 +67,13 @@ Each row names the file and line an element comes from, and the text that line m
 | API process | `scripts/start.sh:193` | `-m uvicorn api.main:app` |
 | Ollama started if needed | `scripts/start.sh:201` | `start_ollama() {` |
 | plp.db location | `ingest/db.py:17` | `DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")` |
-| embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.environ.get("PLP_EMBEDDINGS_PATH")` |
+| embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.path.abspath(os.environ.get("PLP_EMBEDDINGS_PATH")` |
 | news filter log location | `ingest/news_filter.py:53` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
 | dashboard reads the database | `dashboard/app.py:22` | `from ingest.db import get_connection` |
-| API reads the database | `api/main.py:38` | `from ingest.db import get_connection` |
+| API reads the database | `api/main.py:40` | `from ingest.db import get_connection` |
 | evidence search reads the embeddings | `chatbot/retrieval.py:142` | `all_ids, all_vecs = load_for_search()` |
 | dashboard chat | `dashboard/app.py:473` | `from chatbot.agent import Conversation` |
-| API chat | `api/main.py:30` | `from chatbot.agent import Conversation` |
+| API chat | `api/main.py:31` | `from chatbot.agent import Conversation` |
 | database not in git | `.gitignore:14` | `data/plp.db` |
 | embeddings not in git | `.gitignore:17` | `data/sentence_embeddings.npz` |
 | snapshots not in git | `.gitignore:18` | `data/snapshots/` |

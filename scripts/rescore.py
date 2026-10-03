@@ -11,7 +11,8 @@ applying it to data/plp.db is the team's decision.
      so each sentence's existing label is copied to its new pair.
   3. Fine-tuned rows (--finetuned): the three seeds' averaged probabilities
      with the neutral margin, for every assigned pair, under their own
-     model_version. Probabilities come from aggregate.preview's scores cache,
+     model_version. A version listed in FINETUNED (config/model_version.py)
+     brings its models and margin; other models need --margin. Probabilities come from aggregate.preview's scores cache,
      so pairs the full-corpus preview scored are not scored again (on the
      same device: pass --cpu to reuse the CPU run).
   4. Scores of pairs no longer assigned are deleted; the index ignores them
@@ -42,13 +43,14 @@ import sqlite3
 import sys
 from datetime import datetime, timezone
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 
 import pandas as pd  # noqa: E402
 
 import ingest.db  # noqa: E402
 
-BASE_VERSION = "finbert-base-zeroshot-v1"
+from config.model_version import BASE_VERSION  # noqa: E402
 REAL_DB = ingest.db.DB_PATH
 BACKUP_DIR = os.path.join(os.path.dirname(REAL_DB), "snapshots")
 
@@ -65,9 +67,57 @@ def finetuned_version(model_dirs: list[str], margin: float) -> str:
     return f"finbert-finetuned-{exp}-{len(model_dirs)}seed-m{margin:g}"
 
 
-def fresh_copy(dst: str, src: str = REAL_DB) -> None:
+def _abs(paths: list[str]) -> list[str]:
+    """Model folders as absolute paths: FINETUNED lists them from the repository root."""
+    return [os.path.realpath(p if os.path.isabs(p) else os.path.join(ROOT, p)) for p in paths]
+
+
+def _same_models(a: list[str], b: list[str]) -> bool:
+    return _abs(a) == _abs(b)
+
+
+def choose_finetuned(models: list[str] | None, margin: float | None, version: str | None,
+                     registry: dict, default_models: list[str]) -> tuple[list[str], float, str]:
+    """The models, margin and model_version tag for the fine-tuned rows.
+
+    A version listed in FINETUNED (config/model_version.py) brings its own
+    models and margin, because sentiment/score.py scores new sentences with
+    exactly those: other models or another margin under its tag would mix
+    two models' scores in one version, so they are refused. Otherwise the
+    margin is --margin, or that of the one listed version with these models.
+    The tag is that version's name, or one built from the models' folder.
+    Base FinBERT's tag is refused. Raises ValueError with the reason."""
+    if version == BASE_VERSION:
+        raise ValueError(f"{BASE_VERSION} is base FinBERT's tag; the fine-tuned rows need their own")
+    if version in registry:
+        spec = registry[version]
+        if (models and not _same_models(models, spec["models"])) or (margin is not None and margin != spec["margin"]):
+            raise ValueError(f"{version} is in FINETUNED with other models or another margin: "
+                             f"drop --models/--margin, or choose a new --version")
+        return _abs(spec["models"]), spec["margin"], version
+    models = models or default_models
+    listed = [v for v, spec in registry.items() if _same_models(models, spec["models"])
+              and (margin is None or margin == spec["margin"])]
+    if margin is None:
+        if len(listed) != 1:
+            raise ValueError("give --margin: no single FINETUNED version lists these models")
+        margin = registry[listed[0]]["margin"]
+    if version is None:
+        version = listed[0] if len(listed) == 1 else finetuned_version(models, margin)
+    if version == BASE_VERSION:
+        raise ValueError(f"{BASE_VERSION} is base FinBERT's tag; the fine-tuned rows need their own")
+    if version in registry and not (_same_models(models, registry[version]["models"])
+                                    and margin == registry[version]["margin"]):
+        raise ValueError(f"{version} is in FINETUNED with other models or another margin: choose a new --version")
+    return _abs(models), margin, version
+
+
+def fresh_copy(dst: str, src: str | None = None) -> None:
     """Copy the database through SQLite's backup API, read-only on the source,
-    so rows still in its write-ahead log are included."""
+    so rows still in its write-ahead log are included. The source defaults to
+    data/plp.db, even when PLP_DB_PATH serves a (perhaps already rescored)
+    copy: a fresh copy starts from the real data."""
+    src = src or ingest.db.DEFAULT_DB_PATH
     for path in (dst, dst + "-wal", dst + "-shm"):    # a stale log would replay onto the new copy
         if os.path.exists(path):
             os.remove(path)
@@ -202,13 +252,16 @@ def summary(conn) -> dict:
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--db", required=True, help="the database to change (a copy, unless --real-db)")
-    p.add_argument("--fresh-copy", action="store_true", help=f"first copy {REAL_DB} to --db")
+    p.add_argument("--fresh-copy", action="store_true", help=f"first copy {ingest.db.DEFAULT_DB_PATH} to --db")
     p.add_argument("--aspects", choices=["keep", "llm"], default="keep")
-    p.add_argument("--llm-model", default="llama3.1:8b")
+    from aspects.llm_classify import DEFAULT_MODEL as LLM_MODEL
+    p.add_argument("--llm-model", default=LLM_MODEL)
     p.add_argument("--finetuned", action="store_true", help="add the fine-tuned models' scores")
     p.add_argument("--models", nargs="+", default=None, help="fine-tuned model folders (default: the 1 Oct seeds)")
-    p.add_argument("--margin", type=float, default=0.13)
-    p.add_argument("--version", default=None, help="model_version tag for the fine-tuned rows")
+    p.add_argument("--margin", type=float, default=None,
+                   help="neutral margin (default: the FINETUNED entry's for these models)")
+    p.add_argument("--version", default=None,
+                   help="model_version tag for the fine-tuned rows; one listed in FINETUNED brings its models and margin")
     p.add_argument("--cpu", action="store_true", help="score on the CPU (and reuse the CPU preview's cache)")
     p.add_argument("--apply", action="store_true", help="write; without it, only report")
     p.add_argument("--real-db", action="store_true", help=f"allow --db to be {REAL_DB}")
@@ -246,8 +299,14 @@ def main(argv=None) -> int:
     if args.finetuned:
         import aggregate.preview as pv
         from config.model_version import FINETUNED
-        models = args.models or pv.DEFAULT_MODELS
-        version = args.version or finetuned_version(models, args.margin)
+        try:
+            models, margin, version = choose_finetuned(args.models, args.margin, args.version, FINETUNED,
+                                                       pv.DEFAULT_MODELS)
+        except ValueError as e:
+            print(f"refusing: {e}", file=sys.stderr)
+            conn.close()
+            return 2
+        print(f"fine-tuned models: {', '.join(models)}; margin {margin}")
         if version not in FINETUNED:
             print(f"note: {version} is not in FINETUNED in config/model_version.py; add it before serving "
                   f"it, or new sentences won't get its scores")
@@ -260,7 +319,7 @@ def main(argv=None) -> int:
             todo = sum((s, a) not in done for s, a in zip(pairs["sentence_id"], pairs["aspect"]))
             print(f"fine-tuned: {version}; {len(pairs) - todo} pairs already scored in {cache}, {todo} to score")
         else:
-            finetuned = pv.finetuned_labels(pairs, models, cache, args.margin)
+            finetuned = pv.finetuned_labels(pairs, models, cache, margin)
 
     if not args.apply:
         conn.close()
@@ -271,7 +330,8 @@ def main(argv=None) -> int:
         os.makedirs(BACKUP_DIR, exist_ok=True)
         backup = os.path.join(BACKUP_DIR, f"plp-before-rescore-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}.db")
         fresh_copy(backup, src=db)
-        print(f"backup: {backup} (to undo: stop the API, then copy it over {db})")
+        print(f"backup: {backup} (to undo: stop the API and the dashboard, delete {db}-wal and {db}-shm "
+              f"if they exist, then copy the backup over {db})")
 
     from ingest.db import now_iso
     try:

@@ -34,7 +34,7 @@ def _hits():
          "text": REDDIT, "url": REDDIT_URL, "score": 0.9},
         {"sentence_id": "b" * 24, "bank": "UOB", "source": "google_news", "published_at": "2026-09-02T00:00:00",
          "text": REDDIT_VIA_NEWS, "url": REDDIT_VIA_NEWS_URL, "score": 0.8},
-        {"sentence_id": "c" * 24, "bank": "DBS", "source": "cna", "published_at": "2026-09-03T00:00:00",
+        {"sentence_id": "c" * 24, "bank": "DBS", "source": "google_news", "published_at": "2026-09-03T00:00:00",
          "text": NEWS, "url": NEWS_URL, "score": 0.7},
     ]
 

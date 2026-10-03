@@ -23,7 +23,7 @@ carry a dated note saying so.
 | claim you might make | why you can't, yet |
 |---|---|
 | "DBS/OCBC show more positive sentiment than UOB" | No longer an artifact of missing UOB data — all three banks now have earnings coverage (DBS 9,093 sentences, UOB 1,600, OCBC 1,561). DBS still carries ~6x the earnings volume of the other two, so check the per-source breakdown before making a blended claim. |
-| "Fine-tuning improved sentiment classification" | On macro-F1, modestly, and only since 2026-10-01: with the aspect's readable label as input, test macro-F1 0.604 ± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT zero-shot's 0.571 on the 299-row test split; the gap is about one seed standard deviation ([evidence](evidence/finetune-fixes-2026-10-01.md)). Don't credit the readable label for it: on two more seeds' cross-validation it is no better than the aspect key (+0.005 over 15 paired folds; [evidence](evidence/noise-floor-cv-2026-10-02.md)). Base FinBERT still has the higher accuracy (0.70 against 0.66): the fine-tuned model calls neutral sentences positive or negative more often. The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT. |
+| "Fine-tuning improved sentiment classification" | On macro-F1, modestly, and only since 2026-10-01: with the aspect's readable label as input, test macro-F1 0.604 ± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT zero-shot's 0.571 on the 299-row test split; the gap is about one seed standard deviation ([evidence](evidence/finetune-fixes-2026-10-01.md)). Don't credit the readable label for it: on two more seeds' cross-validation it is no better than the aspect key (+0.005 over 15 paired folds; [evidence](evidence/noise-floor-cv-2026-10-02.md)). Base FinBERT still has the higher accuracy (0.70 against 0.66): the fine-tuned model calls neutral sentences positive or negative more often. The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT. Retrained on 2026-10-04 after a training bug (the pretrained head's outputs were renamed): every seed beats base (0.621 ± 0.027; 0.634 for the three averaged, accuracy 0.702), but these models are not adopted, a team decision ([evidence](evidence/retrain-2026-10-04.md)). |
 | "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16): an LLM classifier (`llama3.1:8b`) matches the human aspect on 0.729 of the 1,277 labelled sentences against 0.413 for the embedding match; it classified the whole corpus on 3 Oct but isn't applied to the database yet ([evidence](evidence/llm-aspect-classifier-2026-10-01.md), [index preview](evidence/index-preview-2026-10-01.md)). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
 | "The chatbot cites its sources" | Local models invent citations: on gold set v2 (1 Oct), 15 of 32 answers on the default `llama3.2:3b`, 11 of 32 on `llama3.1:8b`, every one from an answer that never searched for evidence ([evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). A code check flags this; since 2 Oct `CHATBOT_ENFORCE_EVIDENCE=strip` (off by default) removes such evidence: replayed under the stricter checks of 3 Oct, citation warnings fell to 0 on both models (8B 11 → 0, 3B 16 → 0) and answers with a figure no tool returned to 0 on the 8B and 2 on the 3B, both real inventions ([evidence](evidence/chatbot-eval-build-2026-10-01.md)). |
 | "GPT / Gemini backends work" | Gemini works: verified live on 2026-09-30 on numbers-only questions ([evidence](evidence/gemini-backend-2026-09-30.md)). Since 4 Oct its backend withholds Reddit evidence text, so Reddit posts never reach it. The OpenAI backend has never been run: no key exists. Since 1 Oct it also reaches OpenAI-compatible providers such as Groq (`OPENAI_BASE_URL`), equally unverified. |
@@ -73,8 +73,8 @@ By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase on 2026-10-04: 21,867 lines of Python in git (13,604 excluding
-tests), 1107 tests in `tests/` (1154 with the diagram and notebook checks).
+Codebase on 2026-10-04: 22,344 lines of Python in git (13,748 excluding
+tests), 1126 tests in `tests/` (1173 with the diagram and notebook checks).
 
 These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
 loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
@@ -128,7 +128,7 @@ Streamlit dashboard (`dashboard/`) is maintained by a teammate and reads the
 database directly; it was removed on 2026-10-01 and restored the same night
 with the teammate's redesign (DESIGN decision 23, amended).
 
-**Engineering.** 1107 tests (external APIs mocked with captured payloads),
+**Engineering.** 1126 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the API and Ollama. A clean copy installs
 and runs from the README on Python 3.14
@@ -137,6 +137,18 @@ and runs from the README on Python 3.14
 ---
 
 ## Chatbot evaluation
+
+> **Updated 2026-10-04.** The regex input guards are replaced by an intent
+> classifier (DESIGN decision 24): a local model sorts each question into one
+> of eleven intents, and every intent but in-scope gets a reviewed fixed
+> reply. `llama3.1:8b` sorts 100 of 103 labelled questions correctly and
+> blocks no real question (possibly optimistic: the intent definitions quote
+> some evaluation phrasings). Live on the 32-question gold set with the same
+> chatbot model, behaviour stays 8/8 and the right tool is called 21–22 of 24
+> times (20 on 1–2 Oct; the prompt and checks changed too); with strip
+> enforcement, no invented citation and one invented figure. Two other-bank questions now reach the model, which
+> declined both. Method and tables:
+> [evidence/chatbot-intent-2026-10-04.md](evidence/chatbot-intent-2026-10-04.md).
 
 > **Updated 2026-09-26.** Memory, input guards and output checks were added
 > (DESIGN decision 19). With them, advice and out-of-scope questions are

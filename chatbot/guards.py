@@ -75,10 +75,14 @@ def _percent_fields(obj, out: list[float]) -> None:
 def _count_ratios(obj, out: list[float]) -> None:
     """100·a/b for the whole-number counts within one result object (positive_n
     over n, say), the percentages an answer can honestly derive. Pairing every
-    number with every other accepted almost any percentage (3 Oct 2026)."""
+    number with every other accepted almost any percentage (3 Oct 2026). An
+    object made only of counts is a breakdown (analysts per rating): each
+    count's share of their total is derivable too (4 Oct 2026)."""
     if isinstance(obj, dict):
         counts = [float(v) for v in obj.values() if isinstance(v, int) and not isinstance(v, bool)]
         out.extend(100 * a / b for a, b in permutations(counts, 2) if b and 0 <= a <= b)
+        if obj and len(counts) == len(obj) and min(counts) >= 0 and sum(counts):
+            out.extend(100 * c / sum(counts) for c in counts)
         for v in obj.values():
             _count_ratios(v, out)
     elif isinstance(obj, (list, tuple)):

@@ -58,16 +58,16 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| gold set | `chatbot/eval_gold_set.py:26` | `GOLD_SET = [` |
-| fresh single turn | `chatbot/run_eval.py:135` | `turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)` |
-| record tool calls with results | `chatbot/run_eval.py:154` | `"result": c.get("result"), **({"by": c["by"]} if c.get("by") else {})}` |
+| gold set | `chatbot/eval_gold_set.py:28` | `GOLD_SET = [` |
+| fresh single turn | `chatbot/run_eval.py:137` | `turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)` |
+| record tool calls with results | `chatbot/run_eval.py:156` | `"result": c.get("result"), **({"by": c["by"]} if c.get("by") else {})}` |
 | tool selection check | `chatbot/run_eval.py:71` | `def _check_tool_selection(item: dict, calls: list[dict])` |
 | behaviour check | `chatbot/run_eval.py:93` | `def _check_behavior(item: dict, answer: str)` |
 | advice decline | `chatbot/run_eval.py:97` | `if expected == "decline_advice":` |
 | decline or no data | `chatbot/run_eval.py:101` | `if expected == "decline_or_no_data":` |
-| citation flag | `chatbot/run_eval.py:142` | `fabricated = bool(turn.citation_unverified)` |
-| input guard | `chatbot/run_eval.py:158` | `"input_guard": guard,` |
-| unverified figures | `chatbot/run_eval.py:160` | `"unverified_numbers": numbers,` |
+| citation flag | `chatbot/run_eval.py:144` | `fabricated = bool(turn.citation_unverified)` |
+| input guard | `chatbot/run_eval.py:160` | `"input_guard": guard,` |
+| unverified figures | `chatbot/run_eval.py:162` | `"unverified_numbers": numbers,` |
 | output files and tag | `chatbot/run_eval.py:49` | `def _output_paths(tag: str | None)` |
 | left to a person | `chatbot/run_eval.py:19` | `NOT automated, and left in the transcript for a human to grade` |
 | figure check is not a grade | `chatbot/run_eval.py:16` | `check is a strict detector, not a grade` |

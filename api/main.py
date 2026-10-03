@@ -21,6 +21,7 @@ import config.model_version as current_model
 from config import aspect_taxonomy
 
 import sqlite3
+from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -33,7 +34,8 @@ from aggregate.index import MIN_N, compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
 from chatbot.tools import (ASPECT_KEYS, MIN_VOLUME_FOR_SCORE, compare_banks, get_analyst_consensus,
-                            get_coverage, get_sentiment, get_trend, normalize_aspect, search_evidence)
+                            get_coverage, get_sentiment, get_trend, normalize_aspect, search_evidence,
+                            version_has_rows)
 from ingest.base import BANK_NAMES
 from ingest.db import get_connection
 
@@ -41,8 +43,24 @@ setup_logging()
 logger = get_logger(__name__)
 
 BANKS = list(BANK_NAMES)
+BANK_PATTERN = "^(" + "|".join(BANK_NAMES) + ")$"     # exactly one bank name: anything else is a 422
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    """Say at startup, not first at a reader's "no data", when the database
+    has no index rows for the model version config/model_version.py serves."""
+    try:
+        if not version_has_rows():
+            logger.error("no sentiment_index rows for %s (config/model_version.py): every index endpoint "
+                         "will report no data until the index is computed for it", current_model.MODEL_VERSION)
+    except sqlite3.Error as e:
+        logger.error("database check at startup failed: %s", e)
+    yield
+
 
 app = FastAPI(
+    lifespan=lifespan,
     title="SG Bank Sentiment API",
     description="The system's interface: the sentiment index, its evidence, analyst "
                  "consensus and the chatbot, for any dashboard or client to read. "
@@ -97,7 +115,7 @@ def valid_source(source: str = Query(
 
 
 @app.get("/sentiment")
-def sentiment(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
+def sentiment(bank: str = Query(..., pattern=BANK_PATTERN),
               aspect: str | None = Depends(valid_aspect),
               window: str = Query("all_time", pattern="^(7d|30d|all_time)$")):
     return get_sentiment(bank, aspect, window)
@@ -110,7 +128,7 @@ def sentiment_compare(aspect: str | None = Depends(valid_aspect),
 
 
 @app.get("/sentiment/trend")
-def sentiment_trend(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = Depends(valid_aspect)):
+def sentiment_trend(bank: str = Query(..., pattern=BANK_PATTERN), aspect: str | None = Depends(valid_aspect)):
     return get_trend(bank, aspect)
 
 
@@ -169,12 +187,12 @@ def sources_breakdown():
 
 
 @app.get("/coverage")
-def coverage(bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = Depends(valid_aspect)):
+def coverage(bank: str | None = Query(None, pattern=BANK_PATTERN), aspect: str | None = Depends(valid_aspect)):
     return get_coverage(bank, aspect)
 
 
 @app.get("/evidence")
-def evidence(query: str, bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)$"),
+def evidence(query: str, bank: str | None = Query(None, pattern=BANK_PATTERN),
              aspect: str | None = Depends(valid_aspect),
              sentiment: str | None = Query(None, pattern="^(positive|neutral|negative)$"),
              k: int = Query(5, ge=1, le=50)):
@@ -182,7 +200,7 @@ def evidence(query: str, bank: str | None = Query(None, pattern="^(DBS|OCBC|UOB)
 
 
 @app.get("/analyst-consensus")
-def analyst_consensus(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$")):
+def analyst_consensus(bank: str = Query(..., pattern=BANK_PATTERN)):
     return get_analyst_consensus(bank)
 
 
@@ -207,7 +225,7 @@ def analyst_consensus_latest():
 
 
 @app.get("/evidence/latest")
-def evidence_latest(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"), aspect: str | None = Depends(valid_aspect),
+def evidence_latest(bank: str = Query(..., pattern=BANK_PATTERN), aspect: str | None = Depends(valid_aspect),
                     limit: int = Query(30, ge=1, le=200)):
     """The newest sentences for a bank, optionally one aspect, with their stored
     sentiment label: a drill-down list for a dashboard. (`/evidence` is the
@@ -240,7 +258,7 @@ def aspects():
 
 
 @app.get("/sentiment/series")
-def sentiment_series(bank: str = Query(..., pattern="^(DBS|OCBC|UOB)$"),
+def sentiment_series(bank: str = Query(..., pattern=BANK_PATTERN),
                      aspect: str | None = Depends(valid_aspect),
                      bucket: str = Query("month", pattern="^(week|month|quarter)$"),
                      source: str = Depends(valid_source),

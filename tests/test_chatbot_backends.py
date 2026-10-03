@@ -342,7 +342,8 @@ def test_gemini_never_receives_reddit_text_or_earlier_quotes(monkeypatch):
     evidence = {"query": "q", "results": [
         {"sentence_id": "a" * 24, "source": "arctic_shift", "text": "my OCBC app keeps crashing lol",
          "url": "https://www.reddit.com/r/singaporefi/comments/x/", "cite_as": "[OCBC, 2025-01-01]"},
-        {"sentence_id": "b" * 24, "source": "cna", "text": "OCBC raised its dividend.", "url": "https://cna.sg/1"}]}
+        {"sentence_id": "b" * 24, "source": "google_news", "text": "OCBC raised its dividend.",
+         "url": "https://news.google.com/1"}]}
     history = [{"role": "user", "content": "quotes on OCBC?"},
                {"role": "assistant", "content": 'One user wrote "my OCBC app keeps crashing lol".'}]
     answer = GeminiBackend(api_key="k").ask("more?", "system", [], lambda n, a: json.dumps(evidence),
@@ -355,10 +356,19 @@ def test_gemini_never_receives_reddit_text_or_earlier_quotes(monkeypatch):
 def test_gemini_withholds_evidence_from_an_unknown_or_missing_source():
     # Unknown text is treated as personal: only sources config/sources.yaml marks
     # as not written by the public reach the hosted model.
-    from chatbot.backends.gemini_backend import WITHHELD, withhold_reddit
+    from chatbot.backends.gemini_backend import WITHHELD_UNKNOWN, withhold_reddit
     content = {"results": [
-        {"source": "cna", "text": "OCBC raised its dividend.", "url": "https://cna.sg/1"},
+        {"source": "google_news", "text": "OCBC raised its dividend.", "url": "https://news.google.com/1"},
         {"source": "telegram", "text": "my DBS card got blocked", "url": "https://t.me/x"},
         {"text": "someone's own words", "url": None}]}
     out = [r["text"] for r in withhold_reddit("search_evidence", content)["results"]]
-    assert out == ["OCBC raised its dividend.", WITHHELD, WITHHELD]
+    assert out == ["OCBC raised its dividend.", WITHHELD_UNKNOWN, WITHHELD_UNKNOWN]
+
+
+def test_gemini_never_receives_cna_text():
+    # CNA articles stay within the team (CLAUDE.md); Gemini's free tier may be read by people.
+    from chatbot.backends.gemini_backend import WITHHELD_TEAM_ONLY, withhold_reddit
+    content = {"results": [{"source": "cna", "text": "DBS posted record profit, CNA reported.",
+                            "url": "https://www.channelnewsasia.com/x", "cite_as": "[DBS, 2026-01-01]"}]}
+    item = withhold_reddit("search_evidence", content)["results"][0]
+    assert item["text"] == WITHHELD_TEAM_ONLY and item["url"] is None and item["cite_as"] is None

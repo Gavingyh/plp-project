@@ -39,43 +39,21 @@ import pandas as pd
 import requests
 import yaml
 
+from config import aspect_taxonomy
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(BASE_DIR, "config", "aspects.yaml")
 LABELS_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
 CACHE_DIR = os.path.join(BASE_DIR, "data", "aspect_llm")
 OLLAMA_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-DEFAULT_MODEL = "llama3.1:8b"
 OTHER = "other"
 
-# One line per aspect, from docs/evidence/aspect-taxonomy-2026-09-25.md.
-DEFINITIONS = {
-    "asset_quality": "loan quality: non-performing loans, allowances and provisions, credit costs, exposure to troubled borrowers",
-    "capital_liquidity": "capital and liquidity: CET1 and capital ratios, leverage, LCR/NSFR, Basel rules, capital instruments, bond issuance",
-    "dividend_policy": "dividends declared or expected, dividend per share, payout ratio, dividend yield, capital returned to shareholders",
-    "net_interest_margin": "net interest margin and net interest income, loan and deposit growth as their driver, effect of interest-rate moves on the bank's earnings",
-    "management_guidance": "forward-looking statements by the bank: targets, outlook, guidance, strategy, earnings-call answers",
-    "income_profit_results": "reported income and profit: total income, net profit, fee and trading income, quarterly or annual results",
-    "wealth_business": "wealth management and private or premier banking: assets under management, wealth fee income, wealth targets",
-    "investor_stock_sentiment": "the bank's stock: buy, sell or hold views, share price, valuation, analyst target prices, returns against alternatives",
-    "retail_banking_sentiment": "products and service as customers experience them: cards, cashback, savings accounts, fees, app or service outages, scams, applications",
-    "macro_market_environment": "GDP, interest-rate cuts and hikes, geopolitics and trade, the macro outlook as it affects the banks",
-    OTHER: "anything else: appointments and pay, awards, M&A and partnerships, CSR, careers, regulatory boilerplate, or no clear investment topic",
-}
-
-# Invented sentences, so none can appear in the evaluation set.
-EXAMPLES = [
-    ("The bank set aside more allowances as bad loans rose in its SME book.", "asset_quality"),
-    ("Its CET1 ratio stayed comfortably above the regulatory minimum.", "capital_liquidity"),
-    ("They declared a final dividend of 60 cents a share.", "dividend_policy"),
-    ("Margins narrowed as interest rates fell, weighing on net interest income.", "net_interest_margin"),
-    ("Management expects mid-single-digit loan growth next year.", "management_guidance"),
-    ("Quarterly net profit rose 8% on higher fee income.", "income_profit_results"),
-    ("Wealth management fees hit a record as assets under management grew.", "wealth_business"),
-    ("I'm holding the shares for the yield; the price looks fair at 1.5x book.", "investor_stock_sentiment"),
-    ("The app has been down all morning and I can't transfer money.", "retail_banking_sentiment"),
-    ("Rate cuts by the Fed will squeeze all three Singapore banks.", "macro_market_environment"),
-    ("The bank named a new chief technology officer.", OTHER),
-]
+# Each aspect's line in the prompt, the invented examples and the model:
+# config/aspects.yaml (llm_definition, llm_examples, llm_model).
+_CONFIG = aspect_taxonomy.load()
+DEFINITIONS = {k: v["llm_definition"] for k, v in _CONFIG["aspects"].items()}
+EXAMPLES = [(e["sentence"], e["aspect"]) for e in _CONFIG["llm_examples"]]
+DEFAULT_MODEL = _CONFIG["llm_model"]
 
 
 def aspect_keys(config_path: str = CONFIG_PATH) -> list[str]:

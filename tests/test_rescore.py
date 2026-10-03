@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -60,7 +61,8 @@ def _rows(path, sql):
 
 def test_dry_run_writes_nothing(db):
     before = _rows(db, "SELECT * FROM sentence_aspects ORDER BY 1, 2")
-    assert rescore.main(["--db", db, "--aspects", "llm", "--finetuned", "--models", "m/a", "m/b"]) == 0
+    assert rescore.main(["--db", db, "--aspects", "llm", "--finetuned", "--models", "m/a", "m/b",
+                         "--margin", "0.13"]) == 0
     assert _rows(db, "SELECT * FROM sentence_aspects ORDER BY 1, 2") == before
 
 
@@ -93,6 +95,36 @@ def test_refuses_data_plp_db_even_when_another_database_is_served(db, monkeypatc
     import ingest.db
     monkeypatch.setattr(ingest.db, "DEFAULT_DB_PATH", db)
     assert rescore.main(["--db", db, "--aspects", "llm", "--apply"]) == 2
+
+
+def test_refuses_the_database_plp_db_path_names(tmp_path):
+    # Set in the environment, so REAL_DB is computed from it at import, as in real use.
+    import subprocess
+    import sys
+    served = tmp_path / "served.db"
+    served.write_bytes(b"")
+    root = Path(rescore.__file__).resolve().parent.parent
+    run = subprocess.run([sys.executable, str(root / "scripts" / "rescore.py"), "--db", str(served), "--apply"],
+                         env={**os.environ, "PLP_DB_PATH": str(served), "HF_HUB_OFFLINE": "1"},
+                         capture_output=True, text=True, cwd=root)
+    assert run.returncode == 2 and "refusing to change" in run.stderr
+
+
+def test_a_fresh_copy_starts_from_data_plp_db_not_the_served_copy(db, tmp_path, monkeypatch):
+    import shutil
+    import sqlite3
+    import ingest.db
+    served = tmp_path / "served.db"
+    shutil.copy(db, served)
+    conn = sqlite3.connect(served)
+    conn.execute("DELETE FROM sentence_aspects")             # the served copy differs from the real data
+    conn.commit()
+    conn.close()
+    monkeypatch.setattr(rescore, "REAL_DB", str(served))
+    monkeypatch.setattr(ingest.db, "DEFAULT_DB_PATH", db)
+    fresh = str(tmp_path / "fresh.db")
+    assert rescore.main(["--db", fresh, "--fresh-copy"]) == 0
+    assert _assignments(fresh) == _assignments(db) != []
 
 
 def test_refuses_when_a_sentence_has_no_llm_answer(db, tmp_path):
@@ -132,11 +164,16 @@ def test_a_failed_check_writes_nothing(db):
 
 
 def test_new_aspects_alone_refuse_to_leave_a_fine_tuned_version_partial(db):
-    args = ["--db", db, "--finetuned", "--models", "x/experiments-2026-10-01/s1", "--apply"]
+    args = ["--db", db, "--finetuned", "--models", "x/experiments-2026-10-01/s1", "--margin", "0.13", "--apply"]
     assert rescore.main(args) == 0                                            # fine-tuned rows on centroid pairs
     before = _assignments(db)
     assert rescore.main(["--db", db, "--aspects", "llm", "--apply"]) == 1      # would leave them on 2 of 3 pairs
     assert _assignments(db) == before
+
+
+def _every_table(path):
+    tables = [t for (t,) in _rows(path, "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+    return {t: sorted(map(repr, _rows(path, f"SELECT * FROM {t}"))) for t in tables}
 
 
 def test_an_index_failure_rolls_everything_back(db, monkeypatch):
@@ -145,10 +182,59 @@ def test_an_index_failure_rolls_everything_back(db, monkeypatch):
     def broken(conn):
         raise RuntimeError("index failed")
     monkeypatch.setattr(aggregate.index, "rebuild", broken)
-    before = _assignments(db)
+    before = _every_table(db)
     with pytest.raises(RuntimeError, match="index failed"):
-        rescore.main(["--db", db, "--aspects", "llm", "--apply"])
-    assert _assignments(db) == before
+        rescore.main(["--db", db, "--aspects", "llm", "--finetuned", "--models", "x/experiments-2026-10-01/s1",
+                      "--margin", "0.13", "--apply"])
+    assert _every_table(db) == before                    # aspects, scores and the index alike
+
+
+def test_the_backup_includes_rows_still_in_the_write_ahead_log(db, tmp_path):
+    import sqlite3
+    live = sqlite3.connect(db)
+    live.execute("PRAGMA journal_mode=WAL")
+    live.execute("PRAGMA wal_autocheckpoint=0")
+    live.execute("INSERT INTO sentence_aspects VALUES ('s1', 'wealth_business', 0.5, '2026-10-04')")
+    live.commit()                                        # committed, not checkpointed: only in the -wal file
+    try:
+        rescore.fresh_copy(str(tmp_path / "backup.db"), src=db)
+    finally:
+        live.close()
+    assert ("s1", "wealth_business") in _rows(str(tmp_path / "backup.db"), "SELECT sentence_id, aspect FROM sentence_aspects")
+
+
+REGISTRY = {"finbert-finetuned-2026-10-01-3seed-m0.13": {"models": ["m/a", "m/b", "m/c"], "margin": 0.13}}
+
+
+def test_a_listed_version_brings_its_own_models_and_margin():
+    models, margin, version = rescore.choose_finetuned(None, None, "finbert-finetuned-2026-10-01-3seed-m0.13",
+                                                       REGISTRY, ["other/x"])
+    assert models == rescore._abs(["m/a", "m/b", "m/c"]) and margin == 0.13
+
+
+def test_a_listed_version_with_other_models_or_margin_is_refused():
+    v = "finbert-finetuned-2026-10-01-3seed-m0.13"
+    with pytest.raises(ValueError, match="other models"):
+        rescore.choose_finetuned(["n/a", "n/b", "n/c"], None, v, REGISTRY, [])
+    with pytest.raises(ValueError, match="other models"):
+        rescore.choose_finetuned(None, 0.12, v, REGISTRY, [])
+
+
+def test_base_finberts_tag_is_refused(db):
+    with pytest.raises(ValueError, match="base FinBERT"):
+        rescore.choose_finetuned(["m/a"], 0.1, rescore.BASE_VERSION, REGISTRY, [])
+    assert rescore.main(["--db", db, "--finetuned", "--models", "m/a", "--margin", "0.1",
+                         "--version", rescore.BASE_VERSION, "--apply"]) == 2
+
+
+def test_the_margin_comes_from_the_listing_or_must_be_given():
+    assert rescore.choose_finetuned(None, None, None, REGISTRY, ["m/a", "m/b", "m/c"])[1:] == (
+        0.13, "finbert-finetuned-2026-10-01-3seed-m0.13")
+    with pytest.raises(ValueError, match="give --margin"):
+        rescore.choose_finetuned(["models/experiments-2026-10-03/label/seed_42/final"], None, None, REGISTRY, [])
+    # retrained models get their own version, never the 1 Oct one
+    assert rescore.choose_finetuned(["models/experiments-2026-10-03/s1"], 0.12, None, REGISTRY, [])[2] == (
+        "finbert-finetuned-2026-10-03-1seed-m0.12")
 
 
 def test_the_real_database_is_backed_up_first(db, tmp_path, monkeypatch):

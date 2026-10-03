@@ -274,3 +274,26 @@ def test_a_database_error_is_not_read_as_no_consensus(temp_db, monkeypatch):
             pass
     monkeypatch.setattr(api_main, "get_connection", lambda: Broken())
     assert TestClient(api_main.app, raise_server_exceptions=False).get("/analyst-consensus/latest").status_code == 500
+
+
+def test_startup_says_when_the_served_version_has_no_index_rows(temp_db, caplog):
+    # An empty index for config/model_version.py's version is reported when the
+    # API starts, not first as "no data" at a reader.
+    import logging
+    with caplog.at_level(logging.ERROR, logger="api.main"), TestClient(app) as client:
+        assert client.get("/health").json() == {"status": "ok"}
+    assert any("no sentiment_index rows for" in r.getMessage() for r in caplog.records)
+
+
+def test_startup_is_quiet_when_the_served_version_has_rows(temp_db, caplog):
+    import logging
+    import ingest.db
+    conn = ingest.db.get_connection()
+    conn.execute("INSERT INTO sentiment_index (bank, aspect, source, window, score, n, pos_n, neu_n, neg_n, "
+                 "confidence_mean, model_version, computed_at) VALUES ('DBS', 'ALL', 'ALL', 'all_time', 0.1, 10, "
+                 "3, 5, 2, 0.8, ?, ?)", (MODEL_VERSION, now_iso()))
+    conn.commit()
+    conn.close()
+    with caplog.at_level(logging.ERROR, logger="api.main"), TestClient(app):
+        pass
+    assert not any("no sentiment_index rows for" in r.getMessage() for r in caplog.records)

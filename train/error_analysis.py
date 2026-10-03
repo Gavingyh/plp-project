@@ -23,10 +23,11 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score
 
+from config.model_version import DEFAULT_FINETUNED, FINETUNED
+from train.labels import LABELS
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_MODELS = [os.path.join(BASE_DIR, "models", "experiments-2026-10-01", "label", f"seed_{s}", "final")
-                  for s in (42, 1, 7)]
-LABELS = ["negative", "neutral", "positive"]
+DEFAULT_MODELS = [os.path.join(BASE_DIR, d) for d in FINETUNED[DEFAULT_FINETUNED]["models"]]
 MARGINS = np.round(np.arange(0.0, 0.61, 0.05), 2)
 
 

@@ -51,7 +51,7 @@ Each row names the file and line an element comes from, and the text that line m
 | windows | `aggregate/index.py:54` | `WINDOWS = {"7d": 7, "30d": 30, "all_time": None}` |
 | window cutoff | `aggregate/index.py:238` | `if t is None or t < cutoff:` |
 | label scores | `aggregate/index.py:47` | `_LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}` |
-| source weights | `config/sources.yaml:23` | `earnings:     {weight: 1.0` |
+| source weights | `config/sources.yaml:24` | `earnings:     {weight: 1.0` |
 | weights read by the index | `aggregate/index.py:51` | `_SOURCE_WEIGHT = sources.weights()` |
 | each item weighted | `aggregate/index.py:240` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))` |
 | group: aspect and source | `aggregate/index.py:241` | `groups[(bank, aspect, source, model_version)].append(item)` |

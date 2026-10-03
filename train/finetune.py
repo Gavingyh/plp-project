@@ -48,13 +48,12 @@ from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
                           DataCollatorWithPadding, EarlyStoppingCallback, Trainer,
                           TrainingArguments)
 
-from train.labels import check_splits
+from train.labels import LABELS, check_splits
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANDIDATES_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
 MODEL_OUT_DIR = os.path.join(BASE_DIR, "models", "finbert-absa")
 BASE_MODEL = "ProsusAI/finbert"
-LABELS = ["negative", "neutral", "positive"]
 LABEL2ID = {l: i for i, l in enumerate(LABELS)}
 
 
@@ -141,8 +140,11 @@ def corpus_shares(column: str) -> dict[str, float]:
     conn = get_connection()
     try:
         if column == "label":
+            # Base FinBERT's labels only: with a fine-tuned version stored too, MIN(label) would mix the two.
+            from config.model_version import BASE_VERSION
             rows = conn.execute("SELECT label, COUNT(*) FROM (SELECT sentence_id, MIN(label) AS label "
-                                "FROM aspect_sentiment GROUP BY sentence_id) GROUP BY label").fetchall()
+                                "FROM aspect_sentiment WHERE model_version = ? GROUP BY sentence_id) "
+                                "GROUP BY label", (BASE_VERSION,)).fetchall()
         elif column == "source":
             rows = conn.execute("SELECT source, COUNT(*) FROM sentences GROUP BY source").fetchall()
         else:

@@ -34,6 +34,7 @@ import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from config.device import best_device
+from config.model_version import BASE_VERSION
 from config.logging_config import get_logger, setup_logging
 from ingest.db import get_connection, init_db, now_iso
 
@@ -43,7 +44,7 @@ MODEL_NAME = "ProsusAI/finbert"
 # The tag on every row this script writes. It names the model this script
 # runs (MODEL_NAME), so it stays fixed: a fine-tuned scorer writes its own
 # tag, and the readers pick a version through config/model_version.py.
-MODEL_VERSION = "finbert-base-zeroshot-v1"
+MODEL_VERSION = BASE_VERSION
 _BATCH_SIZE = 32
 _MAX_LENGTH = 128
 _CHUNK = 2000   # sentences classified and committed per step

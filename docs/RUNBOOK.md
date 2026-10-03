@@ -137,6 +137,14 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.
     --aspects llm --finetuned --margin 0.13 --cpu --apply
 ```
 
+Which models and margin: `--version` with a version listed in `FINETUNED`
+(`config/model_version.py`) uses that entry's models and margin, and refuses
+others, because new sentences are scored with exactly those. Without it, the
+1 Oct seeds are used with the margin their entry lists; other models
+(`--models`, such as the retrained seeds in
+`models/experiments-2026-10-03/label/`) need `--margin` and get a version of
+their own. Base FinBERT's tag is refused.
+
 It prints its checks (one aspect per sentence, no scored pair without an
 assignment) and every bank's headline per model version, which should match
 the preview's columns B and D. On 3 Oct the copy matched all 36 bank-aspect
@@ -527,7 +535,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-1107 tests in `tests/`; `pytest -q` from the repository root runs 1154,
+1126 tests in `tests/`; `pytest -q` from the repository root runs 1173,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.
@@ -729,8 +737,10 @@ another job running on the Mac at the same time.
 Answers are cached in `data/aspect_llm/<model>.<prompt>.jsonl` (gitignored),
 so an interrupted run resumes with the same command and new sentences are
 the only ones classified. `<prompt>` is a hash of the aspect keys,
-definitions, examples and instructions (`96efe244` on 2 Oct). Change any of
-them and the next run starts a new file, so the corpus needs a full redo;
+definitions, examples and instructions (`96efe244` on 2 Oct). The definitions
+(`llm_definition`), the examples (`llm_examples`) and the model (`llm_model`)
+are in `config/aspects.yaml`; a test pins the hash, so a change to them is
+deliberate. Change any of them and the next run starts a new file, so the corpus needs a full redo;
 change them back and the old file is used again. Each run prints its cache
 file. Neither command writes to the database; applying the answers to it is a
 team decision ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).

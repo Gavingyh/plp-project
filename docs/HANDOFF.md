@@ -968,3 +968,74 @@ through a venue name (UOB Plaza, OCBC Cycle), which NER's resolution table
 doesn't cover yet; the LLM aspect cache has two duplicate lines (same
 answers, harmless).
 
+
+### 4 October
+
+- **Chatbot questions are sorted by a model, not by word lists** (DESIGN
+  decision 24). `chatbot/intent.py` asks a local model (`llama3.1:8b`,
+  Ollama structured output) which of eleven intents a question is:
+  in-scope questions go to the chatbot model; advice, another bank, small
+  talk, help, banking service, prompt injection, feedback and off-topic get
+  a reviewed fixed reply from `config/intents.yaml`. If the classifier is
+  down, the question goes to the model (fail open). On 103 labelled
+  questions (`python -m chatbot.eval_intent`): `llama3.1:8b` 100 correct,
+  no real question blocked, two other-bank questions (HSBC, Standard
+  Chartered) let through to the model; `llama3.2:3b` 94; `qwen3:4b` 99 but
+  blocks three real questions. Results in `data/eval/intent_eval_*.md`.
+  Possibly optimistic: the intent definitions quote some evaluation
+  phrasings and name the evaluation's other banks; new questions written
+  apart from the prompt would measure it fairly.
+  Live with `llama3.1:8b` as classifier and chatbot model, the gold set
+  under today's checks: behaviour 8/8, right tool 21 and 22 of 24 (20 on
+  1–2 Oct; the prompt and checks changed too), answers with an unverified
+  figure 4 of 32 (10 on 1 Oct); with
+  strip, no invented citation and one invented figure. HSBC and Standard
+  Chartered now reach the model, which declined both. Conversations 9/9,
+  the new scope set 28 of 29, its conversations 9/9.
+  `docs/evidence/chatbot-intent-2026-10-04.md`. Two checks were corrected
+  after these runs, both for flagging correct answers (an analyst
+  breakdown's shares; "I can't help with that" as a decline), and the
+  earlier runs re-scored with them.
+- **Settings in one place.** `config/chatbot.yaml` (every chatbot setting,
+  with its environment override), `config/sources.yaml` (source weights;
+  which sources' text the Gemini backend must never receive: Reddit, CNA,
+  and any source not listed), `config/aspect_taxonomy.py` (the one reader of
+  `config/aspects.yaml`), one minimum-sentences constant (`MIN_N`), one
+  bank-name tuple (`BANK_NAMES`), one label order (`train/labels.py`),
+  `BASE_VERSION` and `DEFAULT_FINETUNED` in `config/model_version.py`. The
+  aspect classifier's definitions, examples and model are in
+  `config/aspects.yaml`; its prompt fingerprint is unchanged (96efe244, a
+  test pins it), so the corpus answers are still used.
+- **`PLP_DB_PATH` / `PLP_EMBEDDINGS_PATH`** serve a copy (a rescored one,
+  say) to the API and the dashboard without touching `data/plp.db`.
+  `scripts/rescore.py` refuses both databases without `--real-db`, and
+  `--fresh-copy` always copies `data/plp.db`.
+- **Rescore: models and margin from `FINETUNED`.** A listed `--version`
+  brings its own models and margin and refuses others; base FinBERT's tag is
+  refused; models not listed need `--margin`. The undo advice mentions the
+  WAL files.
+- **The retrained models** (head-order fix): every seed beats base FinBERT
+  (test macro-F1 0.646, 0.592, 0.625; mean 0.621 ± 0.027 against 0.571);
+  the average matches base on accuracy (0.702 against 0.699). The
+  dev-chosen margin (0.12) now lowers every seed's test score. On the full
+  corpus the retrained average stays within 0.015 of base FinBERT's
+  headlines with the margin and agrees with base on every aspect's sign;
+  single seeds still differ. Not adopted: `docs/evidence/retrain-2026-10-04.md`
+  (audited).
+- **Fixes with tests:** evaluation stops on probabilities that don't sum to
+  1 and takes `--cpu`; the label shares used for class weights count base
+  FinBERT only; the API logs at startup when the served version has no index
+  rows; the backup and rollback tests cover every table and an open WAL.
+- **Validation:** the 4 Oct chatbot-and-API validation's findings are all
+  fixed (`docs/validation/2026-10-04-chatbot-and-api.md`); two reviewer
+  runs and two auditor runs on today's changes, all findings fixed.
+
+**Needs a human (4 Oct):** decide whether to adopt the retrained models and
+how to settle the margin on dev (decision brief, 7); anchor the 7- and
+30-day windows to the newest sentence or collect up to the re-score, since
+a rebuild after 12 Oct would otherwise leave them empty (12); whether the
+Claude and OpenAI backends also withhold Reddit and CNA text (13); POSB as
+a DBS alias at collection (14); read the fixed replies in
+`config/intents.yaml`. Known and not fixed: the number check skips years,
+so a wrong year ("2023" for 2026) passes; the classifier lets two
+other-bank questions through to the model, which declined them.

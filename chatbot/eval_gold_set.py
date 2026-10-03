@@ -20,8 +20,10 @@ introduced and one more uncovered bank, for 32 in all. MULTI_TURN holds
 conversations whose later turns depend on earlier ones ("and OCBC?").
 """
 
+from ingest.base import BANK_NAMES
+
 ASPECTS = ["dividend_policy", "asset_quality", "net_interest_margin", "management_guidance"]  # v1's four
-BANKS = ["DBS", "OCBC", "UOB"]
+BANKS = list(BANK_NAMES)
 
 GOLD_SET = [
     # --- Single-bank, single-aspect lookup ---

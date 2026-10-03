@@ -22,6 +22,10 @@ def test_only_reddit_is_text_written_by_the_public():
     assert sources.personal_text_sources() == {"arctic_shift"}
 
 
+def test_only_cna_must_stay_within_the_team():
+    assert sources.team_only_sources() == {"cna"}
+
+
 def test_every_source_the_ingesters_write_is_configured():
     named = set()
     for f in (ROOT / "ingest").glob("*.py"):

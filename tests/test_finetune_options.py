@@ -181,3 +181,18 @@ def test_real_finbert_head_order_is_used():
         pytest.skip("ProsusAI/finbert not in the local cache")
     order = ft.head_label2id()
     assert order["positive"] == 0 and order["negative"] == 1 and order["neutral"] == 2
+
+
+def test_label_shares_count_base_finbert_only(temp_db):
+    # With a fine-tuned version stored beside base FinBERT, MIN(label) across
+    # versions would mix the two models' labels.
+    import ingest.db
+    from config.model_version import BASE_VERSION
+    conn = ingest.db.get_connection()
+    rows = [("s1", "other", "neutral", BASE_VERSION), ("s1", "other", "negative", "finbert-finetuned-x"),
+            ("s2", "other", "positive", BASE_VERSION), ("s2", "other", "negative", "finbert-finetuned-x")]
+    conn.executemany("INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, scored_at) "
+                     "VALUES (?, ?, ?, 0.9, ?, '2026-10-04')", rows)
+    conn.commit()
+    conn.close()
+    assert ft.corpus_shares("label") == {"neutral": 0.5, "positive": 0.5}

@@ -195,6 +195,34 @@ answers that never searched; the old checks would not have caught an
 invention after a search. Re-measured figures: `docs/evidence/chatbot-eval-build-2026-10-01.md`,
 "Third round".
 
+### The model's own words came back as evidence (4 Oct 2026)
+
+A second review found that "text a tool returned" included text the model
+had written. `search_evidence` echoes the query back, so a model could
+search for "investors fear OCBC bad loans will surge 37.5%" and then quote
+that phrase, or the figure, with nothing flagged: the check found it in the
+tool output. Timestamps did the same for numbers (a `computed_at` of
+`07:34:45` vouched for "34" and "45"). Now the echoed arguments, timestamps
+and links are left out of what can vouch. The same review found that any
+count above 1 was accepted as a percentage, so 23 positive sentences out
+of 58 could be written as "23% positive" (the true share is 40%), and
+that strip mode removed invented quotes line by line, so one that wrapped
+onto a second line survived. Each fix came with a test that failed first.
+Replayed on 48 recorded answers, the flags were unchanged except one
+already-flagged answer, which now also flags timestamp digits the model had
+copied into fake sentence ids.
+
+**The lesson:** "returned by a tool" has to mean "returned by the data",
+not anything in the tool's response. Know which fields are your own input
+coming back.
+
+A privacy rule had the same gap between policy and code. The project says
+the free Gemini tier must never receive Reddit text, but the API and the
+dashboard chose Gemini by default whenever its key was the one set, and
+nothing stopped evidence going to it. The backend now withholds Reddit
+text, links and citations, and quoted text in earlier answers. A rule that
+only a person can follow will be broken by a default.
+
 ## 5. Evaluate
 
 **Code-level enforcement was the right call, and the evidence is unusually

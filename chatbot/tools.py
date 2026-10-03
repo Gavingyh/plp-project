@@ -38,16 +38,11 @@ def _load_aspect_keys() -> list[str]:
     string field for `aspect` was observed passing "dividend policy" (a
     space, matching how the question was phrased) instead of the real key
     "dividend_policy", silently producing insufficient_data on a perfectly
-    valid question. Falls back to the four proposal aspects if the config
-    can't be read, so tool schemas still build during tests that don't need
-    the real file."""
-    try:
-        with open(_ASPECTS_CONFIG_PATH) as f:
-            config = yaml.safe_load(f)
-        return list(config["aspects"].keys())
-    except Exception:
-        return ["dividend_policy", "asset_quality", "net_interest_margin",
-                "management_guidance", "other"]
+    valid question. A missing or broken file is an error: falling back to a
+    built-in list (the proposal's four, until 4 Oct 2026) made the API reject
+    real aspects without saying why."""
+    with open(_ASPECTS_CONFIG_PATH) as f:
+        return list(yaml.safe_load(f)["aspects"].keys())
 
 
 ASPECT_KEYS = _load_aspect_keys()

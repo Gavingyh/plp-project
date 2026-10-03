@@ -79,9 +79,18 @@ def update() -> dict:
             "pruned_stale": pruned, "total": len(all_ids)}
 
 
+_search_cache: dict = {}
+
+
 def load_for_search() -> tuple[list[str], np.ndarray]:
-    """Read-only load for retrieval/clustering consumers."""
-    return _load_store()
+    """Read-only load for retrieval/clustering consumers, kept in memory until
+    the file changes: the chatbot searches evidence on most turns, and reading
+    the 127 MB file each time made every search slower (4 Oct 2026). Callers
+    must not modify what it returns."""
+    key = (os.path.getmtime(STORE_PATH), os.path.getsize(STORE_PATH)) if os.path.exists(STORE_PATH) else None
+    if _search_cache.get("key") != key or "value" not in _search_cache:
+        _search_cache.update(key=key, value=_load_store())
+    return _search_cache["value"]
 
 
 if __name__ == "__main__":

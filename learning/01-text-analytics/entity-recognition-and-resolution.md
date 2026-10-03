@@ -11,7 +11,7 @@ Every sentence in the index is attributed to a bank. If "UOB Kay Hian
 raised its target for OCBC" counts towards UOB, a broker's opinion becomes
 UOB's sentiment. Alias matching, which attributes today, can't tell the
 bank from things that share its name. Bank entity recognition is the
-project's third text-mining task (PLAN D3, DESIGN decision 18).
+project's third text-mining task (PLAN section 2, DESIGN decision 18).
 
 ---
 

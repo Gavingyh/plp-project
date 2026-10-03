@@ -24,8 +24,8 @@ Bash is for reading only: `grep`, `ls`, `git log/show`, `sqlite3 "file:data/plp.
 Run times are rough estimates ("about a day"). Absolute dates. Plain English. Do not comment on wording unless it changes the meaning.
 
 ## Output
-First line: `Model: <your model ID>`. Then one line per finding, numbered A1, A2, …:
-`A<n> | high|med|low | path:line | the claim as written | what is wrong | the source or command that settles it`
+First line: `Model: <your model ID>`. Then one line per finding, starting with a short plain name (three to six words, unique in the run, such as `Trend compares shrunk scores`):
+`<finding name> | high|med|low | path:line | the claim as written | what is wrong | the source or command that settles it`
 
 - high: a wrong figure, or a conclusion the evidence doesn't support, in a doc the team, the examiner or the public reads (`docs/report/`, `docs/briefs/`, `README.md`, `docs/model-card.md`, `docs/spec/`).
 - med: right but untraceable; or two docs disagree; or a wrong figure in an internal doc.

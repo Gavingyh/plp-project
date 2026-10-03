@@ -10,13 +10,13 @@ Two questions: does training longer help, and does telling the model the
 aspect help at all?
 
 ```bash
-# E1: sentence + aspect, up to 8 epochs
+# sentence + aspect, up to 8 epochs
 .venv-plp/bin/python3 -m train.finetune --seed $s --epochs 8 --out-dir models/experiments-2026-09-30/e1-aspect-8ep
-# E2: sentence only
+# sentence only
 .venv-plp/bin/python3 -m train.finetune --seed $s --epochs 8 --no-aspect --out-dir models/experiments-2026-09-30/e2-noaspect-8ep
-# each E1/E2 model
+# each of those models
 .venv-plp/bin/python3 -m train.evaluate --model-dir <out-dir>/seed_$s/final
-# E3: 5-fold cross-validation on train_dev, seed 42, both inputs
+# 5-fold cross-validation on train_dev, seed 42, both inputs
 .venv-plp/bin/python3 -m train.finetune --seed 42 --epochs 8 [--no-aspect] --folds 5 --fold $f --out-dir models/experiments-2026-09-30/e3-cv
 ```
 
@@ -28,9 +28,9 @@ the rate decays linearly over all 8 epochs, so it stays higher for longer.
 ## How the configuration was chosen
 
 On dev scores only, as the plan requires. 4 epochs: best dev macro-F1 0.667,
-0.607, 0.575 (mean 0.616). 8 epochs (E1): 0.641, 0.642, 0.628 (mean 0.637,
-sd 0.008). 8 epochs was chosen for E2 and E3 before any E2 or E3 test score
-existed.
+0.607, 0.575 (mean 0.616). 8 epochs (sentence + aspect): 0.641, 0.642, 0.628 (mean 0.637,
+sd 0.008). 8 epochs was chosen for the sentence-only and cross-validation
+runs before any of their test scores existed.
 
 ## Result
 
@@ -40,8 +40,8 @@ Test split, n = 299 (39 negative, 166 neutral, 94 positive):
 |---|---|---|---|---|---|---|
 | base FinBERT, zero-shot | — | 0.571 | — | 0.30 | 0.78 | 0.64 |
 | 30 Sep: sentence + aspect, 4 epochs | 0.616 | 0.534, 0.560, 0.548 | 0.547 ± 0.013 | 0.42 | 0.59* | 0.61* |
-| **E1: sentence + aspect, 8 epochs** | **0.637** | **0.607, 0.560, 0.563** | **0.577 ± 0.027** | 0.44 | 0.66 | 0.63 |
-| E2: sentence only, 8 epochs | 0.556 | 0.549, 0.534, 0.542 | 0.542 ± 0.008 | 0.29 | 0.70 | 0.63 |
+| **sentence + aspect, 8 epochs** | **0.637** | **0.607, 0.560, 0.563** | **0.577 ± 0.027** | 0.44 | 0.66 | 0.63 |
+| sentence only, 8 epochs | 0.556 | 0.549, 0.534, 0.542 | 0.542 ± 0.008 | 0.29 | 0.70 | 0.63 |
 | TF-IDF + logistic regression | — | 0.514 | — | 0.34 | 0.65 | 0.55 |
 | VADER lexicon | — | 0.427 | — | 0.24 | 0.50 | 0.54 |
 
@@ -49,11 +49,12 @@ Per-class F1 is the mean over the three seeds, from each run's
 `classification_report`. (*30 Sep: seeds 42 and 1 reported negative F1 0.42
 and 0.41 and seed 7 0.44; neutral and positive shown for seed 7.)
 
-Per seed, E1: seed 42 stopped after 5 epochs (best epoch 3), seed 1 after 7
-(best 5), seed 7 after 5 (best 3); E2 the same pattern. Test accuracy: E1
-0.66, 0.60, 0.60; E2 0.63, 0.62, 0.63; base FinBERT 0.70.
+Per seed, sentence + aspect: seed 42 stopped after 5 epochs (best epoch 3),
+seed 1 after 7 (best 5), seed 7 after 5 (best 3); sentence only the same
+pattern. Test accuracy: sentence + aspect 0.66, 0.60, 0.60; sentence only
+0.63, 0.62, 0.63; base FinBERT 0.70.
 
-**E3, 5-fold cross-validation on train/dev** (seed 42, 8 epochs; dev macro-F1
+**5-fold cross-validation on train/dev** (seed 42, 8 epochs; dev macro-F1
 per fold 0–4):
 
 | input | fold 0 | fold 1 | fold 2 | fold 3 | fold 4 | mean ± sd |
@@ -64,14 +65,14 @@ per fold 0–4):
 
 ## What it shows
 
-1. **Longer training helps, a little.** E1 beats the 4-epoch runs on dev
+1. **Longer training helps, a little.** 8 epochs beats the 4-epoch runs on dev
    (0.637 against 0.616) and on test (0.577 against 0.547), and its test mean
    is now level with base FinBERT (0.571): within one seed standard
    deviation, so level, not ahead. Seed-to-seed spread is large (0.560 to
    0.607 on the same data), which is itself a finding at 978 training rows.
 2. **The aspect input helps, and is where the gain on negative sentences
    comes from.** It wins in all five cross-validation folds (by 0.026 on
-   average), on dev in E1 against E2, and on test (0.577 against 0.542).
+   average), on dev at 8 epochs (0.637 against 0.556), and on test (0.577 against 0.542).
    Without it, negative F1 falls to 0.29, base FinBERT's level. So the
    model is using the aspect, not only the sentence.
 3. **The trade against base FinBERT is unchanged in kind.** Base FinBERT is

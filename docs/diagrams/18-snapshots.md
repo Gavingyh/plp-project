@@ -41,7 +41,7 @@ Rendered for the report: [SVG](img/18-snapshots.svg) · [PNG](img/18-snapshots.p
 
 The database (198.5 MB restored) is too large for GitHub, so it lives outside git as dated,
 compressed snapshots (DESIGN decision 15); the latest, `plp-2026-09-30.db.gz`, is the
-frozen corpus (PLAN D5), with CNA and the 10-aspect taxonomy. Checkpointing first matters: without it, recent writes can sit
+frozen corpus (PLAN section 2), with CNA and the 10-aspect taxonomy. Checkpointing first matters: without it, recent writes can sit
 in the `-wal` file and be missing from the copy. Nothing automates the upload or the
 download; the shared folder is outside the repository. The "no" branches are what a
 person should do on a failed check, not steps any script performs. The embeddings cache

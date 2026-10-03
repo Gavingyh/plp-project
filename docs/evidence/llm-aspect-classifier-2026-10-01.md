@@ -1,6 +1,6 @@
 # LLM aspect classifier against the human aspect labels
 
-DESIGN decision 16 (PLAN D1): a local LLM reads each sentence and chooses one
+DESIGN decision 16 (and PLAN section 2): a local LLM reads each sentence and chooses one
 aspect, replacing seed-centroid assignment. Built and evaluated 2026-10-01 on
 the 1,277 labelled sentences of the 27 Sep round, against their human aspect
 (10-aspect taxonomy plus `other`, DESIGN 21). **Nothing was written to the

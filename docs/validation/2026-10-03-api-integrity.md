@@ -8,8 +8,8 @@ Verdict: fix first
 | Grounded chatbot | UNTESTED | out of scope |
 
 ## Confirmed issues
-- **Trend contradicts itself** [med] chatbot/tools.py:137: the direction and delta come from unshrunk scores, but only the shrunk 7d and 30d scores are returned, so UOB reads "improving" (+0.123) beside a 7d score (0.244) below its 30d score (0.289); the chatbot could misquote it (test: test_r1_trend_delta_reproducible_from_returned_fields)
-- **Wrong model version looks like no data** [low] config/model_version.py:14: a version with no rows makes `/sentiment` say the pipeline hasn't run and `/suggestions` return nothing, with no warning (test: test_r4_wrong_model_version_is_distinguishable_from_no_data)
+- **Trend contradicts itself** [med] chatbot/tools.py:137: the direction and delta come from unshrunk scores, but only the shrunk 7d and 30d scores are returned, so UOB reads "improving" (+0.123) beside a 7d score (0.244) below its 30d score (0.289); the chatbot could misquote it (test: test_trend_delta_reproducible_from_returned_fields)
+- **Wrong model version looks like no data** [low] config/model_version.py:14: a version with no rows makes `/sentiment` say the pipeline hasn't run and `/suggestions` return nothing, with no warning (test: test_wrong_model_version_is_distinguishable_from_no_data)
 - **Unbounded `k`** [low] api/main.py:145: `/evidence?k=-1` returns every candidate but the last (`scored[:k]`, chatbot/retrieval.py:171)
 
 ## Open questions

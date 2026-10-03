@@ -209,7 +209,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <ul>
         <li>a stop, crash or reboot: the same command resumes where it stopped</li>
         <li>new sentences: only they are classified</li>
-        <li>the scoring model, NER and DBS Vickers, passing mentions (O5), chatbot settings, how the index is blended (O2)</li>
+        <li>the scoring model, NER and DBS Vickers, passing mentions, chatbot settings, how the index is blended</li>
       </ul>
     </div>
   </div>
@@ -253,16 +253,16 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">File: <code>docs/local-context-questions.md</code>. Unblocks: the guideline for the top-up round.</span>
     </li>
     <li data-o="decide">
-      <span class="t">O1: confirm the aspect approach with the supervisor <span class="chip decide">Decision</span></span>
+      <span class="t">Confirm the aspect approach with the supervisor <span class="chip decide">Decision</span></span>
       <span class="when">by 5 Oct</span>
       <p class="why"><b>Why:</b> it keeps the proposal's aspects but changes how sentences are assigned (an LLM instead of centroids), and the taxonomy grew from four aspects to ten. A change from the proposal that the supervisor hasn't seen is a marking risk; the report must explain it either way.</p>
-      <span class="meta">Source: PLAN, decision O1; DESIGN 21.</span>
+      <span class="meta">Source: PLAN, supervisor sign-off; DESIGN 21.</span>
     </li>
     <li data-o="decide">
-      <span class="t">O2: one blended index, or each source's index side by side <span class="chip decide">Decision</span></span>
+      <span class="t">One blended index, or each source's index side by side <span class="chip decide">Decision</span></span>
       <span class="when">by 5 Oct</span>
       <p class="why"><b>Why:</b> UOB has the highest earnings-only score and the lowest blended one, only because it publishes less earnings text than DBS. The ranking the report and the dashboard show depends on this choice.</p>
-      <span class="meta">Source: PLAN, decision O2.</span>
+      <span class="meta">Source: PLAN, blended-index decision.</span>
     </li>
     <li data-o="team">
       <span class="t">Fix the dashboard's analyst-consensus panel <span class="chip team">Dashboard owner</span></span>
@@ -273,7 +273,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="team">
       <span class="t">Get a free Groq API key for larger chatbot models <span class="chip team">People</span></span>
       <span class="when">this week</span>
-      <p class="why"><b>Why:</b> the code is ready to use three far larger hosted models (<code>gpt-oss-120b</code>, <code>llama-3.3-70b</code>, <code>qwen3.8-27b</code>), which gives the demo-model decision a hosted option and verifies the OpenAI-compatible backend (O4). Sign-up needs a person; switch on Zero Data Retention, since evidence searches send Reddit text. Setup: RUNBOOK, "Chatbot backends".</p>
+      <p class="why"><b>Why:</b> the code is ready to use three far larger hosted models (<code>gpt-oss-120b</code>, <code>llama-3.3-70b</code>, <code>qwen3.8-27b</code>), which gives the demo-model decision a hosted option and verifies the OpenAI-compatible backend. Sign-up needs a person; switch on Zero Data Retention, since evidence searches send Reddit text. Setup: RUNBOOK, "Chatbot backends".</p>
       <span class="meta">Unblocks: the three-model evaluation (Claude, about 45 min each).</span>
     </li>
     <li data-o="team">
@@ -305,7 +305,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Confirm that DBS Vickers counts as DBS <span class="chip decide">Decision</span></span>
       <span class="when">by 12 Oct</span>
       <p class="why"><b>Why:</b> 456 sentences change attribution on this one rule, about three fifths of everything NER changes. Checked on 2 Oct: DBS Vickers is a DBS subsidiary (in DBS Group's own list of subsidiaries), and the 456 are customers using it as their broker. The rule already applied to POSB and PayLah!, that subsidiaries count as the parent, makes it DBS; the plan had grouped it with UOB Kay Hian, which is separately listed and stays out. One line in <code>preprocess/bank_ner.py</code> once confirmed.</p>
-      <span class="meta">Source: bank-ner; local-context questions A5.</span>
+      <span class="meta">Source: bank-ner; local-context questions (DBS Vickers).</span>
     </li>
     <li data-o="decide">
       <span class="t">Decide the scoring model: the fine-tuned models, or base FinBERT <span class="chip decide">Decision</span></span>
@@ -320,10 +320,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Source: chatbot-eval-build, "Second round".</span>
     </li>
     <li data-o="decide">
-      <span class="t">O5: drop passing mentions ("paid via DBS PayNow")? <span class="chip decide">Decision</span></span>
+      <span class="t">Drop passing mentions ("paid via DBS PayNow")? <span class="chip decide">Decision</span></span>
       <span class="when">by 12 Oct</span>
       <p class="why"><b>Why:</b> it changes which sentences are in the data, so it has to be decided before the one final re-score.</p>
-      <span class="meta">Source: PLAN, decision O5.</span>
+      <span class="meta">Source: PLAN, passing-mentions decision.</span>
     </li>
     <li data-o="decide">
       <span class="t">Store earnings-PDF links as relative paths? <span class="chip decide">Decision</span></span>
@@ -364,13 +364,13 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> neither is in git. The team and the marker need exactly the database and models the report describes; check the SHA-256 values after uploading.</p>
     </li>
     <li data-o="decide">
-      <span class="t">O3: the chatbot model for the demo <span class="chip decide">Decision</span></span>
+      <span class="t">The chatbot model for the demo <span class="chip decide">Decision</span></span>
       <span class="when">by 19 Oct</span>
       <p class="why"><b>Why:</b> with strip enforcement both local models invent no citations; the 8B picks the right tool more often (20/24 against 18/24), the 3B is about twice as fast. <code>qwen3:4b</code> is out (22 of 32 questions timed out). Add the Groq models if a key exists.</p>
       <span class="meta">Source: chatbot-eval-build.</span>
     </li>
     <li data-o="decide">
-      <span class="t">O4: verify the OpenAI-compatible backend or stop claiming it <span class="chip decide">Decision</span></span>
+      <span class="t">Verify the OpenAI-compatible backend or stop claiming it <span class="chip decide">Decision</span></span>
       <span class="when">by 19 Oct</span>
       <p class="why"><b>Why:</b> it is described as working but has never answered a real request. A free Groq key verifies it.</p>
     </li>

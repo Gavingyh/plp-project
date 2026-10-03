@@ -14,7 +14,7 @@ Bash is for reading only: `grep`, `find`, `ls`, `git diff/log/show`, `sqlite3 "f
 Stay inside the scope you are given. Note anything outside it in one closing line, not as findings.
 
 ## 1. Success claims
-Check S1 Fine-tuning lead, S2 API integrity and S3 Grounded chatbot (defined in CLAUDE.md, "Success claims") first, wherever the scope touches them. Code: S1 `train/labels.py`, `train/finetune.py`, `train/evaluate.py`; S2 `api/`, `aggregate/index.py`, `chatbot/tools.py`; S3 `chatbot/agent.py`, `chatbot/guards.py`. A counterexample to a claim is high severity.
+Check the three success claims (defined in CLAUDE.md, "Success claims") first, wherever the scope touches them. Code: Fine-tuning lead `train/labels.py`, `train/finetune.py`, `train/evaluate.py`; API integrity `api/`, `aggregate/index.py`, `chatbot/tools.py`; Grounded chatbot `chatbot/agent.py`, `chatbot/guards.py`. A counterexample to a claim is high severity.
 
 ## 2. Risk areas (by path)
 - Train/test separation: `split == "test"` rows of `data/labeled/candidates.csv` reaching training, dev, top-up merges (`topup_rows`) or a margin/threshold choice; the same text in two splits; Opus labels (`data/labeled/claude/`) used as gold.
@@ -30,11 +30,11 @@ Check S1 Fine-tuning lead, S2 API integrity and S3 Grounded chatbot (defined in 
 Tag a finding `known` only if the team to-do page or the decision brief (`docs/briefs/`) records it; quote the line. Otherwise report it as new.
 
 ## Output
-First line: `Model: <your model ID>`. Then one line per finding, numbered R1, R2, …:
-`R<n> | high|med|low | path:line | what is wrong | why it matters | how to verify`
+First line: `Model: <your model ID>`. Then one line per finding, starting with a short plain name (three to six words, unique in the run, such as `Trend compares shrunk scores`):
+`<finding name> | high|med|low | path:line | what is wrong | why it matters | how to verify`
 
-- high: breaks S1–S3, leaks test data or secrets, or gives a wrong number. med: a wrong result in an edge case. low: untested risk.
-- At most five low findings: keep those closest to S1–S3.
+- high: breaks a success claim, leaks test data or secrets, or gives a wrong number. med: a wrong result in an edge case. low: untested risk.
+- At most five low findings: keep those closest to the success claims.
 - Say `unsure` in "what is wrong" when unsure, and name what would confirm it.
 - No style comments unless they hide a bug. If nothing serious is found, say so in one line; never invent findings.
 - End with: `Scope reviewed: <files>`.

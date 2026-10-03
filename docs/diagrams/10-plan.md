@@ -27,7 +27,7 @@ gantt
 
   section Gates
   Candidates re-drawn                               :milestone, g1, 2026-10-04, 0d
-  Agreement reached, O1 and O2 decided              :milestone, g2, 2026-10-11, 0d
+  Agreement reached, aspects and blending decided   :milestone, g2, 2026-10-11, 0d
   About 1,000 rows labelled, model trained          :milestone, g3, 2026-10-18, 0d
   Results frozen                                    :milestone, g4, 2026-10-25, 0d
   Submitted                                         :milestone, g5, 2026-11-01, 0d
@@ -40,8 +40,8 @@ Rendered for the report: [SVG](img/10-plan.svg) · [PNG](img/10-plan.png)
 Bars are weeks from the plan's table; they show what each week is for, not effort.
 Labelling runs across two weeks because it is the critical path and its gate (about
 1,000 rows) closes on 18 Oct. If it slips, the plan's fallback is to fine-tune on what is
-labelled by then with k-fold cross-validation. Decisions O3 to O5 fall inside weeks 3
-and 4 and are listed in PLAN section 2. The chart doesn't update itself: when the plan
+labelled by then with k-fold cross-validation. The decisions on passing mentions, the
+demo model and the OpenAI backend fall inside weeks 3 and 4 and are listed in PLAN section 2. The chart doesn't update itself: when the plan
 changes, change this source too.
 
 ## Sources
@@ -51,7 +51,7 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | week 1 and its gate | `docs/PLAN.md:174` | `| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled |` |
-| week 2 and its gate | `docs/PLAN.md:175` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; decisions O1, O2 made |` |
+| week 2 and its gate | `docs/PLAN.md:175` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; supervisor sign-off and blended index decided |` |
 | week 3 and its gate | `docs/PLAN.md:176` | `| 12 – 18 Oct | ~1,000 rows labelled; model trained |` |
 | week 4 and its gate | `docs/PLAN.md:177` | `| 19 – 25 Oct | Results frozen |` |
 | week 5 and its gate | `docs/PLAN.md:178` | `| 26 Oct – 1 Nov | Submitted |` |

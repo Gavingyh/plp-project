@@ -65,21 +65,25 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
 The project must prove these; `/validate` reports each as PROVEN, DISPROVEN
 or UNTESTED. They come from `docs/spec/functional-spec.md`.
 
-- **S1 Fine-tuning lead** (T4, L6, L2): fine-tuned FinBERT scores above base FinBERT on the
-  frozen random test split (299 rows): three seeds' mean macro-F1
+- **Fine-tuning lead** (functional spec 4.4 and 4.5: the fine-tuned
+  classifier, sentiment classification, the frozen test split): fine-tuned
+  FinBERT scores above base FinBERT on the frozen random test split (299
+  rows): three seeds' mean macro-F1
   0.604 ± 0.035 against 0.571. The gap is about one seed standard deviation
   and seed 7 is below base, so it is a modest lead, not a clear win. No test
   row, and no test text, informs training, dev or any choice of threshold.
-- **S2 API integrity** (A1, A2): the index endpoints (`/sentiment`, `/sentiment/compare`,
+- **API integrity** (functional spec 4.2: every number fetchable, invalid
+  input rejected): the index endpoints (`/sentiment`, `/sentiment/compare`,
   `/sentiment/index`, `/sentiment/trend`, `/sentiment/series`) return the
   stored index unchanged, and every endpoint that takes `bank`, `window` or
   `bucket` rejects a bad value with HTTP 422.
-- **S3 Grounded chatbot** (C3, C10): the chatbot never presents evidence or a figure that no
-  tool call returned: such answers are flagged, and with
+- **Grounded chatbot** (functional spec 4.3: no unretrieved evidence, every
+  number matches a tool result): the chatbot never presents evidence or a
+  figure that no tool call returned: such answers are flagged, and with
   `CHATBOT_ENFORCE_EVIDENCE=strip` the evidence is removed.
 
-Add S4 (the aspect method against the human labels) once the team decides
-the aspect method.
+Add a fourth claim, Aspect accuracy (the aspect method against the human
+labels), once the team decides the aspect method.
 
 ## Validation
 
@@ -116,6 +120,9 @@ the aspect method.
   turns out wrong, correct it everywhere it appears.
 - Plain English. No AI-style jargon; em dashes only inside regexes and text
   sent to a model.
+- No code labels (S1, T4, O3, R2, E1) for claims, requirements, decisions,
+  findings, experiments or questions: call each by a short plain name, in
+  docs, agent output and test names alike.
 - Give run times as rough estimates ("about a day", "under an hour"), not
   exact hours.
 - Use absolute dates, never "yesterday" or "next week".

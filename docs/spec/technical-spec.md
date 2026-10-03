@@ -527,7 +527,7 @@ personal names are kept in the repository.
 ### Open decisions
 
 > **Updated 2026-09-26.** Decisions 1 and 5 were made by the team (PLAN.md
-> section 2: D1, D2) and 3 has a planned fix (DESIGN decision 19). The live
+> section 2: LLM aspects, and annotators labelling aspect and sentiment) and 3 has a planned fix (DESIGN decision 19). The live
 > list is PLAN.md's "Still open" table; the rows below record how they stood
 > on 2026-09-11.
 

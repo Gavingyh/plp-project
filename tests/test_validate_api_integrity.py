@@ -1,5 +1,5 @@
 """
-Validation of claim S2 (CLAUDE.md): the index endpoints return the stored
+Validation of the API integrity claim (CLAUDE.md): the index endpoints return the stored
 index unchanged, and every endpoint taking `bank`, `window` or `bucket`
 rejects a bad value with 422.
 
@@ -384,7 +384,7 @@ def _add_scored(temp_db, sid, bank, aspect, days_ago, label, version=None):
 # Trend self-consistency (fixed 3 Oct): the delta and direction come from unshrunk
 # scores, and the response now returns them, so the delta can be recomputed.
 
-def test_r1_trend_delta_reproducible_from_returned_fields(temp_db):
+def test_trend_delta_reproducible_from_returned_fields(temp_db):
     import aggregate.index as agg
     i = 0
     for label in ["positive"] * 4 + ["neutral"] * 2:          # 7d: raw 0.6667, shrunk 0.3636
@@ -394,7 +394,7 @@ def test_r1_trend_delta_reproducible_from_returned_fields(temp_db):
     agg.run()
     body = TestClient(app).get("/sentiment/trend", params={"bank": "UOB"}).json()
     r, b = body["recent_7d"], body["baseline_30d"]
-    print(f"\nR1: direction={body['direction']} delta={body['delta_7d_vs_30d']} "
+    print(f"\ntrend: direction={body['direction']} delta={body['delta_7d_vs_30d']} "
           f"7d score={r['score']} n={r['n']}; 30d score={b['score']} n={b['n']}; "
           f"other keys={sorted(set(body) - {'recent_7d', 'baseline_30d', 'monthly_series'})}")
     assert body["trend_available"] is True
@@ -411,7 +411,7 @@ def test_r1_trend_delta_reproducible_from_returned_fields(temp_db):
 # Wrong model version (fixed 3 Oct): a MODEL_VERSION with no rows is reported and
 # logged, not shown as ordinary "no data".
 
-def test_r4_wrong_model_version_is_distinguishable_from_no_data(temp_db, monkeypatch, caplog):
+def test_wrong_model_version_is_distinguishable_from_no_data(temp_db, monkeypatch, caplog):
     import aggregate.index as agg
     import config.model_version
     for i in range(10):
@@ -430,8 +430,8 @@ def test_r4_wrong_model_version_is_distinguishable_from_no_data(temp_db, monkeyp
     sugg = client.get("/suggestions").json()
     logged = [rec.getMessage() for rec in caplog.records
               if rec.levelno >= logging.WARNING and "httpx" not in rec.name]
-    print(f"\nR4 no-data body: {no_data}\nR4 wrong-version body: {wrong}\n"
-          f"R4 suggestions: {sugg}\nR4 warnings logged: {logged}")
+    print(f"\nno-data body: {no_data}\nwrong-version body: {wrong}\n"
+          f"suggestions: {sugg}\nwarnings logged: {logged}")
     strip = lambda d: {k: v for k, v in d.items() if k != "bank"}
     distinguishable = (strip(wrong) != strip(no_data)
                        or "no-such-model-v9" in str(wrong)

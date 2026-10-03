@@ -473,7 +473,7 @@ first fine-tuning) is now in the repository. Evidence:
      A small second round would fix both.
   3. The cluster labels behind the taxonomy were drafted with an AI
      assistant: put that in the GenAI declaration.
-  4. Confirm the taxonomy change with the supervisor (PLAN O1).
+  4. Confirm the taxonomy change with the supervisor (PLAN, supervisor sign-off).
 - **Gemini.** A free-tier `GEMINI_API_KEY` is in `.env`, for the chatbot
   only. It works (the first key didn't), and the backend is now verified live
   ([evidence](evidence/gemini-backend-2026-09-30.md)). While a key is set,
@@ -513,20 +513,21 @@ Running `.project-context/prompt/overnight-experiments.md` from HEAD
 
 Left out, and why:
 - Nothing from the prompt. The CV fold models were deleted after scoring, as
-  specified; only the E1 and E2 finals are kept.
+  specified; only the final sentence-plus-aspect and sentence-only models are
+  kept.
 - `aspects.compare_taxonomies` measures its own hard-coded four-aspect
   candidate A, not the current config, despite its docstring. Recorded in the
   calibration file, not fixed (outside the run's scope).
 
 Needs a human:
-1. **Scoring model.** E1 (8 epochs, with aspect) is level with base FinBERT
+1. **Scoring model.** The sentence-plus-aspect model (8 epochs) is level with base FinBERT
    on macro-F1 (0.577 ± 0.027 against 0.571), better on negative sentences
    (0.44 against 0.30) and worse on neutral. Whether it replaces base
    FinBERT for the corpus is PLAN section 5's decision.
 2. **Aspect assignment.** No floor makes centroid assignment accurate (top-1
    0.41); leave the floor at 0.65 and build the LLM classifier, whose
    baseline is now measured.
-3. **Demo model (O3).** The 8B invents far less than the 3B (3 against 9
+3. **Demo model.** The 8B invents far less than the 3B (3 against 9
    invented-citation answers) at about twice the runtime.
 4. **Model weights** exist only on this MacBook; copy them to the team
    folder and check the SHA-256 values in the experiments file.
@@ -542,7 +543,7 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   "class-weighted loss". Every model so far used plain cross-entropy. Fixed in
   the docs; the weighting is now a real option (`--class-weights`), default
   `none` so earlier results stay reproducible.
-- J1 (fine-tuning fixes): done
+- Fine-tuning fixes: done
   ([evidence](evidence/finetune-fixes-2026-10-01.md)). Per-batch padding
   matches the old padding within noise (CV 0.621 against 0.622). On 5-fold
   CV, balanced class weights (0.630), source weights (0.633) and the
@@ -555,7 +556,7 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   Neutral sentences called polar remain the main error. The Mac slept
   12:22–13:29 (battery at 1%, then lid closed; `caffeinate -i` stops
   neither), pausing one CV fold; it resumed unharmed.
-- J2 (LLM aspect classifier): done
+- LLM aspect classifier: done
   ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)). On the 1,277
   human aspect labels, llama3.1:8b scores top-1 0.729 (macro-F1 0.679) and
   qwen3:4b without thinking 0.719 (0.671), against 0.413 (0.296) for
@@ -593,10 +594,10 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
    wealth or retail banking (63 rows), before the next labelling round.
 5. Long runs need the Mac plugged in with the lid open: it slept twice on
    1 Oct (battery, then lid), pausing jobs for about an hour each time.
-- J3 (preprocessing dry run): done, `606dde4`. 98 of 44,345 sentences
+- Preprocessing dry run: done, `606dde4`. 98 of 44,345 sentences
   (0.22%, all earnings PDFs) are debris; broader rules remove real
   sentiment, so preprocessing isn't where the model's errors are.
-- J4 (install test): done, `1ff6c74`. With a Mac's default `python3`
+- Install test: done, `1ff6c74`. With a Mac's default `python3`
   (Apple's 3.9) the install fails on `torch>=2.9.0` and the README never
   names the Python it needs; with 3.14 every step works, the snapshot
   checksum matches, 421 tests pass, and the API and dashboard answer on free
@@ -736,7 +737,7 @@ Asked for after the night's results; nothing written to the database.
 
 **Needs a human (2 Oct):** whether to switch strip enforcement on for the
 demo; the answers in `local-context-questions.md`, the bank-economist
-question (A8) first, since it decides whether macro can reach 80 labels;
+question first, since it decides whether macro can reach 80 labels;
 whether the PDF URLs in the database, which carry the macOS username, should
 become relative paths.
 
@@ -775,7 +776,7 @@ become relative paths.
   in DBS Group's list of subsidiaries (31 Dec 2024); UOB Kay Hian is
   separately listed (SGX U10), UOB holding about a third. The 456 affected
   sentences are customers using DBS Vickers as their broker, none research
-  about another bank. Recorded in local-context A5, the bank-NER evidence,
+  about another bank. Recorded in the local-context DBS Vickers question, the bank-NER evidence,
   a note in PLAN section 7, decision 6 of the brief and the to-do; the
   `vickers` rule in `preprocess/bank_ner.py` is unchanged until the team
   confirms.
@@ -791,8 +792,8 @@ become relative paths.
   technical spec and the README.
 - **Validation workflow added** (`.claude/`, see `CLAUDE.md` "Validation"):
   `reviewer`, `tester`, `triage`, `auditor` (docs) and `examiner` agents, and
-  `/validate <scope>`, which reports S1–S3 as PROVEN, DISPROVEN or UNTESTED
-  and keeps dated runs in `docs/validation/`. The first run (S2, `api/`)
+  `/validate <scope>`, which reports the three success claims as PROVEN, DISPROVEN or UNTESTED
+  and keeps dated runs in `docs/validation/`. The first run (API integrity, `api/`)
   found three medium bugs: the trend direction compares shrunk scores (UOB
   reads "declining" though its unshrunk change is +0.12), readers will mix
   model versions after the re-score, and `/coverage` and `/evidence` accept
@@ -809,13 +810,13 @@ become relative paths.
 
 ### 3 October
 
-- **The three API bugs from the S2 validation run are fixed**, and three
+- **The three API bugs from the API-integrity validation run are fixed**, and three
   low ones with them; every `test_validate_api.py` test now passes, with no
   `xfail` left (592 tests in `tests/`, 639 from the root):
-  - **Trend direction (R1):** `get_trend` compares the 7d and 30d scores
+  - **Trend direction:** `get_trend` compares the 7d and 30d scores
     before the n/(n+5) shrinkage. UOB no longer reads "declining" when its
     week was better than its month.
-  - **Model versions (R2):** the current version lives in
+  - **Model versions:** the current version lives in
     `config/model_version.py` (out of `sentiment/score.py`, which imports
     torch). The API, the chatbot's tools, evidence search, suggestions, the
     time series and the preview read only that version, so fine-tuned scores
@@ -823,12 +824,12 @@ become relative paths.
     **The dashboard still reads every version** (`dashboard/app.py` lines 72,
     89 and 103): its owner should add `AND model_version = ?` with
     `config.model_version.MODEL_VERSION` before the 12 Oct re-score.
-  - **Bank names (R3):** `/coverage` and `/evidence` reject a bad `bank` with
+  - **Bank names:** `/coverage` and `/evidence` reject a bad `bank` with
     422, like the other endpoints; `docs/api/openapi.json` regenerated.
   - **Low ones:** the spec's promised 400 for a bad bucket, which the API
-    couldn't return, is gone, with its dead code (R4); `/sentiment/index`
-    rows carry `insufficient_data` (R6); a database error in the trend's
-    monthly series is logged and reported, not shown as "no data" (R10).
+    couldn't return, is gone, with its dead code; `/sentiment/index`
+    rows carry `insufficient_data`; a database error in the trend's
+    monthly series is logged and reported, not shown as "no data".
 - **API integrity validated after the fixes** (`/validate`, record in
   `docs/validation/2026-10-03-api-integrity.md`): every index endpoint equals
   the stored rows and every bad `bank`, `window` or `bucket` gets 422
@@ -909,4 +910,12 @@ become relative paths.
   gaps under 0.02); UOB is last either way. **Correction:** the 11,000-sentence
   preview said the ranking was unchanged; today's index has OCBC first.
   Corrected in the evidence, findings, decision brief and to-do.
+- **Code labels replaced by names** across the docs, the `.claude` agents and
+  `/validate`, and the validation tests: success claims (Fine-tuning lead,
+  API integrity, Grounded chatbot), the functional spec's requirement IDs (the
+  `#` columns are gone), PLAN's made and open decisions, the 30 Sep
+  experiments, the 1 Oct jobs, review findings and the local-context
+  questions. Agents now name each finding in a few words instead of
+  numbering it. `CLAUDE.md` ("Writing docs") says so. Two tables in the
+  functional spec, split by a stray blank line, are whole again.
 

@@ -1,5 +1,5 @@
 """
-Validation of claim S2 (api/main.py): GET /sentiment?bank=DBS&window=all_time
+Validation of the API integrity claim (api/main.py): GET /sentiment?bank=DBS&window=all_time
 returns the score and n of the blended headline row in sentiment_index
 (source='ALL', aspect='ALL'), and a bad bank, window or bucket gives 422.
 
@@ -104,7 +104,7 @@ def test_sentiment_good_window_is_accepted(temp_db, window):
 
 
 # ---------------------------------------------------------------------------
-# Step 3: reviewer findings R1-R3. Each test fails if the finding is real.
+# Step 3: the reviewer's findings. Each test fails if the finding is real.
 # ---------------------------------------------------------------------------
 
 from datetime import datetime, timedelta, timezone
@@ -129,9 +129,9 @@ def _add_scored(temp_db, sid, bank, aspect, days_ago, labels_by_version, source=
     conn.close()
 
 
-# R1 (fixed 3 Oct): /sentiment/trend compared shrunk scores, so a thin 7d window read as "declining".
+# Trend direction (fixed 3 Oct): /sentiment/trend compared shrunk scores, so a thin 7d window read as "declining".
 
-def test_r1_trend_not_declining_when_raw_7d_is_higher(temp_db):
+def test_trend_not_declining_when_raw_7d_is_higher(temp_db):
     import aggregate.index as agg
     from chatbot.tools import get_trend
     i = 0
@@ -144,13 +144,13 @@ def test_r1_trend_not_declining_when_raw_7d_is_higher(temp_db):
     agg.run()
     trend = get_trend("UOB")
     raw_7d, raw_30d = 4 / 6, 45 / 100
-    print(f"\nR1 synthetic: raw 7d={raw_7d:.4f} raw 30d={raw_30d:.4f} raw delta={raw_7d - raw_30d:+.4f}; "
+    print(f"\ntrend, synthetic: raw 7d={raw_7d:.4f} raw 30d={raw_30d:.4f} raw delta={raw_7d - raw_30d:+.4f}; "
           f"stored delta={trend['delta_7d_vs_30d']} direction={trend['direction']}")
     assert trend["trend_available"] is True
     assert trend["direction"] != "declining"
 
 
-# R2 (fixed 3 Oct): the index keeps a row per model version (for before/after comparisons);
+# Model versions (fixed 3 Oct): the index keeps a row per model version (for before/after comparisons);
 # readers must return only the current version, config.model_version.MODEL_VERSION.
 
 OLD_V, NEW_V = "finbert-base-zeroshot-v1", "finbert-finetuned-v2"
@@ -165,7 +165,7 @@ def _two_version_index(temp_db):
     agg.run()
 
 
-def test_r2_index_keeps_one_row_per_cell_and_version(temp_db):
+def test_index_keeps_one_row_per_cell_and_version(temp_db):
     _two_version_index(temp_db)
     conn = temp_db.get_connection()
     dup = conn.execute(
@@ -176,45 +176,45 @@ def test_r2_index_keeps_one_row_per_cell_and_version(temp_db):
     assert dup == [] and versions == {OLD_V, NEW_V}
 
 
-def test_r2_index_endpoint_has_no_duplicate_cells(temp_db):
+def test_index_endpoint_has_no_duplicate_cells(temp_db):
     _two_version_index(temp_db)
     rows = TestClient(app).get("/sentiment/index", params={"window": "all_time"}).json()["rows"]
     cells = [(r["bank"], r["aspect"]) for r in rows]
-    print(f"\nR2 /sentiment/index: {len(cells)} rows, {len(set(cells))} distinct (bank, aspect)")
+    print(f"\n/sentiment/index: {len(cells)} rows, {len(set(cells))} distinct (bank, aspect)")
     assert len(cells) == len(set(cells))
 
 
 @pytest.mark.parametrize("current", [OLD_V, NEW_V])
-def test_r2_sentiment_returns_the_current_model_version(temp_db, monkeypatch, current):
+def test_sentiment_returns_the_current_model_version(temp_db, monkeypatch, current):
     import config.model_version
     _two_version_index(temp_db)
     monkeypatch.setattr(config.model_version, "MODEL_VERSION", current)
     body = TestClient(app).get("/sentiment", params={"bank": "DBS", "window": "all_time"}).json()
-    print(f"\nR2 current={current}: API returned model_version={body.get('model_version')} "
+    print(f"\ncurrent={current}: API returned model_version={body.get('model_version')} "
           f"score={body.get('score')} n={body.get('n')}")
     assert body["model_version"] == current
 
 
-# R3 (fixed 3 Oct): /coverage and /evidence took any bank string; spec A2 says bank is validated.
+# Bank names (fixed 3 Oct): /coverage and /evidence took any bank string; the spec says bank is validated.
 
 @pytest.mark.parametrize("bank", ["dbs", "HSBC"])
-def test_r3_coverage_bad_bank_returns_422(temp_db, bank):
+def test_coverage_bad_bank_returns_422(temp_db, bank):
     resp = TestClient(app).get("/coverage", params={"bank": bank})
-    print(f"\nR3 /coverage?bank={bank}: {resp.status_code} {resp.text[:120]}")
+    print(f"\n/coverage?bank={bank}: {resp.status_code} {resp.text[:120]}")
     assert resp.status_code == 422
 
 
 @pytest.mark.parametrize("bank", ["dbs", "HSBC"])
-def test_r3_evidence_bad_bank_returns_422(monkeypatch, bank):
+def test_evidence_bad_bank_returns_422(monkeypatch, bank):
     calls = []
     monkeypatch.setattr("api.main.search_evidence",   # stub: no embedding model is loaded
                         lambda query, **kw: calls.append(kw) or {"results": [], "n_found": 0})
     resp = TestClient(app).get("/evidence", params={"query": "dividend", "bank": bank})
-    print(f"\nR3 /evidence?bank={bank}: {resp.status_code}; search called with {calls}")
+    print(f"\n/evidence?bank={bank}: {resp.status_code}; search called with {calls}")
     assert resp.status_code == 422
 
 
-def test_r2_readers_skip_other_versions(temp_db):
+def test_readers_skip_other_versions(temp_db):
     """Time series, evidence search and suggestions read the current version only."""
     from aggregate.index import compute_time_series
     _two_version_index(temp_db)            # old version: positive; new version: negative
@@ -222,9 +222,9 @@ def test_r2_readers_skip_other_versions(temp_db):
     assert sum(p["n"] for p in series) == 10 and all(p["neg_n"] == 0 for p in series)
 
 
-# R6 (fixed 3 Oct): /sentiment/index flags cells below the volume floor, as /sentiment does.
+# Thin index cells (fixed 3 Oct): /sentiment/index flags cells below the volume floor, as /sentiment does.
 
-def test_r6_index_flags_thin_cells(temp_db):
+def test_index_flags_thin_cells(temp_db):
     import aggregate.index as agg
     for i in range(3):
         _add_scored(temp_db, f"t{i}", "OCBC", "dividend_policy", 200, {OLD_V: "positive"})
@@ -234,9 +234,9 @@ def test_r6_index_flags_thin_cells(temp_db):
     assert any(r["insufficient_data"] for r in rows)
 
 
-# R10 (fixed 3 Oct): a database error in the trend's monthly series is reported, not shown as "no data".
+# Series errors (fixed 3 Oct): a database error in the trend's monthly series is reported, not shown as "no data".
 
-def test_r10_series_error_is_not_reported_as_no_data(temp_db, monkeypatch):
+def test_series_error_is_not_reported_as_no_data(temp_db, monkeypatch):
     import sqlite3
     import aggregate.index as agg
     import chatbot.tools as tools

@@ -113,15 +113,15 @@ teammate maintains the Streamlit dashboard in `dashboard/`, redesigned on
 support, so a view can move onto the API. The UI column below was not
 re-checked after the redesign.
 
-| # | Requirement | API support here | Status |
-|---|---|---|---|
-| D1 | As a retail reader, I see an overall sentiment score per bank so I can compare the three at a glance | `GET /sentiment?bank=` returns a score with its sample size `n`; no score without `n` | API done; UI not re-checked |
-| D2 | I see sentiment broken down by aspect so I can drill into what drives the headline | `GET /sentiment/index` returns the whole bank × aspect grid in one call | API done; UI not re-checked |
-| D3 | I see how sentiment moved over time, not just a snapshot | `GET /sentiment/series` with a week/month/quarter bucket; thin buckets come back `sufficient: false`, never interpolated | API done; UI not re-checked |
-| D4 | I can read the actual sentences behind a score | `GET /evidence/latest` and `GET /evidence` return sentences with `sentence_id`, source URL and date | API done; UI not re-checked |
-| D5 | I can ask questions in natural language | `POST /chat` runs the same agent as the terminal chat and returns the verification flags; `GET /suggestions` gives starter questions | API done; UI not re-checked |
-| D6 | I am told when the data cannot support a number | results below the volume floor carry `insufficient_data` | API done; UI not re-checked |
-| D7 | I can see which sources produced a blended figure | `GET /sentiment/index?source=*` and `GET /sources` | API done; UI not re-checked |
+| Requirement | API support here | Status |
+|---|---|---|
+| As a retail reader, I see an overall sentiment score per bank so I can compare the three at a glance | `GET /sentiment?bank=` returns a score with its sample size `n`; no score without `n` | API done; UI not re-checked |
+| I see sentiment broken down by aspect so I can drill into what drives the headline | `GET /sentiment/index` returns the whole bank × aspect grid in one call | API done; UI not re-checked |
+| I see how sentiment moved over time, not just a snapshot | `GET /sentiment/series` with a week/month/quarter bucket; thin buckets come back `sufficient: false`, never interpolated | API done; UI not re-checked |
+| I can read the actual sentences behind a score | `GET /evidence/latest` and `GET /evidence` return sentences with `sentence_id`, source URL and date | API done; UI not re-checked |
+| I can ask questions in natural language | `POST /chat` runs the same agent as the terminal chat and returns the verification flags; `GET /suggestions` gives starter questions | API done; UI not re-checked |
+| I am told when the data cannot support a number | results below the volume floor carry `insufficient_data` | API done; UI not re-checked |
+| I can see which sources produced a blended figure | `GET /sentiment/index?source=*` and `GET /sources` | API done; UI not re-checked |
 
 ### 4.2 REST API
 
@@ -130,62 +130,61 @@ open so a browser dashboard on any port can call it. The integration guide is
 [api-integration.md](../api-integration.md), and `docs/api/openapi.json` is the
 machine-readable contract (a test keeps it current).
 
-| # | Requirement | Acceptance criteria | Status |
-|---|---|---|---|
-| A1 | A dashboard can fetch every number it shows | `/sentiment`, `/sentiment/compare`, `/sentiment/index`, `/sentiment/trend`, `/sentiment/series` return JSON matching the stored index | Done |
-| A2 | Invalid input is rejected, not guessed at | `bank` is validated against `^(DBS\|OCBC\|UOB)$`, `window` against `^(7d\|30d\|all_time)$`, `bucket` against `^(week\|month\|quarter)$`; bad values give HTTP 422 on every endpoint that takes them | Done, covered in `tests/test_api.py` and `tests/test_validate_api.py` (3 Oct: `/coverage` and `/evidence` now check `bank` too) |
-| A3 | A chat UI can offer questions the data can actually answer | `/suggestions?limit=N` returns questions generated from the index, never hardcoded, excluding advice-seeking and out-of-scope framings | Done |
-| A4 | A caller can distinguish "no data" from "neutral sentiment" | `/coverage` reports `has_data`; thin results carry `insufficient_data`, including each `/sentiment/index` row (3 Oct) | Done |
-| A5 | A caller can retrieve evidence with provenance | `/evidence` returns `sentence_id`, `url`, `published_at` per hit | Done |
-| A6 | A caller can reach the chatbot | `POST /chat` accepts a message and optional backend | Done |
-| A7 | Service health is checkable | `GET /health` returns `{"status": "ok"}` | Done |
+| Requirement | Acceptance criteria | Status |
+|---|---|---|
+| A dashboard can fetch every number it shows | `/sentiment`, `/sentiment/compare`, `/sentiment/index`, `/sentiment/trend`, `/sentiment/series` return JSON matching the stored index | Done |
+| Invalid input is rejected, not guessed at | `bank` is validated against `^(DBS\|OCBC\|UOB)$`, `window` against `^(7d\|30d\|all_time)$`, `bucket` against `^(week\|month\|quarter)$`; bad values give HTTP 422 on every endpoint that takes them | Done, covered in `tests/test_api.py` and `tests/test_validate_api.py` (3 Oct: `/coverage` and `/evidence` now check `bank` too) |
+| A chat UI can offer questions the data can actually answer | `/suggestions?limit=N` returns questions generated from the index, never hardcoded, excluding advice-seeking and out-of-scope framings | Done |
+| A caller can distinguish "no data" from "neutral sentiment" | `/coverage` reports `has_data`; thin results carry `insufficient_data`, including each `/sentiment/index` row (3 Oct) | Done |
+| A caller can retrieve evidence with provenance | `/evidence` returns `sentence_id`, `url`, `published_at` per hit | Done |
+| A caller can reach the chatbot | `POST /chat` accepts a message and optional backend | Done |
+| Service health is checkable | `GET /health` returns `{"status": "ok"}` | Done |
 
 ### 4.3 Chatbot
 
-| # | Requirement | Acceptance criteria | Status |
-|---|---|---|---|
-| C1 | Answers questions about sentiment by querying the store, not from model memory | Six tools: `get_sentiment`, `compare_banks`, `get_trend`, `get_coverage`, `search_evidence`, `get_analyst_consensus` | Done |
-| C2 | Never states a number it did not retrieve | Enforced in code by the volume floor, and by prompt rule 1; every figure is checked against the tools' results (C10) | **Partial** — invented figures are now detected and flagged, not prevented |
-| C3 | Never cites evidence it did not retrieve | If `search_evidence` was not called, any quoted evidence, `sentence_id` or URL is fabricated by definition and the answer is flagged | **Partial** — detection works; local models still fabricate at 43–48% (3B) and 13% (8B) |
-| C4 | Declines investment advice | Advice-seeking questions are declined with a not-financial-advice statement | Done through C9 — prompt-only was 2–3 of 7 on every model tested |
-| C5 | Says so plainly when data is thin | Tools return `insufficient_data` below 5 observations | Done |
-| C6 | Runs without any API key | Ollama backend auto-selected when no key is present | Done |
-| C7 | Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude and Gemini verified (Gemini on 2026-09-30, [evidence](../evidence/gemini-backend-2026-09-30.md)); GPT never run |
+| Requirement | Acceptance criteria | Status |
+|---|---|---|
+| Answers questions about sentiment by querying the store, not from model memory | Six tools: `get_sentiment`, `compare_banks`, `get_trend`, `get_coverage`, `search_evidence`, `get_analyst_consensus` | Done |
+| Never states a number it did not retrieve | Enforced in code by the volume floor, and by prompt rule 1; every figure is checked against the tools' results (the number check below) | **Partial** — invented figures are now detected and flagged, not prevented |
+| Never cites evidence it did not retrieve | If `search_evidence` was not called, any quoted evidence, `sentence_id` or URL is fabricated by definition and the answer is flagged | **Partial** — detection works; local models still fabricate at 43–48% (3B) and 13% (8B) |
+| Declines investment advice | Advice-seeking questions are declined with a not-financial-advice statement | Done through the advice guard below — prompt-only was 2–3 of 7 on every model tested |
+| Says so plainly when data is thin | Tools return `insufficient_data` below 5 observations | Done |
+| Runs without any API key | Ollama backend auto-selected when no key is present | Done |
+| Works with hosted models too | Claude, OpenAI and Gemini backends implemented | **Partial** — Claude and Gemini verified (Gemini on 2026-09-30, [evidence](../evidence/gemini-backend-2026-09-30.md)); GPT never run |
+| Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | Done — terminal chat and API (`history`); verified live in a three-turn conversation |
+| Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | Done — 7 of 7, by guards; off-topic questions get a scope reply too |
+| Every number in an answer matches a tool result | An output guard compares each figure with the tools' results and flags a mismatch, as the citation check does | Done — 18 of 19 flagged figures in the final run were invented; the one false alarm is fixed |
+| Evaluated on a frozen, sliced gold set | About 30 questions with expected behaviour written before tuning; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; multi-turn scenarios; SASSI questionnaire with 5–8 users | **Planned** — today 23 single-turn questions, also used during tuning |
 
-| C8 | Follows a conversation across turns | "What about OCBC?" after a DBS question answers about OCBC on the same aspect and window; recent turns and the current bank, aspect and window are passed to the model | Done — terminal chat and API (`history`); verified live in a three-turn conversation |
-| C9 | Declines investment advice reliably | An input guard recognises advice-seeking before the model runs and answers with a fixed, reviewed reply; ≥ 6 of 7 advice gold-set questions declined | Done — 7 of 7, by guards; off-topic questions get a scope reply too |
-| C10 | Every number in an answer matches a tool result | An output guard compares each figure with the tools' results and flags a mismatch, as C3 does for citations | Done — 18 of 19 flagged figures in the final run were invented; the one false alarm is fixed |
-| C11 | Evaluated on a frozen, sliced gold set | About 30 questions with expected behaviour written before tuning; retrieval Hit@K and MRR; faithfulness via an LLM judge calibrated on human ratings; multi-turn scenarios; SASSI questionnaire with 5–8 users | **Planned** — today 23 single-turn questions, also used during tuning |
-
-C2 and C3 remain the honest weak points: the harness detects invented
+Numbers and citations remain the honest weak points: the harness detects invented
 figures and citations but a small local model keeps producing them (43–48% of
-answers). C8–C11 apply the Conversational UIs module and are DESIGN decision
+answers). The last four (conversation, advice guard, number check, gold-set
+evaluation) apply the Conversational UIs module and are DESIGN decision
 19; results in [evidence/chatbot-harness-2026-09-26.md](../evidence/chatbot-harness-2026-09-26.md).
 
 ### 4.4 Labelling workflow
 
-| # | Requirement | Acceptance criteria | Status |
-|---|---|---|---|
-| L1 | Export a stratified candidate set for annotation | `preprocess/export_candidates.py` writes the candidate set: currently 997 rows, 797 `train_dev` and 200 `test` (one removed with off-topic news on 2026-09-24) | Done, to be re-drawn (L7) |
-| L2 | The test split is drawn at random before any model screening, and frozen | `split=test` rows are randomly sampled independently of model output | Done |
-| L3 | Annotators are not shown model opinions when labelling the test set | `preprocess/export_blind_test.py` writes a sheet carrying sentence, aspect and provenance only | Done |
-| L4 | Pre-labelling reduces annotation to correction | `train/llm_prelabel.py` fills `llm_prelabel` and `llm_rationale`, never `label`; checkpointed and resumable | Done, 997 of 998 rows |
-| L5 | Agreement between annotators is measured before dividing the work | `train/agreement.py` reports Cohen's κ against a 0.6 target | Done |
-| L6 | A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Met**: with the readable aspect label, three seeds score macro-F1 0.604 ± 0.035 (0.615 averaged) against base FinBERT's 0.571, which keeps the higher accuracy ([evidence](../evidence/finetune-fixes-2026-10-01.md)); the 30 Sep configuration scored 0.547 ± 0.013 |
+| Requirement | Acceptance criteria | Status |
+|---|---|---|
+| Export a stratified candidate set for annotation | `preprocess/export_candidates.py` writes the candidate set: currently 997 rows, 797 `train_dev` and 200 `test` (one removed with off-topic news on 2026-09-24) | Done, to be re-drawn (last row) |
+| The test split is drawn at random before any model screening, and frozen | `split=test` rows are randomly sampled independently of model output | Done |
+| Annotators are not shown model opinions when labelling the test set | `preprocess/export_blind_test.py` writes a sheet carrying sentence, aspect and provenance only | Done |
+| Pre-labelling reduces annotation to correction | `train/llm_prelabel.py` fills `llm_prelabel` and `llm_rationale`, never `label`; checkpointed and resumable | Done, 997 of 998 rows |
+| Agreement between annotators is measured before dividing the work | `train/agreement.py` reports Cohen's κ against a 0.6 target | Done |
+| A fine-tuned classifier is trained and evaluated against baselines | `train/finetune.py`, `train/evaluate.py` | **Met**: with the readable aspect label, three seeds score macro-F1 0.604 ± 0.035 (0.615 averaged) against base FinBERT's 0.571, which keeps the higher accuracy ([evidence](../evidence/finetune-fixes-2026-10-01.md)); the 30 Sep configuration scored 0.547 ± 0.013 |
+| Annotators choose the aspect and the sentiment for each sentence | Re-drawn candidate set across Reddit, earnings and news; ≥ 200 rows per sentiment class overall, ~80 per aspect; blind test sheet; κ reported for aspect and for sentiment | **Partly met** by the 2026-09-27 round: 1,277 rows (617 Reddit, 477 earnings, 183 news), 275 / 543 / 459 negative / neutral / positive, sentiment κ 0.93. Not met: five aspects below 80 rows, and aspect κ between people (only human–LLM, 0.80, DESIGN decision 22) |
 
-| L7 | Annotators choose the aspect and the sentiment for each sentence | Re-drawn candidate set across Reddit, earnings and news; ≥ 200 rows per sentiment class overall, ~80 per aspect; blind test sheet; κ reported for aspect and for sentiment | **Partly met** by the 2026-09-27 round: 1,277 rows (617 Reddit, 477 earnings, 183 news), 275 / 543 / 459 negative / neutral / positive, sentiment κ 0.93. Not met: five aspects below 80 rows, and aspect κ between people (only human–LLM, 0.80, DESIGN decision 22) |
-
-What L7 still owes is human–human aspect agreement and more rows for the
+What the aspect-and-sentiment labelling still owes is human–human aspect agreement and more rows for the
 five smallest aspects.
 
 ### 4.5 Text-mining tasks
 
-| # | Task | Acceptance criteria | Status |
-|---|---|---|---|
-| T1 | Aspect discovery by clustering | FinBERT embeddings, UMAP, HDBSCAN over the full corpus; cluster count, noise share and correspondence to the aspects reported | Done on 36,884 sentences (2026-09-11, 281 clusters, 67% noise); swept over `min_cluster_size` on all 44,345 sentences on 2026-09-30 (10: 358 clusters, 65% noise; 100: 25 clusters, 52% noise; [evidence](../evidence/aspect-discovery-sweep-2026-09-30.md)) |
-| T2 | Aspect categorisation | A local LLM assigns each sentence one of the ten aspects (DESIGN decision 21) or `other`; accuracy and macro-F1 against the human aspect labels, with seed-centroid assignment as baseline | **Evaluated, not applied** (2026-10-01): `llama3.1:8b` top-1 0.729, macro-F1 0.679, against seed-centroid 0.413 and 0.296 ([evidence](../evidence/llm-aspect-classifier-2026-10-01.md)); a corpus run waits for the team |
-| T3 | Bank entity recognition and resolution | Organisation mentions recognised and resolved to DBS, OCBC, UOB or not the bank; precision, recall and F1 on a ~200-sentence gold set against alias matching | **Planned** — DESIGN decision 18 |
-| T4 | Sentiment classification (fine-tuned FinBERT) | = L6: per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Done**: 0.604 ± 0.035 against base FinBERT's 0.571 (see L6) |
+| Task | Acceptance criteria | Status |
+|---|---|---|
+| Aspect discovery by clustering | FinBERT embeddings, UMAP, HDBSCAN over the full corpus; cluster count, noise share and correspondence to the aspects reported | Done on 36,884 sentences (2026-09-11, 281 clusters, 67% noise); swept over `min_cluster_size` on all 44,345 sentences on 2026-09-30 (10: 358 clusters, 65% noise; 100: 25 clusters, 52% noise; [evidence](../evidence/aspect-discovery-sweep-2026-09-30.md)) |
+| Aspect categorisation | A local LLM assigns each sentence one of the ten aspects (DESIGN decision 21) or `other`; accuracy and macro-F1 against the human aspect labels, with seed-centroid assignment as baseline | **Evaluated, not applied** (2026-10-01): `llama3.1:8b` top-1 0.729, macro-F1 0.679, against seed-centroid 0.413 and 0.296 ([evidence](../evidence/llm-aspect-classifier-2026-10-01.md)); the whole corpus classified on 3 Oct, applying it waits for the team |
+| Bank entity recognition and resolution | Organisation mentions recognised and resolved to DBS, OCBC, UOB or not the bank; precision, recall and F1 on a ~200-sentence gold set against alias matching | **Planned** — DESIGN decision 18 |
+| Sentiment classification (fine-tuned FinBERT) | As for the fine-tuned classifier (4.4): per-class P/R/F1 and macro-F1 on the frozen test split, mean ± sd over ≥ 3 seeds, against three baselines | **Done**: 0.604 ± 0.035 against base FinBERT's 0.571 (see 4.4) |
 
 ---
 
@@ -196,7 +195,7 @@ five smallest aspects.
 | Requirement | Satisfied by | Code | Status |
 |---|---|---|---|
 | Conversational user interface | Tool-calling chatbot with RAG evidence retrieval, in the terminal chat and through the API (the dashboard's chat uses `POST /chat`) | `chatbot/` | Done |
-| At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, `aspects/llm_classify.py`, planned NER module, `train/finetune.py` | T1 and T4 done; T2 evaluated, not applied; T3 planned |
+| At least two text mining tasks | Four, per 4.5: aspect discovery, aspect categorisation, bank entity recognition, sentiment classification | `aspects/discover.py`, `aspects/llm_classify.py`, planned NER module, `train/finetune.py` | Aspect discovery and sentiment classification done; aspect categorisation evaluated, not applied; bank entity recognition planned |
 | A sentiment mining component | Overall and aspect-based sentiment index across four sources | `sentiment/`, `aggregate/` | Done |
 | At least one deep neural network task | Fine-tuned FinBERT aspect-sentiment classifier | `train/finetune.py` | **Met**: trained on 1,277 labelled rows, three seeds; ahead of base FinBERT on macro-F1, behind on accuracy |
 
@@ -231,8 +230,9 @@ Summarised from [STATUS.md](../STATUS.md), which is the authority.
    stored sentiment is base FinBERT, zero-shot.
 2. **Aspect assignment is not meaningful yet.** Embedding similarity gives a
    sentence 6.4 of the ten aspects on average and picks the human's aspect
-   first 41% of the time. The LLM classifier that replaces it (T2) picks it
-   73% of the time but hasn't been run on the corpus.
+   first 41% of the time. The LLM classifier that replaces it picks it 73%
+   of the time; it has classified the whole corpus (3 Oct) but isn't applied
+   yet.
 3. **Local models fabricate citations**, and the check detects rather than
    prevents.
 4. **Invented figures and citations are flagged, not prevented.** The local

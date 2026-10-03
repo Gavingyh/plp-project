@@ -369,7 +369,7 @@ The per-source breakdown remains the honest way to read blended figures.
 >
 > **Decided 2026-09-26.** Keep the proposal's four aspects plus `other`, and
 > assign them with a local LLM, one per sentence (DESIGN decision 16), to be
-> confirmed with the supervisor (PLAN.md, O1). The analysis below is the
+> confirmed with the supervisor (an open decision in PLAN.md). The analysis below is the
 > evidence behind that decision.
 
 The taxonomy is still the proposal's four a-priori aspects. The earlier

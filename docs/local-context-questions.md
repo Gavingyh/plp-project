@@ -22,14 +22,15 @@ the models handle it is barely measured (on those 12, base FinBERT gave a
 different label from people on 2 and none on 3). Local **product** vocabulary is common: "UOB One" alone is in
 2,908 sentences, and the aspect a product sentence belongs to (retail
 banking, wealth, NIM, dividends) is where the models go wrong most (DESIGN
-decision 21; the top-up and Opus evidence). Sections A and E are where
-answers change the most labels.
+decision 21; the top-up and Opus evidence). The banking-products section and
+Claude's own assumptions (the last section) are where answers change the
+most labels.
 
 ---
 
-## A. Singapore banking products and names
+## Singapore banking products and names
 
-**A1. A rate cut on a savings account ("UOB One nerf", "OCBC 360 nerf") is
+**A rate cut on a savings account ("UOB One nerf", "OCBC 360 nerf") is
 retail banking, not net interest margin or dividends. Right? And is it
 negative sentiment toward the bank?**
 - Occurs: UOB One 2,908; OCBC 360 670; DBS Multiplier 746; UOB Stash 241;
@@ -43,13 +44,13 @@ negative sentiment toward the bank?**
   of the 42 rows the LLM called NIM are customer rates.
 - Team answer:
 
-**A2. Mortgage repricing (FHR, SORA, "fixed for 2Y") is retail banking too?**
+**Mortgage repricing (FHR, SORA, "fixed for 2Y") is retail banking too?**
 - Occurs: SORA 96; FHR 15 (DBS's Fixed Deposit Home Rate, assumed).
 - Assumed: retail banking; a customer comparing package rates is sentiment
   toward the bank as a lender, not toward its margin.
 - Team answer:
 
-**A3. OCBC's "Premier Dividend+" and "Dividend+" are deposit accounts, not
+**OCBC's "Premier Dividend+" and "Dividend+" are deposit accounts, not
 the bank's dividend. Right?**
 - Occurs: 52, e.g. "OCBC already nerfed their dividend+ from 3.7% to 3.3%".
 - Assumed by Claude, confirmed by Opus on the top-up sheet (5 rows moved from
@@ -57,7 +58,7 @@ the bank's dividend. Right?**
   read them as dividend policy.
 - Team answer:
 
-**A4. Where do priority and private banking products belong: DBS Treasures,
+**Where do priority and private banking products belong: DBS Treasures,
 OCBC Premier, Bank of Singapore, the DBS Insignia card?**
 - Occurs: Treasures 231; Premier 206; Insignia 15; Bank of Singapore (NER
   stratum, 20 in the gold sheet).
@@ -67,7 +68,7 @@ OCBC Premier, Bank of Singapore, the DBS Insignia card?**
 - Answer goes into: `docs/annotation-guideline.md`, before the top-up round.
 - Team answer:
 
-**A5. Is DBS Vickers "DBS"? Is UOB Kay Hian "UOB"?**
+**Is DBS Vickers "DBS"? Is UOB Kay Hian "UOB"?**
 - Occurs: Vickers 541; Kay Hian 144.
 - Assumed: both are brokers, not the bank (PLAN section 7), so NER drops 456
   DBS Vickers sentences from DBS. UOB Kay Hian is a separate listed company;
@@ -82,26 +83,26 @@ OCBC Premier, Bank of Singapore, the DBS Insignia card?**
   the 456 DBS Vickers sentences, 451 are from Reddit: customers using it as
   their broker (fees, paying upfront, CDP, SRS, the app). None of the twelve
   that use words such as "analyst" or "recommend" is research about another
-  bank. A6's rule, that subsidiaries count as the parent, puts DBS Vickers
-  in DBS.
+  bank. The next question's rule, that subsidiaries count as the parent,
+  puts DBS Vickers in DBS.
 - Suggested answer: DBS Vickers is DBS; UOB Kay Hian is not UOB.
 - Team answer:
 
-**A6. Subsidiaries and apps count as the parent: POSB, PayLah! and digibank
+**Subsidiaries and apps count as the parent: POSB, PayLah! and digibank
 as DBS; Great Eastern and Bank of Singapore as OCBC. Right?**
 - Occurs: POSB 535; PayLah 161; digibank 52.
 - Assumed: yes (PLAN section 7). Great Eastern is an insurer OCBC controls;
   counting its news as OCBC moves OCBC's index.
 - Team answer:
 
-**A7. Tickers and market names: D05, O39 and U11 are the three banks on SGX;
+**Tickers and market names: D05, O39 and U11 are the three banks on SGX;
 the STI is the index they are in. Anything else a local reader would
 recognise that the models don't?**
 - Occurs: D05/O39/U11 130; STI 174; SGX 233; CDP (with brokers) common.
 - Assumed: tickers resolve to the bank (`preprocess/bank_ner.py`).
 - Team answer:
 
-**A8. A bank's economists forecasting the economy ("UOB revises up
+**A bank's economists forecasting the economy ("UOB revises up
 Vietnam's 2026 GDP growth forecast to 8.5%", "Malaysian SMEs face rising
 costs ..., OCBC warns"): is that macro sentiment about the bank, or not
 about the bank?**
@@ -111,7 +112,7 @@ about the bank?**
 - Matters for: whether the macro aspect can be trained and evaluated at all.
 - Team answer:
 
-**A9. Comparisons with brokers and robo-advisers (IBKR, moomoo, Tiger,
+**Comparisons with brokers and robo-advisers (IBKR, moomoo, Tiger,
 Endowus, Syfe, StashAway): when is "IBKR is cheaper than DBS Vickers"
 sentiment about the bank?**
 - Occurs: IBKR 796; moomoo or Tiger 278; Endowus, Syfe or StashAway 341.
@@ -120,14 +121,14 @@ sentiment about the bank?**
   funding account.
 - Team answer:
 
-**A10. Products that compete with bank deposits (SSB, T-bills, CPF, SRS):
+**Products that compete with bank deposits (SSB, T-bills, CPF, SRS):
 "T-bills beat UOB One now" is negative for UOB?**
 - Occurs: SSB 217; T-bills 179; CPF 268; SRS 259.
 - Assumed: negative for the bank's product when it's the comparison point,
   otherwise not about the bank.
 - Team answer:
 
-**A11. Scams and outages: an impersonation scam the bank didn't cause ("Scam
+**Scams and outages: an impersonation scam the bank didn't cause ("Scam
 call impersonating DBS"), against a failure that is the bank's ("DBS went
 down again"). Both negative retail banking sentiment?**
 - Occurs: scam 212; phishing 35; outage or "down again" 100.
@@ -136,16 +137,16 @@ down again"). Both negative retail banking sentiment?**
   not settled.
 - Team answer:
 
-**A12. MAS rules and notices ("Is this part of some new MAS guideline or
+**MAS rules and notices ("Is this part of some new MAS guideline or
 just UOB being extra cautious?"): which aspect?**
 - Occurs: MAS 282.
 - Assumed: capital and liquidity for prudential rules, retail banking for
   customer-facing rules, other for boilerplate.
 - Team answer:
 
-## B. Singlish and local expressions
+## Singlish and local expressions
 
-**B1. Particles (lah, leh, lor, meh, liao, sia) carry tone, not sentiment.
+**Particles (lah, leh, lor, meh, liao, sia) carry tone, not sentiment.
 Agreed?**
 - Occurs: lah 23 (plus 161 "PayLah", the DBS app, which a model may
   confuse); leh 16; lor 30; meh 9; liao 21; sia 21 lowercase (plus 75 "SIA",
@@ -154,7 +155,7 @@ Agreed?**
   go for uob lor" is a resigned recommendation.
 - Team answer:
 
-**B2. Sentiment words: are these readings right?**
+**Sentiment words: are these readings right?**
 
 | word | count | assumed meaning | assumed polarity |
 |---|---|---|---|
@@ -180,7 +181,7 @@ Agreed?**
 
 - Team answer (correct any row):
 
-**B3. What do these mean? Claude could not tell.**
+**What do these mean? Claude could not tell.**
 - "Not chio no mood to invest liao, heng dbs give me xmm this time." What is
   *xmm*, and is the sentence positive about DBS?
 - "Lobang Sis says cannot use DBS Woman's to smash that 4mpd": is *Lobang
@@ -190,14 +191,15 @@ Agreed?**
   else's?
 - Team answer:
 
-## C. Internet and investing slang
+## Internet and investing slang
 
-**C1. "nerf" and "buff" are gaming words for a product made worse or better.
+**"nerf" and "buff" are gaming words for a product made worse or better.
 Agreed, and always about the product?**
-- Occurs: nerf 154; buff 10. See A1 for what llama did with them.
+- Occurs: nerf 154; buff 10. See the savings-account rate-cut question (first in the banking
+  products section) for what llama did with them.
 - Team answer:
 
-**C2. Do "lol", "lmao", "😂", "tbh", "sigh" change a sentence's sentiment?**
+**Do "lol", "lmao", "😂", "tbh", "sigh" change a sentence's sentiment?**
 - Occurs: lol 169; lmao 14; tbh 36; imo 56; iirc 62.
 - Assumed: they soften or mark sarcasm but don't flip it. "Don't use DBS lol
   hahah it's down again" is negative; "where else did u think DBS fund the
@@ -205,76 +207,76 @@ Agreed, and always about the product?**
   negative by Opus.
 - Team answer:
 
-**C3. Investing stance words: DCA (150), "diamond hands", "to the moon",
+**Investing stance words: DCA (150), "diamond hands", "to the moon",
 "stonks", FOMO, YOLO. Is "Monthly DCA dbs stock." positive investor
 sentiment, or neutral description?**
 - Assumed: a plan to keep buying is mildly positive about the stock; the
   guideline doesn't say.
 - Team answer:
 
-**C4. "FIRE" means financial independence, retire early, except when it
+**"FIRE" means financial independence, retire early, except when it
 means fire insurance. Any other local acronym with two readings?**
 - Occurs: 9 "FIRE" in capitals, 6 "fire insurance".
 - Team answer:
 
-## D. Sarcasm, jokes and questions
+## Sarcasm, jokes and questions
 
-**D1. Sarcastic expansions of a bank's name: "DBS - Dumbest Bank of
+**Sarcastic expansions of a bank's name: "DBS - Dumbest Bank of
 Singapore". Negative toward DBS, and not about OCBC?**
 - Assumed: yes; NER wrongly adds OCBC (it reads "Bank of Singapore", OCBC's
   private bank). Are there other common ones? None of the guesses Claude
   tried, such as "Damn Bloody Slow", occur in this corpus.
 - Team answer:
 
-**D2. Contrarian jokes: "Jialat if auntie say buy dbs means gone case liao"
+**Contrarian jokes: "Jialat if auntie say buy dbs means gone case liao"
 (when the aunties buy, it's the top). Negative about the stock?**
 - Team answer:
 
-**D3. Sarcasm marked "/s" (7) or not marked at all. Should annotators flag
+**Sarcasm marked "/s" (7) or not marked at all. Should annotators flag
 sarcasm, so the models' errors on it can be counted?**
 - Team answer:
 
-**D4. A question is not evidence: "How is the fundamental/current state of
+**A question is not evidence: "How is the fundamental/current state of
 DBS?" Neutral, and never quoted as a supporting quote?**
 - Matters for: the chatbot. When evidence search ranks by the question's
   wording, it returns other people's questions (`chatbot-eval-build`,
   search-mode replay).
 - Team answer:
 
-## E. What Claude Code assumed in its own analysis
+## What Claude Code assumed in its own analysis
 
 These are judgements made while writing the evidence, recorded so a person
 can check them.
 
-**E1.** In the top-up sheet, Claude read 16 of the 19 Reddit rows the LLM
+**Customer rates read as NIM.** In the top-up sheet, Claude read 16 of the 19 Reddit rows the LLM
 called NIM as customer rates (retail banking), and 3 of 23 news and earnings
 rows likewise. Opus agreed (19 of 42 to retail). No person has checked.
 (`labelling-topup-2026-10-01.md`)
 
-**E2.** In the search-mode replay, Claude judged how many harness-found
+**On-topic quotes in the replay.** In the search-mode replay, Claude judged how many harness-found
 quotes were on the asked topic: about 10 of 33 when ranked by the question,
 about 19 of 33 when ranked by the aspect's name, most of the latter report
 boilerplate. A subjective count. (`chatbot-eval-build-2026-10-01.md`)
 
-**E3.** Report boilerplate is not evidence of sentiment: "These
+**Report boilerplate.** Report boilerplate is not evidence of sentiment: "These
 Forward-Looking Statements are statements regarding ...", footnotes such as
 "1/ Wealth Management income comprises ...". Assumed neutral and not worth
 quoting. Should they be removed from the corpus, as PDF debris was
 considered (`preprocessing-dry-run-2026-10-01.md`)?
 
-**E4.** A product description is neutral unless it judges: "UOB One gives
+**Product descriptions.** A product description is neutral unless it judges: "UOB One gives
 4% on $100k" neutral, "UOB One is the best leh" positive. This is the
 neutral boundary where people, Opus and the fine-tuned model disagree most
 (`error-analysis-2026-10-01.md`: most of the model's errors are Reddit
 descriptions of retail products called positive or negative).
 
-**E5.** Analyst consensus: "buy" with an implied upside of 0.9% was reported
+**A "buy" with 0.9% upside.** Analyst consensus: "buy" with an implied upside of 0.9% was reported
 as given. Whether a local reader would call that a buy is not a question
 the system answers.
 
-**E6.** The NER gold-sheet reference: Opus's reading was taken as a
+**Opus as the NER reference.** The NER gold-sheet reference: Opus's reading was taken as a
 stand-in for a person's. It agrees with NER on 200 of 201 sentences, but it
-was given the same rules NER encodes, so it can't test the rules (A5, A6).
+was given the same rules NER encodes, so it can't test the rules (the DBS Vickers and subsidiaries questions).
 
 ---
 

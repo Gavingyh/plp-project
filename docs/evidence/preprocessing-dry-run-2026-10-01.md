@@ -51,4 +51,4 @@ read as positive or negative, implicit sentiment missed, and Reddit
 (`finetune-fixes-2026-10-01.md`). Two preprocessing steps remain worth
 having for the corpus, not the model: this filter applied before scoring
 (0.22% fewer junk rows in the index), and the "not about the bank" relevance
-question (PLAN decision O5), which this dry run doesn't address.
+question (PLAN, the open decision on passing mentions), which this dry run doesn't address.

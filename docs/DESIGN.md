@@ -379,14 +379,14 @@ What it achieved, on the gold set with `llama3.2:3b`: advice and
 out-of-scope questions went from 2 of 7 handled correctly to 7 of 7, all by
 guards and so independent of the model. Invented citations stayed at
 43–48%: the harness detects them but can't make a 3B model stop producing
-them, so the demo model (PLAN.md, O3) matters more than any further prompt
+them, so the demo model (an open decision in PLAN.md) matters more than any further prompt
 work. Of 19 figures the number check flagged in the final run, 18 were
 invented. The temperature change had no measurable effect at 23 questions.
 
 ### 20. CNA loaded as full text, found through the Wayback Machine
 
 *2026-09-26.* CNA was the one planned addition to the frozen corpus (PLAN,
-D5). Its scraper read only the live RSS feed, which holds the latest items and
+section 2). Its scraper read only the live RSS feed, which holds the latest items and
 none about the banks, and wrote a file rather than the database.
 `ingest/cna_archive.py` finds CNA bank articles from 2023 on through the
 Wayback Machine's index of CNA URLs, whose slugs carry the headline. It

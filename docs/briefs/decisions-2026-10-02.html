@@ -171,7 +171,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
   <ol class="summary">
     <li><a href="#d-aspects">Aspects</a>: switch to <code>llama3.1:8b</code>, llama alone.</li>
     <li><a href="#d-test">Test split</a>: keep it, and report the anchoring with the Opus comparison.</li>
-    <li><a href="#d-o2">O2</a>: blended headline with the per-source rows beside it.</li>
+    <li><a href="#d-o2">Blended index</a>: blended headline with the per-source rows beside it.</li>
     <li><a href="#d-econ">Bank economists</a>: not about the bank; macro stays a thin aspect.</li>
     <li><a href="#d-wealth">Wealth or retail</a>: decide by product.</li>
     <li><a href="#d-vickers">DBS Vickers</a>: count it as DBS.</li>
@@ -181,7 +181,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
     <li><a href="#d-paths">PDF links</a>: rewrite to relative paths in the re-score.</li>
     <li><a href="#d-o3">Demo model</a>: <code>llama3.1:8b</code> with strip on.</li>
   </ol>
-  <p class="sub">Also needed, not decisions: confirm the aspect approach with the supervisor (O1, by 5 Oct), and the OpenAI-compatible backend (O4, by 19 Oct) needs a Groq key to be verified or the claim dropped.</p>
+  <p class="sub">Also needed, not decisions: confirm the aspect approach with the supervisor (by 5 Oct), and the OpenAI-compatible backend (by 19 Oct) needs a Groq key to be verified or the claim dropped.</p>
 </section>
 <section aria-labelledby="h-dec">
   <h2 id="h-dec">The decisions</h2>
@@ -210,7 +210,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-o2">
-  <h3>3. O2: one blended index, or each source side by side? <span class="chip decide">Team decision</span> <span class="when">by 5 Oct</span></h3>
+  <h3>3. One blended index, or each source side by side? <span class="chip decide">Team decision</span> <span class="when">by 5 Oct</span></h3>
   <p class="q">Earnings text is far more positive than Reddit for every bank, so a blended score tracks each bank's source mix as much as its sentiment.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Blended headline only</b></td><td>DBS +0.122, OCBC +0.136, UOB +0.074: UOB looks worst only because it publishes less earnings text.</td></tr>
@@ -277,7 +277,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-o5">
-  <h3>9. O5: drop passing mentions from the corpus? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <h3>9. Drop passing mentions from the corpus? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
   <p class="q">"Paid via DBS PayNow" in a thread about something else.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Drop them</b></td><td>Needs a filter applied before the final re-score; changes the data late.</td></tr>
@@ -299,7 +299,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-o3">
-  <h3>11. O3: the demo chatbot model <span class="chip decide">Team decision</span> <span class="when">by 19 Oct</span></h3>
+  <h3>11. The demo chatbot model <span class="chip decide">Team decision</span> <span class="when">by 19 Oct</span></h3>
   <p class="q">With strip enforcement on, neither local model shows invented citations.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b><code>llama3.1:8b</code></b></td><td>Right tool 20 of 24; about 27 minutes for the 32-question set.</td></tr>

@@ -32,23 +32,23 @@ fine-tuned deep neural network; Python.
 
 ### Made on 2026-09-26
 
-| # | decision | why | consequence |
-|---|---|---|---|
-| D1 | **A local LLM assigns each sentence one aspect**: one of ten (DESIGN decision 21; the proposal's four until 30 Sep) or `other` | Seed-centroid assignment gives 46% of sentences three or four aspects at once and sends evaluative sentences to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). An LLM prompted with a fixed schema reads meaning, not vocabulary (NMSM Day 2, zero-shot ABSA) | Changes the method; the taxonomy changed separately on 30 Sep (DESIGN 21). Replaces DESIGN decisions 4 and 5. Evaluated against the 1,277 human aspect labels (D2) |
-| D2 | **Annotators record aspect and sentiment for each sentence** | Labels no longer depend on the automatic assignment being right, and the human aspect choices become the gold set that evaluates D1 | Candidates are re-drawn to include news; the annotation guideline gains aspect definitions ([annotation-guideline.md](annotation-guideline.md)) |
-| D3 | **Four text-mining tasks**: aspect discovery (clustering), aspect categorisation (D1), bank entity recognition (new), sentiment classification (the fine-tuned DNN) | All four are real and evaluable. NER is scoped narrowly so it doesn't compete with labelling | The course notes' earlier NER claim becomes true. See section 7 |
-| D4 | **No personal names in the repository** | Team preference; work is split offline | Ownership is recorded by role (section 4); contribution summaries go in the report only |
-| D5 | **The daily ingestion job is not running on any machine** | Stopped on 26 Sep at the team's request. Over its three runs Yahoo added nothing and one run failed at wake-up before the network was up | The corpus is frozen at 26 Sep unless someone runs `run_news_pull.py` / `run_daily_batch.py` by hand. `scripts/com.plp.dailybatch.plist` remains as a template |
+| decision | why | consequence |
+|---|---|---|
+| **A local LLM assigns each sentence one aspect**: one of ten (DESIGN decision 21; the proposal's four until 30 Sep) or `other` | Seed-centroid assignment gives 46% of sentences three or four aspects at once and sends evaluative sentences to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). An LLM prompted with a fixed schema reads meaning, not vocabulary (NMSM Day 2, zero-shot ABSA) | Changes the method; the taxonomy changed separately on 30 Sep (DESIGN 21). Replaces DESIGN decisions 4 and 5. Evaluated against the 1,277 human aspect labels (next row) |
+| **Annotators record aspect and sentiment for each sentence** | Labels no longer depend on the automatic assignment being right, and the human aspect choices become the gold set that evaluates the LLM's aspects | Candidates are re-drawn to include news; the annotation guideline gains aspect definitions ([annotation-guideline.md](annotation-guideline.md)) |
+| **Four text-mining tasks**: aspect discovery (clustering), aspect categorisation (the LLM aspects above), bank entity recognition (new), sentiment classification (the fine-tuned DNN) | All four are real and evaluable. NER is scoped narrowly so it doesn't compete with labelling | The course notes' earlier NER claim becomes true. See section 7 |
+| **No personal names in the repository** | Team preference; work is split offline | Ownership is recorded by role (section 4); contribution summaries go in the report only |
+| **The daily ingestion job is not running on any machine** | Stopped on 26 Sep at the team's request. Over its three runs Yahoo added nothing and one run failed at wake-up before the network was up | The corpus is frozen at 26 Sep unless someone runs `run_news_pull.py` / `run_daily_batch.py` by hand. `scripts/com.plp.dailybatch.plist` remains as a template |
 
 ### Still open
 
-| # | decision | who | by |
-|---|---|---|---|
-| O1 | Confirm D1 with the supervisor. It keeps the proposal's aspects but changes how they are assigned, which the report must explain | team, supervisor | 5 Oct |
-| O2 | One blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text | team, supervisor | 5 Oct |
-| O3 | Default chatbot model for the demo: `llama3.1:8b` fabricates citations 13% of the time, `llama3.2:3b` 43–48%, but the 8B is slower. The harness now detects fabrication but can't prevent it, so this choice decides how many flagged answers a demo shows | team | 19 Oct |
-| O4 | OpenAI backend: provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
-| O5 | Stricter relevance filtering for passing mentions ("paid via DBS PayNow"). It changes the data, so it must be decided before the final pipeline run | team | 12 Oct |
+| decision | who | by |
+|---|---|---|
+| **Supervisor sign-off:** confirm the LLM-aspects decision with the supervisor. It keeps the proposal's aspects but changes how they are assigned, which the report must explain | team, supervisor | 5 Oct |
+| **Blended index:** one blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text | team, supervisor | 5 Oct |
+| **Demo model:** the default chatbot model for the demo. `llama3.1:8b` fabricates citations 13% of the time, `llama3.2:3b` 43–48%, but the 8B is slower. The harness now detects fabrication but can't prevent it, so this choice decides how many flagged answers a demo shows | team | 19 Oct |
+| **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
+| **Passing mentions:** stricter relevance filtering for passing mentions ("paid via DBS PayNow"). It changes the data, so it must be decided before the final pipeline run | team | 12 Oct |
 
 ---
 
@@ -63,7 +63,7 @@ is the backbone of the report's solution-approach section.
 | Sentence segmentation, bank attribution | preprocessing | TA Day 1 (text preparation), Day 3 (IE pipeline) | counts; attribution errors surfaced in STATUS |
 | **Bank entity recognition and resolution** | text-mining task 3 | TA Day 3 (NER, entity resolution); NMSM Day 1 PM (entity extraction, polysemy/synonymy) | precision, recall, F1 against a ~200-sentence gold set; baseline: today's alias matching |
 | **Aspect discovery** (FinBERT embeddings → UMAP → HDBSCAN) | text-mining task 1 | TA Day 2 (clustering, topic modelling); NMSM Day 1 PM (aspect grouping) | cluster count and noise; cluster-to-aspect correspondence; informs whether `other` hides a missing aspect |
-| **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 | TA Day 2 (text categorisation); NMSM Day 2 AM (structured ABSA prompt: role, task, schema, constraints, examples) | accuracy and macro-F1 against human aspect labels (D2); confusion matrix; baseline: seed-centroid assignment |
+| **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 | TA Day 2 (text categorisation); NMSM Day 2 AM (structured ABSA prompt: role, task, schema, constraints, examples) | accuracy and macro-F1 against human aspect labels (section 2); confusion matrix; baseline: seed-centroid assignment |
 | **Sentiment classification** (fine-tuned FinBERT) | the DNN; text-mining task 4 | TPML Day 3 (transfer learning, BERT fine-tuning); NMSM Days 1–3 (ABSA, lexicon and supervised approaches) | per-class precision, recall, F1 and macro-F1 on a frozen random test split, mean ± sd over ≥3 seeds; baselines: base FinBERT zero-shot, VADER lexicon, TF-IDF + logistic regression |
 | Annotation | labels | TA Day 1 (annotation methodology, Cohen's κ); TA Day 1 (LLMs as annotators with human correction) | κ ≥ 0.6 on a shared 150-row sample, for aspect and for sentiment |
 | Sentiment index, served by the API | sentiment mining | NMSM Day 2 PM (aggregation by holder, time, aspect; heat maps; time series) | shrinkage and volume floors already in `aggregate/index.py` |
@@ -77,7 +77,7 @@ speech content of CNI Days 3–4 is out of scope: the chatbot is text-only.
 
 ## 4. Workstreams
 
-Owners are roles, filled offline (D4). One person can hold more than one role.
+Owners are roles, filled offline (no personal names, section 2). One person can hold more than one role.
 "AI" means work an AI coding assistant can do with a person reviewing it; the
 split is detailed in the checklist.
 
@@ -167,14 +167,14 @@ judge catches them), Opus as an extra rater on the top-up and NER sheets,
 [findings, limitations and solutions](report/findings-limitations-solutions.md).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
-(D2 attaches sentiment to an aspect), so the aspect classifier comes first.
+(annotators attach sentiment to an aspect), so the aspect classifier comes first.
 
 | week | gate at the end of the week | people | AI |
 |---|---|---|---|
 | 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled | Rotate API keys; fill roles; check the aspect classifier's 100-sentence validation sample; book the supervisor meeting | Aspect-classifier prompt and validation run; full run overnight; re-draw candidates; update the labelling sheet and tools for aspect + sentiment |
-| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; decisions O1, O2 made | Agreement round (two people, 150 rows), then full labelling; supervisor meeting; NER gold set; CNA load reviewed (loaded 26 Sep) | Discovery re-run and sweep; NER step; frozen chatbot evaluation set; report structure and datasets/methods drafts |
-| 12 – 18 Oct | ~1,000 rows labelled; model trained | Finish labelling; decide O5 | Fine-tune (3 seeds); evaluate sentiment, aspect categorisation and NER; re-score the corpus |
-| 19 – 25 Oct | Results frozen | Interpret results; transcript reading; SASSI sessions; decide O3, O4; rehearse | Chatbot evaluation; results tables and figures; video script; clean-copy install test |
+| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; supervisor sign-off and blended index decided | Agreement round (two people, 150 rows), then full labelling; supervisor meeting; NER gold set; CNA load reviewed (loaded 26 Sep) | Discovery re-run and sweep; NER step; frozen chatbot evaluation set; report structure and datasets/methods drafts |
+| 12 – 18 Oct | ~1,000 rows labelled; model trained | Finish labelling; decide on passing mentions | Fine-tune (3 seeds); evaluate sentiment, aspect categorisation and NER; re-score the corpus |
+| 19 – 25 Oct | Results frozen | Interpret results; transcript reading; SASSI sessions; decide the demo model and the OpenAI backend; rehearse | Chatbot evaluation; results tables and figures; video script; clean-copy install test |
 | 26 Oct – 1 Nov | Submitted | Conclusions, contribution summaries, GenAI declaration; record the video; final read-through; submit | Final snapshot and data report; second clean-copy test |
 
 If labelling slips, the fallback is to fine-tune on whatever is labelled by
@@ -223,7 +223,8 @@ Estimated at half a day of AI work plus about two hours of annotation.
 *Note, 2 Oct:* DBS Vickers is in fact a DBS subsidiary (DBS Group's list of
 subsidiaries, 31 Dec 2024); UOB Kay Hian is separately listed. The broker
 rule is therefore under review for DBS Vickers only: see
-`docs/evidence/bank-ner-2026-10-01.md` and local-context question A5.
+`docs/evidence/bank-ner-2026-10-01.md` and the DBS Vickers question in
+`docs/local-context-questions.md`.
 
 ---
 

@@ -90,5 +90,5 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | recorded in |
 |---|---|
-| Aspect categorisation by a local LLM | DESIGN.md decision 16; PLAN.md D1 |
-| Bank entity recognition and resolution | DESIGN.md decision 18; PLAN.md D3, section 7 |
+| Aspect categorisation by a local LLM | DESIGN.md decision 16; PLAN.md section 2 |
+| Bank entity recognition and resolution | DESIGN.md decision 18; PLAN.md sections 2 and 7 |

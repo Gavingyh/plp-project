@@ -44,8 +44,11 @@ TOOL_DATES = TOOL + [{"data_runs_to": d} for d in ("2026-09-25", "2026-09-30", "
     ("On 25 Sept. 47 new posts appeared.", "47"),
     ("Sentences rose to 25 in May.", "25"),
 ])
-def test_an_invented_figure_near_a_month_is_flagged(answer, figure):
-    assert figure in unverified_numbers(answer, TOOL)
+@pytest.mark.parametrize("tools", [TOOL, TOOL_DATES], ids=["no tool dates", "with data_runs_to"])
+def test_an_invented_figure_near_a_month_is_flagged(answer, figure, tools):
+    # Real answers always carry data_runs_to; without it here, a date rule that swallowed
+    # "25.7%" after a returned 25 September passed (fourth validation, 4 Oct 2026).
+    assert figure in unverified_numbers(answer, tools)
 
 
 @pytest.mark.parametrize("answer", [

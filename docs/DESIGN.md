@@ -570,47 +570,37 @@ Decided:
   overall mood from evidence filtered to one side, so the prompt keeps the
   sentiment filter for questions about complaints or praise; and a reading it
   put in quote marks was removed as an invented quote, so a reading or a
-  real topic name a tool returned no longer counts as a quote. The figure
-  check skips a date written without its year ("September 25th").
-- Found in validation and fixed (`docs/validation/2026-10-04-chatbot-answers.md`):
-  the first pattern for such dates also hid real figures ("0.45 may",
-  "September 45 sentences"), so it now takes only a capitalised month and a
-  day from 1 to 31 followed by an ordinal or punctuation; a topic name the
-  model could set by passing its own text as the aspect let it quote that
-  text, so only real topic names count; the numbered markers and sources the
-  reader saw went back to the model through the API's history, so history
-  drops them; and when a trend's printed scores point another way from its
-  direction, the sentence says it's too close to call, and the model isn't
-  given the change before shrinkage. A second validation
-  (`docs/validation/2026-10-04-chatbot-answers-recheck.md`) found that
-  flagging a bare "[2]" flagged real quotes beside it and, in strip mode,
-  let an invented quote beside one survive: a marker the model writes is
-  now dropped outside quote marks (in strip mode, and in what the reader
-  sees whatever the mode), and quotes are compared without markers. The
-  date pattern also takes a lower-case full month name (never "may"), and
-  a day-first date can't cross a line, follow a sign or precede a count
-  noun. A third validation
-  (`docs/validation/2026-10-04-chatbot-answers-third-check.md`) found the
-  patches still opening gaps, so the approach changed: a date without its
-  year is skipped only when a tool returned that month and day, so counts
-  are checked whatever follows them; and the checks read the model's own
-  text before any marker is dropped, with a quote allowed to open after
-  "]", close before a dash, slash or apostrophe, mix marks or run unclosed
-  to its line's end. At display, a marker inside a quote stays only if the
-  quoted sentence has it, and a dropped marker's figures are still checked.
+  real topic name a tool returned no longer counts as a quote.
+- Four validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`)
+  found gaps the change had opened in the grounding checks, and some old
+  ones. Pattern fixes kept opening new gaps, so two rules replaced them.
+  Quotes are found by pairing each paragraph's quote marks in order,
+  whatever stands around them, a pair around fewer than ten characters
+  being a word, not a quote, and an unpaired mark opening a quote to the end
+  of its line. A date without its year is skipped by the figure check only
+  when a tool's date field has that month and day and no decimal, thousands
+  group or "%" follows it. Around them: the checks read the model's own text
+  before the bare markers it wrote ("[2]") are dropped, and a dropped
+  marker's figures are still checked; a marker inside a quote is shown only
+  if the quoted sentence has it; history rebuilt for the API drops markers
+  and sources; only real topic names count as tool wording; and a trend
+  sentence whose printed scores point the other way says it's too close to
+  call. The findings and their tests are listed in
+  `docs/evidence/chatbot-answers-2026-10-04.md`.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or
   negative sentence is lifted 0.03 over a neutral one when the search is
-  filtered by topic or sentiment (the only time retrieval returns a
-  sentence's label). Each result names its
+  filtered by topic and not by sentiment (retrieval returns a sentence's
+  label only with a filter, and a sentiment filter leaves one label). Each result names its
   source ("Reddit", "news", "CNA", "bank results report", from
   `config/sources.yaml`).
 - The reader sees numbered citations and a list of sources. The checks still
   run on the model's own text, sentence ids included, before the numbering.
 
-Costs: answers are slower on a local model, because the tool results the
-model reads are longer (measured with the prompt cached; the answers
-themselves were not longer). A separate id field and raw counts are left out
+Costs: answers are slower on a local model. Two parts were measured: the
+longer tool results take longer to read (2.5 to 12 seconds more per answer),
+and the longer prompt takes longer to read whenever Ollama hasn't cached it
+(14 to 26 seconds); the answers themselves were not longer. A separate id field and raw counts are left out
 of what it reads, to limit that (the turn's record keeps them; an id still
 travels inside the citation the model copies). Links stay: the
 hosted backends' privacy filter knows a Reddit post that came through a news

@@ -25,7 +25,7 @@ through `main`'s code later gave the same kind of answer: "0.122 out of 1",
 | What is the overall sentiment on DBS? | 16 s | right figures (+0.122, 24,431 sentences), as "0.122 out of 1", under four labelled sections, with "No specific quotes or articles were found" |
 | And OCBC? | 28 s | the same shape; the follow-up resolved |
 | Compare DBS, OCBC and UOB on dividends. | not timed | right scores, but UOB's +0.1242 called "slightly negative" |
-| Has sentiment on UOB's net interest margin changed recently? | not timed | "the trend is not available due to insufficient recent data", though 66 months had enough sentences to score (of 72 stored) |
+| Has sentiment on UOB's net interest margin changed recently? | not timed | "the trend is not available due to insufficient recent data", though 66 months had enough sentences to score (of 72 months with any) |
 | Show me evidence about OCBC's asset quality. | about 100 s | results-report boilerplate (segment descriptions, table notes), cited by 24-character ids |
 | What do analysts think of UOB? | about 40 s | useful figures (hold, 16 analysts, $43.30 target) under the same headings, with a filler caveat |
 | Should I buy DBS shares now? | 3 s | the fixed reply, which reads well |
@@ -166,8 +166,8 @@ before the next.
    Ollama's own timings on three questions, against `main`, showed why
    once the branch's prompt was cached: the tool results the model reads
    are longer (see Speed).
-5. **Trimmed.** The model was given fewer fields (no links, ids or raw
-   counts; six months of history instead of twelve) and a prompt a quarter
+5. **Trimmed.** The model was given fewer fields (no links, no separate id
+   field, no raw counts; six months of history instead of twelve) and a prompt a quarter
    shorter asking for 50 to 100 words. The median fell to 41 seconds, but
    the right tool fell to 20 of 24 (one a time-out) and scores with their
    scale to 8 of 17; in the dashboard questions the model reused topic
@@ -189,71 +189,61 @@ before the next.
 
 ## After validation
 
-The branch's validation (`docs/validation/2026-10-04-chatbot-answers.md`)
-found three holes the change had opened in the checks, and a trend
-sentence that could contradict its own figures. All four were fixed with
-tests (`tests/test_validate_chatbot_reader_*.py`):
+Four validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`)
+each found gaps the change had opened in the checks, or old ones it had not
+closed. The checks as they stand after the fourth:
 
-- The figure check's new pattern for dates without a year also hid real
-  figures ("0.45 may suggest caution", "In September 45 sentences"). It now
-  takes only a capitalised month and a day from 1 to 31, followed by an
-  ordinal or punctuation. (Refined after the second validation, below.)
-- A topic name counted as the tool's own wording, so a model passing its own
-  text as the aspect could then quote that text unchecked. Only real topic
-  names count now.
-- Through the API, the numbered markers and the list of sources the reader
-  saw went back to the model as history, and a bare "[2]" passed unchecked.
-  History drops both. A bare marker in the model's text was first flagged;
-  after the second validation it is dropped instead (below).
-- A trend sentence printed the index's scores beside a direction worked out
-  before shrinkage, so a thin month could read "(+0.27, 6 sentences) was up
-  on (+0.44, 200 sentences)". When the two disagree it now says there are
-  too few sentences to tell.
+- **Quotes** are found by pairing each paragraph's quote marks in order,
+  first with second and third with fourth, as a reader pairs them, whatever
+  stands around them: '"..."(Reddit)', a table cell '|"..."|', a space inside
+  the marks, mixed straight and curly marks, « ». A pair around fewer than ten
+  characters ('"buy"') is a word in quote marks, not a quote. A mark left
+  without a partner opens a quote that runs to the end of its line, stopping
+  before a citation. Single quotes are left out, as they are mostly
+  apostrophes.
+- **Numbered markers** the model writes ("[2]", "[2, 3]", "[12-45]") are
+  dropped only after the checks have read the model's own text and removed
+  any unretrieved quote or link; the figures of a dropped marker are still
+  checked, and "[0, 1]" is left as written. At display, a marker inside a
+  quote stays only if the quoted sentence has it (one stored sentence has a
+  "[1]" footnote). Through the API, history drops the markers and the list
+  of sources the reader saw.
+- **A date without its year** is skipped by the figure check only when a
+  tool's date field (`data_runs_to`, an evidence item's date) has that month
+  and day, and a day followed by a decimal, a thousands group or "%" is
+  never a date. A date in the model's own search query, a link or a quoted
+  sentence vouches for nothing, and "may" in lower case is the verb.
+- **Tool wording**: a reading or a real topic name in quote marks is not a
+  quote; a topic name the model set by passing its own text as the aspect is
+  not exempt.
+- **The trend sentence** says it's too close to call when the printed scores
+  point another way from the change before shrinkage, and the model is then
+  not given that change.
 
-A second validation (`docs/validation/2026-10-04-chatbot-answers-recheck.md`)
-found that the first marker fix had made two things worse, and some date
-edges. Fixed, with tests:
+What each validation found, in short:
 
-- Strip mode left an invented quote in the answer when a "[2]" sat inside or
-  just after its quote marks, because the marker was removed after the quote
-  had been found. Markers now go first, and a quote followed straight by
-  "[2]" is recognised as a quote.
-- Flagging any bare marker also flagged real quotes beside one. A marker is
-  now dropped, not flagged: outside quote marks, in strip mode and in what
-  the reader sees whatever the mode, and quotes are compared with what was
-  retrieved without markers (one stored sentence has a "[1]" footnote in
-  it). "[2, 3]", "[2-3]" and "[100]" count as markers too.
-- Dates: a full month name in lower case counts ("september 25th"), but
-  never "may"; with the day first, a date can't run across a line, follow a
-  sign or come before a count noun ("27" on one line and "September" on
-  the next, "-21 May", "21 Oct sentences" are all checked as figures).
-- When the trend sentence says it's too close to call, the model is no
-  longer given the change before shrinkage, which would contradict the
-  printed scores.
+1. The first: the first date pattern hid figures ("0.45 may"); a topic name
+   the model chose let it quote its own text; markers and sources went back
+   to the model through the API's history; the trend sentence could
+   contradict its figures.
+2. The second: flagging any bare marker flagged real quotes, and in strip
+   mode an invented quote beside a "[2]" survived; more date edges.
+3. The third: the patched date patterns read counts as dates ("July 18" on
+   one line, "21 Oct tweets"), which `main` had checked, and dropping a marker
+   before the checks could leave '"..."-', which no longer read as a quote.
+   Dates were then grounded in tool results and the checks moved before the
+   marker drop.
+4. The fourth: the grounded date rule let a returned date swallow a figure
+   ("September 25.7%" when data ran to 25 September), and dates in the
+   model's own search query counted; and quotes in shapes the pattern never
+   matched ('"..."(Reddit)', table cells), also unchecked on `main`. The
+   pairing of quote marks replaced the pattern.
 
-A third validation (`docs/validation/2026-10-04-chatbot-answers-third-check.md`)
-showed that patching these patterns kept opening new gaps: a count list one
-month per line, or "21 Oct tweets", now read as dates (`main` had checked
-them), and dropping a marker could leave '"..."-', which no longer read as a
-quote, so strip kept an invented quote. Two changes of approach replaced the
-patches, with tests:
-
-- A date written without its year is skipped only when a tool returned that
-  month and day (`data_runs_to`, a sentence's date). Counts are checked
-  whatever follows them, including "July 18, August 24, September 29.",
-  which was a known limit; a date no tool returned is checked as figures.
-- The checks read the model's own text first; quotes and links are removed;
-  only then are bare markers dropped. A quote may now open after "]", close
-  before a dash, slash or apostrophe, mix curly and straight marks, or run
-  unclosed to the end of its line (none of these was checked on `main`
-  either). At display, a marker inside a quote stays only if the quoted
-  sentence has it. Markers start at 1, so "[0, 1]" stays as written, and
-  the figures of a dropped marker ("[12-45]") are still checked.
-
-Re-run over the recorded answers of all seven runs, the figure check flags
-exactly what it flagged before, except round 1's false alarm on "September
-25th", now cleared because a tool had returned that date; none of the
-answers has a bare marker in the model's text, so the tables above stand.
+Each finding has a test in `tests/test_validate_chatbot_*.py`, none of them
+now marked as expected to fail. Re-run over the recorded answers of all
+seven runs, the figure and citation checks flag exactly what they flagged
+before, except round 1's false alarm on "September 25th", cleared because a
+tool had returned that date; so the tables above stand.
 
 ## The seven questions again, after
 
@@ -289,9 +279,14 @@ per-question times were 20 against 46 seconds (DBS overall), 34 against 63
 (a trend) and 82 against 84 (a comparison, where `main`'s answer ran to 387
 tokens). Much of those gaps was the branch re-reading its whole prompt on
 every first call, 14 to 26 seconds more than `main` each time (55% of the
-first gap, 87% of the second, and more than all of the third): alternating
-the two versions kept the branch's prompt out of Ollama's cache. The block
-run and the window run below used the trimmed version (shorter prompt,
+first gap, 87% of the second, and more than all of the third). Why
+`main`'s prompt was read from Ollama's cache in that run and the branch's
+was not isn't known: with one slot, alternating should have evicted both.
+So the slowdown has two measured parts, reading the longer tool results
+(2.5 to 12 seconds more per answer in that run) and, whenever the prompt
+isn't cached, reading the longer prompt again (14 to 26 seconds); these
+runs don't split the 26-second gap between the medians before and after
+between them. The block run and the window run below used the trimmed version (shorter prompt,
 fewer fields), started at 16:33: asked as a block, it re-read its prompt
 only for the first question (37.9 seconds, then 0.6 and 0.5).
 

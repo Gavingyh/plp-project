@@ -27,7 +27,8 @@ invented citation in the 1 Oct gold-set runs, on both local models):
 `strip` removes the evidence the model wrote and says so; `search` removes
 it and has the harness run search_evidence for the bank and aspect the
 model looked up, showing those real quotes under a heading that says the
-system found them. Unset or `off` (the default) leaves answers as written.
+system found them. `off` leaves answers as written; the default is `strip`
+(config/chatbot.yaml).
 A search the harness makes is recorded with `"by": "harness"`, so the
 evaluation doesn't count it as the model's tool choice.
 
@@ -79,20 +80,69 @@ logger = get_logger(__name__)
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
                           r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/[^\s)\]}\"'“”]*",
                           re.IGNORECASE)
-# A purported verbatim quote: opens after whitespace or punctuation and closes
-# before it, so the gap between two short quotes ('"buy". ... as "hold"')
-# isn't mistaken for one long quote. Straight or curly quotes, wrapped in
-# markdown emphasis or not, may run across a single line break.
-# After its closing mark a quote may meet a dash, slash, apostrophe or marker
-# ('"..."—', '"..."[2]'). Mixed marks and a quote never closed by the end of
-# its line count too: none was checked before (validation, 4 Oct 2026), and an
-# answer cut short at the length limit ends in an open quote.
-_QUOTE_PATTERN = re.compile(
-    r'(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s](?:[^"\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)'
-    r'|“[^”]{10,}?”'
-    r'|“[^”"\n]{10,}?"'
-    r'|(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s][^"”\n]{9,}?”'
-    r'|(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s][^"\n]{9,}(?=\n|\Z)')
+class _QuoteSpans:
+    """Quoted passages in an answer, found by pairing each paragraph's quote
+    marks in order, first with second and third with fourth, as a reader pairs
+    them, whatever stands around them: '"..."(Reddit)', a table cell
+    '|"..."|', a space inside the marks, mixed straight and curly marks.
+    Patterns keyed on the characters around a mark missed a new shape at every
+    validation on 4 Oct 2026. A pair around fewer than ten characters ('"buy"')
+    is a word in quote marks, not a quote, but still takes its two marks, so the
+    gap between two short quotes is never read as one. A mark left without a
+    partner opens a quote running to the end of its line, stopping before a
+    citation: an answer cut short ends in one. Single quotes are left out, as
+    they are mostly apostrophes. Offers a compiled pattern's finditer, search
+    and findall, so its callers read like any regex's."""
+
+    _MARK = re.compile('["\u201c\u201d\u00ab\u00bb]')
+    _PARAGRAPH = re.compile(r"(?:[^\n]|\n(?![ \t]*\n))+")
+    _CITATION = re.compile(r"[ \t]*\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id")
+    _SHORTEST = 10
+
+    class _Span:
+        def __init__(self, text: str, start: int, end: int):
+            self._text, self._start, self._end = text, start, end
+
+        def group(self, index: int = 0) -> str:
+            return self._text[self._start:self._end]
+
+        def start(self) -> int:
+            return self._start
+
+        def end(self) -> int:
+            return self._end
+
+    def finditer(self, text: str | None):
+        text = text or ""
+        for para in self._PARAGRAPH.finditer(text):
+            opened = None
+            for mark in self._MARK.finditer(text, para.start(), para.end()):
+                if opened is None:
+                    if mark.group(0) not in "\u201d\u00bb":    # a closing mark with nothing open is skipped
+                        opened = mark.start()
+                    continue
+                if len(text[opened + 1:mark.start()].strip()) >= self._SHORTEST:
+                    yield self._Span(text, opened, mark.end())
+                opened = None
+            if opened is not None:
+                line_end = text.find("\n", opened, para.end())
+                line_end = para.end() if line_end == -1 else line_end
+                cite = self._CITATION.search(text, opened, line_end)
+                end = cite.start() if cite else line_end
+                while end > opened and text[end - 1] in " \t":
+                    end -= 1
+                if len(text[opened + 1:end].strip()) >= self._SHORTEST:
+                    yield self._Span(text, opened, end)
+
+    def search(self, text: str | None):
+        return next(self.finditer(text), None)
+
+    def findall(self, text: str | None) -> list[str]:
+        return [m.group(0) for m in self.finditer(text)]
+
+
+_QUOTE_PATTERN = _QuoteSpans()
+_QUOTE_MARKS = '"\u201c\u201d\u00ab\u00bb'
 # A markdown blockquote line ("> OCBC has the worst app..."): quoted text without quote marks.
 # A line opening with a label and a colon ("> **Note:** ...") is the model's own
 # aside, not quoted evidence (4 Oct 2026: notes were flagged as invented quotes).
@@ -147,7 +197,7 @@ def _drop_bare_marks(text: str, sources: list[str] | None = None) -> str:
     part of the sentence quoted: kept there, or, given the retrieved sentences,
     kept only if the quote with its marker is in one of them."""
     def quote(span: str) -> str:
-        if sources is None or any(_norm_text(span.strip('"“”'), keep_marks=True) in s for s in sources):
+        if sources is None or any(_norm_text(span.strip(_QUOTE_MARKS), keep_marks=True) in s for s in sources):
             return span
         return _BARE_MARK.sub("", span)
 
@@ -240,6 +290,7 @@ class _ToolCallTracker:
         self.calls: list[dict] = []
         self.evidence: dict[str, dict] = {}       # sentence_id -> what a search returned for it, this turn or earlier
         self.tool_wording: set[str] = set()       # a reading or topic name a tool returned: quoting it cites nothing
+        self.dropped_marks: list[str] = []        # bare markers enforcement dropped from the text: their figures are checked
         # Evidence earlier turns of the conversation retrieved: a follow-up may
         # repeat it ("explain that second quote") without searching again.
         self.earlier_text: list[str] = []
@@ -290,7 +341,7 @@ class _ToolCallTracker:
         more words was returned. A quote with no such piece can't be checked:
         `strict` counts it as unverified."""
         known = self.retrieved_text + self.earlier_text
-        spans = [(m.group(0), m.group(0).strip('"“”')) for m in _QUOTE_PATTERN.finditer(answer or "")]
+        spans = [(m.group(0), m.group(0).strip(_QUOTE_MARKS)) for m in _QUOTE_PATTERN.finditer(answer or "")]
         spans += [(m.group(0), m.group(1)) for m in _BLOCKQUOTE.finditer(answer or "")]
         out = []
         for span, inner in spans:
@@ -337,7 +388,7 @@ class _ToolCallTracker:
 
 
 def enforce_evidence_mode() -> str:
-    """CHATBOT_ENFORCE_EVIDENCE: off (default), strip or search."""
+    """CHATBOT_ENFORCE_EVIDENCE: off, strip (the default, config/chatbot.yaml) or search."""
     mode = (settings.get("enforce_evidence") or "off").strip().lower()
     return mode if mode in ENFORCE_MODES else "off"
 
@@ -441,6 +492,19 @@ EVIDENCE_UNMATCHED_NOTE = (
 )
 
 
+def _drop_marks_noted(text: str, tracker: _ToolCallTracker) -> str:
+    """_drop_bare_marks, noting on the tracker the markers it dropped, so their
+    figures are still checked; a marker removed with its evidence isn't one
+    (validation, 4 Oct 2026: such a marker drew a warning about a number the
+    reader couldn't see)."""
+    out = _drop_bare_marks(text)
+    dropped = [m.strip() for m in _BARE_MARK.findall(text)]
+    for left in _BARE_MARK.findall(out):
+        dropped.remove(left.strip())
+    tracker.dropped_marks += dropped
+    return out
+
+
 def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode: str) -> tuple[str, bool]:
     """(new answer, whether the model's own text still cites unretrieved evidence).
     With no search made, the answer's evidence goes (and in search mode the
@@ -453,15 +517,15 @@ def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode
     if mode == "off":
         return answer, tracker.answer_has_unverified_citation(answer)
     if not tracker.answer_has_unverified_citation(answer):
-        return _drop_bare_marks(answer), False
+        return _drop_marks_noted(answer, tracker), False
     if tracker.search_evidence_called:
         # The whole answer at once: a quote can wrap onto the next line, and an
         # invented sentence id must go too (4 Oct 2026: both survived).
-        cleaned = _drop_bare_marks(_remove_spans(
+        cleaned = _drop_marks_noted(_remove_spans(
             answer, tracker.unverified_quotes(answer) + tracker.unverified_urls(answer),
-            unverified_sentence_ids(answer, tracker.known_ids())))
+            unverified_sentence_ids(answer, tracker.known_ids())), tracker)
         return cleaned + EVIDENCE_UNMATCHED_NOTE, tracker.answer_has_unverified_citation(cleaned)
-    stripped = _drop_bare_marks(strip_unsearched_evidence(answer))
+    stripped = _drop_marks_noted(strip_unsearched_evidence(answer), tracker)
     still_flagged = tracker.answer_has_unverified_citation(stripped)  # checked before any harness search
     found = _harness_search(tracker, question) if mode == "search" else ""
     return stripped + (found or EVIDENCE_REMOVED_NOTE), still_flagged
@@ -552,7 +616,6 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
         # as text. The replacement is the harness's own text, so it skips the checks.
         return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls)
     result = TurnResult(question=question, answer=answer, calls=tracker.calls, intent=intent)
-    written = answer                         # the model's text, before anything is removed
 
     mode = enforce_evidence_mode()
     enforced, flagged = enforce_evidence(answer, tracker, question, mode)
@@ -579,9 +642,8 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
     # brackets can't escape the check (validation, 4 Oct 2026). A citation
     # marker is a single digit, which is never checked.
     body = answer.split(EVIDENCE_FOUND_HEADING)[0]
-    gone = [m.group(0).strip() for m in _BARE_MARK.finditer(written) if m.group(0).strip() not in body]
     checked = _BARE_MARK.sub(lambda m: " " + re.sub(r"\D+", " ", m.group(0)) + " ", body)
-    checked += "".join("\n" + re.sub(r"\D+", " ", g) for g in gone)
+    checked += "".join("\n" + re.sub(r"\D+", " ", g) for g in tracker.dropped_marks)
     figures = unverified_numbers(checked, [c.get("result") for c in tracker.calls if c.get("by") != "harness"],
                                  question)
     if figures:

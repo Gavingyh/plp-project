@@ -1065,6 +1065,11 @@ other-bank questions through to the model, which declined them.
   (`docs/validation/2026-10-04-chatbot-answers-third-check.md`) found the
   pattern patches still opening gaps, so dates without a year now count only
   when a tool returned them, and markers are dropped only after the checks.
+  A fourth (`docs/validation/2026-10-04-chatbot-answers-fourth-check.md`)
+  found a returned date could swallow a figure ("September 25.7%") and
+  quote shapes the pattern never matched (also on `main`); quotes are now
+  found by pairing quote marks in order, and dates come only from date
+  fields, never followed by a decimal or "%".
 - **Found on the way:** the full test suite stops a running API
   (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
   keeps the chatbot code it first loaded, so restart it after changing

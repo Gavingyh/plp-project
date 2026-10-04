@@ -47,23 +47,30 @@ _STRIP_FIRST = [
 # a count and a day look alike, but only a day matches a date the tools gave.
 _MONTH_NUMBER = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
                  "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+# A day is never followed by a decimal, a thousands group or a per cent sign:
+# "September 25.7%" and "Sept 25,000" are figures, whatever date the tools
+# returned (validation, 4 Oct 2026).
 _YEARLESS_DATE = re.compile(
-    rf"\b(?P<month1>{_MONTH})[ \t]+(?P<day1>\d{{1,2}})(?:st|nd|rd|th)?\b"
+    rf"\b(?P<month1>{_MONTH})[ \t]+(?P<day1>\d{{1,2}})(?:st|nd|rd|th)?\b(?![.,]\d|[ \t]*%)"
     rf"|(?<![\w.])(?P<day2>\d{{1,2}})(?:st|nd|rd|th)?[ \t]+(?:of[ \t]+)?(?P<month2>{_MONTH})",
     re.IGNORECASE)
 _ISO_DAY = re.compile(r"\b\d{4}-(\d{2})-(\d{2})")
+# Where tools write dates. Only these count: a date in the model's own search
+# query, in a link or in a quoted sentence would let the model vouch for itself.
+_DATE_KEYS = frozenset({"data_runs_to", "date", "earliest", "latest", "as_of_date", "published_at"})
 
 
-def _tool_days(obj, out: set) -> None:
-    """(month, day) of every date written in a tool result."""
+def _tool_days(obj, out: set, key=None) -> None:
+    """(month, day) of every date in a tool result's date fields."""
     if isinstance(obj, str):
-        out.update((int(m.group(1)), int(m.group(2))) for m in _ISO_DAY.finditer(obj))
+        if key in _DATE_KEYS:
+            out.update((int(m.group(1)), int(m.group(2))) for m in _ISO_DAY.finditer(obj))
     elif isinstance(obj, dict):
-        for v in obj.values():
-            _tool_days(v, out)
+        for k, v in obj.items():
+            _tool_days(v, out, k)
     elif isinstance(obj, (list, tuple)):
         for v in obj:
-            _tool_days(v, out)
+            _tool_days(v, out, key)
 
 
 def _without_tool_dates(text: str, tool_results) -> str:
@@ -71,9 +78,11 @@ def _without_tool_dates(text: str, tool_results) -> str:
     _tool_days(tool_results, days)
 
     def blank(m: re.Match) -> str:
-        month = (m.group("month1") or m.group("month2"))[:3].lower()
+        written = m.group("month1") or m.group("month2")
+        if written == "may":                     # the verb: "12 may be bots"
+            return m.group(0)
         day = int(m.group("day1") or m.group("day2"))
-        return " " if (_MONTH_NUMBER[month], day) in days else m.group(0)
+        return " " if (_MONTH_NUMBER[written[:3].lower()], day) in days else m.group(0)
 
     return _YEARLESS_DATE.sub(blank, text) if days else text
 

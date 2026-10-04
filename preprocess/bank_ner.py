@@ -6,7 +6,8 @@ UOB or "not the bank".
 Alias matching (`ingest.base.detect_banks`) treats any "DBS", "OCBC" or "UOB"
 as the bank. That is wrong for the cases this module exists for:
 
-- POSB is DBS's retail brand, and alias matching never sees it;
+- POSB is DBS's retail brand (an alias since 4 Oct 2026, so alias matching
+  finds it too);
 - Bank of Singapore and Great Eastern are OCBC subsidiaries;
 - UOB Kay Hian and DBS Vickers are brokers, not the bank's own business
   (PLAN section 7; see RESOLUTION for the one line that decides this);

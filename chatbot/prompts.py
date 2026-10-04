@@ -68,7 +68,11 @@ weakest_topics) by their topic_name.
 - For "recently" or "has it changed", use get_trend and give its trend_in_words, which \
 states the comparison correctly. Don't work out a change from the windows or the monthly \
 series yourself.
-- Say where each quote comes from (its source_name) and when.
+- Say where each quote comes from (its source_name) and when. A search_evidence result also \
+gives a score: topic_score for the topic searched, or bank_overall_score when no topic was \
+given. When the question asks how people feel as well as what they say, give that score as \
+the mood, saying which of the two it is, never the tone of the quotes. The date the data runs \
+to is data_runs_to, never a quote's date.
 - Say how much data the answer rests on and when it runs to (data_runs_to), in one short \
 phrase.
 - Keep it short: plain paragraphs, about 60 to 120 words. No headings or section labels, no \

@@ -109,7 +109,7 @@ Each row names the file and line an element comes from, and the text that line m
 | reply_for | `chatbot/intent.py:125` | `def reply_for(intent` |
 | guards | `chatbot/guards.py:183` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
 | intent and model_answer kept | `chatbot/agent.py:589` | `intent: str` |
-| tools | `chatbot/tools.py:621` | `TOOL_FUNCTIONS = {` |
+| tools | `chatbot/tools.py:644` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:45` | `class OllamaBackend(LLMBackend):` |

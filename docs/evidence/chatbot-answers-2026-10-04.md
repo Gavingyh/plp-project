@@ -54,7 +54,8 @@ retail investor replaces the fixed format; the chatbot's own versions of
 the tools add each score's reading in words, the shares of positive and
 negative sentences, where a bank ranks among the three, its strongest and
 weakest topics, one sentence stating a trend, and the date the data runs
-to; evidence skips repeated wordings and takes at most two results from one
+to, and a search for a bank also returns that bank's score (for the topic
+searched, or overall, named as such) with that date; evidence skips repeated wordings and takes at most two results from one
 source; the reader sees numbered citations with a source list; and the
 model is given fewer fields (no separate id field or raw counts, though an
 id still travels inside the citation it copies). The API's results are

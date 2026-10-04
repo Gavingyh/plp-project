@@ -192,13 +192,30 @@ def test_evidence_raises_positive_and_negative_sentences_by_the_boost():
     assert [r["sentence_id"] for r in tools._pick_evidence(pool, 1, 0.0)] == ["n"]
 
 
-def test_evidence_results_name_their_source_for_the_reader(monkeypatch):
+def test_evidence_results_name_their_source_for_the_reader(temp_db, monkeypatch):
     monkeypatch.setattr(tools, "_search_evidence", lambda *a, **kw: [
         {**_hit("1" * 24, "OCBC kept its dividend.", 0.9, "arctic_shift"), "bank": "OCBC",
          "published_at": "2026-09-02T01:00:00+00:00", "url": "http://r.example/1"}])
     item = tools.chat_search_evidence("dividend", bank="OCBC")["results"][0]
     assert item["source_name"] == "Reddit"
     assert item["cite_as"] == f"[OCBC, 2026-09-02, sentence_id {'1' * 24}]"
+
+
+def test_evidence_comes_with_the_banks_score_and_the_data_date(temp_db, monkeypatch):
+    # 4 Oct: asked what people say and how they feel, the model searched only, called the mood
+    # "neutral" with no score fetched, and gave a quote's date as the date the data runs to.
+    _index(temp_db, [("DBS", "dividend_policy", "2026-08", 6, 3, 1)])
+    monkeypatch.setattr(tools, "_search_evidence", lambda *a, **kw: [])
+    r = tools.chat_search_evidence("dividends", bank="DBS", aspect="dividend_policy", sentiment="negative")
+    context = r["topic_score"]
+    assert context["topic_name"] == "Dividend Policy" and context["reading"] == tools.reading(context["score"])
+    assert context["positive_pct"] == 60.0 and context["negative_pct"] == 10.0
+    assert r["data_runs_to"].startswith("2026-08")
+    # The model may state that score: the figure check accepts it.
+    assert unverified_numbers(f"Overall {context['score']:+.2f}, {context['positive_pct']}% positive.", [r]) == []
+    # Searched without a topic, the score given is the bank's overall one, and says so.
+    overall = tools.chat_search_evidence("dividends", bank="DBS")
+    assert "topic_score" not in overall and overall["bank_overall_score"]["topic_name"] == "overall"
 
 
 # --- what the reader sees ----------------------------------------------------------

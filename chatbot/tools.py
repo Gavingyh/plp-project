@@ -526,6 +526,29 @@ def chat_search_evidence(query: str, bank: str | None = None, aspect: str | None
     out = _package_evidence(query, _pick_evidence(pool, k, boost))
     for item in out["results"]:
         item["source_name"] = source_config.label(item.get("source"))
+    out.update(_evidence_context(bank, aspect))
+    return out
+
+
+def _evidence_context(bank: str | None, aspect: str | None) -> dict:
+    """What a search alone leaves the model to guess: the bank's score for
+    the topic, read as get_sentiment reads it, and the date the data runs to.
+    On 4 Oct 2026, asked what people say and how they feel, a local model
+    searched only, called the mood "neutral" with no score fetched, and gave
+    a quote's date as the date the data runs to. A database without the
+    tables (a fresh copy) leaves the context out."""
+    out = {}
+    try:
+        if bank:
+            r = _for_reader(get_sentiment(bank, aspect))
+            # Named for what it is: given the bank's overall score under a neutral name, the
+            # model reported it as the score for the topic it had asked about (4 Oct 2026).
+            out["topic_score" if aspect else "bank_overall_score"] = {
+                k: r[k] for k in ("topic_name", "reading", "score", "n", "positive_pct", "negative_pct",
+                                  "insufficient_data") if k in r}
+        out["data_runs_to"] = _data_runs_to(bank)
+    except sqlite3.Error as e:
+        logger.warning("no score or data date for the evidence: %s", e)
     return out
 
 

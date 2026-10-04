@@ -70,7 +70,7 @@ Each row names the file and line an element comes from, and the text that line m
 | classifier | `chatbot/intent.py:106` | `def classify_intent(question: str` |
 | fixed reply for the intent | `chatbot/intent.py:125` | `def reply_for(intent` |
 | state and turns passed to the model | `chatbot/agent.py:612` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
-| state added to the system prompt | `chatbot/prompts.py:80` | `def with_state(system: str` |
+| state added to the system prompt | `chatbot/prompts.py:84` | `def with_state(system: str` |
 | last three turns | `config/chatbot.yaml:36` | `turns:        {value: 3}` |
 | tool-call loop, eight calls | `config/chatbot.yaml:22` | `max_tool_iterations: {value: 8}` |
 | loop | `chatbot/backends/ollama_backend.py:84` | `for _ in range(MAX_TOOL_ITERATIONS):` |

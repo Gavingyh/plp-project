@@ -558,7 +558,11 @@ Decided:
   (`chatbot/tools.py`): each score's reading in words (bands in
   `config/chatbot.yaml`), the shares, a bank's two strongest and two weakest
   topics, where a bank ranks among the three with the other two's scores, and
-  the date the data runs to. A trend comes with one sentence that states it
+  the date the data runs to. An evidence search for a bank also returns the
+  bank's score, as `topic_score` or `bank_overall_score`, and the data date:
+  asked what people say and how they feel, the model had searched only,
+  called the mood "neutral" with no score, and given a quote's date as the
+  data's. A trend comes with one sentence that states it
   (`trend_in_words`): the last 7 days against the last 30 when both have
   enough sentences, else the latest month against the one before (the change
   computed before shrinkage, as for 7 against 30 days). The API's results are

@@ -2,7 +2,7 @@
 # default `value`; where `env` names an environment variable, a value set
 # there (in .env or the shell) wins. Edit defaults here, not in the code.
 
-backend:          {value: null, env: CHATBOT_BACKEND}       # ollama | claude | openai | gemini; null: auto-detect from the API keys set
+backend:          {value: "ollama", env: CHATBOT_BACKEND}   # ollama (decided 4 Oct) | claude | openai | gemini | auto: the first API key set
 temperature:      {value: 0.2, env: CHATBOT_TEMPERATURE}    # low, for grounded answers
 ollama_url:       {value: "http://localhost:11434", env: OLLAMA_BASE_URL}
 openai_base_url:  {value: "https://api.openai.com/v1", env: OPENAI_BASE_URL}   # any OpenAI-compatible provider

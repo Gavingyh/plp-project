@@ -66,4 +66,4 @@ Each row names the file and line an element comes from, and the text that line m
 | compare checksum | `README.md:134` | `# should match the checksum below` |
 | snapshot table | `README.md:137` | `| snapshot | size | sha256 | contents |` |
 | embeddings rebuilt, not shared | `README.md:146` | `` `python -m aspects.embed_store` rebuilds from the database `` |
-| decision | `docs/DESIGN.md:284` | `### 15. The database lives outside git, as dated snapshots` |
+| decision | `docs/DESIGN.md:286` | `### 15. The database lives outside git, as dated snapshots` |

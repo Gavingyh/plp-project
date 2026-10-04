@@ -35,7 +35,7 @@ from chatbot.tools import TOOL_SCHEMAS, coerce_tool_arguments
 
 def test_auto_detect_prefers_claude_when_key_present(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake-key-for-test")
-    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")                     # auto-detection only when asked for
     backend = get_backend()
     assert isinstance(backend, ClaudeBackend)
 
@@ -43,8 +43,9 @@ def test_auto_detect_prefers_claude_when_key_present(monkeypatch):
 def test_auto_detect_falls_back_to_ollama_with_no_key(monkeypatch):
     # Every provider's key, not just Claude's: .env is loaded on import, and a
     # real key in it (GEMINI_API_KEY since 2026-09-30) would otherwise win.
-    for var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "CHATBOT_BACKEND"):
+    for var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"):
         monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
     backend = get_backend()
     assert isinstance(backend, OllamaBackend)
 

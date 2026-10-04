@@ -383,16 +383,19 @@ with `/suggest`.
 
 ### Chatbot backends
 
-With no API key set, the chatbot uses a local model via Ollama:
+By default the chatbot uses the local demo model, `llama3.1:8b`, via Ollama
+(decided 4 Oct), whatever API keys `.env` holds:
 
 ```bash
-ollama pull llama3.2:3b
+ollama pull llama3.1:8b
 ollama serve
 ```
 
-Set `CHATBOT_BACKEND` to `ollama`, `claude`, `openai` or `gemini` to force
-one; otherwise it auto-detects from whichever key is present, so a Gemini key
-in `.env` makes Gemini the default unless `CHATBOT_BACKEND=ollama` is set.
+To use Gemini instead, set `CHATBOT_BACKEND=gemini` (in `.env` or the shell,
+for example `CHATBOT_BACKEND=gemini scripts/start.sh api`); `claude` and
+`openai` work the same way, each with its own key. `CHATBOT_BACKEND=auto`
+picks the first key set (Claude, then OpenAI, then Gemini), as the default
+did before 4 Oct.
 
 **Gemini** (`GEMINI_API_KEY`, the team's key is for the chatbot only): the
 model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
@@ -418,8 +421,8 @@ OPENAI_API_KEY=<the Groq key>
 OPENAI_MODEL=openai/gpt-oss-120b        # or llama-3.3-70b-versatile, qwen/qwen3.8-27b
 ```
 
-With that key set, auto-detection picks this backend over Gemini and Ollama;
-set `CHATBOT_BACKEND` to choose another. Groq's free tier allowed 8,000
+Then set `CHATBOT_BACKEND=openai` to use it (or `auto`, which prefers it
+over Gemini). Groq's free tier allowed 8,000
 tokens a minute on 2026-09-30, about one question a minute with this
 chatbot's prompt and tools; the backend waits out a 429 or 503 (after
 Groq's `Retry-After` when sent) four times. Not yet run against Groq: the
@@ -454,7 +457,8 @@ changed:
 
 | setting | default | effect |
 |---|---|---|
-| `OLLAMA_MODEL` | `llama3.1:8b` (since 4 Oct) | the local chatbot model; used when the backend is Ollama (set, or auto-detected because no API key is set) |
+| `CHATBOT_BACKEND` | `ollama` (since 4 Oct) | `gemini`, `claude` or `openai` to use a hosted model; `auto` picks the first API key set |
+| `OLLAMA_MODEL` | `llama3.1:8b` (since 4 Oct) | the local chatbot model, used when the backend is Ollama (the default) |
 | `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |

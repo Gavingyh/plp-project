@@ -255,8 +255,8 @@ Local models available through Ollama:
 | `NEWSAPI_KEY` | — | `ingest/newsapi.py` |
 | `ALPHAVANTAGE_KEY` | — | `ingest/alphavantage.py` (contributes nothing) |
 | `REDDIT_CLIENT_ID` / `_SECRET` / `_USER_AGENT` | — | Unused; Arctic Shift needs no key |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | — | Backend auto-detection, preferring Claude, then OpenAI, then Gemini |
-| `CHATBOT_BACKEND` | auto | Forces `ollama` \| `claude` \| `openai` \| `gemini` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | — | The hosted backends' keys; with `CHATBOT_BACKEND=auto` the first one set is used (Claude, then OpenAI, then Gemini) |
+| `CHATBOT_BACKEND` | `ollama` | `ollama` \| `claude` \| `openai` \| `gemini` \| `auto` (since 4 Oct the default is Ollama, not the first key set) |
 | `CLAUDE_MODEL` / `OPENAI_MODEL` / `GEMINI_MODEL` / `OLLAMA_MODEL` | per backend | Model override (`GEMINI_CHAT_MODEL` is also read for Gemini; default `gemini-3.8-flash`) |
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | The `openai` backend's address; any OpenAI-compatible provider, e.g. `https://api.groq.com/openai/v1` |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama backend and the service scripts |

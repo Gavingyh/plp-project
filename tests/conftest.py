@@ -21,8 +21,8 @@ def intent_in_scope(monkeypatch):
 @pytest.fixture(autouse=True)
 def no_real_chatbot_backend(monkeypatch):
     """A test that reaches the chatbot model must give it a fake backend: the
-    auto-detected one is a real service (Gemini, when its key is set), and on
-    4 Oct 2026 a test reached it. Tests that set agent.get_backend replace this."""
+    configured one can be a real service (Gemini, when CHATBOT_BACKEND says so),
+    and on 4 Oct 2026 a test reached it. Tests that set agent.get_backend replace this."""
     def refuse(*a, **k):
         raise RuntimeError("tests must not reach a real chatbot backend: pass a fake one")
     monkeypatch.setattr("chatbot.agent.get_backend", refuse)

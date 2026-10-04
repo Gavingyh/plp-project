@@ -280,7 +280,7 @@ def test_gemini_backend_no_candidates_does_not_crash(monkeypatch):
 
 def test_auto_detect_priority_openai_over_gemini(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")                     # auto-detection only when asked for
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
     monkeypatch.setenv("GEMINI_API_KEY", "fake")
     backend = get_backend()
@@ -290,10 +290,27 @@ def test_auto_detect_priority_openai_over_gemini(monkeypatch):
 def test_auto_detect_gemini_when_only_gemini_key_present(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
     monkeypatch.setenv("GEMINI_API_KEY", "fake")
     backend = get_backend()
     assert isinstance(backend, GeminiBackend)
+
+
+def test_the_default_is_ollama_even_with_a_gemini_key(monkeypatch):
+    # Decided 4 Oct 2026: the demo model is local; a key in .env no longer
+    # switches the chatbot to a hosted model.
+    from chatbot.backends.ollama_backend import OllamaBackend
+    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
+    backend = get_backend()
+    assert isinstance(backend, OllamaBackend) and backend.model == "llama3.1:8b"
+
+
+def test_gemini_is_one_setting_away(monkeypatch):
+    monkeypatch.setenv("CHATBOT_BACKEND", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+    assert isinstance(get_backend(), GeminiBackend)
 
 
 def test_explicit_backend_name_overrides_auto_detect(monkeypatch):

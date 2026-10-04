@@ -3,11 +3,11 @@ Backend selection for the chatbot.
 
 Settings, defaults and the environment variables that override them:
 config/chatbot.yaml (backend, models, Ollama and OpenAI addresses,
-temperature, thinking). If no backend is set, it auto-detects by checking
-for API keys in this order: ANTHROPIC_API_KEY, OPENAI_API_KEY,
-GEMINI_API_KEY, falling back to Ollama (local, no key needed). This exists
-so a lecturer with no API key still gets a working chatbot by default,
-while anyone with a key gets a frontier model without configuring anything.
+temperature, thinking). The default backend is Ollama, the local demo
+model (decided 4 Oct 2026): a key in .env no longer switches the chatbot to
+a hosted model by itself. CHATBOT_BACKEND chooses another (claude, openai,
+gemini), or `auto` restores the old behaviour: the first of
+ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY that is set, else Ollama.
 """
 
 import os
@@ -48,8 +48,11 @@ def _think() -> bool | None:
 
 
 def get_backend(name: str | None = None) -> LLMBackend:
-    """Build the requested backend, or auto-detect one if name is None."""
-    name = (name or settings.get("backend") or _auto_detect()).lower()
+    """Build the requested backend; with no name, the configured one (Ollama
+    unless CHATBOT_BACKEND says otherwise; `auto` picks by the keys set)."""
+    name = (name or settings.get("backend") or "ollama").lower()
+    if name == "auto":
+        name = _auto_detect()
     temperature = _temperature()
 
     if name == "claude":

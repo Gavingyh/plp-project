@@ -28,34 +28,54 @@ _NUMBER = re.compile(r"(?<![\w.])(?<![A-Za-z]-)[-+−]?\d{1,3}(?:,\d{3})+(?:\.\d
 # "declined 4321" for dates and hid the figures (4 Oct 2026).
 _MONTH = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?"
           r"|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?")
-# The same for a date written without its year: capitalised, or a full name in lower
-# case, but never "may", which is a verb more often than a month.
-_MONTH_NAME = (r"(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?"
-               r"|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b\.?"
-               r"|(?:january|february|march|april|june|july|august|september|october|november|december)\b)")
-_DAY = r"(?:3[01]|[12]\d|0?[1-9])(?!\d)"
-# What a count is a count of: "21 Oct sentences" is 21 sentences, not 21 October.
-_COUNT_NOUN = (r"(?:sentences?|mentions?|posts?|comments?|articles?|items?|data|results?|reports?"
-               r"|analysts?|scores?|reviews?|stories|headlines?)\b")
-
 _STRIP_FIRST = [
     re.compile(r"https?://\S+"),                   # URLs carry ids and dates
     re.compile(rf"\b{_MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}\b", re.IGNORECASE),  # "September 24th, 2026"
     re.compile(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTH},?\s+\d{{4}}\b", re.IGNORECASE),  # "24 September 2026"
     re.compile(rf"\b{_MONTH}\s+\d{{4}}\b", re.IGNORECASE),                                   # "September 2026"
-    # A day without its year ("runs to September 25th", "to 24 Sep"; 4 Oct 2026). Kept
-    # narrow, since a looser pattern hid figures ("0.45 may suggest", "in September 45
-    # sentences"): a capitalised month, a day from 1 to 31 not inside a decimal, and
-    # after the month either an ordinal or punctuation, so a count can't pass for a day.
-    # Day first, it stays on one line, can't follow a sign, and isn't followed by a count
-    # noun (validation, 4 Oct 2026: "27\nSeptember", "-21 May", "21 Oct sentences").
-    re.compile(rf"\b{_MONTH_NAME}[ \t]+{_DAY}(?:(?:st|nd|rd|th)\b|(?=[ \t]*(?:[,;:)\n]|\.(?!\d)|$)))"),
-    re.compile(rf"(?<![\w.+−-]){_DAY}(?:st|nd|rd|th)?[ \t]+{_MONTH_NAME}(?![ \t]+{_COUNT_NOUN})"),
     re.compile(r"\b[0-9a-f]{24}\b"),               # sentence ids
     re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?"),  # ISO dates and timestamps
     re.compile(r"^\s*\d+[.)]\s", re.MULTILINE),     # numbered-list markers
     re.compile(r"\b\d+\s*(?:-|\s)?(?:day|d|week|month|year)s?\b", re.IGNORECASE),  # "7-day", "30d"
 ]
+
+
+# A date written without its year ("runs to September 25th", "to 24 Sep") is
+# skipped only when a tool returned that month and day: its data_runs_to, a
+# sentence's date. Guessing dates by their shape hid real figures in three
+# validations on 4 Oct 2026 ("0.45 may", "July 18\nAugust 24", "21 Oct tweets"):
+# a count and a day look alike, but only a day matches a date the tools gave.
+_MONTH_NUMBER = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+                 "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+_YEARLESS_DATE = re.compile(
+    rf"\b(?P<month1>{_MONTH})[ \t]+(?P<day1>\d{{1,2}})(?:st|nd|rd|th)?\b"
+    rf"|(?<![\w.])(?P<day2>\d{{1,2}})(?:st|nd|rd|th)?[ \t]+(?:of[ \t]+)?(?P<month2>{_MONTH})",
+    re.IGNORECASE)
+_ISO_DAY = re.compile(r"\b\d{4}-(\d{2})-(\d{2})")
+
+
+def _tool_days(obj, out: set) -> None:
+    """(month, day) of every date written in a tool result."""
+    if isinstance(obj, str):
+        out.update((int(m.group(1)), int(m.group(2))) for m in _ISO_DAY.finditer(obj))
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            _tool_days(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _tool_days(v, out)
+
+
+def _without_tool_dates(text: str, tool_results) -> str:
+    days: set = set()
+    _tool_days(tool_results, days)
+
+    def blank(m: re.Match) -> str:
+        month = (m.group("month1") or m.group("month2"))[:3].lower()
+        day = int(m.group("day1") or m.group("day2"))
+        return " " if (_MONTH_NUMBER[month], day) in days else m.group(0)
+
+    return _YEARLESS_DATE.sub(blank, text) if days else text
 
 
 # What in a tool result may vouch for an answer (an allow-list, 4 Oct 2026):
@@ -158,12 +178,15 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
     is written with, or that value times 100 (a score or share written as a
     percentage), or one tool value as a percentage of another ("12% of
     mentions were positive"), or a figure written inside retrieved text (a
-    quoted "$0.54 per share"). Years, dates (ISO or written out), list markers,
-    window lengths, numbers under 10 and numbers the user typed are not checked.
+    quoted "$0.54 per share"). Years, dates with their year (ISO or written
+    out), a date without its year that matches one a tool returned, list
+    markers, window lengths, numbers under 10 and numbers the user typed are
+    not checked.
     """
     text = answer or ""
     for pat in _STRIP_FIRST:
         text = pat.sub(" ", text)
+    text = _without_tool_dates(text, tool_results)
     question_numbers = {m.group(0).rstrip("%").replace(",", "") for m in _NUMBER.finditer(question or "")}
 
     values: list[float] = []

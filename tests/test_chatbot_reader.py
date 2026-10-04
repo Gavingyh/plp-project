@@ -243,8 +243,11 @@ def test_a_report_stored_on_this_machine_is_listed_by_name_not_path():
 
 
 def test_a_date_without_its_year_is_not_a_figure_but_a_figure_after_a_month_is():
-    # The prompt asks for the date the data runs to; "September 25th" was flagged on 4 Oct.
-    assert unverified_numbers("The data runs to September 25th, and to 24 Sep for UOB.", [{"n": 1}]) == []
+    # The prompt asks for the date the data runs to; "September 25th" was flagged on 4 Oct. It is
+    # skipped because a tool returned that date; a date no tool returned is checked as figures.
+    tools = [{"n": 1, "data_runs_to": "2026-09-25"}, {"data_runs_to": "2026-09-24"}]
+    assert unverified_numbers("The data runs to September 25th, and to 24 Sep for UOB.", tools) == []
+    assert unverified_numbers("The data runs to September 25th.", [{"n": 1}]) == ["25"]
     assert unverified_numbers("It scored in September 0.34.", [{"score": 0.1}]) == ["0.34"]
 
 

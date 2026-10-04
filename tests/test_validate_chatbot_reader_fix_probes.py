@@ -27,7 +27,10 @@ from chatbot.guards import unverified_numbers
 from chatbot.judge import load_results
 from chatbot.replay import replay
 
+# A date written without its year is skipped only when a tool returned it (4 Oct 2026),
+# as a real answer's date always is (data_runs_to): these tests give the tools that date.
 TOOL = [{"bank": "DBS", "score": 0.31, "n": 120}]
+TOOL_DATES = TOOL + [{"data_runs_to": d} for d in ("2026-09-25", "2026-09-30", "2026-10-24")]
 
 
 # --- year-less dates in the number check ------------------------------------------------
@@ -52,11 +55,9 @@ def test_an_invented_figure_near_a_month_is_flagged(answer, figure):
     "The data runs to September 25th; OCBC's to 24 Oct.",
 ])
 def test_a_real_year_less_date_is_not_a_figure(answer):
-    assert unverified_numbers(answer, TOOL) == []
+    assert unverified_numbers(answer, TOOL_DATES) == []
 
 
-@pytest.mark.xfail(strict=True, reason="Counts listed by month escape the number check: "
-                   "'July 18, August 24, September 29.' reads as three dates")
 @pytest.mark.parametrize("answer, figures", [
     ("Negative sentences by month: July 18, August 24, September 29.", ["18", "24", "29"]),
     ("Negative sentences by month: 18 July, 24 August, 29 September.", ["18", "24", "29"]),
@@ -68,7 +69,7 @@ def test_counts_listed_by_month_are_checked(answer, figures):
 
 @pytest.mark.parametrize("answer", ["The data runs to september 25th.", "The data runs to 25 september."])
 def test_a_lower_case_year_less_date_is_not_a_figure(answer):
-    assert unverified_numbers(answer, TOOL) == []
+    assert unverified_numbers(answer, TOOL_DATES) == []
 
 
 # --- the bare [n] marker check ------------------------------------------------------------

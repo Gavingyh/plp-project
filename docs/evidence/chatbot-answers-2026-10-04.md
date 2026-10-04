@@ -56,7 +56,8 @@ negative sentences, where a bank ranks among the three, its strongest and
 weakest topics, one sentence stating a trend, and the date the data runs
 to; evidence skips repeated wordings and takes at most two results from one
 source; the reader sees numbered citations with a source list; and the
-model is given fewer fields (no ids or raw counts). The API's results are
+model is given fewer fields (no separate id field or raw counts, though an
+id still travels inside the citation it copies). The API's results are
 unchanged.
 
 ## How it was measured
@@ -164,7 +165,7 @@ before the next.
    bank" when OCBC has 6,379). But answers took a median of 68 seconds.
    Ollama's own timings on three questions, against `main`, showed why
    once the branch's prompt was cached: the tool results the model reads
-   are longer and the answers say more (see Speed).
+   are longer (see Speed).
 5. **Trimmed.** The model was given fewer fields (no links, ids or raw
    counts; six months of history instead of twelve) and a prompt a quarter
    shorter asking for 50 to 100 words. The median fell to 41 seconds, but
@@ -230,14 +231,29 @@ edges. Fixed, with tests:
   longer given the change before shrinkage, which would contradict the
   printed scores.
 
-A list of counts by month ("July 18, August 24, September 29.") still reads
-as dates: written that way the two look alike, so it stays a known limit,
-kept as a strict xfail test.
+A third validation (`docs/validation/2026-10-04-chatbot-answers-third-check.md`)
+showed that patching these patterns kept opening new gaps: a count list one
+month per line, or "21 Oct tweets", now read as dates (`main` had checked
+them), and dropping a marker could leave '"..."-', which no longer read as a
+quote, so strip kept an invented quote. Two changes of approach replaced the
+patches, with tests:
 
-Re-run over the recorded answers of the before, round 3, final, trimmed and
-mix runs, the fixed figure check flags exactly what it flagged before, and
-none of those answers has a bare marker in the model's text, so the tables
-above stand.
+- A date written without its year is skipped only when a tool returned that
+  month and day (`data_runs_to`, a sentence's date). Counts are checked
+  whatever follows them, including "July 18, August 24, September 29.",
+  which was a known limit; a date no tool returned is checked as figures.
+- The checks read the model's own text first; quotes and links are removed;
+  only then are bare markers dropped. A quote may now open after "]", close
+  before a dash, slash or apostrophe, mix curly and straight marks, or run
+  unclosed to the end of its line (none of these was checked on `main`
+  either). At display, a marker inside a quote stays only if the quoted
+  sentence has it. Markers start at 1, so "[0, 1]" stays as written, and
+  the figures of a dropped marker ("[12-45]") are still checked.
+
+Re-run over the recorded answers of all seven runs, the figure check flags
+exactly what it flagged before, except round 1's false alarm on "September
+25th", now cleared because a tool had returned that date; none of the
+answers has a bare marker in the model's text, so the tables above stand.
 
 ## The seven questions again, after
 
@@ -262,19 +278,22 @@ questions. Before, the 32 questions took 16 minutes, about 35 seconds for
 each answer the model wrote.
 
 Ollama's own timings, on three questions asked through `main` and through
-the final round's version, show what the change costs once its prompt is
-cached. Reading the tool's result before answering took about 3.5 to 8.5
-seconds on `main` and 6 to 17 on the branch, because the results are
-longer; and the answers say more (ranking, topics, shares), written at about
-5 to 9 tokens a second on this Mac that day. Asked alternately, the
+the final round's version (the fuller prompt, every field), show what the
+change costs once its prompt is cached: reading the tool's result before
+answering took about 3.5 to 8.5 seconds on `main` and 6 to 17 on the
+branch, because the results are longer. The answers were not longer: the
+branch's were shorter on two of the three questions (205 against 387 tokens,
+74 against 99), and answers were written at about 5 to 11 tokens a second
+across that day's runs. Asked alternately, the
 per-question times were 20 against 46 seconds (DBS overall), 34 against 63
 (a trend) and 82 against 84 (a comparison, where `main`'s answer ran to 387
 tokens). Much of those gaps was the branch re-reading its whole prompt on
 every first call, 14 to 26 seconds more than `main` each time (55% of the
 first gap, 87% of the second, and more than all of the third): alternating
-the two versions kept the branch's prompt out of Ollama's cache. Asked as a
-block, the branch re-read it only for the first question (37.9 seconds,
-then 0.6 and 0.5).
+the two versions kept the branch's prompt out of Ollama's cache. The block
+run and the window run below used the trimmed version (shorter prompt,
+fewer fields), started at 16:33: asked as a block, it re-read its prompt
+only for the first question (37.9 seconds, then 0.6 and 0.5).
 
 The mix run's median, 61 seconds, against the final run's 68, can't be put
 down to the fields left out: it is one run each, within the load noise

@@ -98,4 +98,6 @@ def test_an_invented_figure_next_to_a_month_word_is_flagged(answer, figure):
 
 
 def test_a_real_year_less_date_is_still_not_a_figure():
-    assert unverified_numbers("The data runs to September 25th; UOB's to 24 Sep.", [{"n": 1}]) == []
+    # A date without its year counts only when a tool returned it (4 Oct 2026), as data_runs_to does.
+    tools = [{"n": 1, "data_runs_to": "2026-09-25"}, {"data_runs_to": "2026-09-24"}]
+    assert unverified_numbers("The data runs to September 25th; UOB's to 24 Sep.", tools) == []

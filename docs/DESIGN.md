@@ -589,8 +589,15 @@ Decided:
   sees whatever the mode), and quotes are compared without markers. The
   date pattern also takes a lower-case full month name (never "may"), and
   a day-first date can't cross a line, follow a sign or precede a count
-  noun. A list of counts by month ("July 18, August 24") still reads as
-  dates: written that way the two look alike.
+  noun. A third validation
+  (`docs/validation/2026-10-04-chatbot-answers-third-check.md`) found the
+  patches still opening gaps, so the approach changed: a date without its
+  year is skipped only when a tool returned that month and day, so counts
+  are checked whatever follows them; and the checks read the model's own
+  text before any marker is dropped, with a quote allowed to open after
+  "]", close before a dash, slash or apostrophe, mix marks or run unclosed
+  to its line's end. At display, a marker inside a quote stays only if the
+  quoted sentence has it, and a dropped marker's figures are still checked.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or
   negative sentence is lifted 0.03 over a neutral one when the search is
@@ -601,9 +608,11 @@ Decided:
 - The reader sees numbered citations and a list of sources. The checks still
   run on the model's own text, sentence ids included, before the numbering.
 
-Costs: answers are slower on a local model, because they say more and the
-tool results the model reads are longer (measured with the prompt cached); ids and raw counts are left out of
-what it reads (the turn's record keeps them) to limit that. Links stay: the
+Costs: answers are slower on a local model, because the tool results the
+model reads are longer (measured with the prompt cached; the answers
+themselves were not longer). A separate id field and raw counts are left out
+of what it reads, to limit that (the turn's record keeps them; an id still
+travels inside the citation the model copies). Links stay: the
 hosted backends' privacy filter knows a Reddit post that came through a news
 feed only by its link, and hiding links let such text through in a test. The
 reading bands are a judgment, kept in config; and evidence is still ranked

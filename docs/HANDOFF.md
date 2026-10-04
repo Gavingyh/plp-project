@@ -1049,7 +1049,7 @@ other-bank questions through to the model, which declined them.
   branch `fix/chatbot-answers`, not merged). In the dashboard the figures
   were right but every answer had the same labelled sections, scores read
   "0.122 out of 1", +0.124 was called "slightly negative", a trend question
-  got "not available" with 66 months of scores stored, and evidence was report
+  got "not available" though 66 months had enough sentences to score, and evidence was report
   boilerplate. Now the readings, shares, rankings and the trend sentence are
   computed in code and handed to the model, the prompt is a guide to
   writing for a retail investor, and citations show as numbered sources.
@@ -1061,7 +1061,10 @@ other-bank questions through to the model, which declined them.
   that could contradict its figures were found and fixed with tests. A
   second validation (`docs/validation/2026-10-04-chatbot-answers-recheck.md`)
   found the marker fix let an invented quote beside "[2]" survive strip mode
-  and flagged real quotes; markers are now dropped, not flagged.
+  and flagged real quotes; markers are now dropped, not flagged. A third
+  (`docs/validation/2026-10-04-chatbot-answers-third-check.md`) found the
+  pattern patches still opening gaps, so dates without a year now count only
+  when a tool returned them, and markers are dropped only after the checks.
 - **Found on the way:** the full test suite stops a running API
   (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
   keeps the chatbot code it first loaded, so restart it after changing

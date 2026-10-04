@@ -51,7 +51,7 @@ Each row names the file and line an element comes from, and the text that line m
 | windows | `aggregate/index.py:54` | `WINDOWS = {"7d": 7, "30d": 30, "all_time": None}` |
 | window cutoff | `aggregate/index.py:238` | `if t is None or t < cutoff:` |
 | label scores | `aggregate/index.py:47` | `_LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}` |
-| source weights | `config/sources.yaml:24` | `earnings:     {weight: 1.0` |
+| source weights | `config/sources.yaml:25` | `earnings:     {weight: 1.0` |
 | weights read by the index | `aggregate/index.py:51` | `_SOURCE_WEIGHT = sources.weights()` |
 | each item weighted | `aggregate/index.py:240` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))` |
 | group: aspect and source | `aggregate/index.py:241` | `groups[(bank, aspect, source, model_version)].append(item)` |
@@ -62,7 +62,7 @@ Each row names the file and line an element comes from, and the text that line m
 | shrinkage constant | `aggregate/index.py:45` | `SHRINKAGE_K = 5` |
 | deleted and rewritten | `aggregate/index.py:280` | `conn.execute("DELETE FROM sentiment_index")` |
 | volume floor | `aggregate/index.py:46` | `MIN_N = 5` |
-| volume floor, applied when read | `chatbot/tools.py:27` | `MIN_VOLUME_FOR_SCORE = MIN_N` |
+| volume floor, applied when read | `chatbot/tools.py:29` | `MIN_VOLUME_FOR_SCORE = MIN_N` |
 | time-series floor | `aggregate/index.py:156` | `min_n: int = MIN_N` |
 | thin buckets left off the chart | `docs/api-integration.md:85` | `gap, not a line through them, and not a zero.` |
-| insufficient data reported | `chatbot/tools.py:106` | `if n < MIN_VOLUME_FOR_SCORE:` |
+| insufficient data reported | `chatbot/tools.py:108` | `if n < MIN_VOLUME_FOR_SCORE:` |

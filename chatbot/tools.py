@@ -11,6 +11,7 @@ check "do I have data on this at all" before answering, rather than
 confabulating when it doesn't.
 """
 
+import re
 import sqlite3
 
 import config.model_version as current_model
@@ -18,6 +19,7 @@ from aggregate.index import MIN_N, SHRINKAGE_K, compute_time_series
 from chatbot import settings
 from chatbot.retrieval import search_evidence as _search_evidence
 from config import aspect_taxonomy
+from config import sources as source_config
 from config.logging_config import get_logger
 from ingest.base import BANK_NAMES
 from ingest.db import get_connection
@@ -126,6 +128,23 @@ def _unshrunk(result: dict) -> float:
     return result["score"] * (n + SHRINKAGE_K) / n
 
 
+def _monthly_series(bank: str, aspect: str | None) -> tuple[list[dict], str | None]:
+    """(the last months with enough sentences, an error or None).
+
+    A two-point comparison can only say "up" or "down". The monthly series
+    gives the shape behind that. Capped at 12 points and trimmed to
+    period/score/n on purpose: this goes into the model's context, and a
+    long table of numbers is more surface to misquote, not more insight."""
+    try:
+        return [{"period": p["period"], "score": p["score"], "n": p["n"]}
+                for p in compute_time_series(bank, aspect, bucket="month")
+                if p["sufficient"]][-settings.get("trend.monthly_points"):], None
+    except (sqlite3.Error, ValueError) as e:
+        # A database error or a bad stored label is not "no data": log it and say so in the note.
+        logger.warning("monthly series failed for %s/%s: %s", bank, aspect or "ALL", e)
+        return [], str(e)
+
+
 def get_trend(bank: str, aspect: str | None = None) -> dict:
     """Direction/magnitude of sentiment change: compares the 7d window against
     the 30d window (both from aggregate/index.py's rolling windows). Falls back
@@ -153,20 +172,7 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
     stable = settings.get("trend.stable_within")
     direction = "improving" if delta > stable else "declining" if delta < -stable else "stable"
 
-    # A two-point comparison can only say "up" or "down". The monthly series
-    # gives the shape behind that. Capped at 12 points and trimmed to
-    # period/score/n on purpose: this goes into the model's context, and a
-    # long table of numbers is more surface to misquote, not more insight.
-    series_error = None
-    try:
-        series = [{"period": p["period"], "score": p["score"], "n": p["n"]}
-                  for p in compute_time_series(bank, aspect, bucket="month")
-                  if p["sufficient"]][-settings.get("trend.monthly_points"):]
-    except (sqlite3.Error, ValueError) as e:
-        # A database error or a bad stored label is not "no data": log it and say so in the note.
-        logger.warning("monthly series failed for %s/%s: %s", bank, aspect or "ALL", e)
-        series, series_error = [], str(e)
-
+    series, series_error = _monthly_series(bank, aspect)
     return {"bank": bank, "aspect": aspect or "ALL", "trend_available": True,
             "direction": direction, "delta_7d_vs_30d": delta,
             "recent_7d": recent, "baseline_30d": baseline,
@@ -260,7 +266,10 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     """RAG evidence search (chatbot/retrieval.py) - quotes with citations for
     any qualitative claim. See docs/DESIGN.md, 'Grounding rules': every
     qualitative claim must cite a sentence_id + url."""
-    results = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k)
+    return _package_evidence(query, _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k))
+
+
+def _package_evidence(query: str, results: list[dict]) -> dict:
     # Packaged for citing, per the grounded-generation contract (CNI Day 2):
     # a short id, the date without a timestamp, and a ready-made citation the
     # model can copy, so it has no reason to compose one. The retrieval score
@@ -276,6 +285,218 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
             item["aspect"], item["sentiment"] = r.get("aspect"), r.get("sentiment")
         packaged.append(item)
     return {"query": query, "results": packaged, "n_found": len(packaged)}
+
+
+# --- What the chatbot's model is given ---------------------------------------------
+#
+# The API returns the functions above as they are. The chatbot's model gets
+# the same results plus what a retail investor needs to read them, worked
+# out here rather than left to the model: on 4 Oct a local model gave a score
+# as "0.122 out of 1", called +0.124 "slightly negative", said a trend was
+# "not available" when 66 months of it existed, and cited earnings-report
+# boilerplate (docs/evidence/chatbot-answers-2026-10-04.md). So each score
+# comes with its reading in words and its shares of positive, neutral and
+# negative sentences; a bank's overall score with its strongest and weakest
+# topics; a comparison with its ranking; a trend with its latest months even
+# when the 7- and 30-day windows are too thin; and evidence without repeats,
+# spread across sources. Fields a reader can't use are left out: computed_at,
+# when the index was built, reads like the date of the data.
+
+_NOT_FOR_THE_READER = ("model_version", "confidence_mean", "computed_at")
+
+
+def reading(score: float) -> str:
+    """A score in words: "neutral", or "slightly", "moderately" or "clearly"
+    positive or negative (bands in config/chatbot.yaml, `reading`)."""
+    size, side = abs(score), "positive" if score > 0 else "negative"
+    if size < settings.get("reading.neutral_below"):
+        return "neutral"
+    if size < settings.get("reading.slightly_below"):
+        return f"slightly {side}"
+    if size < settings.get("reading.moderately_below"):
+        return f"moderately {side}"
+    return f"clearly {side}"
+
+
+def _topic_name(aspect: str | None) -> str:
+    if not aspect or aspect == "ALL":
+        return "overall"
+    return aspect_taxonomy.labels().get(aspect, aspect)
+
+
+def _for_reader(result: dict) -> dict:
+    """A copy of a get_sentiment-shaped result with the topic's name, the
+    score's reading and the shares of positive, neutral and negative sentences."""
+    out = {k: v for k, v in result.items() if k not in _NOT_FOR_THE_READER}
+    if "aspect" in out:
+        out["topic_name"] = _topic_name(out["aspect"])
+    if out.get("insufficient_data") is False and out.get("n"):
+        out["reading"] = reading(out["score"])
+        for label in ("positive", "neutral", "negative"):
+            out[f"{label}_pct"] = round(100 * out[f"{label}_n"] / out["n"], 1)
+    return out
+
+
+def _data_runs_to(bank: str | None = None) -> str | None:
+    """The date of the newest stored sentence, for one bank or any."""
+    conn = get_connection()
+    try:
+        sql = "SELECT MAX(substr(published_at, 1, 10)) FROM sentences" + (" WHERE bank = ?" if bank else "")
+        return conn.execute(sql, (bank,) if bank else ()).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def _topics(bank: str, window: str) -> tuple[list[dict], list[dict]]:
+    """The bank's highest- and lowest-scoring named topics in this window,
+    among those with enough sentences to report; none appears in both."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT aspect, score, n FROM sentiment_index WHERE bank = ? AND window = ? AND source = 'ALL' "
+            "AND model_version = ? AND aspect NOT IN ('ALL', 'other') AND n >= ? ORDER BY score DESC",
+            (bank, window, current_model.MODEL_VERSION, MIN_VOLUME_FOR_SCORE)).fetchall()
+    finally:
+        conn.close()
+    topics = [{"topic_name": _topic_name(a), "score": s, "n": n, "reading": reading(s)} for a, s, n in rows]
+    k = settings.get("topics_each_way")
+    return topics[:k], topics[k:][::-1][:k]
+
+
+def chat_get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time") -> dict:
+    """One bank's score, with the other two banks' for the same topic and
+    window: told to say how a bank compares, a local model asked about DBS
+    alone said it ranked above OCBC, and asked about OCBC that it ranked below
+    both (4 Oct 2026). OCBC was the highest of the three."""
+    out = _for_reader(get_sentiment(bank, aspect, window))
+    if out.get("insufficient_data") is False:
+        peers = chat_compare_banks(aspect, window)
+        out["ranking_high_to_low"] = peers["ranking_high_to_low"]
+        out["other_banks"] = {b: {k: r[k] for k in ("score", "reading")} for b, r in peers["banks"].items()
+                              if b != bank and r.get("insufficient_data") is False}
+        if out["aspect"] == "ALL":
+            out["strongest_topics"], out["weakest_topics"] = _topics(bank, window)
+    out["data_runs_to"] = _data_runs_to(bank)
+    return out
+
+
+def chat_compare_banks(aspect: str | None = None, window: str = "all_time") -> dict:
+    result = compare_banks(aspect, window)
+    banks = {b: _for_reader(r) for b, r in result["banks"].items()}
+    ranked = sorted((b for b, r in banks.items() if r.get("insufficient_data") is False),
+                    key=lambda b: banks[b]["score"], reverse=True)
+    return {**result, "topic_name": _topic_name(result["aspect"]), "banks": banks,
+            "ranking_high_to_low": ranked, "data_runs_to": _data_runs_to()}
+
+
+def _month_on_month(series: list[dict]) -> dict:
+    """The latest month with enough sentences against the one before it in
+    the series. As with 7d against 30d, the change is between the scores
+    before shrinkage, so a thinner month doesn't read as a fall."""
+    if len(series) < 2:
+        return {"month_on_month_available": False}
+    latest, previous = series[-1], series[-2]
+    change = round(_unshrunk(latest) - _unshrunk(previous), 4)
+    stable = settings.get("trend.stable_within")
+    direction = "up" if change > stable else "down" if change < -stable else "about the same"
+    return {"month_on_month_available": True,
+            "latest_month": {**latest, "reading": reading(latest["score"])},
+            "previous_month": {**previous, "reading": reading(previous["score"])},
+            "change_from_previous_month": change,
+            "month_on_month": direction,
+            "trend_in_words": f"{_month_name(latest)} {_compared(direction)} {_month_name(previous)}."}
+
+
+_COMPARED = {"up": "was up on", "improving": "was up on", "down": "was down on", "declining": "was down on"}
+
+
+def _compared(direction: str) -> str:
+    return _COMPARED.get(direction, "was about the same as")
+
+
+def _figures(score: float, n: int) -> str:
+    return f"({score:+.2f}, {n:,} sentences)"
+
+
+def _month_name(point: dict) -> str:
+    """ "September 2026 (+0.34, 167 sentences)": the month, its score and its count."""
+    year, month = point["period"].split("-")
+    name = ("January February March April May June July August September October November "
+            "December").split()[int(month) - 1]
+    return f"{name} {year} {_figures(point['score'], point['n'])}"
+
+
+def chat_get_trend(bank: str, aspect: str | None = None) -> dict:
+    """The trend with one sentence that states it (trend_in_words): the last 7
+    days against the last 30 when both have enough sentences, else the latest
+    month against the one before. One comparison, written out, because on
+    4 Oct a local model reading the series gave August's +0.2185 as
+    "-0.2185", gave a month's change as its score, and blended a rising week
+    with a falling month."""
+    out = _for_reader(get_trend(bank, aspect))
+    for window in ("recent_7d", "baseline_30d"):
+        if isinstance(out.get(window), dict):
+            out[window] = _for_reader(out[window])
+    if out.get("trend_available"):
+        recent, base = out["recent_7d"], out["baseline_30d"]
+        out["trend_in_words"] = (f"The last 7 days {_figures(recent['score'], recent['n'])} "
+                                 f"{_compared(out['direction']).replace('was', 'were')} the last 30 days "
+                                 f"{_figures(base['score'], base['n'])}.")
+    else:                                    # the 7- and 30-day windows were too thin
+        series, error = _monthly_series(bank, aspect)
+        out.update(_month_on_month(series))
+        out["note"] = ("Too few sentences in the last 7 or 30 days for that comparison; "
+                       "trend_in_words compares the latest months instead." if len(series) > 1 else
+                       f"No recent trend: {error or 'fewer than two months with enough sentences'}.")
+        out["monthly_series"] = series
+    out["monthly_series"] = out.get("monthly_series", [])[-settings.get("trend.chat_months"):]
+    out["data_runs_to"] = _data_runs_to(bank)
+    return out
+
+
+def _words(text: str | None) -> set[str]:
+    """A sentence's words without digits, so "3Q24" and "3Q23" read the same."""
+    return set(re.findall(r"[a-z]+", (text or "").lower()))
+
+
+def _same_wording(a: set[str], b: set[str]) -> bool:
+    return bool(a | b) and len(a & b) / len(a | b) >= settings.get("evidence.same_wording")
+
+
+def _pick_evidence(pool: list[dict], k: int, polar_boost: float) -> list[dict]:
+    """Up to k of the ranked pool: positive and negative sentences raised by
+    polar_boost; a wording already picked skipped (a results report repeats a
+    sentence every quarter with only the quarter changed); and at most
+    evidence.max_per_source from one source, unless too few others match."""
+    cap = settings.get("evidence.max_per_source")
+    ranked = sorted(pool, key=lambda r: r.get("score", 0.0)
+                    + (polar_boost if r.get("sentiment") in ("positive", "negative") else 0.0), reverse=True)
+    picked, held_back, per_source, seen = [], [], {}, []
+    for r in ranked:
+        words = _words(r.get("text"))
+        if any(_same_wording(words, w) for w in seen):
+            continue
+        seen.append(words)
+        if per_source.get(r.get("source"), 0) >= cap:
+            held_back.append(r)
+            continue
+        per_source[r.get("source")] = per_source.get(r.get("source"), 0) + 1
+        picked.append(r)
+        if len(picked) == k:
+            break
+    return (picked + held_back)[:k]
+
+
+def chat_search_evidence(query: str, bank: str | None = None, aspect: str | None = None,
+                         sentiment: str | None = None, k: int = 5) -> dict:
+    k = max(int(k), 0)
+    pool = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment,
+                            k=k * settings.get("evidence.pool_factor"))
+    boost = 0.0 if sentiment else settings.get("evidence.polar_boost")
+    out = _package_evidence(query, _pick_evidence(pool, k, boost))
+    for item in out["results"]:
+        item["source_name"] = source_config.label(item.get("source"))
+    return out
 
 
 # Anthropic tool-use schema for the four structured-data tools + search_evidence.
@@ -308,9 +529,11 @@ TOOL_SCHEMAS = [
     },
     {
         "name": "get_trend",
-        "description": "Get sentiment trend/direction for a bank and aspect: compares the last "
-                        "7 days against the last 30 days. Falls back to an all-time snapshot "
-                        "(trend_available=false) if either window is too thin to compare.",
+        "description": "Get how sentiment for a bank (and aspect) has moved: the last 7 days "
+                        "against the last 30 (trend_available=false when either is too thin), and "
+                        "the latest month with data against the month before it "
+                        "(latest_month, previous_month, month_on_month). Use it for any 'recently' "
+                        "or 'has it changed' question.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -364,12 +587,13 @@ TOOL_SCHEMAS = [
     },
 ]
 
+# The chatbot's model calls the reader-facing versions (above); the API calls the plain ones.
 TOOL_FUNCTIONS = {
-    "get_sentiment": lambda **kw: get_sentiment(**kw),
-    "compare_banks": lambda **kw: compare_banks(**kw),
-    "get_trend": lambda **kw: get_trend(**kw),
+    "get_sentiment": lambda **kw: chat_get_sentiment(**kw),
+    "compare_banks": lambda **kw: chat_compare_banks(**kw),
+    "get_trend": lambda **kw: chat_get_trend(**kw),
     "get_coverage": lambda **kw: get_coverage(**kw),
-    "search_evidence": lambda **kw: search_evidence(**kw),
+    "search_evidence": lambda **kw: chat_search_evidence(**kw),
     "get_analyst_consensus": lambda **kw: get_analyst_consensus(**kw),
 }
 

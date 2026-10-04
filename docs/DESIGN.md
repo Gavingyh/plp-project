@@ -533,6 +533,63 @@ of its content; the demo model is `llama3.1:8b`; strip enforcement and the
 aspect query are on by default; and the 7- and 30-day figures count back from
 the newest sentence, labelled "as of" its date.
 
+### 25. The chatbot writes for a retail investor, with the figures read for it
+
+*2026-10-04, at the project owner's request.* Tried in the dashboard on 4
+Oct, the chatbot's figures were right but its answers didn't help a retail
+investor. Every answer had the same labelled sections, because the prompt
+asked for "direct answer first, then supporting evidence, then the sample
+size and time window, then caveats". A score was given as "0.122 out of 1"
+with no scale, and +0.124 was called "slightly negative". "Has it changed
+recently?" about UOB's net interest margin got "not available" though 66
+months of data were stored: its 7-day window held too few sentences, and the
+monthly series was only sent when both windows had enough. Evidence was mostly
+results-report boilerplate, often the same sentence once a quarter, cited by
+24-character ids.
+
+Decided:
+- The prompt keeps its grounding rules and replaces the fixed format with a
+  short guide to writing for a retail investor: the answer first in plain
+  words, a score once with its scale, the share of positive and negative
+  sentences, how the bank compares and which topics lift or drag it, no
+  headings, about 60 to 120 words.
+- What a small model can't be trusted to work out is worked out in code and
+  handed to it, in the chatbot's own versions of the tools
+  (`chatbot/tools.py`): each score's reading in words (bands in
+  `config/chatbot.yaml`), the shares, a bank's two strongest and two weakest
+  topics, where a bank ranks among the three with the other two's scores, and
+  the date the data runs to. A trend comes with one sentence that states it
+  (`trend_in_words`): the last 7 days against the last 30 when both have
+  enough sentences, else the latest month against the one before (the change
+  computed before shrinkage, as for 7 against 30 days). The API's results are
+  unchanged.
+- Found in the evaluation rounds and fixed: the model invented comparisons
+  between banks it hadn't fetched, which is why one bank's score now carries
+  the other two; it misread the monthly series and blended a rising week with
+  a falling month, which is why the trend is written out; it judged the
+  overall mood from evidence filtered to one side, so the prompt keeps the
+  sentiment filter for questions about complaints or praise; and a reading it
+  put in quote marks was removed as an invented quote, so a reading or topic
+  name a tool returned no longer counts as a quote. The figure check skips a
+  date written without its year ("September 25th").
+- Evidence: from 50 candidates, a wording already picked is skipped, at most
+  two come from one source unless too few others match, and a positive or
+  negative sentence is lifted 0.03 over a neutral one. Each result names its
+  source ("Reddit", "news", "CNA", "bank results report", from
+  `config/sources.yaml`).
+- The reader sees numbered citations and a list of sources. The checks still
+  run on the model's own text, sentence ids included, before the numbering.
+
+Costs: answers are slower on a local model, because they say more and the
+tool results the model reads are longer; ids and raw counts are left out of
+what it reads (the turn's record keeps them) to limit that. Links stay: the
+hosted backends' privacy filter knows a Reddit post that came through a news
+feed only by its link, and hiding links let such text through in a test. The
+reading bands are a judgment, kept in config; and evidence is still ranked
+by FinBERT embeddings, which favour report prose, so the evidence is better
+rather than good. Measured before and after, with the times, in
+`docs/evidence/chatbot-answers-2026-10-04.md`.
+
 ## Notable implementation details
 
 **Idempotent ingestion.** Every document has a deterministic `doc_id` hashed

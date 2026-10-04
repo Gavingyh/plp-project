@@ -38,3 +38,9 @@ def personal_text_sources() -> frozenset[str]:
 
 def team_only_sources() -> frozenset[str]:
     return frozenset(name for name, spec in _load()["sources"].items() if spec["team_only"])
+
+
+def label(source: str | None) -> str:
+    """What the chatbot calls a source when citing it; the stored name if none is set."""
+    spec = _load()["sources"].get(source) or {}
+    return spec.get("label") or (source or "unknown source")

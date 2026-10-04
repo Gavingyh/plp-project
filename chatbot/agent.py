@@ -55,10 +55,12 @@ import os
 import re
 import sys
 from dataclasses import asdict, dataclass, field
+from datetime import datetime
 
 from dotenv import load_dotenv
 
 from chatbot.backends import get_backend
+from config.sources import label as source_label
 from config.logging_config import get_logger, setup_logging
 from chatbot import intent as intents
 from chatbot import settings
@@ -143,6 +145,49 @@ def _collect_text(obj, out: list[str], key=None) -> None:
             _collect_text(v, out, key)
 
 
+# Fields left out of what the model reads (4 Oct 2026). Each costs prompt
+# tokens, and so seconds on a local model whose 4,096-token window also holds
+# the system prompt, without helping an answer: counts give way to the shares
+# worked out from them, links and ids reach the reader through the numbered
+# sources, and the notes explain fields the model is told not to work from.
+# The turn's record keeps them all, for the checks and the source list.
+# A link stays: the hosted backends' filter (chatbot/backends/base.py) knows a
+# Reddit post that came through a news feed only by its reddit.com link, and
+# hiding links let such text reach Gemini (caught by
+# tests/test_validate_gemini_reddit_privacy.py, 4 Oct 2026).
+_HIDDEN_FROM_MODEL = frozenset({
+    "sentence_id", "evidence_id", "relevance",
+    "positive_n", "neutral_n", "negative_n",
+    "recent_7d_unshrunk_score", "baseline_30d_unshrunk_score", "delta_basis", "series_note",
+})
+
+
+def _for_model(obj):
+    if isinstance(obj, dict):
+        return {k: _for_model(v) for k, v in obj.items() if k not in _HIDDEN_FROM_MODEL}
+    if isinstance(obj, list):
+        return [_for_model(v) for v in obj]
+    return obj
+
+
+# Fields whose words a model may put in quote marks without citing anything.
+# On 4 Oct a reading written as "clearly positive" was taken for an invented
+# quote and removed, leaving "with a reading of." in the answer.
+_WORDING_KEYS = frozenset({"reading", "topic_name", "source_name", "trend_in_words", "month_on_month"})
+
+
+def _collect_wording(obj, out: set[str], key=None) -> None:
+    if isinstance(obj, str):
+        if key in _WORDING_KEYS:
+            out.add(_norm_text(obj).strip(" .,;:"))
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            _collect_wording(v, out, k)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _collect_wording(v, out, key)
+
+
 class _ToolCallTracker:
     """Records what search_evidence actually returned, so the final answer can
     be checked against what was truly retrieved - not what the model claims.
@@ -156,6 +201,8 @@ class _ToolCallTracker:
         self.verified_sentence_ids: set[str] = set()
         self.retrieved_text: list[str] = []      # every string a tool returned, normalised
         self.calls: list[dict] = []
+        self.evidence: dict[str, dict] = {}       # sentence_id -> what a search returned for it, this turn or earlier
+        self.tool_wording: set[str] = set()       # a reading or topic name a tool returned: quoting it cites nothing
         # Evidence earlier turns of the conversation retrieved: a follow-up may
         # repeat it ("explain that second quote") without searching again.
         self.earlier_text: list[str] = []
@@ -168,6 +215,7 @@ class _ToolCallTracker:
                         self.verified_urls.add(_norm_url(item["url"]))
                     if item.get("sentence_id"):
                         self.earlier_ids.add(item["sentence_id"])
+                        self.evidence[item["sentence_id"]] = item
 
     def execute(self, name: str, tool_input: dict, by: str = "model") -> str:
         fn = TOOL_FUNCTIONS.get(name)
@@ -182,11 +230,12 @@ class _ToolCallTracker:
         if by != "model":
             call["by"] = by
         self._record(call)
-        return json.dumps(result, default=str)
+        return json.dumps(_for_model(result), default=str)
 
     def _record(self, call: dict) -> None:
         self.calls.append(call)
         _collect_text(call.get("result"), self.retrieved_text)
+        _collect_wording(call.get("result"), self.tool_wording)
         if call["name"] == "search_evidence":
             self.search_evidence_called = True
             if isinstance(call.get("result"), dict):
@@ -195,6 +244,7 @@ class _ToolCallTracker:
                         self.verified_urls.add(_norm_url(item["url"]))
                     if item.get("sentence_id"):
                         self.verified_sentence_ids.add(item["sentence_id"])
+                        self.evidence[item["sentence_id"]] = item
 
     def unverified_quotes(self, answer: str, strict: bool = False) -> list[str]:
         """Quotes in the answer (in quote marks, or a markdown blockquote line)
@@ -207,6 +257,8 @@ class _ToolCallTracker:
         spans += [(m.group(0), m.group(1)) for m in _BLOCKQUOTE.finditer(answer or "")]
         out = []
         for span, inner in spans:
+            if _norm_text(inner).strip(" .,;:") in self.tool_wording:
+                continue      # 'a reading of "clearly positive"': the tool's own words, not evidence
             pieces = [p for p in re.split(r"\.{3}|…", _norm_text(inner)) if len(p.split()) >= 3]
             if not pieces:
                 if strict:
@@ -371,6 +423,50 @@ def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode
     return stripped + (found or EVIDENCE_REMOVED_NOTE), still_flagged
 
 
+# A citation as search_evidence's cite_as writes it: "[OCBC, 2026-09-02, sentence_id 32e5...]".
+_CITE_AS = re.compile(r"\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id ([0-9a-f]{24})\]")
+
+
+def _cited_date(date: str | None) -> str:
+    try:
+        d = datetime.strptime(date or "", "%Y-%m-%d")
+    except ValueError:
+        return date or "undated"
+    return f"{d.day} {d:%b %Y}"
+
+
+def number_citations(answer: str, tracker: _ToolCallTracker) -> str:
+    """For the reader (4 Oct 2026: answers showed "[OCBC, 2023-08-01, sentence_id
+    32e585f5...]" inline): each citation of a sentence a search returned
+    becomes "[1]", "[2]" ..., with the numbered sources listed under the
+    answer. It runs after the checks, which read the model's own text; a
+    citation no search returned is left as written, and was flagged."""
+    order: list[str] = []
+
+    def number(m: re.Match) -> str:
+        sid = m.group(1)
+        if sid not in tracker.evidence:
+            return m.group(0)
+        if sid not in order:
+            order.append(sid)
+        return f"[{order.index(sid) + 1}]"
+
+    body, sep, warnings = answer.partition("\n\n⚠️")
+    body = _CITE_AS.sub(number, body)
+    if not order:
+        return answer
+    body = re.sub(r"\(?\bcite_as:?\s*(\[\d+\])\)?", r"\1", body)   # "(cite_as: [1])", the field's name copied too
+    lines = []
+    for i, sid in enumerate(order, start=1):
+        e = tracker.evidence[sid]
+        where = f"{e.get('source_name') or source_label(e.get('source'))}, {e.get('bank')}, {_cited_date(e.get('date'))}"
+        url = e.get("url") or ""
+        if url.startswith("file:"):           # a results report stored on this machine: its name, not its path
+            url = os.path.basename(url)
+        lines.append(f"- [{i}] {where}" + (f": {url}" if url else ""))
+    return body.rstrip() + "\n\nSources:\n" + "\n".join(lines) + sep + warnings
+
+
 @dataclass
 class TurnResult:
     """Everything one turn produced, for the UI, the evaluation and the trace."""
@@ -435,6 +531,7 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
         result.unverified_numbers = figures
         result.answer += UNVERIFIED_NUMBER_WARNING.format(
             figures=", ".join(figures), them="it" if len(figures) == 1 else "them")
+    result.answer = number_citations(result.answer, tracker)
     return result
 
 

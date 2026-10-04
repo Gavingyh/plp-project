@@ -1037,3 +1037,35 @@ a DBS alias at collection (14); read the fixed replies in
 `config/intents.yaml`. Known and not fixed: the number check skips years,
 so a wrong year ("2023" for 2026) passes; the classifier lets two
 other-bank questions through to the model, which declined them.
+
+### 4 October, afternoon
+
+- **Dashboard menu fixed and pushed** (merge a99f271). The sidebar's page
+  names were hidden by a CSS rule written for an older Streamlit, and the
+  address didn't follow the page chosen; both fixed in `dashboard/` with
+  the edit block lifted for it. The teammate who owns `dashboard/` should
+  review the two lines.
+- **Chatbot answers rewritten for a retail investor** (DESIGN decision 25,
+  branch `fix/chatbot-answers`, not merged). In the dashboard the figures
+  were right but every answer had the same labelled sections, scores read
+  "0.122 out of 1", +0.124 was called "slightly negative", a trend question
+  got "not available" with 66 months stored, and evidence was report
+  boilerplate. Now the readings, shares, rankings and the trend sentence are
+  computed in code and handed to the model, the prompt is a guide to
+  writing for a retail investor, and citations show as numbered sources.
+  Five evaluation rounds on the 32-question gold set, with what each found:
+  `docs/evidence/chatbot-answers-2026-10-04.md`. Answers are slower on the
+  local model.
+- **Found on the way:** the full test suite stops a running API
+  (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
+  keeps the chatbot code it first loaded, so restart it after changing
+  `chatbot/`; evaluation results now hold CNA text when evidence comes from
+  CNA, so those results files stay out of git. Hiding evidence links from
+  the model to save time let a Reddit post that came through a news feed
+  reach Gemini in the privacy tests; links went back in before commit, and
+  every run used the local model, so nothing left the machine.
+
+**Needs a human (4 Oct, afternoon):** review and merge
+`fix/chatbot-answers` (with `/validate` first); write new test questions
+apart from the prompt, since the gold set was used to tune it; decide
+whether slower, fuller answers are worth it on the demo Mac.

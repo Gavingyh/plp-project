@@ -7,7 +7,7 @@ Every path a question can take through the chatbot, including the points where c
 ```mermaid
 flowchart TB
   accTitle: One chatbot turn
-  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check and a figure check before it is shown.
+  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check and a figure check, and the citations it retrieved are numbered with their sources listed, before it is shown.
 
   q(["Question"])
   cls{"Intent classifier (local model):<br/>what is the question asking for?"}
@@ -24,6 +24,7 @@ flowchart TB
   w1["Append VERIFICATION WARNING"]
   num{"States a figure<br/>no tool returned?"}
   w2["Append NUMBER CHECK"]
+  refs["Number the citations it retrieved,<br/>list their sources under the answer"]
   out(["Answer and turn record"])
 
   q --> cls
@@ -37,8 +38,8 @@ flowchart TB
   emp -- no --> cite
   cite -- yes --> w1 --> num
   cite -- no --> num
-  num -- yes --> w2 --> out
-  num -- no --> out
+  num -- yes --> w2 --> refs
+  num -- no --> refs --> out
 ```
 
 Rendered for the report: [SVG](img/07-chatbot-turn.svg) · [PNG](img/07-chatbot-turn.png)
@@ -61,21 +62,22 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| intent classifier runs first | `chatbot/agent.py:392` | `intent = intents.classify_intent(question, state, previous)` |
+| intent classifier runs first | `chatbot/agent.py:488` | `intent = intents.classify_intent(question, state, previous)` |
 | classifier | `chatbot/intent.py:106` | `def classify_intent(question: str` |
 | fixed reply for the intent | `chatbot/intent.py:125` | `def reply_for(intent` |
-| state and turns passed to the model | `chatbot/agent.py:404` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
-| state added to the system prompt | `chatbot/prompts.py:53` | `def with_state(system: str` |
+| state and turns passed to the model | `chatbot/agent.py:500` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
+| state added to the system prompt | `chatbot/prompts.py:80` | `def with_state(system: str` |
 | last three turns | `config/chatbot.yaml:36` | `turns:        {value: 3}` |
 | tool-call loop, eight calls | `config/chatbot.yaml:22` | `max_tool_iterations: {value: 8}` |
 | loop | `chatbot/backends/ollama_backend.py:84` | `for _ in range(MAX_TOOL_ITERATIONS):` |
 | tool calls? | `chatbot/backends/ollama_backend.py:89` | `tool_calls = message.get("tool_calls") or []` |
 | run the tools | `chatbot/backends/ollama_backend.py:106` | `result_json = tool_executor(name, arguments)` |
-| record calls and results | `chatbot/agent.py:172` | `def execute(self, name: str, tool_input: dict, by: str = "model")` |
+| record calls and results | `chatbot/agent.py:220` | `def execute(self, name: str, tool_input: dict, by: str = "model")` |
 | budget message | `chatbot/backends/ollama_backend.py:113` | `within the tool-call budget` |
-| empty answer check | `chatbot/agent.py:406` | `if not (answer or "").strip(` |
-| empty answer replaced, checks skipped | `chatbot/agent.py:409` | `return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY` |
-| citation check | `chatbot/agent.py:413` | `enforced, flagged = enforce_evidence(answer, tracker, question, mode)` |
-| sentence ids checked | `chatbot/agent.py:228` | `if unverified_sentence_ids(answer, self.known_ids()):` |
-| figure check | `chatbot/agent.py:430` | `figures = unverified_numbers(` |
-| number warning appended | `chatbot/agent.py:436` | `result.answer += UNVERIFIED_NUMBER_WARNING.format(` |
+| empty answer check | `chatbot/agent.py:502` | `if not (answer or "").strip(` |
+| empty answer replaced, checks skipped | `chatbot/agent.py:505` | `return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY` |
+| citation check | `chatbot/agent.py:509` | `enforced, flagged = enforce_evidence(answer, tracker, question, mode)` |
+| sentence ids checked | `chatbot/agent.py:280` | `if unverified_sentence_ids(answer, self.known_ids()):` |
+| figure check | `chatbot/agent.py:526` | `figures = unverified_numbers(` |
+| number warning appended | `chatbot/agent.py:532` | `result.answer += UNVERIFIED_NUMBER_WARNING.format(` |
+| citations numbered, sources listed | `chatbot/agent.py:534` | `result.answer = number_citations(result.answer, tracker)` |

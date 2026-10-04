@@ -34,6 +34,9 @@ _STRIP_FIRST = [
     re.compile(rf"\b{_MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}\b", re.IGNORECASE),  # "September 24th, 2026"
     re.compile(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTH},?\s+\d{{4}}\b", re.IGNORECASE),  # "24 September 2026"
     re.compile(rf"\b{_MONTH}\s+\d{{4}}\b", re.IGNORECASE),                                   # "September 2026"
+    # A day without its year ("runs to September 25th", 4 Oct 2026), not "September 0.34".
+    re.compile(rf"\b{_MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?\b(?![.,]\d)", re.IGNORECASE),
+    re.compile(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTH}", re.IGNORECASE),                  # "25 Sep"
     re.compile(r"\b[0-9a-f]{24}\b"),               # sentence ids
     re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?"),  # ISO dates and timestamps
     re.compile(r"^\s*\d+[.)]\s", re.MULTILINE),     # numbered-list markers

@@ -164,6 +164,8 @@ with st.sidebar:
     page = st.radio("Navigate", list(PAGES), format_func=lambda k: f"{PAGES[k]} {k}",
                     index=list(PAGES).index(_start) if _start in PAGES else 0,
                     label_visibility="collapsed", key="nav")
+    if st.query_params.get("page") != page:  # keep the address in step, so a refresh stays on this page
+        st.query_params["page"] = page
     st.markdown('<div class="side-label">Data snapshot</div>', unsafe_allow_html=True)
     for label, value in (("Sentences scored", f"{int(_total):,}"),
                          ("Refreshed", datetime.now(timezone.utc).strftime("%d %b %H:%M UTC"))):

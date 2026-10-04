@@ -57,7 +57,8 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"] {{
     color: {MUTED}; transition: background .2s, color .2s; cursor: pointer;
 }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:hover {{ background: {SURFACE_2}; color: {INK}; }}
-section[data-testid="stSidebar"] label[data-testid="stRadioOption"] > div > div:first-child {{ display: none; }}
+/* hide the radio circle: the element just before the option's name (Streamlit 1.63 wraps both in one block) */
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"] div:has(+ [data-testid="stMarkdownContainer"]) {{ display: none; }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"] p {{ font-weight: 500; font-size: .95rem; }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] {{
     background: {ACCENT}; color: {ON_ACCENT};

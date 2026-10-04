@@ -279,8 +279,15 @@ def test_strip_removes_the_evidence_section_and_keeps_the_rest():
     assert "Sample size and time window" in out and "Caveats" in out
 
 
-def test_enforcement_is_off_by_default(fake_sentiment, monkeypatch):
+def test_enforcement_is_strip_by_default(fake_sentiment, monkeypatch):
+    # Decided 4 Oct 2026: invented evidence is removed unless the setting says otherwise.
     monkeypatch.delenv("CHATBOT_ENFORCE_EVIDENCE", raising=False)
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced == "strip" and not r.citation_unverified and "12345" not in r.answer
+
+
+def test_enforcement_off_still_flags_and_keeps_the_answer(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "off")
     r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
     assert r.evidence_enforced is None and r.citation_unverified and "12345" in r.answer
 

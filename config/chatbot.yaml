@@ -9,7 +9,7 @@ openai_base_url:  {value: "https://api.openai.com/v1", env: OPENAI_BASE_URL}   #
 ollama_think:     {value: null, env: OLLAMA_THINK}          # false turns a reasoning model's thinking off (qwen3)
 
 models:
-  ollama:  {value: "llama3.2:3b", env: OLLAMA_MODEL}
+  ollama:  {value: "llama3.1:8b", env: OLLAMA_MODEL}     # the demo model (decided 4 Oct)
   claude:  {value: "claude-sonnet-5", env: CLAUDE_MODEL}
   openai:  {value: "gpt-4o-mini", env: OPENAI_MODEL}
   gemini:  {value: "gemini-3.8-flash", env: [GEMINI_MODEL, GEMINI_CHAT_MODEL]}
@@ -38,8 +38,8 @@ history:
 harness_search:
   k_one_bank:   {value: 3}               # quotes the harness adds when one bank was asked about
   k_each_bank:  {value: 1}               # ... per bank when several were
-enforce_evidence: {value: "off", env: CHATBOT_ENFORCE_EVIDENCE}   # off | strip | search
-aspect_query:     {value: false, env: CHATBOT_ASPECT_QUERY}       # rank evidence by the aspect's name
+enforce_evidence: {value: "strip", env: CHATBOT_ENFORCE_EVIDENCE} # off | strip | search (strip decided 4 Oct)
+aspect_query:     {value: true, env: CHATBOT_ASPECT_QUERY}        # rank evidence by the aspect's name (on since 4 Oct)
 trace_file:       {value: null, env: CHATBOT_TRACE_FILE}
 
 # The trend tool.

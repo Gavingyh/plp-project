@@ -454,12 +454,13 @@ changed:
 
 | setting | default | effect |
 |---|---|---|
+| `OLLAMA_MODEL` | `llama3.1:8b` (since 4 Oct) | the local chatbot model; used when the backend is Ollama (set, or auto-detected because no API key is set) |
 | `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
-| `CHATBOT_ENFORCE_EVIDENCE` | `off` | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds |
+| `CHATBOT_ENFORCE_EVIDENCE` | `strip` (since 4 Oct) | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds; `off` only flags it |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
-| `CHATBOT_ASPECT_QUERY` | unset (off) | `1` makes evidence search, when given an aspect, rank by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
+| `CHATBOT_ASPECT_QUERY` | on (since 4 Oct) | `0` turns it off. On, evidence search, when given an aspect, ranks by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
 
 The terminal chat remembers the last three turns, so follow-ups like
 "and OCBC?" work. The API is stateless: send earlier turns in `history`:

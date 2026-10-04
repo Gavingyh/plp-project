@@ -241,6 +241,7 @@ def test_tracker_records_urls_from_real_search_evidence_call():
 def test_ask_appends_warning_when_backend_fabricates(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("CHATBOT_BACKEND", "ollama")
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "off")     # the flag itself; strip (the default) removes the quote
 
     class _FabricatingBackend:
         name = "fake"

@@ -46,10 +46,10 @@ def test_aspect_query_flag_ranks_by_the_aspect_not_the_question_words(temp_db, m
     _two_dividend_sentences(temp_db)
     q = "What do people say about DBS's dividend policy?"
 
-    monkeypatch.delenv("CHATBOT_ASPECT_QUERY", raising=False)
-    default = retrieval.search_evidence(q, bank="DBS", aspect="dividend_policy", k=2)
-    assert default[0]["sentence_id"] == "s1" and embedded[-1] == q        # equal cosine; question words decide
+    monkeypatch.setenv("CHATBOT_ASPECT_QUERY", "0")
+    off = retrieval.search_evidence(q, bank="DBS", aspect="dividend_policy", k=2)
+    assert off[0]["sentence_id"] == "s1" and embedded[-1] == q            # equal cosine; question words decide
 
-    monkeypatch.setenv("CHATBOT_ASPECT_QUERY", "1")
+    monkeypatch.delenv("CHATBOT_ASPECT_QUERY", raising=False)             # on by default since 4 Oct
     flagged = retrieval.search_evidence(q, bank="DBS", aspect="dividend_policy", k=2)
     assert flagged[0]["sentence_id"] == "s2" and embedded[-1] == "Dividend Policy"

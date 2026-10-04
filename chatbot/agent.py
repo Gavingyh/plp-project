@@ -55,6 +55,7 @@ import json
 import os
 import re
 import sys
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 
@@ -80,21 +81,60 @@ logger = get_logger(__name__)
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
                           r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/[^\s)\]}\"'“”]*",
                           re.IGNORECASE)
-class _QuoteSpans:
-    """Quoted passages in an answer, found by pairing each paragraph's quote
-    marks in order, first with second and third with fourth, as a reader pairs
-    them, whatever stands around them: '"..."(Reddit)', a table cell
-    '|"..."|', a space inside the marks, mixed straight and curly marks.
-    Patterns keyed on the characters around a mark missed a new shape at every
-    validation on 4 Oct 2026. A pair around fewer than ten characters ('"buy"')
-    is a word in quote marks, not a quote, but still takes its two marks, so the
-    gap between two short quotes is never read as one. A mark left without a
-    partner opens a quote running to the end of its line, stopping before a
-    citation: an answer cut short ends in one. Single quotes are left out, as
-    they are mostly apostrophes. Offers a compiled pattern's finditer, search
-    and findall, so its callers read like any regex's."""
+# A purported verbatim quote, known by what stands around its marks (as in commit
+# f4b9145): it opens after whitespace or punctuation and closes before it, so the
+# gap between two short quotes ('"buy". ... as "hold"') isn't mistaken for one
+# long quote, and an inch mark ('a 6" phone') opens nothing. Straight or curly
+# quotes, wrapped in markdown emphasis or not, may run across a single line
+# break. After its closing mark a quote may meet a dash, slash, apostrophe or
+# marker ('"..."—', '"..."[2]'). Mixed marks and a quote never closed by the end
+# of its line count too: an answer cut short at the length limit ends in an open
+# quote. Changed since f4b9145 (validation, 4 Oct 2026): a quote holds no other
+# double quote mark, so it never runs past a closing mark of another style
+# ('"...”(Reddit) ... a 6" phone' ran on to the inch mark); mixed marks may wrap
+# a line too; a straight mark closing a curly quote stands where any closing
+# mark would; angle quotes (« ») count like curly ones; and a quote opened with
+# a closing mark (»...«, ”...”) follows the same rule.
+_QUOTE_REGEX = re.compile(
+    r'(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s](?:[^"“”«»\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)'
+    r'|“(?:[^"“”«»\n]|\n(?!\n)){10,}?”'
+    r'|«(?:[^"“”«»\n]|\n(?!\n)){10,}?»'
+    r'|“(?:[^"“”«»\n]|\n(?!\n)){9,}?[^"“”«»\s]"(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)'
+    r'|(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s](?:[^"“”«»\n]|\n(?!\n)){9,}?”'
+    r'|(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s][^"“”«»\n]{9,}(?=\n|\Z)'
+    r'|(?:^|(?<=[\s(\[\]:—–*_-]))»[^"“”«»\s](?:[^"“”«»\n]|\n(?!\n)){8,}?[^"“”«»\s]«(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)'
+    r'|(?:^|(?<=[\s(\[\]:—–*_-]))”[^"“”«»\s](?:[^"“”«»\n]|\n(?!\n)){8,}?[^"“”«»\s]”(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)')
+# A passage in single quotes, by the same rule, of three words or more: an
+# apostrophe inside a word ("OCBC's", "don't") neither opens nor closes one, and
+# a quote must open on a letter, so "the '08 crisis ... banks' margins" is not
+# one. Two words in single quotes ('strong buy') are a term, not a quote.
+_SINGLE_QUOTE = re.compile(
+    r"(?:^|(?<=[\s(\[\]:—–*_-]))['‘](?=[^\W\d_])(?:[^'‘’\n]|(?<=\w)['’](?=\w)|\n(?!\n)){10,}?"
+    r"(?<=[^\s'‘’])['’](?!\w)")
 
-    _MARK = re.compile('["\u201c\u201d\u00ab\u00bb]')
+
+class _QuoteSpans:
+    """Quoted passages in an answer, from two detectors that each catch what the
+    other misses (validation, 4 Oct 2026; five rounds found a new shape each).
+
+    First, _QUOTE_REGEX: it knows a quote by what stands around its marks, so
+    one stray or missing mark ('a 6" phone', an unclosed quote) never shifts
+    the quotes after it. Then, in the text between its quotes, each paragraph's
+    marks are paired in order, first with second and third with fourth, as a
+    reader pairs them, whatever stands around them: '"..."(Reddit)', a table
+    cell '|"..."|', a space inside the marks. With nothing open, a closing
+    mark (” or ») opens nothing, and nor does an inch mark ('a 6" phone'). A
+    pair around fewer than ten characters ('"buy"') is a word in quote marks,
+    not a quote, but still takes its two marks, so the gap between two short
+    quotes is never read as one. A mark left without a partner opens a quote
+    that runs to the end of its line, or to the next quote the regex found,
+    stopping before a citation; a mark closing a word ('bad" ') opens no such quote.
+    Last, single-quoted passages (_SINGLE_QUOTE) where neither found a quote.
+    Offers a compiled pattern's finditer, search and findall, the spans in text
+    order and never overlapping, so its callers read like any regex's."""
+
+    _DOUBLE = '"\u201c\u201d\u00ab\u00bb'
+    _MARK = re.compile(f"[{_DOUBLE}]")
     _PARAGRAPH = re.compile(r"(?:[^\n]|\n(?![ \t]*\n))+")
     _CITATION = re.compile(r"[ \t]*\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id")
     _SHORTEST = 10
@@ -112,27 +152,78 @@ class _QuoteSpans:
         def end(self) -> int:
             return self._end
 
-    def finditer(self, text: str | None):
-        text = text or ""
-        for para in self._PARAGRAPH.finditer(text):
+    @staticmethod
+    def _closes_a_word(text: str, i: int) -> bool:
+        """A straight mark right after a letter or digit, with neither after it:
+        where a quote closes, or an inch mark ('a 6" phone')."""
+        after = text[i + 1] if i + 1 < len(text) else " "
+        return text[i] == '"' and i > 0 and text[i - 1].isalnum() and not after.isalnum()
+
+    @staticmethod
+    def _opens_a_word(text: str, i: int) -> bool:
+        """“ or «, or a straight mark before a letter or digit and not after one."""
+        after = text[i + 1] if i + 1 < len(text) else " "
+        if text[i] in "\u201c\u00ab":
+            return True
+        return text[i] == '"' and after.isalnum() and not (i > 0 and text[i - 1].isalnum())
+
+    def _opens(self, text: str, i: int, following) -> bool:
+        """Whether the mark at i opens a quote when none is open. Not a closing
+        mark (” or »), nor an inch mark ('a 6" phone'). A mark closing a word
+        ('bad" ') closes a quote whose opening was lost, unless the next mark
+        can't open one either: then it closes a quote inside a quote
+        ('"What do you think of "DBS Robot" with the fees?"') and opens the rest."""
+        if text[i] in "\u201d\u00bb":
+            return False
+        if self._closes_a_word(text, i):
+            return not text[i - 1].isdigit() and not (following is not None and self._opens_a_word(text, following))
+        return True
+
+    def _paired(self, text: str, start: int, end: int):
+        """(start, end) of the quotes found by pairing marks within text[start:end]."""
+        for para in self._PARAGRAPH.finditer(text, start, end):
             opened = None
-            for mark in self._MARK.finditer(text, para.start(), para.end()):
+            marks = [m.start() for m in self._MARK.finditer(text, para.start(), para.end())]
+            for k, i in enumerate(marks):
                 if opened is None:
-                    if mark.group(0) not in "\u201d\u00bb":    # a closing mark with nothing open is skipped
-                        opened = mark.start()
+                    if self._opens(text, i, marks[k + 1] if k + 1 < len(marks) else None):
+                        opened = i
                     continue
-                if len(text[opened + 1:mark.start()].strip()) >= self._SHORTEST:
-                    yield self._Span(text, opened, mark.end())
+                if len(text[opened + 1:i].strip()) >= self._SHORTEST:
+                    yield opened, i + 1
                 opened = None
-            if opened is not None:
+            if opened is not None and not self._closes_a_word(text, opened):
                 line_end = text.find("\n", opened, para.end())
                 line_end = para.end() if line_end == -1 else line_end
                 cite = self._CITATION.search(text, opened, line_end)
-                end = cite.start() if cite else line_end
-                while end > opened and text[end - 1] in " \t":
+                stop = cite.start() if cite else line_end
+                while stop > opened and text[stop - 1] in " \t":
+                    stop -= 1
+                if len(text[opened + 1:stop].strip()) >= self._SHORTEST:
+                    yield opened, stop
+
+    def _regex_spans(self, text: str):
+        for m in _QUOTE_REGEX.finditer(text):
+            start, end = m.span()
+            if text[end - 1] not in self._DOUBLE:     # left open: like a pairing's, it stops before a citation
+                cite = self._CITATION.search(text, start, end)
+                end = cite.start() if cite else end
+                while end > start and text[end - 1] in " \t":
                     end -= 1
-                if len(text[opened + 1:end].strip()) >= self._SHORTEST:
-                    yield self._Span(text, opened, end)
+                if len(text[start + 1:end].strip()) < self._SHORTEST:
+                    continue
+            yield start, end
+
+    def finditer(self, text: str | None):
+        text = text or ""
+        spans = list(self._regex_spans(text))
+        gaps = zip([0] + [e for _, e in spans], [s for s, _ in spans] + [len(text)])
+        spans += [p for s, e in gaps if s < e for p in self._paired(text, s, e)]
+        for m in _SINGLE_QUOTE.finditer(text):
+            if len(m.group(0)[1:-1].split()) >= 3 and not any(s < m.end() and m.start() < e for s, e in spans):
+                spans.append((m.start(), m.end()))
+        for s, e in sorted(spans):
+            yield self._Span(text, s, e)
 
     def search(self, text: str | None):
         return next(self.finditer(text), None)
@@ -142,7 +233,7 @@ class _QuoteSpans:
 
 
 _QUOTE_PATTERN = _QuoteSpans()
-_QUOTE_MARKS = '"\u201c\u201d\u00ab\u00bb'
+_QUOTE_MARKS = "\"\u201c\u201d\u00ab\u00bb'\u2018\u2019"
 # A markdown blockquote line ("> OCBC has the worst app..."): quoted text without quote marks.
 # A line opening with a label and a colon ("> **Note:** ...") is the model's own
 # aside, not quoted evidence (4 Oct 2026: notes were flagged as invented quotes).
@@ -192,20 +283,32 @@ def _norm_text(text: str, keep_marks: bool = False) -> str:
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
-def _drop_bare_marks(text: str, sources: list[str] | None = None) -> str:
+def _drop_bare_marks(text: str, sources: list[str] | None = None, dropped: list[str] | None = None) -> str:
     """The text without bare numbered markers. Inside quote marks one may be
     part of the sentence quoted: kept there, or, given the retrieved sentences,
-    kept only if the quote with its marker is in one of them."""
+    kept only if the quote with its marker is in one of them. A drop that
+    leaves a new marker ("[1[2]]" leaves "[1]") is repeated until none is left
+    (validation, 4 Oct 2026: the leftover crashed the turn); `dropped`, if
+    given, collects every marker dropped."""
     def quote(span: str) -> str:
         if sources is None or any(_norm_text(span.strip(_QUOTE_MARKS), keep_marks=True) in s for s in sources):
             return span
         return _BARE_MARK.sub("", span)
 
-    out, last = [], 0
-    for m in _QUOTE_PATTERN.finditer(text or ""):
-        out += [_BARE_MARK.sub("", text[last:m.start()]), quote(m.group(0))]
-        last = m.end()
-    return "".join(out) + _BARE_MARK.sub("", (text or "")[last:])
+    def once(text: str) -> str:
+        out, last = [], 0
+        for m in _QUOTE_PATTERN.finditer(text):
+            out += [_BARE_MARK.sub("", text[last:m.start()]), quote(m.group(0))]
+            last = m.end()
+        return "".join(out) + _BARE_MARK.sub("", text[last:])
+
+    text = text or ""
+    while (shorter := once(text)) != text:
+        if dropped is not None:     # the markers before less those after; one a drop made counts when it goes
+            dropped += (Counter(m.strip() for m in _BARE_MARK.findall(text))
+                        - Counter(m.strip() for m in _BARE_MARK.findall(shorter))).elements()
+        text = shorter
+    return text
 
 
 def _norm_url(url: str) -> str:
@@ -497,12 +600,7 @@ def _drop_marks_noted(text: str, tracker: _ToolCallTracker) -> str:
     figures are still checked; a marker removed with its evidence isn't one
     (validation, 4 Oct 2026: such a marker drew a warning about a number the
     reader couldn't see)."""
-    out = _drop_bare_marks(text)
-    dropped = [m.strip() for m in _BARE_MARK.findall(text)]
-    for left in _BARE_MARK.findall(out):
-        dropped.remove(left.strip())
-    tracker.dropped_marks += dropped
-    return out
+    return _drop_bare_marks(text, dropped=tracker.dropped_marks)
 
 
 def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode: str) -> tuple[str, bool]:

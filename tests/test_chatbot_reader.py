@@ -9,6 +9,8 @@ repeats, and numbered citations. On 4 Oct a local model wrote "0.122 out of
 The API's own results must stay as they were.
 """
 
+import pytest
+
 import config.model_version as current_model
 from chatbot import tools
 from chatbot.agent import _ToolCallTracker, number_citations
@@ -218,6 +220,15 @@ def test_evidence_comes_with_the_banks_score_and_the_data_date(temp_db, monkeypa
     assert "topic_score" not in overall and overall["bank_overall_score"]["topic_name"] == "overall"
 
 
+def test_evidence_context_gives_the_neutral_share_too(temp_db, monkeypatch):
+    # Validation, 4 Oct 2026: a model that worked out the neutral share from the other two was flagged.
+    _index(temp_db, [("DBS", "dividend_policy", "2026-08", 6, 3, 1)])
+    monkeypatch.setattr(tools, "_search_evidence", lambda *a, **kw: [])
+    r = tools.chat_search_evidence("dividends", bank="DBS", aspect="dividend_policy")
+    assert r["topic_score"]["neutral_pct"] == 30.0
+    assert unverified_numbers("60% positive, 30% neutral and 10% negative.", [r]) == []
+
+
 # --- what the reader sees ----------------------------------------------------------
 
 def _tracker_with(*items):
@@ -266,6 +277,30 @@ def test_a_date_without_its_year_is_not_a_figure_but_a_figure_after_a_month_is()
     assert unverified_numbers("The data runs to September 25th, and to 24 Sep for UOB.", tools) == []
     assert unverified_numbers("The data runs to September 25th.", [{"n": 1}]) == ["25"]
     assert unverified_numbers("It scored in September 0.34.", [{"score": 0.1}]) == ["0.34"]
+
+
+DAYS_RETURNED = [{"n": 45, "data_runs_to": "2026-09-25"}, {"data_runs_to": "2026-09-26"}]
+
+
+@pytest.mark.parametrize("answer", ["In September 25 sentences were negative.", "In Sept 25 posts were negative.",
+                                    "September 25 of them were negative."])
+def test_a_returned_day_with_a_word_after_it_is_a_count(answer):
+    # Validation, 4 Oct 2026: with data to 25 September, "In September 25 sentences" hid the 25.
+    assert unverified_numbers(answer, DAYS_RETURNED) == ["25"]
+
+
+@pytest.mark.parametrize("answer", [
+    "The data runs to September 25.", "The data runs to September 25\nfor all three.", "Up to September 25 (DBS).",
+    "The data runs to September 25th for DBS.", "Data from September 25 and 26.", "From Sept 25 to 26.",
+    "The data runs to Sept 25-26.",
+])
+def test_a_returned_day_or_range_where_the_date_ends_is_not_a_figure(answer):
+    assert unverified_numbers(answer, DAYS_RETURNED) == []
+
+
+def test_a_range_running_past_the_returned_days_is_checked():
+    assert unverified_numbers("The data runs to Sept 25-27.", DAYS_RETURNED) == ["-27"]
+    assert unverified_numbers("In September 25-30% were negative.", DAYS_RETURNED) == ["25", "30%"]
 
 
 def test_the_model_reads_fewer_fields_than_the_turn_records(monkeypatch):

@@ -49,11 +49,19 @@ _MONTH_NUMBER = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
                  "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
 # A day is never followed by a decimal, a thousands group or a per cent sign:
 # "September 25.7%" and "Sept 25,000" are figures, whatever date the tools
-# returned (validation, 4 Oct 2026).
+# returned (validation, 4 Oct 2026). A range of returned days ("Sept 25-26",
+# "September 20 to 25") is a date too.
 _YEARLESS_DATE = re.compile(
-    rf"\b(?P<month1>{_MONTH})[ \t]+(?P<day1>\d{{1,2}})(?:st|nd|rd|th)?\b(?![.,]\d|[ \t]*%)"
+    rf"\b(?P<month1>{_MONTH})[ \t]+(?P<day1>\d{{1,2}})(?P<ord1>st|nd|rd|th)?\b"
+    rf"(?:[ \t]*(?:[-–]|to\b|and\b)[ \t]*(?P<day1b>\d{{1,2}})(?P<ord1b>st|nd|rd|th)?\b)?(?![.,]\d|[ \t]*%)"
     rf"|(?<![\w.])(?P<day2>\d{{1,2}})(?:st|nd|rd|th)?[ \t]+(?:of[ \t]+)?(?P<month2>{_MONTH})",
     re.IGNORECASE)
+# After a month, a returned day is a date only where the date ends: at an
+# ordinal ("25th"), punctuation, the end of a line, or "and" or "to". A word
+# after it makes it a count: "In September 25 sentences were negative", with
+# data to 25 September, hid the 25 (validation, 4 Oct 2026).
+_DATE_ENDS = re.compile(r"[ \t]*(?:\n|\Z|[.,;:!?()\[\]{}\"'’”*_—]|[-–](?![ \t]*\d)|(?:and|to)\b)",
+                        re.IGNORECASE)
 _ISO_DAY = re.compile(r"\b\d{4}-(\d{2})-(\d{2})")
 # Where tools write dates. Only these count: a date in the model's own search
 # query, in a link or in a quoted sentence would let the model vouch for itself.
@@ -81,8 +89,17 @@ def _without_tool_dates(text: str, tool_results) -> str:
         written = m.group("month1") or m.group("month2")
         if written == "may":                     # the verb: "12 may be bots"
             return m.group(0)
-        day = int(m.group("day1") or m.group("day2"))
-        return " " if (_MONTH_NUMBER[written[:3].lower()], day) in days else m.group(0)
+        month = _MONTH_NUMBER[written[:3].lower()]
+        if m.group("day2"):                      # "25 September"
+            return " " if (month, int(m.group("day2"))) in days else m.group(0)
+        if (month, int(m.group("day1"))) not in days:
+            return m.group(0)
+        if m.group("day1b"):                     # "Sept 25-26": both days returned, the range ends there
+            if (month, int(m.group("day1b"))) in days and (m.group("ord1b") or _DATE_ENDS.match(m.string, m.end())):
+                return " "
+            first_end = m.end("ord1") if m.group("ord1") else m.end("day1")
+            return " " + m.string[first_end:m.end()]     # the first day alone; what follows it is checked
+        return " " if m.group("ord1") or _DATE_ENDS.match(m.string, m.end()) else m.group(0)
 
     return _YEARLESS_DATE.sub(blank, text) if days else text
 

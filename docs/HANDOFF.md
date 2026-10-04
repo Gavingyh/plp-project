@@ -1067,9 +1067,17 @@ other-bank questions through to the model, which declined them.
   when a tool returned them, and markers are dropped only after the checks.
   A fourth (`docs/validation/2026-10-04-chatbot-answers-fourth-check.md`)
   found a returned date could swallow a figure ("September 25.7%") and
-  quote shapes the pattern never matched (also on `main`); quotes are now
+  quote shapes the pattern never matched (also on `main`); quotes were then
   found by pairing quote marks in order, and dates come only from date
-  fields, never followed by a decimal or "%".
+  fields, never followed by a decimal, a thousands group or "%". An evidence
+  search for a bank now also returns the bank's score (`topic_score` or
+  `bank_overall_score`) and `data_runs_to` (6e8298b): asked what people say
+  and how they feel, the model had searched only and called the mood
+  "neutral". A fifth (`docs/validation/2026-10-04-chatbot-answers-fifth-check.md`)
+  found one missing or stray quote mark shifted the pairing and hid the next
+  quote; the earlier pattern and the pairing now run together, single-quoted
+  passages of three words or more are checked, and the limits left are
+  listed on the evidence page.
 - **Found on the way:** the full test suite stops a running API
   (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
   keeps the chatbot code it first loaded, so restart it after changing

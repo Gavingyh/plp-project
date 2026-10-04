@@ -575,22 +575,26 @@ Decided:
   sentiment filter for questions about complaints or praise; and a reading it
   put in quote marks was removed as an invented quote, so a reading or a
   real topic name a tool returned no longer counts as a quote.
-- Four validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`)
+- Five validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`)
   found gaps the change had opened in the grounding checks, and some old
-  ones. Pattern fixes kept opening new gaps, so two rules replaced them.
-  Quotes are found by pairing each paragraph's quote marks in order,
-  whatever stands around them, a pair around fewer than ten characters
-  being a word, not a quote, and an unpaired mark opening a quote to the end
-  of its line. A date without its year is skipped by the figure check only
-  when a tool's date field has that month and day and no decimal, thousands
-  group or "%" follows it. Around them: the checks read the model's own text
-  before the bare markers it wrote ("[2]") are dropped, and a dropped
-  marker's figures are still checked; a marker inside a quote is shown only
-  if the quoted sentence has it; history rebuilt for the API drops markers
-  and sources; only real topic names count as tool wording; and a trend
-  sentence whose printed scores point the other way says it's too close to
-  call. The findings and their tests are listed in
-  `docs/evidence/chatbot-answers-2026-10-04.md`.
+  ones. Each way of spotting quotes caught what the last missed and missed
+  something new, so two detectors now run together. A pattern knows a quote
+  by what stands around its marks, so one stray or missing mark never
+  shifts the quotes after it; in the text between its quotes, each
+  paragraph's marks are paired in order, whatever stands around them, a
+  pair around fewer than ten characters being a word, not a quote, and an
+  unpaired mark opening a quote to the end of its line. A single-quoted
+  passage counts from three words. A date without its year is skipped by the
+  figure check only when a tool's date field has that month and day, the
+  date ends there (an ordinal, punctuation, a line end, "and" or "to") and
+  no decimal, thousands group or "%" follows it. Around them: the checks
+  read the model's own text before the bare markers it wrote ("[2]") are
+  dropped, and a dropped marker's figures are still checked; a marker inside
+  a quote is shown only if the quoted sentence has it; history rebuilt for
+  the API drops markers and sources; only real topic names count as tool
+  wording; and a trend sentence whose printed scores point the other way
+  says it's too close to call. The findings, their tests and the known
+  limits are listed in `docs/evidence/chatbot-answers-2026-10-04.md`.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or
   negative sentence is lifted 0.03 over a neutral one when the search is
@@ -604,7 +608,9 @@ Decided:
 Costs: answers are slower on a local model. Two parts were measured: the
 longer tool results take longer to read (2.5 to 12 seconds more per answer),
 and the longer prompt takes longer to read whenever Ollama hasn't cached it
-(14 to 26 seconds); the answers themselves were not longer. A separate id field and raw counts are left out
+(14 to 26 seconds); the answers themselves were shorter on two of the three
+timed questions (205 against 387 tokens, 74 against 99) and longer on one
+(169 against 94). A separate id field and raw counts are left out
 of what it reads, to limit that (the turn's record keeps them; an id still
 travels inside the citation the model copies). Links stay: the
 hosted backends' privacy filter knows a Reddit post that came through a news

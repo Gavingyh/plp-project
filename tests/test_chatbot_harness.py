@@ -381,3 +381,109 @@ def test_a_plain_decline_counts_as_declining_an_uncovered_bank():
     item = {"expected_behavior": "decline_or_no_data"}
     assert _check_behavior(item, "I can't help with that part of your question. I cover DBS, OCBC and UOB.")["correct"]
     assert not _check_behavior(item, "HSBC sentiment is broadly positive this month.")["correct"]
+
+
+# --- quote detection: two detectors together (validation, 4 Oct 2026) -------------------
+# Five validations each found a quote shape the detector of the day missed: the pattern
+# knows a quote by what stands around its marks, the pairing of marks in order doesn't
+# care. Both now run, the pairing only between the pattern's quotes.
+
+QUOTE_SID = "f" * 24
+QUOTED_REAL = 'What do you think of "DBS Robot" with the 0.5% fees?'    # a Reddit sentence with a quote in it
+QUOTED_INVENTED = "OCBC will cut its dividend next year for sure"
+
+
+def _quote_tracker():
+    item = {"sentence_id": QUOTE_SID, "bank": "DBS", "source": "arctic_shift", "date": "2026-09-01",
+            "text": QUOTED_REAL, "url": "https://r.example/x", "cite_as": f"[DBS, 2026-09-01, sentence_id {QUOTE_SID}]"}
+    return agent._ToolCallTracker.from_calls([{"name": "search_evidence", "arguments": {"query": "q"},
+                                               "result": {"results": [item]}}])
+
+
+@pytest.mark.parametrize("answer, kept", [
+    (f'The screen is 6" wide. One user said "{QUOTED_INVENTED}".', 'The screen is 6" wide. One user said.'),
+    (f'On a 6" phone "{QUOTED_INVENTED}" ok', 'On a 6" phone ok'),
+    (f'Fees: 2" | "{QUOTED_INVENTED}" end', 'Fees: 2" | end'),
+    (f'Consensus is "buy" but one user said "{QUOTED_INVENTED}"(Reddit) and others rate it "hold".',
+     'Consensus is "buy" but one user said (Reddit) and others rate it "hold".'),
+    # A closing mark whose opening was lost, then a quote the pattern can't see
+    (f'The app is bad" and then one user said "{QUOTED_INVENTED}"(Reddit).',
+     'The app is bad" and then one user said (Reddit).'),
+])
+def test_strip_removes_the_invented_quote_and_never_the_text_between_two_quotes(answer, kept):
+    out = agent.enforce_evidence(answer, _quote_tracker(), "q", "strip")
+    assert out == (kept + agent.EVIDENCE_UNMATCHED_NOTE, False)
+
+
+@pytest.mark.parametrize("answer", [
+    'The screen is 6" wide and bright.',
+    'Branch had a 55" TV and a "queue" display.',
+    "Analysts rate DBS a 'strong buy' and OCBC a 'buy'.",
+    "Since the '08 crisis the three banks' margins rose.",
+    "OCBC's and DBS's apps don't crash, the banks' teams say.",
+])
+def test_an_inch_mark_an_apostrophe_or_a_term_in_quote_marks_is_no_quote(answer):
+    assert agent._QUOTE_PATTERN.findall(answer) == []
+
+
+def test_quotes_are_found_in_text_order_and_never_overlap():
+    answer = (f'"{QUOTED_REAL}" and a 6" phone, then "{QUOTED_INVENTED}"(Reddit), «another quote here» and '
+              "'a single quoted passage here' and “a curly quote here”.")
+    spans = list(agent._QUOTE_PATTERN.finditer(answer))
+    assert [m.group(0) for m in spans] == [
+        '"What do you think of "', '" with the 0.5% fees?"', f'"{QUOTED_INVENTED}"',
+        "«another quote here»", "'a single quoted passage here'", "“a curly quote here”"]
+    assert all(a.end() <= b.start() for a, b in zip(spans, spans[1:]))
+
+
+def test_a_quote_the_pattern_finds_stops_an_unclosed_one_shifting_the_pairs():
+    # 04af72a paired the unclosed quote's mark with the next quote's opening, hiding the next quote.
+    answer = f'- One said "a nightmare to use.\n- Another wrote "{QUOTED_INVENTED}"(Reddit).'
+    assert agent._QUOTE_PATTERN.findall(answer) == ['"a nightmare to use.', f'"{QUOTED_INVENTED}"']
+
+
+def test_a_real_quote_with_a_quote_inside_it_passes_and_an_invented_ending_does_not():
+    answer = f'One user asked "{QUOTED_REAL}" [DBS, 2026-09-01, sentence_id {QUOTE_SID}]'
+    assert agent.enforce_evidence(answer, _quote_tracker(), "q", "strip") == (answer, False)
+    invented = answer.replace("with the 0.5% fees?", "a total scam that will collapse soon")
+    out, flagged = agent.enforce_evidence(invented, _quote_tracker(), "q", "strip")
+    assert "collapse soon" not in out or flagged
+
+
+def test_a_marker_left_by_dropping_one_inside_it_goes_too_and_both_are_checked(monkeypatch):
+    # Validation, 4 Oct 2026: "[1[2]]" left "[1]" after the drop, and noting it crashed the turn.
+    tracker = agent._ToolCallTracker()
+    assert agent.enforce_evidence("See note [12[34]] here.", tracker, "q", "strip") == ("See note here.", False)
+    assert sorted(tracker.dropped_marks) == ["[12]", "[34]"]
+    _intent(monkeypatch, None)
+
+    class _Model:
+        name = model = "fake"
+
+        def ask(self, *a, **k):
+            return "DBS reads slightly positive [12[34]]."
+
+    r = answer_turn("How is DBS?", backend=_Model(), verbose=False)
+    assert "[" not in r.answer and sorted(r.unverified_numbers) == ["12", "34"]
+
+
+@pytest.mark.parametrize("answer, quotes", [
+    # Opened straight, closed curly, wrapped onto the next line: once only its first line was read.
+    ('One user said "OCBC will cut its\ndividend next year for sure”',
+     ['"OCBC will cut its\ndividend next year for sure”']),
+    # An unclosed curly quote, then a straight one: the curly mark mustn't take the next quote's opening.
+    (f'One user called the app “a nightmare to use. Another wrote "{QUOTED_INVENTED}" ok.',
+     ["“a nightmare to use. Another wrote", f'"{QUOTED_INVENTED}"']),
+    # A quote never runs past its closing mark of the other style to a later mark.
+    ('"the app keeps crashing on payday”(Reddit) \n- Fees: 2" |', ['"the app keeps crashing on payday”']),
+    ('"the app keeps crashing on payday”[2] The screen is 6" wide.', ['"the app keeps crashing on payday”']),
+    ('|“the app keeps crashing on payday"| Another wrote “the app keeps crashing on payday”and',
+     ['“the app keeps crashing on payday"', "“the app keeps crashing on payday”"]),
+    ('“the app keeps crashing on payday “the fees are far too high for me”',
+     ["“the app keeps crashing on payday", "“the fees are far too high for me”"]),
+    # A quote left open stops before its citation, as the pairing's always did.
+    (f'"the app keeps crashing on payday [DBS, 2026-09-01, sentence_id {QUOTE_SID}]',
+     ['"the app keeps crashing on payday']),
+])
+def test_mixed_quote_marks_close_where_the_quote_does(answer, quotes):
+    assert agent._QUOTE_PATTERN.findall(answer) == quotes

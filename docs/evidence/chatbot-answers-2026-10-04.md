@@ -164,9 +164,10 @@ before the next.
    Every check held; the two flagged figures were the model's own errors
    (5,232 sentences written as "2,232", and "over 20,000 sentences for each
    bank" when OCBC has 6,379). But answers took a median of 68 seconds.
-   Ollama's own timings on three questions, against `main`, showed why
-   once the branch's prompt was cached: the tool results the model reads
-   are longer (see Speed).
+   Ollama's own timings on three questions, against `main`, measured two
+   parts (see Speed): reading the longer tool results, 2.5 to 12 seconds
+   more per answer, and, whenever the prompt wasn't cached, reading the
+   longer prompt again, 14 to 26 seconds.
 5. **Trimmed.** The model was given fewer fields (no links, no separate id
    field, no raw counts; six months of history instead of twelve) and a prompt a quarter
    shorter asking for 50 to 100 words. The median fell to 41 seconds, but
@@ -190,30 +191,41 @@ before the next.
 
 ## After validation
 
-Four validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`)
+Five validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`)
 each found gaps the change had opened in the checks, or old ones it had not
-closed. The checks as they stand after the fourth:
+closed. The checks as they stand after the fifth:
 
-- **Quotes** are found by pairing each paragraph's quote marks in order,
-  first with second and third with fourth, as a reader pairs them, whatever
-  stands around them: '"..."(Reddit)', a table cell '|"..."|', a space inside
-  the marks, mixed straight and curly marks, « ». A pair around fewer than ten
+- **Quotes** are found by two detectors together, as each catches shapes the
+  other misses. A pattern first knows a quote in straight, curly or angle
+  marks by what stands around them: it opens after a space or punctuation
+  and closes before one, so a stray or missing mark (the inch mark in 'a 6"
+  phone', a quote left open) never moves the quotes after it, and a quote
+  holds no other double quote mark. Then, in the text between the pattern's
+  quotes, each paragraph's marks are paired in order, as a reader pairs
+  them, whatever stands around them: '"..."(Reddit)', a table cell
+  '|"..."|', a space inside the marks. A pair around fewer than ten
   characters ('"buy"') is a word in quote marks, not a quote. A mark left
-  without a partner opens a quote that runs to the end of its line, stopping
-  before a citation. Single quotes are left out, as they are mostly
-  apostrophes.
+  without a partner opens a quote that runs to the end of its line, or to
+  the next quote, stopping before a citation. Last, a passage in single
+  quotes counts from three words; an apostrophe inside a word ("OCBC's")
+  neither opens nor closes one.
 - **Numbered markers** the model writes ("[2]", "[2, 3]", "[12-45]") are
   dropped only after the checks have read the model's own text and removed
-  any unretrieved quote or link; the figures of a dropped marker are still
+  any unretrieved quote or link; a drop that leaves a new marker ("[1[2]]"
+  leaves "[1]") is repeated, the figures of every dropped marker are still
   checked, and "[0, 1]" is left as written. At display, a marker inside a
   quote stays only if the quoted sentence has it (one stored sentence has a
   "[1]" footnote). Through the API, history drops the markers and the list
   of sources the reader saw.
 - **A date without its year** is skipped by the figure check only when a
   tool's date field (`data_runs_to`, an evidence item's date) has that month
-  and day, and a day followed by a decimal, a thousands group or "%" is
-  never a date. A date in the model's own search query, a link or a quoted
-  sentence vouches for nothing, and "may" in lower case is the verb.
+  and day, and, after a month, only where the date ends: at an ordinal
+  ("25th"), punctuation, the end of a line, or "and" or "to". With data to 25
+  September, "In September 25 sentences were negative" is a count to check.
+  A day followed by a decimal, a thousands group or "%" is never a date; a
+  range of returned days ("Sept 25-26") is. A date in the model's own search
+  query, a link or a quoted sentence vouches for nothing, and "may" in lower
+  case is the verb.
 - **Tool wording**: a reading or a real topic name in quote marks is not a
   quote; a topic name the model set by passing its own text as the aspect is
   not exempt.
@@ -239,12 +251,63 @@ What each validation found, in short:
    model's own search query counted; and quotes in shapes the pattern never
    matched ('"..."(Reddit)', table cells), also unchecked on `main`. The
    pairing of quote marks replaced the pattern.
+5. The fifth: the pairing broke on one missing or stray mark. A quote left
+   open, or an inch mark ('a 6" phone'), took the next quote's opening mark
+   and hid that quote from strip mode, unflagged, where the pattern had
+   caught it. Quotes in single marks or opened with a closing mark (»...«)
+   were never checked; a count equal to a returned day ("In September 25
+   sentences") was hidden; "[1[2]]" crashed the turn; and "Sept 25-26" and a
+   neutral share the model worked out were flagged, as the evidence search
+   gave no neutral share. The pattern and the pairing were combined, and the
+   search now gives the neutral share.
 
 Each finding has a test in `tests/test_validate_chatbot_*.py`, none of them
 now marked as expected to fail. Re-run over the recorded answers of all
 seven runs, the figure and citation checks flag exactly what they flagged
 before, except round 1's false alarm on "September 25th", cleared because a
-tool had returned that date; so the tables above stand.
+tool had returned that date; so the tables above stand. Over all 955
+recorded answers under `data/eval/`, the fifth round's changes leave every
+citation flag, strip result and figure flag as it was; in one answer, flagged
+already, two made-up source names in single quotes are now found as well.
+
+The combination was also compared with the fourth round's version on made-up
+answers built from quote shapes, stray marks and line breaks, most of them
+odd on purpose: three runs of about 35,000 answers each, not saved. As first
+restored, the pattern read a quote opened straight, wrapped onto a second
+line and closed curly as its first line only (317 of the 334 answers in the
+first run where the old version caught an invented quote and the new one
+didn't), and a quote left open before one in angle marks (« ») still hid
+it. So a quote now holds no other double quote mark, and angle quotes count
+like curly ones. In the end, no answer with one odd shape or none kept an
+invented quote unflagged (the old version: 170 to 200 a run with one); with
+two odd shapes about 13% did (the old version 36%), with three or more about
+28% (60%). Against the old version, the new one caught an invented quote the
+old one let through in 7,770 to 7,891 answers a run, let one through that
+the old one caught in 10 to 18, each with three or more odd shapes, and
+removed a real quote the old one kept in 15 to 20, each with two or more
+(mostly a quote left open, which now runs over the model's own words to the
+end of its line).
+
+**Known limits.** No check that reads quote marks can promise to find every
+quote. What is left:
+
+- A quote is checked through its pieces of three or more words, so after a
+  search a quote of two words passes unchecked; without a search it counts
+  as invented.
+- A single quote mark is also an apostrophe: a single-quoted passage that
+  opens on a digit or has a plural possessive inside ("the banks' fees") is
+  missed or cut short.
+- In a quote that holds another quote of ten or more characters, the words
+  after the inner quote are not checked.
+- Two or more odd shapes at once (a quote left open, a stray mark, spaces
+  inside the marks, mixed marks, a letter or bracket against a mark) can
+  still hide a quote, as in the made-up answers above.
+- A quote left open runs to the end of its line, so a real quote that lost
+  its closing mark is removed with the words after it on that line.
+- A marker range the model writes ("[12-45]") is dropped from what the
+  reader sees; its figures are still checked.
+- After a month, a returned day with a word after it ("September 25 for
+  DBS") is checked as a figure: a false alarm rather than a hidden figure.
 
 ## The seven questions again, after
 
@@ -272,10 +335,11 @@ Ollama's own timings, on three questions asked through `main` and through
 the final round's version (the fuller prompt, every field), show what the
 change costs once its prompt is cached: reading the tool's result before
 answering took about 3.5 to 8.5 seconds on `main` and 6 to 17 on the
-branch, because the results are longer. The answers were not longer: the
-branch's were shorter on two of the three questions (205 against 387 tokens,
-74 against 99), and answers were written at about 5 to 11 tokens a second
-across that day's runs. Asked alternately, the
+branch, because the results are longer. The answers were not longer
+overall: the branch's were shorter on two of the three questions (205
+against 387 tokens, 74 against 99) and longer on one (169 against 94), and
+answers were written at about 5 to 11 tokens a second across that day's
+runs. Asked alternately, the
 per-question times were 20 against 46 seconds (DBS overall), 34 against 63
 (a trend) and 82 against 84 (a comparison, where `main`'s answer ran to 387
 tokens). Much of those gaps was the branch re-reading its whole prompt on
@@ -286,8 +350,9 @@ was not isn't known: with one slot, alternating should have evicted both.
 So the slowdown has two measured parts, reading the longer tool results
 (2.5 to 12 seconds more per answer in that run) and, whenever the prompt
 isn't cached, reading the longer prompt again (14 to 26 seconds); these
-runs don't split the 26-second gap between the medians before and after
-between them. The block run and the window run below used the trimmed version (shorter prompt,
+runs don't say how much of the 26-second gap, between the before run's
+average of about 35 seconds an answer and the kept version's median of 61,
+each part makes up. The block run and the window run below used the trimmed version (shorter prompt,
 fewer fields), started at 16:33: asked as a block, it re-read its prompt
 only for the first question (37.9 seconds, then 0.6 and 0.5).
 

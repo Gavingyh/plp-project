@@ -543,9 +543,11 @@ def _evidence_context(bank: str | None, aspect: str | None) -> dict:
             r = _for_reader(get_sentiment(bank, aspect))
             # Named for what it is: given the bank's overall score under a neutral name, the
             # model reported it as the score for the topic it had asked about (4 Oct 2026).
+            # The neutral share too: a model that worked it out from the other two was flagged
+            # for a figure no tool returned (validation, 4 Oct 2026).
             out["topic_score" if aspect else "bank_overall_score"] = {
-                k: r[k] for k in ("topic_name", "reading", "score", "n", "positive_pct", "negative_pct",
-                                  "insufficient_data") if k in r}
+                k: r[k] for k in ("topic_name", "reading", "score", "n", "positive_pct", "neutral_pct",
+                                  "negative_pct", "insufficient_data") if k in r}
         out["data_runs_to"] = _data_runs_to(bank)
     except sqlite3.Error as e:
         logger.warning("no score or data date for the evidence: %s", e)

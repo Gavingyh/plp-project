@@ -349,6 +349,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> each changes the database or git, so each needs a yes. (1) <b>Earnings dates:</b> 6 UOB earnings documents (114 sentences, 2023–2024 results) are dated 10 Sep 2026, their extraction day, so they count in the 7- and 30-day windows; the parser is fixed and <code>scripts/fix_earnings_dates.py --apply</code> repairs the rows. Rehearsed on a copy on 3 Oct: UOB's 30-day headline goes from +0.315 on 211 sentences to +0.251 on 97, because 114 of those 211 are these old results; nothing else changes. (2) <b>Reddit gaps:</b> three months lost most of their comments when a page kept failing: Sep 2021 has 10 (neighbours 107 and 82), May 2024 has 167 (513 and 385), Mar 2025 has 89 (497 and 377). The fetcher no longer marks such a month done; refilling means a network pull and new rows. (3) <b>CNA text in git:</b> <code>ingest/cna_articles.json</code> holds the full text of 15 CNA articles, against the rule that CNA text is never committed; removing it is one <code>git rm</code>, but teammates lose their copy on the next pull and it stays in git history.</p>
       <span class="meta">Source: HANDOFF, 3 Oct; <code>scripts/fix_earnings_dates.py</code> (dry run by default).</span>
     </li>
+    <li data-o="decide">
+      <span class="t">Word the Grounded chatbot claim to match what the checks can promise <span class="chip decide">Decision</span></span>
+      <span class="when">before the chatbot branch is merged</span>
+      <p class="why"><b>Why:</b> the claim says the chatbot "never" presents evidence no tool returned. The validations of the branch <code>fix/chatbot-answers</code> on 4 and 5 Oct showed that a check reading quote marks can't promise that for every way a quote can be written: each fix caught new shapes and missed others. The branch checks quotes in double, curly and angle marks, single-quoted passages, links, sentence ids and figures; the shapes it still misses are listed under "Known limits" in <code>docs/evidence/chatbot-answers-2026-10-04.md</code> on the branch. Options: keep "never" and treat each new shape as a bug, or reword the claim to name what is checked and record the limits here.</p>
+      <span class="meta">Source: <code>docs/validation/2026-10-04-chatbot-answers*.md</code> on the branch.</span>
+    </li>
     <li data-o="team">
       <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>
       <span class="when">by 12 Oct</span>

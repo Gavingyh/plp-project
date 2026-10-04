@@ -9,8 +9,9 @@ as the bank. That is wrong for the cases this module exists for:
 - POSB is DBS's retail brand (an alias since 4 Oct 2026, so alias matching
   finds it too);
 - Bank of Singapore and Great Eastern are OCBC subsidiaries;
-- UOB Kay Hian and DBS Vickers are brokers, not the bank's own business
-  (PLAN section 7; see RESOLUTION for the one line that decides this);
+- UOB Kay Hian is a separate broker, not UOB's own business; DBS Vickers,
+  DBS's own brokerage, counts as DBS (decided 4 Oct 2026, PLAN section 2;
+  see RESOLUTION for the line that decides each);
 - "Aston Martin DBS" and "deep brain stimulation (DBS)" are not banks.
 
 Recognition is spaCy's pretrained English pipeline with an entity ruler in
@@ -46,7 +47,7 @@ RESOLUTION = [
     (r"aston\s+martin", NOT_BANK),
     (r"deep\s+brain|brain\s+stimulation", NOT_BANK),
     (r"kay\s*hian|\buobkh\b", NOT_BANK),          # UOB Kay Hian: a separate broker
-    (r"vickers", NOT_BANK),                         # DBS Vickers: PLAN section 7 treats brokers as not the bank
+    (r"vickers", "DBS"),                            # DBS Vickers: a DBS subsidiary, counted as DBS (decided 4 Oct 2026)
     (r"bank\s+of\s+singapore", "OCBC"),             # OCBC's private bank
     (r"great\s+eastern", "OCBC"),                   # OCBC's insurer
     (r"\bposb\b", "DBS"),                           # DBS's retail brand
@@ -105,13 +106,13 @@ def mentions(doc) -> list[tuple[str, str, str]]:
 # The fallback: bank names glued to punctuation ("DBS/", "OCBC+", "UOB$",
 # "D05.SI", "www.ocbc.com") become one token that neither the ruler nor the
 # statistical model sees. Any such name outside an entity already resolved
-# still counts, unless it sits inside a not-the-bank entity ("DBS Vickers").
+# still counts, unless it sits inside a not-the-bank entity ("UOB Kay Hian").
 # A digit may follow the name: products such as "OCBC360" are written as one
 # word (62 corpus sentences on 2 Oct; the Opus rater caught one in the gold sheet).
 _FALLBACK = re.compile(r"\b(?:posb|dbs|d05|ocbc|o39|uob|u11)(?=\d|\b)", re.IGNORECASE)
-# Not-the-bank names found in the raw text for the same reason: "DBS Vickers/"
-# tokenizes as "DBS" + "Vickers/", so the ruler never sees the broker.
-_NOT_BANK_TEXT = re.compile(r"\bdbs\W{0,2}vickers|\buob\W{0,2}kay\W{0,2}hian|\bkay\W{0,2}hian|\buobkh\b"
+# Not-the-bank names found in the raw text for the same reason: "UOB Kay Hian/"
+# tokenizes as "UOB", "Kay" and "Hian/", so the ruler may never see the broker.
+_NOT_BANK_TEXT = re.compile(r"\buob\W{0,2}kay\W{0,2}hian|\bkay\W{0,2}hian|\buobkh\b"
                             r"|aston\W+martin\W+dbs|deep\W+brain\W+stimulation", re.IGNORECASE)
 
 
@@ -165,9 +166,8 @@ empty if it is about none of them. Then put your role in `annotator`.
 Rules (PLAN section 7, DESIGN decision 18):
 
 - POSB counts as DBS. Bank of Singapore and Great Eastern count as OCBC.
-- UOB Kay Hian and DBS Vickers are brokers: they do NOT count as the bank.
-  If the team decides DBS Vickers should count as DBS, change the `vickers`
-  line in `preprocess/bank_ner.py` RESOLUTION and say so in `notes`.
+- DBS Vickers counts as DBS (decided 4 Oct 2026). UOB Kay Hian is a
+  separate broker: it does NOT count as UOB.
 - "Aston Martin DBS" and medical DBS (deep brain stimulation) are not banks.
 - A bank named only as a place or a payment rail ("paid via DBS PayNow")
   still counts: this task is about which bank is named, not about relevance.

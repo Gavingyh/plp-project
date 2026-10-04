@@ -10,13 +10,12 @@ source an article came from:
    "UOB Singapore" query returns general Singapore economy stories.
 
 2. Broker and venue false positives. Names like "UOB Kay Hian" (a separately
-   listed broker), "DBS Vickers" and "OCBC Arena" contain a bank's name but
-   are not about the bank's own business. These phrases are masked before the
-   bank-mention check, so "UOB Kay Hian upgrades DBS" counts as a DBS article
-   and "UOB Kay Hian names top picks" counts as no bank at all.
-   The masking is news-only. ingest/base.py's detect_banks is left alone,
-   because Reddit complaints about a DBS Vickers trading account are
-   plausibly about DBS the group.
+   listed broker) and "OCBC Arena" contain a bank's name but are not about the
+   bank's own business. These phrases are masked before the bank-mention
+   check, so "UOB Kay Hian upgrades DBS" counts as a DBS article and "UOB Kay
+   Hian names top picks" counts as no bank at all. DBS Vickers, DBS's own
+   brokerage, is not masked: it counts as DBS (decided 4 Oct 2026), as it
+   does in ingest/base.py's detect_banks and in bank recognition.
 
 3. Cross-source dedup. The same story arrives via Yahoo and Google News, and
    wire copy is syndicated across outlets. A candidate is a duplicate when its
@@ -76,7 +75,6 @@ _MENTION = {
 # entry is (label, pattern). Matches are masked before the mention check.
 FALSE_POSITIVES = [
     ("UOB Kay Hian", r"UOB[\s-]*Kay[\s-]*Hian|UOBKH"),
-    ("DBS Vickers", r"DBS[\s-]*Vickers"),
     ("OCBC Securities", r"OCBC[\s-]*Securities"),
     ("OCBC Arena", r"OCBC[\s-]*Arena"),
     ("OCBC Square", r"OCBC[\s-]*Square"),

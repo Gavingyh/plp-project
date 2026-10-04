@@ -56,7 +56,7 @@ RSS_URL = "https://news.google.com/rss/search"
 EDITION = {"hl": "en-SG", "gl": "SG", "ceid": "SG:en"}
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; plp-research/1.0; academic project)"}
 
-_EXCLUDE = '-"Kay Hian" -Vickers -"OCBC Arena" -"OCBC Cycle"'
+_EXCLUDE = '-"Kay Hian" -"OCBC Arena" -"OCBC Cycle"'   # DBS Vickers counts as DBS since 4 Oct 2026
 QUERIES = {
     "DBS": ['"DBS Group" Singapore', "DBS bank Singapore",
             f"intitle:DBS (bank OR Singapore OR SGX OR POSB OR PayLah) {_EXCLUDE}"],

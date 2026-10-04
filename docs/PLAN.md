@@ -40,14 +40,33 @@ fine-tuned deep neural network; Python.
 | **No personal names in the repository** | Team preference; work is split offline | Ownership is recorded by role (section 4); contribution summaries go in the report only |
 | **The daily ingestion job is not running on any machine** | Stopped on 26 Sep at the team's request. Over its three runs Yahoo added nothing and one run failed at wake-up before the network was up | The corpus is frozen at 26 Sep unless someone runs `run_news_pull.py` / `run_daily_batch.py` by hand. `scripts/com.plp.dailybatch.plist` remains as a template |
 
+### Made on 2026-10-04
+
+By the project owner, from the decision brief (`docs/briefs/decisions-2026-10-02.html`, numbers in brackets). Each is built on its own branch and applied in the re-score week, not before.
+
+| decision | evidence | consequence |
+|---|---|---|
+| **DBS Vickers counts as DBS** (6) | DBS Group's list of subsidiaries, 31 Dec 2024 (section 7) | Bank recognition resolves "DBS Vickers" to DBS; UOB Kay Hian stays a separate broker. About 456 sentences change attribution if NER is applied |
+| **POSB counts as DBS at collection** (14) | DBS acquired POSBank in 1998, and POSB runs as a DBS brand | "POSB" joins the DBS aliases in `ingest/base.py`. Affects future collection only: POSB-only posts and sentences missed so far come back only if collection is run again |
+| **Hosted backends never receive Reddit, CNA or unlisted-source text** (13) | The safe default; Reddit's developer policy restricts third-party use of its content | The Claude and OpenAI/Groq backends withhold that evidence and earlier answers, as Gemini does since 4 Oct |
+| **Earnings PDF links become relative paths** (10) | The developer's macOS username is in 178 document and 12,254 sentence URLs, every snapshot and 29 committed files (audit, 4 Oct) | Code first; the database rewrite runs in the re-score week, with a backup |
+| **The 7- and 30-day windows count back from the newest sentence**, labelled "as of" its date (12) | The newest sentence is from 25 Sep and collection is stopped, so a rebuild after 12 Oct would leave the 7-day window empty (`aggregate/index.py`) | The tools, the prompt, the starter questions and the API say "as of <date>"; the dashboard owner adds the label to the dashboard |
+| **Demo chatbot model: `llama3.1:8b`** (11) | On 4 Oct the 3B was not faster (median 20.7 s a question against 22.2 s) and called the wrong tool for the trend question ([chatbot-intent](evidence/chatbot-intent-2026-10-04.md)) | The default chatbot model changes from `llama3.2:3b` |
+| **Chatbot evidence settings on: `CHATBOT_ENFORCE_EVIDENCE=strip`, `CHATBOT_ASPECT_QUERY=1`** (8) | With strip, no invented citation in the 4 Oct live run; ranking by the aspect's name lifts retrieval MRR from 0.217 to 0.559 ([chatbot-eval-build](evidence/chatbot-eval-build-2026-10-01.md)) | Both become the defaults in `config/chatbot.yaml` |
+| **Labels: the human labels stay where Opus disagrees** (202 aspects, 173 sentiments); no full relabel | Opus is an additional rater, never the gold label (DESIGN decision 22) | Only the rows on the economist and wealth-or-retail boundaries are fixed, after the team decides those two rules |
+| **Passing mentions stay** (9) | The default; they are about 6% of sentences | No filtering; the report gives the 6% |
+
 ### Still open
 
 | decision | who | by |
 |---|---|---|
-| **Blended index:** one blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text | team | 5 Oct |
-| **Demo model:** the default chatbot model for the demo. `llama3.1:8b` fabricates citations 13% of the time, `llama3.2:3b` 43–48%, but the 8B is slower. The harness now detects fabrication but can't prevent it, so this choice decides how many flagged answers a demo shows | team | 19 Oct |
+| **Aspect method:** the LLM's aspects replace the centroids, and the rule where two models disagree (brief, 1) | team | 5 Oct |
+| **Test split:** relabel the 299 test rows blind, or keep them and report the anchoring (brief, 2) | team | 5 Oct |
+| **Blended index:** one blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text (brief, 3) | team | 5 Oct |
+| **Bank economists:** whether a bank economist's macro forecast is "about the bank" (brief, 4) | team | 5 Oct |
+| **Wealth or retail** for priority-banking and investment products (brief, 5) | team | 5 Oct |
+| **Scoring model:** base FinBERT or the retrained fine-tuned average, and the margin (brief, 7) | team | 12 Oct |
 | **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
-| **Passing mentions:** stricter relevance filtering for passing mentions ("paid via DBS PayNow"). It changes the data, so it must be decided before the final pipeline run | team | 12 Oct |
 
 ---
 
@@ -224,6 +243,9 @@ subsidiaries, 31 Dec 2024); UOB Kay Hian is separately listed. The broker
 rule is therefore under review for DBS Vickers only: see
 `docs/evidence/bank-ner-2026-10-01.md` and the DBS Vickers question in
 `docs/local-context-questions.md`.
+
+*Decided 4 Oct:* DBS Vickers counts as DBS (section 2, made on 2026-10-04);
+UOB Kay Hian stays "not the bank".
 
 ---
 

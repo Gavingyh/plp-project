@@ -153,6 +153,8 @@ th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--rule
 th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
 .rec { border-left: 3px solid var(--ai); background: var(--surface); padding: 10px 14px; margin: 8px 0 6px; font-size: 14.5px; }
 .rec p { margin: 0; }
+.chip.done { color: var(--ground); background: var(--accent); }
+.decided { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; margin: 0 0 12px; font-size: 14.5px; }
 .rec b { color: var(--ai); }
 .ifnot { color: var(--muted); font-size: 13.5px; margin: 4px 0 0; }
 .summary li { margin-bottom: 6px; }
@@ -162,8 +164,8 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 <div class="wrap">
 <header class="mast">
   <div class="eyebrow"><span>PLP practice module</span><span>Decision brief</span><span>Sun 4 Oct 2026</span></div>
-  <h1>Fourteen decisions, with the evidence and a recommendation each</h1>
-  <p class="lede">For a team meeting before Monday 5 October. Each decision lists the options, what the evidence says about each, a recommendation, and what happens by default if nobody decides. The recommendations are Claude's reading of the evidence; the decisions are the team's.</p>
+  <h1>Fifteen decisions: nine settled on 4 October, six for the team</h1>
+  <p class="lede">For a team meeting before Monday 5 October. The project owner settled nine on 4 October (marked <b>Decided</b>, with the evidence); the team decides 1–5 and 7. Each decision lists the options, what the evidence says about each, a recommendation, and what happens by default if nobody decides. The recommendations are Claude's reading of the evidence; the decisions are the team's.</p>
   <div class="countdown"><b>5</b> decisions are due by Mon 5 Oct</div>
 </header>
 <section aria-labelledby="h-sum">
@@ -174,15 +176,16 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
     <li><a href="#d-o2">Blended index</a>: blended headline with the per-source rows beside it.</li>
     <li><a href="#d-econ">Bank economists</a>: not about the bank; macro stays a thin aspect.</li>
     <li><a href="#d-wealth">Wealth or retail</a>: decide by product.</li>
-    <li><a href="#d-vickers">DBS Vickers</a>: count it as DBS.</li>
+    <li><b>Decided:</b> <a href="#d-vickers">DBS Vickers</a>: count it as DBS.</li>
     <li><a href="#d-scoring">Scoring model</a>: the retrained fine-tuned average, with the margin chosen on dev (0.10) and argmax beside it; on test the margin makes no measurable difference.</li>
-    <li><a href="#d-chat">Chatbot</a>: strip enforcement and the aspect query both on.</li>
-    <li><a href="#d-o5">Passing mentions</a>: keep them; report the 6%.</li>
-    <li><a href="#d-paths">PDF links</a>: rewrite to relative paths in the re-score.</li>
-    <li><a href="#d-o3">Demo model</a>: <code>llama3.1:8b</code> with strip on.</li>
-    <li><a href="#d-window">Recent windows</a>: anchor them to the newest sentence.</li>
-    <li><a href="#d-hosted">Hosted backends</a>: withhold Reddit and CNA text from all of them.</li>
-    <li><a href="#d-posb">POSB</a>: count it as DBS at collection.</li>
+    <li><b>Decided:</b> <a href="#d-chat">Chatbot</a>: strip enforcement and the aspect query both on.</li>
+    <li><b>Decided:</b> <a href="#d-o5">Passing mentions</a>: keep them; report the 6%.</li>
+    <li><b>Decided:</b> <a href="#d-paths">PDF links</a>: rewrite to relative paths in the re-score.</li>
+    <li><b>Decided:</b> <a href="#d-o3">Demo model</a>: <code>llama3.1:8b</code> with strip on.</li>
+    <li><b>Decided:</b> <a href="#d-window">Recent windows</a>: anchor them to the newest sentence.</li>
+    <li><b>Decided:</b> <a href="#d-hosted">Hosted backends</a>: withhold Reddit and CNA text from all of them.</li>
+    <li><b>Decided:</b> <a href="#d-posb">POSB</a>: count it as DBS at collection.</li>
+    <li><b>Decided:</b> <a href="#d-labels">Opus disagreements</a>: keep the human labels; fix only the boundary rows.</li>
   </ol>
   <p class="sub">Also needed, not a decision: the OpenAI-compatible backend (by 19 Oct) needs a Groq key to be verified or the claim dropped.</p>
 </section>
@@ -248,7 +251,8 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-vickers">
-  <h3>6. DBS Vickers: the bank, or a separate broker? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <h3>6. DBS Vickers: the bank, or a separate broker? <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> DBS Vickers counts as DBS; UOB Kay Hian stays a separate broker. Evidence: DBS Group's list of subsidiaries, 31 Dec 2024.</p>
   <p class="q">456 sentences change attribution on this rule alone, about three fifths of everything NER changes. Who owns it is settled: DBS Vickers Securities (Singapore) is in DBS Group's own list of subsidiaries (<a href="https://www.dbs.com/iwov-resources/images/investors/other-materials/2025/list-of-subsi-and-assoc.pdf" target="_blank" rel="noopener">31 Dec 2024</a>); UOB Kay Hian is separately listed on SGX, with UOB holding about a third.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>A broker (current rule)</b></td><td>Rests on the plan's "brokers, not the bank's own business", which is true of UOB Kay Hian but not of DBS Vickers. Removes 456 sentences from DBS.</td></tr>
@@ -270,7 +274,8 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-chat">
-  <h3>8. Chatbot settings: strip invented evidence; rank evidence by the aspect's name <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <h3>8. Chatbot settings: strip invented evidence; rank evidence by the aspect's name <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> both on by default: <code>CHATBOT_ENFORCE_EVIDENCE=strip</code> and <code>CHATBOT_ASPECT_QUERY=1</code>. Evidence: with strip, no invented citation in the 4 Oct live run; ranking by the aspect's name lifts retrieval MRR from 0.217 to 0.559.</p>
   <p class="q">Both are built and off by default.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b><code>CHATBOT_ENFORCE_EVIDENCE=strip</code></b></td><td>Replayed on 3 Oct with stricter guards (quoted text, signs and percentages now checked): citation warnings 11 → 0 on the 8B and 16 → 0 on the 3B; answers with a figure no tool returned 10 → 0 and 12 → 2, both inventions the check now catches. Live on 2 Oct, tool choice unchanged. Answers that didn't search show no quotes and say why.</td></tr>
@@ -281,7 +286,8 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-o5">
-  <h3>9. Drop passing mentions from the corpus? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <h3>9. Drop passing mentions from the corpus? <span class="chip done">Default kept, 4 Oct</span></h3>
+  <p class="decided"><b>Settled 4 Oct:</b> the default applies; passing mentions stay, and the report gives their share (about 6%).</p>
   <p class="q">"Paid via DBS PayNow" in a thread about something else.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Drop them</b></td><td>Needs a filter applied before the final re-score; changes the data late.</td></tr>
@@ -292,7 +298,8 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-paths">
-  <h3>10. Earnings-PDF links as relative paths? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <h3>10. Earnings-PDF links as relative paths? <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> earnings PDF links are rewritten to relative paths during the re-score. Evidence: the developer's macOS username is in 178 document and 12,254 sentence URLs, every snapshot and 29 committed files.</p>
   <p class="q">12,254 earnings sentences store a local file path as their URL, carrying the developer's macOS username into the database, every snapshot and 25 committed files.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Rewrite to relative paths</b></td><td>A database change; do it in the re-score week with the rest. Fixes privacy and portability.</td></tr>
@@ -303,7 +310,8 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-o3">
-  <h3>11. The demo chatbot model <span class="chip decide">Team decision</span> <span class="when">by 19 Oct</span></h3>
+  <h3>11. The demo chatbot model <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> <code>llama3.1:8b</code>. Evidence: on 4 Oct the 3B was not faster and called the wrong tool for the trend question.</p>
   <p class="q">With strip enforcement on, neither local model shows invented citations.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b><code>llama3.1:8b</code></b></td><td>Right tool 20 of 24 on 1 Oct; 21 and 22 of 24 on 4 Oct with the intent classifier, which sorts 100 of 103 labelled questions correctly with the same model. On 4 Oct, five gold-set questions took a median of 22.2 seconds each (12 to 45).</td></tr>
@@ -315,7 +323,8 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-window">
-  <h3>12. Recent windows: anchor to the newest data, or collect up to the re-score? <span class="chip decide">Team decision</span> <span class="when">before the re-score</span></h3>
+  <h3>12. Recent windows: anchor to the newest data, or collect up to the re-score? <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> the 7- and 30-day windows count back from the newest sentence, labelled "as of" its date. Evidence: the newest sentence is from 25 Sep, so a rebuild after 12 Oct would otherwise leave the 7-day window empty.</p>
   <p class="q">The 7-day and 30-day windows count back from the moment the index is rebuilt. The newest sentence is from 25 Sep and collection is stopped, so a rebuild during 12–18 Oct leaves the 7-day window empty and the 30-day one nearly so.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what it means</th></tr></thead><tbody>
 <tr><td><b>Anchor to the newest sentence</b></td><td>A small code change; "lately" means the week before 25 Sep, and the screen and the chatbot must say "as of" that date.</td></tr>
@@ -326,17 +335,24 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 </div>
 
 <div class="dec" id="d-hosted">
-  <h3>13. Reddit and CNA text to the paid hosted backends? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <h3>13. Reddit and CNA text to the paid hosted backends? <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> every hosted backend (Gemini, Claude, OpenAI or Groq) is denied Reddit, CNA and unlisted-source text. Evidence: the safe default; Reddit's developer policy restricts third-party use of its content.</p>
   <p class="q">Since 4 Oct the Gemini backend never receives Reddit text, CNA text or text from an unlisted source (<code>config/sources.yaml</code>). The Claude and OpenAI backends still do.</p>
   <div class="rec"><p><b>Recommendation:</b> apply the same rule to every hosted backend unless CNA's terms allow sending its text to an outside service; Reddit text is other people's posts either way.</p></div>
   <p class="ifnot">If not decided by the date: only Gemini withholds them.</p>
 </div>
 
 <div class="dec" id="d-posb">
-  <h3>14. Count POSB as DBS at collection? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
+  <h3>14. Count POSB as DBS at collection? <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> POSB counts as DBS at collection. Evidence: DBS acquired POSBank in 1998, and POSB runs as a DBS brand. Posts and sentences already missed come back only if collection is run again.</p>
   <p class="q">The news filter and the bank tagging count POSB as DBS; the aliases used at collection (<code>ingest/base.py</code>) don't. A Reddit post naming only POSB is never stored (<code>ingest/arctic_shift.py:139-140</code>), and a sentence naming only POSB is dropped at segmentation (<code>preprocess/pipeline.py:66-73</code>).</p>
   <div class="rec"><p><b>Recommendation:</b> add it. It affects future collection only: the posts and sentences already missed come back only if collection is run again for those periods.</p></div>
   <p class="ifnot">If not decided by the date: POSB-only posts and sentences stay out of the corpus.</p>
+</div>
+
+<div class="dec" id="d-labels">
+  <h3>15. Opus disagreements: relabel, or keep the human labels? <span class="chip done">Decided 4 Oct</span></h3>
+  <p class="decided"><b>Decided 4 Oct:</b> the human labels stay where Opus disagrees (202 aspect and 173 sentiment labels), and there is no full relabel. Only the rows on the bank-economist (4) and wealth-or-retail (5) boundaries are fixed, after the team decides those two rules; they are listed in <code>data/labeled/boundary-review-2026-10-04.csv</code>. Evidence: Opus is an additional rater, never the gold label (DESIGN decision 22).</p>
 </div>
 </section>
 <footer>Evidence: the files in <code>docs/evidence/</code>, summarised in <code>docs/report/findings-limitations-solutions.md</code>; the full to-do list is the team to-do page. Once decided, record each in <code>docs/DESIGN.md</code> or <code>docs/PLAN.md</code>.</footer>

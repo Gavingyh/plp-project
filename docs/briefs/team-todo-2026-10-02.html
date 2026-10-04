@@ -271,10 +271,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Unblocks: the three-model evaluation (Claude, about 45 min each).</span>
     </li>
     <li data-o="team">
-      <span class="t">Opus disagreements: the human labels stay. Optional: check the 80 test rows without seeing either label <span class="chip team">People</span></span>
-      <span class="when">decided 4 Oct; check by 12 Oct</span>
-      <p class="why"><b>Decided 4 Oct:</b> where Opus disagreed with our labels (202 aspects, 173 sentiments), the human labels are kept, and the findings say so. Nobody needs to relabel those 375 rows. <b>Why the check:</b> the disagreements are on boundaries, not plain mistakes (every sentiment one is about where neutral ends, and in 118 of the 173 our label is the suggestion we were shown), so a spot check can't settle them. For the report to say the labels were reviewed, one person goes through the 80 on the test split without seeing our label or Opus's, about an hour. If they mostly side with our labels, say so; if not, raise it before the models are re-evaluated. The 63 wealth-or-retail rows follow the wealth/retail decision, whatever it is.</p>
-      <span class="meta">Source: opus-labeller; findings, section 1. Claude can make the blind sheet of the 80 rows on request.</span>
+      <span class="t">Fix only the boundary rows, after the team decides the economist and wealth-or-retail rules <span class="chip team">People</span></span>
+      <span class="when">after 4 and 5 are decided</span>
+      <p class="why">After the team decides #4 and #5, fix only the boundary rows in <code>data/labeled/boundary-review-2026-10-04.csv</code>. <b>Decided 4 Oct:</b> the human labels stay where Opus disagrees (202 aspects, 173 sentiments), with no full relabel.</p>
+      <span class="meta">Decision 15 in the decision brief. The list is on the branch <code>data/boundary-review</code> until it is merged.</span>
     </li>
   </ul>
 </section>
@@ -295,10 +295,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> NER is the project's third text-mining task, and it has no human accuracy figure until these are labelled. Against Opus as a stand-in it matches 200 of 201, but Opus was given the same rules NER encodes, so it can't test the rules.</p>
       <span class="meta">File: <code>data/labeled/ner/gold_sheet.csv</code>. Source: bank-ner.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Confirm that DBS Vickers counts as DBS <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> 456 sentences change attribution on this one rule, about three fifths of everything NER changes. Checked on 2 Oct: DBS Vickers is a DBS subsidiary (in DBS Group's own list of subsidiaries), and the 456 are customers using it as their broker. The rule already applied to POSB and PayLah!, that subsidiaries count as the parent, makes it DBS; the plan had grouped it with UOB Kay Hian, which is separately listed and stays out. One line in <code>preprocess/bank_ner.py</code> once confirmed.</p>
+    <li data-o="ai">
+      <span class="t">Confirm that DBS Vickers counts as DBS <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> DBS Vickers counts as DBS (DBS Group's list of subsidiaries, 31 Dec 2024). Claude builds it on its own branch. <b>Why:</b> 456 sentences change attribution on this one rule, about three fifths of everything NER changes. Checked on 2 Oct: DBS Vickers is a DBS subsidiary (in DBS Group's own list of subsidiaries), and the 456 are customers using it as their broker. The rule already applied to POSB and PayLah!, that subsidiaries count as the parent, makes it DBS; the plan had grouped it with UOB Kay Hian, which is separately listed and stays out. One line in <code>preprocess/bank_ner.py</code> once confirmed.</p>
       <span class="meta">Source: bank-ner; local-context questions (DBS Vickers).</span>
     </li>
     <li data-o="decide">
@@ -307,28 +307,28 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> the stored scores are base FinBERT's, so the DNN the rubric requires doesn't yet affect what the product shows. The 1 Oct seeds were trained from a relabelled head (a bug, fixed 3 Oct). <b>Retrained on 4 Oct</b>, every seed beats base FinBERT (test macro-F1 0.646, 0.592 and 0.625; mean 0.621 ± 0.027 against 0.571), and the average of the three matches base on accuracy (0.702 against 0.699). On the full corpus the retrained average barely moves the headlines (within 0.015 of base with the margin: DBS +0.132, OCBC +0.122, UOB +0.084) and agrees with base FinBERT on every aspect's sign; seed 42 alone still raises every headline, so the level depends on the seed. Two choices: the retrained seeds or the 1 Oct ones, and whether to keep the neutral margin. Tuned on dev for the averaged model, the margin is 0.10 (a single-model stand-in: no clean dev set exists for the three-seed average); on test it makes no measurable difference (0.612 against 0.634 at argmax, paired bootstrap interval −0.058 to +0.009), and the test result can't be used to drop it: keep 0.10 and report argmax beside it. State the criterion first. For the report: the input change chosen on 1 Oct proved no better on two more seeds, so credit no single change for the gain.</p>
       <span class="meta">Source: retrain and ensemble-margin (4 Oct), finetune-fixes, error-analysis, index-preview, noise-floor-cv. Decision 7 in the decision brief. <code>scripts/rescore.py</code> still defaults to the 1 Oct seeds.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Decide the chatbot's settings: strip invented evidence, and rank evidence by the aspect's name <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> both are built and off by default. <code>CHATBOT_ENFORCE_EVIDENCE=strip</code> takes citation warnings from 11 to 0 on the 8B and 16 to 0 on the 3B (replayed on 3 Oct with stricter guards that check quoted text, signs and percentages), with tool choice unchanged in the live runs; answers that didn't search simply show no quotes. <code>CHATBOT_ASPECT_QUERY=1</code> makes evidence more on topic (MRR 0.559 against 0.217) but often returns report boilerplate.</p>
+    <li data-o="ai">
+      <span class="t">Decide the chatbot's settings: strip invented evidence, and rank evidence by the aspect's name <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> both on by default. Claude builds it on its own branch. <b>Why:</b> both are built and off by default. <code>CHATBOT_ENFORCE_EVIDENCE=strip</code> takes citation warnings from 11 to 0 on the 8B and 16 to 0 on the 3B (replayed on 3 Oct with stricter guards that check quoted text, signs and percentages), with tool choice unchanged in the live runs; answers that didn't search simply show no quotes. <code>CHATBOT_ASPECT_QUERY=1</code> makes evidence more on topic (MRR 0.559 against 0.217) but often returns report boilerplate.</p>
       <span class="meta">Source: chatbot-eval-build, "Second round".</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Anchor the 7-day and 30-day windows to the newest data, or resume collection first <span class="chip decide">Decision</span></span>
-      <span class="when">before the re-score</span>
-      <p class="why"><b>Why:</b> the windows count back from the moment the index is rebuilt, not from the newest sentence. The newest sentence is from 25 Sep and the daily collection is stopped, so a rebuild during the 12–18 Oct re-score would leave the 7-day window empty and the 30-day one nearly so: every "lately" answer, trend and recent score would read "not enough data". Either anchor the windows to the newest sentence's date (a small code change; the screen should then say "as of 25 Sep"), or run the collection up to the re-score.</p>
+    <li data-o="ai">
+      <span class="t">Anchor the 7-day and 30-day windows to the newest data, or resume collection first <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> count back from the newest sentence, labelled "as of" its date. Claude builds it on its own branch. <b>Why:</b> the windows count back from the moment the index is rebuilt, not from the newest sentence. The newest sentence is from 25 Sep and the daily collection is stopped, so a rebuild during the 12–18 Oct re-score would leave the 7-day window empty and the 30-day one nearly so: every "lately" answer, trend and recent score would read "not enough data". Either anchor the windows to the newest sentence's date (a small code change; the screen should then say "as of 25 Sep"), or run the collection up to the re-score.</p>
       <span class="meta">Source: <code>aggregate/index.py</code>, <code>_compute_rows_for_window</code>; today's index has 33, 10 and 7 sentences in the 7-day window (DBS, OCBC, UOB), computed 30 Sep.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Should the Claude and OpenAI backends also withhold Reddit and CNA text? <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> since 4 Oct the Gemini backend never receives Reddit text (other people's posts) or CNA text (which stays within the team), nor text from any source not in <code>config/sources.yaml</code>. The paid Claude and OpenAI backends still receive both. If CNA's terms keep its text within the team, sending it to any outside service may breach them.</p>
+    <li data-o="ai">
+      <span class="t">Should the Claude and OpenAI backends also withhold Reddit and CNA text? <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> yes: every hosted backend is denied Reddit, CNA and unlisted-source text. Claude builds it on its own branch. <b>Why:</b> since 4 Oct the Gemini backend never receives Reddit text (other people's posts) or CNA text (which stays within the team), nor text from any source not in <code>config/sources.yaml</code>. The paid Claude and OpenAI backends still receive both. If CNA's terms keep its text within the team, sending it to any outside service may breach them.</p>
       <span class="meta">Source: <code>config/sources.yaml</code> (<code>personal_text</code>, <code>team_only</code>), <code>chatbot/backends/gemini_backend.py</code>.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Count POSB as DBS when documents are collected? <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> the news filter and the bank tagging already count POSB, DBS's retail brand, as DBS, but the bank aliases used at collection (<code>ingest/base.py</code>) don't. A Reddit post naming only POSB is never stored (<code>ingest/arctic_shift.py:139-140</code>), and a sentence naming only POSB is dropped at segmentation (<code>preprocess/pipeline.py:66-73</code>). Adding it affects future collection only: the missed posts and sentences come back only if collection is run again for those periods.</p>
+    <li data-o="ai">
+      <span class="t">Count POSB as DBS when documents are collected? <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> yes, at collection (DBS acquired POSBank in 1998). Claude builds it on its own branch. <b>Why:</b> the news filter and the bank tagging already count POSB, DBS's retail brand, as DBS, but the bank aliases used at collection (<code>ingest/base.py</code>) don't. A Reddit post naming only POSB is never stored (<code>ingest/arctic_shift.py:139-140</code>), and a sentence naming only POSB is dropped at segmentation (<code>preprocess/pipeline.py:66-73</code>). Adding it affects future collection only: the missed posts and sentences come back only if collection is run again for those periods.</p>
       <span class="meta">Source: <code>ingest/base.py</code> <code>BANKS</code>, <code>ingest/news_filter.py</code>, <code>preprocess/bank_ner.py</code>.</span>
     </li>
     <li data-o="team">
@@ -337,10 +337,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> since 4 Oct a local model sorts each question, and advice, other banks, small talk, help, banking-service requests, prompt injection, complaints and off-topic questions get a fixed reply instead of the model's. The replies are what a user sees most often in a demo; they are in <code>config/intents.yaml</code> and change without code. On 103 labelled questions the classifier sorts 100 correctly and blocks no real question.</p>
       <span class="meta">Source: chatbot-intent (4 Oct), DESIGN decision 24.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Drop passing mentions ("paid via DBS PayNow")? <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> it changes which sentences are in the data, so it has to be decided before the one final re-score.</p>
+    <li data-o="ai">
+      <span class="t">Drop passing mentions ("paid via DBS PayNow")? <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> no: the default applies, and the report gives their share. <b>Why:</b> it changes which sentences are in the data, so it has to be decided before the one final re-score.</p>
       <span class="meta">Source: PLAN, passing-mentions decision.</span>
     </li>
     <li data-o="decide">
@@ -355,10 +355,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> the re-score adds the fine-tuned scores beside the base ones, and the dashboard's queries don't filter on <code>model_version</code>, so it would count every sentence twice, and both "See the numbers" panels would crash (their pivots meet duplicate rows). Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot now do.</p>
       <span class="meta"><code>dashboard/app.py</code> lines 72, 89 and 103. Source: API-integrity validation, 2 Oct.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Store earnings-PDF links as relative paths? <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> 12,254 earnings sentences store a local file path as their URL, which carries the developer's macOS username into the database, every snapshot and 25 committed files. Rewriting them is a database change, so it belongs in the same re-score.</p>
+    <li data-o="ai">
+      <span class="t">Store earnings-PDF links as relative paths? <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> yes, rewritten during the re-score. Claude builds the code and the rewrite script. <b>Why:</b> 12,254 earnings sentences store a local file path as their URL, which carries the developer's macOS username into the database, every snapshot and 25 committed files. Rewriting them is a database change, so it belongs in the same re-score.</p>
     </li>
   </ul>
 </section>
@@ -393,10 +393,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="when">by 18 Oct</span>
       <p class="why"><b>Why:</b> neither is in git. The team and the marker need exactly the database and models the report describes; check the SHA-256 values after uploading.</p>
     </li>
-    <li data-o="decide">
-      <span class="t">The chatbot model for the demo <span class="chip decide">Decision</span></span>
-      <span class="when">by 19 Oct</span>
-      <p class="why"><b>Why:</b> with strip enforcement both local models invent no citations; the 8B picks the right tool more often (20/24 against 18/24), the 3B is about twice as fast. <code>qwen3:4b</code> is out (22 of 32 questions timed out). Add the Groq models if a key exists.</p>
+    <li data-o="ai">
+      <span class="t">The chatbot model for the demo <span class="chip ai">Decided 4 Oct</span></span>
+      <span class="when">decided 4 Oct</span>
+      <p class="why"><b>Decided 4 Oct:</b> <code>llama3.1:8b</code> (on 4 Oct the 3B was not faster and called the wrong tool on the trend question). Claude builds it on its own branch. <b>Why:</b> with strip enforcement both local models invent no citations; the 8B picks the right tool more often (20/24 against 18/24), the 3B is about twice as fast. <code>qwen3:4b</code> is out (22 of 32 questions timed out). Add the Groq models if a key exists.</p>
       <span class="meta">Source: chatbot-eval-build.</span>
     </li>
     <li data-o="decide">

@@ -137,12 +137,34 @@ says which models it belongs to.*
   `train.labels --topup`); Opus as an extra rater on it.
 - Decided (4 Oct): keep the human labels where Opus disagrees; Opus stays
   a second rater, reported beside them.
-- Proposed: one person checks the 80 test-split disagreements without
-  seeing either label, and the result is reported with this decision.
+- Decided (4 Oct): no full relabel. Only the rows on the bank-economist
+  and wealth-or-retail boundaries are fixed, once the team decides those two
+  rules (`data/labeled/boundary-review-2026-10-04.csv`).
 - Decision: relabel the 299 test rows blind; settle the wealth/retail and
   bank-economist questions in the guideline before labelling.
 - Proposed: two people label the same 40 top-up rows first, giving the first
   human–human aspect κ.
+
+**Terms of use and ethics**
+- The Reddit posts and comments were collected through a third-party archive
+  (Arctic Shift), not through Reddit's own API. As the team reads it,
+  Reddit's developer policy
+  ([Developer Platform: Accessing Reddit Data](https://support.reddithelp.com/hc/en-us/articles/14945211791892-Developer-Platform-Accessing-Reddit-Data))
+  restricts academic use of Reddit data through third-party tools, and the
+  use of Reddit content to train models without consent. *The page refused
+  automated requests on 4 Oct (HTTP 403), so its wording is not quoted here:
+  copy the exact sentences from a browser before the report relies on them.*
+- The fine-tuned model is trained partly on labelled Reddit sentences: 433
+  of the 978 training and development rows (44%) come from Reddit, and 184
+  of the 299 test rows (`data/labeled/candidates.csv`).
+- Mitigations: the data isn't redistributed outside the team. The GitHub
+  repository, which holds the labelled sentences and evaluation results that
+  quote Reddit text, and the Hugging Face model repository are both private
+  (checked 4 Oct); the database and the corpus are not in git. Reddit text
+  is withheld from every hosted model (decided 4 Oct: Gemini already, the
+  Claude and OpenAI backends on their own branch). These reduce the exposure
+  but don't settle whether the collection itself is allowed; the report
+  should state it as a limitation.
 
 ## 2. Bank attribution (entity recognition)
 

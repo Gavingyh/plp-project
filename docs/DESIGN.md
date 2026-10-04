@@ -342,6 +342,11 @@ Singapore and Great Eastern, Aston Martin DBS. It is evaluated on a
 scope is kept to what improves attribution, so it doesn't compete with
 labelling for time.
 
+*Amended 2026-10-04:* DBS Vickers counts as DBS (DBS Group's list of
+subsidiaries, 31 Dec 2024), and POSB counts as DBS at collection too (DBS
+acquired POSBank in 1998). UOB Kay Hian stays a separate broker. PLAN
+section 2, made on 2026-10-04.
+
 ### 19. Chatbot changes drawn from the Conversational UIs module
 
 *Decided and implemented 2026-09-26* (`chatbot/guards.py`, `chatbot/agent.py`).
@@ -452,6 +457,11 @@ isn't re-runnable code and isn't sized for 44,345 sentences. The report's
 GenAI declaration lists it, and its agreement figures are human–LLM, not
 human–human.
 
+*Applied 2026-10-04:* where Opus disagrees with the human (202 aspect and 173
+sentiment labels), the human label stays and there is no full relabel. Only
+the rows on the bank-economist and wealth-or-retail boundaries are fixed,
+once the team decides those two rules (PLAN section 2).
+
 
 ### 23. The API serves every view a dashboard needs; the dashboard is a teammate's
 
@@ -513,6 +523,13 @@ prompt still says to decline, so advice recall is reported on its own. If
 the classifier is down it fails open: the question goes to the model and the
 turn records no intent. The output checks (decision 19) stay rules, since
 they compare the answer with what the tools returned.
+
+*Decided 2026-10-04 (PLAN section 2):* every hosted backend (Gemini, Claude,
+OpenAI or Groq) is denied Reddit text, CNA text and text from unlisted
+sources, the safe default given Reddit's developer policy on third-party use
+of its content; the demo model is `llama3.1:8b`; strip enforcement and the
+aspect query are on by default; and the 7- and 30-day figures count back from
+the newest sentence, labelled "as of" its date.
 
 ## Notable implementation details
 

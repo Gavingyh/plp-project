@@ -98,18 +98,18 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:570` | `class Conversation:` |
-| state fields | `chatbot/agent.py:576` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:580` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:483` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:496` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:196` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:282` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:592` | `class Conversation:` |
+| state fields | `chatbot/agent.py:598` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:602` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:503` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:516` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:215` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:301` | `def answer_has_unverified_citation(self, answer: str)` |
 | intent | `chatbot/intent.py:106` | `def classify_intent(question: str` |
 | reply_for | `chatbot/intent.py:125` | `def reply_for(intent` |
-| guards | `chatbot/guards.py:147` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
-| intent and model_answer kept | `chatbot/agent.py:489` | `intent: str` |
-| tools | `chatbot/tools.py:614` | `TOOL_FUNCTIONS = {` |
+| guards | `chatbot/guards.py:154` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
+| intent and model_answer kept | `chatbot/agent.py:509` | `intent: str` |
+| tools | `chatbot/tools.py:621` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:45` | `class OllamaBackend(LLMBackend):` |

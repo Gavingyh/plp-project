@@ -402,15 +402,20 @@ def _month_on_month(series: list[dict]) -> dict:
     direction = _settled(_direction(change), latest["score"] - previous["score"])
     words = (f"{_month_name(latest)} {_compared(direction)} {_month_name(previous)}." if direction != "unclear"
              else f"{_month_name(latest)} against {_month_name(previous)}: {_TOO_FEW}.")
-    return {"month_on_month_available": True,
-            "latest_month": {**latest, "reading": reading(latest["score"])},
-            "previous_month": {**previous, "reading": reading(previous["score"])},
-            "change_from_previous_month": change,
-            "month_on_month": direction,
-            "trend_in_words": words}
+    out = {"month_on_month_available": True,
+           "latest_month": {**latest, "reading": reading(latest["score"])},
+           "previous_month": {**previous, "reading": reading(previous["score"])},
+           "change_from_previous_month": change,
+           "month_on_month": direction,
+           "trend_in_words": words}
+    if direction == "unclear":
+        del out["change_from_previous_month"]     # it would contradict the printed scores
+    return out
 
 
-_TOO_FEW = "too few sentences in one of them to say which way sentiment moved"
+# When the printed scores and the change before shrinkage disagree: the gap is
+# smaller than the shrinkage on the thinner period, so neither way can be said.
+_TOO_FEW = "too close to call, as one of them has few sentences"
 
 
 def _direction(change: float) -> str:
@@ -461,6 +466,8 @@ def chat_get_trend(bank: str, aspect: str | None = None) -> dict:
     if out.get("trend_available"):
         recent, base = out["recent_7d"], out["baseline_30d"]
         out["direction"] = _settled(out["direction"], recent["score"] - base["score"])
+        if out["direction"] == "unclear":
+            out.pop("delta_7d_vs_30d", None)       # the change before shrinkage, which the printed scores contradict
         week, month = (f"The last 7 days {_figures(recent['score'], recent['n'])}",
                        f"the last 30 days {_figures(base['score'], base['n'])}")
         out["trend_in_words"] = (f"{week} {_compared(out['direction']).replace('was', 'were')} {month}."

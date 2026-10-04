@@ -28,10 +28,15 @@ _NUMBER = re.compile(r"(?<![\w.])(?<![A-Za-z]-)[-+−]?\d{1,3}(?:,\d{3})+(?:\.\d
 # "declined 4321" for dates and hid the figures (4 Oct 2026).
 _MONTH = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?"
           r"|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?")
-# The same, capitalised only ("May", not the verb "may"), for a date written without its year.
-_MONTH_NAME = (r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?"
-               r"|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b\.?")
+# The same for a date written without its year: capitalised, or a full name in lower
+# case, but never "may", which is a verb more often than a month.
+_MONTH_NAME = (r"(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?"
+               r"|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b\.?"
+               r"|(?:january|february|march|april|june|july|august|september|october|november|december)\b)")
 _DAY = r"(?:3[01]|[12]\d|0?[1-9])(?!\d)"
+# What a count is a count of: "21 Oct sentences" is 21 sentences, not 21 October.
+_COUNT_NOUN = (r"(?:sentences?|mentions?|posts?|comments?|articles?|items?|data|results?|reports?"
+               r"|analysts?|scores?|reviews?|stories|headlines?)\b")
 
 _STRIP_FIRST = [
     re.compile(r"https?://\S+"),                   # URLs carry ids and dates
@@ -42,8 +47,10 @@ _STRIP_FIRST = [
     # narrow, since a looser pattern hid figures ("0.45 may suggest", "in September 45
     # sentences"): a capitalised month, a day from 1 to 31 not inside a decimal, and
     # after the month either an ordinal or punctuation, so a count can't pass for a day.
-    re.compile(rf"\b{_MONTH_NAME}\s+{_DAY}(?:(?:st|nd|rd|th)\b|(?=\s*(?:[,;:)]|\.(?!\d)|$)))"),
-    re.compile(rf"(?<![\w.]){_DAY}(?:st|nd|rd|th)?\s+{_MONTH_NAME}"),
+    # Day first, it stays on one line, can't follow a sign, and isn't followed by a count
+    # noun (validation, 4 Oct 2026: "27\nSeptember", "-21 May", "21 Oct sentences").
+    re.compile(rf"\b{_MONTH_NAME}[ \t]+{_DAY}(?:(?:st|nd|rd|th)\b|(?=[ \t]*(?:[,;:)\n]|\.(?!\d)|$)))"),
+    re.compile(rf"(?<![\w.+−-]){_DAY}(?:st|nd|rd|th)?[ \t]+{_MONTH_NAME}(?![ \t]+{_COUNT_NOUN})"),
     re.compile(r"\b[0-9a-f]{24}\b"),               # sentence ids
     re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?"),  # ISO dates and timestamps
     re.compile(r"^\s*\d+[.)]\s", re.MULTILINE),     # numbered-list markers

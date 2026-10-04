@@ -25,7 +25,7 @@ through `main`'s code later gave the same kind of answer: "0.122 out of 1",
 | What is the overall sentiment on DBS? | 16 s | right figures (+0.122, 24,431 sentences), as "0.122 out of 1", under four labelled sections, with "No specific quotes or articles were found" |
 | And OCBC? | 28 s | the same shape; the follow-up resolved |
 | Compare DBS, OCBC and UOB on dividends. | not timed | right scores, but UOB's +0.1242 called "slightly negative" |
-| Has sentiment on UOB's net interest margin changed recently? | not timed | "the trend is not available due to insufficient recent data", though 66 months of data were stored |
+| Has sentiment on UOB's net interest margin changed recently? | not timed | "the trend is not available due to insufficient recent data", though 66 months had enough sentences to score (of 72 stored) |
 | Show me evidence about OCBC's asset quality. | about 100 s | results-report boilerplate (segment descriptions, table notes), cited by 24-character ids |
 | What do analysts think of UOB? | about 40 s | useful figures (hold, 16 analysts, $43.30 target) under the same headings, with a filler caveat |
 | Should I buy DBS shares now? | 3 s | the fixed reply, which reads well |
@@ -153,16 +153,18 @@ before the next.
    both; OCBC is the highest. Those answers were not saved, and the browser
    test turned out to be running the round-1 code the dashboard had loaded
    when the Ask page was first opened. With each bank's score now carrying
-   the other two, the seven questions were asked again in Python (their
-   rankings right), and a reading the model put in quote marks was removed
+   the other two, the seven questions were asked again in Python (the
+   rankings right, though one aside in the OCBC answer called DBS's +0.12
+   "slightly more positive" than OCBC's +0.14), and a reading the model put in quote marks was removed
    as an invented quote, leaving "with a reading of." in the answer.
 4. **Final.** One bank's score now came with the other two and the
    ranking, and a quoted reading or topic name was not taken for evidence.
    Every check held; the two flagged figures were the model's own errors
    (5,232 sentences written as "2,232", and "over 20,000 sentences for each
    bank" when OCBC has 6,379). But answers took a median of 68 seconds.
-   Ollama's own timings on three questions, against `main`, showed why:
-   the tool results the model reads are longer and the answers say more.
+   Ollama's own timings on three questions, against `main`, showed why
+   once the branch's prompt was cached: the tool results the model reads
+   are longer and the answers say more (see Speed).
 5. **Trimmed.** The model was given fewer fields (no links, ids or raw
    counts; six months of history instead of twelve) and a prompt a quarter
    shorter asking for 50 to 100 words. The median fell to 41 seconds, but
@@ -194,18 +196,43 @@ tests (`tests/test_validate_chatbot_reader_*.py`):
 - The figure check's new pattern for dates without a year also hid real
   figures ("0.45 may suggest caution", "In September 45 sentences"). It now
   takes only a capitalised month and a day from 1 to 31, followed by an
-  ordinal or punctuation.
+  ordinal or punctuation. (Refined after the second validation, below.)
 - A topic name counted as the tool's own wording, so a model passing its own
   text as the aspect could then quote that text unchecked. Only real topic
   names count now.
 - Through the API, the numbered markers and the list of sources the reader
   saw went back to the model as history, and a bare "[2]" passed unchecked.
-  History drops both, and a bare marker in the model's text is flagged (and
-  removed in strip mode).
+  History drops both. A bare marker in the model's text was first flagged;
+  after the second validation it is dropped instead (below).
 - A trend sentence printed the index's scores beside a direction worked out
   before shrinkage, so a thin month could read "(+0.27, 6 sentences) was up
   on (+0.44, 200 sentences)". When the two disagree it now says there are
   too few sentences to tell.
+
+A second validation (`docs/validation/2026-10-04-chatbot-answers-recheck.md`)
+found that the first marker fix had made two things worse, and some date
+edges. Fixed, with tests:
+
+- Strip mode left an invented quote in the answer when a "[2]" sat inside or
+  just after its quote marks, because the marker was removed after the quote
+  had been found. Markers now go first, and a quote followed straight by
+  "[2]" is recognised as a quote.
+- Flagging any bare marker also flagged real quotes beside one. A marker is
+  now dropped, not flagged: outside quote marks, in strip mode and in what
+  the reader sees whatever the mode, and quotes are compared with what was
+  retrieved without markers (one stored sentence has a "[1]" footnote in
+  it). "[2, 3]", "[2-3]" and "[100]" count as markers too.
+- Dates: a full month name in lower case counts ("september 25th"), but
+  never "may"; with the day first, a date can't run across a line, follow a
+  sign or come before a count noun ("27" on one line and "September" on
+  the next, "-21 May", "21 Oct sentences" are all checked as figures).
+- When the trend sentence says it's too close to call, the model is no
+  longer given the change before shrinkage, which would contradict the
+  printed scores.
+
+A list of counts by month ("July 18, August 24, September 29.") still reads
+as dates: written that way the two look alike, so it stays a known limit,
+kept as a strict xfail test.
 
 Re-run over the recorded answers of the before, round 3, final, trimmed and
 mix runs, the fixed figure check flags exactly what it flagged before, and
@@ -235,26 +262,28 @@ questions. Before, the 32 questions took 16 minutes, about 35 seconds for
 each answer the model wrote.
 
 Ollama's own timings, on three questions asked through `main` and through
-the final round's version, show what the change costs. The second model
-call, which reads the tool's result, took about 3.5 to 8.5 seconds on
-`main` and 6 to 17 on the branch, because the results are longer; and the
-answers say more (ranking, topics, shares), at about 5 to 9 tokens a second
-on this Mac that day. Asked alternately, the per-question times were 20
-against 46 seconds (DBS overall), 34 against 63 (a trend) and 82 against 84
-(a comparison, where `main`'s answer ran to 387 tokens), but about half of
-each gap was the branch re-reading its whole prompt on every first call
-(14.6 to 26.1 seconds, against 0.4 to 0.6 on `main`): alternating the two
-versions kept the branch's prompt out of Ollama's cache. Asked as a block,
-the branch re-read it only for the first question (37.9 seconds, then 0.6
-and 0.5).
+the final round's version, show what the change costs once its prompt is
+cached. Reading the tool's result before answering took about 3.5 to 8.5
+seconds on `main` and 6 to 17 on the branch, because the results are
+longer; and the answers say more (ranking, topics, shares), written at about
+5 to 9 tokens a second on this Mac that day. Asked alternately, the
+per-question times were 20 against 46 seconds (DBS overall), 34 against 63
+(a trend) and 82 against 84 (a comparison, where `main`'s answer ran to 387
+tokens). Much of those gaps was the branch re-reading its whole prompt on
+every first call, 14 to 26 seconds more than `main` each time (55% of the
+first gap, 87% of the second, and more than all of the third): alternating
+the two versions kept the branch's prompt out of Ollama's cache. Asked as a
+block, the branch re-read it only for the first question (37.9 seconds,
+then 0.6 and 0.5).
 
 The mix run's median, 61 seconds, against the final run's 68, can't be put
 down to the fields left out: it is one run each, within the load noise
 below, and the committed version (links back in) was not timed. A shorter
 prompt (the trimmed run) gave 41 seconds, with less complete answers.
-Ollama ran one slot with a 4,096-token window (the runner's command line,
-`-c 4096 -np 1`, seen with `ps` on 4 Oct); an 8,192-token window didn't make
-it faster (two of three questions were slower, within the noise).
+Ollama ran one slot with a 4,096-token window (`-c 4096 -np 1` on the
+runner's command line, read with `ps` on 4 Oct and not saved); an
+8,192-token window didn't make it faster: all three questions were slower
+than in the block run.
 
 Run times move with the Mac's load (the same first question took between 32
 and 108 seconds across the rounds), so the minutes in the table are a guide,

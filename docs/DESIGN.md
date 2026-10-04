@@ -542,7 +542,7 @@ asked for "direct answer first, then supporting evidence, then the sample
 size and time window, then caveats". A score was given as "0.122 out of 1"
 with no scale, and +0.124 was called "slightly negative". "Has it changed
 recently?" about UOB's net interest margin got "not available" though 66
-months of data were stored: its 7-day window held too few sentences, and the
+months had enough sentences to score: its 7-day window held too few sentences, and the
 monthly series was only sent when both windows had enough. Evidence was mostly
 results-report boilerplate, often the same sentence once a quarter, cited by
 24-character ids.
@@ -579,9 +579,18 @@ Decided:
   model could set by passing its own text as the aspect let it quote that
   text, so only real topic names count; the numbered markers and sources the
   reader saw went back to the model through the API's history, so history
-  drops them and a bare "[2]" in the model's text is flagged; and when a
-  trend's printed scores point another way from its direction, the sentence
-  says there are too few sentences to tell.
+  drops them; and when a trend's printed scores point another way from its
+  direction, the sentence says it's too close to call, and the model isn't
+  given the change before shrinkage. A second validation
+  (`docs/validation/2026-10-04-chatbot-answers-recheck.md`) found that
+  flagging a bare "[2]" flagged real quotes beside it and, in strip mode,
+  let an invented quote beside one survive: a marker the model writes is
+  now dropped outside quote marks (in strip mode, and in what the reader
+  sees whatever the mode), and quotes are compared without markers. The
+  date pattern also takes a lower-case full month name (never "may"), and
+  a day-first date can't cross a line, follow a sign or precede a count
+  noun. A list of counts by month ("July 18, August 24") still reads as
+  dates: written that way the two look alike.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or
   negative sentence is lifted 0.03 over a neutral one when the search is
@@ -593,7 +602,7 @@ Decided:
   run on the model's own text, sentence ids included, before the numbering.
 
 Costs: answers are slower on a local model, because they say more and the
-tool results the model reads are longer; ids and raw counts are left out of
+tool results the model reads are longer (measured with the prompt cached); ids and raw counts are left out of
 what it reads (the turn's record keeps them) to limit that. Links stay: the
 hosted backends' privacy filter knows a Reddit post that came through a news
 feed only by its link, and hiding links let such text through in a test. The

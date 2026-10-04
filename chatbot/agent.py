@@ -84,7 +84,7 @@ _URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
 # isn't mistaken for one long quote. Straight or curly quotes, wrapped in
 # markdown emphasis or not, may run across a single line break.
 _QUOTE_PATTERN = re.compile(
-    r'(?:^|(?<=[\s(\[:—–*_-]))"[^"\s](?:[^"\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_]|$)'
+    r'(?:^|(?<=[\s(\[:—–*_-]))"[^"\s](?:[^"\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_\[]|$)'
     r'|“[^”]{10,}?”')
 # A markdown blockquote line ("> OCBC has the worst app..."): quoted text without quote marks.
 # A line opening with a label and a colon ("> **Note:** ...") is the model's own
@@ -92,6 +92,13 @@ _QUOTE_PATTERN = re.compile(
 _BLOCKQUOTE = re.compile(r"^[ \t]*>[ \t]*(?![*_]*[A-Z][\w ]{0,20}[*_]*:)(\S.{9,})$", re.MULTILINE)
 _SENTENCE_ID_PATTERN = re.compile(r"sentence[_\s]?id", re.IGNORECASE)
 _SENTENCE_ID = re.compile(r"\b[0-9a-f]{24}\b")
+# A bare numbered marker ("[2]", "[2, 3]", "[2-3]"), as the reader sees citations once
+# number_citations has run. The model cites by copying cite_as, so a marker in its own text
+# came from an earlier answer it was shown, or was made up, and points at no source of this
+# turn. It is dropped rather than flagged (flagging it flagged real quotes beside it), and
+# ignored when a quote is compared with what was retrieved: one stored sentence has a "[1]"
+# footnote in it. Found in validation, 4 Oct 2026.
+_BARE_MARK = re.compile(r"[ \t]*\[\d{1,3}(?:[ \t]*[,–-][ \t]*\d{1,3})*\]")
 
 UNVERIFIED_CITATION_WARNING = (
     "\n\n⚠️ VERIFICATION WARNING: this answer cites evidence (a quote, sentence_id or URL) "
@@ -121,9 +128,21 @@ HISTORY_ANSWER_CHARS = settings.get("history.answer_chars")  # earlier answers a
 
 
 def _norm_text(text: str) -> str:
-    """Lower case, straight quotes and apostrophes, single spaces: how quoted text is compared."""
-    text = (text or "").replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    """Lower case, straight quotes and apostrophes, single spaces, no bare
+    numbered markers: how quoted text is compared."""
+    text = _BARE_MARK.sub("", text or "")
+    text = text.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
     return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def _drop_bare_marks(text: str) -> str:
+    """The text without bare numbered markers, except inside quote marks,
+    where one may be part of the sentence quoted."""
+    out, last = [], 0
+    for m in _QUOTE_PATTERN.finditer(text or ""):
+        out += [_BARE_MARK.sub("", text[last:m.start()]), m.group(0)]
+        last = m.end()
+    return "".join(out) + _BARE_MARK.sub("", (text or "")[last:])
 
 
 def _norm_url(url: str) -> str:
@@ -280,8 +299,6 @@ class _ToolCallTracker:
         return self.verified_sentence_ids | self.earlier_ids
 
     def answer_has_unverified_citation(self, answer: str) -> bool:
-        if _BARE_MARK.search(answer or ""):
-            return True       # "[2]": the model cites with cite_as; a bare number points at nothing it retrieved
         if self.unverified_urls(answer):
             return True
         if unverified_sentence_ids(answer, self.known_ids()):
@@ -338,10 +355,6 @@ def _remove_inline(text: str, quotes: list[str] | None = None, urls: list[str] |
 
 
 _CITATION_MARK = re.compile(r"\[E\d+\]|\[[^\[\]\n]*sentence[_\s]?id[^\[\]\n]*\]", re.IGNORECASE)
-# A bare numbered marker, as the reader sees citations once number_citations has run. The
-# model never writes one legitimately (it copies cite_as); one in its text came from an
-# earlier answer it was shown, or was made up, and points at no source of this turn.
-_BARE_MARK = re.compile(r"[ \t]*\[\d{1,2}\]")
 
 
 def _remove_spans(text: str, spans: list[str], ids: list[str]) -> str:
@@ -372,7 +385,7 @@ def strip_unsearched_evidence(answer: str) -> str:
     evidence section (from its heading to the next known section), any later
     line carrying a quote, URL or sentence id, and any quote, URL or id inside
     the first paragraph, which is otherwise kept as written."""
-    head, _, rest = _BARE_MARK.sub("", answer).partition("\n\n")
+    head, _, rest = answer.partition("\n\n")
     head = _remove_inline(head)
     kept, skipping = [], False
     for line in rest.split("\n"):
@@ -419,14 +432,19 @@ def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode
     """(new answer, whether the model's own text still cites unretrieved evidence).
     With no search made, the answer's evidence goes (and in search mode the
     harness finds real quotes); after a search, only the quotes and links the
-    searches didn't return go. Answers citing nothing unretrieved pass unchanged."""
-    if mode == "off" or not tracker.answer_has_unverified_citation(answer):
+    searches didn't return go. Answers citing nothing unretrieved pass unchanged,
+    but for any bare numbered marker the model wrote outside a quote, which goes
+    first, so the quotes and links to remove are found in the text they are
+    removed from (validation, 4 Oct 2026: a quote beside "[2]" survived)."""
+    if mode == "off":
         return answer, tracker.answer_has_unverified_citation(answer)
+    answer = _drop_bare_marks(answer)
+    if not tracker.answer_has_unverified_citation(answer):
+        return answer, False
     if tracker.search_evidence_called:
         # The whole answer at once: a quote can wrap onto the next line, and an
         # invented sentence id must go too (4 Oct 2026: both survived).
-        cleaned = _remove_spans(_BARE_MARK.sub("", answer),
-                                tracker.unverified_quotes(answer) + tracker.unverified_urls(answer),
+        cleaned = _remove_spans(answer, tracker.unverified_quotes(answer) + tracker.unverified_urls(answer),
                                 unverified_sentence_ids(answer, tracker.known_ids()))
         return cleaned + EVIDENCE_UNMATCHED_NOTE, tracker.answer_has_unverified_citation(cleaned)
     stripped = strip_unsearched_evidence(answer)
@@ -452,7 +470,9 @@ def number_citations(answer: str, tracker: _ToolCallTracker) -> str:
     32e585f5...]" inline): each citation of a sentence a search returned
     becomes "[1]", "[2]" ..., with the numbered sources listed under the
     answer. It runs after the checks, which read the model's own text; a
-    citation no search returned is left as written, and was flagged."""
+    citation no search returned is left as written, and was flagged. A bare
+    marker the model wrote itself is dropped first, in every mode, so it can't
+    be read as one of these numbers."""
     order: list[str] = []
 
     def number(m: re.Match) -> str:
@@ -464,9 +484,9 @@ def number_citations(answer: str, tracker: _ToolCallTracker) -> str:
         return f"[{order.index(sid) + 1}]"
 
     body, sep, warnings = answer.partition("\n\n⚠️")
-    body = _CITE_AS.sub(number, body)
+    body = _CITE_AS.sub(number, _drop_bare_marks(body))
     if not order:
-        return answer
+        return body + sep + warnings
     body = re.sub(r"\(?\bcite_as:?\s*(\[\d+\])\)?", r"\1", body)   # "(cite_as: [1])", the field's name copied too
     lines = []
     for i, sid in enumerate(order, start=1):
@@ -520,9 +540,11 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
     mode = enforce_evidence_mode()
     enforced, flagged = enforce_evidence(answer, tracker, question, mode)
     if enforced != answer:
-        if verbose:
-            logger.warning("evidence written without a search was removed (%s)", mode)
-        answer, result.answer, result.evidence_enforced = enforced, enforced, mode
+        if enforced != _drop_bare_marks(answer):      # evidence went, not only a stray marker
+            if verbose:
+                logger.warning("evidence written without a search was removed (%s)", mode)
+            result.evidence_enforced = mode
+        answer = result.answer = enforced
 
     result.model_answer = answer
     if flagged:

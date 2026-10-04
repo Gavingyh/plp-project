@@ -86,6 +86,7 @@ OCBC Premier, Bank of Singapore, the DBS Insignia card?**
   bank. The next question's rule, that subsidiaries count as the parent,
   puts DBS Vickers in DBS.
 - Suggested answer: DBS Vickers is DBS; UOB Kay Hian is not UOB.
+- Decided 4 Oct 2026: DBS Vickers is DBS; UOB Kay Hian is not UOB (PLAN section 2).
 - Team answer:
 
 **Subsidiaries and apps count as the parent: POSB, PayLah! and digibank

@@ -12,7 +12,7 @@ import preprocess.bank_ner as ner
     ("DBS", "DBS"), ("dbs", "DBS"), ("POSB", "DBS"),
     ("Bank of Singapore", "OCBC"), ("Great Eastern", "OCBC"), ("Oversea-Chinese", "OCBC"),
     ("UOB", "UOB"), ("United Overseas Bank", "UOB"),
-    ("UOB Kay Hian", ner.NOT_BANK), ("UOBKH", ner.NOT_BANK), ("DBS Vickers", ner.NOT_BANK),
+    ("UOB Kay Hian", ner.NOT_BANK), ("UOBKH", ner.NOT_BANK), ("DBS Vickers", "DBS"),
     ("Aston Martin DBS", ner.NOT_BANK), ("deep brain stimulation", ner.NOT_BANK),
     ("Citibank", None), ("Singapore", None),
 ])
@@ -24,7 +24,8 @@ def test_resolution_table(mention, expected):
     ("I opened a POSB account last year.", ["DBS"]),                    # alias matching misses POSB
     ("my dbs card got declined again", ["DBS"]),                       # lowercase Reddit text
     ("UOB Kay Hian raised its target for OCBC.", ["OCBC"]),            # the broker isn't UOB
-    ("I bought shares on DBS Vickers and UOB.", ["UOB"]),
+    ("I bought shares on DBS Vickers and UOB.", ["DBS", "UOB"]),      # DBS Vickers counts as DBS (4 Oct)
+    ("I only use DBS Vickers for SGX trades.", ["DBS"]),
     ("Great Eastern lifted group earnings.", ["OCBC"]),
     ("He drives an Aston Martin DBS.", []),
     ("DBS, OCBC and UOB all reported higher profit.", ["DBS", "OCBC", "UOB"]),
@@ -79,7 +80,7 @@ def test_evaluate_needs_labelled_rows_and_compares_both_methods():
     ("Complete list of UOB$ merchants", ["UOB"]),
     ("Only have 1 SG stock in my portfolio… D05.SI", ["DBS"]),
     ("For more information, please visit www.ocbc.com.", ["OCBC"]),
-    ("DBS Vickers/ UOB Kay Hian both charge less now", []),       # the fallback doesn't undo a broker
+    ("DBS Vickers/ UOB Kay Hian both charge less now", ["DBS"]),  # DBS Vickers is DBS; the fallback doesn't undo UOB Kay Hian
 ])
 def test_fallback_catches_names_glued_to_punctuation(text, expected):
     assert ner.banks_in(text) == expected

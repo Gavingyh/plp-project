@@ -244,7 +244,7 @@ PLAN section 7, DESIGN decision 18), quoted.
 ## The rules
 
 - POSB counts as DBS. Bank of Singapore and Great Eastern count as OCBC.
-- UOB Kay Hian and DBS Vickers are brokers: they do NOT count as the bank.
+- DBS Vickers counts as DBS. UOB Kay Hian is a separate broker: it does NOT count as UOB.
 - "Aston Martin DBS" and medical DBS (deep brain stimulation) are not banks.
 - A bank named only as a place or a payment rail ("paid via DBS PayNow")
   still counts: this task is about which bank is named, not about relevance.

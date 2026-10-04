@@ -7,28 +7,41 @@ pipeline. "Built" means in the repository and tested; "proposed" means
 measured or designed but not applied; "decision" means it waits for the
 team.*
 
+*Updated 4 October 2026 with the retrained models
+([retrain](../evidence/retrain-2026-10-04.md),
+[ensemble-margin](../evidence/ensemble-margin-2026-10-04.md)), the intent
+classifier ([chatbot-intent](../evidence/chatbot-intent-2026-10-04.md)) and
+the 4 Oct read-only audit. Where a 2 Oct figure was superseded, the text
+says which models it belongs to.*
+
 ---
 
 ## Headline findings
 
 1. **The system runs older methods than the ones it has measured to be
    better**, on all four parts that matter: sentiment, aspects, bank
-   attribution and evidence search. Switching changes the results: on the
-   full corpus (3 Oct), the two pending changes together (with the neutral
-   margin) raise every bank's headline by 0.04–0.07 and swap the top two (DBS moves just ahead of OCBC;
-   both gaps under 0.02, UOB last either way), and retail banking and some
-   NIM rows turn negative where centroid assignment made every aspect
-   positive. Those are properties of the three-seed average: each seed
-   alone moves a headline by up to 0.12, and with one of the three OCBC
-   stays ahead and both DBS and OCBC fall below base FinBERT.
+   attribution and evidence search. Switching the aspect method moves the
+   per-aspect rows: retail banking turns negative for all three banks where
+   centroid assignment made every aspect positive. Switching the sentiment
+   model moves the headlines less than first measured. The 0.04–0.07 rise
+   in every headline (3 Oct) came from the 1 Oct models, which were trained
+   from a relabelled head; the retrained seeds' average (4 Oct, previewed at
+   margin 0.12) stays within 0.015 of base FinBERT and agrees with it on
+   every aspect's sign. DBS moves just ahead of OCBC either way (by 0.010
+   with the retrained seeds; UOB last). Single seeds still differ: retrained
+   seed 42 raises every headline.
 2. **Assigning aspects by embedding similarity doesn't work; asking an LLM
    does.** Seed centroids pick the human's aspect 41% of the time, barely
    above always guessing the commonest aspect (37%); `llama3.1:8b` picks it
    73% of the time, 84% where a second model agrees.
-3. **The fine-tuned FinBERT beats zero-shot FinBERT on macro-F1 (0.624
-   against 0.571) but not on accuracy (0.682 against 0.70),** and the input
-   change chosen to get there turned out to make no difference when tested
-   on more seeds. Model selection on one seed was inside the noise.
+3. **Fine-tuned FinBERT beats zero-shot FinBERT on macro-F1, modestly.**
+   Retrained on 4 Oct after a training bug, every seed beats it (0.592 to
+   0.646; mean 0.621 ± 0.027 against 0.571), and the three averaged score
+   0.634 with the same accuracy as base (0.702 against 0.699). The neutral
+   margin, chosen on dev (0.10), makes no measurable difference on test.
+   The input change chosen on 1 October turned out to make no difference
+   when tested on more seeds: model selection on one seed was inside the
+   noise.
 4. **The chatbot's main failure is invented evidence, and its cause is in
    the design, not the model.** On both local models every invented citation
    (25 in 64 answers) came from an answer that never searched for evidence.
@@ -189,8 +202,19 @@ team.*
 | VADER lexicon | 0.427 | 0.49 |
 | TF-IDF + logistic regression | 0.515 | 0.57 |
 | FinBERT, zero-shot | 0.571 | 0.70 |
-| fine-tuned FinBERT, three seeds | 0.604 ± 0.035 | 0.61–0.68 |
-| the three averaged, with a neutral margin chosen on dev | **0.624** | 0.682 |
+| fine-tuned FinBERT, 1 Oct seeds | 0.604 ± 0.035 | 0.61–0.68 |
+| the 1 Oct seeds averaged, margin 0.13 chosen on dev | 0.624 | 0.682 |
+| fine-tuned FinBERT, retrained 4 Oct | 0.621 ± 0.027 | 0.66–0.71 |
+| the retrained seeds averaged, argmax | **0.634** | 0.702 |
+| the retrained seeds averaged, margin 0.10 chosen on dev | 0.612 | 0.702 |
+
+The 1 Oct seeds were trained from a relabelled pretrained head (each output
+answered for the wrong class at the start); the fix and the retrain are in
+the [retrain](../evidence/retrain-2026-10-04.md) evidence. The retrained
+models' margin is a single-model stand-in: each seed held out different dev
+rows, so no clean dev set exists for the three-seed average, and the
+difference from argmax on test is not measurable (paired bootstrap 95%
+interval −0.058 to +0.009; [ensemble-margin](../evidence/ensemble-margin-2026-10-04.md)).
 
 - Most errors are neutral sentences called positive or negative, typically
   Reddit descriptions of retail products ([error-analysis](../evidence/error-analysis-2026-10-01.md)).
@@ -202,14 +226,16 @@ team.*
   1 October; found by reading the code before training.
 
 **Limitations**
-- The lead over zero-shot FinBERT is about one seed standard deviation, on
-  anchored labels.
+- The lead over zero-shot FinBERT is about one seed standard deviation for
+  the 1 Oct seeds and 1.4 to 1.9 for the retrained ones, still on anchored
+  labels.
 - Training on the Apple GPU isn't bit-for-bit reproducible.
 
 **Solutions**
 - Built: three seeds, three baselines, the neutral margin, 3-seed CV as the
   standard for choosing configurations.
-- Decision: whether the fine-tuned models score the corpus.
+- Decision: whether the fine-tuned models score the corpus, and which:
+  `scripts/rescore.py` still defaults to the 1 Oct seeds.
 
 ## 5. The sentiment index
 
@@ -219,12 +245,15 @@ a first preview on 1,000 overstated both effects)
   sentence) but moves the per-aspect rows: DBS asset quality falls from
   +0.27 to +0.07, and retail banking turns slightly negative for all three
   banks.
-- Switching the sentiment model raises every headline: by 0.12–0.18 with
-  centroid aspects, by 0.04–0.07 with LLM aspects and the margin. Today
+- With the 1 Oct models, switching the sentiment model raised every
+  headline: by 0.12–0.18 with centroid aspects, by 0.04–0.07 with LLM
+  aspects and the margin. With the retrained seeds (4 Oct, LLM aspects,
+  margin 0.12) the average stays within 0.015 of base FinBERT (DBS +0.132,
+  OCBC +0.122, UOB +0.084) and agrees with it on every aspect's sign. Today
   OCBC is just ahead of DBS; with both changes DBS is just ahead of OCBC
   (both gaps under 0.02); UOB is last either way. The
   1,000-sentence preview's UOB-ahead-of-DBS result was sampling noise.
-- All of that is the three-seed average. Scored by each seed alone, the
+- All of that is the three-seed average of the 1 Oct models. Scored by each seed alone, the
   headlines spread by 0.04 (UOB) to 0.12 (DBS); with seed 1, OCBC stays
   ahead and both DBS and OCBC fall below base FinBERT. Retail banking stays
   negative for DBS and OCBC under every seed; NIM and macro change sign.
@@ -235,8 +264,16 @@ a first preview on 1,000 overstated both effects)
 
 **Limitations**
 - With LLM aspects a named bank-aspect cell holds a median of 699 sentences
-  (smallest 59). The fine-tuned models are the 1 Oct seeds, trained from a
-  relabelled head; retrained ones could move the figures.
+  (smallest 59). The figures above for the 1 Oct seeds came from a
+  relabelled head; the retrained seeds moved them, as above. Their seeds
+  spread less on the DBS and OCBC headlines (0.068 and 0.062), but 5 of the
+  30 named cells still change sign between seeds.
+- The 7-day and 30-day windows count back from the moment the index is
+  rebuilt (`aggregate/index.py:228`), not from the newest sentence. The
+  newest sentence is from 25 September and collection is stopped, so a
+  rebuild during the 12–18 October re-score would leave the 7-day window
+  empty and the 30-day one nearly so: every recent score and trend would
+  read "not enough data".
 - The seeds disagree: each seed alone gives DBS +0.113 to +0.235, OCBC
   +0.116 to +0.210, UOB +0.105 to +0.149, and 8 of the 30 named cells
   (NIM and macro for every bank among them) change sign between seeds.
@@ -248,6 +285,8 @@ a first preview on 1,000 overstated both effects)
   file, so applying the chosen setting takes minutes.
 - Decision: which aspect method and sentiment model score the corpus; then
   one combined re-score.
+- Decision: anchor the windows to the newest sentence, labelled "as of" that
+  date, or collect up to the re-score.
 
 ## 6. The chatbot
 
@@ -260,12 +299,24 @@ a first preview on 1,000 overstated both effects)
 | advice and no-data questions handled | 8 / 8 | 8 / 8 |
 | answers citing evidence no tool returned | 15 | 11 |
 
+- 4 October, with the intent classifier that replaced the word-list input
+  guards ([chatbot-intent](../evidence/chatbot-intent-2026-10-04.md)): a
+  local model (`llama3.1:8b`) sorts 100 of 103 labelled questions correctly
+  and blocks no real question (possibly optimistic: its definitions quote
+  some evaluation phrasings). Live on the gold set, re-scored with today's
+  checks: advice and no-data questions 8 of 8, right tool 21 and 22 of 24,
+  and with strip enforcement no invented citation and one invented figure.
+  Questions about HSBC and Standard Chartered now reach the chatbot model,
+  which declined both. Five gold-set questions took a median of 22.2
+  seconds each on the 8B and 20.7 on the 3B (the classifier on the 8B); the
+  3B called the wrong tool for the trend question.
 - Every invented citation came from an answer that never searched; the
   prompt forbids exactly that and the models ignore it. The opening figures
   of each answer always came from a tool.
-- Conversations: the 8B got 7 of 9 turns right at first; the scope guard refused a
-  follow-up with no bank named, and the model once wrote a tool call as
-  text. After both fixes: 9 of 9 on both models.
+- Conversations: the 8B got 7 of 9 turns right at first; the scope guard
+  (since replaced by the intent classifier) refused a follow-up with no bank
+  named, and the model once wrote a tool call as text. After both fixes: 9
+  of 9 on both models, and 9 of 9 again with the classifier (4 Oct).
 - Evidence search: MRR 0.217 for question-phrased queries (random 0.217),
   0.559 when ranked by the aspect's name. A live answer presented card-fee
   and fraud complaints as "complaints about UOB's asset quality", and every
@@ -291,8 +342,10 @@ a first preview on 1,000 overstated both effects)
   weak.
 
 **Solutions**
-- Built: the scope guard reads the conversation; a tool call written as
-  text is run; `CHATBOT_ENFORCE_EVIDENCE=strip` removes evidence written
+- Built: an intent classifier (4 October) replaced the word-list guards,
+  the scope guard among them: a local model sorts each question, reading
+  the conversation, and every intent but in-scope gets a reviewed fixed
+  reply; a tool call written as text is run; `CHATBOT_ENFORCE_EVIDENCE=strip` removes evidence written
   without a search (off by default), which took live citation warnings to 0
   on the 8B and to 2 false alarms on the 3B, with tool choice unchanged; `CHATBOT_ASPECT_QUERY` ranks
   evidence by the aspect's name (off by default), more on topic in live
@@ -307,15 +360,17 @@ a first preview on 1,000 overstated both effects)
 ## 7. Engineering and process
 
 **Findings**
-- 592 tests, an OpenAPI contract kept current by a test, two clean-copy
+- 1126 tests in `tests/` (1173 with the diagram and notebook checks), an
+  OpenAPI contract kept current by a test, two clean-copy
   installs (the first found that the README never named its Python
   version), and every figure in the evidence traceable to a command.
 - Two read paths: the dashboard queries the database directly while other
   clients use the API, and they already disagree on one view (the
   dashboard hides UOB's analyst consensus).
 - Earnings-PDF sentences store a local file path as their URL, which
-  carries the developer's macOS username into the database and 25 committed
-  files.
+  carries the developer's macOS username into the database (178 documents
+  and 12,254 sentences, and every snapshot) and 29 committed files (4
+  October), among them evaluation results that record tool output.
 
 **Solutions**
 - Proposed: a one-line fix for the consensus panel; the dashboard on the API

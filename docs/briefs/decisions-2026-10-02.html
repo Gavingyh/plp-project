@@ -162,7 +162,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 <div class="wrap">
 <header class="mast">
   <div class="eyebrow"><span>PLP practice module</span><span>Decision brief</span><span>Sun 4 Oct 2026</span></div>
-  <h1>Eleven decisions, with the evidence and a recommendation each</h1>
+  <h1>Fourteen decisions, with the evidence and a recommendation each</h1>
   <p class="lede">For a team meeting before Monday 5 October. Each decision lists the options, what the evidence says about each, a recommendation, and what happens by default if nobody decides. The recommendations are Claude's reading of the evidence; the decisions are the team's.</p>
   <div class="countdown"><b>5</b> decisions are due by Mon 5 Oct</div>
 </header>
@@ -175,7 +175,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
     <li><a href="#d-econ">Bank economists</a>: not about the bank; macro stays a thin aspect.</li>
     <li><a href="#d-wealth">Wealth or retail</a>: decide by product.</li>
     <li><a href="#d-vickers">DBS Vickers</a>: count it as DBS.</li>
-    <li><a href="#d-scoring">Scoring model</a>: the retrained fine-tuned average, with the margin chosen on dev; argmax reported beside it.</li>
+    <li><a href="#d-scoring">Scoring model</a>: the retrained fine-tuned average, with the margin chosen on dev (0.10) and argmax beside it; on test the margin makes no measurable difference.</li>
     <li><a href="#d-chat">Chatbot</a>: strip enforcement and the aspect query both on.</li>
     <li><a href="#d-o5">Passing mentions</a>: keep them; report the 6%.</li>
     <li><a href="#d-paths">PDF links</a>: rewrite to relative paths in the re-score.</li>
@@ -244,7 +244,7 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 <tr><td><b>By customer</b></td><td>Anything for an affluent customer → wealth. Simpler to state, harder to apply from one sentence. Changes the classifier's definitions, so the corpus run is redone: about a day of the MacBook.</td></tr>
   </tbody></table></div>
   <div class="rec"><p><b>Recommendation:</b> by product, written into the annotation guideline's table before the top-up round.</p></div>
-  <p class="ifnot">If not decided by the date: the top-up labels repeat the inconsistency the Opus round found. If the team leans to "by customer", saying so before the current run ends (around midday on 3 Oct) saves the rest of it. Changing only the labelling guideline needs no redo, but the classifier is then scored against labels that follow a different rule on this boundary.</p>
+  <p class="ifnot">If not decided by the date: the top-up labels repeat the inconsistency the Opus round found. Changing only the labelling guideline needs no redo, but the classifier is then scored against labels that follow a different rule on this boundary.</p>
 </div>
 
 <div class="dec" id="d-vickers">
@@ -260,13 +260,12 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 
 <div class="dec" id="d-scoring">
   <h3>7. Scoring model: fine-tuned FinBERT or base FinBERT? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
-  <p class="q">Every stored sentiment score comes from base FinBERT, used zero-shot; the fine-tuned model is the DNN the rubric requires.</p>
+  <p class="q">Every stored sentiment score comes from base FinBERT, used zero-shot; the fine-tuned model is the DNN the rubric requires. The 1 Oct seeds were trained from a relabelled head (a bug, fixed 3 Oct) and are no longer an option, but <code>scripts/rescore.py</code> still defaults to them (<code>DEFAULT_FINETUNED</code> in <code>config/model_version.py</code>): adopting the retrained seeds needs a new entry there.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
 <tr><td><b>Base FinBERT</b></td><td>Test macro-F1 0.571, accuracy 0.70. Calls most sentences neutral; finds few of the negatives.</td></tr>
-<tr><td><b>Fine-tuned, 1 Oct seeds, averaged, margin 0.13</b></td><td>Test macro-F1 0.624, accuracy 0.682. Trained from a relabelled head (a bug, fixed 3 Oct). On the full corpus with LLM aspects, every headline rises by 0.04–0.07 and DBS moves just ahead of OCBC; 52% of sentences come out neutral, against 70%. The seeds disagree: each alone gives DBS +0.113 to +0.235.</td></tr>
-<tr><td><b>Fine-tuned, retrained 4 Oct, averaged</b></td><td>Every seed beats base: test macro-F1 0.646, 0.592, 0.625 (mean 0.621 ± 0.027). The average scores 0.634 (accuracy 0.702) without a margin and 0.612 with the dev-chosen margin 0.12: the margin now lowers the test score, for every seed. On the full corpus the average stays within 0.015 of base FinBERT's headlines with the margin (DBS +0.132, OCBC +0.122, UOB +0.084; DBS just ahead of OCBC, under every seed) and agrees with base on every aspect's sign; 62% of sentences come out neutral. Seed 42 alone still raises every headline (DBS +0.171), and the seeds disagree in sign on 5 of 30 aspect cells.</td></tr>
+<tr><td><b>Fine-tuned, retrained 4 Oct, averaged</b></td><td>Every seed beats base: test macro-F1 0.646, 0.592, 0.625 (mean 0.621 ± 0.027). The average scores 0.634 (accuracy 0.702) without a margin and 0.612 (accuracy 0.702) with the margin chosen on dev, 0.10. That margin is a single-model stand-in: no clean dev set exists for the three-seed average, 320 of the 380 out-of-fold dev rows are scored by one seed, and averaging flattens the probabilities, so the average's own best margin is likely smaller. On test the margin makes no measurable difference (paired bootstrap: −0.022, 95% interval −0.058 to +0.009). On the full corpus (previewed at margin 0.12, not 0.10) the average stays within 0.015 of base FinBERT's headlines (DBS +0.132, OCBC +0.122, UOB +0.084; DBS just ahead of OCBC, under every seed) and agrees with base on every aspect's sign; 62% of sentences come out neutral. Seed 42 alone still raises every headline (DBS +0.171), and the seeds disagree in sign on 5 of 30 aspect cells.</td></tr>
   </tbody></table></div>
-  <div class="rec"><p><b>Recommendation:</b> the retrained average, on the stated criterion that the index exists to surface positive and negative sentiment (macro-F1): the 1 Oct seeds carry a known bug. Keep the margin as chosen on dev (0.12) and report the argmax score beside it, saying the dev choice didn't carry over to test; dropping the margin because of the test result would be choosing on the test split. Report base FinBERT's ranking and the per-seed range beside the headlines, and call the DBS–OCBC order unsettled. Adopting the retrained models changes the reported fine-tuning result (0.604 ± 0.035 to 0.621 ± 0.027) everywhere it appears. Either way, applying it is quick: <code>scripts/rescore.py</code>, tested on a copy on 3 Oct, applies both changes in seconds and reproduces the preview cell for cell.</p></div>
+  <div class="rec"><p><b>Recommendation:</b> the retrained average, on the stated criterion that the index exists to surface positive and negative sentiment (macro-F1): the 1 Oct seeds carry a known bug. Keep the margin as chosen on dev (0.10) and report the argmax score beside it: on test the margin makes no measurable difference, and dropping it because of the test result would be choosing on the test split. Report base FinBERT's ranking and the per-seed range beside the headlines, and call the DBS–OCBC order unsettled. Adopting the retrained models changes the reported fine-tuning result (0.604 ± 0.035 to 0.621 ± 0.027) everywhere it appears. Either way, applying it is quick: <code>scripts/rescore.py</code>, tested on a copy on 3 Oct, applies both changes in seconds from the saved probabilities; the headlines at 0.10 haven't been previewed and will differ slightly from the 0.12 figures above.</p></div>
   <p class="ifnot">If not decided by the date: the DNN stays an offline result, and the system the report describes doesn't use it.</p>
 </div>
 
@@ -307,11 +306,11 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
   <h3>11. The demo chatbot model <span class="chip decide">Team decision</span> <span class="when">by 19 Oct</span></h3>
   <p class="q">With strip enforcement on, neither local model shows invented citations.</p>
   <div class="tbl"><table><thead><tr><th>option</th><th>what the evidence says</th></tr></thead><tbody>
-<tr><td><b><code>llama3.1:8b</code></b></td><td>Right tool 20 of 24 on 1 Oct; 21 and 22 of 24 on 4 Oct with the intent classifier, which sorts 100 of 103 labelled questions correctly with the same model. About 25 minutes for the 32-question set.</td></tr>
-<tr><td><b><code>llama3.2:3b</code></b></td><td>Right tool 18 of 24; about twice as fast.</td></tr>
+<tr><td><b><code>llama3.1:8b</code></b></td><td>Right tool 20 of 24 on 1 Oct; 21 and 22 of 24 on 4 Oct with the intent classifier, which sorts 100 of 103 labelled questions correctly with the same model. On 4 Oct, five gold-set questions took a median of 22.2 seconds each (12 to 45).</td></tr>
+<tr><td><b><code>llama3.2:3b</code></b></td><td>Right tool 18 of 24 on 1 Oct. On 4 Oct, the same five questions took a median of 20.7 seconds each (10 to 24), with the intent classifier still on the 8B: barely faster. It called the wrong tool for the trend question.</td></tr>
 <tr><td><b>Groq (hosted)</b></td><td>Untested; needs a free key and the Zero Data Retention setting. <code>qwen3:4b</code> is out: 22 of 32 questions timed out.</td></tr>
   </tbody></table></div>
-  <div class="rec"><p><b>Recommendation:</b> <code>llama3.1:8b</code> with strip on, unless response time in the demo is a problem; test Groq if someone gets a key.</p></div>
+  <div class="rec"><p><b>Recommendation:</b> <code>llama3.1:8b</code> with strip on: on this Mac the 3B is barely faster and picks the wrong tool more often. Test Groq if someone gets a key.</p></div>
   <p class="ifnot">If not decided by the date: the default stays <code>llama3.2:3b</code>.</p>
 </div>
 
@@ -335,9 +334,9 @@ th { font: 500 11.5px/1.3 var(--mono); letter-spacing: 0.05em; text-transform: u
 
 <div class="dec" id="d-posb">
   <h3>14. Count POSB as DBS at collection? <span class="chip decide">Team decision</span> <span class="when">by 12 Oct</span></h3>
-  <p class="q">The news filter and the bank tagging count POSB as DBS; the aliases used at collection (<code>ingest/base.py</code>) don't, so a Reddit post naming only POSB gets no bank.</p>
-  <div class="rec"><p><b>Recommendation:</b> add it; it changes future attribution only.</p></div>
-  <p class="ifnot">If not decided by the date: POSB-only posts stay unattributed.</p>
+  <p class="q">The news filter and the bank tagging count POSB as DBS; the aliases used at collection (<code>ingest/base.py</code>) don't. A Reddit post naming only POSB is never stored (<code>ingest/arctic_shift.py:139-140</code>), and a sentence naming only POSB is dropped at segmentation (<code>preprocess/pipeline.py:66-73</code>).</p>
+  <div class="rec"><p><b>Recommendation:</b> add it. It affects future collection only: the posts and sentences already missed come back only if collection is run again for those periods.</p></div>
+  <p class="ifnot">If not decided by the date: POSB-only posts and sentences stay out of the corpus.</p>
 </div>
 </section>
 <footer>Evidence: the files in <code>docs/evidence/</code>, summarised in <code>docs/report/findings-limitations-solutions.md</code>; the full to-do list is the team to-do page. Once decided, record each in <code>docs/DESIGN.md</code> or <code>docs/PLAN.md</code>.</footer>

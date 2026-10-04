@@ -36,7 +36,8 @@ import requests
 
 from chatbot.backends._openai_compat import to_openai_function_tools
 from config.logging_config import get_logger
-from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
+from chatbot.backends.base import (BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor,
+                                   history_for_hosted, withheld_tool_result)
 
 logger = get_logger(__name__)
 
@@ -94,7 +95,7 @@ class OpenAIBackend(LLMBackend):
             tool_executor: ToolExecutor, verbose: bool = True,
             history: History | None = None) -> str:
         openai_tools = to_openai_function_tools(tool_schemas)
-        messages = ([{"role": "system", "content": system}] + list(history or [])
+        messages = ([{"role": "system", "content": system}] + history_for_hosted(history)
                     + [{"role": "user", "content": question}])
 
         for _ in range(MAX_TOOL_ITERATIONS):
@@ -121,7 +122,7 @@ class OpenAIBackend(LLMBackend):
                     logger.info("tool call: %s(%s)", name, arguments)
                 result_json = tool_executor(name, arguments)
                 messages.append({
-                    "role": "tool", "tool_call_id": call["id"], "content": result_json,
+                    "role": "tool", "tool_call_id": call["id"], "content": withheld_tool_result(name, result_json),
                 })
 
         return ("I wasn't able to reach a final answer within the tool-call budget: "

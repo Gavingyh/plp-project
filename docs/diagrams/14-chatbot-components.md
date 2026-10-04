@@ -110,9 +110,9 @@ Each row names the file and line an element comes from, and the text that line m
 | guards | `chatbot/guards.py:137` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
 | intent and model_answer kept | `chatbot/agent.py:381` | `intent: str` |
 | tools | `chatbot/tools.py:367` | `TOOL_FUNCTIONS = {` |
-| LLMBackend | `chatbot/backends/base.py:33` | `class LLMBackend(ABC):` |
-| temperature | `chatbot/backends/base.py:39` | `temperature: float = DEFAULT_TEMPERATURE` |
+| LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
+| temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:45` | `class OllamaBackend(LLMBackend):` |
-| ClaudeBackend | `chatbot/backends/claude_backend.py:22` | `class ClaudeBackend(LLMBackend):` |
-| OpenAIBackend | `chatbot/backends/openai_backend.py:53` | `class OpenAIBackend(LLMBackend):` |
-| GeminiBackend | `chatbot/backends/gemini_backend.py:128` | `class GeminiBackend(LLMBackend):` |
+| ClaudeBackend | `chatbot/backends/claude_backend.py:23` | `class ClaudeBackend(LLMBackend):` |
+| OpenAIBackend | `chatbot/backends/openai_backend.py:54` | `class OpenAIBackend(LLMBackend):` |
+| GeminiBackend | `chatbot/backends/gemini_backend.py:83` | `class GeminiBackend(LLMBackend):` |

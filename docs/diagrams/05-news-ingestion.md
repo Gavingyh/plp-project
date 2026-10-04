@@ -70,14 +70,14 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | run(): one shared index | `run_news_pull.py:51` | `index = load_index()` |
-| load_index reads stored news | `ingest/news_filter.py:243` | `def load_index() -> _Index:` |
+| load_index reads stored news | `ingest/news_filter.py:241` | `def load_index() -> _Index:` |
 | Yahoo first | `run_news_pull.py:55` | `_ingest("yahoo_news", yahoo_news.pull(), index)` |
 | each ticker | `ingest/yahoo_news.py:90` | `for ticker in tickers:` |
 | each tab | `ingest/yahoo_news.py:91` | `for tab in TABS:` |
 | filter then insert | `run_news_pull.py:44` | `kept, stats = filter_and_dedup(docs, index)` |
 | insert | `run_news_pull.py:45` | `_, inserted = upsert_documents(kept)` |
 | INSERT OR IGNORE | `ingest/db.py:132` | `INSERT OR IGNORE INTO documents` |
-| flagged articles written | `ingest/news_filter.py:316` | `_append_flagged(flagged)` |
+| flagged articles written | `ingest/news_filter.py:314` | `_append_flagged(flagged)` |
 | Google month loop | `run_news_pull.py:59` | `for month, docs in google_news.iter_batches(since, until):` |
 | each calendar month | `ingest/google_news.py:151` | `for start, end in _months(s, u):` |
 | each bank and query | `ingest/google_news.py:153` | `for bank, queries in QUERIES.items():` |

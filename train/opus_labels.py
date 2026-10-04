@@ -217,6 +217,10 @@ TOPUP_SHEET = os.path.join(BASE_DIR, "data", "labeled", "topup", "topup_sheet.cs
 TOPUP_LLM = os.path.join(BASE_DIR, "data", "labeled", "topup", "llm_aspects.csv")
 NER_SHEET = os.path.join(BASE_DIR, "data", "labeled", "ner", "gold_sheet.csv")
 BANKS = ("DBS", "OCBC", "UOB")
+# Rules the team changed after Opus answered the NER sheet (2 Oct), applied at
+# merge so a re-merge keeps them; the raw answers stay as Opus gave them.
+# 4 Oct 2026: DBS Vickers counts as DBS (PLAN section 2); Opus was told it didn't.
+NER_RULE_CHANGES = [(re.compile(r"\bdbs\W{0,2}vickers", re.IGNORECASE), "DBS")]
 SEED = 2026
 SHEETS = {
     "topup": {"sheet": TOPUP_SHEET, "columns": ["sentence_id", "bank", "source", "text"], "prefix": "aspect",
@@ -292,9 +296,11 @@ def merge_extra(name: str, valid_aspects: set[str] | None = None) -> pd.DataFram
     inputs = sorted(glob.glob(os.path.join(sheet_dir(name), f"{spec['prefix']}_[0-9][0-9].csv")))
     if not inputs:
         raise FileNotFoundError(f"no batches in {sheet_dir(name)}; run `batches {name}` first")
+    texts = {}
     for inp in inputs:
         ans = os.path.join(os.path.dirname(inp), "opus_" + os.path.basename(inp)[:-4] + ".jsonl")
         rows = _jsonl(ans)
+        texts.update(pd.read_csv(inp, keep_default_na=False).set_index("sentence_id")["text"].to_dict())
         if [r["sentence_id"] for r in rows] != pd.read_csv(inp)["sentence_id"].tolist():
             raise ValueError(f"{ans}: sentence ids or order differ from {inp}")
         for r in rows:
@@ -308,7 +314,14 @@ def merge_extra(name: str, valid_aspects: set[str] | None = None) -> pd.DataFram
         out += rows
     df = pd.DataFrame(out)
     if name == "ner":
-        df["banks"] = [";".join(b for b in BANKS if b in r) for r in df["banks"]]
+        def with_rule_changes(sid, banks):
+            banks = set(banks)
+            for pattern, bank in NER_RULE_CHANGES:
+                if pattern.search(str(texts.get(sid, ""))):
+                    banks.add(bank)
+            return banks
+        df["banks"] = [";".join(b for b in BANKS if b in with_rule_changes(sid, r))
+                       for sid, r in zip(df["sentence_id"], df["banks"])]
         df = df.rename(columns={"banks": "opus_banks"})
     else:
         df = df.rename(columns={"aspect": "opus_aspect", "not_about_bank": "opus_not_about_bank"})

@@ -78,8 +78,8 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | Reddit adapter | `ingest/arctic_shift.py:40` | `BASE_URL = "https://arctic-shift` |
-| news filter | `ingest/news_filter.py:260` | `def filter_and_dedup(` |
-| news sources | `ingest/news_filter.py:55` | `NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news", "cna")` |
+| news filter | `ingest/news_filter.py:258` | `def filter_and_dedup(` |
+| news sources | `ingest/news_filter.py:54` | `NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news", "cna")` |
 | consensus writes analyst_consensus | `ingest/yahoo_analyst.py:146` | `def upsert(rows` |
 | preprocessing | `preprocess/pipeline.py:90` | `def run() -> dict:` |
 | bank attribution per sentence | `preprocess/pipeline.py:62` | `def _resolve_sentence_bank(` |

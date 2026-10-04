@@ -113,3 +113,16 @@ def test_merge_refuses_wrong_order_or_unknown_banks(sheets):
     _answer(_answer_path(paths[0]), [{"sentence_id": s, "banks": []} for s in ids])
     with pytest.raises(ValueError, match="order differ"):
         ol.merge_extra("ner")
+
+
+def test_ner_merge_applies_the_dbs_vickers_rule_change(sheets):
+    # Opus answered under the 2 Oct rule (DBS Vickers is not DBS); the 4 Oct rule
+    # adds DBS at merge, so a re-merge keeps it. The raw answers are untouched.
+    sheet = pd.read_csv(ol.SHEETS["ner"]["sheet"], keep_default_na=False)
+    sheet.loc[0, "text"] = "I use dbs vickers for SGX stocks."
+    sheet.loc[1, "text"] = "UOB Kay Hian raised its target."
+    sheet.to_csv(ol.SHEETS["ner"]["sheet"], index=False)
+    for p in ol.extra_batches("ner"):
+        _answer(_answer_path(p), [{"sentence_id": s, "banks": []} for s in pd.read_csv(p)["sentence_id"]])
+    merged = ol.merge_extra("ner").set_index("sentence_id")["opus_banks"]
+    assert merged["n0"] == "DBS" and merged["n1"] == ""

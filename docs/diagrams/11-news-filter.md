@@ -60,20 +60,20 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| already stored | `ingest/news_filter.py:275` | `if d["doc_id"] in index.doc_ids:` |
-| mask, then find banks | `ingest/news_filter.py:278` | `banks, phrases = mentioned_banks(doc_text(` |
-| masking function | `ingest/news_filter.py:141` | `def mask_false_positives(text: str)` |
-| market notes masked first | `ingest/news_filter.py:147` | `found.append("market note")` |
-| exemptions for the bank's own news | `ingest/news_filter.py:146` | `and not _OWN_PERFORMANCE.search(text) and not _MARKET_NOTE_EXEMPT.search(text)):` |
-| brokers, venues, research, rating calls | `ingest/news_filter.py:77` | `FALSE_POSITIVES = [` |
-| no bank: which reason | `ingest/news_filter.py:284` | `reason = "false_positive_only" if phrases else "no_bank_mention"` |
-| duplicate check | `ingest/news_filter.py:290` | `dup = index.find_duplicate(` |
-| full text over a bare headline | `ingest/news_filter.py:292` | `# Full text beats a headline-only copy, unless a fuller copy is also stored.` |
-| flag: full text kept | `ingest/news_filter.py:296` | `"reason": "kept_full_text_over_headline"` |
+| already stored | `ingest/news_filter.py:273` | `if d["doc_id"] in index.doc_ids:` |
+| mask, then find banks | `ingest/news_filter.py:276` | `banks, phrases = mentioned_banks(doc_text(` |
+| masking function | `ingest/news_filter.py:139` | `def mask_false_positives(text: str)` |
+| market notes masked first | `ingest/news_filter.py:145` | `found.append("market note")` |
+| exemptions for the bank's own news | `ingest/news_filter.py:144` | `and not _OWN_PERFORMANCE.search(text) and not _MARKET_NOTE_EXEMPT.search(text)):` |
+| brokers, venues, research, rating calls | `ingest/news_filter.py:76` | `FALSE_POSITIVES = [` |
+| no bank: which reason | `ingest/news_filter.py:282` | `reason = "false_positive_only" if phrases else "no_bank_mention"` |
+| duplicate check | `ingest/news_filter.py:288` | `dup = index.find_duplicate(` |
+| full text over a bare headline | `ingest/news_filter.py:290` | `# Full text beats a headline-only copy, unless a fuller copy is also stored.` |
+| flag: full text kept | `ingest/news_filter.py:294` | `"reason": "kept_full_text_over_headline"` |
 | headline not counted twice | `preprocess/pipeline.py:114` | `if h in seen_hashes:` |
-| 90% headline similarity | `ingest/news_filter.py:57` | `TITLE_SIMILARITY = 0.90` |
-| within 3 days | `ingest/news_filter.py:58` | `DUP_WINDOW_DAYS = 3` |
-| bank from the text, MULTI | `ingest/news_filter.py:304` | `d = {**d, "bank": banks[0] if len(banks) == 1 else "MULTI"}` |
-| flag: masked phrase | `ingest/news_filter.py:308` | `"reason": "kept_with_false_positive_phrase"` |
-| flag: possible commentary | `ingest/news_filter.py:311` | `"reason": "kept_possible_bank_commentary"` |
-| every decision logged | `ingest/news_filter.py:316` | `_append_flagged(flagged)` |
+| 90% headline similarity | `ingest/news_filter.py:56` | `TITLE_SIMILARITY = 0.90` |
+| within 3 days | `ingest/news_filter.py:57` | `DUP_WINDOW_DAYS = 3` |
+| bank from the text, MULTI | `ingest/news_filter.py:302` | `d = {**d, "bank": banks[0] if len(banks) == 1 else "MULTI"}` |
+| flag: masked phrase | `ingest/news_filter.py:306` | `"reason": "kept_with_false_positive_phrase"` |
+| flag: possible commentary | `ingest/news_filter.py:309` | `"reason": "kept_possible_bank_commentary"` |
+| every decision logged | `ingest/news_filter.py:314` | `_append_flagged(flagged)` |

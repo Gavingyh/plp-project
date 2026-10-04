@@ -115,8 +115,10 @@ go looking for a leak.
 sentence, its aspect and its provenance, and nothing else.
 
 **Be precise about what the repair does and does not do.** It prevents the
-leak for anyone labelling from the blind sheet, and since zero rows are
-labelled so far, nothing is yet contaminated. It does not undo the model's
+leak for anyone labelling from the blind sheet. *(Written before labelling.
+In the event the blind sheet appears to have been filled from the sheet that
+showed the suggestion, and the test labels match it on 89% of rows; see
+[annotation-agreement-2026-09-27.md](../../docs/evidence/annotation-agreement-2026-09-27.md).)* It does not undo the model's
 exposure to those rows, and it cannot help if someone opens `candidates.csv`
 and labels the test rows there anyway.
 
@@ -159,6 +161,25 @@ The temporal split is the interesting road not taken, since the dashboard's
 actual job is scoring text that has not been written yet.
 
 ---
+
+### Near-copies under different ids, and dev rows that move (3 Oct 2026)
+
+Every leakage check compared `sentence_id`. But the same sentence can reach
+the corpus twice: a bank's results PDF and a news article quoting it. The
+unmerged top-up sheet held a CNA sentence that repeats a frozen test sentence
+from UOB's PDF word for word apart from the attribution (word overlap 0.93,
+different id). Merging the labelled sheet would have trained on test text.
+The checks now also compare words: a top-up row overlapping a test sentence
+by 0.8 or more is dropped, and the labelled file is refused if any pair
+remains.
+
+A quieter leak was waiting in the margin search. The neutral margin is
+chosen on each seed's dev rows, which the analysis rebuilt by reshuffling
+the labelled file as training had. Once top-up rows are added, the same
+reshuffle picks different rows, mostly ones the model trained on, and the
+"dev-chosen" margin would be chosen on training data. Training now saves its
+exact dev rows with the model. Anything that tunes on a split should read
+the split it was given, not recompute it.
 
 ## 5. Evaluate
 

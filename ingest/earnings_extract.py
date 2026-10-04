@@ -7,7 +7,7 @@ The earnings pipeline is three modules, and this is the last of them:
                             investor-relations sites
     earnings_fetch_uob.py   downloads UOB's from the Wayback Machine, because
                             UOB's IR site is WAF-blocked
-    earnings_extract.py     THIS FILE — reads whatever is in
+    earnings_extract.py     THIS FILE - reads whatever is in
                             data/earnings_pdfs/<BANK>/, extracts prose,
                             discards numeric tables (FinBERT scores them as
                             noise), and upserts into `documents`
@@ -40,9 +40,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PDF_DIR = os.path.join(BASE_DIR, "data", "earnings_pdfs")
 
 # A line that's mostly digits/punctuation is almost certainly a financial-
-# statement table row, not prose — drop it (see docs/DESIGN.md).
+# statement table row, not prose - drop it (see docs/DESIGN.md).
 _NUMERIC_LINE = re.compile(r"^[\d\s.,()%$SGDsgd/-]{10,}$")
 _MIN_PROSE_LEN = 40
+# A line ending in one of these (then any closing quote or bracket) has
+# finished its sentence. The colon counts for the line above but not for a
+# short line below, where "Key drivers:" is a header, not a sentence's end.
+_FINISHED = re.compile(r"""[.!?:]["'”’)\]]*$""")
+_ENDS_SENTENCE = re.compile(r"""[.!?]["'”’)\]]*$""")
 
 
 # Filename -> announcement date. Lives here, with extraction, because that is
@@ -59,10 +64,17 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
     sentiment. Approximate-but-right beats precise-and-wrong here; the day of
     month is nominal, the quarter is what actually matters for windowing.
     """
-    # UOB's IR naming: "ceo-presentation-2q-2021.pdf" — lowercase q, four-digit
+    # UOB's IR naming: "ceo-presentation-2q-2021.pdf" - lowercase q, four-digit
     # year. Checked BEFORE the two-digit form below, which would otherwise read
     # the "20" of "2021" as the year.
     m = re.search(r"([1-4])[qQ][-_ ]?(\d{4})", filename)
+    if m:
+        quarter, year = int(m.group(1)), int(m.group(2))
+        month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
+        return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
+    # The same with the q first: "ceo-slides-q1-2024.pdf". Missing until 3 Oct
+    # 2026, which left five UOB 2024 files stamped with their ingestion date.
+    m = re.search(r"[qQ]([1-4])[-_ ]?(\d{4})", filename)
     if m:
         quarter, year = int(m.group(1)), int(m.group(2))
         month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
@@ -81,10 +93,15 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
         year = 2000 + yy
         return (f"{year:04d}-08-01T00:00:00+00:00" if half == 1
                 else f"{year + 1:04d}-02-01T00:00:00+00:00")
-    # FY25 — full-year results, announced early the following year
+    # FY25 - full-year results, announced early the following year
     m = re.search(r"FY(\d{2})", filename)
     if m:
         return f"{2000 + int(m.group(1)) + 1:04d}-02-01T00:00:00+00:00"
+    # "cfo-presentation-2023-results.pdf": a year's results with no quarter
+    # are the full-year results, announced early the following year.
+    m = re.search(r"(20\d{2})[-_ ]results", filename, re.IGNORECASE)
+    if m:
+        return f"{int(m.group(1)) + 1:04d}-02-01T00:00:00+00:00"
     return None
 
 
@@ -100,6 +117,21 @@ def _is_prose(line: str) -> bool:
     return True
 
 
+def _finishes_sentence(kept_above: str | None, line: str) -> bool:
+    """A line too short for _is_prose that is the wrapped end of the sentence
+    on the kept line just above it. Dropping such a tail spliced the kept part
+    into the next sentence ("Markets trading income rose to Expenses increased
+    10%, ..."). Headers, page numbers and table fragments don't qualify: they
+    neither end a sentence nor run on in lowercase."""
+    line = line.strip()
+    if not kept_above or not line or _FINISHED.search(kept_above):
+        return False
+    if _ENDS_SENTENCE.search(line):
+        return True
+    # A run-on in lowercase, more than one word: "and lower allowances", not "bps".
+    return line[0].islower() and len(line.split()) > 1
+
+
 def extract_prose(pdf_path: str) -> list[str]:
     import pdfplumber  # imported here so a missing dependency doesn't block other ingest modules
 
@@ -107,16 +139,20 @@ def extract_prose(pdf_path: str) -> list[str]:
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
+            kept_above = None   # the line just above, if it was kept
             for line in text.split("\n"):
-                if _is_prose(line):
-                    paragraphs.append(line.strip())
+                if _is_prose(line) or _finishes_sentence(kept_above, line):
+                    kept_above = line.strip()
+                    paragraphs.append(kept_above)
+                else:
+                    kept_above = None
     return paragraphs
 
 
 def pull() -> list[dict]:
     if not os.path.isdir(PDF_DIR):
         logger.warning(f"No {PDF_DIR} directory found.")
-        logger.info("Create data/earnings_pdfs/<BANK>/*.pdf and re-run — "
+        logger.info("Create data/earnings_pdfs/<BANK>/*.pdf and re-run - "
               "see docs/DESIGN.md for where to source these (bank IR sites).")
         return []
 
@@ -134,7 +170,7 @@ def pull() -> list[dict]:
             try:
                 paragraphs = extract_prose(path)
             except Exception as e:
-                logger.error(f"{fname}: ERROR extracting text — {e}")
+                logger.error(f"{fname}: ERROR extracting text - {e}")
                 continue
             body = "\n".join(paragraphs)
             if not body.strip():

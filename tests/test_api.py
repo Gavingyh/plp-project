@@ -1,18 +1,20 @@
 """
 Tests for the minimal REST API (api/main.py). Every endpoint here is a thin
 pass-through to a chatbot/tools.py function already tested elsewhere
-(tests/test_chatbot_tools.py, tests/test_yahoo_analyst.py) — these tests
+(tests/test_chatbot_tools.py, tests/test_yahoo_analyst.py) - these tests
 check the HTTP plumbing (routing, query params, validation, status codes),
 not the underlying business logic again.
 
 /chat is mocked (no live Ollama/Claude call) so this suite stays fast and
-portable — the actual chatbot loop is covered by tests/test_chatbot_backends.py.
+portable - the actual chatbot loop is covered by tests/test_chatbot_backends.py.
 """
 
+import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
 from ingest.db import now_iso
+from config.model_version import MODEL_VERSION
 
 
 def _insert_scored_sentence(temp_db, sentence_id, bank, aspect, label, confidence):
@@ -30,7 +32,7 @@ def _insert_scored_sentence(temp_db, sentence_id, bank, aspect, label, confidenc
     conn.execute(
         "INSERT INTO aspect_sentiment (sentence_id, aspect, label, confidence, model_version, scored_at) "
         "VALUES (?,?,?,?,?,?)",
-        (sentence_id, aspect, label, confidence, "test-model", now_iso()),
+        (sentence_id, aspect, label, confidence, MODEL_VERSION, now_iso()),
     )
     conn.commit()
     conn.close()
@@ -168,3 +170,130 @@ def test_chat_passes_history_for_follow_ups(monkeypatch):
     resp = TestClient(app).post("/chat", json={"message": "and OCBC?", "history": history})
     assert resp.status_code == 200
     assert _FakeConversation.seen["messages"] == history
+
+
+def test_aspects_lists_every_key_with_its_label():
+    body = TestClient(app).get("/aspects").json()
+    keys = [a["key"] for a in body["aspects"]]
+    assert "dividend_policy" in keys and "other" in keys and len(keys) == 11
+    assert {"key": "dividend_policy", "label": "Dividend Policy"} in body["aspects"]
+
+
+def test_evidence_latest_filters_by_bank_and_aspect(temp_db):
+    _insert_scored_sentence(temp_db, "s1", "OCBC", "dividend_policy", "positive", 0.9)
+    _insert_scored_sentence(temp_db, "s2", "OCBC", "asset_quality", "negative", 0.8)
+    _insert_scored_sentence(temp_db, "s3", "DBS", "dividend_policy", "neutral", 0.7)
+    client = TestClient(app)
+    rows = client.get("/evidence/latest", params={"bank": "OCBC", "aspect": "dividend_policy"}).json()["rows"]
+    assert [r["sentence_id"] for r in rows] == ["s1"] and rows[0]["label"] == "positive"
+    all_ocbc = client.get("/evidence/latest", params={"bank": "OCBC"}).json()["rows"]
+    assert {r["sentence_id"] for r in all_ocbc} == {"s1", "s2"}
+    assert client.get("/evidence/latest", params={"bank": "HSBC"}).status_code == 422
+
+
+def test_analyst_consensus_latest_keeps_each_banks_newest_row(temp_db):
+    conn = temp_db.get_connection()
+    for bank, day in (("DBS", "2026-09-25"), ("UOB", "2026-09-24"), ("UOB", "2026-09-10")):
+        conn.execute("INSERT INTO analyst_consensus (bank, as_of_date, ticker, n_analysts, fetched_at) "
+                     "VALUES (?,?,?,?,?)", (bank, day, f"{bank}.SI", 10, now_iso()))
+    conn.commit()
+    conn.close()
+    rows = TestClient(app).get("/analyst-consensus/latest").json()["rows"]
+    assert [(r["bank"], r["as_of_date"]) for r in rows] == [("DBS", "2026-09-25"), ("UOB", "2026-09-24")]
+
+
+def test_committed_openapi_spec_matches_the_app():
+    """docs/api/openapi.json is what the dashboard team generates clients from;
+    regenerate it when an endpoint changes (command in docs/api-integration.md)."""
+    import json
+    import os
+    path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs", "api", "openapi.json")
+    with open(path) as f:
+        assert json.load(f) == json.loads(json.dumps(app.openapi(), sort_keys=True))
+
+
+# --- 4 Oct 2026: input that used to read as "no data" -------------------------------
+
+@pytest.mark.parametrize("path", ["/coverage?bank=DBS&aspect=dividend%20polcy", "/evidence?query=x&aspect=nope",
+                                  "/evidence/latest?bank=DBS&aspect=nope", "/sentiment?bank=DBS&aspect=nope"])
+def test_an_unknown_aspect_is_rejected(temp_db, path):
+    from fastapi.testclient import TestClient
+    from api.main import app
+    assert TestClient(app).get(path).status_code == 422
+
+
+def test_a_readable_aspect_name_still_works(temp_db):
+    from fastapi.testclient import TestClient
+    from api.main import app
+    r = TestClient(app).get("/coverage?bank=DBS&aspect=dividend%20policy")
+    assert r.status_code == 200
+
+
+@pytest.mark.parametrize("body", [{"message": "hi", "backend": "nope"},
+                                  {"message": "hi", "history": [{"role": "system", "content": "x"}]}])
+def test_chat_rejects_an_unknown_backend_or_role(body):
+    from fastapi.testclient import TestClient
+    from api.main import app
+    assert TestClient(app).post("/chat", json=body).status_code == 422
+
+
+def test_a_failing_chat_backend_is_a_503_not_a_500(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as api_main
+
+    from chatbot.backends.base import BackendUnavailable
+
+    def down(self, question, verbose=False):
+        raise BackendUnavailable("Ollama isn't running")
+    monkeypatch.setattr(api_main.Conversation, "ask", down)
+    r = TestClient(api_main.app).post("/chat", json={"message": "How is DBS doing?"})
+    assert r.status_code == 503 and "Ollama" in r.json()["detail"]
+
+
+def test_a_bug_while_answering_is_a_500_not_backend_unavailable(monkeypatch):
+    from fastapi.testclient import TestClient
+    import api.main as api_main
+
+    def broken(self, question, verbose=False):
+        raise KeyError("a harness bug")
+    monkeypatch.setattr(api_main.Conversation, "ask", broken)
+    r = TestClient(api_main.app, raise_server_exceptions=False).post("/chat", json={"message": "How is DBS doing?"})
+    assert r.status_code == 500 and "harness bug" not in r.text
+
+
+def test_a_database_error_is_not_read_as_no_consensus(temp_db, monkeypatch):
+    import sqlite3
+    from fastapi.testclient import TestClient
+    import api.main as api_main
+
+    class Broken:
+        def execute(self, *a):
+            raise sqlite3.OperationalError("database is locked")
+
+        def close(self):
+            pass
+    monkeypatch.setattr(api_main, "get_connection", lambda: Broken())
+    assert TestClient(api_main.app, raise_server_exceptions=False).get("/analyst-consensus/latest").status_code == 500
+
+
+def test_startup_says_when_the_served_version_has_no_index_rows(temp_db, caplog):
+    # An empty index for config/model_version.py's version is reported when the
+    # API starts, not first as "no data" at a reader.
+    import logging
+    with caplog.at_level(logging.ERROR, logger="api.main"), TestClient(app) as client:
+        assert client.get("/health").json() == {"status": "ok"}
+    assert any("no sentiment_index rows for" in r.getMessage() for r in caplog.records)
+
+
+def test_startup_is_quiet_when_the_served_version_has_rows(temp_db, caplog):
+    import logging
+    import ingest.db
+    conn = ingest.db.get_connection()
+    conn.execute("INSERT INTO sentiment_index (bank, aspect, source, window, score, n, pos_n, neu_n, neg_n, "
+                 "confidence_mean, model_version, computed_at) VALUES ('DBS', 'ALL', 'ALL', 'all_time', 0.1, 10, "
+                 "3, 5, 2, 0.8, ?, ?)", (MODEL_VERSION, now_iso()))
+    conn.commit()
+    conn.close()
+    with caplog.at_level(logging.ERROR, logger="api.main"), TestClient(app):
+        pass
+    assert not any("no sentiment_index rows for" in r.getMessage() for r in caplog.records)

@@ -17,7 +17,7 @@ Files, in `data/labeled/`:
 | `test_blind.csv` | the blind sheet after resolving disagreements |
 | `candidates.csv` | what training and evaluation read, built by `python -m train.labels` |
 
-Annotator names are not recorded (PLAN D4). One candidate sentence quoted a bank
+Annotator names are not recorded (PLAN: no personal names in the repository). One candidate sentence quoted a bank
 staff member's email address from an investor-relations PDF; it is redacted in
 every sheet.
 

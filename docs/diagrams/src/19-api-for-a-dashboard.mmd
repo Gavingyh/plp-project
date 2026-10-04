@@ -1,0 +1,46 @@
+flowchart LR
+  accTitle: The API behind a dashboard
+  accDescr: Each view a dashboard needs, the API endpoint that feeds it, and what that endpoint reads. The Streamlit dashboard in this repository reads the database directly; this is the contract for any frontend on the API.
+
+  subgraph views["Views a frontend needs"]
+    v1["Headline score per bank"]
+    v2["Bank × aspect grid"]
+    v3["What the blend is made of"]
+    v4["Sentiment over time"]
+    v5["Analyst consensus"]
+    v6["Evidence behind a score"]
+    v7["Chat"]
+  end
+
+  subgraph api["REST API: api/main.py"]
+    e1["GET /sentiment"]
+    e2["GET /sentiment/index"]
+    e3["GET /sentiment/index?source=*<br/>GET /sources"]
+    e4["GET /sentiment/series"]
+    e5["GET /analyst-consensus/latest"]
+    e6["GET /evidence/latest<br/>GET /evidence"]
+    e7["POST /chat<br/>GET /suggestions"]
+  end
+
+  subgraph reads["What each reads"]
+    idx[("sentiment_index")]
+    sent[("sentences and<br/>aspect_sentiment")]
+    ac[("analyst_consensus")]
+    bot["chatbot:<br/>tools and a model"]
+  end
+
+  v1 --> e1
+  v2 --> e2
+  v3 --> e3
+  v4 --> e4
+  v5 --> e5
+  v6 --> e6
+  v7 --> e7
+  e1 --> idx
+  e2 --> idx
+  e3 --> idx
+  e3 --> sent
+  e4 --> sent
+  e5 --> ac
+  e6 --> sent
+  e7 --> bot

@@ -22,8 +22,12 @@ assigned. That is a simplification: the real formulation feeds the
 (sentence, aspect) pair to the model so it can condition on the aspect, which
 only a fine-tuned model can do.
 
+Every batch's probabilities are checked before anything is written: on
+2026-10-01 the Mac's GPU, under memory pressure, returned garbage without an
+error. If the check fails, rerun with --cpu.
+
 USAGE:
-  python -m sentiment.score
+  python -m sentiment.score [--cpu]
   python -m sentiment.score --sources sgx_research   # only these sources' sentences
 """
 
@@ -31,13 +35,17 @@ import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from config.device import best_device
+from config.model_version import BASE_VERSION
 from config.logging_config import get_logger, setup_logging
 from ingest.db import get_connection, init_db, now_iso
 
 logger = get_logger(__name__)
 
 MODEL_NAME = "ProsusAI/finbert"
-MODEL_VERSION = "finbert-base-zeroshot-v1"  # bump when the fine-tuned model replaces this
+# The tag on every row this script writes. It names the model this script
+# runs (MODEL_NAME), so it stays fixed: a fine-tuned scorer writes its own
+# tag, and the readers pick a version through config/model_version.py.
+MODEL_VERSION = BASE_VERSION
 _BATCH_SIZE = 32
 _MAX_LENGTH = 128
 _CHUNK = 2000   # sentences classified and committed per step
@@ -89,6 +97,11 @@ def classify_sentences(texts: list[str]) -> list[tuple[str, float]]:
             enc = tokenizer([texts[i] for i in idx_batch], padding=True, truncation=True,
                             max_length=_MAX_LENGTH, return_tensors="pt").to(device)
             probs = torch.softmax(model(**enc).logits, dim=-1)
+            if not (torch.isfinite(probs).all()
+                    and torch.allclose(probs.sum(dim=-1), torch.ones(len(idx_batch), device=probs.device),
+                                       atol=1e-3)):
+                raise RuntimeError("model probabilities don't sum to 1: the device returned garbage; "
+                                   "rerun with --cpu")
             top_prob, top_idx = probs.max(dim=-1)
             for i, p, k in zip(idx_batch, top_prob.tolist(), top_idx.tolist()):
                 results[i] = (id2label[k], round(p, 4))
@@ -113,8 +126,7 @@ def run(sources: set[str] | None = None) -> dict:
     """, (MODEL_VERSION, *sorted(sources or ()))).fetchall()
 
     if not rows:
-        conn.close()
-        return {"already_scored_or_no_assignments": True, "newly_scored": 0}
+        return _finetuned_pass(conn, {"already_scored_or_no_assignments": True, "newly_scored": 0})
 
     # Base FinBERT never sees the aspect, so a sentence assigned to several
     # aspects gets the same prediction for each: classify each sentence once
@@ -145,14 +157,33 @@ def run(sources: set[str] | None = None) -> dict:
         conn.commit()
         written += len(to_insert)
         logger.info("scored %d/%d sentences (%d pairs)", min(start + _CHUNK, len(ids)), len(ids), written)
-    conn.close()
-    return {"newly_scored": written, "sentences_classified": len(ids), "model_version": MODEL_VERSION}
+    return _finetuned_pass(conn, {"newly_scored": written, "sentences_classified": len(ids),
+                                  "model_version": MODEL_VERSION})
+
+
+def _finetuned_pass(conn, result: dict) -> dict:
+    """While the readers serve a fine-tuned version, give new pairs its scores
+    too (sentiment/finetuned.py); otherwise they would count in nothing served."""
+    import config.model_version as current_model
+    try:
+        if current_model.MODEL_VERSION != MODEL_VERSION:
+            from sentiment.finetuned import score_missing
+            result["finetuned_version"] = current_model.MODEL_VERSION
+            result["finetuned_scored"] = score_missing(conn, current_model.MODEL_VERSION, now_iso())
+    finally:
+        conn.close()
+    return result
 
 
 if __name__ == "__main__":
     import argparse
-    ap = argparse.ArgumentParser(description="Score sentence-aspect pairs with base FinBERT.")
-    ap.add_argument("--sources", nargs="+", help="score only sentences from these sources")
-    args = ap.parse_args()
+    p = argparse.ArgumentParser(description="Score assigned (sentence, aspect) pairs with base FinBERT.")
+    p.add_argument("--cpu", action="store_true", help="run on the CPU instead of the GPU")
+    p.add_argument("--sources", nargs="+", help="score only sentences from these sources")
+    args = p.parse_args()
+    if args.cpu:
+        import train.evaluate
+        best_device = lambda: "cpu"  # noqa: E731  (read by _get_model)
+        train.evaluate.best_device = best_device       # the fine-tuned pass
     setup_logging()
     logger.info("Scoring complete: %s", run(set(args.sources) if args.sources else None))

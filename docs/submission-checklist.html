@@ -125,7 +125,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
   <header>
     <div class="eyebrow">PLP practice module · DBS, OCBC, UOB sentiment dashboard · updated 26 Sep 2026 with the team's decisions</div>
     <h1>PLP Submission Checklist</h1>
-    <p class="lede">Everything left before submission, matching <code>docs/PLAN.md</code>: decisions D1–D5 made on 26 Sep, O1–O5 still open. Each item says who can do it: only people, AI now, or AI once something else is in place.</p>
+    <p class="lede">Everything left before submission, matching <code>docs/PLAN.md</code>: five decisions made on 26 Sep, five still open. Each item says who can do it: only people, AI now, or AI once something else is in place.</p>
   </header>
 
   <div class="top">
@@ -165,15 +165,11 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
       </div></li>
       <li class="item"><input type="checkbox" id="p-roles"><div class="body">
         <div class="title"><label for="p-roles">Fill the roles offline</label><span class="tag when">This week</span></div>
-        <div class="why">Data and NER, Labelling, Modelling, Interfaces; report and video are shared. No names go in the repository (decision D4). Each person later writes their own contribution summary for the report.</div>
+        <div class="why">Data and NER, Labelling, Modelling, Interfaces; report and video are shared. No names go in the repository (a team decision). Each person later writes their own contribution summary for the report.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-validate"><div class="body">
         <div class="title"><label for="p-validate">Check the aspect classifier's validation sample</label><span class="tag crit">Week 1</span></div>
         <div class="why">About 100 sentences with the LLM's chosen aspect. Mark each right or wrong using the aspect definitions in <code>docs/annotation-guideline.md</code>. It decides whether the full run goes ahead as designed.</div>
-      </div></li>
-      <li class="item"><input type="checkbox" id="p-supervisor"><div class="body">
-        <div class="title"><label for="p-supervisor">Confirm two things with the supervisor</label><span class="tag when">By ~5 Oct</span></div>
-        <div class="why">That the taxonomy is now ten data-derived aspects instead of the proposal's four, still to be assigned by an LLM (O1, DESIGN decision 21), and whether retail chatter and management commentary belong in one index (O2).</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-agree"><div class="body">
         <div class="title"><label for="p-agree">Agreement round</label><span class="tag crit">Week 2</span></div>
@@ -192,16 +188,20 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="why">CNA was loaded on 26 Sep: 207 full-text articles from 2023, found through the Wayback Machine (DESIGN decision 20). Whoever owns the CNA scraper should spot-check a few articles and read the coverage gaps in <code>docs/news-data.md</code>. Discovery can re-run now.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-relevance"><div class="body">
-        <div class="title"><label for="p-relevance">Decide on stricter relevance filtering (O5)</label><span class="tag when">By ~12 Oct</span></div>
+        <div class="title"><label for="p-relevance">Decide on stricter relevance filtering</label><span class="tag when">By ~12 Oct</span></div>
         <div class="why">Whether passing mentions ("paid via DBS PayNow") should be dropped. It changes the data, so decide before the final pipeline run.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-model"><div class="body">
-        <div class="title"><label for="p-model">Choose the chatbot model for the demo (O3)</label><span class="tag when">By ~19 Oct</span></div>
+        <div class="title"><label for="p-model">Choose the chatbot model for the demo</label><span class="tag when">By ~19 Oct</span></div>
         <div class="why"><code>llama3.1:8b</code> fabricates citations 13% of the time against 43–48% for <code>llama3.2:3b</code>, but is slower. The harness flags fabrication but can't prevent it, so this decides how many flagged answers the demo shows.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-hosted"><div class="body">
-        <div class="title"><label for="p-hosted">Decide on the OpenAI and Gemini backends (O4)</label><span class="tag when">By ~19 Oct</span></div>
+        <div class="title"><label for="p-hosted">Decide on the OpenAI and Gemini backends</label><span class="tag when">By ~19 Oct</span></div>
         <div class="why">Provide a key for each so they can be tested, or stop claiming they work.</div>
+      </div></li>
+      <li class="item"><input type="checkbox" id="p-groq"><div class="body">
+        <div class="title"><label for="p-groq">Get a free Groq API key for larger chatbot models</label><span class="tag when">Before the demo-model choice</span></div>
+        <div class="why">The code is ready: the <code>openai</code> backend reaches Groq through <code>OPENAI_BASE_URL</code>. Create a key at console.groq.com, consider switching on Zero Data Retention, and add the three lines in the RUNBOOK (Chatbot backends) to <code>.env</code>. Then gold set v2 runs on <code>openai/gpt-oss-120b</code>, <code>llama-3.3-70b-versatile</code> and <code>qwen/qwen3.8-27b</code> (RUNBOOK, Evaluating the chatbot), giving three larger models to compare with the local 3B and 8B. Optional: an NVIDIA NIM key (Llama 3.3 70B), same backend.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="p-eval"><div class="body">
         <div class="title"><label for="p-eval">Chatbot evaluation that needs people</label><span class="tag when">19–25 Oct</span></div>
@@ -257,8 +257,8 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="why">About 30 frozen questions with expected behaviour written first, multi-turn scenarios, retrieval Hit@K and MRR, and a judge prompt to calibrate against people's ratings.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="a-dash"><div class="body">
-        <div class="title"><label for="a-dash">Fix stale dashboard text and check every tab</label><span class="tag when">Week 2</span></div>
-        <div class="why">It still says "~1-month news window".</div>
+        <div class="title"><label for="a-dash">Hand the dashboard to its own project</label><span class="tag when">Done 1 Oct</span></div>
+        <div class="why">The Streamlit dashboard is removed; a teammate builds the dashboard on the REST API. Its contract is <code>docs/api-integration.md</code>, with <code>docs/api/openapi.json</code> for generating a client (DESIGN decision 23).</div>
       </div></li>
       <li class="item"><input type="checkbox" id="a-report"><div class="body">
         <div class="title"><label for="a-report">Draft the report structure and factual sections</label><span class="tag when">Weeks 2–3</span></div>
@@ -290,7 +290,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="why"><code>ingest/cna_archive.py</code> backfills CNA from 2023 and loads it through the news filter, which now keeps a full-text article over a stored bare headline without counting the headline twice. The RSS scraper stays as it is, and its output loads the same way.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="d-relevance"><div class="body">
-        <div class="title"><label for="d-relevance">Tighten relevance filtering</label><span class="tag decide">If O5 says yes</span></div>
+        <div class="title"><label for="d-relevance">Tighten relevance filtering</label><span class="tag decide">If the team says yes</span></div>
         <div class="why">Drop passing mentions before the final pipeline run.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="d-hosted"><div class="body">
@@ -298,7 +298,7 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="why">One real call each, fixing whatever breaks.</div>
       </div></li>
       <li class="item"><input type="checkbox" id="d-model"><div class="body">
-        <div class="title"><label for="d-model">Switch the chatbot's default model</label><span class="tag decide">After O3</span></div>
+        <div class="title"><label for="d-model">Switch the chatbot's default model</label><span class="tag decide">After the demo-model choice</span></div>
         <div class="why">Change the default and raise the 120-second timeout if the slower model is chosen.</div>
       </div></li>
     </ul>
@@ -311,16 +311,16 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
     </div>
     <div class="plan">
       <div class="week"><div class="d">28 Sep<small>gate: candidates re-drawn</small></div>
-        <div><h3>People</h3><ul><li>Rotate keys; fill roles</li><li>Check the classifier's validation sample</li><li>Book the supervisor meeting</li></ul></div>
+        <div><h3>People</h3><ul><li>Rotate keys; fill roles</li><li>Check the classifier's validation sample</li></ul></div>
         <div><h3>AI</h3><ul><li>Aspect classifier, full run overnight</li><li>Re-draw and pre-label candidates</li></ul></div></div>
-      <div class="week"><div class="d">5 Oct<small>gate: κ ≥ 0.6; O1, O2 decided</small></div>
-        <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>Supervisor meeting</li><li>NER gold set; CNA load reviewed</li></ul></div>
+      <div class="week"><div class="d">5 Oct<small>gate: κ ≥ 0.6; aspects and blending decided</small></div>
+        <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>NER gold set; CNA load reviewed</li></ul></div>
         <div><h3>AI</h3><ul><li>Discovery re-run and sweep; NER</li><li>Frozen chatbot evaluation set; dashboard fixes</li><li>Report structure and drafts</li></ul></div></div>
       <div class="week"><div class="d">12 Oct<small>gate: ~1,000 labelled; model trained</small></div>
-        <div><h3>People</h3><ul><li>Finish labelling</li><li>Decide O5</li></ul></div>
+        <div><h3>People</h3><ul><li>Finish labelling</li><li>Decide on passing mentions</li></ul></div>
         <div><h3>AI</h3><ul><li>Fine-tune, three seeds</li><li>Evaluate all four tasks</li><li>Re-score the corpus</li></ul></div></div>
       <div class="week"><div class="d">19 Oct<small>gate: results frozen</small></div>
-        <div><h3>People</h3><ul><li>Interpret results; transcripts; SASSI</li><li>Decide O3, O4; rehearse</li></ul></div>
+        <div><h3>People</h3><ul><li>Interpret results; transcripts; SASSI</li><li>Decide the demo model and the OpenAI backend; rehearse</li></ul></div>
         <div><h3>AI</h3><ul><li>Chatbot evaluation; results tables</li><li>Video script; clean-copy test</li></ul></div></div>
       <div class="week"><div class="d">26 Oct<small>gate: submitted</small></div>
         <div><h3>People</h3><ul><li>Conclusions, contributions, GenAI</li><li>Record the video; submit</li></ul></div>

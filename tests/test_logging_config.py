@@ -109,7 +109,7 @@ def test_setup_is_idempotent(tmp_path, monkeypatch):
     log_file = tmp_path / "test.log"
     root = setup_logging(level="INFO", log_file=str(log_file), force=True)
     before = len(root.handlers)
-    setup_logging(level="INFO", log_file=str(log_file))  # no force — should no-op
+    setup_logging(level="INFO", log_file=str(log_file))  # no force - should no-op
     assert len(root.handlers) == before
 
 
@@ -121,13 +121,13 @@ def test_unwritable_log_path_does_not_raise(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Third-party noise suppression — the original motivation
+# Third-party noise suppression - the original motivation
 # ---------------------------------------------------------------------------
 
 def test_noisy_libraries_pinned_to_warning_or_quieter():
     quiet_noisy_libraries(debug=False)
     # transformers ends up at ERROR rather than WARNING: the generic loop sets
-    # WARNING, then set_verbosity_error() deliberately pushes it further,
+    # WARNING, then set_verbosity_error() pushes it further,
     # because its INFO/WARNING output (weight-loading reports) is exactly the
     # noise this module exists to remove. So assert "at least WARNING", not
     # an exact level.
@@ -137,7 +137,7 @@ def test_noisy_libraries_pinned_to_warning_or_quieter():
 
 
 def test_debug_mode_leaves_third_party_alone():
-    """If you've asked for DEBUG you want the library chatter too — that's the
+    """If you've asked for DEBUG you want the library chatter too - that's the
     whole point of turning it on."""
     for name in ("transformers", "urllib3"):
         logging.getLogger(name).setLevel(logging.NOTSET)
@@ -147,7 +147,7 @@ def test_debug_mode_leaves_third_party_alone():
 
 
 def test_get_logger_has_no_import_side_effects():
-    """get_logger must not configure logging — entry points do that
+    """get_logger must not configure logging - entry points do that
     explicitly, so importing a library module stays inert."""
     logger = get_logger("some.module.name")
     assert logger.name == "some.module.name"

@@ -176,6 +176,59 @@ answer.
 
 ---
 
+### Shrunk scores can't be compared across windows of different size (3 Oct 2026)
+
+Shrinkage multiplies a raw score by n/(n+5), which is right for reporting one
+cell: a thin cell is pulled towards neutral. It is wrong for *comparing* two
+cells of very different size, because the thin one is pulled much harder. The
+trend tool compared UOB's 7-day score (n = 7, factor 0.58) with its 30-day
+score (n = 230, factor 0.98): shrunk, 0.244 against 0.289, "declining"; raw,
+0.418 against 0.296, a rise of 0.12. Seven of 23 cells with a trend changed
+direction once the comparison used raw scores. The trend now compares the
+raw scores and returns them, so the delta can be checked.
+
+The same table taught a second lesson. `aspect_sentiment` and
+`sentiment_index` were designed to hold several models' scores side by side
+(the model version is in the key), but no reader filtered on it, so the
+first re-score with a fine-tuned model would have doubled every sentence.
+Every reader now asks for one version, named in `config/model_version.py`.
+A key that allows several versions is only safe if every query names one.
+
+### "Unchanged" needs the real baseline, and a gap needs its spread (3 Oct 2026)
+
+The 11,000-sentence preview reported that, with both pending changes, the
+banks rank DBS, OCBC, UOB "as it is today". Nobody checked "today": the
+stored index has OCBC first (+0.136 against DBS +0.122). The full corpus
+confirmed the swap (DBS +0.192, OCBC +0.174 with both changes). Two habits
+would have caught it: compare a "no change" claim against the stored figures,
+not against memory; and before calling an order a finding, ask how much it
+moves between runs. A gap of 0.018 from one average of three seeds is not a
+ranking until the seed-to-seed spread is measured
+(`aggregate.preview --per-seed`). Measured the same evening, it is 0.044 to
+0.122 per bank, and one seed alone keeps OCBC ahead.
+
+### Compare instants, not timestamp strings (3 Oct 2026)
+
+Windows and series buckets compared `published_at` strings. Every source is
+UTC except CNA, whose 1,599 sentences carry +08:00, so a CNA article
+published at 05:00 on 1 March in Singapore (21:00 on 28 February UTC) went
+into March while everything else was cut at UTC midnight, and the 7-day
+cutoff was up to eight hours off for CNA. Weeks used SQLite's `%W`, which
+calls the days before a year's first Monday "week 00". Both now parse each
+timestamp to its UTC instant and use ISO weeks. Strings sort like instants
+only when every string has the same offset; one source is enough to break
+that.
+
+### Score only what is assigned (3 Oct 2026)
+
+`aspect_sentiment` holds a score per (sentence, aspect) pair, and the index
+read every row. That was correct while assignments never changed. Replacing
+the centroid aspects with the LLM's leaves each sentence's old pairs scored:
+on a copy of the corpus, 245,635 old scores would have kept counting beside
+the 44,345 new pairs. The index now joins the current assignments, and
+`scripts/rescore.py` deletes scores whose pair is gone. When one table's rows
+depend on another's, read them through the other.
+
 ## 5. Evaluate
 
 **Shrinkage was the right call.** It is cheap, it is explainable in one

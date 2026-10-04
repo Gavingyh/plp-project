@@ -13,10 +13,14 @@ logger = get_logger(__name__)
 # consistent whether the mention came from a news headline, a Reddit comment,
 # or an earnings PDF.
 BANKS = {
-    "DBS": ["DBS Bank", "DBS Group", "D05.SI", "DBS"],
+    # POSB last: DBS's retail brand since 1998 (decided 4 Oct 2026). Order matters:
+    # Alpha Vantage reads the ticker at position 2, and NewsAPI queries only
+    # aliases with a space or a dot, so "POSB" never widens a news query.
+    "DBS": ["DBS Bank", "DBS Group", "D05.SI", "DBS", "POSB"],
     "OCBC": ["OCBC Bank", "Oversea-Chinese Banking", "O39.SI", "OCBC"],
     "UOB": ["United Overseas Bank", "UOB Bank", "U11.SI", "UOB"],
 }
+BANK_NAMES = tuple(BANKS)   # ("DBS", "OCBC", "UOB"): the only banks the project covers
 
 _BANK_PATTERNS = {
     bank: re.compile(r"\b(?:" + "|".join(re.escape(a) for a in aliases) + r")\b", re.IGNORECASE)
@@ -37,7 +41,7 @@ def detect_banks(text: str) -> list[str]:
 def resolve_bank(text: str, fallback: str | None = None) -> str | None:
     """Single bank if exactly one is named; 'MULTI' if more than one; fallback otherwise.
 
-    Document-level attribution only — sentence-level re-attribution happens in
+    Document-level attribution only - sentence-level re-attribution happens in
     preprocess/, since a MULTI document usually has each bank named
     in a different sentence.
     """
@@ -51,7 +55,7 @@ def resolve_bank(text: str, fallback: str | None = None) -> str | None:
 
 def request_with_retries(url, params, timeout=15, headers=None):
     """GET with a few retries on transient failures (timeouts, 429, 5xx).
-    Does NOT retry on 4xx auth errors (401/403) — a bad key won't fix itself."""
+    Does NOT retry on 4xx auth errors (401/403) - a bad key won't fix itself."""
     last_exc = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -60,7 +64,7 @@ def request_with_retries(url, params, timeout=15, headers=None):
                 resp.raise_for_status()
             if resp.status_code == 429 or resp.status_code >= 500:
                 raise requests.exceptions.HTTPError(
-                    f"{resp.status_code} — retryable", response=resp
+                    f"{resp.status_code}, retryable", response=resp
                 )
             resp.raise_for_status()
             return resp

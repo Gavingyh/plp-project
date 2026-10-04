@@ -20,7 +20,7 @@ nothing else. Fill in `label` (and `flag` for rows that shouldn't be scored
 at all), then merge back.
 
 USAGE:
-  python -m preprocess.export_blind_test                 # write the blind sheet
+  python -m preprocess.export_blind_test [--force]       # write the blind sheet (--force: over an existing one)
   python -m preprocess.export_blind_test --merge         # merge the filled sheet back
   python -m preprocess.export_blind_test --check-leakage # group-separation report only
 """
@@ -72,7 +72,7 @@ def find_split_leakage(df: pd.DataFrame) -> list[str]:
 def repair_split_leakage(candidates_path: str = CANDIDATES_PATH) -> dict:
     """Drop the *train_dev* side of any sentence that straddles the split.
 
-    Dropping the train side rather than the test side is deliberate: the test
+    The train side goes, not the test side: the test
     split is 200 randomly-drawn rows and every one is expensive, while
     train_dev has 800 and losing a couple costs nothing. Only ever run this
     before labelling - it rewrites candidates.csv.
@@ -102,8 +102,13 @@ def repair_split_leakage(candidates_path: str = CANDIDATES_PATH) -> dict:
 
 
 def export_blind(candidates_path: str = CANDIDATES_PATH,
-                 out_path: str = BLIND_PATH) -> dict:
+                 out_path: str = BLIND_PATH, force: bool = False) -> dict:
     """Write the test split with every model-produced column withheld."""
+    if os.path.exists(out_path) and not force:
+        # The existing sheet holds the human test labels; a fresh export
+        # writes every label blank.
+        raise FileExistsError(f"{out_path} exists and may hold the human test labels; "
+                              "move it first, or pass --force to replace it")
     df = pd.read_csv(candidates_path)
     test = df[df.split == "test"].copy()
 
@@ -178,6 +183,8 @@ if __name__ == "__main__":
                         help="report sentences straddling the train/test split and exit")
     parser.add_argument("--repair-leakage", action="store_true",
                         help="drop train_dev rows sharing a sentence with the test split")
+    parser.add_argument("--force", action="store_true",
+                        help="replace an existing blind sheet (and the labels in it)")
     args = parser.parse_args()
 
     if args.check_leakage:
@@ -190,4 +197,4 @@ if __name__ == "__main__":
     elif args.merge:
         print(merge_labels())
     else:
-        print(export_blind())
+        print(export_blind(force=args.force))

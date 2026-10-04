@@ -1,6 +1,6 @@
 classDiagram
   accTitle: Chatbot components
-  accDescr: Conversation holds TurnResults and calls answer_turn, which uses the guards, a tool-call tracker, the tools and one of four backends implementing LLMBackend.
+  accDescr: Conversation holds TurnResults and calls answer_turn, which asks the intent classifier first, then uses a tool-call tracker, the output checks in guards, the tools and one of four backends implementing LLMBackend.
 
   class Conversation {
     +backend_name
@@ -15,6 +15,8 @@ classDiagram
     +answer
     +calls
     +guard
+    +intent
+    +model_answer
     +citation_unverified
     +unverified_numbers
   }
@@ -30,10 +32,13 @@ classDiagram
     +execute(name, arguments) str
     +answer_has_unverified_citation(answer) bool
   }
+  class intent {
+    <<module>>
+    +classify_intent(question, state, previous_question) str
+    +reply_for(intent, question, state) str
+  }
   class guards {
     <<module>>
-    +advice_reply(question, context_banks)
-    +scope_reply(question)
     +unverified_numbers(answer, tool_results, question)
     +unverified_sentence_ids(answer, retrieved_ids)
   }
@@ -59,7 +64,8 @@ classDiagram
 
   Conversation "1" *-- "*" TurnResult : keeps
   Conversation ..> agent : calls answer_turn
-  agent ..> guards : before and after the model
+  agent ..> intent : before the model
+  agent ..> guards : after the model
   agent ..> ToolCallTracker : creates one per turn
   ToolCallTracker ..> tools : runs
   agent ..> LLMBackend : asks

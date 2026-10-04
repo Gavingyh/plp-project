@@ -44,7 +44,7 @@ planned frozen evaluation set (PLAN.md) is.
 a prompt rule to copy it, and a lower temperature. The 3B model writes
 plausible-looking evidence (Bloomberg and Reuters URLs, numeric "sentence
 ids" such as 123456) whether or not it retrieved anything. Only a stronger
-model can reduce that; this makes the choice of demo model (PLAN.md, O3)
+model can reduce that; this makes the choice of demo model (PLAN.md, section 2)
 more important, not less.
 
 **The number check catches inventions the other checks don't name.** In the

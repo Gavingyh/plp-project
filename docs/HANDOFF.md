@@ -14,7 +14,8 @@ An aspect-based sentiment system for Singapore's three listed banks — DBS,
 OCBC and UOB — built for the NUS-ISS Practical Language Processing practice
 module. It ingests public text, splits it into sentences, assigns each
 sentence to a financial aspect, scores sentiment, and exposes the result
-through a dashboard, a REST API and a grounded chatbot.
+through a REST API and a grounded chatbot; the dashboard is a separate
+project built on the API ([api-integration.md](api-integration.md)).
 
 **Deliverables are due 1 November 2026:** the system with source code and
 datasets, a report under 20 pages, and a demo video.
@@ -45,7 +46,7 @@ python3 -m venv .venv-plp
 .venv-plp/bin/python3 -m spacy download en_core_web_sm
 cp .env.example .env          # no keys needed to run
 
-scripts/start.sh              # dashboard + API + Ollama, with health checks
+scripts/start.sh              # the API + Ollama, with health checks
 scripts/status.sh
 scripts/stop.sh
 ```
@@ -122,13 +123,12 @@ labelling section of [RUNBOOK.md](RUNBOOK.md). Three rules that matter:
   class overall, not per aspect; the re-drawn set adds a floor of about 80
   rows per aspect. PLAN.md section 6.)
 
-### 3. Settle the aspect taxonomy — team plus supervisor
+### 3. Settle the aspect taxonomy
 
-> **Decided by the team 2026-09-26, to confirm with the supervisor.** Keep the
-> proposal's four aspects plus `other`, assigned by a local LLM, one per
-> sentence (DESIGN decision 16). The supervisor's input is still needed
-> because the method differs from the proposal. Evidence as it stood on
-> 2026-09-11:
+> **Decided by the team 2026-09-26.** Keep the proposal's four aspects plus
+> `other`, assigned by a local LLM, one per sentence (DESIGN decision 16).
+> The report must explain it, because the method differs from the proposal.
+> Evidence as it stood on 2026-09-11:
 
 This is now well evidenced and needs a decision, not more analysis. Dropping
 the proposal's four a-priori aspects changes what was proposed, so it is not a
@@ -192,7 +192,7 @@ repository. One person can hold more than one role. Tasks per role are in
 | Data and NER | ingestion, news and CNA feeds, bank entity recognition, dataset packaging |
 | Labelling | annotation guideline, agreement round, the labelled set |
 | Modelling | aspect classifier, aspect discovery, fine-tuning and evaluation |
-| Interfaces | dashboard, API, chatbot and its evaluation |
+| Interfaces | the API, the chatbot and its evaluation; the Streamlit dashboard (`dashboard/`), a teammate's |
 | Report and video | everyone; each person writes their own contribution summary |
 
 ---
@@ -204,7 +204,7 @@ repository. One person can hold more than one role. Tasks per role are in
 | `TypeError: unsupported operand type(s) for \|` | conda's Python 3.9 shadowing the venv | Use `.venv-plp/bin/python3` by absolute path, always |
 | `ModuleNotFoundError: torch` | System Python | Same |
 | A step hangs at near-zero CPU | HuggingFace metadata check | `HF_HUB_OFFLINE=1` |
-| `scripts/start.sh` refuses port 8501 | Another project's Streamlit is on it | Use `PLP_DASHBOARD_PORT`, or stop that process yourself. The script will not kill it for you |
+| `scripts/start.sh` refuses port 8000 | Another project's server is on it | Use `PLP_API_PORT`, or stop that process yourself. The script will not kill it for you |
 | Chatbot answer carries a verification warning | The model cited evidence it never retrieved | Do not trust that answer |
 | Dashboard says "No sentiment data yet" | Pipeline has not run, or `data/plp.db` is missing | See RUNBOOK |
 | `pip install` fails: `No matching distribution found for torch>=2.9.0` | The venv was made with Python 3.9 (a Mac's built-in `python3`) | Recreate it with Python 3.10 or newer, e.g. `python3.14 -m venv .venv-plp` |
@@ -472,7 +472,6 @@ first fine-tuning) is now in the repository. Evidence:
      A small second round would fix both.
   3. The cluster labels behind the taxonomy were drafted with an AI
      assistant: put that in the GenAI declaration.
-  4. Confirm the taxonomy change with the supervisor (PLAN O1).
 - **Gemini.** A free-tier `GEMINI_API_KEY` is in `.env`, for the chatbot
   only. It works (the first key didn't), and the backend is now verified live
   ([evidence](evidence/gemini-backend-2026-09-30.md)). While a key is set,
@@ -512,20 +511,21 @@ Running `.project-context/prompt/overnight-experiments.md` from HEAD
 
 Left out, and why:
 - Nothing from the prompt. The CV fold models were deleted after scoring, as
-  specified; only the E1 and E2 finals are kept.
+  specified; only the final sentence-plus-aspect and sentence-only models are
+  kept.
 - `aspects.compare_taxonomies` measures its own hard-coded four-aspect
   candidate A, not the current config, despite its docstring. Recorded in the
   calibration file, not fixed (outside the run's scope).
 
 Needs a human:
-1. **Scoring model.** E1 (8 epochs, with aspect) is level with base FinBERT
+1. **Scoring model.** The sentence-plus-aspect model (8 epochs) is level with base FinBERT
    on macro-F1 (0.577 ± 0.027 against 0.571), better on negative sentences
    (0.44 against 0.30) and worse on neutral. Whether it replaces base
    FinBERT for the corpus is PLAN section 5's decision.
 2. **Aspect assignment.** No floor makes centroid assignment accurate (top-1
    0.41); leave the floor at 0.65 and build the LLM classifier, whose
    baseline is now measured.
-3. **Demo model (O3).** The 8B invents far less than the 3B (3 against 9
+3. **Demo model.** The 8B invents far less than the 3B (3 against 9
    invented-citation answers) at about twice the runtime.
 4. **Model weights** exist only on this MacBook; copy them to the team
    folder and check the SHA-256 values in the experiments file.
@@ -541,7 +541,7 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   "class-weighted loss". Every model so far used plain cross-entropy. Fixed in
   the docs; the weighting is now a real option (`--class-weights`), default
   `none` so earlier results stay reproducible.
-- J1 (fine-tuning fixes): done
+- Fine-tuning fixes: done
   ([evidence](evidence/finetune-fixes-2026-10-01.md)). Per-batch padding
   matches the old padding within noise (CV 0.621 against 0.622). On 5-fold
   CV, balanced class weights (0.630), source weights (0.633) and the
@@ -554,7 +554,7 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   Neutral sentences called polar remain the main error. The Mac slept
   12:22–13:29 (battery at 1%, then lid closed; `caffeinate -i` stops
   neither), pausing one CV fold; it resumed unharmed.
-- J2 (LLM aspect classifier): done
+- LLM aspect classifier: done
   ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)). On the 1,277
   human aspect labels, llama3.1:8b scores top-1 0.729 (macro-F1 0.679) and
   qwen3:4b without thinking 0.719 (0.671), against 0.413 (0.296) for
@@ -592,12 +592,448 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
    wealth or retail banking (63 rows), before the next labelling round.
 5. Long runs need the Mac plugged in with the lid open: it slept twice on
    1 Oct (battery, then lid), pausing jobs for about an hour each time.
-- J3 (preprocessing dry run): done, `606dde4`. 98 of 44,345 sentences
+- Preprocessing dry run: done, `606dde4`. 98 of 44,345 sentences
   (0.22%, all earnings PDFs) are debris; broader rules remove real
   sentiment, so preprocessing isn't where the model's errors are.
-- J4 (install test): done, `1ff6c74`. With a Mac's default `python3`
+- Install test: done, `1ff6c74`. With a Mac's default `python3`
   (Apple's 3.9) the install fails on `torch>=2.9.0` and the README never
   names the Python it needs; with 3.14 every step works, the snapshot
   checksum matches, 421 tests pass, and the API and dashboard answer on free
   ports ([evidence](evidence/install-test-2026-10-01.md), four README fixes
   listed there).
+
+## 1 October, evening, and the night after (2026-10-01/02)
+
+Work asked for during the day on 1 Oct, after night 1. Nothing was written
+to the database.
+
+- **Measurement tools.** `train.agreement --field aspect` measures aspect
+  agreement (`302feb9`). `aspects.compare_taxonomies` now compares the live
+  ten-aspect config, not a hard-coded four (`60ec01f`).
+- **Fine-tuned model's errors** (`9d0be44`,
+  [evidence](evidence/error-analysis-2026-10-01.md)). Most errors are
+  neutral sentences called polar. A neutral margin chosen on dev lifts the
+  3-model average to test macro-F1 0.624 (accuracy 0.682); base FinBERT
+  scores 0.571 (accuracy 0.70).
+- **Bank entity recognition** (`861d205`,
+  [evidence](evidence/bank-ner-2026-10-01.md)). spaCy with an entity ruler,
+  a resolution table and a gazetteer fallback. On the corpus it disagrees
+  with alias matching on 714 sentences, mostly DBS Vickers (456) and UOB Kay
+  Hian (132). A 201-row gold sheet is in `data/labeled/ner/`, blank: its
+  labels are for people.
+- **Dashboard handed to its own project** (`36283da`, DESIGN 23; reversed
+  the same night, when the teammate pushed a redesign to this repository:
+  the dashboard stays here, see the amendment to DESIGN 23). The API
+  is the interface: `/evidence/latest`, `/analyst-consensus/latest` (which
+  fixes UOB being hidden by a global latest date) and `/aspects` are new, and
+  the contract is [api-integration.md](api-integration.md), with
+  `docs/api/openapi.json` kept current by a test. The chatbot has a terminal
+  client, `python -m chatbot.chat`.
+- **Chatbot evaluation extended** (`701014d`,
+  [evidence](evidence/chatbot-eval-build-2026-10-01.md)): gold set v2 (32),
+  four multi-turn conversations, retrieval metrics and an LLM judge. Asked
+  as a question, evidence search ranks no better than random (MRR 0.217,
+  random 0.217); the aspect's name reaches 0.559. The fix is in place behind
+  `CHATBOT_ASPECT_QUERY=1`, off by default (`2b209d3`).
+- **Index preview** (`c7f21f1`,
+  [evidence](evidence/index-preview-2026-10-01.md)). On 1,000 sampled
+  sentences, LLM aspects leave the headline unchanged. The fine-tuned model
+  raises every headline (by 0.06–0.19 on that sample; a second preview on
+  11,000 sentences on 2 Oct gives 0.04–0.09 with LLM aspects and no change
+  in ranking, so the UOB-ahead-of-DBS result was noise). On a
+  swapping Mac, the GPU returned all-zero probabilities without an error;
+  the preview now refuses them and was rerun on the CPU.
+- **Report draft** of the factual sections (`a65c4b4`) and an
+  **examiner's assessment** at Bloom levels 4–6, with the learning folder
+  brought up to 1 Oct (`814b65d`).
+- **Clean install retested** (`c7f21f1`): passes from a fresh clone with
+  Python 3.14.
+- **Top-up labelling sheet** (`092367c`,
+  [evidence](evidence/labelling-topup-2026-10-01.md)). 268 blind rows for the
+  five aspects under 80 labels. NIM may end near the floor: most Reddit rows
+  the LLM called NIM are customer rates.
+- **LLM aspect classifier corpus mode** (`5d7c591`). `--corpus` fills the
+  answer cache in a fixed random order and writes nothing to the database.
+- **Judge against the harness** (`1b665fb`). `chatbot.judge checks` scores
+  the judge on answers the harness flagged for invented citations, with no
+  human ratings needed.
+- **Larger hosted models through the OpenAI backend.** It now reads
+  `OPENAI_BASE_URL`, so any OpenAI-compatible provider works. Groq's free
+  tier offers `openai/gpt-oss-120b`, `llama-3.3-70b-versatile` and
+  `qwen/qwen3.8-27b`. It retries rate limits and sends back only standard
+  message fields. Setup and the three-model gold-set loop are in the
+  RUNBOOK. It is unverified until someone adds a Groq key: that's on the
+  submission checklist.
+
+### Overnight, 1–2 October
+
+Run one job at a time on the MacBook from 22:54. Nothing was written to the
+database.
+
+- **Chatbot, gold set v2 and conversations** (`593dc96`, `e82f6a3`,
+  [evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). On an
+  idle machine `llama3.1:8b` chose the right tool for 20 of 24 questions,
+  handled 8 of 8 advice and no-data questions, and invented citations in
+  11 of 32 answers; `llama3.2:3b` 18/24, 8/8 and 15 of 32. Every flag was
+  read by hand: all of the 8B's are real, 14 of the 3B's 15. **None of them
+  called `search_evidence`**: the models write an evidence section after
+  looking up a score, against prompt rule 8. Conversations: 7 of 9 turns
+  right. The scope guard refused "Has that improved lately?" because it
+  doesn't see the conversation, and the 8B once wrote a tool call as text.
+  A first run that shared Ollama lost 6 questions to timeouts; it is kept,
+  not reported.
+- **The judge doesn't discriminate.** `qwen3:4b` without thinking scored all
+  32 answers 3, including the 11 inventions. `chatbot.judge checks`
+  (`1b665fb`) measures this against the harness's flags without people.
+- **Noise-floor cross-validation**
+  ([evidence](evidence/noise-floor-cv-2026-10-02.md)). Seeds 1 and 7, both
+  inputs, 20 folds, 23:46–03:04. The readable label's lead on seed 42
+  (+0.017) doesn't replicate (−0.003, +0.001; +0.005 over 15 paired folds).
+  The final models stand; the report must not credit the input change.
+- **Corpus aspect classification** started at 03:04 into the answer cache
+  (`aspects.llm_classify --corpus`), about 20 sentences a minute; stop it
+  with `pkill -f "llm_classify --corpus"` and it resumes from the cache.
+- **Dashboard merged back** (`d31da61`): a teammate pushed a redesign while
+  this branch had removed the dashboard; the team chose to keep it here
+  (DESIGN 23, amended).
+- **Verification:** 551 tests pass; `check_sources.py` clean.
+
+**Needs a human (1–2 Oct):** the full list, with reasons, is the team to-do
+page ([briefs/team-todo-2026-10-02.html](briefs/team-todo-2026-10-02.html)).
+The new items since night 1: label the top-up sheet; fix the dashboard's
+consensus panel (it hides UOB); get a free Groq key; decide whether evidence
+search ranks by the aspect's name; and the examiner's assessment
+([review/examiner-assessment-2026-10-02.md](review/examiner-assessment-2026-10-02.md)).
+
+### 2 October, morning
+
+Asked for after the night's results; nothing written to the database.
+
+- **Chatbot fixes** (`29dee6b`; [evidence](evidence/chatbot-eval-build-2026-10-01.md#second-round-2-oct-the-fixes-live)).
+  The scope guard reads the conversation, a tool call written as text is
+  run, and `CHATBOT_ENFORCE_EVIDENCE=strip` (off by default) removes evidence
+  written without a search. Live: conversations 9/9 on both models; invented
+  citations 11 → 0 (8B) and 15 → 2 false alarms (3B), tool choice unchanged.
+  `CHATBOT_ASPECT_QUERY=1` makes evidence more topical but often boilerplate.
+  `qwen3:4b` isn't a viable chatbot here (22 of 32 timed out).
+- **Judges.** The one-score judge passes everything; a checklist prompt
+  (list unsupported quotes, sources, figures) catches all 11 known
+  inventions with the same `qwen3:4b`, with about three false alarms (a
+  quote it overlooked, a rounded figure; not truncation, as first written). `gemma3:4b` and thinking runs
+  are not usable.
+- **Labels.** The top-up merge is `train.labels --topup` (`a387f2a`); Opus
+  rated the top-up and NER sheets blind (`15238d8`): NER matches it on 200
+  of 201 after an "OCBC360" fix (`13897f6`); macro, not NIM, is the top-up
+  shortfall. The ratings sheet now hides the harness's warnings.
+- **For the report and team:** [local-context questions](local-context-questions.md),
+  [the approach](report/approach.md) with diagrams 21–23,
+  [findings, limitations and solutions](report/findings-limitations-solutions.md),
+  the AI usage declaration up to date.
+- **Code clean-up:** superseded scripts removed and `opus_extra` folded into
+  `opus_labels` (`553a742`); comments and messages made plain across the
+  code (no behaviour change); the teammate's dashboard left as written.
+
+**Needs a human (2 Oct):** whether to switch strip enforcement on for the
+demo; the answers in `local-context-questions.md`, the bank-economist
+question first, since it decides whether macro can reach 80 labels;
+whether the PDF URLs in the database, which carry the macOS username, should
+become relative paths.
+
+### 2 October, evening
+
+- **The LLM aspect cache is named by its prompt:**
+  `data/aspect_llm/<model>.<prompt>.jsonl`, where `<prompt>` hashes the
+  aspect keys, definitions, examples and instructions (`96efe244`). Before,
+  `--eval` and `--corpus` silently reused cached answers after a wording
+  change. The three existing caches were renamed to `96efe244`: no edit after
+  the first cached answer (1 Oct 14:43) touched the prompt, and
+  `config/aspects.yaml` last changed on 30 Sep. The running corpus job kept
+  its file handle, so it appends to the renamed file.
+- **Corpus run time:** a full run takes about a day, a little more than the
+  labelled-set estimate, and longer with another job on the Mac. This run
+  finishes around midday on 3 Oct.
+- **To-do page** (`2ee4597`): when the corpus run must be redone, with the
+  run times, and the wealth-or-retail decision with its redo cost.
+- **Run times as rough estimates** (the team asked for no exact hours): a
+  full corpus run is about a day, testing a new wording under an hour.
+- **Index preview made resumable** (`aggregate/preview.py`): the fine-tuned
+  models' averaged probabilities are saved per pair in
+  `data/preview/scores.<key>.jsonl` (models and device), a chunk at a time; a
+  `--margin` option applies the dev-chosen neutral margin; the database
+  query runs in batches, since one query for the whole corpus exceeded
+  SQLite's 32,766-parameter limit. The 11,000-sentence outputs moved to
+  `data/preview/n11000/`.
+- **Full-corpus preview queued:** a watcher (scratchpad `after_corpus.sh`)
+  waits for the corpus run, checks every sentence has an answer, then runs
+  the preview on the CPU, plain and with margin 0.13. Logs:
+  `after_corpus.log`, `preview_full.log`, `preview_full_m013.log`.
+- **Decision brief:** decision 5 states the redo cost of "by customer".
+- **Verification:** 552 tests pass in `tests/` (599 from the root);
+  `check_sources.py` clean.
+- **DBS Vickers checked on the web:** DBS Vickers Securities (Singapore) is
+  in DBS Group's list of subsidiaries (31 Dec 2024); UOB Kay Hian is
+  separately listed (SGX U10), UOB holding about a third. The 456 affected
+  sentences are customers using DBS Vickers as their broker, none research
+  about another bank. Recorded in the local-context DBS Vickers question, the bank-NER evidence,
+  a note in PLAN section 7, decision 6 of the brief and the to-do; the
+  `vickers` rule in `preprocess/bank_ner.py` is unchanged until the team
+  confirms.
+- **Model card and report docs corrected after a fact-check** of
+  `docs/model-card.md` and then of the fix: averaging the seeds is
+  the safer choice, not the best (seed 42 alone scores 0.630); train/dev was
+  drawn in thirds by base FinBERT's label, not by aspect; product names are
+  common in the labels (82 of 1,277), Singlish barely measured; the anchoring
+  may favour the fine-tuned models, unmeasured; the margin is 0.133; the
+  test labels weren't blind in practice; file sizes in decimal MB (models
+  438 MB, embeddings 127 MB). Same fixes in `docs/report/approach.md`,
+  `findings-limitations-solutions.md`, `local-context-questions.md`, the
+  technical spec and the README.
+- **Validation workflow added** (`.claude/`, see `CLAUDE.md` "Validation"):
+  `reviewer`, `tester`, `triage`, `auditor` (docs) and `examiner` agents, and
+  `/validate <scope>`, which reports the three success claims as PROVEN, DISPROVEN or UNTESTED
+  and keeps dated runs in `docs/validation/`. The first run (API integrity, `api/`)
+  found three medium bugs: the trend direction compares shrunk scores (UOB
+  reads "declining" though its unshrunk change is +0.12), readers will mix
+  model versions after the re-score, and `/coverage` and `/evidence` accept
+  any bank. Each has a strict-xfail test in `tests/test_validate_api.py`;
+  remove the marker in the commit that fixes it.
+- **Fine-tuned models on Hugging Face:** private repo
+  `plp-bank-sentiment/plp-finbert-absa` (organisation members only): the three
+  seeds without `training_args.bin`, and the model card as `README.md`.
+  Downloaded back and hashed on 2 Oct: all three match the model card's
+  SHA-256 values. Commands in README, "Sharing the data and models".
+- **Corpus run speed:** it slowed to 5–6 s a sentence while two external
+  monitors (DisplayLink) were on and the upload ran, and returned to about
+  2.5 s once both stopped. Keep external monitors off during long GPU jobs.
+
+### 3 October
+
+- **The three API bugs from the API-integrity validation run are fixed**, and three
+  low ones with them; every `test_validate_api.py` test now passes, with no
+  `xfail` left (592 tests in `tests/`, 639 from the root):
+  - **Trend direction:** `get_trend` compares the 7d and 30d scores
+    before the n/(n+5) shrinkage. UOB no longer reads "declining" when its
+    week was better than its month.
+  - **Model versions:** the current version lives in
+    `config/model_version.py` (out of `sentiment/score.py`, which imports
+    torch). The API, the chatbot's tools, evidence search, suggestions, the
+    time series and the preview read only that version, so fine-tuned scores
+    can sit beside the base ones at the re-score without doubling anything.
+    **The dashboard still reads every version** (`dashboard/app.py` lines 72,
+    89 and 103): its owner should add `AND model_version = ?` with
+    `config.model_version.MODEL_VERSION` before the 12 Oct re-score.
+  - **Bank names:** `/coverage` and `/evidence` reject a bad `bank` with
+    422, like the other endpoints; `docs/api/openapi.json` regenerated.
+  - **Low ones:** the spec's promised 400 for a bad bucket, which the API
+    couldn't return, is gone, with its dead code; `/sentiment/index`
+    rows carry `insufficient_data`; a database error in the trend's
+    monthly series is logged and reported, not shown as "no data".
+- **API integrity validated after the fixes** (`/validate`, record in
+  `docs/validation/2026-10-03-api-integrity.md`): every index endpoint equals
+  the stored rows and every bad `bank`, `window` or `bucket` gets 422
+  (`tests/test_validate_api_integrity.py`, which reads a copy of the live
+  database). It found three more problems, now fixed: the trend response
+  returned shrunk scores beside a delta computed from unshrunk ones (it now
+  returns `recent_7d_unshrunk_score` and `baseline_30d_unshrunk_score`); a
+  model version with no rows looked like ordinary missing data (now reported
+  and logged); `/evidence?k=-1` dropped the last result (`k` is now 1–50).
+  Open: whether a 7-day window of 5 to 10 sentences is enough for a
+  direction, and whether `source` and `aspect` should be validated.
+- **Misdated UOB earnings files** (found by two reviewers): the filename
+  parser in `ingest/earnings_extract.py` couldn't read `q1-2024` or
+  `2023-results`, so six UOB documents (114 sentences of 2023–24 management
+  prose) carry their ingestion date, 10 Sep 2026, and count as recent: 114 of
+  the 230 sentences behind UOB's 30-day headline. The parser is fixed and
+  tested. **Repairing the stored dates needs approval** (a database write):
+  `.venv-plp/bin/python3 scripts/fix_earnings_dates.py` shows the six
+  changes; add `--apply`, then re-run `aggregate.index`. Re-running the
+  extraction alone doesn't fix them, because existing documents are skipped.
+- **Scorer tag:** `sentiment/score.py` tags rows with the model it runs
+  again, independent of the version readers serve, so changing
+  `config/model_version.py` can't relabel base scores.
+- **Chatbot grounding guards: eight confirmed weaknesses** (tests marked
+  `xfail` in `tests/test_validate_chatbot_grounding.py`): an invented quote
+  passes once any search has run; strip mode leaves evidence in a one-
+  paragraph answer while saying it removed it; the number check ignores the
+  sign, accepts 0.12 written as 0.12%, skips a number after a date, and its
+  ratio set accepts 85–95 of the whole percentages 1–99 on a trend answer;
+  curly or wrapped quotes and URLs without http(s) go unchecked. The "11 → 0
+  invented citations" in the decision brief was measured with these guards.
+- **Chatbot grounding guards fixed** (all eight; details and the re-measured
+  table in `docs/evidence/chatbot-eval-build-2026-10-01.md`, "Third round"):
+  strip still takes citation warnings to 0 on both models (8B 11 → 0, 3B
+  16 → 0) under checks that now also compare quoted text with what was
+  retrieved, respect signs and percentages, and pair counts only within one
+  result. Figures no tool returned: 8B 10 → 0, 3B 12 → 2 (two inventions the
+  old check missed). `chatbot.replay` now uses today's checks for both
+  columns. The decision brief and the to-do carry the new figures.
+- **Training review** (`docs/evidence/training-review-2026-10-03.md`):
+  - **Fine-tuning relabelled FinBERT's head.** Base FinBERT orders its
+    outputs positive, negative, neutral; training loaded it as negative,
+    neutral, positive and kept the weights, so every model started with each
+    output answering for the wrong class. Fixed in `train/finetune.py`. It
+    biases the reported lead down, not up. **Retraining the three seeds is a
+    team decision** (GPU time; changes the reported results).
+  - **A top-up row nearly copies a test sentence** (word overlap 0.93,
+    different id). `prepare` now drops such rows and `check_splits` refuses
+    them.
+  - Training saves its dev rows (`dev_ids.json`); the margin search refuses
+    to reshuffle once train_dev has grown. The candidate export no longer
+    overwrites the labelled file without `--force`.
+  - The model card says these models weren't retrained; the copy on Hugging
+    Face predates that line.
+- **Reddit fetcher no longer reads a failure as the end of the data.**
+  `ingest/arctic_shift.py` returned an empty page on any request error,
+  server error, 422 timeout or bad JSON, and the window loop stopped there:
+  comments are missing for 4–30 Sep 2021, 14–31 May 2024 and 5–31 Mar 2025,
+  each gap ending at a month boundary while posts for the same months are
+  normal. It now retries, then logs the window as incomplete. **Refilling the
+  three gaps needs approval** (network pulls and database writes):
+  `python -m ingest.arctic_shift --since <start> --until <end>` per gap, then
+  preprocessing, embedding, aspects, scoring and the index for the new rows.
+- **Still open from the reviews, for the team:** `ingest/cna_articles.json`
+  (committed with the CNA scraper) holds the full text of 15 CNA articles,
+  against the rule that CNA text is never committed; removing it is one
+  `git rm`, but teammates lose their copy on the next pull and the text stays
+  in git history. 118 "Kay Hian" sentences are attributed to UOB until NER
+  is applied (known, decision brief).
+- **Corpus aspect run done** (14:04, 3 Oct): all 44,345 sentences answered by
+  `llama3.1:8b`, none invalid. Retail banking 19,089, investor stock 5,545,
+  wealth 4,252, other 4,235, income and profit 3,602, guidance 2,023, asset
+  quality 1,530, NIM 1,332, capital 1,222, macro 906, dividends 609.
+- **Full-corpus index preview** (14:04–19:19,
+  `docs/evidence/index-preview-2026-10-01.md`, last section): with LLM
+  aspects and the fine-tuned models (margin 0.13) every headline rises by
+  0.04–0.07 and DBS moves just ahead of OCBC (today OCBC is just ahead; both
+  gaps under 0.02); UOB is last either way. **Correction:** the 11,000-sentence
+  preview said the ranking was unchanged; today's index has OCBC first.
+  Corrected in the evidence, findings, decision brief and to-do.
+- **Code labels replaced by names** across the docs, the `.claude` agents and
+  `/validate`, and the validation tests: success claims (Fine-tuning lead,
+  API integrity, Grounded chatbot), the functional spec's requirement IDs (the
+  `#` columns are gone), PLAN's made and open decisions, the 30 Sep
+  experiments, the 1 Oct jobs, review findings and the local-context
+  questions. Agents now name each finding in a few words instead of
+  numbering it. `CLAUDE.md` ("Writing docs") says so. Two tables in the
+  functional spec, split by a stray blank line, are whole again.
+- **The re-score step is ready** (`040ed26`). `scripts/rescore.py` applies
+  the LLM aspects and the fine-tuned scores (three seeds averaged, margin
+  0.13) in one transaction with its checks and the index rebuild, refuses
+  `data/plp.db` without `--real-db`, and backs it up first. On a fresh copy
+  it took seconds and matched the full-corpus preview in all 36 bank-aspect
+  cells (scores within 0.0001). Afterwards: set `MODEL_VERSION` (the version
+  `finbert-finetuned-2026-10-01-3seed-m0.13` is already listed in
+  `FINETUNED`) and `assignment_method: llm`. While a fine-tuned version is
+  served, `sentiment.score` scores new pairs with it too. RUNBOOK, "Apply
+  the aspect and sentiment decisions".
+- **Index and scorer fixes** (`244b7c0`): windows and series buckets use
+  UTC instants and ISO weeks; the index counts a score only while its pair
+  is assigned; the series raises on an unknown label; `sentiment.score`
+  refuses probabilities that don't sum to 1 and takes `--cpu`;
+  `aggregate.preview --per-seed` measures the spread between seeds.
+- **Ingestion fixes** (`bf0357f`), future data only: failed Reddit and
+  Google News windows no longer pass as done or quiet, CNA retries
+  temporary failures, PDF extraction keeps wrapped sentence ends, Reddit
+  text is unescaped before quotes are removed, the blind-sheet export needs
+  `--force` to overwrite, no home paths in code.
+- **Earnings-date repair rehearsed on two copies**: only UOB's 30-day rows
+  change (24 rows); its headline goes from +0.315 on 211 sentences to
+  +0.251 on 97.
+- **Hugging Face**: the model card is re-uploaded and matches
+  `docs/model-card.md`. It has no metadata block, so the Hub warns; cosmetic.
+- **New commands**: `/sync-docs`, `/handoff`, `/jobs`, `/examine`,
+  `/team-message` (`CLAUDE.md`, "Validation").
+- Three reviewer runs found the bugs above; every fix has a test that failed
+  before it. 850 tests in `tests/` (848 pass, 2 skipped), 897 from the root.
+- **Seed-to-seed spread measured** (index-preview evidence, last section):
+  each fine-tuned seed alone gives DBS +0.113 to +0.235, OCBC +0.116 to
+  +0.210, UOB +0.105 to +0.149. With seed 1 alone OCBC stays ahead of DBS
+  and both fall below base FinBERT, so "DBS moves ahead" and "every
+  headline rises" hold for the three-seed average only; 8 of 30 named cells
+  (NIM and macro for every bank) change sign between seeds. Corrected in
+  the findings, the decision brief and the to-do.
+
+**Needs a human (3 Oct, evening):** approve the three data repairs on the
+to-do (earnings dates; the Reddit gaps, whose three markers in
+`data/.backfill_progress.txt` must be deleted before a rerun; CNA text in
+git); the dashboard owner adds the `model_version` filter, and should check
+that the series' week labels, now ISO weeks, still plot; retraining stays on
+hold. Known and not fixed: `run_daily_batch.py` still exits 0 when a window
+fails (it logs it; the daily job is stopped); a short PDF tail that starts
+with a capital (say "S$1.2 billion") still splices; Reddit spoiler lines
+(`>!`) are now removed as quotes; a few news sentences reach a bank only
+through a venue name (UOB Plaza, OCBC Cycle), which NER's resolution table
+doesn't cover yet; the LLM aspect cache has two duplicate lines (same
+answers, harmless).
+
+
+### 4 October
+
+- **Chatbot questions are sorted by a model, not by word lists** (DESIGN
+  decision 24). `chatbot/intent.py` asks a local model (`llama3.1:8b`,
+  Ollama structured output) which of eleven intents a question is:
+  in-scope questions go to the chatbot model; advice, another bank, small
+  talk, help, banking service, prompt injection, feedback and off-topic get
+  a reviewed fixed reply from `config/intents.yaml`. If the classifier is
+  down, the question goes to the model (fail open). On 103 labelled
+  questions (`python -m chatbot.eval_intent`): `llama3.1:8b` 100 correct,
+  no real question blocked, two other-bank questions (HSBC, Standard
+  Chartered) let through to the model; `llama3.2:3b` 94; `qwen3:4b` 99 but
+  blocks three real questions. Results in `data/eval/intent_eval_*.md`.
+  Possibly optimistic: the intent definitions quote some evaluation
+  phrasings and name the evaluation's other banks; new questions written
+  apart from the prompt would measure it fairly.
+  Live with `llama3.1:8b` as classifier and chatbot model, the gold set
+  under today's checks: behaviour 8/8, right tool 21 and 22 of 24 (20 on
+  1–2 Oct; the prompt and checks changed too), answers with an unverified
+  figure 4 of 32 (10 on 1 Oct); with
+  strip, no invented citation and one invented figure. HSBC and Standard
+  Chartered now reach the model, which declined both. Conversations 9/9,
+  the new scope set 28 of 29, its conversations 9/9.
+  `docs/evidence/chatbot-intent-2026-10-04.md`. Two checks were corrected
+  after these runs, both for flagging correct answers (an analyst
+  breakdown's shares; "I can't help with that" as a decline), and the
+  earlier runs re-scored with them.
+- **Settings in one place.** `config/chatbot.yaml` (every chatbot setting,
+  with its environment override), `config/sources.yaml` (source weights;
+  which sources' text the Gemini backend must never receive: Reddit, CNA,
+  and any source not listed), `config/aspect_taxonomy.py` (the one reader of
+  `config/aspects.yaml`), one minimum-sentences constant (`MIN_N`), one
+  bank-name tuple (`BANK_NAMES`), one label order (`train/labels.py`),
+  `BASE_VERSION` and `DEFAULT_FINETUNED` in `config/model_version.py`. The
+  aspect classifier's definitions, examples and model are in
+  `config/aspects.yaml`; its prompt fingerprint is unchanged (96efe244, a
+  test pins it), so the corpus answers are still used.
+- **`PLP_DB_PATH` / `PLP_EMBEDDINGS_PATH`** serve a copy (a rescored one,
+  say) to the API and the dashboard without touching `data/plp.db`.
+  `scripts/rescore.py` refuses both databases without `--real-db`, and
+  `--fresh-copy` always copies `data/plp.db`.
+- **Rescore: models and margin from `FINETUNED`.** A listed `--version`
+  brings its own models and margin and refuses others; base FinBERT's tag is
+  refused; models not listed need `--margin`. The undo advice mentions the
+  WAL files.
+- **The retrained models** (head-order fix): every seed beats base FinBERT
+  (test macro-F1 0.646, 0.592, 0.625; mean 0.621 ± 0.027 against 0.571);
+  the average matches base on accuracy (0.702 against 0.699). The
+  dev-chosen margin (0.12) now lowers every seed's test score. On the full
+  corpus the retrained average stays within 0.015 of base FinBERT's
+  headlines with the margin and agrees with base on every aspect's sign;
+  single seeds still differ. Not adopted: `docs/evidence/retrain-2026-10-04.md`
+  (audited).
+- **Fixes with tests:** evaluation stops on probabilities that don't sum to
+  1 and takes `--cpu`; the label shares used for class weights count base
+  FinBERT only; the API logs at startup when the served version has no index
+  rows; the backup and rollback tests cover every table and an open WAL.
+- **Validation:** the 4 Oct chatbot-and-API validation's findings are all
+  fixed (`docs/validation/2026-10-04-chatbot-and-api.md`); two reviewer
+  runs and two auditor runs on today's changes, all findings fixed.
+
+**Needs a human (4 Oct):** decide whether to adopt the retrained models and
+how to settle the margin on dev (decision brief, 7); anchor the 7- and
+30-day windows to the newest sentence or collect up to the re-score, since
+a rebuild after 12 Oct would otherwise leave them empty (12); whether the
+Claude and OpenAI backends also withhold Reddit and CNA text (13); POSB as
+a DBS alias at collection (14); read the fixed replies in
+`config/intents.yaml`. Known and not fixed: the number check skips years,
+so a wrong year ("2023" for 2026) passes; the classifier lets two
+other-bank questions through to the model, which declined them.

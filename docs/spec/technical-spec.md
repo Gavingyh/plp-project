@@ -8,7 +8,8 @@ repeated. Commands live in [RUNBOOK.md](../RUNBOOK.md). Current state and
 caveats live in [STATUS.md](../STATUS.md).
 
 Verified against the code and database on 2026-09-11; the module map,
-operations and open decisions were updated on 2026-09-26. Planned components
+operations and open decisions were updated on 2026-09-26, and the whole
+document checked against the code again on 2026-10-04. Planned components
 are marked as such and sequenced in [PLAN.md](../PLAN.md).
 
 ---
@@ -17,7 +18,7 @@ are marked as such and sequenced in [PLAN.md](../PLAN.md).
 
 The pipeline diagram is in [DESIGN.md](../DESIGN.md#what-the-system-does).
 Rather than redraw it, here is one sentence's journey through the system, with
-`sentence_id` as the thread that ties it together. Twenty more diagrams, each
+`sentence_id` as the thread that ties it together. Twenty-three diagrams, each
 traced to the code, are in [docs/diagrams](../diagrams/README.md).
 
 A DBS analyst-call transcript PDF is downloaded to
@@ -41,6 +42,8 @@ writes `aspect_sentiment` with a label, a confidence, and a `model_version`.
 and shrinkage. When a user later asks the chatbot about DBS margins,
 `search_evidence` retrieves it by cosine similarity over the cached embedding,
 and the answer cites it by that same `sentence_id` and the transcript's URL.
+The Streamlit dashboard reads the same rows from the database; any other
+frontend reads them through the REST API ([api-integration.md](../api-integration.md)).
 
 The invariant: **the sentence is the unit of analysis**, and every downstream
 artifact keys off `sentence_id`. Document-level sentiment would defeat the
@@ -55,25 +58,31 @@ criticise an app in consecutive sentences.
 |---|---|---|
 | `ingest/` | Source adapters, DB schema and connection, retry helper, bank detection, news relevance filter and cross-source dedup | `arctic_shift`, `google_news`, `yahoo_news`, `newsapi`, `yahoo_analyst`, `analyst_tag`, `alphavantage`, `news_filter`, `cna_scraper` (RSS to a JSON file), `cna_archive` (CNA backfill into the database), plus the three-stage earnings group: `earnings_fetch_ir`, `earnings_fetch_uob`, `earnings_extract` |
 | repository root | Batch entry points | `run_news_pull.py` (every news source, then a source × bank × month table; `--audit` re-checks stored news), `run_daily_batch.py` (news, Reddit, consensus) |
-| `preprocess/` | Documents to sentences; labelling exports; a dry-run debris filter | `pipeline`, `export_candidates`, `export_blind_test`, `fragments` (reports only) |
-| `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison, the LLM aspect classifier and assignment evaluation | `assign`, `discover`, `compare_taxonomies`, `embed_store`, `llm_classify` (evaluation only), `assignment_eval` |
-| `sentiment/` | Aspect-conditioned sentiment classification | `score` |
-| `aggregate/` | The sentiment index and continuous time series | `index` |
-| `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation | `agent`, `run_eval` |
+| `preprocess/` | Documents to sentences; labelling exports; a dry-run debris filter; bank entity recognition | `pipeline`, `export_candidates`, `export_blind_test`, `export_topup`, `bank_ner` (evaluated, not applied), `fragments` (reports only) |
+| `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison, the LLM aspect classifier and assignment evaluation | `assign`, `discover`, `compare_taxonomies`, `embed_store`, `llm_classify` (evaluation and the corpus run), `assignment_eval` |
+| `sentiment/` | Aspect-conditioned sentiment classification | `score` (base FinBERT; also scores new pairs with a served fine-tuned version through `finetuned`) |
+| `aggregate/` | The sentiment index, continuous time series, and the read-only preview of pending changes | `index`, `preview` |
+| `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation, a terminal chat for testing | `chat`, `agent`, `run_eval` |
 | `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `opus_labels` |
-| `api/` | FastAPI REST layer | `uvicorn api.main:app` |
-| `dashboard/` | Streamlit UI | `streamlit run dashboard/app.py` |
-| `config/` | Aspect taxonomy, logging configuration | — |
-| `scripts/` | Service lifecycle, overnight backfill, model comparison, scheduling template | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `compare_chatbot_models.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
+| `api/` | FastAPI REST API: the documented interface for any frontend (DESIGN decision 23) | `uvicorn api.main:app` |
+| `dashboard/` | Streamlit dashboard, maintained by a teammate; reads the database directly | `streamlit run dashboard/app.py` |
+| `config/` | Aspect taxonomy and assignment method, the served model version and the fine-tuned models behind it, logging configuration | — |
+| `scripts/` | Service lifecycle, overnight backfill, scheduling template, data repairs, the re-score step, the sharing bundle | `start.sh`, `stop.sh`, `status.sh`, `overnight_backfill.py`, `rescore.py`, `fix_earnings_dates.py`, `share_bundle.sh`, `com.plp.dailybatch.plist` (launchd job, not installed anywhere) |
 
 The LLM aspect classifier of DESIGN decision 16 is built
-(`aspects/llm_classify.py`) and evaluated against the human aspect labels,
-but not yet wired into the pipeline: `aspects/assign.py`'s seed-centroid
-matching still fills `sentence_aspects`. Still planned (decisions 17–18): a
-bank entity recognition step, and aspect agreement in `train/agreement.py`. Decision 19's chatbot harness is
-built: `chatbot/guards.py` (advice, off-topic, figure and sentence-id checks)
-and `Conversation` / `answer_turn` in `chatbot/agent.py` (memory, state,
-per-turn record); `/chat` accepts earlier turns as `history`.
+(`aspects/llm_classify.py`), evaluated against the human aspect labels, and
+has classified the whole corpus (3 Oct). It isn't applied: seed-centroid
+matching still fills `sentence_aspects` until the team decides, after which
+`scripts/rescore.py` replaces it and `aspects/assign.py` follows
+`assignment_method`. Bank entity recognition (decisions 17–18) is built and
+evaluated (`preprocess/bank_ner.py`, 1 Oct) but not applied either. Aspect agreement is in `train/agreement.py`
+(`--field aspect`, 2026-10-01). Decision 19's chatbot harness is
+built: `chatbot/intent.py` with `config/intents.yaml` (a local model sorts each
+question into an intent; all but in_scope get a fixed reply, decision 24),
+`chatbot/guards.py` (figure and sentence-id checks), and `Conversation` /
+`answer_turn` in `chatbot/agent.py` (memory, state, per-turn record); `/chat`
+accepts earlier turns as `history`. Chatbot settings: `config/chatbot.yaml`
+through `chatbot/settings.py`.
 
 Run every module as `.venv-plp/bin/python3 -m <module>`. Never plain
 `python3`; see RUNBOOK for why.
@@ -82,7 +91,7 @@ Run every module as `.venv-plp/bin/python3 -m <module>`. Never plain
 
 ## 3. Data model
 
-One SQLite file, `data/plp.db`, 83 MB. Six tables. WAL journal mode.
+One SQLite file, `data/plp.db`, 198.5 MB (4 Oct). Six tables. WAL journal mode.
 
 ### `documents`
 One row per ingested item, before segmentation.
@@ -95,7 +104,7 @@ One row per ingested item, before segmentation.
 | `bank` | TEXT | `DBS` \| `OCBC` \| `UOB` \| `MULTI` |
 | `doc_type` | TEXT | `article` \| `submission` \| `comment` \| `earnings_release` |
 | `title`, `body` | TEXT | `body` is NOT NULL |
-| `published_at` | TEXT | ISO 8601 UTC |
+| `published_at` | TEXT | ISO 8601 with offset: UTC, except CNA's +08:00 |
 | `url` | TEXT | Provenance, surfaced in every citation |
 | `ingested_at` | TEXT | Batch provenance |
 | `raw` | TEXT | Original payload as JSON, for auditability |
@@ -122,6 +131,11 @@ aspects.
 
 `(sentence_id, aspect)` primary key, plus `similarity` and `assigned_at`.
 
+`assignment_method` in `config/aspects.yaml` decides how new sentences are
+assigned: `centroid` (the above, today) or `llm`, one aspect per sentence from
+the local LLM, stored with `similarity` 1.0 since the LLM gives no score.
+Switch it in the same change that applies the LLM's aspects to the corpus.
+
 ### `aspect_sentiment`
 One classification per (sentence, aspect, model version).
 
@@ -129,10 +143,17 @@ One classification per (sentence, aspect, model version).
 (`positive` \| `neutral` \| `negative`), `confidence`, `scored_at`. The
 `model_version` in the key is what will let a fine-tuned model's scores
 coexist with the current `finbert-base-zeroshot-v1` rather than overwrite
-them.
+them. Every reader (the API, the chatbot's tools, evidence search,
+suggestions and the time series) returns only the version named in
+`config/model_version.py`, so two models' rows never mix; change it in the
+commit that re-scores the corpus. If that version has no rows,
+`get_sentiment` says so and a warning is logged. The index and the time
+series count a row only while its pair is in `sentence_aspects`, so scores
+left from an earlier aspect method never count; `scripts/rescore.py`, which
+applies the LLM aspects and the fine-tuned scores, also deletes them.
 
 ### `sentiment_index`
-The aggregate the dashboard, API and chatbot read.
+The aggregate the API and chatbot read, and a dashboard through the API.
 
 `(bank, aspect, window, source, model_version)` primary key, plus `score`,
 `n`, `pos_n`, `neu_n`, `neg_n`, `confidence_mean`, `computed_at`.
@@ -143,7 +164,8 @@ The aggregate the dashboard, API and chatbot read.
   dimension exists so a blended figure is never opaque.
 - `score` is shrunk and weighted, in −1 to +1.
 - `n` is always stored and always displayed. A sentiment number without its
-  sample size is the main way this dashboard could mislead someone.
+  sample size is the main way a dashboard could mislead someone, so the API
+  returns it with every score.
 
 ### `analyst_consensus`
 Standalone; not part of the sentence pipeline. `(bank, as_of_date)` primary
@@ -157,11 +179,11 @@ sell) scale, and price target statistics.
   `INSERT OR IGNORE`. Re-running any adapter is a no-op.
 - **Deduplication** is by `norm_hash` on the normalised sentence text, which
   catches syndicated wire copy republished across outlets.
-- **Window filtering compares `published_at` strings** against an ISO cutoff
-  string rather than parsed datetimes. Correct at day granularity given every
-  source is UTC, but it relies on comparing digits before any `Z` versus
-  `+00:00` suffix difference. Switch to parsed datetimes before adding
-  sub-day windows. Documented in `aggregate/index.py`.
+- **Windows and series buckets use parsed UTC instants.** CNA's timestamps
+  carry +08:00 and NewsAPI's `Z`, so comparing the strings put CNA rows up to
+  eight hours on the wrong side of a cutoff or month edge (fixed 3 Oct).
+  Weeks are ISO weeks (`2025-W01`, never `W00`). Documented in
+  `aggregate/index.py`.
 - **SQLite binds at most 32,766 parameters.** Never build `IN (?,?,...)` over
   a per-row list; this crashed `aspects/discover.py` once the corpus passed
   that size.
@@ -187,7 +209,7 @@ re-measured during the 2026-09-11 documentation pass.
 Every step after ingestion needs `HF_HUB_OFFLINE=1`, or HuggingFace's
 rate-limited metadata check can stall with near-zero CPU and look like a hang.
 
-Embeddings are cached in `data/sentence_embeddings.npz` (101 MB) and reused by
+Embeddings are cached in `data/sentence_embeddings.npz` (127 MB) and reused by
 assignment, discovery, taxonomy comparison and chatbot retrieval.
 
 ---
@@ -203,7 +225,6 @@ assignment, discovery, taxonomy comparison and chatbot retrieval.
 | scikit-learn | ≥1.7 | TF-IDF for cluster labelling, Cohen's κ, classical baseline, metrics |
 | umap-learn | ≥0.5 | Dimensionality reduction before clustering |
 | hdbscan | ≥0.8 | Density clustering for taxonomy discovery |
-| streamlit | 1.63.0 | Dashboard; health at `/_stcore/health` |
 | fastapi + uvicorn | ≥0.115 / ≥0.30 | REST API |
 | pdfplumber | ≥0.11 | Earnings PDF prose extraction |
 | vaderSentiment | ≥3.3.2 | Lexicon baseline for evaluation |
@@ -217,8 +238,8 @@ Local models available through Ollama:
 
 | model | size | notes |
 |---|---|---|
-| `llama3.2:3b` | 2.0 GB | Current default. Fast; fabricates citations at 43–48% |
-| `llama3.1:8b` | 4.9 GB | Fabricates at 13%; slower. The better default where it fits |
+| `llama3.2:3b` | 2.0 GB | The default until 4 Oct. On gold set v2 (1 Oct) 15 of 32 answers carried a citation warning; on 4 Oct no faster than the 8B (median 20.7 s against 22.2 s a question) |
+| `llama3.1:8b` | 4.9 GB | The default since 4 Oct (the demo model). 11 of 32 on the same set |
 | `phi4-mini` | 2.5 GB | Called a tool 0 of 16 times; fabricated in 83% of answers |
 | `gemma3:4b` | 3.3 GB | No Ollama tool-calling support; all 23 questions error |
 | `qwen3:4b` | 2.5 GB | Emits a hidden reasoning chain first; roughly 7x slower per chatbot call. For aspect classification `--no-think` turns it off (1.3 s a sentence) |
@@ -234,14 +255,18 @@ Local models available through Ollama:
 | `NEWSAPI_KEY` | — | `ingest/newsapi.py` |
 | `ALPHAVANTAGE_KEY` | — | `ingest/alphavantage.py` (contributes nothing) |
 | `REDDIT_CLIENT_ID` / `_SECRET` / `_USER_AGENT` | — | Unused; Arctic Shift needs no key |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | — | Backend auto-detection, preferring Claude, then OpenAI, then Gemini |
-| `CHATBOT_BACKEND` | auto | Forces `ollama` \| `claude` \| `openai` \| `gemini` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | — | The hosted backends' keys; with `CHATBOT_BACKEND=auto` the first one set is used (Claude, then OpenAI, then Gemini) |
+| `CHATBOT_BACKEND` | `ollama` | `ollama` \| `claude` \| `openai` \| `gemini` \| `auto` (since 4 Oct the default is Ollama, not the first key set) |
 | `CLAUDE_MODEL` / `OPENAI_MODEL` / `GEMINI_MODEL` / `OLLAMA_MODEL` | per backend | Model override (`GEMINI_CHAT_MODEL` is also read for Gemini; default `gemini-3.8-flash`) |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | The `openai` backend's address; any OpenAI-compatible provider, e.g. `https://api.groq.com/openai/v1` |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama backend and the service scripts |
 | `LOG_LEVEL` | `INFO` | Console verbosity |
 | `DEBUG` | `false` | DEBUG level plus un-silencing third-party libraries |
 | `LOG_FILE` | `data/logs/plp.log` | `none` disables file logging |
-| `PLP_DASHBOARD_PORT` / `PLP_API_PORT` | 8501 / 8000 | `scripts/start.sh`, `stop.sh`, `status.sh` |
+| `PLP_API_PORT` | 8000 | `scripts/start.sh`, `stop.sh`, `status.sh` |
+| `PLP_DASHBOARD_PORT` | 8501 | the same scripts, for the dashboard |
+| `CHATBOT_ENFORCE_EVIDENCE` | `strip` | `strip` removes evidence no search returned; `search` also adds real quotes the harness finds; `off` only flags it |
+| `OLLAMA_THINK` | unset | `false` turns a reasoning model's hidden thinking off (qwen3) |
 
 `.env.example` is tracked, so every value in it must be a placeholder. Real
 keys were committed there from the first commit until 2026-09-11 and must be
@@ -281,23 +306,26 @@ is open for local frontend development.
 | GET | `/banks` | — | Supported bank codes |
 | GET | `/sentiment` | `bank*`, `aspect`, `window` | Score, `n`, class counts |
 | GET | `/sentiment/compare` | `aspect`, `window` | All three banks side by side |
-| GET | `/sentiment/trend` | `bank*`, `aspect` | Direction, 7d vs 30d delta, up to 12 monthly points |
+| GET | `/sentiment/trend` | `bank*`, `aspect` | Direction from the 7d vs 30d delta of the unshrunk scores, up to 12 monthly points |
 | GET | `/sentiment/index` | `window`, `source` | Full index rows |
 | GET | `/sentiment/series` | `bank*`, `aspect`, `bucket`, `source`, `min_n` | Continuous series; each point carries `sufficient` |
 | GET | `/sources` | — | Sources present, for per-source breakdowns |
 | GET | `/coverage` | `bank`, `aspect` | `has_data`, so callers can tell absence from neutrality |
-| GET | `/evidence` | `query*`, `bank`, `aspect`, `sentiment`, `k` | Sentences with `sentence_id`, `url`, `published_at` |
+| GET | `/evidence` | `query*`, `bank`, `aspect`, `sentiment`, `k` (1–50) | Sentences with `sentence_id`, `source`, `url`, `published_at` |
+| GET | `/evidence/latest` | `bank*`, `aspect`, `limit` | The newest sentences with their stored label, for a drill-down list |
 | GET | `/analyst-consensus` | `bank*` | Latest Yahoo snapshot, with its unofficial-API caveat |
+| GET | `/analyst-consensus/latest` | — | Every bank's newest consensus row |
+| GET | `/aspects` | — | Aspect keys and readable labels |
 | GET | `/suggestions` | `limit` (1–20) | Starter questions generated from the index |
-| POST | `/chat` | `{message, backend?}` | Chatbot answer |
+| POST | `/chat` | `{message, backend?, history?}` | Chatbot answer with its verification flags |
 
-`*` marks required. Validation is by regex on the query parameter, so a bad
-`bank`, `window` or `bucket` returns **HTTP 422** from FastAPI before the
-handler runs — verified against a live instance on 2026-09-11. The handler's
-own `ValueError` to 400 path on `/sentiment/series` is therefore unreachable
-through the API, since the regex admits only the three valid buckets; it still
-guards `compute_time_series` when called directly from Python. Covered by
-`tests/test_api.py`.
+`*` marks required. A bad `bank`, `window` or `bucket` returns **HTTP 422**
+from FastAPI before the handler runs (regex on the query parameter), and so
+does an unknown `aspect` on every endpoint that takes one (a readable name
+such as "dividend policy" is accepted; 4 Oct). On `/chat`, an unknown
+`backend` or message `role` is a 422, an empty message a 400, and a backend
+that fails (Ollama not running, a missing or rejected key) a 503. Covered by
+`tests/test_api.py` and `tests/test_validate_api*.py`.
 
 ### Chatbot tools
 
@@ -349,9 +377,11 @@ instructions alone failed in testing:
    twice, once as plausible URLs and once as placeholder tokens a URL-matching
    check alone would have missed.
 
-**Evaluation.** A 23-question gold set in `chatbot/eval_gold_set.py` covering
-lookups, comparisons, trends, out-of-scope questions, thin data, evidence
-requests and advice-seeking. `chatbot/run_eval.py --tag <name>` writes a
+**Evaluation.** A gold set in `chatbot/eval_gold_set.py` covering lookups,
+comparisons, trends, out-of-scope questions, thin data, evidence requests and
+advice-seeking: 23 questions in v1, 32 in v2 (`--set v2`, 1 Oct), plus four
+multi-turn conversations (`--multi-turn`), retrieval MRR and an LLM judge
+([evidence](../evidence/chatbot-eval-build-2026-10-01.md)). `chatbot/run_eval.py --tag <name>` writes a
 transcript and a summary per model. Tool selection, advice-declining and
 citation fabrication are automated. Whether a stated number is *correct* is
 not, and deliberately so: verifying a number by extracting it with another
@@ -402,7 +432,9 @@ configuration chosen on 2026-10-01 by 5-fold cross-validation is up to 8
 epochs with the aspect's readable label (`--aspect-text label`) as the second
 segment.
 
-**Status (2026-10-01).** Trained on 1,277 labelled rows: test macro-F1 0.604
+**Status (2026-10-01).** Trained on the 978 train/dev rows of the 1,277
+labelled (831 for training, 147 for early stopping) and tested on the other
+299: test macro-F1 0.604
 ± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT
 zero-shot's 0.571
 ([evidence](../evidence/finetune-fixes-2026-10-01.md)). The aspect
@@ -413,7 +445,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-438 tests in `tests/` (479 from the repository root, adding the diagram and
+1139 tests in `tests/` (1186 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.
@@ -421,7 +453,7 @@ rather than a silent production break.
 - `tests/conftest.py` provides `temp_db`, which redirects `ingest.db.DB_PATH`
   to a throwaway file and creates every table, so tests never touch
   `data/plp.db`.
-- All 479 ran in 45 seconds on 2026-10-01; part of that is `umap`/`hdbscan`
+- 479 ran in 45 seconds on 2026-10-01 on a quiet machine; part of that is `umap`/`hdbscan`
   import cost from the discovery tests.
 - Several tests exist because of specific real bugs and say so in their
   docstrings: silent PDF extraction failure, the SQLite parameter ceiling, the
@@ -492,7 +524,8 @@ development tool and must not be exposed to a network.
    terms blessing it, and a cookie-and-crumb handshake that exists to slow
    automated access. It provides consensus aggregates, not analyst reasoning,
    and must not be described as "analyst reports". The caveat is surfaced in
-   the module, the dashboard and the API response.
+   the module and the API response, and the integration guide asks a
+   dashboard to show it.
 
 `sgx.com` and `sginvestors.io` were tested and both serve bot-protection
 responses to plain clients. Scraping them would need a headless browser and
@@ -500,9 +533,11 @@ was assessed as disproportionate and in greyer territory than reading a public
 feed.
 
 **Not financial advice.** The chatbot is required to decline buy/sell framing
-and state that it does not give investment advice. It currently manages this
-in 3 of 7 gold-set cases on every model tested, which is a known and
-report-relevant gap.
+and state that it does not give investment advice. Prompt instructions alone
+managed this in 2–3 of 7 gold-set cases on every model tested. From 26 Sep a
+regex input guard answered advice-seeking questions with a fixed reply and
+declined 7 of 7; since 4 Oct the intent classifier (decision 24) does, with
+its advice recall measured by `chatbot/eval_intent.py`.
 
 **Personal data.** Reddit content is public but user-authored. Documents store
 the source URL rather than building user profiles, and no analysis is done per
@@ -518,14 +553,14 @@ personal names are kept in the repository.
 ### Open decisions
 
 > **Updated 2026-09-26.** Decisions 1 and 5 were made by the team (PLAN.md
-> section 2: D1, D2) and 3 has a planned fix (DESIGN decision 19). The live
+> section 2: LLM aspects, and annotators labelling aspect and sentiment) and 3 has a planned fix (DESIGN decision 19). The live
 > list is PLAN.md's "Still open" table; the rows below record how they stood
 > on 2026-09-11.
 
 | # | Decision | Evidence available | Who decides |
 |---|---|---|---|
-| 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source. *Decided 2026-09-30: ten data-derived aspects (DESIGN decision 21)* | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team plus supervisor. It changes what was proposed. |
-| 2 | **Default local model.** `llama3.1:8b` fabricates citations at 13% against `llama3.2:3b`'s 43–48%, but is noticeably slower | STATUS chatbot evaluation | Team |
-| 3 | **Advice-declining fix.** 3 of 7 at best on every model, so it is a prompt and design problem, not a model choice | `data/eval/chatbot_eval_results_*.jsonl` | Whoever owns the chatbot |
-| 4 | **Whether blending is right at all.** Management commentary and retail chatter in one index is a legitimate methodological question, currently resolved in favour of the proposal with composition made visible | Per-source rows in `sentiment_index` | Team plus supervisor |
+| 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source. *Decided 2026-09-30: ten data-derived aspects (DESIGN decision 21)* | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team. It changes what was proposed, so the report must explain it. |
+| 2 | **Default local model.** *Decided 4 Oct: `llama3.1:8b`.* On gold set v2 (1 Oct) it carried a citation warning on 11 of 32 answers against `llama3.2:3b`'s 15, and on 4 Oct the 3B was no faster | `docs/evidence/chatbot-eval-build-2026-10-01.md` | Team |
+| 3 | **Advice-declining fix.** *Done 2026-09-26:* the input guard declines 7 of 7, where prompts alone managed 2–3 of 7 | `docs/evidence/chatbot-harness-2026-09-26.md` | — |
+| 4 | **Whether blending is right at all.** Management commentary and retail chatter in one index is a legitimate methodological question, currently resolved in favour of the proposal with composition made visible | Per-source rows in `sentiment_index` | Team |
 | 5 | **Labelling split across four people**, and whether to reduce the per-class target given `asset_quality` has only 58 candidate rows | `docs/STATUS.md` labelling section | Team |

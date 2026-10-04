@@ -30,7 +30,7 @@ The pipeline runs without any API key. Keys only add sources:
 |---|---|---|
 | *(none)* | Reddit, earnings PDFs, Yahoo consensus, local chatbot | — |
 | `NEWSAPI_KEY` | news articles (~1 month lookback on free tier) | optional |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | hosted chatbot model | optional |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | hosted chatbot model (`OPENAI_API_KEY` with `OPENAI_BASE_URL` for any OpenAI-compatible provider, such as Groq) | optional |
 
 ---
 
@@ -114,6 +114,50 @@ Steps 3 and 4 only process *new* work, so subsequent runs are fast. Progress
 appears in the logs; the log file also captures DEBUG detail
 (`data/logs/plp.log`).
 
+Step 3 assigns new sentences by `assignment_method` in `config/aspects.yaml`:
+`centroid` (today) or `llm`, one aspect per sentence from `llama3.1:8b`,
+which needs Ollama running. Step 4 stops with "probabilities don't sum to 1"
+if the GPU returns garbage; rerun it with `--cpu`.
+
+### Apply the aspect and sentiment decisions (the re-score)
+
+`scripts/rescore.py` replaces the centroid aspects with the LLM's one aspect
+per sentence and adds the fine-tuned models' scores (three seeds averaged,
+neutral margin) beside base FinBERT's, then recomputes the index. It reads
+the LLM's answers and the fine-tuned probabilities from the caches the
+corpus run and the full-corpus preview left, so on this Mac it takes
+seconds. It refuses `data/plp.db` unless given `--real-db`: rehearse on a
+copy first.
+
+```bash
+# a fresh copy, a dry run, then the copy changed
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.db --fresh-copy \
+    --aspects llm --finetuned --margin 0.13 --cpu
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.db --fresh-copy \
+    --aspects llm --finetuned --margin 0.13 --cpu --apply
+```
+
+Which models and margin: `--version` with a version listed in `FINETUNED`
+(`config/model_version.py`) uses that entry's models and margin, and refuses
+others, because new sentences are scored with exactly those. Without it, the
+1 Oct seeds are used with the margin their entry lists; other models
+(`--models`, such as the retrained seeds in
+`models/experiments-2026-10-03/label/`) need `--margin` and get a version of
+their own. Base FinBERT's tag is refused.
+
+It prints its checks (one aspect per sentence, no scored pair without an
+assignment) and every bank's headline per model version, which should match
+the preview's columns B and D. On 3 Oct the copy matched all 36 bank-aspect
+cells of the full-corpus preview (scores within 0.0001). After the real run,
+which only the team can approve: set `MODEL_VERSION` in
+`config/model_version.py` to the version it prints, set `assignment_method:
+llm`, take a snapshot (below), and run the evaluations again. On another
+device (a CUDA PC, or the Mac's GPU without `--cpu`) the fine-tuned pairs
+are scored again, since the cache is kept per device.
+
+`aggregate.preview --per-seed` scores the LLM-aspect pairs with each model
+alone and prints the spread of every bank's headline between seeds.
+
 ---
 
 ## One-off ingestion tasks
@@ -186,7 +230,11 @@ shasum -a 256 data/snapshots/plp-<date>-vN.db.gz   # record name, size and check
 
 Not running since 2026-09-26. To run the ingestion daily on a Mac, install
 `scripts/com.plp.dailybatch.plist`; its header has the install, run-now and
-remove commands. It ingests only; run the pipeline steps afterwards.
+remove commands. Replace its `/path/to/plp-project` placeholders with the
+checkout's path first. It ingests only; run the pipeline steps afterwards.
+`run_daily_batch.py` logs failed Reddit or Google News windows at error
+level but still exits 0; `run_news_pull.py` exits non-zero, and the
+backfill below records such a month as incomplete and moves on.
 
 ### UOB earnings — fetched from the Wayback Machine
 
@@ -224,41 +272,61 @@ caffeinate -i .venv-plp/bin/python3 scripts/overnight_backfill.py
 ```
 
 Progress: `data/backfill_overnight.log` and `data/.backfill_progress.txt`.
+A month in which a page kept failing after its retries ends with exit code 3
+and an `INCOMPLETE` line naming the lost windows, and is not marked done, so
+the next run retries it. Before 3 Oct such months were marked done: Sep 2021,
+May 2024 and Mar 2025 are in the progress file with most of their comments
+missing (see the to-do). To refill them, once approved, delete those three
+lines from `data/.backfill_progress.txt` and run the script again.
 
 ---
 
 ## Interfaces
 
+The interfaces are the REST API, a terminal chat for testing the chatbot,
+and the Streamlit dashboard (`dashboard/`, a teammate's), which reads the
+database directly. The API is the documented interface for any frontend
+(DESIGN decision 23); [api-integration.md](api-integration.md) is its contract.
+
 ### Start and stop
 
 ```bash
-scripts/start.sh              # Ollama (if needed), API, dashboard
+scripts/start.sh              # Ollama (if needed), the API and the dashboard
 scripts/status.sh             # what's running, on which port, healthy or not
 scripts/stop.sh               # stop everything this project started
 ```
 
-Each takes an optional service name — `dashboard`, `api` or `ollama` — to act
-on just one. The scripts work from any directory.
+Each takes an optional service name (`api`, `ollama` or `dashboard`) to act
+on just one. Ports come from `PLP_API_PORT` (default 8000) and
+`PLP_DASHBOARD_PORT` (default 8501); the script refuses a port already in use.
+The scripts work from any directory.
 
-Ports come from `PLP_DASHBOARD_PORT` (default 8501) and `PLP_API_PORT`
-(default 8000):
+The API's port comes from `PLP_API_PORT` (default 8000):
 
 ```bash
-PLP_DASHBOARD_PORT=8511 scripts/start.sh dashboard
+PLP_API_PORT=8100 scripts/start.sh api
 ```
+
+To serve another database, such as a rescored copy, without touching
+`data/plp.db`, set `PLP_DB_PATH`, and `PLP_EMBEDDINGS_PATH` if its sentence
+embeddings differ. The API and the dashboard both read it:
+
+```bash
+PLP_DB_PATH=data/plp_rescored.db PLP_API_PORT=8100 scripts/start.sh api
+```
+
+`scripts/rescore.py` refuses to change `data/plp.db`, or the database
+`PLP_DB_PATH` names, without `--real-db`.
 
 What the scripts do that the raw commands below don't:
 
 - **Refuse a port they don't own.** If something else is listening, they print
   the owning process and exit rather than starting or killing anything. This
-  is not hypothetical: 8501 is a common default and a second Streamlit project
-  on the same machine will already be there.
-- **Wait for a real health check** before reporting success — `/health` for
-  the API, `/_stcore/health` for the dashboard — so a green message means the
-  service answers, not merely that a process exists. Note the limit: the
-  dashboard's endpoint reports that the Streamlit *server* is up, not that any
-  page renders. It reported healthy for months while two tables crashed on a
-  missing matplotlib. Open the page after starting it.
+  is not hypothetical: 8000 is a common default, and another project on the
+  development Mac already uses it.
+- **Wait for a real health check** before reporting success (`/health` for
+  the API), so a green message means the service answers, not merely that a
+  process exists.
 - **Fail fast on the wrong interpreter**, with the same check
   `scripts/overnight_backfill.py` uses, instead of failing per-request later.
 - **Set `HF_HUB_OFFLINE=1`** and load `.env`.
@@ -280,13 +348,13 @@ that line, so the file is fine; shell is just the wrong parser for it.
 These are what the scripts run, and remain the reference:
 
 ```bash
-# Dashboard
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m streamlit run dashboard/app.py
-
 # REST API (docs at http://localhost:8000/docs)
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m uvicorn api.main:app --port 8000
 
-# Chatbot (also available as the dashboard's Chat tab)
+# Chatbot, interactive, with memory and the answer flags (/suggest, /tools, /reset, /quit)
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.chat --backend ollama
+
+# Chatbot, one question
 CHATBOT_BACKEND=ollama .venv-plp/bin/python3 -m chatbot.agent "How does the market feel about DBS's dividend policy?"
 ```
 
@@ -310,21 +378,24 @@ The questions are generated from the sentiment index, not hardcoded, so a
 bank or aspect without enough data is never suggested and a clicked
 suggestion won't dead-end on "insufficient data". Categories are `overall`,
 `aspect`, `compare`, `consensus`, `trend`, `evidence` — useful if the
-frontend wants to group or icon them. The Chat tab in the Streamlit
-dashboard renders the same list as buttons.
+frontend wants to group or icon them. The terminal chat prints the same list
+with `/suggest`.
 
 ### Chatbot backends
 
-With no API key set, the chatbot uses a local model via Ollama:
+By default the chatbot uses the local demo model, `llama3.1:8b`, via Ollama
+(decided 4 Oct), whatever API keys `.env` holds:
 
 ```bash
-ollama pull llama3.2:3b
+ollama pull llama3.1:8b
 ollama serve
 ```
 
-Set `CHATBOT_BACKEND` to `ollama`, `claude`, `openai` or `gemini` to force
-one; otherwise it auto-detects from whichever key is present, so a Gemini key
-in `.env` makes Gemini the default unless `CHATBOT_BACKEND=ollama` is set.
+To use Gemini instead, set `CHATBOT_BACKEND=gemini` (in `.env` or the shell,
+for example `CHATBOT_BACKEND=gemini scripts/start.sh api`); `claude` and
+`openai` work the same way, each with its own key. `CHATBOT_BACKEND=auto`
+picks the first key set (Claude, then OpenAI, then Gemini), as the default
+did before 4 Oct.
 
 **Gemini** (`GEMINI_API_KEY`, the team's key is for the chatbot only): the
 model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
@@ -332,10 +403,32 @@ model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
 demand) while `gemini-3.6-flash` worked, so set that if 3.8 is busy. The
 backend retries a 503 or 429 three times. On the free tier Google may use prompts and responses to improve its
 products and people may review them, and its terms say not to send
-sensitive, confidential or personal information: test with questions whose
-tool results are numbers, and keep evidence searches (which return Reddit
-text) to the local model. Check the terms again before wider use:
-https://ai.google.dev/gemini-api/terms. Two warnings
+sensitive, confidential or personal information. Since 4 Oct the Gemini
+backend withholds Reddit evidence (text, link and citation) and quoted text
+from earlier answers, so Reddit text never reaches it; it still sees news
+and earnings evidence. Check the terms again before wider use:
+https://ai.google.dev/gemini-api/terms.
+
+**Any OpenAI-compatible provider** (Groq, NVIDIA NIM, OpenRouter, …) goes
+through the `openai` backend with its address in `OPENAI_BASE_URL`. For
+Groq's free tier: create a key at https://console.groq.com/keys, consider
+switching on Zero Data Retention in its Data Controls settings (evidence
+searches send Reddit text), and put three lines in `.env`:
+
+```bash
+OPENAI_BASE_URL=https://api.groq.com/openai/v1
+OPENAI_API_KEY=<the Groq key>
+OPENAI_MODEL=openai/gpt-oss-120b        # or llama-3.3-70b-versatile, qwen/qwen3.8-27b
+```
+
+Then set `CHATBOT_BACKEND=openai` to use it (or `auto`, which prefers it
+over Gemini). Groq's free tier allowed 8,000
+tokens a minute on 2026-09-30, about one question a minute with this
+chatbot's prompt and tools; the backend waits out a 429 or 503 (after
+Groq's `Retry-After` when sent) four times. Not yet run against Groq: the
+first successful answer is this setup's verification.
+
+Two warnings
 can be appended to an answer, and both mean "don't trust this part":
 
 - `⚠️ VERIFICATION WARNING`: the model cited evidence (a quote, sentence id or
@@ -344,15 +437,36 @@ can be appended to an answer, and both mean "don't trust this part":
   for that question. The check is strict: a figure the model derived
   legitimately in an unusual way can also trip it, so read the flagged one.
 
-Buy/sell/hold questions, price predictions and questions only about other
-banks never reach the model: they get a fixed reply (`chatbot/guards.py`).
+Before the model runs, a local model sorts the question into an intent
+(`chatbot/intent.py`, DESIGN decision 24): buy/sell/hold and price
+predictions, other banks, greetings and thanks, "what can you do?",
+banking-service requests, attempts to change the instructions, complaints
+and off-topic questions get a reviewed fixed reply from
+`config/intents.yaml`; only questions about the three banks' sentiment reach
+the chatbot model. It needs Ollama; if the classifier can't answer, the
+question goes to the model and the turn records no intent. Measure it:
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.eval_intent --model llama3.1:8b --tag llama8b
+```
+
+Every chatbot setting has its default in `config/chatbot.yaml`, with the
+environment variable that overrides it (models, Ollama address, temperature,
+timeouts, retries, history length, the trend threshold). The ones most often
+changed:
 
 | setting | default | effect |
 |---|---|---|
+| `CHATBOT_BACKEND` | `ollama` (since 4 Oct) | `gemini`, `claude` or `openai` to use a hosted model; `auto` picks the first API key set |
+| `OLLAMA_MODEL` | `llama3.1:8b` (since 4 Oct) | the local chatbot model, used when the backend is Ollama (the default) |
+| `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
-| `CHATBOT_TRACE_FILE` | unset | if set, each dashboard or API turn appends a JSON line: question, answer, tool calls and results, guards, state |
+| `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
+| `CHATBOT_ENFORCE_EVIDENCE` | `strip` (since 4 Oct) | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds; `off` only flags it |
+| `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
+| `CHATBOT_ASPECT_QUERY` | on (since 4 Oct) | `0` turns it off. On, evidence search, when given an aspect, ranks by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
 
-The dashboard's Chat tab remembers the last three turns, so follow-ups like
+The terminal chat remembers the last three turns, so follow-ups like
 "and OCBC?" work. The API is stateless: send earlier turns in `history`:
 
 ```bash
@@ -384,7 +498,15 @@ Runs `chatbot/eval_gold_set.py` against the chatbot and writes:
   input guard answered, and how many answers carried an unverified figure
 
 Use `--tag` to keep runs apart, and `CHATBOT_TEMPERATURE` to compare decoding
-settings.
+settings. Gold set v2 on each Groq model, one after another (the free tier's
+rate limit makes each run slow, roughly 45 minutes):
+
+```bash
+for m in openai/gpt-oss-120b llama-3.3-70b-versatile qwen/qwen3.8-27b; do
+  OPENAI_MODEL=$m HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.run_eval \
+      --backend openai --set v2 --tag "groq_${m//[^A-Za-z0-9.]/_}_v2"
+done
+```
 
 The number check flags figures no tool returned; it doesn't prove the
 unflagged ones are used correctly. Read the transcript for that.
@@ -418,12 +540,16 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-438 tests in `tests/`; `pytest -q` from the repository root runs 479,
-adding the diagram and notebook checks. No network calls — external APIs are
+1139 tests in `tests/`; `pytest -q` from the repository root runs 1186,
+adding the diagram and notebook checks. A bug that `/validate` confirms gets a
+test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
+"xfailed" until the bug is fixed; the marker comes off in the fixing commit.
+None is open on 3 Oct 2026. No network calls — external APIs are
 mocked with captured real payloads, so a provider changing its response shape
 surfaces as a failing test rather than a silent production break.
 
-On 2026-10-01 all 479 ran in 45 seconds on the MacBook Air; a fresh clone's
+On 2026-10-01, 479 ran in 45 seconds on a quiet MacBook Air, and 539 took
+2.1 minutes that evening alongside other jobs; a fresh clone's
 first run of `tests/` took 2.6 minutes. Part of every run is
 `umap`/`hdbscan` import cost (numba), paid once by the aspect-discovery
 tests.
@@ -461,6 +587,14 @@ fails if a page and its `.mmd` differ; `pytest -q` from the repository root runs
 >
 > ```bash
 > .venv-plp/bin/python3 -m train.labels
+> ```
+>
+> A labelled top-up sheet (`preprocess.export_topup`) is added the same way;
+> its rows join train_dev, `not_about_bank` rows are left out, and a sentence
+> already labelled is refused:
+>
+> ```bash
+> .venv-plp/bin/python3 -m train.labels --topup data/labeled/topup/topup_sheet.csv
 > ```
 >
 > The commands below are for the next round.
@@ -506,7 +640,8 @@ the test set exists to compare. Labelling next to either column measures
 agreement with a model rather than establishing ground truth.
 
 ```bash
-.venv-plp/bin/python3 -m preprocess.export_blind_test               # write the blind sheet
+.venv-plp/bin/python3 -m preprocess.export_blind_test               # write the blind sheet (refuses to
+                                                                    # replace a filled one without --force)
 .venv-plp/bin/python3 -m preprocess.export_blind_test --check-leakage  # what's withheld, and why
 .venv-plp/bin/python3 -m preprocess.export_blind_test --merge       # merge the filled sheet back
 ```
@@ -532,8 +667,16 @@ Two annotators label the same ~150 rows independently, then:
 
 Target is Cohen's κ ≥ 0.6. Below that, the guideline is ambiguous somewhere
 rather than an annotator being careless — find the disagreements, tighten the
-guideline, re-label the sample. Watch the gap between raw agreement and κ:
-this corpus is 87% neutral under base FinBERT, so two annotators who both
+guideline, re-label the sample. For the aspect, add `--field aspect`: the
+sheets are then matched on `sentence_id` alone and compared over the eleven
+aspect keys.
+
+```bash
+.venv-plp/bin/python3 -m train.agreement --a sheet_a.csv --b sheet_b.csv --field aspect --show-disagreements 20
+```
+
+Watch the gap between raw agreement and κ:
+70% of corpus sentences are neutral under base FinBERT, so two annotators who both
 default to `neutral` will agree ~90% of the time while sharing no judgement
 at all. The tool prints both and warns when the gap is large.
 
@@ -581,20 +724,56 @@ the team folder with the checksums in the evidence, not git. Results:
 [evidence/finetune-fixes-2026-10-01.md](evidence/finetune-fixes-2026-10-01.md)
 (earlier: [finetune-experiments-2026-09-30.md](evidence/finetune-experiments-2026-09-30.md)).
 
-### The LLM aspect classifier (evaluation only)
+### The LLM aspect classifier
 
 ```bash
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval                              # llama3.1:8b
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval --model qwen3:4b --no-think
+caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # all 44,345 sentences
 ```
 
-Classifies the 1,277 labelled sentences through local Ollama and scores them
-against the human aspect: about 40 minutes for `llama3.1:8b`, 30 for
-`qwen3:4b`. `--no-think` is needed for qwen3, whose hidden reasoning
-otherwise takes minutes a sentence. Answers are cached in `data/aspect_llm/`
-(gitignored), so an interrupted run resumes. It writes nothing to the
-database; running it on the corpus is a team decision
-([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
+`--eval` classifies the 1,277 labelled sentences through local Ollama and
+scores them against the human aspect: about 40 minutes for `llama3.1:8b`, 30
+for `qwen3:4b`. `--no-think` is needed for qwen3, whose hidden reasoning
+otherwise takes minutes a sentence. `--corpus` classifies every corpus
+sentence in a fixed random order: about a day for `llama3.1:8b`, longer with
+another job running on the Mac at the same time.
+
+Answers are cached in `data/aspect_llm/<model>.<prompt>.jsonl` (gitignored),
+so an interrupted run resumes with the same command and new sentences are
+the only ones classified. `<prompt>` is a hash of the aspect keys,
+definitions, examples and instructions (`96efe244` on 2 Oct). The definitions
+(`llm_definition`), the examples (`llm_examples`) and the model (`llm_model`)
+are in `config/aspects.yaml`; a test pins the hash, so a change to them is
+deliberate. Change any of them and the next run starts a new file, so the corpus needs a full redo;
+change them back and the old file is used again. Each run prints its cache
+file. Neither command writes to the database; applying the answers to it is a
+team decision ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
+
+### The index preview (reads only)
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 11000 --cpu
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13   # whole corpus, neutral margin
+```
+
+Shows the index four ways: today's centroid aspects or the LLM's, each with
+base FinBERT or the fine-tuned average. It uses the LLM's cached answers for
+the sampled sentences and asks Ollama for any that are missing. The
+fine-tuned probabilities are saved in `data/preview/scores.<key>.jsonl`
+(`<key>` names the models and the device), so a stopped run resumes and a
+second margin takes minutes. Use `--cpu`: on 1 Oct the GPU returned garbage
+under memory pressure (the run now stops if that happens). The whole corpus
+takes about half a day on the CPU. `--llm-only` skips the centroid pairs
+with the fine-tuned models (the slow scenario); `--per-seed` also scores the
+LLM-aspect pairs with each model alone and prints the spread between seeds;
+`--models` takes another set of models, whose output files carry their
+experiment date. Results go to `data/preview/index_preview*.csv`
+([evidence](evidence/index-preview-2026-10-01.md)).
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13 --llm-only --per-seed
+```
 
 ### The Opus labeller
 
@@ -643,8 +822,6 @@ text (`tests/test_notebooks.py` checks).
 | `TypeError: unsupported operand \|` | conda Python 3.9 | use `.venv-plp/bin/python3` |
 | Step hangs, near-zero CPU | HuggingFace metadata check | `HF_HUB_OFFLINE=1` |
 | `Could not reach Ollama` | Ollama not running | `ollama serve` |
-| Dashboard: "No sentiment data yet" | pipeline not run | run steps 1–5 above |
-| Dashboard tab crashes with `Styler.background_gradient requires matplotlib` | dependencies not current | `.venv-plp/bin/python3 -m pip install -r requirements.txt` |
-| Dashboard log shows `No module named 'torchvision'` | Streamlit's file watcher walking `transformers`, which lazily imports vision models this project never uses | Harmless noise; ignore it |
+| API returns `insufficient_data` everywhere | pipeline not run, or no database restored | restore the snapshot (README), or run steps 1–5 above |
 | Chatbot answer has a verification warning | model fabricated citations | don't trust it; try a hosted backend |
 | `pip: bad interpreter` | venv was created under an older directory name | use `.venv-plp/bin/python3 -m pip` |

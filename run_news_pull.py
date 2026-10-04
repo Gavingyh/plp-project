@@ -112,8 +112,11 @@ if __name__ == "__main__":
     if args.audit:
         logger.info(f"Audit of stored news: {audit_stored()} (see data/news_flagged.csv)")
     elif not args.report:
-        logger.info("NEWS PULL — %s", datetime.now(timezone.utc).isoformat())
+        logger.info("NEWS PULL - %s", datetime.now(timezone.utc).isoformat())
         sources = SOURCES if args.source == "all" else [args.source]
         totals = run(sources, args.since, args.until)
         logger.info(f"Newly inserted this run: {totals}")
     print(count_table())
+    if google_news.FAILED_WINDOWS:
+        raise SystemExit(f"{len(google_news.FAILED_WINDOWS)} Google News window(s) failed and were "
+                         "not fetched (listed above); re-run that range")

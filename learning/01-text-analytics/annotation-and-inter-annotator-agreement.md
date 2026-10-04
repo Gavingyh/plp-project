@@ -8,6 +8,16 @@ Prerequisites: none. Read with
 
 ## 1. Why it matters here (Understand)
 
+> **Updated 2026-10-01.** The first round is done: 1,277 sentences labelled
+> by two people for aspect and sentiment, sentiment κ 0.93
+> ([evidence](../../docs/evidence/annotation-agreement-2026-09-27.md)). The
+> annotators kept the model's suggestion on 91.6% of rows, and aspect
+> agreement between people wasn't measured; an independent Opus 5.5 rater
+> later agreed with the human labels at κ 0.80 (aspect) and 0.79
+> (sentiment). The LLM-rater side is in
+> [llms-as-classifiers-and-raters](llms-as-classifiers-and-raters.md). The
+> text below describes the project before labelling and is kept as written.
+
 Labelling is the project's critical blocker. Zero of 998 candidate rows are
 human-labelled, and until they are there is no fine-tuned model, and therefore
 no deep-learning deliverable.
@@ -304,7 +314,8 @@ stronger than one reporting a single number.
 
 **Not verified**
 
-- No human labels exist, so no human-to-human κ has ever been computed. Every
-  agreement figure here is model-to-model.
+- When this file was written no human labels existed, so every agreement
+  figure here is model-to-model. Human figures since: see the update at the
+  top of section 1.
 - The llama-vs-qwen comparison is a single test case documented in
   `train/llm_prelabel.py`, not a systematic evaluation.

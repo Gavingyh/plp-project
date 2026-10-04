@@ -1,12 +1,13 @@
 sequenceDiagram
-  accTitle: Chatbot sequence from the dashboard
-  accDescr: The Chat tab hands the question to the conversation, which runs the guards, then the model's tool loop against the database, then the output checks, and updates its state.
+  accTitle: Chatbot sequence from a chat client
+  accDescr: The chat client hands the question to the conversation, which asks a local intent classifier first, then runs the model's tool loop against the database, then the output checks, and updates its state.
 
   actor user as Investor
-  participant ui as Dashboard Chat tab
+  participant ui as Chat client (terminal chat)
   participant conv as Conversation
   participant turn as answer_turn
-  participant g as chatbot.guards
+  participant ic as Intent classifier (local model)
+  participant g as chatbot.guards (output checks)
   participant be as Backend (Ollama)
   participant llm as Language model
   participant tools as Tools
@@ -15,10 +16,11 @@ sequenceDiagram
   user->>ui: types a question
   ui->>conv: ask(question)
   conv->>turn: question, last three turns, state
-  turn->>g: advice_reply, scope_reply
-  alt a guard matches
-    g-->>turn: fixed reply
-  else the model answers
+  turn->>ic: question, state, previous question
+  ic-->>turn: one intent (none if unavailable)
+  alt any intent but in scope
+    turn->>turn: fixed reply from config/intents.yaml
+  else in scope, or no intent
     turn->>be: question, system prompt with state, tools, history
     loop until a final answer, at most eight model calls
       be->>llm: messages, tool schemas, temperature 0.2

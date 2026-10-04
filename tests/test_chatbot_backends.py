@@ -3,11 +3,11 @@ Tests for the pluggable chatbot backend (chatbot/backends/) and the
 fabrication-detection safety net in chatbot/agent.py.
 
 Three real bugs were caught live against a running Ollama instance
-(llama3.2:3b) before these tests were written — each test below
+(llama3.2:3b) before these tests were written - each test below
 exists because of one of them, not as generic coverage:
   1. The model fabricated a full "supporting evidence" section (fake URLs,
      fake sentence_ids) despite never calling search_evidence.
-  2. After a prompt fix, it still fabricated evidence — this time using
+  2. After a prompt fix, it still fabricated evidence - this time using
      placeholder tokens ("[insert sentence_id]") instead of a fake URL,
      which a naive URL-only check would miss entirely.
   3. It called search_evidence with k="5" (a string) instead of k=5,
@@ -35,7 +35,7 @@ from chatbot.tools import TOOL_SCHEMAS, coerce_tool_arguments
 
 def test_auto_detect_prefers_claude_when_key_present(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake-key-for-test")
-    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")                     # auto-detection only when asked for
     backend = get_backend()
     assert isinstance(backend, ClaudeBackend)
 
@@ -43,8 +43,9 @@ def test_auto_detect_prefers_claude_when_key_present(monkeypatch):
 def test_auto_detect_falls_back_to_ollama_with_no_key(monkeypatch):
     # Every provider's key, not just Claude's: .env is loaded on import, and a
     # real key in it (GEMINI_API_KEY since 2026-09-30) would otherwise win.
-    for var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "CHATBOT_BACKEND"):
+    for var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"):
         monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
     backend = get_backend()
     assert isinstance(backend, OllamaBackend)
 
@@ -195,7 +196,7 @@ def test_detects_fabricated_url_citation():
 
 
 def test_detects_placeholder_style_fabrication_with_no_url():
-    # The exact second failure mode observed live: no URL at all, just a
+    # A failure seen in real answers: no URL at all, just a
     # placeholder token and a fabricated quote.
     tracker = _ToolCallTracker()
     answer = ('Sentence_id: [insert sentence_id] from [url]\n'
@@ -210,11 +211,13 @@ def test_honest_answer_with_no_evidence_claim_not_flagged():
 
 
 def test_real_verified_citation_not_flagged():
-    tracker = _ToolCallTracker()
-    tracker.search_evidence_called = True
-    tracker.verified_urls.add("https://reddit.com/real-post")
+    # A citation is verified when its link and its quoted text were both returned.
+    tracker = _ToolCallTracker.from_calls([{"name": "search_evidence", "arguments": {"query": "fees"},
+                                            "result": {"results": [{"url": "https://reddit.com/real-post",
+                                                                    "text": "DBS raised fees again this year"}]}}])
     answer = 'See: "DBS raised fees again" (https://reddit.com/real-post)'
     assert not tracker.answer_has_unverified_citation(answer)
+    assert tracker.answer_has_unverified_citation('See: "DBS cut fees for everyone" (https://reddit.com/real-post)')
 
 
 def test_tracker_records_urls_from_real_search_evidence_call():
@@ -232,12 +235,14 @@ def test_tracker_records_urls_from_real_search_evidence_call():
         tools_module.TOOL_FUNCTIONS["search_evidence"] = orig
 
     assert tracker.search_evidence_called is True
-    assert "https://reddit.com/x" in tracker.verified_urls
+    assert tracker.unverified_urls("see https://reddit.com/x and www.reddit.com/x") == []
+    assert tracker.unverified_urls("see https://reddit.com/y") == ["https://reddit.com/y"]
 
 
 def test_ask_appends_warning_when_backend_fabricates(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("CHATBOT_BACKEND", "ollama")
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "off")     # the flag itself; strip (the default) removes the quote
 
     class _FabricatingBackend:
         name = "fake"
@@ -262,3 +267,182 @@ def test_ask_no_warning_when_backend_is_honest(monkeypatch):
     monkeypatch.setattr("chatbot.agent.get_backend", lambda name=None: _HonestBackend())
     answer = ask("test question", verbose=False)
     assert "VERIFICATION WARNING" not in answer
+
+
+# --- a tool call written as text (gold-set runs, 30 Sep and 1 Oct) ---------------------
+
+from chatbot.backends._text_tool_call import text_tool_call
+
+_NAMES = {"get_sentiment", "search_evidence"}
+
+
+def test_text_tool_call_after_a_preamble():
+    content = ('Since the question asks for evidence, I will call it. '
+               '{"name": "search_evidence", "parameters": {"query": "DBS NIM", "bank": "DBS"}}')
+    assert text_tool_call(content, _NAMES) == ("search_evidence", {"query": "DBS NIM", "bank": "DBS"})
+
+
+def test_text_tool_call_accepts_arguments_as_a_string():
+    content = '{"name": "get_sentiment", "arguments": "{\\"bank\\": \\"UOB\\"}"}'
+    assert text_tool_call(content, _NAMES) == ("get_sentiment", {"bank": "UOB"})
+
+
+@pytest.mark.parametrize("content", [
+    "DBS sentiment is neutral.",
+    '{"name": "delete_everything", "parameters": {}}',
+    'The tool returned {"score": 0.1, "n": 20}.',
+    '{"name": "get_sentiment", "parameters": "not json"}',
+])
+def test_text_tool_call_ignores_anything_else(content):
+    assert text_tool_call(content, _NAMES) is None
+
+
+def test_ollama_backend_runs_a_tool_call_written_as_text(monkeypatch):
+    written = {"message": {"role": "assistant", "content":
+               'Let me check. {"name": "get_sentiment", "parameters": {"bank": "UOB"}}'}, "done": True}
+    fake_post = _FakePost([written, _OLLAMA_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    calls = []
+    answer = OllamaBackend().ask("UOB?", "sys", TOOL_SCHEMAS,
+                                 lambda n, a: calls.append((n, a)) or "{}", verbose=False)
+    assert calls == [("get_sentiment", {"bank": "UOB"})]
+    assert answer == "The sentiment for DBS on dividend policy is neutral."
+    sent = fake_post.calls[1]["messages"]   # recorded by reference, so it holds the final answer too
+    made = [m for m in sent if m.get("tool_calls")]
+    assert len(made) == 1 and made[0]["tool_calls"][0]["function"]["name"] == "get_sentiment"
+    assert made[0]["content"] == "" and sent[sent.index(made[0]) + 1]["role"] == "tool"
+
+
+@pytest.mark.parametrize("env, expected", [(None, None), ("false", False), ("true", True), ("maybe", None)])
+def test_ollama_think_setting(monkeypatch, env, expected):
+    if env is None:
+        monkeypatch.delenv("OLLAMA_THINK", raising=False)
+    else:
+        monkeypatch.setenv("OLLAMA_THINK", env)
+    backend = get_backend("ollama")
+    assert backend.think is expected
+    fake_post = _FakePost([_OLLAMA_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    backend.ask("q", "sys", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert fake_post.calls[0].get("think") is expected
+
+
+def test_gemini_never_receives_reddit_text_or_earlier_quotes(monkeypatch):
+    # CLAUDE.md: the free Gemini tier is never sent Reddit evidence text (4 Oct 2026: nothing enforced it).
+    from chatbot.backends.gemini_backend import WITHHELD, GeminiBackend
+    sent = []
+    replies = iter([
+        {"candidates": [{"content": {"parts": [{"functionCall": {"name": "search_evidence",
+                                                                 "args": {"query": "q"}}}]}}]},
+        {"candidates": [{"content": {"parts": [{"text": "Done."}]}}]},
+    ])
+
+    def fake_generate(self, contents, system, tools):
+        sent.append(json.dumps(contents))
+        return next(replies)
+    monkeypatch.setattr(GeminiBackend, "_generate", fake_generate)
+    evidence = {"query": "q", "results": [
+        {"sentence_id": "a" * 24, "source": "arctic_shift", "text": "my OCBC app keeps crashing lol",
+         "url": "https://www.reddit.com/r/singaporefi/comments/x/", "cite_as": "[OCBC, 2025-01-01]"},
+        {"sentence_id": "b" * 24, "source": "google_news", "text": "OCBC raised its dividend.",
+         "url": "https://news.google.com/1"}]}
+    history = [{"role": "user", "content": "quotes on OCBC?"},
+               {"role": "assistant", "content": 'One user wrote "my OCBC app keeps crashing lol".'}]
+    answer = GeminiBackend(api_key="k").ask("more?", "system", [], lambda n, a: json.dumps(evidence),
+                                            verbose=False, history=history)
+    assert answer == "Done."
+    assert not any("keeps crashing" in s or "reddit.com" in s for s in sent)
+    assert WITHHELD in sent[-1] and "OCBC raised its dividend." in sent[-1]       # news evidence still goes
+
+
+def test_gemini_withholds_evidence_from_an_unknown_or_missing_source():
+    # Unknown text is treated as personal: only sources config/sources.yaml marks
+    # as not written by the public reach the hosted model.
+    from chatbot.backends.gemini_backend import WITHHELD_UNKNOWN, withhold_reddit
+    content = {"results": [
+        {"source": "google_news", "text": "OCBC raised its dividend.", "url": "https://news.google.com/1"},
+        {"source": "telegram", "text": "my DBS card got blocked", "url": "https://t.me/x"},
+        {"text": "someone's own words", "url": None}]}
+    out = [r["text"] for r in withhold_reddit("search_evidence", content)["results"]]
+    assert out == ["OCBC raised its dividend.", WITHHELD_UNKNOWN, WITHHELD_UNKNOWN]
+
+
+def test_gemini_never_receives_cna_text():
+    # CNA articles stay within the team (CLAUDE.md); Gemini's free tier may be read by people.
+    from chatbot.backends.gemini_backend import WITHHELD_TEAM_ONLY, withhold_reddit
+    content = {"results": [{"source": "cna", "text": "DBS posted record profit, CNA reported.",
+                            "url": "https://www.channelnewsasia.com/x", "cite_as": "[DBS, 2026-01-01]"}]}
+    item = withhold_reddit("search_evidence", content)["results"][0]
+    assert item["text"] == WITHHELD_TEAM_ONLY and item["url"] is None and item["cite_as"] is None
+
+
+# --- Every hosted backend withholds Reddit, CNA and unlisted text (decided 4 Oct 2026) ---
+
+_EVIDENCE = {"query": "q", "results": [
+    {"sentence_id": "a" * 24, "source": "arctic_shift", "text": "my OCBC app keeps crashing lol",
+     "url": "https://www.reddit.com/r/singaporefi/comments/x/", "cite_as": "[OCBC, 2025-01-01]"},
+    {"sentence_id": "c" * 24, "source": "cna", "text": "DBS posted record profit, CNA reported.",
+     "url": "https://www.channelnewsasia.com/x", "cite_as": "[DBS, 2026-01-02]"},
+    {"sentence_id": "t" * 24, "source": "telegram", "text": "my UOB card got blocked", "url": "https://t.me/x"},
+    {"sentence_id": "b" * 24, "source": "google_news", "text": "OCBC raised its dividend.",
+     "url": "https://news.google.com/1"}]}
+_HISTORY = [{"role": "user", "content": "quotes on OCBC?"},
+            {"role": "assistant", "content": 'One user wrote "my OCBC app keeps crashing lol".'}]
+
+
+def _assert_nothing_private_left(sent: list[str]):
+    from chatbot.backends.base import EARLIER_ANSWER, WITHHELD, WITHHELD_TEAM_ONLY, WITHHELD_UNKNOWN
+    blob = "\n".join(sent)
+    for private in ("keeps crashing", "reddit.com", "record profit", "channelnewsasia", "card got blocked"):
+        assert private not in blob, private
+    assert WITHHELD in blob and WITHHELD_TEAM_ONLY in blob and WITHHELD_UNKNOWN in blob
+    assert "OCBC raised its dividend." in blob                  # cleared news still goes
+    assert EARLIER_ANSWER in blob and "quotes on OCBC?" in blob   # the user's question stays
+
+
+def test_claude_never_receives_reddit_cna_or_unlisted_text(monkeypatch):
+    import types
+    import anthropic
+    sent = []
+    block = types.SimpleNamespace
+    replies = iter([
+        block(content=[block(type="tool_use", id="t1", name="search_evidence", input={"query": "q"})]),
+        block(content=[block(type="text", text="Done.")]),
+    ])
+
+    class FakeClient:
+        def __init__(self, api_key=None):
+            self.messages = self
+
+        def create(self, **kw):
+            sent.append(json.dumps(kw, default=str))
+            return next(replies)
+    monkeypatch.setattr(anthropic, "Anthropic", FakeClient)
+    answer = ClaudeBackend(api_key="k").ask("more?", "system", [], lambda n, a: json.dumps(_EVIDENCE),
+                                            verbose=False, history=_HISTORY)
+    assert answer == "Done."
+    _assert_nothing_private_left(sent)
+
+
+def test_openai_never_receives_reddit_cna_or_unlisted_text(monkeypatch):
+    from chatbot.backends.openai_backend import OpenAIBackend
+    sent = []
+    replies = iter([
+        {"choices": [{"message": {"content": "", "tool_calls": [
+            {"id": "c1", "type": "function", "function": {"name": "search_evidence", "arguments": '{"query": "q"}'}}]}}]},
+        {"choices": [{"message": {"content": "Done."}}]},
+    ])
+
+    def fake_chat(self, messages, tools):
+        sent.append(json.dumps(messages))
+        return next(replies)
+    monkeypatch.setattr(OpenAIBackend, "_chat", fake_chat)
+    answer = OpenAIBackend(api_key="k").ask("more?", "system", [], lambda n, a: json.dumps(_EVIDENCE),
+                                            verbose=False, history=_HISTORY)
+    assert answer == "Done."
+    _assert_nothing_private_left(sent)
+
+
+def test_a_tool_result_that_is_not_json_passes_through():
+    from chatbot.backends.base import withheld_tool_result
+    assert withheld_tool_result("search_evidence", "tool error: no such bank") == "tool error: no such bank"

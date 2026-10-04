@@ -64,7 +64,7 @@ untrustworthy; it does not stop the model producing it.
 | Aspect-name validation against the real taxonomy | `chatbot/tools.py` |
 | 23-question gold set including 7 advice-seeking questions | `chatbot/eval_gold_set.py` |
 | Automated checks and per-model output | `chatbot/run_eval.py` |
-| Multi-model comparison runner | `scripts/compare_chatbot_models.sh` |
+| Runs per model, kept apart by tag | `chatbot/run_eval.py --tag` |
 | Transcripts and summaries | `data/eval/chatbot_eval_*` |
 
 ---
@@ -166,6 +166,70 @@ recommendation for future work: if the citation block is assembled from
 fabricated citation stops being possible rather than merely being detected.
 
 ---
+
+### Checking that evidence exists is not checking what it says (3 Oct 2026)
+
+A review of the guards found that they verified the *presence* of a search,
+not the *content* of the answer. Once the model had called `search_evidence`,
+even a search that returned nothing, any quote it wrote passed: the check
+asked "was there a search?", never "did the search return this text?". The
+number check had the same shape of weakness. It compared absolute values, so
+a trend delta of −0.05 written as "+0.05" passed. It accepted a fraction 0.12
+written as "0.12%". And it let a figure match any ratio of any two numbers in
+the tool output, which on one recorded trend answer accepted 85 to 95 of the
+whole percentages from 1% to 99%. A check that accepts almost everything is
+not a check.
+
+The fixes compare content: a quote must appear in text a tool returned, a
+signed figure must have the right sign, a percentage must come from a
+fraction × 100 or a percentage field, and ratios pair only the counts inside
+one result. Strip mode also stopped keeping the opening paragraph untouched,
+which had left one-paragraph answers with their invented quote under a note
+saying it was removed.
+
+**The lesson for evaluation:** measure a detector's *acceptance rate* on
+invented inputs, not only its catch rate on recorded failures. The 2 Oct
+result (citation warnings 11 → 0 with strip) survived the stronger checks
+(8B 11 → 0, 3B 16 → 0), but only because those inventions all came from
+answers that never searched; the old checks would not have caught an
+invention after a search. Re-measured figures: `docs/evidence/chatbot-eval-build-2026-10-01.md`,
+"Third round".
+
+### The model's own words came back as evidence (4 Oct 2026)
+
+A second review found that "text a tool returned" included text the model
+had written. `search_evidence` echoes the query back, so a model could
+search for "investors fear OCBC bad loans will surge 37.5%" and then quote
+that phrase, or the figure, with nothing flagged: the check found it in the
+tool output. Timestamps did the same for numbers (a `computed_at` of
+`07:34:45` vouched for "34" and "45"). Now the echoed arguments, timestamps
+and links are left out of what can vouch. The same review found that any
+count above 1 was accepted as a percentage, so 23 positive sentences out
+of 58 could be written as "23% positive" (the true share is 40%), and
+that strip mode removed invented quotes line by line, so one that wrapped
+onto a second line survived. Each fix came with a test that failed first.
+Replayed on 48 recorded answers, the flags were unchanged except one
+already-flagged answer, which now also flags timestamp digits the model had
+copied into fake sentence ids.
+
+**The lesson:** "returned by a tool" has to mean "returned by the data",
+not anything in the tool's response. Know which fields are your own input
+coming back.
+
+A privacy rule had the same gap between policy and code. The project says
+the free Gemini tier must never receive Reddit text, but the API and the
+dashboard chose Gemini by default whenever its key was the one set, and
+nothing stopped evidence going to it. The backend now withholds Reddit
+text, links and citations, and quoted text in earlier answers. A rule that
+only a person can follow will be broken by a default.
+
+The first fix for the echoed query was a list of fields that must not vouch
+(`query`, `window`, timestamps). A review the same night found four more
+that still did: dates, a sentence id's digits, and a `reason` string that
+repeated the model's own argument. The second fix turned the list around:
+only numeric data fields and the text of retrieved evidence may vouch, and
+everything else is ignored by default. **The lesson:** when the safe set is
+small and the unsafe set keeps growing, list the safe set.
 
 ## 5. Evaluate
 

@@ -1,12 +1,12 @@
 """
-Tests for ingest/base.py's bank detection/resolution — the logic behind two
+Tests for ingest/base.py's bank detection/resolution - the logic behind two
 regressions this suite guards against:
   1. NewsAPI's bare "DBS" query term matched unrelated global news.
   2. preprocess/pipeline.py inheriting doc-level bank onto every sentence in
      a long Reddit thread produced noise ("Calling you for $8 transaction
      is a red flag itself." tagged as DBS).
 These tests don't re-test the query-construction or inheritance-source
-logic directly (that's preprocess/pipeline.py's job, tested separately) —
+logic directly (that's preprocess/pipeline.py's job, tested separately) -
 they lock down the underlying detect_banks/resolve_bank primitives both bugs
 ultimately depend on.
 """
@@ -40,7 +40,7 @@ def test_case_insensitive():
 
 
 def test_word_boundary_no_partial_match():
-    # "DBSK" (a K-pop group) or similar should NOT match bare "DBS" —
+    # "DBSK" (a K-pop group) or similar should NOT match bare "DBS" -
     # detect_banks must respect word boundaries, not substring search.
     assert detect_banks("DBSK reunion tour announced") == []
 
@@ -59,3 +59,52 @@ def test_resolve_bank_no_match_returns_fallback():
 
 def test_resolve_bank_no_match_no_fallback_returns_none():
     assert resolve_bank("the market was quiet today") is None
+
+
+# --- POSB counts as DBS at collection (decided 4 Oct 2026) -----------------------
+
+def test_posb_alone_is_dbs():
+    assert detect_banks("I opened a POSB account last year") == ["DBS"]
+    assert resolve_bank("POSB eSavings interest cut again") == "DBS"
+
+
+def test_posb_and_dbs_together_are_one_bank():
+    assert detect_banks("DBS/POSB app is down") == ["DBS"]
+    assert resolve_bank("POSB savings versus OCBC 360") == "MULTI"
+
+
+def test_posb_is_not_found_inside_other_words():
+    assert detect_banks("the posbility of a rate cut") == []
+
+
+class _Response:
+    def __init__(self, data):
+        self._data = data
+
+    def json(self):
+        return self._data
+
+
+def test_alpha_vantage_still_reads_the_ticker_at_position_2(monkeypatch):
+    # Appending POSB must not move "D05.SI": Alpha Vantage takes queries[2].
+    import ingest.alphavantage as av
+    sent = []
+    monkeypatch.setattr(av, "AV_KEY", "k")
+    monkeypatch.setattr(av.time, "sleep", lambda s: None)
+    monkeypatch.setattr(av, "request_with_retries", lambda url, params: sent.append(params) or _Response({"feed": []}))
+    av.pull()
+    assert [p["tickers"] for p in sent] == ["D05", "O39", "U11"]
+
+
+def test_newsapi_queries_never_include_posb(monkeypatch):
+    # NewsAPI queries only aliases with a space or a dot, so a bare "POSB" (like
+    # a bare "DBS") never widens the search to unrelated news.
+    import ingest.newsapi as na
+    sent = []
+    monkeypatch.setattr(na, "NEWSAPI_KEY", "k")
+    monkeypatch.setattr(na.time, "sleep", lambda s: None)
+    monkeypatch.setattr(na, "request_with_retries",
+                        lambda url, params: sent.append(params) or _Response({"articles": [], "totalResults": 0}))
+    na.pull()
+    dbs = [p["q"] for p in sent if "DBS Bank" in p["q"]]
+    assert dbs and all("POSB" not in q for q in dbs)

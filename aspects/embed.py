@@ -1,8 +1,8 @@
 """
 FinBERT sentence embeddings for aspect discovery ("Job 1" from the
-proposal — no fine-tuning needed for this part, just measuring similarity).
+proposal - no fine-tuning needed for this part, just measuring similarity).
 
-Mean-pooled over token embeddings, NOT the CLS token — BERT-family CLS vectors
+Mean-pooled over token embeddings, NOT the CLS token - BERT-family CLS vectors
 without a sentence-level training objective (like SBERT's) are known to be
 poor similarity representations; mean pooling is materially better and costs
 nothing. See docs/DESIGN.md, step 1.

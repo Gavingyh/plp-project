@@ -3,14 +3,14 @@ Aggregate per-sentence sentiment into the per-bank, per-aspect index
 the dashboard and chatbot read.
 
 Two requirements this implements, both from the original plan:
-  - shrinkage toward neutral at low volume: score * n/(n+k), k=5 — without
+  - shrinkage toward neutral at low volume: score * n/(n+k), k=5 - without
     this, one Reddit comment can swing the index to +/-1.0 on a single data
     point.
-  - `n` is ALWAYS stored and displayed alongside the score — a sentiment
+  - `n` is ALWAYS stored and displayed alongside the score - a sentiment
     number without its sample size is flagged in the plan as the main way
     this dashboard could mislead a retail investor.
 
-Source weighting is deliberately simple for the MVP: earnings and
+Source weighting is simple: earnings and
 analyst-flagged news outnumber a single Reddit comment. Confidence weighting
 is applied via the per-row `confidence` from aspect_sentiment.
 
@@ -18,18 +18,14 @@ Rolling windows (docs/DESIGN.md, step 3): computes '7d', '30d', and 'all_time'
 per (bank, aspect), so the dashboard's time-series view and the chatbot's
 get_trend tool have real data to show instead of a single snapshot.
 Window cutoffs are relative to actual wall-clock time (not the latest data
-point) — a live dashboard should show genuine recency, including a thin/empty
+point) - a live dashboard should show genuine recency, including a thin/empty
 7d window if a source hasn't been re-ingested recently, rather than silently
 redefining "recent" to hide that gap.
 
-KNOWN CAVEAT: window filtering compares `published_at` strings directly
-against an ISO cutoff string rather than parsing to datetime — this is
-correct for day-granularity windows given every source's timestamps are UTC,
-but relies on comparing digits *before* any "Z" vs "+00:00" suffix
-difference between sources (NewsAPI uses "Z", our own now_iso() uses
-"+00:00"); the two would only compare incorrectly at the literal boundary
-instant, which day-level windows never hit in practice. Worth switching to
-parsed datetimes if sub-day windows are ever added.
+Window cutoffs and series buckets use each timestamp's UTC instant, parsed
+(`_utc`): CNA's timestamps carry +08:00 and NewsAPI's "Z", so comparing the
+strings put CNA rows up to eight hours on the wrong side of a cutoff or a
+month edge (fixed 2026-10-03). Weeks are ISO weeks.
 
 USAGE:
   python -m aggregate.index
@@ -40,36 +36,29 @@ from datetime import datetime, timedelta, timezone
 
 from ingest.db import get_connection, init_db, now_iso
 
+from config import sources
 from config.logging_config import get_logger, setup_logging
 
 
 logger = get_logger(__name__)
 
 SHRINKAGE_K = 5
+MIN_N = 5          # below this many sentences a score is reported as insufficient data
 _LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 
-# Source weight: how much one item from this source counts relative to a
-# baseline Reddit comment (weight 1.0).
-#
-# earnings WAS 3.0, dropped to 1.0 after the earnings corpus
-# actually landed. That 3.0 was set when earnings was assumed to be a handful
-# of high-signal documents; it became the second-largest source (10,658
-# sentences), and it is management describing its own results, which is
-# measurably far more positive than any other source: 24.7% of earnings
-# sentences score positive vs 2.3% of Reddit sentences. Triple-weighting
-# self-authored promotional prose amplified a known skew instead of damping
-# it. 1.0 counts it honestly without letting it dominate.
-_SOURCE_WEIGHT = {"earnings": 1.0, "sgx_research": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0,
-                  "yahoo_news": 1.5, "google_news": 1.5, "cna": 1.5}
+# How much one sentence from each source counts, relative to a Reddit
+# comment: config/sources.yaml, which also records why earnings counts 1.0.
+_SOURCE_WEIGHT = sources.weights()
+_DEFAULT_WEIGHT = sources.default_weight()
 
 WINDOWS = {"7d": 7, "30d": 30, "all_time": None}
 
-# 'ALL' means "blended across every source" — the headline number. Individual
+# 'ALL' means "blended across every source" - the headline number. Individual
 # source rows sit alongside it so the dashboard, API and write-up can show
 # what the blend is actually made of (retail chatter vs. management framing),
 # rather than presenting one opaque figure. This matters here: earnings
 # coverage is very unequal across banks (DBS 9,093 sentences, OCBC 1,561,
-# UOB 4 — UOB's IR site is WAF-blocked and its PDFs need adding by hand), so
+# UOB 4 - UOB's IR site is WAF-blocked and its PDFs need adding by hand), so
 # a blended cross-bank comparison is only trustworthy once a reader can see
 # the composition behind it.
 SOURCE_ALL = "ALL"
@@ -94,11 +83,14 @@ CREATE TABLE IF NOT EXISTS sentiment_index (
 
 
 def _fetch_all_rows(conn):
+    # Only pairs the sentence is assigned to now: after a change of aspect method, a
+    # sentence's old pairs may still have scores, and must not count.
     return conn.execute("""
         SELECT sa.bank, ase.aspect, ase.label, ase.confidence, ase.model_version,
                sa.source, sa.published_at, ase.sentence_id
         FROM aspect_sentiment ase
         JOIN sentences sa ON sa.sentence_id = ase.sentence_id
+        JOIN sentence_aspects asg ON asg.sentence_id = ase.sentence_id AND asg.aspect = ase.aspect
     """).fetchall()
 
 
@@ -131,18 +123,37 @@ def _summarize(items):
     return round(shrunk, 4), n, pos, neu, neg, round(conf_mean, 4)
 
 
-# Bucket expressions for the continuous series. published_at is an ISO
-# string, so plain substring/strftime work without parsing every row.
-_BUCKET_SQL = {
-    "month": "substr(sa.published_at, 1, 7)",              # YYYY-MM
-    "week": "strftime('%Y-W%W', sa.published_at)",
-    "quarter": "substr(sa.published_at, 1, 4) || '-Q' || "
-               "((CAST(substr(sa.published_at, 6, 2) AS INTEGER) + 2) / 3)",
-}
+def _utc(published_at: str | None) -> datetime | None:
+    """The UTC instant of an ISO timestamp ("+08:00", "+00:00" or "Z"; no
+    offset is read as UTC), or None if it can't be parsed."""
+    try:
+        t = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return (t if t.tzinfo else t.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
+
+
+def _period(published_at: str | None, bucket: str) -> str | None:
+    """The series bucket a timestamp falls in, by its UTC date: `YYYY-MM`,
+    `YYYY-Qn`, or the ISO week `YYYY-Www` (weeks start on Monday and week 1
+    holds the year's first Thursday, so there is no week 00 and the last days
+    of December can belong to the next year's week 1)."""
+    t = _utc(published_at)
+    if t is None:
+        return None
+    if bucket == "month":
+        return f"{t.year:04d}-{t.month:02d}"
+    if bucket == "quarter":
+        return f"{t.year:04d}-Q{(t.month + 2) // 3}"
+    year, week, _ = t.isocalendar()
+    return f"{year:04d}-W{week:02d}"
+
+
+_BUCKETS = ("week", "month", "quarter")
 
 
 def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "month",
-                        source: str = SOURCE_ALL, min_n: int = 5) -> list[dict]:
+                        source: str = SOURCE_ALL, min_n: int = MIN_N) -> list[dict]:
     """Sentiment per time bucket, as a continuous series.
 
     The stored index holds three fixed windows (7d/30d/all_time), which is
@@ -158,11 +169,12 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
     dropped, so a thin stretch shows up as a gap in the chart instead of
     silently interpolating over data that isn't there.
     """
-    if bucket not in _BUCKET_SQL:
-        raise ValueError(f"bucket must be one of {sorted(_BUCKET_SQL)}, got {bucket!r}")
+    if bucket not in _BUCKETS:
+        raise ValueError(f"bucket must be one of {sorted(_BUCKETS)}, got {bucket!r}")
 
-    where = ["sa.bank = ?", "sa.published_at IS NOT NULL"]
-    params: list = [bank]
+    import config.model_version as current_model
+    where = ["sa.bank = ?", "sa.published_at IS NOT NULL", "ase.model_version = ?"]
+    params: list = [bank, current_model.MODEL_VERSION]
     if aspect and aspect != "ALL":
         where.append("ase.aspect = ?")
         params.append(aspect)
@@ -173,12 +185,12 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
     conn = get_connection()
     try:
         rows = conn.execute(
-            f"SELECT {_BUCKET_SQL[bucket]} AS period, ase.label, ase.confidence, sa.source, "
+            f"SELECT sa.published_at, ase.label, ase.confidence, sa.source, "
             f"ase.sentence_id "
             f"FROM aspect_sentiment ase "
             f"JOIN sentences sa ON sa.sentence_id = ase.sentence_id "
-            f"WHERE {' AND '.join(where)} "
-            f"ORDER BY period",
+            f"JOIN sentence_aspects asg ON asg.sentence_id = ase.sentence_id AND asg.aspect = ase.aspect "
+            f"WHERE {' AND '.join(where)}",
             params,
         ).fetchall()
     finally:
@@ -187,10 +199,13 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
     buckets: dict[str, list] = {}
     per_sentence: dict = {}
     across = not aspect or aspect == "ALL"
-    for period, label, confidence, row_source, sentence_id in rows:
-        if period is None or label not in _LABEL_SCORE:
+    for published_at, label, confidence, row_source, sentence_id in rows:
+        if label not in _LABEL_SCORE:   # the stored index fails on it too: never "no data"
+            raise ValueError(f"unknown sentiment label {label!r} on {sentence_id}")
+        period = _period(published_at, bucket)
+        if period is None:
             continue
-        item = (label, confidence, _SOURCE_WEIGHT.get(row_source, 1.0))
+        item = (label, confidence, _SOURCE_WEIGHT.get(row_source, _DEFAULT_WEIGHT))
         if across:   # same rule as the stored index: each sentence once
             _one_per_sentence(per_sentence, sentence_id, period, item)
         else:
@@ -210,7 +225,7 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
 def _compute_rows_for_window(all_rows, window_name: str, days: int | None):
     cutoff = None
     if days is not None:
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
     # Keyed by (bank, aspect, source, model_version); 'ALL' is used for the
     # blended-across-sources and blended-across-aspects rows respectively, so a
@@ -218,9 +233,11 @@ def _compute_rows_for_window(all_rows, window_name: str, days: int | None):
     groups = defaultdict(list)
     across_aspects: dict = {}   # (group key, sentence_id) -> one item per sentence
     for bank, aspect, label, confidence, model_version, source, published_at, sentence_id in all_rows:
-        if cutoff is not None and published_at < cutoff:
-            continue
-        item = (label, confidence, _SOURCE_WEIGHT.get(source, 1.0))
+        if cutoff is not None:
+            t = _utc(published_at)
+            if t is None or t < cutoff:
+                continue
+        item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))
         groups[(bank, aspect, source, model_version)].append(item)          # per aspect, per source
         groups[(bank, aspect, SOURCE_ALL, model_version)].append(item)      # per aspect, blended
         _one_per_sentence(across_aspects, sentence_id, (bank, "ALL", source, model_version), item)      # per source, all aspects
@@ -249,10 +266,10 @@ def _ensure_schema(conn):
         conn.commit()
 
 
-def run() -> int:
-    init_db()
-    conn = get_connection()
-    _ensure_schema(conn)
+def rebuild(conn) -> int:
+    """Recompute sentiment_index on this connection without committing, so a
+    caller (scripts/rescore.py) can make it part of its own transaction. The
+    table must exist (_ensure_schema, which commits, so call it first)."""
     all_rows = _fetch_all_rows(conn)
 
     out = []
@@ -260,7 +277,7 @@ def run() -> int:
         out.extend(_compute_rows_for_window(all_rows, window_name, days))
 
     if out:
-        conn.execute("DELETE FROM sentiment_index")  # full recompute each run — cheap at this scale
+        conn.execute("DELETE FROM sentiment_index")  # full recompute each run - cheap at this scale
         conn.executemany(
             """INSERT INTO sentiment_index
                (bank, aspect, window, source, score, n, pos_n, neu_n, neg_n,
@@ -268,9 +285,17 @@ def run() -> int:
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
             out,
         )
-        conn.commit()
-    conn.close()
     return len(out)
+
+
+def run() -> int:
+    init_db()
+    conn = get_connection()
+    _ensure_schema(conn)
+    n = rebuild(conn)
+    conn.commit()
+    conn.close()
+    return n
 
 
 if __name__ == "__main__":

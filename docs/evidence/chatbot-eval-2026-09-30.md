@@ -2,7 +2,7 @@
 
 The 23-question gold set (`chatbot/eval_gold_set.py`) re-run on 2026-10-01
 against the database as rebuilt on 30 Sep (10-aspect taxonomy, corrected
-index), on both local models. Evidence for PLAN decision O3, the demo model;
+index), on both local models. Evidence for PLAN's open decision on the demo model;
 it doesn't make that decision.
 
 ```bash

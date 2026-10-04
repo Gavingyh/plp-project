@@ -1,6 +1,6 @@
 sequenceDiagram
   accTitle: API chat sequence
-  accDescr: The client sends the new message with the earlier turns; the API rebuilds a conversation from them, runs one turn exactly as the dashboard does, and returns the answer with the guard and check results.
+  accDescr: The client sends the new message with the earlier turns; the API rebuilds a conversation from them, runs one turn exactly as the terminal chat does, and returns the answer with the guard and check results.
 
   participant client as Client
   participant api as FastAPI POST /chat
@@ -14,7 +14,7 @@ sequenceDiagram
     api->>conv: from_messages(history)
     Note over conv: rebuild earlier turns, and the banks the user named, as state
     api->>conv: ask(message)
-    conv->>turn: same turn as the dashboard (diagram 08)
+    conv->>turn: same turn as the terminal chat (diagram 08)
     turn-->>conv: TurnResult
     conv-->>api: TurnResult
     api-->>client: answer, guard, citation_unverified, unverified_numbers

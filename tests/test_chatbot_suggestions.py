@@ -17,6 +17,7 @@ import pytest
 from chatbot.suggestions import build_candidates, get_suggestions
 from chatbot.tools import MIN_VOLUME_FOR_SCORE
 from ingest.db import now_iso
+from config.model_version import MODEL_VERSION
 
 
 def _insert_index_row(temp_db, bank, aspect, n, window="all_time"):
@@ -26,7 +27,7 @@ def _insert_index_row(temp_db, bank, aspect, n, window="all_time"):
         "(bank, aspect, window, source, score, n, pos_n, neu_n, neg_n, "
         "confidence_mean, model_version, computed_at) "
         "VALUES (?,?,?,'ALL',?,?,?,?,?,?,?,?)",
-        (bank, aspect, window, 0.5, n, n, 0, 0, 0.9, "test-model", now_iso()),
+        (bank, aspect, window, 0.5, n, n, 0, 0, 0.9, MODEL_VERSION, now_iso()),
     )
     conn.commit()
     conn.close()

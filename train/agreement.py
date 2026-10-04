@@ -21,6 +21,9 @@ USAGE:
   # Two annotators' sheets, matched on (sentence_id, aspect)
   python -m train.agreement --a labels_alice.csv --b labels_bob.csv
 
+  # Aspect agreement: the sheets' `aspect` columns, matched on sentence_id
+  python -m train.agreement --a sheet_a.csv --b sheet_b.csv --field aspect
+
   # Two label columns inside one file
   python -m train.agreement --file candidates.csv --col-a label --col-b llm_prelabel
 
@@ -30,18 +33,17 @@ USAGE:
 """
 
 import argparse
-import os
 
 import pandas as pd
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 
 from config.logging_config import get_logger, setup_logging
+from train.labels import LABELS
 
 logger = get_logger(__name__)
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LABELS = ["negative", "neutral", "positive"]
 KEY = ["sentence_id", "aspect"]
+ASPECT_KEY = ["sentence_id"]   # aspect agreement: the aspect is the thing compared
 
 # From Landis & Koch (1977), "The Measurement of Observer Agreement for
 # Categorical Data", Biometrics 33(1):159-174 - the thresholds the course's
@@ -71,36 +73,43 @@ def _clean(series: pd.Series) -> pd.Series:
     return series.astype(str).str.strip().str.lower()
 
 
-def _one_row_per_pair(df: pd.DataFrame, col: str, name: str) -> pd.DataFrame:
-    labels = df.assign(_v=_clean(df[col])).groupby(KEY)["_v"].nunique()
+def aspect_keys() -> list[str]:
+    from config import aspect_taxonomy
+    return aspect_taxonomy.keys()
+
+
+def _one_row_per_pair(df: pd.DataFrame, col: str, name: str, key: list[str] = KEY) -> pd.DataFrame:
+    labels = df.assign(_v=_clean(df[col])).groupby(key)["_v"].nunique()
     conflicting = labels[labels > 1]
     if not conflicting.empty:
-        raise ValueError(f"{name} lists {len(conflicting)} (sentence_id, aspect) pair(s) more than "
-                         f"once with different labels, first: {list(conflicting.index[:3])}")
-    return df.drop_duplicates(KEY, keep="first")
+        raise ValueError(f"{name} lists {len(conflicting)} {tuple(key)} key(s) more than "
+                         f"once with different values, first: {list(conflicting.index[:3])}")
+    return df.drop_duplicates(key, keep="first")
 
 
-def load_pair(file_a: str, file_b: str, col: str = "label") -> pd.DataFrame:
-    """Two annotator sheets joined on (sentence_id, aspect).
+def load_pair(file_a: str, file_b: str, col: str = "label", key: list[str] = KEY) -> pd.DataFrame:
+    """Two annotator sheets joined on `key`: (sentence_id, aspect) for
+    sentiment, sentence_id alone for the aspect itself.
 
-    An inner join is deliberate: rows only one annotator labelled say nothing
+    The join is inner: rows only one annotator labelled say nothing
     about agreement, and silently treating a missing label as a disagreement
     would understate kappa.
     """
     a = pd.read_csv(file_a, keep_default_na=False)
     b = pd.read_csv(file_b, keep_default_na=False)
     for name, df in (("--a", a), ("--b", b)):
-        missing = [c for c in KEY + [col] if c not in df.columns]
+        missing = [c for c in dict.fromkeys(key + [col]) if c not in df.columns]
         if missing:
             raise ValueError(f"{name} is missing column(s): {', '.join(missing)}")
 
     # A pair listed twice in one sheet (an aspect correction can make two
     # candidate rows the same pair) would be joined to the other sheet twice
     # and counted twice. Keep one copy, unless the copies disagree.
-    a, b = _one_row_per_pair(a, col, "--a"), _one_row_per_pair(b, col, "--b")
-    merged = a[KEY + [col]].merge(b[KEY + [col]], on=KEY, suffixes=("_a", "_b"))
+    a, b = _one_row_per_pair(a, col, "--a", key), _one_row_per_pair(b, col, "--b", key)
+    cols = list(dict.fromkeys(key + [col]))
+    merged = a[cols].merge(b[cols], on=key, suffixes=("_a", "_b"))
     if merged.empty:
-        raise ValueError("no (sentence_id, aspect) rows are present in both files")
+        raise ValueError(f"no {tuple(key)} rows are present in both files")
     return merged.rename(columns={f"{col}_a": "rater_a", f"{col}_b": "rater_b"})
 
 
@@ -113,20 +122,20 @@ def load_columns(path: str, col_a: str, col_b: str) -> pd.DataFrame:
     return out.rename(columns={col_a: "rater_a", col_b: "rater_b"})
 
 
-def score(pairs: pd.DataFrame) -> dict:
-    """Kappa over rows where BOTH raters gave a valid label."""
+def score(pairs: pd.DataFrame, labels: list[str] = LABELS) -> dict:
+    """Kappa over rows where BOTH raters gave a valid label (one of `labels`)."""
     df = pairs.copy()
     df["rater_a"] = _clean(df["rater_a"])
     df["rater_b"] = _clean(df["rater_b"])
 
     total = len(df)
-    both = df[df["rater_a"].isin(LABELS) & df["rater_b"].isin(LABELS)]
+    both = df[df["rater_a"].isin(labels) & df["rater_b"].isin(labels)]
     if both.empty:
         raise ValueError(
-            f"no rows where both raters gave one of {LABELS}. "
+            f"no rows where both raters gave one of {labels}. "
             f"{total} row(s) were compared - is the label column filled in?")
 
-    kappa = float(cohen_kappa_score(both["rater_a"], both["rater_b"], labels=LABELS))
+    kappa = float(cohen_kappa_score(both["rater_a"], both["rater_b"], labels=labels))
     observed = float((both["rater_a"] == both["rater_b"]).mean())
     return {
         "n_compared": len(both),
@@ -135,7 +144,8 @@ def score(pairs: pd.DataFrame) -> dict:
         "observed_agreement": round(observed, 4),
         "interpretation": interpret(kappa),
         "meets_target": kappa >= TARGET_KAPPA,
-        "confusion": confusion_matrix(both["rater_a"], both["rater_b"], labels=LABELS),
+        "confusion": confusion_matrix(both["rater_a"], both["rater_b"], labels=labels),
+        "labels": labels,
         "pairs": both,
     }
 
@@ -147,7 +157,7 @@ def report(result: dict, show_disagreements: int = 0) -> str:
         f"Rows compared:        {result['n_compared']}",
         f"Rows skipped:         {result['n_skipped']}  (a rater left it blank or non-standard)",
         f"Observed agreement:   {result['observed_agreement']:.3f}",
-        f"Cohen's kappa:        {result['cohen_kappa']:.3f}  — {result['interpretation']}",
+        f"Cohen's kappa:        {result['cohen_kappa']:.3f}  - {result['interpretation']}",
         "",
     ]
 
@@ -155,7 +165,7 @@ def report(result: dict, show_disagreements: int = 0) -> str:
     if gap > 0.3:
         lines += [
             f"NOTE: raw agreement exceeds kappa by {gap:.2f}. Much of the agreement here is",
-            "explained by the label distribution rather than by shared judgement — this is",
+            "explained by the label distribution rather than by shared judgement - this is",
             "what a heavily neutral corpus looks like. Trust kappa, not the raw figure.",
             "",
         ]
@@ -171,11 +181,18 @@ def report(result: dict, show_disagreements: int = 0) -> str:
             "the guideline, and re-label this sample before dividing up the rest.",
         ]
 
+    labels = result.get("labels", LABELS)
     lines += ["", "Confusion matrix (rows = rater A, columns = rater B):", ""]
-    header = " " * 12 + "".join(f"{c:>12s}" for c in LABELS)
-    lines.append(header)
-    for label, row in zip(LABELS, result["confusion"]):
-        lines.append(f"{label:>10s}  " + "".join(f"{v:>12d}" for v in row))
+    if labels == LABELS:
+        lines.append(" " * 12 + "".join(f"{c:>12s}" for c in LABELS))
+        for label, row in zip(LABELS, result["confusion"]):
+            lines.append(f"{label:>10s}  " + "".join(f"{v:>12d}" for v in row))
+    else:   # eleven aspects: abbreviate the columns so the table fits a terminal
+        pad = max(len(l) for l in labels)
+        lines.append("Columns use the first five letters of each label.")
+        lines.append(" " * (pad + 2) + "".join(f"{l[:5]:>7s}" for l in labels))
+        for label, row in zip(labels, result["confusion"]):
+            lines.append(f"{label:>{pad}s}  " + "".join(f"{v:>7d}" for v in row))
 
     if show_disagreements:
         d = result["pairs"]
@@ -191,15 +208,20 @@ def report(result: dict, show_disagreements: int = 0) -> str:
 
 def run(file_a: str | None = None, file_b: str | None = None, path: str | None = None,
         col_a: str = "label", col_b: str = "llm_prelabel",
-        show_disagreements: int = 0) -> dict:
+        show_disagreements: int = 0, field: str = "label") -> dict:
+    """`field` is what the two raters chose: "label" (sentiment, per
+    (sentence, aspect) pair) or "aspect" (per sentence)."""
+    if field not in ("label", "aspect"):
+        raise ValueError(f"field must be 'label' or 'aspect', got {field!r}")
+    labels = LABELS if field == "label" else aspect_keys()
     if file_a and file_b:
-        pairs = load_pair(file_a, file_b)
+        pairs = load_pair(file_a, file_b, col=field, key=KEY if field == "label" else ASPECT_KEY)
     elif path:
         pairs = load_columns(path, col_a, col_b)
     else:
         raise ValueError("provide either --a and --b, or --file with --col-a/--col-b")
 
-    result = score(pairs)
+    result = score(pairs, labels)
     print(report(result, show_disagreements))
     return result
 
@@ -213,6 +235,9 @@ if __name__ == "__main__":
     parser.add_argument("--col-a", default="label")
     parser.add_argument("--col-b", default="llm_prelabel")
     parser.add_argument("--show-disagreements", type=int, default=0, metavar="N")
+    parser.add_argument("--field", choices=["label", "aspect"], default="label",
+                        help="what the raters chose: sentiment `label` (default) or the `aspect`")
     args = parser.parse_args()
     run(file_a=args.file_a, file_b=args.file_b, path=args.path,
-        col_a=args.col_a, col_b=args.col_b, show_disagreements=args.show_disagreements)
+        col_a=args.col_a, col_b=args.col_b, show_disagreements=args.show_disagreements,
+        field=args.field)

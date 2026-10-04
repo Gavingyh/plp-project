@@ -8,6 +8,8 @@ empty rows. No network calls.
 import time
 from datetime import date
 
+import pytest
+
 import ingest.google_news as gn
 import ingest.news_filter as nf
 from ingest.db import upsert_documents
@@ -107,6 +109,37 @@ def test_full_window_is_split_and_requeried(monkeypatch):
     docs = _fetch_window("DBS", "DBS bank Singapore", date(2024, 3, 1), date(2024, 4, 1))
     assert len(calls) == 3  # the full month, then its two halves
     assert len(docs) == 6
+
+
+def _google_down(query):
+    raise RuntimeError("HTTP 503 after retries")
+
+
+def test_a_failed_window_is_recorded_not_read_as_a_quiet_month(monkeypatch):
+    monkeypatch.setattr(gn, "FAILED_WINDOWS", [])
+    monkeypatch.setattr(gn, "QUERIES", {"DBS": ["DBS bank Singapore"]})
+    monkeypatch.setattr(gn, "_fetch", _google_down)
+    assert list(gn.iter_batches("2024-03-01", "2024-04-01")) == [("2024-03", [])]
+    assert len(gn.FAILED_WINDOWS) == 1
+    assert "DBS" in gn.FAILED_WINDOWS[0] and "2024-03-01" in gn.FAILED_WINDOWS[0]
+
+
+def test_news_pull_exits_non_zero_when_a_google_window_failed(temp_db, monkeypatch, tmp_path):
+    import runpy
+    import sys
+
+    import config.logging_config as logging_config
+
+    monkeypatch.setattr(nf, "FLAGGED_PATH", str(tmp_path / "f.csv"))
+    monkeypatch.setattr(gn, "FAILED_WINDOWS", [])
+    monkeypatch.setattr(gn, "QUERIES", {"DBS": ["DBS bank Singapore"]})
+    monkeypatch.setattr(gn, "_fetch", _google_down)
+    monkeypatch.setattr(logging_config, "setup_logging", lambda *a, **k: None)
+    monkeypatch.setattr(sys, "argv", ["run_news_pull.py", "--source", "google",
+                                      "--since", "2024-03-01", "--until", "2024-04-01"])
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_module("run_news_pull", run_name="__main__")
+    assert exit_info.value.code not in (0, None)
 
 
 def test_count_table_lists_news_by_month(temp_db, monkeypatch, tmp_path):

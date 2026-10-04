@@ -1,12 +1,12 @@
 """
-Daily batch ingestion entrypoint — the "recomputed after each batch cycle"
+Daily batch ingestion entrypoint - the "recomputed after each batch cycle"
 requirement from the project proposal. Run manually or via cron; not a
-live/streaming pipeline (a deliberate scope decision; see docs/DESIGN.md).
+live/streaming pipeline (a scope decision; see docs/DESIGN.md).
 
 Pulls news (Yahoo, Google News for the last 45 days, NewsAPI, Alpha Vantage;
 see run_news_pull.py) and Arctic Shift
 (incremental Reddit pull since the last run), upserts into data/plp.db.
-Earnings PDFs are NOT part of this — that corpus is static, run
+Earnings PDFs are NOT part of this - that corpus is static, run
 `python -m ingest.earnings_extract` once after adding PDFs.
 
 USAGE:
@@ -30,7 +30,7 @@ GOOGLE_DAYS = 45  # overlap generously; already-stored articles are skipped
 
 
 def main(reddit_since: str | None):
-    logger.info("DAILY BATCH RUN — %s", datetime.now(timezone.utc).isoformat())
+    logger.info("DAILY BATCH RUN - %s", datetime.now(timezone.utc).isoformat())
 
     total_inserted = 0
 

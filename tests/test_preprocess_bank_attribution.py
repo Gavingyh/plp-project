@@ -1,5 +1,5 @@
 """
-Tests for preprocess/pipeline.py's per-sentence bank attribution — this is
+Tests for preprocess/pipeline.py's per-sentence bank attribution - this is
 the logic behind a known source of noise: inheriting a
 document's bank onto every sentence in a long Reddit thread pulled in
 unrelated sentences ("Calling you for $8 transaction is a red flag itself.")
@@ -17,7 +17,7 @@ def test_explicit_mention_wins_regardless_of_source():
 
 
 def test_news_source_inherits_doc_bank_when_sentence_names_none():
-    # A news title+description is short and single-topic — safe to inherit.
+    # A news title+description is short and single-topic - safe to inherit.
     assert _resolve_sentence_bank("Shares rose 3% on the news", "DBS", "newsapi") == "DBS"
     assert _resolve_sentence_bank("Shares rose 3% on the news", "DBS", "alphavantage") == "DBS"
     assert _resolve_sentence_bank("Shares rose 3% on the news", "DBS", "earnings") == "DBS"
@@ -31,7 +31,7 @@ def test_reddit_does_not_inherit_doc_bank():
 
 
 def test_multi_doc_never_inherits_even_for_news():
-    # MULTI means the document names more than one bank — no single bank to
+    # MULTI means the document names more than one bank - no single bank to
     # safely inherit, regardless of source.
     assert _resolve_sentence_bank("Shares rose on the news", "MULTI", "newsapi") is None
 

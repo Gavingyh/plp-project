@@ -13,8 +13,8 @@ aren't running anywhere.
 
 ## Index
 
-Core diagrams (01–10) cover the whole system; extended ones (11–20) zoom in on one part.
-All twenty are rendered.
+Core diagrams (01–10) cover the whole system; extended ones (11–23) zoom in on one part.
+All twenty-three are rendered.
 
 | # | diagram | type | question it answers | set |
 |---|---|---|---|---|
@@ -25,7 +25,7 @@ All twenty are rendered.
 | 05 | [News ingestion, one run](05-news-ingestion.md) | sequence | What happens, in order, during a news pull? | core |
 | 06 | [A batch run, from ingestion to the index](06-batch-pipeline.md) | sequence | In what order are the batch steps run, and why is re-running safe? | core |
 | 07 | [Chatbot: one turn](07-chatbot-turn.md) | flowchart | Which paths can a question take, and where does code rather than the model decide? | core |
-| 08 | [Chatbot: one turn from the dashboard](08-chatbot-sequence.md) | sequence | Which component calls which when an investor asks a question? | core |
+| 08 | [Chatbot: one turn from a chat client](08-chatbot-sequence.md) | sequence | Which component calls which when an investor asks a question? | core |
 | 09 | [Labelling and training](09-labelling-training.md) | flowchart | How were the labels produced and the model trained, and what is still planned? | core |
 | 10 | [Five weeks to submission](10-plan.md) | Gantt | What happens each week to 1 November, and what closes each week? | core |
 | 11 | [News filter: what happens to one article](11-news-filter.md) | flowchart | In what order is a news article checked, and why is it dropped? | extended |
@@ -36,8 +36,11 @@ All twenty are rendered.
 | 16 | [One candidate row in the first labelling round](16-label-lifecycle.md) | state | What states did a row go through in the 27 Sep labelling round? | extended |
 | 17 | [What each rubric item rests on](17-rubric-map.md) | flowchart | Which component answers each rubric item, and which course module does it draw on? | extended |
 | 18 | [Sharing the database as snapshots](18-snapshots.md) | flowchart | How does the database reach a teammate without git? | extended |
-| 19 | [What an investor can do in the dashboard](19-dashboard-journey.md) | flowchart | What does each dashboard tab let a reader do? | extended |
+| 19 | [The API behind a dashboard](19-api-for-a-dashboard.md) | flowchart | Which endpoint feeds each view a dashboard needs? | extended |
 | 20 | [How the chatbot is evaluated](20-chatbot-evaluation.md) | flowchart | What does the evaluation check automatically, and what is left to a person? | extended |
+| 21 | [How the sentiment model was trained and tuned](21-sentiment-model-development.md) | flowchart | Which experiments chose the fine-tuned model's configuration, and what did each score? | extended |
+| 22 | [How the aspect method was chosen](22-aspect-method-development.md) | flowchart | Why centroid assignment gives way to an LLM classifier, and how each was measured? | extended |
+| 23 | [How the chatbot was evaluated and improved](23-chatbot-improvement-loop.md) | flowchart | How were the chatbot's failures found, fixed and checked? | extended |
 
 ## Report shortlist
 

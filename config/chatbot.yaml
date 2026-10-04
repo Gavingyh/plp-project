@@ -1,0 +1,48 @@
+# The chatbot's settings (read by chatbot/settings.py, 4 Oct 2026). Each has a
+# default `value`; where `env` names an environment variable, a value set
+# there (in .env or the shell) wins. Edit defaults here, not in the code.
+
+backend:          {value: "ollama", env: CHATBOT_BACKEND}   # ollama (decided 4 Oct) | claude | openai | gemini | auto: the first API key set
+temperature:      {value: 0.2, env: CHATBOT_TEMPERATURE}    # low, for grounded answers
+ollama_url:       {value: "http://localhost:11434", env: OLLAMA_BASE_URL}
+openai_base_url:  {value: "https://api.openai.com/v1", env: OPENAI_BASE_URL}   # any OpenAI-compatible provider
+ollama_think:     {value: null, env: OLLAMA_THINK}          # false turns a reasoning model's thinking off (qwen3)
+
+models:
+  ollama:  {value: "llama3.1:8b", env: OLLAMA_MODEL}     # the demo model (decided 4 Oct)
+  claude:  {value: "claude-sonnet-5", env: CLAUDE_MODEL}
+  openai:  {value: "gpt-4o-mini", env: OPENAI_MODEL}
+  gemini:  {value: "gemini-3.8-flash", env: [GEMINI_MODEL, GEMINI_CHAT_MODEL]}
+  intent:  {value: "llama3.1:8b", env: CHATBOT_INTENT_MODEL}   # the intent classifier (chatbot/intent.py)
+  judge:   {value: "qwen3:4b", env: CHATBOT_JUDGE_MODEL}       # the evaluation's answer checker (chatbot/judge.py)
+
+intent_think: {value: null, env: CHATBOT_INTENT_THINK}
+
+# Limits and waits, the same for every backend unless named.
+max_tool_iterations: {value: 8}          # a confused tool loop stops here
+max_output_tokens:   {value: 1024}       # the Claude API requires a cap
+timeouts_seconds:
+  ollama: {value: 120}                   # local generation can be slow on a CPU
+  hosted: {value: 60}
+  intent: {value: 60}
+  judge:  {value: 300}
+retry_waits_seconds:                     # before each retry on 429 / 503
+  gemini: {value: [2, 5, 15]}
+  openai: {value: [5, 15, 30, 60]}       # unless Retry-After says otherwise
+max_retry_after_seconds: {value: 60}
+
+# Conversation and evidence.
+history:
+  turns:        {value: 3}               # earlier question/answer pairs passed to the model
+  answer_chars: {value: 1200}            # earlier answers are trimmed to this
+harness_search:
+  k_one_bank:   {value: 3}               # quotes the harness adds when one bank was asked about
+  k_each_bank:  {value: 1}               # ... per bank when several were
+enforce_evidence: {value: "strip", env: CHATBOT_ENFORCE_EVIDENCE} # off | strip | search (strip decided 4 Oct)
+aspect_query:     {value: true, env: CHATBOT_ASPECT_QUERY}        # rank evidence by the aspect's name (on since 4 Oct)
+trace_file:       {value: null, env: CHATBOT_TRACE_FILE}
+
+# The trend tool.
+trend:
+  stable_within:  {value: 0.02}          # an unshrunk 7d-vs-30d change this small reads "stable"
+  monthly_points: {value: 12}            # months of series passed to the model

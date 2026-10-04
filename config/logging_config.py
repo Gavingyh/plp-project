@@ -21,7 +21,7 @@ tool-call trace to stderr, allowing the answer to be piped on its own.
 
 CONFIG (env vars, all optional; .env is loaded automatically):
   LOG_LEVEL   DEBUG | INFO | WARNING | ERROR   (default INFO)
-  DEBUG       "true"/"1"/"yes" — shorthand for LOG_LEVEL=DEBUG, and also
+  DEBUG       "true"/"1"/"yes" - shorthand for LOG_LEVEL=DEBUG, and also
               stops third-party libraries being silenced
   LOG_FILE    path to the log file (default data/logs/plp.log);
               set to "" or "none" to disable file logging entirely
@@ -87,7 +87,7 @@ def resolve_level(level: str | int | None = None) -> int:
 def quiet_noisy_libraries(debug: bool = False) -> None:
     """Silences the third-party output that otherwise buries real messages.
 
-    Skipped entirely when debug=True — if you've turned on DEBUG you probably
+    Skipped entirely when debug=True - if you've turned on DEBUG you probably
     want transformers' loading details and urllib3's connection chatter too.
     """
     if debug:
@@ -98,12 +98,12 @@ def quiet_noisy_libraries(debug: bool = False) -> None:
 
     # transformers and huggingface_hub print progress bars and load reports
     # outside the stdlib logging module, so setting a logger level isn't
-    # enough — they need their own verbosity APIs.
+    # enough - they need their own verbosity APIs.
     try:
         from transformers.utils import logging as hf_logging
         hf_logging.set_verbosity_error()
         hf_logging.disable_progress_bar()
-    except Exception:  # transformers not installed / API moved — not fatal
+    except Exception:  # transformers not installed / API moved - not fatal
         pass
     try:
         from huggingface_hub.utils import logging as hub_logging
@@ -119,7 +119,7 @@ def quiet_noisy_libraries(debug: bool = False) -> None:
 
 def setup_logging(level: str | int | None = None, log_file: str | None = None,
                    force: bool = False) -> logging.Logger:
-    """Configures root logging. Idempotent — safe to call from several entry
+    """Configures root logging. Idempotent - safe to call from several entry
     points; pass force=True to reconfigure (used by tests)."""
     global _configured
     root = logging.getLogger()
@@ -152,7 +152,7 @@ def setup_logging(level: str | int | None = None, log_file: str | None = None,
             file_handler.setFormatter(logging.Formatter(_FILE_FORMAT))
             root.addHandler(file_handler)
         except OSError as e:
-            # A read-only or missing directory must not stop the program —
+            # A read-only or missing directory must not stop the program -
             # console logging still works.
             root.warning("Could not open log file %s (%s); console logging only", path, e)
 
@@ -164,6 +164,6 @@ def setup_logging(level: str | int | None = None, log_file: str | None = None,
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Module-level logger. Deliberately does NOT call setup_logging() — no
+    """Module-level logger. Deliberately does NOT call setup_logging() - no
     import side effects; entry points configure logging explicitly."""
     return logging.getLogger(name)

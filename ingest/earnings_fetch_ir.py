@@ -8,26 +8,26 @@ directories into `documents`.
 
 WHY THESE SOURCES, NOT SGX: SGX doesn't host what this project needs. SGXNet
 carries company announcements (which is what "earnings from SGX" would
-actually mean) and SGX's own commentary — third-party analyst reports are
+actually mean) and SGX's own commentary - third-party analyst reports are
 brokerage IP behind client entitlements and aren't on SGX at all. Meanwhile
 SGX's own API sits behind a WAF returning 403, while DBS and OCBC publish the
 exact same earnings material openly on their IR sites with no bot protection
 at all (confirmed: plain requests, HTTP 200, real content). So this
 fetcher needs no browser automation, no stealth/anti-detection tooling, and
-no ToS grey area — it reads openly published pages the way any reader would.
+no ToS grey area - it reads openly published pages the way any reader would.
 
 UOB IS NOT HERE, IT HAS ITS OWN FETCHER: uobgroup.com redirects non-browser
 clients to a WAF challenge page (confirmed against the live site). Rather than
 escalate to fingerprint-spoofing to defeat that, UOB's PDFs come from the
-Wayback Machine instead — see ingest/earnings_fetch_uob.py. Same documents,
+Wayback Machine instead - see ingest/earnings_fetch_uob.py. Same documents,
 different transport. run() says so explicitly rather than failing silently.
 
-BONUS FIND — the analyst transcripts: DBS publishes `*_analyst_transcript.pdf`
+BONUS FIND - the analyst transcripts: DBS publishes `*_analyst_transcript.pdf`
 every quarter: the edited transcript of its analyst call, with named
 brokerage analysts (Citi, etc.) asking management about NIM, asset quality,
 dividends and guidance, and the CEO/CFO answering. That is genuine analyst
 voice on exactly the aspects this project's taxonomy targets, openly
-published — much closer to the original "analyst reports" goal than anything
+published - much closer to the original "analyst reports" goal than anything
 scraping SGX would have produced, and it fills the gap Reddit can't
 (r/singaporefi discusses banking products, not net interest margin).
 
@@ -74,7 +74,7 @@ SOURCES = {
     },
 }
 
-# Prose-rich documents worth ingesting. Everything else is dropped — see
+# Prose-rich documents worth ingesting. Everything else is dropped - see
 # _SKIP_PATTERNS below for what and why.
 _KEEP_PATTERNS = re.compile(
     r"analyst_transcript|CEO_presentation|CFO_presentation|press_statement|"
@@ -88,7 +88,7 @@ _KEEP_PATTERNS = re.compile(
 # would strip them to nearly nothing anyway (it drops lines >40% digits), so
 # downloading them is wasted bandwidth and wasted extraction time. Basel Pillar 3
 # "other regulatory disclosures" are the same. Annual reports are 200+ pages of
-# mostly boilerplate and tables — excluded from the MVP scope deliberately.
+# mostly boilerplate and tables, so they are out of scope.
 _SKIP_PATTERNS = re.compile(
     r"Condensed|Interim FS|Bank Group FS|other_regulatory_disclosures|"
     r"Annual Report|notice-of-agm|letter-to-shareholders",
@@ -113,7 +113,7 @@ def discover(bank: str, since_year: int) -> list[tuple[str, str]]:
             continue
         if _SKIP_PATTERNS.search(filename) or not _KEEP_PATTERNS.search(filename):
             continue
-        # Filenames contain spaces on OCBC's site — quote the path, not the whole URL.
+        # Filenames contain spaces on OCBC's site - quote the path, not the whole URL.
         url = urljoin(cfg["root"], quote(match.group(0)))
         local_name = f"{year}_{filename.replace('/', '_')}"
         found[local_name] = url
@@ -125,7 +125,7 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
     try:
         targets = discover(bank, since_year)
     except Exception as e:
-        logger.error(f"{bank}: could not read listing page — {e}")
+        logger.error(f"{bank}: could not read listing page - {e}")
         stats["failed"] += 1
         return stats
 
@@ -146,7 +146,7 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
             resp.raise_for_status()
             if not resp.content.startswith(b"%PDF"):
                 logger.warning(f"{bank}: {local_name} is not a PDF (got "
-                      f"{resp.content[:20]!r}) — skipping")
+                      f"{resp.content[:20]!r}) - skipping")
                 stats["failed"] += 1
                 continue
             with open(dest, "wb") as f:
@@ -154,7 +154,7 @@ def fetch(bank: str, since_year: int = 2023, dry_run: bool = False) -> dict:
             logger.info(f"{bank}: {local_name} ({len(resp.content) // 1024}KB)")
             stats["downloaded"] += 1
         except Exception as e:
-            logger.error(f"{bank}: FAILED {local_name} — {e}")
+            logger.error(f"{bank}: FAILED {local_name} - {e}")
             stats["failed"] += 1
         time.sleep(_POLITE_DELAY_SECONDS)
     return stats
@@ -167,7 +167,7 @@ def run(since_year: int = 2023, dry_run: bool = False) -> dict:
         all_stats[bank] = fetch(bank, since_year=since_year, dry_run=dry_run)
 
     logger.info("--- UOB ---")
-    logger.info("UOB: not handled here — uobgroup.com sits behind a WAF that "
+    logger.info("UOB: not handled here - uobgroup.com sits behind a WAF that "
                 "rejects non-browser clients. Run "
                 "`python -m ingest.earnings_fetch_uob` instead; it fetches the "
                 "same PDFs from the Wayback Machine into "

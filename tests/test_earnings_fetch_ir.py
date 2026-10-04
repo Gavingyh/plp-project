@@ -1,5 +1,5 @@
 """
-Tests for ingest/earnings_fetch_ir.py — discovering and downloading earnings
+Tests for ingest/earnings_fetch_ir.py - discovering and downloading earnings
 PDFs from DBS's and OCBC's investor-relations sites.
 
 The listing-page HTML fixtures below are trimmed copies of real markup
@@ -7,7 +7,7 @@ The listing-page HTML fixtures below are trimmed copies of real markup
 surfaces as a failing discovery test rather than a silent "0 documents
 found" in production.
 
-No network calls — requests.get is mocked throughout.
+No network calls - requests.get is mocked throughout.
 """
 
 import pytest
@@ -24,7 +24,7 @@ _DBS_LISTING_HTML = """
 <a href="/iwov-resources/images/investors/quarterly-financials/2025/DBS Annual Report 2025.pdf">x</a>
 """
 
-# Trimmed from the real OCBC financials page — note the spaces in filenames.
+# Trimmed from the real OCBC financials page - note the spaces in filenames.
 _OCBC_LISTING_HTML = """
 <a href="/iwov-resources/sg/ocbc/gbc/pdf/investors/quarterly-results/2026/OCBC 1H26 CEO Presentation.pdf">x</a>
 <a href="/iwov-resources/sg/ocbc/gbc/pdf/investors/quarterly-results/2026/1H26 Unaudited Condensed Interim FS.pdf">x</a>
@@ -55,7 +55,7 @@ def test_discover_dbs_keeps_prose_docs_and_drops_tables(monkeypatch):
     assert any("analyst_transcript" in n for n in names)
     assert any("CEO_presentation" in n for n in names)
     # Basel Pillar 3 disclosures, financial statements and annual reports are
-    # near-pure tables/boilerplate — ingest/earnings_extract.py would strip them to
+    # near-pure tables/boilerplate - ingest/earnings_extract.py would strip them to
     # nothing, so they must not be downloaded at all.
     assert not any("other_regulatory_disclosures" in n for n in names)
     assert not any("Bank Group FS" in n for n in names)
@@ -116,7 +116,7 @@ def test_fetch_rejects_non_pdf_response(monkeypatch, tmp_path):
 
     def fake_get(url, **kw):
         if url.endswith(".pdf"):
-            # An HTML error page served with a 200 — must not be saved as a PDF.
+            # An HTML error page served with a 200 - must not be saved as a PDF.
             return _FakeResponse(content=b"<html>error</html>")
         return _FakeResponse(text=_DBS_LISTING_HTML)
 

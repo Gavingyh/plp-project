@@ -57,3 +57,30 @@ checksum are right.
    `plp-2026-09-30.db.gz` is 198.5 MB (the 10-aspect re-run tripled the
    aspect tables), not "about 103MB"; `tests/` holds 421 tests, not 379 (the same 379 appears in RUNBOOK,
    STATUS and the technical spec).
+
+## Second run, after the README fixes and the API-only change (evening)
+
+Repeated at 21:29–21:40 from a fresh clone of commit `814b65d`, after the
+README fixes above were made and the dashboard was removed (DESIGN decision
+23), with Python 3.14 first on a plain PATH. The copy was deleted
+afterwards.
+
+| step | result | time |
+|---|---|---|
+| `python3 -m venv .venv-plp` (3.14.0) | ok | seconds |
+| `pip install -r requirements.txt` | ok | ~2 min |
+| `python -m spacy download en_core_web_sm` | ok | ~40 s |
+| restore `plp-2026-09-30.db.gz` | ok; SHA-256 matches the README | seconds |
+| `pytest tests/ -q` | **490 passed** | 3.8 min |
+| `pytest -q` from the root | **531 passed** | 3.9 min |
+| `scripts/start.sh` (default port) | refused: port 8000 held by another project's API; the message names it and gives `PLP_API_PORT` | — |
+| `PLP_API_PORT=8100 scripts/start.sh` | ok; Ollama already running, left alone | ~30 s |
+| `/health`, `/docs`, `/openapi.json`, `/sentiment?bank=DBS`, `/analyst-consensus/latest`, `/aspects` | all HTTP 200; DBS `"score":0.122, "n":24431` | — |
+| `python -m chatbot.chat` | starts and prints its prompt | — |
+| `scripts/stop.sh` | stopped the API it started; left Ollama running | — |
+
+All four README problems from the first run are resolved: the Python
+version is stated, the Quick start is in a newcomer's order, the port
+override is documented, and the database size is right. The test counts the
+README gives (438 and 479) were already behind the code by the evening
+(490 and 531) and were updated again.

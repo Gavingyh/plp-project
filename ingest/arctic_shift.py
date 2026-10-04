@@ -8,14 +8,14 @@ Design decisions here are backed by live testing against the real API
 
   - Keyword search (`&query=...`) times out (HTTP 422) on active subreddits.
     So: harvest whole subreddits by date window, filter for bank mentions locally.
-  - No page token exists — paginate by moving `after` to `last_row.created_utc + 1`,
+  - No page token exists - paginate by moving `after` to `last_row.created_utc + 1`,
     which requires `sort=asc`.
-  - r/SingaporeInvestments has had no posts since 2023-10-01 (effectively dead) —
+  - r/SingaporeInvestments has had no posts since 2023-10-01 (effectively dead) -
     kept only for pre-2023-10 historical pulls, not the daily batch.
-  - r/singapore returned 0/100 bank-mentioning posts in testing — general-interest
+  - r/singapore returned 0/100 bank-mentioning posts in testing - general-interest
     noise, dropped entirely.
   - r/singaporefi is the primary source: measured 775 bank-mentioning posts +
-    662+ bank-mentioning comments over 12 months (comments undercounted — see plan).
+    662+ bank-mentioning comments over 12 months (comments undercounted - see plan).
 
 USAGE:
   python -m ingest.arctic_shift                 # backfill + upsert into data/plp.db
@@ -39,10 +39,10 @@ logger = get_logger(__name__)
 
 BASE_URL = "https://arctic-shift.photon-reddit.com/api"
 
-# r/SingaporeInvestments is included for historical (pre-2023-10) pulls only —
+# r/SingaporeInvestments is included for historical (pre-2023-10) pulls only -
 # see module docstring. r/singapore and r/investing were both tested and
 # dropped: 0 bank-mentioning items out of 7,000+ fetched across two separate
-# samples (90-day and 12-day) — pure noise for this project, and r/investing's
+# samples (90-day and 12-day) - pure noise for this project, and r/investing's
 # comment volume in particular is large enough that fetching it for zero
 # payoff would dominate ingestion time.
 SUBREDDITS = ["singaporefi", "SingaporeInvestments"]
@@ -53,28 +53,48 @@ REQUEST_TIMEOUT = 60
 POLITE_DELAY_SECONDS = 0.3
 
 
+RETRY_WAITS = (2, 5, 15)   # seconds between attempts at one page
+
+# Windows that stopped early because a page kept failing; pull() reports them.
+INCOMPLETE_WINDOWS: list[str] = []
+
+# The entry point's exit code when any window stopped early. Not 0, so
+# scripts/overnight_backfill.py does not mark the month done and retries it.
+EXIT_INCOMPLETE = 3
+
+
+class PageFailed(Exception):
+    """A page could not be fetched after every retry."""
+
+
 def _get(endpoint: str, **params) -> list[dict]:
-    """GET one page from Arctic Shift. On the documented 422 "timeout" response,
-    return [] rather than raising — callers narrow the window and move on."""
+    """GET one page from Arctic Shift: the rows, [] only when the archive has no
+    more. A failed request, a server error, the documented 422 "timeout" or
+    unreadable JSON is retried, then raised as PageFailed. Until 3 Oct 2026 a
+    failure returned [], which the caller read as the end of the window: whole
+    months of comments were lost that way (Sep 2021, May 2024, Mar 2025)."""
     url = f"{BASE_URL}/{endpoint}/search"
-    try:
-        resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"request error: {e}")
-        return []
-    if resp.status_code == 429:
-        wait = int(resp.headers.get("Retry-After", 5))
-        logger.info(f"rate limited, waiting {wait}s")
-        time.sleep(wait)
-        return _get(endpoint, **params)
-    if resp.status_code != 200:
-        # Includes the documented 422 timeout case for keyword search / heavy queries.
-        logger.info(f"{endpoint} search returned {resp.status_code}: {resp.text[:120]}")
-        return []
-    try:
-        return resp.json().get("data") or []
-    except json.JSONDecodeError:
-        return []
+    problem = ""
+    for attempt, wait in enumerate((0,) + RETRY_WAITS):
+        if wait:
+            time.sleep(wait)
+        try:
+            resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+        except requests.exceptions.RequestException as e:
+            problem = f"request error: {e}"
+            continue
+        if resp.status_code == 429:
+            time.sleep(int(resp.headers.get("Retry-After", 5)))
+            problem = "rate limited"
+            continue
+        if resp.status_code != 200:
+            problem = f"{endpoint} search returned {resp.status_code}: {resp.text[:120]}"
+            continue
+        try:
+            return resp.json().get("data") or []
+        except json.JSONDecodeError:
+            problem = "unreadable JSON"
+    raise PageFailed(f"{problem} (after {len(RETRY_WAITS) + 1} attempts)")
 
 
 def _harvest_window(endpoint: str, subreddit: str, after: str, before: str, fields: str) -> list[dict]:
@@ -82,8 +102,14 @@ def _harvest_window(endpoint: str, subreddit: str, after: str, before: str, fiel
     (no page token exists in this API)."""
     rows, cursor = [], after
     for _ in range(MAX_PAGES_PER_WINDOW):
-        page = _get(endpoint, subreddit=subreddit, after=cursor, before=before,
-                    limit=PAGE_LIMIT, sort="asc", fields=f"{fields},created_utc")
+        try:
+            page = _get(endpoint, subreddit=subreddit, after=cursor, before=before,
+                        limit=PAGE_LIMIT, sort="asc", fields=f"{fields},created_utc")
+        except PageFailed as e:
+            gap = f"r/{subreddit} {endpoint} from {cursor} to {before}"
+            logger.warning(f"window incomplete, {gap}: {e}")
+            INCOMPLETE_WINDOWS.append(gap)
+            break
         if not page:
             break
         rows.extend(page)
@@ -99,7 +125,7 @@ def _to_documents(rows: list[dict], subreddit: str, doc_type: str, text_field: s
     for r in rows:
         if doc_type == "submission":
             # Link-only posts have an empty selftext but a bank can still be
-            # named in the title — build full_text from both rather than
+            # named in the title - build full_text from both rather than
             # requiring selftext, which would silently drop those posts.
             title = r.get("title") or ""
             selftext = (r.get("selftext") or "").strip()
@@ -111,7 +137,7 @@ def _to_documents(rows: list[dict], subreddit: str, doc_type: str, text_field: s
             continue
         bank = resolve_bank(full_text)
         if bank is None:
-            continue  # no bank mentioned at all — not useful for this project
+            continue  # no bank mentioned at all - not useful for this project
         native_id = r.get("id") or str(r.get("created_utc"))
         published_at = datetime.fromtimestamp(r["created_utc"], tz=timezone.utc).isoformat()
         if doc_type == "submission":
@@ -142,7 +168,7 @@ def pull(since: str | None = None, until: str | None = None) -> list[dict]:
     """Backfill (or incremental pull with `since`) across SUBREDDITS.
 
     Note per Arctic Shift's own docs: scores/comment counts are incomplete for
-    ~36h after posting — treat very recent engagement metrics as provisional.
+    ~36h after posting - treat very recent engagement metrics as provisional.
     """
     until = until or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     since = since or "2020-01-01"  # effectively "all history the archive has"
@@ -162,18 +188,35 @@ def pull(since: str | None = None, until: str | None = None) -> list[dict]:
         all_docs.extend(post_docs)
         all_docs.extend(comment_docs)
 
+    if INCOMPLETE_WINDOWS:
+        logger.warning(f"{len(INCOMPLETE_WINDOWS)} windows stopped early and need a re-pull: "
+                       + "; ".join(INCOMPLETE_WINDOWS))
     return all_docs
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> int:
+    """Pull, store what was fetched, and return the exit code: 0 only when
+    every window was fetched in full, EXIT_INCOMPLETE otherwise."""
     setup_logging()
     parser = argparse.ArgumentParser(description="Ingest Reddit data via Arctic Shift")
     parser.add_argument("--since", default=None, help="YYYY-MM-DD, default = full backfill")
     parser.add_argument("--until", default=None, help="YYYY-MM-DD, default = today")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     logger.info(f"Run started: {datetime.now().isoformat()}")
     docs = pull(since=args.since, until=args.until)
+    # What was fetched is kept (doc_id makes a re-pull harmless); the exit
+    # code below is what tells a caller the run is not complete.
     attempted, inserted = upsert_documents(docs)
     logger.info(f"{'=' * 50}\nDocuments attempted: {attempted}  |  newly inserted: {inserted}  "
           f"|  already-seen (skipped): {attempted - inserted}\n{'=' * 50}")
+    if INCOMPLETE_WINDOWS:
+        logger.error(f"INCOMPLETE, exit code {EXIT_INCOMPLETE}: {len(INCOMPLETE_WINDOWS)} window(s) "
+                     "stopped early on a failing page; re-run to fetch them: "
+                     + "; ".join(INCOMPLETE_WINDOWS))
+        return EXIT_INCOMPLETE
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

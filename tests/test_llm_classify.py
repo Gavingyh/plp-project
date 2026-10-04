@@ -65,3 +65,59 @@ def test_think_is_sent_only_when_asked(monkeypatch):
     lc.ollama_chat("m", [], KEYS, think=False)
     assert "think" not in sent[0] and sent[1]["think"] is False
     assert sent[1]["format"]["properties"]["aspect"]["enum"] == KEYS
+
+
+def test_corpus_order_is_fixed_and_starts_with_the_preview_sample():
+    import sqlite3
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE sentences (sentence_id TEXT, text TEXT)")
+    conn.executemany("INSERT INTO sentences VALUES (?, ?)", [(f"s{i:03d}", f"t{i}") for i in range(200)])
+    rows = lc.corpus_rows(conn, seed=2026)
+    assert len(rows) == 200 and rows["sentence_id"].is_unique
+    assert rows["sentence_id"].tolist() == lc.corpus_rows(conn, seed=2026)["sentence_id"].tolist()
+    # aggregate.preview draws its sample of n the same way, so the first n rows match it
+    base = pd.read_sql("SELECT sentence_id, text FROM sentences ORDER BY sentence_id", conn)
+    assert rows["sentence_id"].head(30).tolist() == base.sample(n=30, random_state=2026)["sentence_id"].tolist()
+    assert len(lc.corpus_rows(conn, seed=2026, limit=10)) == 10
+
+
+def test_cache_file_is_named_by_the_prompt(monkeypatch):
+    fp = lc.prompt_fingerprint(KEYS)
+    assert len(fp) == 8 and fp == lc.prompt_fingerprint(KEYS)
+    assert lc.answer_cache_path("llama3.1:8b", keys=KEYS).endswith(f"llama3.1_8b.{fp}.jsonl")
+    assert lc.answer_cache_path("qwen3:4b", no_think=True, keys=KEYS).endswith(f"qwen3_4b-nothink.{fp}.jsonl")
+    assert lc.prompt_fingerprint(KEYS + ["wealth_business"]) != fp           # an aspect added
+    monkeypatch.setattr(lc, "EXAMPLES", lc.EXAMPLES[:-1])
+    assert lc.prompt_fingerprint(KEYS) != fp                                 # an example dropped
+    monkeypatch.undo()
+    monkeypatch.setitem(lc.DEFINITIONS, "asset_quality", "loan quality only")
+    assert lc.prompt_fingerprint(KEYS) != fp                                 # a definition reworded
+
+
+def test_a_reworded_prompt_does_not_reuse_old_answers(tmp_path, monkeypatch):
+    monkeypatch.setattr(lc, "CACHE_DIR", str(tmp_path))
+    monkeypatch.setattr(lc, "aspect_keys", lambda: KEYS)
+    prompts = []
+
+    def chat(model, msgs, keys):
+        prompts.append(msgs[0]["content"])
+        return '{"aspect": "asset_quality"}'
+
+    rows = pd.DataFrame({"sentence_id": ["s1"], "text": ["a"]})
+    lc.classify_rows(rows, chat=chat)
+    lc.classify_rows(rows, chat=chat)
+    assert len(prompts) == 1                                                 # same prompt: cached
+    monkeypatch.setitem(lc.DEFINITIONS, "asset_quality", "loan quality only")
+    lc.classify_rows(rows, chat=chat)
+    assert len(prompts) == 2 and "loan quality only" in prompts[1]           # new prompt: asked again
+    assert len(list(tmp_path.glob("*.jsonl"))) == 2                          # old answers kept in their own file
+
+
+def test_the_prompt_is_the_one_the_corpus_was_classified_with():
+    # The definitions, examples and model moved to config/aspects.yaml (4 Oct
+    # 2026) unchanged: the corpus answers in data/aspect_llm/ (about a day of
+    # compute) are cached under this fingerprint. A deliberate prompt change
+    # updates this number and starts a new cache.
+    import aspects.llm_classify as llm
+    assert llm.prompt_fingerprint() == "96efe244"
+    assert llm.DEFAULT_MODEL == "llama3.1:8b"

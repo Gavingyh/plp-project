@@ -1,12 +1,10 @@
 flowchart TB
   accTitle: One chatbot turn
-  accDescr: Two input guards can answer without the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check and a figure check before it is shown.
+  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check and a figure check before it is shown.
 
   q(["Question"])
-  adv{"Asks to buy, sell, hold<br/>or predict a price?"}
-  advR["Fixed reply: not financial advice,<br/>what the data can show"]
-  sco{"Only about another bank,<br/>or nothing covered?"}
-  scoR["Fixed reply: what<br/>this assistant covers"]
+  cls{"Intent classifier (local model):<br/>what is the question asking for?"}
+  fixR["Fixed reply for that intent<br/>(config/intents.yaml)"]
   ctx["System prompt + conversation state<br/>+ last three turns"]
   llm["Model: final text<br/>or tool calls"]
   tc{"Tool calls?"}
@@ -21,11 +19,9 @@ flowchart TB
   w2["Append NUMBER CHECK"]
   out(["Answer and turn record"])
 
-  q --> adv
-  adv -- yes --> advR --> out
-  adv -- no --> sco
-  sco -- yes --> scoR --> out
-  sco -- no --> ctx --> llm --> tc
+  q --> cls
+  cls -- "advice, another bank, small talk, help,<br/>service, injection, feedback, off-topic" --> fixR --> out
+  cls -- "in scope, or no answer" --> ctx --> llm --> tc
   tc -- yes --> tools --> cap
   cap -- no --> llm
   cap -- yes --> budget --> emp

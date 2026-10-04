@@ -5,7 +5,7 @@ The classes and modules behind a chatbot turn and how they depend on each other.
 ```mermaid
 classDiagram
   accTitle: Chatbot components
-  accDescr: Conversation holds TurnResults and calls answer_turn, which uses the guards, a tool-call tracker, the tools and one of four backends implementing LLMBackend.
+  accDescr: Conversation holds TurnResults and calls answer_turn, which asks the intent classifier first, then uses a tool-call tracker, the output checks in guards, the tools and one of four backends implementing LLMBackend.
 
   class Conversation {
     +backend_name
@@ -20,6 +20,8 @@ classDiagram
     +answer
     +calls
     +guard
+    +intent
+    +model_answer
     +citation_unverified
     +unverified_numbers
   }
@@ -35,10 +37,13 @@ classDiagram
     +execute(name, arguments) str
     +answer_has_unverified_citation(answer) bool
   }
+  class intent {
+    <<module>>
+    +classify_intent(question, state, previous_question) str
+    +reply_for(intent, question, state) str
+  }
   class guards {
     <<module>>
-    +advice_reply(question, context_banks)
-    +scope_reply(question)
     +unverified_numbers(answer, tool_results, question)
     +unverified_sentence_ids(answer, retrieved_ids)
   }
@@ -64,7 +69,8 @@ classDiagram
 
   Conversation "1" *-- "*" TurnResult : keeps
   Conversation ..> agent : calls answer_turn
-  agent ..> guards : before and after the model
+  agent ..> intent : before the model
+  agent ..> guards : after the model
   agent ..> ToolCallTracker : creates one per turn
   ToolCallTracker ..> tools : runs
   agent ..> LLMBackend : asks
@@ -80,8 +86,8 @@ Rendered for the report: [SVG](img/14-chatbot-components.svg) · [PNG](img/14-ch
 
 Everything here is built. The dotted arrows are UML "uses" dependencies, not planned
 parts; solid arrows with hollow heads are inheritance, and the filled diamond means a
-`Conversation` owns its turns. Modules without a class of their own (`chatbot/agent.py`'s functions, `guards`,
-`tools`) are drawn as classes marked `module`. The tracker is `_ToolCallTracker` in the
+`Conversation` owns its turns. Modules without a class of their own (`chatbot/agent.py`'s functions,
+`intent`, `guards`, `tools`) are drawn as classes marked `module`. The tracker is `_ToolCallTracker` in the
 code; the leading underscore is dropped here because Mermaid would render it oddly. Only
 the members a turn uses are listed. Each backend owns its whole tool-calling loop,
 because providers represent tool calls differently (`chatbot/backends/base.py`).
@@ -92,18 +98,21 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:208` | `class Conversation:` |
-| state fields | `chatbot/agent.py:214` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:218` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:144` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:154` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:94` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:127` | `def answer_has_unverified_citation(self, answer: str)` |
-| guards | `chatbot/guards.py:64` | `def advice_reply(question: str` |
-| tools | `chatbot/tools.py:324` | `TOOL_FUNCTIONS = {` |
-| LLMBackend | `chatbot/backends/base.py:27` | `class LLMBackend(ABC):` |
-| temperature | `chatbot/backends/base.py:33` | `temperature: float = DEFAULT_TEMPERATURE` |
-| OllamaBackend | `chatbot/backends/ollama_backend.py:38` | `class OllamaBackend(LLMBackend):` |
-| ClaudeBackend | `chatbot/backends/claude_backend.py:19` | `class ClaudeBackend(LLMBackend):` |
-| OpenAIBackend | `chatbot/backends/openai_backend.py:39` | `class OpenAIBackend(LLMBackend):` |
-| GeminiBackend | `chatbot/backends/gemini_backend.py:77` | `class GeminiBackend(LLMBackend):` |
+| Conversation | `chatbot/agent.py:457` | `class Conversation:` |
+| state fields | `chatbot/agent.py:463` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:467` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:375` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:388` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:146` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:225` | `def answer_has_unverified_citation(self, answer: str)` |
+| intent | `chatbot/intent.py:106` | `def classify_intent(question: str` |
+| reply_for | `chatbot/intent.py:125` | `def reply_for(intent` |
+| guards | `chatbot/guards.py:137` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
+| intent and model_answer kept | `chatbot/agent.py:381` | `intent: str` |
+| tools | `chatbot/tools.py:367` | `TOOL_FUNCTIONS = {` |
+| LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
+| temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |
+| OllamaBackend | `chatbot/backends/ollama_backend.py:45` | `class OllamaBackend(LLMBackend):` |
+| ClaudeBackend | `chatbot/backends/claude_backend.py:23` | `class ClaudeBackend(LLMBackend):` |
+| OpenAIBackend | `chatbot/backends/openai_backend.py:54` | `class OpenAIBackend(LLMBackend):` |
+| GeminiBackend | `chatbot/backends/gemini_backend.py:83` | `class GeminiBackend(LLMBackend):` |

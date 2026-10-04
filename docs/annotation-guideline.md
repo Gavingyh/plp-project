@@ -53,8 +53,9 @@ with no model output (see "The `test` split is frozen" below).
 
 The agreement round is the same as below, but κ is computed twice, once for
 the aspect and once for the sentiment, and both should reach 0.6.
-`train.agreement` measures sentiment only; aspect agreement needs the two
-sheets joined on `sentence_id` alone, which it doesn't do yet. The
+`train.agreement` measures sentiment by default; `--field aspect` measures
+aspect agreement, joining the two sheets on `sentence_id` alone (added
+2026-10-01). The
 2026-09-27 round measured sentiment only: the aspects were corrected once and
 shared.
 

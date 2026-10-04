@@ -64,3 +64,65 @@ def test_review_queues_hold_only_disagreements():
     qa, qs = ol.review_queues(d)
     assert qa["sentence_id"].tolist() == ["b"] and qa["decision"].eq("").all()
     assert qs["sentence_id"].tolist() == ["a"] and qs.loc[qs.index[0], "human_label"] == "neutral"
+
+
+# --- the later rounds: top-up and NER sheets ---------------------------------------
+
+
+@pytest.fixture
+def sheets(tmp_path, monkeypatch):
+    ner = tmp_path / "gold_sheet.csv"
+    pd.DataFrame({"sentence_id": [f"n{i}" for i in range(5)], "case": ["vickers"] * 5, "source": ["cna"] * 5,
+                  "text": [f"t{i}" for i in range(5)], "gold_banks": [""] * 5, "annotator": [""] * 5}).to_csv(ner, index=False)
+    monkeypatch.setitem(ol.SHEETS, "ner", {**ol.SHEETS["ner"], "sheet": str(ner), "batches": 2})
+    monkeypatch.setattr(ol, "CLAUDE_DIR", str(tmp_path / "claude"))
+    (tmp_path / "claude").mkdir()
+    return tmp_path
+
+
+def _answer_path(inp):
+    import os
+    return os.path.join(os.path.dirname(inp), "opus_" + os.path.basename(inp)[:-4] + ".jsonl")
+
+
+def _answer(path, rows):
+    with open(path, "w") as f:
+        f.write("\n".join(json.dumps(r) for r in rows) + "\n")
+
+
+def test_ner_batches_hide_the_stratum_and_merge_validates(sheets):
+    paths = ol.extra_batches("ner")
+    assert len(paths) == 2 and "case" not in pd.read_csv(paths[0]).columns
+    for p in paths:
+        ids = pd.read_csv(p)["sentence_id"]
+        _answer(_answer_path(p),
+                [{"sentence_id": s, "banks": ["UOB", "DBS"]} for s in ids])
+    merged = ol.merge_extra("ner")
+    assert len(merged) == 5 and set(merged["opus_banks"]) == {"DBS;UOB"}      # canonical order
+
+
+def test_merge_refuses_wrong_order_or_unknown_banks(sheets):
+    paths = ol.extra_batches("ner")
+    for p in paths:
+        ids = list(pd.read_csv(p)["sentence_id"])
+        _answer(_answer_path(p),
+                [{"sentence_id": s, "banks": ["HSBC"]} for s in ids])
+    with pytest.raises(ValueError, match="invalid answer"):
+        ol.merge_extra("ner")
+    ids = list(pd.read_csv(paths[0])["sentence_id"])[::-1]
+    _answer(_answer_path(paths[0]), [{"sentence_id": s, "banks": []} for s in ids])
+    with pytest.raises(ValueError, match="order differ"):
+        ol.merge_extra("ner")
+
+
+def test_ner_merge_applies_the_dbs_vickers_rule_change(sheets):
+    # Opus answered under the 2 Oct rule (DBS Vickers is not DBS); the 4 Oct rule
+    # adds DBS at merge, so a re-merge keeps it. The raw answers are untouched.
+    sheet = pd.read_csv(ol.SHEETS["ner"]["sheet"], keep_default_na=False)
+    sheet.loc[0, "text"] = "I use dbs vickers for SGX stocks."
+    sheet.loc[1, "text"] = "UOB Kay Hian raised its target."
+    sheet.to_csv(ol.SHEETS["ner"]["sheet"], index=False)
+    for p in ol.extra_batches("ner"):
+        _answer(_answer_path(p), [{"sentence_id": s, "banks": []} for s in pd.read_csv(p)["sentence_id"]])
+    merged = ol.merge_extra("ner").set_index("sentence_id")["opus_banks"]
+    assert merged["n0"] == "DBS" and merged["n1"] == ""

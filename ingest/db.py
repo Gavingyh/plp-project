@@ -14,7 +14,8 @@ import sqlite3
 from datetime import datetime, timezone
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")
+DB_PATH = os.path.abspath(os.environ.get("PLP_DB_PATH") or DEFAULT_DB_PATH)   # e.g. serve a rescored copy
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (
@@ -35,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_source ON documents(source);
 CREATE INDEX IF NOT EXISTS idx_documents_published_at ON documents(published_at);
 
 -- preprocess/: the sentence is the unit of analysis for everything
--- downstream — aspect assignment, sentiment labels, the index, and the
+-- downstream: aspect assignment, sentiment labels, the index, and the
 -- chatbot's evidence citations all key off sentence_id. See docs/DESIGN.md,
 -- "Architecture at a glance".
 CREATE TABLE IF NOT EXISTS sentences (
@@ -56,7 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_sentences_bank ON sentences(bank);
 CREATE INDEX IF NOT EXISTS idx_sentences_norm_hash ON sentences(norm_hash);
 
 -- Analyst consensus (ratings + price targets), one row per bank per day.
--- Structured numeric data, NOT text — deliberately separate from `documents`,
+-- Structured numeric data, not text, so kept separate from `documents`,
 -- which feeds sentence-splitting and FinBERT sentiment scoring.
 CREATE TABLE IF NOT EXISTS analyst_consensus (
     bank                TEXT NOT NULL,
@@ -111,7 +112,7 @@ def upsert_documents(rows: list[dict]) -> tuple[int, int]:
     """Insert new documents, ignore ones we've already ingested.
 
     Returns (attempted, inserted) so callers can report how many rows were
-    genuinely new vs. already-seen duplicates from a prior run.
+    new vs. already-seen duplicates from a prior run.
     """
     if not rows:
         return (0, 0)

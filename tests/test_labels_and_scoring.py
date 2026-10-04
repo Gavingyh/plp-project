@@ -125,3 +125,100 @@ def test_classify_sentences_returns_results_in_input_order_despite_length_batchi
     texts = ["a long sentence", "hi", "another long one", "yo", "ok"]
     labels = [label for label, _ in score.classify_sentences(texts)]
     assert labels == ["positive", "negative", "positive", "negative", "negative"]
+
+
+def test_scorer_refuses_garbage_probabilities(monkeypatch):
+    # The 1 Oct GPU failure mode: an error-free batch whose numbers are garbage. Nothing may be written.
+    import torch
+
+    class Enc(dict):
+        def to(self, device):
+            return self
+
+    class Model:
+        def __call__(self, n):
+            return type("Out", (), {"logits": torch.full((int(n), 3), float("nan"))})()
+
+    monkeypatch.setattr(score, "_get_model", lambda: (lambda batch, **kw: Enc(n=len(batch)), Model(), "cpu",
+                                                      {0: "positive", 1: "negative", 2: "neutral"}))
+    with pytest.raises(RuntimeError, match="sum to 1"):
+        score.classify_sentences(["one", "two"])
+
+
+# --- top-up sheets (2026-10-02) ------------------------------------------------------
+
+def _topup_db(temp_db, ids):
+    from ingest.db import now_iso
+    conn = temp_db.get_connection()
+    for sid in ids:
+        conn.execute("INSERT INTO sentences (sentence_id, doc_id, bank, text, published_at, source, url, "
+                     "norm_hash, processed_at) VALUES (?, 'd', 'DBS', ?, '2025-05-01', 'earnings', ?, ?, ?)",
+                     (sid, f"text {sid}", f"https://x/{sid}", f"h{sid}", now_iso()))
+    conn.commit()
+    return conn
+
+
+def test_topup_rows_join_train_dev_with_url_and_date(tmp_path, temp_db):
+    conn = _topup_db(temp_db, ["t1", "t2", "t3", "t4"])
+    sheet = tmp_path / "topup.csv"
+    pd.DataFrame([
+        {"sentence_id": "t1", "bank": "DBS", "source": "earnings", "text": "a", "aspect": "dividend_policy",
+         "label": "Positive", "not_about_bank": "", "annotator": "A"},
+        {"sentence_id": "t2", "bank": "DBS", "source": "earnings", "text": "b", "aspect": "asset_quality",
+         "label": "neutral", "not_about_bank": "yes", "annotator": "A"},          # not about the bank
+        {"sentence_id": "t3", "bank": "DBS", "source": "earnings", "text": "c", "aspect": "",
+         "label": "", "not_about_bank": "", "annotator": ""},                      # not labelled yet
+    ]).to_csv(sheet, index=False)
+    cand = [_row("s1", "dividend_policy", "train_dev", "positive"), _row("s3", "asset_quality", "test", "neutral")]
+    blind = [{"sentence_id": "s3", "aspect": "asset_quality", "label": "neutral"}]
+    c, b, out = _write(tmp_path, cand, blind)
+    report = prepare(c, b, out, [str(sheet)], conn=conn)
+    df = pd.read_csv(out)
+    added = df[df["sentence_id"] == "t1"].iloc[0]
+    assert report["topup_rows_added"] == 1 and set(df["sentence_id"]) == {"s1", "s3", "t1"}
+    assert added["split"] == "train_dev" and added["label"] == "positive" and added["url"] == "https://x/t1"
+    assert added["sampling_method"] == "topup" and added["published_at"] == "2025-05-01"
+
+
+def test_topup_refuses_a_sentence_already_labelled_or_an_invalid_label(tmp_path, temp_db):
+    conn = _topup_db(temp_db, ["s3", "t9"])
+    cand = [_row("s3", "asset_quality", "test", "neutral")]
+    blind = [{"sentence_id": "s3", "aspect": "asset_quality", "label": "neutral"}]
+    c, b, out = _write(tmp_path, cand, blind)
+    sheet = tmp_path / "topup.csv"
+    pd.DataFrame([{"sentence_id": "s3", "aspect": "asset_quality", "label": "neutral"}]).to_csv(sheet, index=False)
+    with pytest.raises(ValueError, match="already labelled"):
+        prepare(c, b, out, [str(sheet)], conn=conn)
+    pd.DataFrame([{"sentence_id": "t9", "aspect": "asset_quality", "label": "great"}]).to_csv(sheet, index=False)
+    with pytest.raises(ValueError, match="invalid labels"):
+        prepare(c, b, out, [str(sheet)], conn=conn)
+
+
+TEST_TEXT = ("This supplementary payout will be paid to about 6,000 employees across the Group "
+             "in the second quarter of this year")
+
+
+def test_topup_near_copy_of_a_test_sentence_is_dropped(tmp_path, temp_db):
+    # The same sentence can arrive twice under different ids (a bank's PDF and a
+    # news article quoting it); an id check misses it, a word-overlap check doesn't.
+    conn = _topup_db(temp_db, ["t1", "t2"])
+    sheet = tmp_path / "topup.csv"
+    pd.DataFrame([
+        {"sentence_id": "t1", "bank": "UOB", "source": "cna", "text": '"' + TEST_TEXT + '," said UOB.',
+         "aspect": "income_profit_results", "label": "neutral", "not_about_bank": "", "annotator": "A"},
+        {"sentence_id": "t2", "bank": "DBS", "source": "earnings", "text": "DBS raised its dividend by five cents",
+         "aspect": "dividend_policy", "label": "positive", "not_about_bank": "", "annotator": "A"},
+    ]).to_csv(sheet, index=False)
+    test_row = {**_row("s3", "income_profit_results", "test", "neutral"), "text": TEST_TEXT}
+    c, b, out = _write(tmp_path, [_row("s1", "dividend_policy", "train_dev", "positive"), test_row],
+                       [{"sentence_id": "s3", "aspect": "income_profit_results", "label": "neutral"}])
+    report = prepare(c, b, out, [str(sheet)], conn=conn)
+    assert report["topup_rows_dropped_as_near_test"] == 1 and report["topup_rows_added"] == 1
+    assert set(pd.read_csv(out)["sentence_id"]) == {"s1", "s3", "t2"}
+
+
+def test_check_splits_refuses_a_near_copy_across_splits():
+    rows = [{**_row("s1", "a", "train_dev", "neutral"), "text": TEST_TEXT + " said UOB"},
+            {**_row("s2", "a", "test", "neutral"), "text": TEST_TEXT}]
+    with pytest.raises(ValueError, match="near-copies of a test sentence"):
+        check_splits(pd.DataFrame(rows))

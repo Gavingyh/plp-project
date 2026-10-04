@@ -65,8 +65,8 @@ random):
 | rater | agreement | Cohen's κ | macro-F1 | test agreement | test κ |
 |---|---|---|---|---|---|
 | **Opus 5.5** | **0.842** | **0.801** | **0.789** | **0.856** | **0.789** |
-| llama3.1:8b (J2) | 0.729 | 0.666 | 0.679 | 0.736 | 0.630 |
-| qwen3:4b, no thinking (J2) | 0.719 | 0.655 | 0.671 | 0.746 | 0.649 |
+| llama3.1:8b (LLM aspect classifier) | 0.729 | 0.666 | 0.679 | 0.736 | 0.630 |
+| qwen3:4b, no thinking (LLM aspect classifier) | 0.719 | 0.655 | 0.671 | 0.746 | 0.649 |
 | seed-centroid, floor 0.65 | 0.413 | 0.294 | 0.296 | 0.465 | 0.267 |
 
 Opus agrees with llama3.1:8b on 0.751 (κ 0.687). Where llama and qwen agree
@@ -170,6 +170,15 @@ returns on 100k, but not more than that": human neutral, Opus positive).
 Each has an empty `decision` column. A reviewer who changes a gold label
 records it there; applying those decisions to `candidates.csv` is a
 separate, reviewed step.
+
+## Two more rounds (2 Oct)
+
+The same procedure rated two sheets people haven't labelled yet, blind:
+the top-up sheet's aspects ([labelling-topup](labelling-topup-2026-10-01.md))
+and the bank-NER gold sheet ([bank-ner](bank-ner-2026-10-01.md)).
+`python -m train.opus_labels extra batches|merge|score topup|ner` writes the
+batches, merges and scores them; the audit's allowed files now include the
+NER batch names.
 
 ## Caveats
 

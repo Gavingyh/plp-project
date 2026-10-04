@@ -7,8 +7,10 @@ Processing (NUS-ISS).
 The system ingests public text about the three banks (Reddit, news, earnings
 releases, analyst consensus), splits it into sentences, assigns each sentence
 to a financial aspect, scores sentiment, and exposes the result through a
-dashboard, a REST API, and a chatbot that answers questions by querying the
-sentiment store.
+REST API and a chatbot that answers questions by querying the sentiment
+store, and a Streamlit dashboard (`dashboard/`, maintained by a teammate).
+The API is the documented interface for any frontend:
+[docs/api-integration.md](docs/api-integration.md) is its contract.
 
 ---
 
@@ -22,10 +24,12 @@ sentiment store.
 | **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way — the decision log with the evidence behind each choice |
 | **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
 | **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
+| **[docs/api-integration.md](docs/api-integration.md)** | For whoever builds the dashboard: running the API, which endpoint feeds which view, example responses, the chat contract, and what the screen must say |
+| [docs/report/report-draft.md](docs/report/report-draft.md) | Draft of the report's factual sections, every figure linked to its evidence; conclusions and contributions left to the team |
 | **[docs/HANDOFF.md](docs/HANDOFF.md)** | Start here if you're new to the project — read order, open decisions, what needs a human |
 | [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | What the system does, for whom, with acceptance criteria and rubric traceability |
 | [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Data model, API contract, module map, configuration, testing |
-| [docs/diagrams/README.md](docs/diagrams/README.md) | Twenty diagrams of the system (data model, pipeline, sequences, chatbot, labelling, plan), each traced to the code, with a shortlist for the report |
+| [docs/diagrams/README.md](docs/diagrams/README.md) | Twenty-three diagrams of the system (data model, pipeline, sequences, chatbot, labelling, plan), each traced to the code, with a shortlist for the report |
 | [learning/](learning/) | Study material on the concepts and techniques used, by subject |
 | [docs/data-viability.md](docs/data-viability.md) | Evidence appendix — per-source findings from testing each data source |
 | [docs/news-data.md](docs/news-data.md) | News dataset: sources, coverage, filter and dedup rules, known gaps, counts by month |
@@ -56,8 +60,10 @@ sentiment store.
   labelled rows. LLM classification is the replacement: `llama3.1:8b`
   matches the human aspect on 73% of the 1,277 labelled sentences against
   41% for the embedding match
-  ([evidence](docs/evidence/llm-aspect-classifier-2026-10-01.md)), but it
-  hasn't been run on the corpus yet (DESIGN decisions 16 and 21).
+  ([evidence](docs/evidence/llm-aspect-classifier-2026-10-01.md)). It has
+  classified the whole corpus (3 Oct) but isn't applied to the database yet:
+  that is a team decision, and `scripts/rescore.py` is ready for it (DESIGN
+  decisions 16 and 21).
 - **News volume over time is a sampling artefact.** Google News favours recent
   articles; normalise per month before comparing periods.
 
@@ -89,14 +95,15 @@ the environment with it, e.g. `python3.14 -m venv .venv-plp`.
 3. Start the interfaces:
 
    ```bash
-   scripts/start.sh     # dashboard + API + Ollama, with health checks
+   scripts/start.sh     # Ollama, the REST API and the dashboard, with health checks
    scripts/status.sh    # what's up, on which port
    scripts/stop.sh      # stop it again
    ```
 
-   The dashboard uses port 8501 and the API 8000. If either is taken, the
-   script says so; choose others with
-   `PLP_DASHBOARD_PORT=8601 PLP_API_PORT=8100 scripts/start.sh`.
+   The API uses port 8000 (interactive docs at `http://localhost:8000/docs`).
+   If it's taken, the script says so; choose another with
+   `PLP_API_PORT=8100 scripts/start.sh`. To try the chatbot in the terminal:
+   `.venv-plp/bin/python3 -m chatbot.chat`.
 
 The snapshot already holds the processed corpus. To refresh or rebuild it,
 run the pipeline (order matters — each step consumes the previous one's
@@ -129,7 +136,7 @@ shasum -a 256 plp-2026-09-30.db.gz   # should match the checksum below
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-09-30.db.gz` (latest; the frozen corpus) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), D5) |
+| `plp-2026-09-30.db.gz` (latest; the frozen corpus) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), section 2) |
 | `plp-2026-09-26-v2.db.gz` (superseded) | 28.9MB | `f6aac79a212368747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored under the four-aspect taxonomy; index recomputed |
 | `plp-2026-09-26.db.gz` (superseded) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed; before CNA |
 | `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
@@ -137,6 +144,50 @@ shasum -a 256 plp-2026-09-30.db.gz   # should match the checksum below
 
 `data/sentence_embeddings.npz` isn't shared either. It is a cache that
 `python -m aspects.embed_store` rebuilds from the database.
+
+### Sharing the data and models
+
+What a teammate needs, beyond `git clone` and the Quick start:
+
+| file | needed for | size |
+|---|---|---|
+| the latest snapshot (`plp-2026-09-30.db.gz`) | everything: unpack to `data/plp.db` | 41.5 MB |
+| `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 127 MB |
+| the three fine-tuned models | only to reproduce the sentiment results or re-score with them; the database holds base FinBERT's scores | 3 × 438 MB |
+
+`scripts/share_bundle.sh OUT_DIR [--with-models]` copies these into one
+folder with a `SHA256SUMS` file (check with `shasum -a 256 -c SHA256SUMS`);
+the models go to `models/experiments-2026-10-01/label/seed_*/final/` on the
+receiving side. FinBERT downloads from Hugging Face on first use, and each
+machine pulls its own Ollama models. Never share `.env` (API keys) or
+`data/cna/` (CNA's articles).
+
+The models are also in a private Hugging Face model repo,
+`plp-bank-sentiment/plp-finbert-absa`, open to the organisation's members
+(ask to be added); [docs/model-card.md](docs/model-card.md) is its
+`README.md`. `hf` is installed in the project's environment, not on your
+PATH. Log in with your own token, download, and check the checksums against
+the table at the end of the model card:
+
+```bash
+.venv-plp/bin/hf auth login
+.venv-plp/bin/hf download plp-bank-sentiment/plp-finbert-absa --local-dir models/experiments-2026-10-01/label
+shasum -a 256 models/experiments-2026-10-01/label/seed_*/final/model.safetensors
+```
+
+To upload a new version, leave `training_args.bin` out (it records a local
+path):
+
+```bash
+for s in 42 1 7; do
+  .venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa models/experiments-2026-10-01/label/seed_$s/final seed_$s/final \
+      --exclude "training_args.bin" --private
+done
+.venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa docs/model-card.md README.md --private
+```
+
+The database stays on the team drive: it holds CNA and Reddit text and isn't
+ours to publish.
 
 ---
 
@@ -230,16 +281,16 @@ aspects/      FinBERT embeddings, taxonomy discovery, aspect assignment, the LLM
 sentiment/    Aspect-sentiment classification
 aggregate/    Per-bank/aspect index, volume shrinkage, time series
 train/        Fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller
-dashboard/    Streamlit UI (Overview, Heatmap, Time Series, Evidence, Chat)
-api/          FastAPI REST endpoints
-chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends
-config/       Aspect taxonomy, logging configuration
-scripts/      start/stop/status, resumable overnight backfill, model comparison
+api/          FastAPI REST API: the interface a dashboard builds on (docs/api-integration.md)
+chatbot/      Tool-calling agent, RAG retrieval, pluggable model backends, a terminal chat for testing
+config/       Aspect taxonomy, source weights, the served model version, the chatbot's settings and intents, logging
+scripts/      start/stop/status, resumable overnight backfill, the sharing bundle,
+              the re-score step (rescore.py) and the earnings-date repair
 notebooks/    The text-analytics workstream's Colab notebooks (outputs cleared)
 learning/     Study material on the concepts and techniques used
 docs/spec/    Functional and technical specifications
 docs/evidence/  Dated outputs backing claims in the docs
-docs/diagrams/  Twenty diagrams, each traced to the code
+docs/diagrams/  Twenty-three diagrams, each traced to the code
 data/labeled/ Human labels; data/labeled/claude/ holds the Opus labeller's answers
 data/plp.db   SQLite store (gitignored; see Getting the database)
 ```
@@ -247,6 +298,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 438 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 479: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 1139 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 1186: adds the diagram and notebook checks
 ```

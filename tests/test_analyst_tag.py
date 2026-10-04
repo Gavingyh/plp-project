@@ -1,6 +1,6 @@
 """
-Tests for ingest/analyst_tag.py — the analyst-consensus proxy (broker name +
-rating/action language). Both signals are required together deliberately:
+Tests for ingest/analyst_tag.py - the analyst-consensus proxy (broker name +
+rating/action language). Both signals are required together, because
 either alone is too weak (a broker named only as the article's own source
 attribution, or generic rating words with no named analyst).
 """

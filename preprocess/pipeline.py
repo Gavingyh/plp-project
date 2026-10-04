@@ -6,7 +6,7 @@ Reads documents not yet processed (doc_id not already represented in
 attribution per sentence, drops near-duplicates (normalized-text hash) and
 sub-length fragments, and writes the result into the `sentences` table.
 
-This is the "unit of analysis is the sentence" step — see docs/DESIGN.md,
+This is the "unit of analysis is the sentence" step - see docs/DESIGN.md,
 Architecture at a glance. Aspect assignment, sentiment scoring,
 the index, and the chatbot's evidence citations
 all key off sentence_id from here.
@@ -36,7 +36,7 @@ _MIN_WORDS = 4  # drops trivially short fragments even after segment()'s char fi
 
 def _norm_hash(text: str) -> str:
     """Normalized-text hash for near-duplicate detection (e.g. syndicated wire
-    copy republished across outlets) — see docs/DESIGN.md, step 5."""
+    copy republished across outlets) - see docs/DESIGN.md, step 5."""
     normalized = re.sub(r"[^\w]", "", text.lower())
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:24]
 
@@ -48,7 +48,7 @@ def _sentence_id(doc_id: str, start: int, end: int) -> str:
 # Sources short/focused enough that a sentence naming no bank can safely
 # inherit the document's bank (a news title+description is ~1-2 sentences,
 # almost always entirely about the bank it was queried for). Long, rambling
-# multi-topic Reddit threads do NOT get this treatment — empirically,
+# multi-topic Reddit threads do NOT get this treatment - empirically,
 # inheriting there pulled in unrelated sentences from the same comment
 # ("Calling you for $8 transaction is a red flag itself.") as if they were
 # about the bank. For those sources we require an explicit in-sentence
@@ -65,17 +65,17 @@ _INHERIT_DOC_BANK_SOURCES = {"newsapi", "alphavantage", "yahoo_news", "google_ne
 
 
 def _resolve_sentence_bank(sentence_text: str, doc_bank: str, source: str) -> str | None:
-    """Per-sentence bank attribution — a MULTI document usually has each bank
+    """Per-sentence bank attribution - a MULTI document usually has each bank
     named in a different sentence, not all sentences about all banks.
     See docs/DESIGN.md, step 3."""
     found = detect_banks(sentence_text)
     if len(found) == 1:
         return found[0]
     if len(found) > 1:
-        return None  # ambiguous within the sentence itself — drop (known MVP limitation)
+        return None  # ambiguous within the sentence itself - drop (known MVP limitation)
     if doc_bank != "MULTI" and source in _INHERIT_DOC_BANK_SOURCES:
         return doc_bank  # implicit reference ("the bank", "it") in a short, single-topic document
-    return None  # no explicit mention, and either MULTI or a source we don't inherit for — drop
+    return None  # no explicit mention, and either MULTI or a source we don't inherit for - drop
 
 
 def fetch_unprocessed_documents(conn, sources: set[str] | None = None) -> list[dict]:

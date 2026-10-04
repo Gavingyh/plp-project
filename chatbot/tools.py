@@ -1,28 +1,31 @@
 """
-Tool implementations for the agentic chatbot — see docs/DESIGN.md.
+Tool implementations for the agentic chatbot - see docs/DESIGN.md.
 
 Plain Python functions, not a framework: the agent loop is small enough that
 a framework would add abstraction without adding capability at this scale.
 
-Every tool that reports a score also reports `n` — the misleading-number
+Every tool that reports a score also reports `n` - the misleading-number
 defense is enforced HERE, in the data contract, not left to the model to
 remember to mention. `get_coverage` exists specifically so the agent can
 check "do I have data on this at all" before answering, rather than
 confabulating when it doesn't.
 """
 
-import os
+import sqlite3
 
-import yaml
-
-from aggregate.index import compute_time_series
-from ingest.db import get_connection
+import config.model_version as current_model
+from aggregate.index import MIN_N, SHRINKAGE_K, compute_time_series
+from chatbot import settings
 from chatbot.retrieval import search_evidence as _search_evidence
+from config import aspect_taxonomy
+from config.logging_config import get_logger
+from ingest.base import BANK_NAMES
+from ingest.db import get_connection
 
-MIN_VOLUME_FOR_SCORE = 5  # below this, report insufficient data rather than a number
+logger = get_logger(__name__)
 
-_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_ASPECTS_CONFIG_PATH = os.path.join(_BASE_DIR, "config", "aspects.yaml")
+MIN_VOLUME_FOR_SCORE = MIN_N  # below this, report insufficient data rather than a number
+
 
 
 def _load_aspect_keys() -> list[str]:
@@ -31,16 +34,10 @@ def _load_aspect_keys() -> list[str]:
     string field for `aspect` was observed passing "dividend policy" (a
     space, matching how the question was phrased) instead of the real key
     "dividend_policy", silently producing insufficient_data on a perfectly
-    valid question. Falls back to the four proposal aspects if the config
-    can't be read, so tool schemas still build during tests that don't need
-    the real file."""
-    try:
-        with open(_ASPECTS_CONFIG_PATH) as f:
-            config = yaml.safe_load(f)
-        return list(config["aspects"].keys())
-    except Exception:
-        return ["dividend_policy", "asset_quality", "net_interest_margin",
-                "management_guidance", "other"]
+    valid question. A missing or broken file is an error: falling back to a
+    built-in list (the proposal's four, until 4 Oct 2026) made the API reject
+    real aspects without saying why."""
+    return aspect_taxonomy.keys()
 
 
 ASPECT_KEYS = _load_aspect_keys()
@@ -49,7 +46,7 @@ ASPECT_KEYS = _load_aspect_keys()
 def normalize_aspect(aspect: str | None) -> str | None:
     """Best-effort correction for the failure mode above: lowercases and
     replaces spaces/hyphens with underscores, then only accepts the result if
-    it matches a real aspect key. A genuinely wrong aspect is left as-is
+    it matches a real aspect key. An unknown aspect is left as-is
     rather than guessed at, so it still surfaces as insufficient_data instead
     of silently mapping to the wrong aspect."""
     if aspect is None:
@@ -58,11 +55,27 @@ def normalize_aspect(aspect: str | None) -> str | None:
     return candidate if candidate in ASPECT_KEYS else aspect
 
 
+def version_has_rows() -> bool:
+    """Whether sentiment_index holds any row for the configured model version.
+    False means config/model_version.py names a version the index was never
+    computed for, which every reader would otherwise report as "no data"."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM sentiment_index WHERE model_version = ? LIMIT 1",
+                            (current_model.MODEL_VERSION,)).fetchone() is not None
+    except sqlite3.OperationalError as e:
+        if "no such table" not in str(e):
+            raise          # a locked or broken database must not read as "no rows for this version"
+        return False   # the table doesn't exist before the first aggregation
+    finally:
+        conn.close()
+
+
 def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time") -> dict:
     """Sentiment index for a bank, optionally filtered to one aspect ('ALL' aspect
-    = overall) and one window ('7d', '30d', or 'all_time' — see aggregate/index.py).
+    = overall) and one window ('7d', '30d', or 'all_time' - see aggregate/index.py).
     Returns insufficient_data=True below the volume floor, or if no row exists at
-    all for this window (e.g. genuinely nothing published in the last 7 days)."""
+    all for this window (e.g. nothing published in the last 7 days)."""
     conn = get_connection()
     try:
         aspect_filter = aspect or "ALL"
@@ -72,13 +85,19 @@ def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time"
             # alongside it (see aggregate/index.py) and must not be picked up
             # here by accident.
             "FROM sentiment_index WHERE bank = ? AND aspect = ? AND window = ? "
-            "AND source = 'ALL' ORDER BY computed_at DESC LIMIT 1",
-            (bank, aspect_filter, window),
+            "AND source = 'ALL' AND model_version = ? ORDER BY computed_at DESC LIMIT 1",
+            (bank, aspect_filter, window, current_model.MODEL_VERSION),
         ).fetchone()
     finally:
         conn.close()
 
     if row is None:
+        if not version_has_rows():
+            version = current_model.MODEL_VERSION
+            logger.warning("sentiment_index has no rows for model version %r (config/model_version.py)", version)
+            return {"bank": bank, "aspect": aspect_filter, "window": window, "insufficient_data": True,
+                    "reason": f"the index has no rows for model version {version!r}: re-run "
+                              "aggregate.index after re-scoring, or check config/model_version.py"}
         return {"bank": bank, "aspect": aspect_filter, "window": window, "insufficient_data": True,
                 "reason": f"no sentiment data computed for this bank/aspect/window combination "
                           f"(window={window!r} may genuinely have zero items, or the pipeline "
@@ -97,14 +116,20 @@ def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time"
 
 def compare_banks(aspect: str | None = None, window: str = "all_time") -> dict:
     """Side-by-side sentiment across DBS/OCBC/UOB for one aspect (or overall)."""
-    results = {bank: get_sentiment(bank, aspect, window) for bank in ("DBS", "OCBC", "UOB")}
+    results = {bank: get_sentiment(bank, aspect, window) for bank in BANK_NAMES}
     return {"aspect": aspect or "ALL", "window": window, "banks": results}
+
+
+def _unshrunk(result: dict) -> float:
+    """The window's score before aggregate/index.py's n/(n+k) shrinkage."""
+    n = result["n"]
+    return result["score"] * (n + SHRINKAGE_K) / n
 
 
 def get_trend(bank: str, aspect: str | None = None) -> dict:
     """Direction/magnitude of sentiment change: compares the 7d window against
     the 30d window (both from aggregate/index.py's rolling windows). Falls back
-    to reporting all_time alone if either rolling window has insufficient data —
+    to reporting all_time alone if either rolling window has insufficient data -
     a trend computed from a handful of items either side is noise, not signal."""
     recent = get_sentiment(bank, aspect, window="7d")
     baseline = get_sentiment(bank, aspect, window="30d")
@@ -117,30 +142,48 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
                         f"30d insufficient={baseline['insufficient_data']}) — "
                         "showing the all-time snapshot instead."}
 
-    delta = round(recent["score"] - baseline["score"], 4)
-    direction = "improving" if delta > 0.02 else "declining" if delta < -0.02 else "stable"
+    # The stored scores are shrunk towards 0 by n/(n+k) (aggregate/index.py).
+    # The 7d window is far thinner than the 30d one, so comparing the shrunk
+    # scores reads a thin week as a fall: on 2 Oct, UOB showed "declining"
+    # (-0.045) when its unshrunk 7d score was 0.12 above the 30d one. Undo
+    # the shrinkage on both before comparing; both windows are at or above
+    # the volume floor here, so neither is a handful of items.
+    recent_unshrunk, baseline_unshrunk = round(_unshrunk(recent), 4), round(_unshrunk(baseline), 4)
+    delta = round(recent_unshrunk - baseline_unshrunk, 4)
+    stable = settings.get("trend.stable_within")
+    direction = "improving" if delta > stable else "declining" if delta < -stable else "stable"
 
     # A two-point comparison can only say "up" or "down". The monthly series
     # gives the shape behind that. Capped at 12 points and trimmed to
     # period/score/n on purpose: this goes into the model's context, and a
     # long table of numbers is more surface to misquote, not more insight.
+    series_error = None
     try:
         series = [{"period": p["period"], "score": p["score"], "n": p["n"]}
                   for p in compute_time_series(bank, aspect, bucket="month")
-                  if p["sufficient"]][-12:]
-    except Exception:
-        series = []
+                  if p["sufficient"]][-settings.get("trend.monthly_points"):]
+    except (sqlite3.Error, ValueError) as e:
+        # A database error or a bad stored label is not "no data": log it and say so in the note.
+        logger.warning("monthly series failed for %s/%s: %s", bank, aspect or "ALL", e)
+        series, series_error = [], str(e)
 
     return {"bank": bank, "aspect": aspect or "ALL", "trend_available": True,
             "direction": direction, "delta_7d_vs_30d": delta,
             "recent_7d": recent, "baseline_30d": baseline,
             "monthly_series": series,
-            "series_note": "monthly, same weighting and shrinkage as the index; "
-                           "thin months omitted" if series else "no monthly series available"}
+            "recent_7d_unshrunk_score": recent_unshrunk,
+            "baseline_30d_unshrunk_score": baseline_unshrunk,
+            "delta_basis": "recent_7d_unshrunk_score minus baseline_30d_unshrunk_score: the "
+                           f"scores before the index's n/(n+{SHRINKAGE_K}) shrinkage, which pulls a "
+                           "thin window towards 0",
+            "series_note": ("monthly, same weighting and shrinkage as the index; thin months omitted"
+                            if series else
+                            f"monthly series unavailable: {series_error}" if series_error else
+                            "no monthly series available")}
 
 
 def get_coverage(bank: str | None = None, aspect: str | None = None) -> dict:
-    """What data actually exists — call this BEFORE answering a question the
+    """What data actually exists - call this BEFORE answering a question the
     other tools come back empty on, to distinguish 'no data' from 'zero
     sentiment'. This is the cheapest hallucination defense available; see
     docs/DESIGN.md, grounding rules."""
@@ -176,7 +219,7 @@ def get_analyst_consensus(bank: str) -> dict:
     """Latest analyst consensus (ratings + price targets) for one bank.
 
     This is consensus *aggregate* data from Yahoo Finance, NOT the contents of
-    any analyst report — say so when reporting it. Returns has_data=False when
+    any analyst report - say so when reporting it. Returns has_data=False when
     no snapshot exists yet.
     """
     conn = get_connection()
@@ -214,7 +257,7 @@ def get_analyst_consensus(bank: str) -> dict:
 
 def search_evidence(query: str, bank: str | None = None, aspect: str | None = None,
                      sentiment: str | None = None, k: int = 5) -> dict:
-    """RAG evidence search (chatbot/retrieval.py) — quotes with citations for
+    """RAG evidence search (chatbot/retrieval.py) - quotes with citations for
     any qualitative claim. See docs/DESIGN.md, 'Grounding rules': every
     qualitative claim must cite a sentence_id + url."""
     results = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, k=k)
@@ -226,7 +269,7 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     for i, r in enumerate(results, start=1):
         date = (r.get("published_at") or "")[:10]
         item = {"evidence_id": f"E{i}", "sentence_id": r["sentence_id"], "bank": r.get("bank"),
-                "date": date, "text": r.get("text"), "url": r.get("url"),
+                "source": r.get("source"), "date": date, "text": r.get("text"), "url": r.get("url"),
                 "cite_as": f"[{r.get('bank')}, {date}, sentence_id {r['sentence_id']}]",
                 "relevance": r.get("score")}
         if "aspect" in r:
@@ -246,7 +289,7 @@ TOOL_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS,
                            "description": "One of the frozen aspect keys, using underscores "
                                           "(e.g. \"dividend_policy\", not \"dividend policy\"), "
@@ -271,7 +314,7 @@ TOOL_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS},
             },
             "required": ["bank"],
@@ -285,7 +328,7 @@ TOOL_SCHEMAS = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS},
             },
         },
@@ -299,7 +342,7 @@ TOOL_SCHEMAS = [
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "What to search for, in natural language."},
-                "bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]},
+                "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS},
                 "sentiment": {"type": "string", "enum": ["positive", "neutral", "negative"]},
                 "k": {"type": "integer", "description": "Max results, default 5"},
@@ -315,7 +358,7 @@ TOOL_SCHEMAS = [
                         "analyst report — do not claim to know why analysts hold that view.",
         "input_schema": {
             "type": "object",
-            "properties": {"bank": {"type": "string", "enum": ["DBS", "OCBC", "UOB"]}},
+            "properties": {"bank": {"type": "string", "enum": list(BANK_NAMES)}},
             "required": ["bank"],
         },
     },
@@ -337,15 +380,12 @@ def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
     """Coerces string-typed arguments to the type declared in the tool's own
     input_schema (integer/number/boolean) before the tool function sees them.
 
-    WHY THIS EXISTS: local models called via Ollama don't reliably respect a
-    JSON schema's declared types — observed with llama3.2:3b, which called
-    search_evidence with k="5" (a string) instead of k=5, which crashed the
-    list-slice inside chatbot/retrieval.py with a TypeError. Claude has not
-    been observed doing this, but this coercion is cheap and harmless for a
-    backend that already sends correct types, so it runs for every backend
-    rather than only for local models.
+    Local models don't always respect a schema's declared types:
+    llama3.2:3b called search_evidence with k="5" (a string), which crashed
+    the list slice in chatbot/retrieval.py. The coercion costs nothing for a
+    backend that sends correct types, so it runs for every backend.
 
-    Also normalizes `aspect` (see normalize_aspect) — the same model called
+    Also normalizes `aspect` (see normalize_aspect) - the same model called
     get_sentiment with aspect="dividend policy" instead of "dividend_policy",
     silently producing insufficient_data on a valid question. The schema's
     enum constraint should prevent this going forward; this is the

@@ -58,22 +58,22 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| gold set | `chatbot/eval_gold_set.py:20` | `GOLD_SET = [` |
-| fresh single turn | `chatbot/run_eval.py:115` | `turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)` |
-| record tool calls with results | `chatbot/run_eval.py:136` | `"result": c.get("result")} for c in calls],` |
-| tool selection check | `chatbot/run_eval.py:67` | `def _check_tool_selection(item: dict, calls: list[dict])` |
-| behaviour check | `chatbot/run_eval.py:88` | `def _check_behavior(item: dict, answer: str)` |
-| advice decline | `chatbot/run_eval.py:92` | `if expected == "decline_advice":` |
-| decline or no data | `chatbot/run_eval.py:96` | `if expected == "decline_or_no_data":` |
-| citation warning | `chatbot/run_eval.py:122` | `fabricated = "VERIFICATION WARNING" in answer` |
-| input guard | `chatbot/run_eval.py:138` | `"input_guard": guard,` |
-| unverified figures | `chatbot/run_eval.py:139` | `"unverified_numbers": numbers,` |
-| output files and tag | `chatbot/run_eval.py:45` | `def _output_paths(tag: str | None)` |
+| gold set | `chatbot/eval_gold_set.py:28` | `GOLD_SET = [` |
+| fresh single turn | `chatbot/run_eval.py:137` | `turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)` |
+| record tool calls with results | `chatbot/run_eval.py:156` | `"result": c.get("result"), **({"by": c["by"]} if c.get("by") else {})}` |
+| tool selection check | `chatbot/run_eval.py:71` | `def _check_tool_selection(item: dict, calls: list[dict])` |
+| behaviour check | `chatbot/run_eval.py:93` | `def _check_behavior(item: dict, answer: str)` |
+| advice decline | `chatbot/run_eval.py:97` | `if expected == "decline_advice":` |
+| decline or no data | `chatbot/run_eval.py:101` | `if expected == "decline_or_no_data":` |
+| citation flag | `chatbot/run_eval.py:144` | `fabricated = bool(turn.citation_unverified)` |
+| input guard | `chatbot/run_eval.py:160` | `"input_guard": guard,` |
+| unverified figures | `chatbot/run_eval.py:162` | `"unverified_numbers": numbers,` |
+| output files and tag | `chatbot/run_eval.py:49` | `def _output_paths(tag: str | None)` |
 | left to a person | `chatbot/run_eval.py:19` | `NOT automated, and left in the transcript for a human to grade` |
 | figure check is not a grade | `chatbot/run_eval.py:16` | `check is a strict detector, not a grade` |
 | 18 of 19 flagged were invented | `docs/evidence/chatbot-harness-2026-09-26.md:52` | `raw tool output, 18 were invented` |
-| planned evaluation | `docs/PLAN.md:70` | `frozen ~30-question gold set; retrieval Hit@K and MRR; faithfulness via an LLM judge` |
-| planned evaluation, recorded | `docs/DESIGN.md:362` | `set of about 30 questions written before tuning, retrieval Hit@K and MRR,` |
+| planned evaluation | `docs/PLAN.md:88` | `frozen ~30-question gold set; retrieval Hit@K and MRR; faithfulness via an LLM judge` |
+| planned evaluation, recorded | `docs/DESIGN.md:374` | `set of about 30 questions written before tuning, retrieval Hit@K and MRR,` |
 
 ## Planned elements
 

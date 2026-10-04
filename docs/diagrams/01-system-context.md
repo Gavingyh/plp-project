@@ -59,7 +59,8 @@ doesn't show internals (see [02](02-runtime.md) and [04](04-pipeline.md)) or the
 feed, which has a scraper (`ingest/cna_scraper.py`) that writes a JSON file and is not
 connected to the system. Alpha Vantage is drawn dashed because its adapter runs but no
 SGX ticker is indexed, so it contributes nothing. Of the hosted backends, Claude and
-(since 2026-09-30) Gemini have returned real responses; OpenAI is implemented but unverified.
+(since 2026-09-30) Gemini have returned real responses; OpenAI is implemented but unverified (it also
+reaches any OpenAI-compatible provider, such as Groq, through `OPENAI_BASE_URL`).
 
 ## Sources
 
@@ -71,20 +72,20 @@ Each row names the file and line an element comes from, and the text that line m
 | Google News RSS | `ingest/google_news.py:55` | `RSS_URL = "https://news.google.com` |
 | Yahoo Finance news | `ingest/yahoo_news.py:93` | `yf.Ticker(ticker).get_news(` |
 | Yahoo Finance consensus | `ingest/yahoo_analyst.py:71` | `finance/quoteSummary/` |
-| NewsAPI | `ingest/newsapi.py:58` | `newsapi.org/v2/everything` |
+| NewsAPI | `ingest/newsapi.py:56` | `newsapi.org/v2/everything` |
 | CNA article pages | `ingest/cna_archive.py:69` | `SITE = "www.channelnewsasia.com"` |
 | Wayback index of CNA URLs | `ingest/cna_archive.py:68` | `CDX_URL = "https://web.archive.org/cdx/search/cdx"` |
 | archived CNA pages | `ingest/cna_archive.py:214` | `archived = f"https://web.archive.org/web/` |
-| Alpha Vantage | `ingest/alphavantage.py:51` | `alphavantage.co/query` |
-| Alpha Vantage returns nothing | `ingest/alphavantage.py:49` | `doesn't index SGX-listed names` |
+| Alpha Vantage | `ingest/alphavantage.py:50` | `alphavantage.co/query` |
+| Alpha Vantage returns nothing | `ingest/alphavantage.py:48` | `doesn't index SGX-listed names` |
 | DBS investor relations | `ingest/earnings_fetch_ir.py:64` | `https://www.dbs.com/investors` |
 | OCBC investor relations | `ingest/earnings_fetch_ir.py:70` | `https://www.ocbc.com/group/investors` |
 | Wayback Machine | `ingest/earnings_fetch_uob.py:49` | `CDX_URL = "http://web.archive.org` |
-| Ollama | `chatbot/backends/ollama_backend.py:32` | `DEFAULT_BASE_URL = "http://localhost:11434"` |
-| Claude | `chatbot/backends/claude_backend.py:36` | `import anthropic` |
-| OpenAI | `chatbot/backends/openai_backend.py:36` | `api.openai.com/v1/chat/completions` |
-| OpenAI unverified | `chatbot/backends/openai_backend.py:4` | `NOT VERIFIED AGAINST THE LIVE API` |
-| Gemini verified | `chatbot/backends/gemini_backend.py:4` | `VERIFIED against the live API on 2026-09-30` |
-| Gemini | `chatbot/backends/gemini_backend.py:46` | `generativelanguage.googleapis.com` |
-| Ollama is the default without a key | `chatbot/backends/__init__.py:46` | `return "ollama"` |
+| Ollama | `config/chatbot.yaml:7` | `ollama_url:       {value: "http://localhost:11434"` |
+| Claude | `chatbot/backends/claude_backend.py:40` | `import anthropic` |
+| OpenAI, or any compatible provider via `OPENAI_BASE_URL` | `config/chatbot.yaml:8` | `openai_base_url:  {value: "https://api.openai.com/v1", env: OPENAI_BASE_URL}` |
+| OpenAI unverified | `chatbot/backends/openai_backend.py:7` | `Not yet run against the live API` |
+| Gemini verified | `chatbot/backends/gemini_backend.py:4` | `Verified against the live API on 2026-09-30` |
+| Gemini | `chatbot/backends/gemini_backend.py:50` | `generativelanguage.googleapis.com` |
+| Ollama is the default without a key | `chatbot/backends/__init__.py:33` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

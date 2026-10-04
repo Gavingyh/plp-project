@@ -1,36 +1,27 @@
 """
-Safe, resumable overnight Reddit backfill.
+Resumable Reddit backfill, one month at a time.
 
-WHY THIS EXISTS: `python run_daily_batch.py --reddit-since 2020-01-01` looks
-like it does the same thing, but it doesn't commit anything to the database
-until the ENTIRE multi-year harvest finishes — ingest/arctic_shift.py's
-pull() accumulates every document in memory and calls upsert_documents()
-exactly once, at the very end (run_daily_batch.py:43). A multi-year backfill
-can run for hours; if the machine sleeps, the terminal closes, or anything
-else interrupts it, every bit of that work is lost with nothing saved. Not
-safe to leave running unattended overnight. (Caught while setting this up —
-the first backfill attempt sat at 34 minutes elapsed with zero new documents
-in the database, because it hadn't reached the one write at the end yet.)
+`python run_daily_batch.py --reddit-since 2020-01-01` covers the same range
+but writes nothing until the whole harvest finishes: ingest/arctic_shift.py's
+pull() keeps every document in memory and calls upsert_documents() once, at
+the end. A multi-year backfill runs for hours, and an interruption loses all
+of it.
 
-This script instead calls `python -m ingest.arctic_shift --since X --until Y`
-as a SEPARATE process per month-sized chunk. Each chunk's own __main__ block
-commits to the database immediately after that chunk's harvest — confirmed
-in ingest/arctic_shift.py:171. So:
-  - if interrupted at any point, everything up to the last completed chunk
-    is already safely in data/plp.db
-  - re-running this script is safe and fast: completed chunks are skipped
-    via a local marker file, and even an unmarked repeat is a no-op at the
-    database level (doc_id is idempotent, see ingest/db.py)
-  - a single bad/slow chunk (Arctic Shift has "no uptime guarantee") doesn't
-    take down the whole run — logged and skipped, moves to the next chunk
+This script runs `python -m ingest.arctic_shift --since X --until Y` as a
+separate process per month. Each process commits its month before the next
+starts, so:
+  - after an interruption, every completed month is already in data/plp.db
+  - re-running skips completed months (a marker file), and repeating one is
+    harmless anyway, because doc_id makes inserts idempotent (ingest/db.py)
+  - a failed or slow month (Arctic Shift has no uptime guarantee) is logged
+    and skipped, and so is a month where some pages kept failing (the child
+    exits non-zero): neither is marked done, so the next run retries it
 
 USAGE:
-  # Run directly in your own terminal, NOT inside a Claude Code session that
-  # might close — e.g. with caffeinate (macOS) to also stop the machine
-  # sleeping mid-run:
+  # From your own terminal; caffeinate keeps a Mac awake for the run:
   caffeinate -i python3 scripts/overnight_backfill.py
 
-  # Resume after an interruption — already-completed chunks are skipped:
+  # Resume after an interruption (completed months are skipped):
   python3 scripts/overnight_backfill.py
 
   # Custom range:
@@ -50,6 +41,9 @@ logger = get_logger(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
 MARKER_FILE = BASE_DIR / "data" / ".backfill_progress.txt"
 LOG_FILE = BASE_DIR / "data" / "backfill_overnight.log"
+# ingest/arctic_shift.py's exit code when a window stopped early on a failing
+# page (its EXIT_INCOMPLETE; not imported, so _check_environment runs first).
+INCOMPLETE_EXIT = 3
 
 
 def month_chunks(since: str, until: str):
@@ -76,38 +70,31 @@ def mark_completed(chunk_key: str):
 
 
 def log(msg: str):
-    """Thin wrapper kept so call sites read the same; routes through the
-    shared logger (console + this script's own log file, configured in run())
-    instead of the hand-rolled print+append it used to do."""
+    """Log to the console and this script's own log file (set up in run())."""
     logger.info(msg)
 
 
 def _check_environment():
-    """Fail loudly and immediately if this isn't running under the project's
-    venv — rather than silently burning through every chunk with the same
-    error. Hit live: a real overnight run got invoked under miniforge's
-    Python 3.9 instead of .venv-plp's 3.14 (almost certainly because a
-    conda auto-activation in the shell profile ran after `source
-    .venv-plp/bin/activate` and shadowed it) and failed all 79 real chunks
-    identically — the codebase's `str | None` syntax (PEP 604) doesn't
-    parse on 3.9. Zero data was lost that couldn't be recovered by
-    re-running, but the whole night's run time was wasted silently."""
+    """Stop at once unless this is the project's Python (3.10 or later): the
+    code uses `str | None` (PEP 604), so an older interpreter, for example a
+    conda base environment that shadows the venv, would fail every month the
+    same way."""
     if sys.version_info < (3, 10):
         print(f"FATAL: running under Python {sys.version.split()[0]} ({sys.executable}), "
               "but this codebase requires 3.10+ (uses `X | None` type syntax throughout). "
               "This almost always means .venv-plp wasn't actually active when this script "
-              "was launched — a conda/miniforge base env auto-activating in your shell "
+              "was launched - a conda/miniforge base env auto-activating in your shell "
               "profile is a common cause, since it can run *after* `source "
               ".venv-plp/bin/activate` and silently take over `python3` on PATH.\n\n"
               "Fix: invoke the venv's interpreter by absolute path instead of relying on "
               "shell activation:\n"
-              "  caffeinate -i /Users/gavin/Projects/plp-project/.venv-plp/bin/python3 "
+              f"  caffeinate -i {BASE_DIR / '.venv-plp' / 'bin' / 'python3'} "
               "scripts/overnight_backfill.py", file=sys.stderr)
         sys.exit(1)
     try:
         import requests  # noqa: F401
     except ImportError:
-        print(f"FATAL: 'requests' isn't importable under {sys.executable} — this isn't the "
+        print(f"FATAL: 'requests' isn't importable under {sys.executable} - this isn't the "
               "project's venv. See the Python-version message above for the fix.", file=sys.stderr)
         sys.exit(1)
 
@@ -142,10 +129,15 @@ def run():
             summary = next((l for l in result.stdout.splitlines() if "attempted" in l), "")
             log(f"DONE  {since} -> {until}  {summary}")
             mark_completed(chunk_key)
+        elif result.returncode == INCOMPLETE_EXIT:
+            # Some pages kept failing. What was fetched is stored, but the
+            # month stays unmarked so the next run fetches it again.
+            reason = next((l for l in reversed(result.stderr.splitlines()) if "INCOMPLETE" in l), "")
+            log(f"INCOMPLETE {since} -> {until}  not marked done, re-run to retry. {reason}")
         else:
             log(f"ERROR {since} -> {until}  exit={result.returncode}  "
                 f"stderr_tail={result.stderr[-500:]!r}")
-            log("       Continuing to next chunk — Arctic Shift has no uptime guarantee, "
+            log("       Continuing to next chunk - Arctic Shift has no uptime guarantee, "
                 "a transient failure here doesn't need to stop the whole run. "
                 "Re-run this script later to retry unmarked chunks.")
 

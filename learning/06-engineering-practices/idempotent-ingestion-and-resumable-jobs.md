@@ -161,6 +161,41 @@ invisible in the code — nothing says "we prefer stale".
 
 ---
 
+### A fallback that looks like data (3 Oct 2026)
+
+Two bugs found on 3 Oct had the same shape: a failure replaced by a value
+that looked valid.
+
+- **Earnings dates.** When the parser couldn't read a period from a file
+  name ("cfo-slides-q1-2024.pdf"), the document was dated with the time it
+  was extracted. Six UOB files (114 sentences of 2023–24 text) landed in
+  September 2026 and made up 114 of the 230 sentences behind UOB's 30-day
+  score. A missing date should have stayed missing and been reported.
+- **Reddit pages.** A failed request returned an empty page, which the
+  pager read as "no more data": whole months of comments are missing (Sep
+  2021, May 2024, Mar 2025), each gap ending at a month boundary.
+
+Idempotence then kept the mistakes. Re-running the earnings extraction skips
+documents already stored (`INSERT OR IGNORE`), so fixing the parser does not
+repair the rows; that needs an explicit repair step
+(`scripts/fix_earnings_dates.py`, a dry run unless given `--apply`). When
+you design an idempotent writer, also design how to correct what it has
+already written.
+
+### A loss that is logged is not a loss that is handled (3 Oct 2026)
+
+The first fix to the Reddit pager retried a failing page and, if it still
+failed, logged the lost window. The pull still exited 0, so the overnight
+backfill, which marks a month done when its pull exits 0, marked the month
+done and would never fetch it again. The three gap months were already in
+its progress file. Now a pull that lost a window exits 3 and the month stays
+unmarked. Two more of the same kind were found the same evening: a Google
+News window that failed after its retries returned an empty list, which
+reads exactly like a quiet month, and the CNA fetcher cached a network error
+like a missing page, so one blip lost an article for good. In a resumable
+job, "done" must mean "complete", and a temporary failure must stay
+retryable.
+
 ## 5. Evaluate
 
 **Idempotent ingestion was unarguably the right foundation.** The proposal's

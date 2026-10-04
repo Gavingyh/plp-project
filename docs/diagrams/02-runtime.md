@@ -60,22 +60,22 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| dashboard port 8501 | `scripts/start.sh:34` | `DASHBOARD_PORT="${PLP_DASHBOARD_PORT:-8501}"` |
-| API port 8000 | `scripts/start.sh:35` | `API_PORT="${PLP_API_PORT:-8000}"` |
-| Ollama port 11434 | `scripts/start.sh:36` | `OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"` |
-| dashboard process | `scripts/start.sh:187` | `-m streamlit run dashboard/app.py` |
-| API process | `scripts/start.sh:195` | `-m uvicorn api.main:app` |
-| Ollama started if needed | `scripts/start.sh:203` | `start_ollama() {` |
+| dashboard port 8501 | `scripts/start.sh:33` | `DASHBOARD_PORT="${PLP_DASHBOARD_PORT:-8501}"` |
+| API port 8000 | `scripts/start.sh:34` | `API_PORT="${PLP_API_PORT:-8000}"` |
+| Ollama port 11434 | `scripts/start.sh:35` | `OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"` |
+| dashboard process | `scripts/start.sh:185` | `-m streamlit run dashboard/app.py` |
+| API process | `scripts/start.sh:193` | `-m uvicorn api.main:app` |
+| Ollama started if needed | `scripts/start.sh:201` | `start_ollama() {` |
 | plp.db location | `ingest/db.py:17` | `DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")` |
-| embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.path.join(BASE_DIR, "data", "sentence_embeddings.npz")` |
-| news filter log location | `ingest/news_filter.py:53` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
-| dashboard reads the database | `dashboard/app.py:23` | `from ingest.db import get_connection` |
-| API reads the database | `api/main.py:28` | `from ingest.db import get_connection` |
-| evidence search reads the embeddings | `chatbot/retrieval.py:103` | `all_ids, all_vecs = load_for_search()` |
-| dashboard chat | `dashboard/app.py:319` | `from chatbot.agent import Conversation` |
-| API chat | `api/main.py:22` | `from chatbot.agent import Conversation` |
+| embeddings cache location | `aspects/embed_store.py:32` | `STORE_PATH = os.path.abspath(os.environ.get("PLP_EMBEDDINGS_PATH")` |
+| news filter log location | `ingest/news_filter.py:52` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
+| dashboard reads the database | `dashboard/app.py:22` | `from ingest.db import get_connection` |
+| API reads the database | `api/main.py:40` | `from ingest.db import get_connection` |
+| evidence search reads the embeddings | `chatbot/retrieval.py:142` | `all_ids, all_vecs = load_for_search()` |
+| dashboard chat | `dashboard/app.py:475` | `from chatbot.agent import Conversation` |
+| API chat | `api/main.py:31` | `from chatbot.agent import Conversation` |
 | database not in git | `.gitignore:14` | `data/plp.db` |
 | embeddings not in git | `.gitignore:17` | `data/sentence_embeddings.npz` |
 | snapshots not in git | `.gitignore:18` | `data/snapshots/` |
-| launchd job runs the daily batch | `scripts/com.plp.dailybatch.plist:24` | `<string>run_daily_batch.py</string>` |
+| launchd job runs the daily batch | `scripts/com.plp.dailybatch.plist:26` | `<string>run_daily_batch.py</string>` |
 | launchd job not running | `docs/PLAN.md:41` | `The daily ingestion job is not running on any machine` |

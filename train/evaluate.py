@@ -28,11 +28,10 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from config.device import best_device
 from train.finetune import aspect_inputs, read_input_spec
-from train.labels import check_splits
+from train.labels import LABELS, check_splits
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANDIDATES_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
-LABELS = ["negative", "neutral", "positive"]
 
 
 def _load_test_set() -> pd.DataFrame:
@@ -40,13 +39,13 @@ def _load_test_set() -> pd.DataFrame:
     check_splits(df)
     df = df[(df["split"] == "test") & (df["label"].isin(LABELS))]
     if df.empty:
-        raise ValueError("No labeled test rows found — Labeling must be complete first.")
+        raise ValueError("No labeled test rows found - Labeling must be complete first.")
     return df
 
 
 def eval_base_finbert_zeroshot(df: pd.DataFrame) -> dict:
     """Baseline 1: base FinBERT, zero-shot, whole-sentence (not aspect-conditioned
-    — base FinBERT has no mechanism to condition on the aspect at all, which is
+ - base FinBERT has no mechanism to condition on the aspect at all, which is
     itself part of the case for fine-tuning)."""
     from sentiment.score import classify_sentences
     preds = [label for label, _ in classify_sentences(df["text"].tolist())]
@@ -58,7 +57,7 @@ def eval_lexicon(df: pd.DataFrame) -> dict:
     try:
         from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
     except ImportError:
-        print("vaderSentiment not installed (pip install vaderSentiment) — skipping lexicon baseline.")
+        print("vaderSentiment not installed (pip install vaderSentiment) - skipping lexicon baseline.")
         return {}
     analyzer = SentimentIntensityAnalyzer()
     preds = []
@@ -98,7 +97,13 @@ def finetuned_probs(model_dir: str, df: pd.DataFrame) -> np.ndarray:
                             return_tensors="pt").to(device)
             probs = torch.softmax(model(**enc).logits, dim=-1).cpu().numpy()
             out.append(probs[:, order])
-    return np.concatenate(out)
+    probs = np.concatenate(out)
+    # On 2026-10-01 the GPU, under memory pressure, returned all-zero rows
+    # without an error, which argmax turned into "negative" everywhere.
+    if not np.allclose(probs.sum(axis=1), 1.0, atol=1e-3):
+        raise RuntimeError(f"{model_dir}: probabilities don't sum to 1: the device returned garbage; "
+                           "rerun with --cpu")
+    return probs
 
 
 def eval_finetuned(model_dir: str, df: pd.DataFrame, name: str = "finetuned_finbert_absa") -> dict:
@@ -160,7 +165,7 @@ def run(model_dir: str | list[str] | None):
         base = results[0]
         if fine["macro_f1"] <= base["macro_f1"]:
             print("\nWARNING: fine-tuned model did NOT beat base FinBERT zero-shot. Per the plan, "
-                  "this is a reportable finding, not a defect to hide — investigate label quality "
+                  "this is a reportable finding, not a defect to hide - investigate label quality "
                   "(kappa), training set size, and whether aspect-conditioning is actually helping "
                   "before concluding the approach failed.")
 
@@ -171,7 +176,11 @@ if __name__ == "__main__":
                         help="one or more fine-tuned models; with several, their average is reported too")
     parser.add_argument("--labels", default=None,
                         help=f"labelled file to score on, default {CANDIDATES_PATH}")
+    parser.add_argument("--cpu", action="store_true", help="run every model on the CPU instead of the GPU")
     args = parser.parse_args()
     if args.labels:
         CANDIDATES_PATH = args.labels
+    if args.cpu:
+        import sentiment.score
+        best_device = sentiment.score.best_device = lambda: "cpu"  # noqa: E731  (read at call time)
     run(model_dir=args.model_dir)

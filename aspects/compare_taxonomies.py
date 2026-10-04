@@ -2,7 +2,7 @@
 Compares candidate aspect taxonomies quantitatively, using real cluster
 content from `python -m aspects.discover` (see
 docs/data-viability.md and config/aspects.yaml's header comment) as the
-source for candidate B/C's seed terms — not invented, drawn from actual
+source for candidate B/C's seed terms - not invented, drawn from actual
 cluster exemplar sentences.
 
 THIS DOES NOT DECIDE ANYTHING. It produces a comparison table so the team/
@@ -11,24 +11,29 @@ per the design notes' "Aspect taxonomy sign-off" open decision. Nothing here
 overwrites config/aspects.yaml.
 
 Candidates:
-  A — proposal-aligned (current config/aspects.yaml): dividend_policy,
-      asset_quality, net_interest_margin, management_guidance, other.
-      Known issue (measured): centroids barely separate on the current
-      corpus, most sentences match ~4 of 5 aspects near-equally.
-  B — data-derived coarse: the two real clusters that DID emerge cleanly
+  A - the live taxonomy: config/aspects.yaml's seed sentences, read at run
+      time so this can't drift from what aspects/assign.py uses (ten aspects
+      plus other since 2026-09-30, DESIGN decision 21).
+  P - the proposal's four a-priori aspects (dividend_policy, asset_quality,
+      net_interest_margin, management_guidance), the taxonomy until
+      2026-09-30, kept for comparison. Known issue (measured): centroids
+      barely separate, most sentences match ~4 of 5 aspects near-equally.
+      Until 2026-10-01 this was hard-coded as candidate A, so the tool kept
+      describing the old taxonomy after the config changed.
+  B - data-derived coarse: the two real clusters that DID emerge cleanly
       (investment_discussion vs. consumer_banking_service), plus other.
-  C — data-derived fine: B split further using the finer real clusters
+  C - data-derived fine: B split further using the finer real clusters
       (dividend_and_valuation, service_and_trust, banking_utility), plus other.
 
 Metrics reported per candidate:
   - avg_aspects_per_sentence: how many aspects (excl. other) each sentence
     clears the similarity floor for. Lower = more discriminating. Candidate
-    A's real problem, quantified: most sentences match nearly everything.
+    P's real problem, quantified: most sentences match nearly everything.
   - pct_other: fraction assigned to the fallback bucket.
   - avg_centroid_separation: mean pairwise cosine DISTANCE between aspect
     centroids (higher = aspects are more distinct from each other in
     embedding space, a proxy for how separable the taxonomy actually is).
-  - avg_top_similarity: mean best-match similarity score — how confidently
+  - avg_top_similarity: mean best-match similarity score - how confidently
     sentences fit their top aspect.
 
 THE FLOOR MATTERS AS MUCH AS THE TAXONOMY. Every metric except centroid
@@ -75,8 +80,19 @@ def configured_floor() -> float:
     with open(CONFIG_PATH) as f:
         return float(yaml.safe_load(f)["similarity_floor"])
 
-CANDIDATES = {
-    "A_proposal_aligned": {
+def current_config_candidate(config_path: str = CONFIG_PATH) -> dict[str, list[str]]:
+    """Candidate A: the live taxonomy's seed sentences, as assign.py builds them (no `other`)."""
+    with open(config_path) as f:
+        cfg = yaml.safe_load(f)
+    return {key: a["seed_terms"] for key, a in cfg["aspects"].items() if key != "other"}
+
+
+def candidates() -> dict[str, dict[str, list[str]]]:
+    return {"A_current_config": current_config_candidate(), **FIXED_CANDIDATES}
+
+
+FIXED_CANDIDATES = {
+    "P_proposal_four": {
         "dividend_policy": ["dividend payout ratio", "special dividend", "dividend yield",
                              "capital return to shareholders", "share buyback"],
         "asset_quality": ["non-performing loans", "credit provisions", "asset quality",
@@ -194,18 +210,19 @@ def _print_table(rows: list[dict], show_floor: bool) -> None:
 def run(floors: tuple[float, ...] | None = None, sweep: bool = False):
     sentence_ids, vectors = load_for_search()
     if len(sentence_ids) == 0:
-        print("No embedded sentences found — run `python -m aspects.embed_store` first.")
+        print("No embedded sentences found - run `python -m aspects.embed_store` first.")
         return
 
     live = configured_floor()
     floors = floors or (DEFAULT_SWEEP if sweep else (live,))
 
+    cands = candidates()
     logger.info("Comparing %d candidate taxonomies against %d sentences at floor(s) %s "
                 "(config/aspects.yaml similarity_floor = %.2f).",
-                len(CANDIDATES), len(vectors), ", ".join(f"{f:.2f}" for f in floors), live)
+                len(cands), len(vectors), ", ".join(f"{f:.2f}" for f in floors), live)
 
     rows = []
-    for name, seeds in CANDIDATES.items():
+    for name, seeds in cands.items():
         rows.extend(evaluate_candidate(name, seeds, vectors, floors))
 
     _print_table(rows, show_floor=len(floors) > 1)
@@ -213,14 +230,15 @@ def run(floors: tuple[float, ...] | None = None, sweep: bool = False):
     print(f"\nMeasured at the floor in config/aspects.yaml ({live:.2f}) unless --floor/--sweep "
           f"says otherwise.")
     print("\nHow to read this:")
-    print("  - avg_aspects_per_sentence closer to 1 = more discriminating (candidate A's known")
-    print("    problem, quantified here — most sentences matching ~4 of 5 aspects near-equally).")
+    print("  - avg_aspects_per_sentence closer to 1 = more discriminating (candidate P's known")
+    print("    problem, quantified here - most sentences matching ~4 of 5 aspects near-equally).")
+    print("  - A is the live config/aspects.yaml; P is the proposal's four, the taxonomy until 30 Sep.")
     print("  - avg_centroid_separation higher = the aspects are more distinct from each other.")
     print("    It does NOT move with the floor: it describes the taxonomy's geometry, so it is")
     print("    the one column a floor change cannot flatter.")
     print("  - pct_other very high or very low are both worth a second look: too high means the")
     print("    taxonomy doesn't fit the corpus; too low (~0%) means the floor never triggers.")
-    print("\nThis is decision support, not a decision — see config/aspects.yaml's header comment")
+    print("\nThis is decision support, not a decision - see config/aspects.yaml's header comment")
     print("and the design notes' 'Aspect taxonomy sign-off' open decision.")
 
 

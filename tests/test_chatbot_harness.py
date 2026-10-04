@@ -1,11 +1,9 @@
 """
 Tests for the harness around the chatbot model (docs/DESIGN.md decision 19):
-input guards, output checks, conversation memory, evidence packaging and
-decoding temperature. No model or network calls: backends are fakes.
-
-The advice-guard phrasings here were written independently of the gold set
-in chatbot/eval_gold_set.py, so that the gold-set run remains a check of the
-guard rather than a restatement of it.
+the intent classifier's replies, output checks, conversation memory, evidence
+packaging and decoding temperature. No model or network calls: backends and
+the classifier's answers are fakes. Whether the classifier picks the right
+intent is measured, not asserted: chatbot/eval_intent.py.
 """
 
 import json
@@ -15,66 +13,37 @@ import pytest
 import chatbot.agent as agent
 import chatbot.tools as tools
 from chatbot.agent import Conversation, answer_turn
-from chatbot.guards import (advice_reply, is_advice_seeking, scope_reply, unverified_numbers,
-                            unverified_sentence_ids)
+from chatbot.guards import unverified_numbers, unverified_sentence_ids
 
 
-# --- input guard: advice and prediction -------------------------------------
+# --- input: intents (chatbot/intent.py; the model's answers are faked here) -----------
 
-@pytest.mark.parametrize("q", [
-    "Should I buy DBS now?",
-    "should we sell our OCBC shares before results",
-    "Is it a good time to buy UOB?",
-    "Buy or sell UOB?",
-    "Is OCBC worth buying at this price?",
-    "Which bank should I invest in?",
-    "Which of the three is the best buy?",
-    "Will DBS share price go up next month?",
-    "Can you predict where the UOB stock price will be in December?",
-    "What should I do with my DBS shares?",
-    "Would you recommend holding OCBC stock?",
-    "Is DBS a buy?",
-])
-def test_advice_and_prediction_questions_are_caught(q):
-    assert is_advice_seeking(q)
+def _intent(monkeypatch, name):
+    monkeypatch.setattr("chatbot.intent.ollama_chat", lambda model, messages, names: json.dumps({"intent": name}))
 
 
-@pytest.mark.parametrize("q", [
-    "How has sentiment on DBS dividends changed?",
-    "Compare OCBC and UOB on asset quality",
-    "What are people saying about DBS's share buyback?",
-    "Why did sentiment on UOB fall last month?",
-    "Should I be worried about DBS's asset quality?",
-    "What do analysts recommend for DBS?",
-    "Show me quotes about OCBC's net interest margin",
-])
-def test_ordinary_questions_are_not_caught(q):
-    assert not is_advice_seeking(q)
-
-
-def test_advice_reply_names_the_bank_and_says_not_advice():
-    reply = advice_reply("Should I sell UOB?")
-    assert "UOB" in reply and "financial advice" in reply
+def _no_backend(*a, **k):
+    raise AssertionError("the model must not be called for this question")
 
 
 def test_advice_is_answered_without_calling_the_model(monkeypatch):
-    def no_backend(*a, **k):
-        raise AssertionError("the model must not be called for an advice question")
-    monkeypatch.setattr(agent, "get_backend", no_backend)
-    r = answer_turn("Should I buy DBS?", verbose=False)
+    _intent(monkeypatch, "advice")
+    monkeypatch.setattr(agent, "get_backend", _no_backend)
+    r = answer_turn("Should I sell UOB?", verbose=False)
     assert r.guard == "advice" and r.calls == []
+    assert "UOB" in r.answer and "financial advice" in r.answer
 
 
-# --- input guard: scope --------------------------------------------------------
-
-def test_question_only_about_another_bank_gets_scope_reply():
-    reply = scope_reply("What's the sentiment on Maybank?")
-    assert reply and "Maybank" in reply and "DBS, OCBC and UOB" in reply
+def test_advice_reply_uses_the_bank_from_the_conversation():
+    from chatbot.intent import reply_for
+    assert "OCBC" in reply_for("advice", "Should I buy it?", {"banks": ["OCBC"]})
 
 
-def test_question_naming_a_covered_bank_is_left_to_the_model():
-    assert scope_reply("How does DBS compare with HSBC?") is None
-    assert scope_reply("How is sentiment on dividends?") is None
+def test_question_only_about_another_bank_gets_its_reply(monkeypatch):
+    _intent(monkeypatch, "other_bank")
+    monkeypatch.setattr(agent, "get_backend", _no_backend)
+    r = answer_turn("What's the sentiment on Maybank?", verbose=False)
+    assert r.guard == "other_bank" and "DBS, OCBC and UOB" in r.answer
 
 
 # --- output check: numbers -------------------------------------------------------
@@ -184,9 +153,11 @@ def test_conversation_rebuilt_from_messages():
 
 
 def test_trace_file_gets_one_line_per_turn(tmp_path, monkeypatch):
+    _intent(monkeypatch, "advice")
+    monkeypatch.setattr(agent, "get_backend", _no_backend)
     path = tmp_path / "trace.jsonl"
     conv = Conversation(trace_path=str(path))
-    conv.ask("Should I buy DBS?")  # answered by the guard, no model needed
+    conv.ask("Should I buy DBS?")  # answered by its fixed reply, no model needed
     rec = json.loads(path.read_text().strip())
     assert rec["guard"] == "advice" and rec["state_after"]["banks"] == ["DBS"]
 
@@ -248,10 +219,11 @@ def test_figures_quoted_from_retrieved_text_pass():
     assert unverified_numbers('Quote: "I have 4400 DBS shares; DBS pays $0.54 per share."', tool) == []
 
 
-def test_off_topic_question_gets_scope_reply_without_the_model(monkeypatch):
-    monkeypatch.setattr(agent, "get_backend", lambda *a, **k: (_ for _ in ()).throw(AssertionError()))
+def test_off_topic_question_gets_its_reply_without_the_model(monkeypatch):
+    _intent(monkeypatch, "off_topic")
+    monkeypatch.setattr(agent, "get_backend", _no_backend)
     r = answer_turn("What's the weather like in Singapore today?", verbose=False)
-    assert r.guard == "scope" and "outside what I can help with" in r.answer
+    assert r.guard == "off_topic" and "outside what I can help with" in r.answer
 
 
 def test_gap_between_two_short_quotes_is_not_a_quote():
@@ -270,9 +242,142 @@ def test_empty_or_braces_answer_is_replaced():
     assert r.answer == agent.EMPTY_ANSWER_REPLY
 
 
-def test_advice_reply_uses_the_bank_from_the_conversation():
-    assert "OCBC" in advice_reply("Should I buy it?", context_banks=["OCBC"])
-
-
 def test_names_with_numbers_are_not_figures():
     assert unverified_numbers("Unlike the COVID-19 period, 3Q24 was calm.", [{"n": 5}]) == []
+
+
+# --- fixes from the gold-set runs of 2026-10-01 ---------------------------------------
+
+def test_the_classifier_sees_the_conversation():
+    from chatbot.intent import build_messages, describe_context
+    ctx = describe_context({"banks": ["UOB"], "aspect": "asset_quality"}, "What about its asset quality?")
+    last = build_messages("Has that improved lately?", ctx)[-1]["content"]
+    assert "bank: UOB" in last and "asset quality" in last and "previous question" in last
+
+
+def test_follow_up_reaches_the_model_in_a_conversation(fake_sentiment, monkeypatch):
+    backend = _ToolUsingBackend("Neutral.")
+    monkeypatch.setattr(agent, "get_backend", lambda name=None: backend)
+    conv = Conversation()
+    conv.ask("What is sentiment on DBS dividends?")
+    r = conv.ask("Has that improved lately?")
+    assert r.guard is None and len(backend.seen) == 2
+
+
+INVENTED = ("DBS's dividend sentiment is positive, at 0.0291 on 13,452 sentences.\n\n"
+            "Supporting evidence:\n"
+            '* "DBS raises its payout ratio to 40%." (sentence_id: 12345, URL: https://example.com/dbs)\n'
+            '* "Analysts worry the dividend is unsustainable." (Bloomberg)\n\n'
+            "Sample size and time window: 13,452 sentences, all time.\n\n"
+            "Caveats: Reddit skews towards DBS.")
+
+
+def test_strip_removes_the_evidence_section_and_keeps_the_rest():
+    out = agent.strip_unsearched_evidence(INVENTED)
+    assert out.startswith("DBS's dividend sentiment is positive, at 0.0291")
+    assert "12345" not in out and "example.com" not in out and "Bloomberg" not in out
+    assert "Sample size and time window" in out and "Caveats" in out
+
+
+def test_enforcement_is_strip_by_default(fake_sentiment, monkeypatch):
+    # Decided 4 Oct 2026: invented evidence is removed unless the setting says otherwise.
+    monkeypatch.delenv("CHATBOT_ENFORCE_EVIDENCE", raising=False)
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced == "strip" and not r.citation_unverified and "12345" not in r.answer
+
+
+def test_enforcement_off_still_flags_and_keeps_the_answer(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "off")
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced is None and r.citation_unverified and "12345" in r.answer
+
+
+def test_strip_mode_removes_invented_evidence_and_says_so(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced == "strip" and not r.citation_unverified
+    assert "12345" not in r.answer and "VERIFICATION WARNING" not in r.answer
+    assert agent.EVIDENCE_REMOVED_NOTE.strip() in r.answer and r.unverified_numbers == []
+
+
+def test_search_mode_shows_real_quotes_found_by_the_harness(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "search")
+    seen = {}
+
+    def fake_search(**kw):
+        seen.update(kw)
+        return {"results": [{"sentence_id": "a" * 24, "text": "DBS kept its dividend at 60 cents.",
+                             "url": "u", "cite_as": f"[DBS, 2026-01-01, sentence_id {'a' * 24}]"}]}
+    monkeypatch.setitem(tools.TOOL_FUNCTIONS, "search_evidence", fake_search)
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
+    assert r.evidence_enforced == "search" and not r.citation_unverified
+    assert '"DBS kept its dividend at 60 cents."' in r.answer and "12345" not in r.answer
+    assert seen["bank"] == "DBS" and seen["aspect"] == "dividend_policy"
+    assert [c.get("by") for c in r.calls] == [None, "harness"]
+
+
+def test_an_answer_that_searched_is_left_alone(monkeypatch):
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
+    monkeypatch.setitem(tools.TOOL_FUNCTIONS, "search_evidence",
+                        lambda **kw: {"results": [{"sentence_id": "b" * 24, "url": "https://x.org/1",
+                                                   "text": "Margins held up well this quarter."}]})
+
+    class _Searching:
+        name, model = "fake", "fake"
+        def ask(self, question, system, schemas, execute, verbose=True, history=None):
+            execute("search_evidence", {"query": "q", "bank": "DBS"})
+            return 'Evidence:\n- "Margins held up well this quarter." (https://x.org/1)'
+    r = answer_turn("DBS margins?", backend=_Searching(), verbose=False)
+    assert r.evidence_enforced is None and "Margins held up" in r.answer and not r.citation_unverified
+
+
+def test_invented_evidence_in_the_opening_paragraph_is_removed(fake_sentiment, monkeypatch):
+    # Until 3 Oct the opening paragraph was kept as written, so this quote stayed
+    # (and was flagged) under a note saying the quotes were removed.
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
+    answer = 'DBS is positive, as "one analyst called the payout safe for years" (Reuters).\n\nEvidence:\n* "made up"'
+    r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(answer), verbose=False)
+    assert r.evidence_enforced == "strip" and not r.citation_unverified
+    assert "payout safe for years" not in r.answer and "made up" not in r.answer
+    assert r.answer.startswith("DBS is positive")
+
+
+def test_tool_selection_ignores_searches_the_harness_made():
+    from chatbot.run_eval import _check_tool_selection
+    item = {"expected_tool": "search_evidence", "expected_bank": "OCBC"}
+    harness_only = [{"name": "get_sentiment", "arguments": {"bank": "OCBC"}},
+                    {"name": "search_evidence", "arguments": {"bank": "OCBC"}, "by": "harness"}]
+    assert _check_tool_selection(item, harness_only)["correct"] is False
+    model_made = [{"name": "search_evidence", "arguments": {"bank": "OCBC"}}]
+    assert _check_tool_selection(item, model_made)["correct"] is True
+
+
+def test_tracker_rebuilt_from_recorded_calls():
+    t = agent._ToolCallTracker.from_calls([
+        {"name": "get_sentiment", "arguments": {"bank": "DBS"}, "result": {"score": 0.1}},
+        {"name": "search_evidence", "arguments": {}, "result": {"results": [{"sentence_id": "c" * 24, "url": "u1"}]}}])
+    assert t.search_evidence_called and t.verified_sentence_ids == {"c" * 24} and len(t.calls) == 2
+
+
+def test_shares_of_an_analyst_breakdown_are_derivable():
+    # 1, 7, 8 and 1 of 17 analysts are 6%, 41%, 47% and 6%: flagged as unverified
+    # in the 4 Oct live run although they were right.
+    result = {"bank": "DBS", "n_analysts": 17, "target_mean": 78.14,
+              "rating_breakdown": {"strong_buy": 1, "buy": 7, "hold": 8, "sell": 1, "strong_sell": 0}}
+    answer = "Strong buy (6%), buy (41%), hold (47%), sell (6%)."
+    assert unverified_numbers(answer, [result]) == []
+    assert unverified_numbers("Buy (52%).", [result]) == ["52%"]
+
+
+def test_shares_of_the_total_are_only_for_objects_made_of_counts():
+    # A sentiment row mixes counts with a score, so 20% is not "a count over the sum of everything".
+    result = {"score": 0.12, "n": 10, "positive_n": 2, "neutral_n": 6, "negative_n": 2}
+    assert unverified_numbers("10% were negative.", [result]) == ["10%"]
+    assert unverified_numbers("20% were negative.", [result]) == []
+
+
+def test_a_plain_decline_counts_as_declining_an_uncovered_bank():
+    from chatbot.run_eval import _check_behavior
+    item = {"expected_behavior": "decline_or_no_data"}
+    assert _check_behavior(item, "I can't help with that part of your question. I cover DBS, OCBC and UOB.")["correct"]
+    assert not _check_behavior(item, "HSBC sentiment is broadly positive this month.")["correct"]

@@ -10,21 +10,22 @@ Why this system is built the way it is. For how to run it, see
 
 **[STATUS.md](STATUS.md) is the single source of truth for these caveats.**
 It is kept current against the database; this page explains design reasoning
-and will drift. The short version, as of 2026-09-26:
+and will drift. The short version, as of 2026-10-01:
 
 - Read blended cross-bank figures next to the per-source breakdown. DBS
   carries about 55% of all sentences and roughly six times the earnings
   volume of the other two banks.
-- A fine-tuned model exists but doesn't beat base FinBERT on macro-F1
-  (0.547 ± 0.013 against 0.571, [evidence](evidence/finetune-2026-09-30.md)). Every stored score is
+- The fine-tuned model leads base FinBERT on macro-F1 and trails it on
+  accuracy (0.604 ± 0.035 against 0.571; accuracy 0.66 against 0.70,
+  [evidence](evidence/finetune-fixes-2026-10-01.md)). Every stored score is
   base FinBERT, zero-shot.
-- Per-aspect scores are not meaningful yet: the current assignment gives
-  plain factual sentences three or four aspects and sends evaluative ones to
-  `other` (decision 16 replaces it).
+- Per-aspect scores are not meaningful yet: the current assignment gives a
+  sentence 6.4 of the ten aspects on average. The LLM classifier of decision
+  16 is built and evaluated (0.729 against 0.413) but not yet applied.
 - The GPT backend has never been run against its real API; Gemini was
   verified on 2026-09-30 ([evidence](evidence/gemini-backend-2026-09-30.md)).
 - Local chatbot models fabricate citations. The code-level check is a
-  detector, not a fix. The chatbot also has no memory between turns yet.
+  detector, not a fix.
 
 What happens next, and in what order, is in [PLAN.md](PLAN.md).
 
@@ -35,8 +36,9 @@ What happens next, and in what order, is in [PLAN.md](PLAN.md).
 Ingests public text about DBS, OCBC and UOB from several sources, splits it
 into sentences, assigns each sentence to one or more financial aspects,
 scores sentiment per (sentence, aspect), aggregates into a per-bank index,
-and exposes the result through a dashboard, a REST API and a chatbot that
-answers questions by querying that store.
+and exposes the result through a REST API and a chatbot that answers
+questions by querying that store, and a Streamlit dashboard maintained by a
+teammate (decision 23).
 
 ```
  sources                  ingest/            preprocess/         aspects/
@@ -59,8 +61,11 @@ answers questions by querying that store.
                                                                     │
                                     ┌───────────────────────────────┼────────────────┐
                                     ▼                               ▼                ▼
-                              dashboard/                          api/           chatbot/
-                              (Streamlit)                      (FastAPI)     (tools + RAG)
+                              dashboard/                          api/  ──────▶  chatbot/
+                              (Streamlit,                      (FastAPI)  POST  (tools + RAG)
+                               a teammate's)                       ▲      /chat
+                                                                   │ HTTP
+                                                            any other frontend
 ```
 
 Everything is stored in one SQLite file (`data/plp.db`). Tables:
@@ -228,7 +233,9 @@ candidate set. A small lexical-overlap boost is added so exact identifiers
 
 The project needs to be runnable by someone without an API key. Backend
 selection auto-detects: a hosted model if a key is present, Ollama
-otherwise. `llama3.2:3b` is the default — its tool-calling was confirmed
+otherwise. *Changed 2026-10-04:* the default is Ollama with `llama3.1:8b`, the
+demo model, whatever keys are set; `CHATBOT_BACKEND=auto` keeps the old
+behaviour (PLAN section 2). `llama3.2:3b` is the default — its tool-calling was confirmed
 against a running instance, and it is roughly seven times faster per call
 than `qwen3:4b`, which emits a hidden reasoning chain first.
 
@@ -337,6 +344,11 @@ Singapore and Great Eastern, Aston Martin DBS. It is evaluated on a
 scope is kept to what improves attribution, so it doesn't compete with
 labelling for time.
 
+*Amended 2026-10-04:* DBS Vickers counts as DBS (DBS Group's list of
+subsidiaries, 31 Dec 2024), and POSB counts as DBS at collection too (DBS
+acquired POSBank in 1998). UOB Kay Hian stays a separate broker. PLAN
+section 2, made on 2026-10-04.
+
 ### 19. Chatbot changes drawn from the Conversational UIs module
 
 *Decided and implemented 2026-09-26* (`chatbot/guards.py`, `chatbot/agent.py`).
@@ -374,14 +386,14 @@ What it achieved, on the gold set with `llama3.2:3b`: advice and
 out-of-scope questions went from 2 of 7 handled correctly to 7 of 7, all by
 guards and so independent of the model. Invented citations stayed at
 43–48%: the harness detects them but can't make a 3B model stop producing
-them, so the demo model (PLAN.md, O3) matters more than any further prompt
+them, so the demo model (an open decision in PLAN.md) matters more than any further prompt
 work. Of 19 figures the number check flagged in the final run, 18 were
 invented. The temperature change had no measurable effect at 23 questions.
 
 ### 20. CNA loaded as full text, found through the Wayback Machine
 
 *2026-09-26.* CNA was the one planned addition to the frozen corpus (PLAN,
-D5). Its scraper read only the live RSS feed, which holds the latest items and
+section 2). Its scraper read only the live RSS feed, which holds the latest items and
 none about the banks, and wrote a file rather than the database.
 `ingest/cna_archive.py` finds CNA bank articles from 2023 on through the
 Wayback Machine's index of CNA URLs, whose slugs carry the headline. It
@@ -447,7 +459,79 @@ isn't re-runnable code and isn't sized for 44,345 sentences. The report's
 GenAI declaration lists it, and its agreement figures are human–LLM, not
 human–human.
 
+*Applied 2026-10-04:* where Opus disagrees with the human (202 aspect and 173
+sentiment labels), the human label stays and there is no full relabel. Only
+the rows on the bank-economist and wealth-or-retail boundaries are fixed,
+once the team decides those two rules (PLAN section 2).
+
+
+### 23. The API serves every view a dashboard needs; the dashboard is a teammate's
+
+*2026-10-01, the team's call.* A teammate builds the dashboard as its own
+project, so the Streamlit dashboard here was removed (its last version is
+in git history before this date). The REST API is now the system's
+interface, and was extended so a dashboard needs nothing else:
+`/evidence/latest` for the drill-down list, `/analyst-consensus/latest` for
+every bank at once (each bank's own newest row: the Streamlit page had taken
+one date for all banks and so hid UOB's consensus), and `/aspects` for
+readable labels. CORS is open, `docs/api/openapi.json` is the
+machine-readable contract (a test fails if it drifts), and
+[api-integration.md](api-integration.md) maps each view to its endpoint and
+lists what the screen must say. The chatbot stays, reachable through
+`POST /chat` and, for testing, a terminal chat (`python -m chatbot.chat`).
+Streamlit and matplotlib left `requirements.txt` with the page.
+
+*Amended later on 2026-10-01, the team's call.* The teammate building the
+dashboard pushed a redesign of the Streamlit dashboard to this repository the
+same night, so it stays here: `dashboard/`, its styling test, Streamlit and
+matplotlib, and the start, stop and status scripts' `dashboard` target are
+back. The teammate owns it. It reads the database directly; the API remains
+the documented interface for any other frontend, and each view can move onto
+it. Its analyst-consensus panel still takes one date for all three banks,
+which hides UOB's consensus; `ingest.yahoo_analyst.latest_per_bank` is the
+fix the API uses.
+
 ---
+
+### 24. The chatbot's input is sorted by a model, not by word lists
+
+*2026-10-04, at the project owner's request.* Since 26 Sep (decision 19) the
+chatbot answered advice-seeking and off-topic questions with fixed replies,
+chosen by regular expressions and keyword lists in `chatbot/guards.py`. The
+lists declined all 7 advice questions in the gold set, but on 4 Oct a probe
+found what word lists can't do well: a weather question asked mid-conversation
+went to the model; "hi" and "what can you do?" got "That's outside what I can
+help with"; "any news on the weather?" and "football results" passed because
+"news" and "results" are bank words; and "what's my DBS account balance?"
+reached a model with no tool for it. Extending the lists would only move the
+edge, and they can't read paraphrases or other languages.
+
+Decided: a local model sorts each question into one intent from
+`config/intents.yaml` (in_scope, advice, other_bank, greeting, thanks,
+goodbye, help, service, injection, feedback, off_topic), given the
+conversation's bank, aspect and previous question, through Ollama's
+structured output, the same pattern as the aspect classifier (decision 16).
+Only in_scope reaches the chatbot model; every other intent gets its reviewed
+fixed reply from the same file. The definitions, few-shot examples and
+replies live in the YAML, not the code. A prompt rule covers questions that
+mix an unrelated part with a real one.
+
+Costs and how they are handled. A second model call per turn (about a second
+or two locally): measured by `chatbot/eval_intent.py`, which scores the
+classifier on every labelled question (accuracy, each intent's precision and
+recall, real questions wrongly blocked, questions let through, latency). It
+is no longer deterministic: an advice question could reach the model, whose
+prompt still says to decline, so advice recall is reported on its own. If
+the classifier is down it fails open: the question goes to the model and the
+turn records no intent. The output checks (decision 19) stay rules, since
+they compare the answer with what the tools returned.
+
+*Decided 2026-10-04 (PLAN section 2):* every hosted backend (Gemini, Claude,
+OpenAI or Groq) is denied Reddit text, CNA text and text from unlisted
+sources, the safe default given Reddit's developer policy on third-party use
+of its content; the demo model is `llama3.1:8b`; strip enforcement and the
+aspect query are on by default; and the 7- and 30-day figures count back from
+the newest sentence, labelled "as of" its date.
 
 ## Notable implementation details
 

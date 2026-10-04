@@ -116,6 +116,26 @@ def test_fetch_all_resumes_from_the_cache(tmp_path, monkeypatch):
     assert fetched == ["2", "1", "3"] and set(ca.load_cache(path)) == {"1", "2", "3"}
 
 
+def test_fetch_all_retries_a_cached_failure_but_not_a_missing_page(tmp_path, monkeypatch):
+    # A network error or a server error is a blip; caching it lost the article
+    # for good. A 404 is a page that is gone.
+    path = tmp_path / "articles.jsonl"
+    path.write_text("".join(json.dumps(r) + "\n" for r in [
+        {"id": "1", "error": "no text (live status 503)"},
+        {"id": "2", "error": "no text (live status None)"},
+        {"id": "3", "error": "no text (live status 404)"},
+        {"id": "4", "text": "DBS rejected the claim."},
+    ]))
+    fetched = []
+    monkeypatch.setattr(ca, "fetch_article",
+                        lambda c: fetched.append(c["id"]) or {"id": c["id"], "text": "fetched"})
+    ca.fetch_all({k: {"id": k} for k in "1234"}, path=str(path))
+    assert fetched == ["2", "1"]
+    cache = ca.load_cache(str(path))
+    assert cache["1"]["text"] == "fetched" and cache["2"]["text"] == "fetched"   # the retry wins
+    assert "error" in cache["3"] and cache["4"]["text"] == "DBS rejected the claim."
+
+
 def test_candidates_are_discovered_once_then_read_from_the_cache(tmp_path, monkeypatch):
     path = str(tmp_path / "candidates.json")
     calls = []

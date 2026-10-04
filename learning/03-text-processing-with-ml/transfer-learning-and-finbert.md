@@ -67,7 +67,7 @@ materially better and costs nothing.
 | Embedding, mean pooling, MPS device selection | `aspects/embed.py` |
 | Embedding cache (101 MB `.npz`) | `aspects/embed_store.py` |
 | Zero-shot classification, `model_version = finbert-base-zeroshot-v1` | `sentiment/score.py` |
-| Fine-tuning script; first real run 2026-09-30, three seeds ([results](../../docs/evidence/finetune-2026-09-30.md)) | `train/finetune.py` |
+| Fine-tuning script; first real run 2026-09-30, three seeds ([results](../../docs/evidence/finetune-2026-09-30.md)); on 2026-10-01 the readable aspect name as input, 0.604 ± 0.035 against base FinBERT's 0.571 ([results](../../docs/evidence/finetune-fixes-2026-10-01.md); selection in [model-selection-under-noise](model-selection-under-noise.md)) | `train/finetune.py` |
 | Baseline comparison harness | `train/evaluate.py` |
 
 The `model_version` column in `aspect_sentiment` is part of that table's
@@ -155,6 +155,22 @@ retrieval quality. That trade was never measured here, which is a fair
 criticism.
 
 ---
+
+### Keep the pretrained head's label order (3 Oct 2026)
+
+Fine-tuning reuses the pretrained classifier head when its shape fits. Base
+FinBERT's head is ordered positive 0, negative 1, neutral 2. This project
+loaded it with its own order, negative 0, neutral 1, positive 2. The shapes
+matched, so the weights were kept and only the names changed: every
+fine-tuned model started with each output answering for the wrong class, and
+had to unlearn that on 831 training rows.
+
+Two things make this easy to miss. Nothing fails: the model trains and
+scores reasonably. And the bias runs against the fine-tuned model, so the
+reported lead over base FinBERT (0.604 ± 0.035 against 0.571) is
+understated, not inflated. Training now reads the order from the base
+model's own config. The fix is cheap; the lesson is to check `id2label`
+whenever you pass `num_labels` to `from_pretrained`.
 
 ## 5. Evaluate
 

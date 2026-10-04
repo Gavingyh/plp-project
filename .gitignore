@@ -28,3 +28,15 @@ data/logs/daily_batch.log
 
 # LLM aspect-classifier answer cache (aspects/llm_classify.py)
 data/aspect_llm/
+
+# index previews from aggregate/preview.py
+data/preview/
+
+# Personal Claude Code notes
+CLAUDE.local.md
+
+# Claude Code: personal settings, worktrees, and the latest validation run
+# (dated copies are kept in docs/validation/)
+.claude/settings.local.json
+.claude/worktrees/
+/VALIDATION.md

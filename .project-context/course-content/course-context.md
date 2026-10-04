@@ -270,4 +270,37 @@ disagreements are queued for people to settle; the sentences, Reddit text
 included, were sent to Anthropic under the project's Claude subscription; the
 run can be inspected but not exactly reproduced.
 
+**2026-10-01 evening to 2026-10-02 — Claude Code (Opus 5.5), evaluation and
+fixes, partly unattended.** The chatbot's gold set v2 and conversations on both
+local models, an LLM judge, cross-validation on two more seeds, a blind top-up
+labelling sheet, an examiner-style assessment and team to-do list, fixes to
+the chatbot found by those runs, and two more Opus 5.5 rating rounds.
+
+- *What it did well.* It read every flagged chatbot answer against the tool
+  data and found that all 25 invented citations came from answers that never
+  searched; it then checked the LLM judge against those known failures before
+  anyone spent time calibrating it, and found the judge passed all of them.
+  It replayed a proposed fix on the recorded answers, so the comparison held
+  the model's output fixed. Cross-validation on two more seeds showed a
+  configuration it had chosen on 1 October was no better than the baseline,
+  and it corrected the docs that relied on it.
+- *What went wrong and was caught by checking.* It first estimated that the
+  top-up sheet's NIM rows would fall short and the others would not; an
+  Opus rating round showed NIM would be fine and macro would fall short. It
+  stated one relevance figure as 0.589 (the true minimum was 0.5853), and its
+  first invented-citation count for the night was 26 (25: one flag was a
+  tool call written as text). A pgrep-based wait matched its own command
+  line and was replaced before it mattered.
+- *Opus 5.5 as a rater again (DESIGN decision 22).* Eight more subagents
+  labelled, blind, the top-up sheet's aspects (268 sentences) and the bank-NER
+  gold sheet (201); transcripts audited, none opened another file. As before,
+  the sentences (Reddit text included) went to Anthropic under the Claude
+  subscription, and the labels replace nothing: they are a provisional
+  reference until people label those sheets. Using such labels to *train* a
+  model (distillation) was discussed and not done: Anthropic's consumer terms
+  may restrict using outputs to train AI models, so that needs checking first.
+- *A merge decided by a person.* A teammate pushed a dashboard redesign while
+  Claude Code had removed the dashboard at the team's request; Claude Code
+  stopped and asked, and the team chose to keep the teammate's dashboard.
+
 **Keep updating this section as work continues — needed verbatim-ish for the report's GenAI declaration.**

@@ -7,13 +7,11 @@ Every path a question can take through the chatbot, including the points where c
 ```mermaid
 flowchart TB
   accTitle: One chatbot turn
-  accDescr: Two input guards can answer without the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check and a figure check before it is shown.
+  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check and a figure check before it is shown.
 
   q(["Question"])
-  adv{"Asks to buy, sell, hold<br/>or predict a price?"}
-  advR["Fixed reply: not financial advice,<br/>what the data can show"]
-  sco{"Only about another bank,<br/>or nothing covered?"}
-  scoR["Fixed reply: what<br/>this assistant covers"]
+  cls{"Intent classifier (local model):<br/>what is the question asking for?"}
+  fixR["Fixed reply for that intent<br/>(config/intents.yaml)"]
   ctx["System prompt + conversation state<br/>+ last three turns"]
   llm["Model: final text<br/>or tool calls"]
   tc{"Tool calls?"}
@@ -28,11 +26,9 @@ flowchart TB
   w2["Append NUMBER CHECK"]
   out(["Answer and turn record"])
 
-  q --> adv
-  adv -- yes --> advR --> out
-  adv -- no --> sco
-  sco -- yes --> scoR --> out
-  sco -- no --> ctx --> llm --> tc
+  q --> cls
+  cls -- "advice, another bank, small talk, help,<br/>service, injection, feedback, off-topic" --> fixR --> out
+  cls -- "in scope, or no answer" --> ctx --> llm --> tc
   tc -- yes --> tools --> cap
   cap -- no --> llm
   cap -- yes --> budget --> emp
@@ -49,8 +45,11 @@ Rendered for the report: [SVG](img/07-chatbot-turn.svg) · [PNG](img/07-chatbot-
 
 ## What this shows and doesn't show
 
-The two guards and the three checks are code, so they behave the same whichever model
-runs (`chatbot/guards.py`, DESIGN decision 19). Everything between "System prompt" and
+The intent classifier is its own local model with fixed replies, and the three checks are
+code, so they behave the same whichever chatbot model runs (`chatbot/intent.py`,
+`chatbot/guards.py`, DESIGN decisions 19 and 24). If the classifier can't answer, the
+question goes on to the model, whose prompt still says to decline advice and unrelated
+questions. Everything between "System prompt" and
 "Tool calls?" is the model's own behaviour. Warnings are appended, not substituted: a
 flagged answer is still shown, with the warning under it. The eight-call cap is per
 backend; Ollama's is shown and the others use the same value. Evaluation results for this
@@ -62,21 +61,21 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| guards run first, advice then scope | `chatbot/agent.py:157` | `for guard, reply in (("advice", advice_reply(question, context_banks)),` |
-| advice guard | `chatbot/guards.py:64` | `def advice_reply(question: str` |
-| scope guard | `chatbot/guards.py:104` | `def scope_reply(question: str)` |
-| state and turns passed to the model | `chatbot/agent.py:169` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
-| state added to the system prompt | `chatbot/prompts.py:46` | `def with_state(system: str` |
-| last three turns | `chatbot/agent.py:90` | `HISTORY_TURNS = 3` |
-| tool-call loop, eight calls | `chatbot/backends/ollama_backend.py:34` | `MAX_TOOL_ITERATIONS = 8` |
-| loop | `chatbot/backends/ollama_backend.py:76` | `for _ in range(MAX_TOOL_ITERATIONS):` |
-| tool calls? | `chatbot/backends/ollama_backend.py:81` | `tool_calls = message.get("tool_calls") or []` |
-| run the tools | `chatbot/backends/ollama_backend.py:90` | `result_json = tool_executor(name, arguments)` |
-| record calls and results | `chatbot/agent.py:107` | `def execute(self, name: str, tool_input: dict)` |
-| budget message | `chatbot/backends/ollama_backend.py:97` | `within the tool-call budget` |
-| empty answer check | `chatbot/agent.py:171` | `if not (answer or "").strip(` |
-| empty answer replaced, checks skipped | `chatbot/agent.py:174` | `return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY` |
-| citation check | `chatbot/agent.py:177` | `if tracker.answer_has_unverified_citation(answer):` |
-| sentence ids checked | `chatbot/agent.py:131` | `if unverified_sentence_ids(answer, self.verified_sentence_ids):` |
-| figure check | `chatbot/agent.py:184` | `figures = unverified_numbers(` |
-| number warning appended | `chatbot/agent.py:189` | `result.answer += UNVERIFIED_NUMBER_WARNING.format(` |
+| intent classifier runs first | `chatbot/agent.py:392` | `intent = intents.classify_intent(question, state, previous)` |
+| classifier | `chatbot/intent.py:106` | `def classify_intent(question: str` |
+| fixed reply for the intent | `chatbot/intent.py:125` | `def reply_for(intent` |
+| state and turns passed to the model | `chatbot/agent.py:404` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
+| state added to the system prompt | `chatbot/prompts.py:53` | `def with_state(system: str` |
+| last three turns | `config/chatbot.yaml:36` | `turns:        {value: 3}` |
+| tool-call loop, eight calls | `config/chatbot.yaml:22` | `max_tool_iterations: {value: 8}` |
+| loop | `chatbot/backends/ollama_backend.py:84` | `for _ in range(MAX_TOOL_ITERATIONS):` |
+| tool calls? | `chatbot/backends/ollama_backend.py:89` | `tool_calls = message.get("tool_calls") or []` |
+| run the tools | `chatbot/backends/ollama_backend.py:106` | `result_json = tool_executor(name, arguments)` |
+| record calls and results | `chatbot/agent.py:172` | `def execute(self, name: str, tool_input: dict, by: str = "model")` |
+| budget message | `chatbot/backends/ollama_backend.py:113` | `within the tool-call budget` |
+| empty answer check | `chatbot/agent.py:406` | `if not (answer or "").strip(` |
+| empty answer replaced, checks skipped | `chatbot/agent.py:409` | `return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY` |
+| citation check | `chatbot/agent.py:413` | `enforced, flagged = enforce_evidence(answer, tracker, question, mode)` |
+| sentence ids checked | `chatbot/agent.py:228` | `if unverified_sentence_ids(answer, self.known_ids()):` |
+| figure check | `chatbot/agent.py:430` | `figures = unverified_numbers(` |
+| number warning appended | `chatbot/agent.py:436` | `result.answer += UNVERIFIED_NUMBER_WARNING.format(` |

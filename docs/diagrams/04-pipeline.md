@@ -78,23 +78,23 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | Reddit adapter | `ingest/arctic_shift.py:40` | `BASE_URL = "https://arctic-shift` |
-| news filter | `ingest/news_filter.py:260` | `def filter_and_dedup(` |
-| news sources | `ingest/news_filter.py:55` | `NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news", "cna")` |
-| consensus writes analyst_consensus | `ingest/yahoo_analyst.py:131` | `def upsert(rows` |
+| news filter | `ingest/news_filter.py:258` | `def filter_and_dedup(` |
+| news sources | `ingest/news_filter.py:54` | `NEWS_SOURCES = ("newsapi", "alphavantage", "yahoo_news", "google_news", "cna")` |
+| consensus writes analyst_consensus | `ingest/yahoo_analyst.py:146` | `def upsert(rows` |
 | preprocessing | `preprocess/pipeline.py:90` | `def run() -> dict:` |
 | bank attribution per sentence | `preprocess/pipeline.py:62` | `def _resolve_sentence_bank(` |
-| sentence splitting | `preprocess/segment.py:35` | `def segment(text: str)` |
-| embeddings | `aspects/embed_store.py:47` | `def update() -> dict:` |
+| sentence splitting | `preprocess/segment.py:62` | `def segment(text: str)` |
+| embeddings | `aspects/embed_store.py:48` | `def update() -> dict:` |
 | FinBERT embedding model | `aspects/embed.py:17` | `MODEL_NAME = "ProsusAI/finbert"` |
 | discovery: UMAP | `aspects/discover.py:90` | `reducer = umap.UMAP(` |
 | discovery: HDBSCAN | `aspects/discover.py:95` | `clusterer = hdbscan.HDBSCAN(` |
-| assignment from seed centroids | `aspects/assign.py:61` | `vecs = embed_sentences(cfg["seed_terms"])` |
-| sentiment scoring | `sentiment/score.py:97` | `def run() -> dict:` |
-| zero-shot base FinBERT | `sentiment/score.py:38` | `MODEL_NAME = "ProsusAI/finbert"` |
-| index aggregation | `aggregate/index.py:252` | `def run() -> int:` |
-| fine-tuning code | `train/finetune.py:235` | `def run(seed: int = 42` |
+| assignment from seed centroids | `aspects/assign.py:67` | `vecs = embed_sentences(cfg["seed_terms"])` |
+| sentiment scoring | `sentiment/score.py:110` | `def run() -> dict:` |
+| zero-shot base FinBERT | `sentiment/score.py:43` | `MODEL_NAME = "ProsusAI/finbert"` |
+| index aggregation | `aggregate/index.py:291` | `def run() -> int:` |
+| fine-tuning code | `train/finetune.py:252` | `def run(seed: int = 42` |
 | first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:36` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |
-| evidence read by the chatbot | `chatbot/retrieval.py:103` | `all_ids, all_vecs = load_for_search()` |
+| evidence read by the chatbot | `chatbot/retrieval.py:142` | `all_ids, all_vecs = load_for_search()` |
 
 ## Planned elements
 

@@ -107,8 +107,8 @@ consequence of adding 34,000 sentences.
   sentences assigned to `net_interest_margin` when the Reddit corpus contains
   zero occurrences of the phrase — and nothing in this table addresses it.
 - It does not account for the proposal commitment. Dropping the four a-priori
-  aspects is a change to what was proposed and needs the supervisor's
-  agreement, not a config edit.
+  aspects is a change to what was proposed and needs a team decision,
+  explained in the report, not a config edit.
 
 ### Suggested next step for the team
 

@@ -19,11 +19,12 @@ Automated checks:
 NOT automated, and left in the transcript for a human to grade: whether a
 stated number is correct, and whether cited evidence is actually relevant.
 Free-text number extraction is unreliable enough that a wrong automated
-check would be worse than an honest "read this yourself".
+check would be worse than a plain "read this yourself".
 
 USAGE:
-  python -m chatbot.run_eval                       # default backend
-  python -m chatbot.run_eval --backend ollama
+  python -m chatbot.run_eval                       # default backend, gold set v1 (23)
+  python -m chatbot.run_eval --backend ollama --set v2 --tag llama8b-v2   # v2 (32)
+  python -m chatbot.run_eval --multi-turn --backend ollama               # the conversations
   python -m chatbot.run_eval --limit 5              # smoke test
 """
 
@@ -32,8 +33,11 @@ import json
 import os
 from datetime import datetime, timezone
 
-from chatbot.agent import answer_turn
-from chatbot.eval_gold_set import GOLD_SET, looks_like_advice_decline, looks_like_no_data_response
+from chatbot import settings
+from chatbot.agent import Conversation, answer_turn
+from chatbot.eval_gold_set import (GOLD_SET, GOLD_SET_V2, MULTI_TURN, looks_like_advice_decline,
+                                   looks_like_no_data_response,
+                               SCOPE_SET, MULTI_TURN_SCOPE, looks_like_declining_unrelated_part)
 from config.logging_config import get_logger, setup_logging
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,13 +57,13 @@ def _output_paths(tag: str | None) -> tuple[str, str]:
 
 
 def _describe_model(backend_name: str | None) -> str:
-    """Which model actually answered - 'auto-detected' isn't reproducible."""
+    """Which model actually answered - 'the configured default' isn't reproducible."""
     try:
         from chatbot.backends import get_backend
         backend = get_backend(backend_name)
         return f"{type(backend).__name__} / {getattr(backend, 'model', 'unknown')}"
     except Exception:
-        return backend_name or "auto-detected"
+        return backend_name or "the configured default"
 
 logger = get_logger(__name__)
 
@@ -68,6 +72,7 @@ def _check_tool_selection(item: dict, calls: list[dict]) -> dict:
     expected_tool = item.get("expected_tool")
     if not expected_tool:
         return {"applicable": False}
+    calls = [c for c in calls if c.get("by", "model") == "model"]  # not a search the harness made
     matching = [c for c in calls if c["name"] == expected_tool]
     if not matching:
         return {"applicable": True, "correct": False, "reason": "expected tool never called"}
@@ -94,15 +99,32 @@ def _check_behavior(item: dict, answer: str) -> dict:
         return {"applicable": True, "correct": ok,
                 "reason": None if ok else "no advice-decline language found"}
     if expected == "decline_or_no_data":
-        ok = looks_like_advice_decline(answer) or looks_like_no_data_response(answer)
+        # "I can't help with that" declines too: the check missed it until 4 Oct 2026.
+        ok = (looks_like_advice_decline(answer) or looks_like_no_data_response(answer)
+              or looks_like_declining_unrelated_part(answer))
         return {"applicable": True, "correct": ok,
                 "reason": None if ok else "answered without declining or flagging no data"}
+    if expected == "decline_unrelated_part":
+        ok = looks_like_declining_unrelated_part(answer)
+        return {"applicable": True, "correct": ok,
+                "reason": None if ok else "didn't say it can't help with the unrelated part"}
     return {"applicable": False}
 
 
+def _check_guard(item: dict, guard: str | None) -> dict:
+    """Whether the right input guard answered: `expected_guard` names it, or is
+    None for a question that must reach the model."""
+    if "expected_guard" not in item:
+        return {"applicable": False}
+    ok = guard == item["expected_guard"]
+    return {"applicable": True, "correct": ok,
+            "reason": None if ok else f"guard {guard!r}, expected {item['expected_guard']!r}"}
+
+
 def run(backend_name: str | None = None, limit: int | None = None,
-        tag: str | None = None) -> dict:
-    items = GOLD_SET[:limit] if limit else GOLD_SET
+        tag: str | None = None, gold: str = "v1") -> dict:
+    gold_set = {"v1": GOLD_SET, "v2": GOLD_SET_V2, "scope": SCOPE_SET}[gold]
+    items = gold_set[:limit] if limit else gold_set
     results_path, summary_path = _output_paths(tag)
     os.makedirs(EVAL_DIR, exist_ok=True)
     model_desc = _describe_model(backend_name)
@@ -114,31 +136,33 @@ def run(backend_name: str | None = None, limit: int | None = None,
         try:
             turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)
             answer, calls, error = turn.answer, turn.calls, None
-            guard, numbers = turn.guard, turn.unverified_numbers
+            guard, numbers, enforced = turn.guard, turn.unverified_numbers, turn.evidence_enforced
         except Exception as e:
-            answer, calls, error, guard, numbers = "", [], str(e), None, []
+            answer, calls, error, guard, numbers, enforced = "", [], str(e), None, [], None
             logger.warning("[%s] FAILED: %s", item["id"], e)
 
-        fabricated = "VERIFICATION WARNING" in answer
-        tool_check = _check_tool_selection(item, calls)
+        fabricated = bool(turn.citation_unverified) if error is None else False
+        tool_check = _check_tool_selection(item, calls) if not guard or "expected_tool" in item else {"applicable": False}
         behavior_check = _check_behavior(item, answer)
+        guard_check = _check_guard(item, guard)
 
         results.append({
             "id": item["id"], "category": item["category"], "question": item["question"],
-            "answer": answer, "error": error,
-            # The result is kept, not just the call. Without it the transcript
-            # cannot answer the one question this suite deliberately does not
-            # automate - whether a number the model stated is the number the
-            # tool returned - which is exactly the human check docs/STATUS.md
-            # lists as outstanding. The tracker already records it
-            # (chatbot/agent.py); this used to drop it on the way to disk.
+            "answer": answer, "model_answer": (turn.model_answer if error is None else None), "error": error,
+            # Keep each call's result, not just the call: a person checking
+            # whether a stated number is the number the tool returned needs it
+            # (the check this suite leaves to people).
             "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
-                             "result": c.get("result")} for c in calls],
+                             "result": c.get("result"), **({"by": c["by"]} if c.get("by") else {})}
+                            for c in calls],
             "citation_fabricated": fabricated,
+            "evidence_enforced": enforced,
             "input_guard": guard,
+            "intent": (turn.intent if error is None else None),
             "unverified_numbers": numbers,
             "tool_selection_check": tool_check,
             "behavior_check": behavior_check,
+            "guard_check": guard_check,
         })
 
     with open(results_path, "w") as f:
@@ -170,11 +194,13 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
     behavior_correct = [r for r in behavior_checked if r["behavior_check"]["correct"]]
     n_guarded = sum(1 for r in results if r.get("input_guard"))
     n_numbers = sum(1 for r in results if r.get("unverified_numbers"))
+    n_enforced = sum(1 for r in results if r.get("evidence_enforced"))
 
     lines = [
         f"# Chatbot evaluation summary",
         f"",
-        f"Model: `{model_desc or 'auto-detected'}`  ",
+        f"Model: `{model_desc or 'the configured default'}`  ",
+        f"Intent classifier: `{settings.get('models.intent')}`  ",
         f"Run at: {datetime.now(timezone.utc).isoformat()}  ",
         f"Questions: {n}  ",
         f"Errors (backend/network failures): {n_errors}",
@@ -189,6 +215,8 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
         f"({100 * n_fabricated / n:.0f}%)",
         f"- Answered by an input guard without calling the model: {n_guarded}/{n}",
         f"- Answers carrying a figure no tool returned: {n_numbers}/{n}",
+        *([f"- Evidence written without a search, removed by CHATBOT_ENFORCE_EVIDENCE: {n_enforced}/{n}"]
+          if n_enforced else []),
         f"",
         f"## Failures needing a look",
         f"",
@@ -216,7 +244,7 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
 
     lines += [
         "",
-        "## Not automated — read the full transcript for these",
+        "## Not automated: read the full transcript for these",
         "",
         "Whether stated numbers are correct, and whether cited evidence is "
         "actually relevant to the question. See the results `.jsonl` beside this file "
@@ -226,13 +254,73 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
     return "\n".join(lines)
 
 
+def check_turn(spec: dict, turn) -> dict:
+    """The single-question checks applied to one turn of a conversation."""
+    tool = _check_tool_selection(spec, turn.calls)
+    behavior = _check_behavior(spec, turn.answer)
+    guard = _check_guard(spec, getattr(turn, "guard", None))
+    checked = [c for c in (tool, behavior, guard) if c["applicable"]]
+    return {"tool_selection_check": tool, "behavior_check": behavior, "guard_check": guard,
+            "correct": all(c["correct"] for c in checked) if checked else None}
+
+
+def run_multi_turn(backend_name: str | None = None, tag: str | None = None,
+                   scenarios: list[dict] = MULTI_TURN, conversation=Conversation) -> dict:
+    """Each scenario in one Conversation, so later turns rely on memory."""
+    results = []
+    for sc in scenarios:
+        conv = conversation(backend_name=backend_name)
+        for i, spec in enumerate(sc["turns"], 1):
+            try:
+                turn = conv.ask(spec["question"])
+                check, error = check_turn(spec, turn), None
+                answer, calls = turn.answer, turn.calls
+            except Exception as e:
+                check, error, answer, calls = {"correct": False}, str(e), "", []
+            results.append({"scenario": sc["id"], "turn": i, "question": spec["question"], "answer": answer,
+                            "error": error, "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
+                                                             **({"by": c["by"]} if c.get("by") else {})}
+                                                            for c in calls],
+                            **check})
+    turns_ok = sum(1 for r in results if r["correct"])
+    by_scenario = {}
+    for r in results:
+        by_scenario.setdefault(r["scenario"], []).append(bool(r["correct"]))
+    scen_ok = sum(1 for v in by_scenario.values() if all(v))
+    lines = [f"# Multi-turn evaluation", "", f"Model: `{_describe_model(backend_name)}`  ",
+             f"Turns correct: {turns_ok}/{len(results)}; conversations with every turn correct: "
+             f"{scen_ok}/{len(by_scenario)}", "", "| scenario | turn | question | correct | reason |", "|---|---|---|---|---|"]
+    for r in results:
+        reason = (r.get("error") or (r.get("tool_selection_check") or {}).get("reason")
+                  or (r.get("behavior_check") or {}).get("reason") or (r.get("guard_check") or {}).get("reason") or "")
+        lines.append(f"| {r['scenario']} | {r['turn']} | {r['question']} | {r['correct']} | {reason} |")
+    os.makedirs(EVAL_DIR, exist_ok=True)
+    suffix = f"_{tag}" if tag else ""
+    with open(os.path.join(EVAL_DIR, f"chatbot_multiturn_results{suffix}.jsonl"), "w") as f:
+        for r in results:
+            f.write(json.dumps(r, default=str) + "\n")
+    with open(os.path.join(EVAL_DIR, f"chatbot_multiturn_summary{suffix}.md"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+    return {"turns": len(results), "turns_correct": turns_ok,
+            "scenarios": len(by_scenario), "scenarios_correct": scen_ok}
+
+
 if __name__ == "__main__":
     setup_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend", default=None)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--set", dest="gold", choices=["v1", "v2", "scope"], default="v1",
+                        help="gold set: v1 (23, frozen 26 Sep), v2 (32, adds the newer aspects) or scope "
+                             "(small talk, off-topic, service and controls, 4 Oct; with --multi-turn, "
+                             "its conversations)")
+    parser.add_argument("--multi-turn", action="store_true", help="run the multi-turn conversations instead")
     parser.add_argument("--tag", default=None,
                         help="suffix for the output files, so one run doesn't "
                              "overwrite another (e.g. the model name)")
     args = parser.parse_args()
-    print(run(backend_name=args.backend, limit=args.limit, tag=args.tag))
+    if args.multi_turn:
+        print(run_multi_turn(backend_name=args.backend, tag=args.tag,
+                             scenarios=MULTI_TURN_SCOPE if args.gold == "scope" else MULTI_TURN))
+    else:
+        print(run(backend_name=args.backend, limit=args.limit, tag=args.tag, gold=args.gold))

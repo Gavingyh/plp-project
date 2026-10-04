@@ -13,7 +13,7 @@ test).
 
 `train/finetune.py` computed balanced class weights
 (`compute_class_weight("balanced")`) and printed them, but the `Trainer` was
-never given them: every model up to 30 Sep, including E1 to E3, trained
+never given them: every model up to 30 Sep, including the 30 Sep experiments, trained
 with plain cross-entropy. The docstring, the technical spec and
 [finetune-2026-09-30.md](finetune-2026-09-30.md) said "class-weighted"; they
 now say what ran. Weighting is now a real option, default `none`, so the
@@ -56,7 +56,7 @@ Seed 42, 8 epochs, the 30 Sep train/dev split, dev macro-F1 per epoch:
 
 | padding | epoch 1 | 2 | 3 | 4 | 5 | best |
 |---|---|---|---|---|---|---|
-| whole set to 128 (E1, 30 Sep) | 0.389 | 0.569 | **0.641** | 0.635 | 0.630 | 0.641, epoch 3 |
+| whole set to 128 (sentence + aspect, 30 Sep) | 0.389 | 0.569 | **0.641** | 0.635 | 0.630 | 0.641, epoch 3 |
 | per batch (1 Oct) | 0.464 | 0.500 | **0.626** | 0.608 | 0.619 | 0.626, epoch 3 |
 
 Both stop after epoch 5 with the best at epoch 3. On 147 dev rows a 0.015
@@ -84,7 +84,7 @@ macro-F1:
 | `--class-weights prior` | 0.398 | 0.555 | 0.530 | 0.623 | 0.517 | 0.525 ± 0.082 | −0.096 | 1 |
 | `--source-weights` | 0.690 | 0.638 | 0.604 | 0.625 | 0.606 | 0.633 ± 0.035 | +0.012 | 4 |
 | `--aspect-text label` | 0.682 | 0.610 | 0.652 | 0.627 | 0.617 | **0.637 ± 0.029** | +0.016 | 4 |
-| *none, whole-set padding (E3, 30 Sep)* | *0.667* | *0.614* | *0.601* | *0.628* | *0.598* | *0.622 ± 0.028* | | |
+| *none, whole-set padding (cross-validation, 30 Sep)* | *0.667* | *0.614* | *0.601* | *0.628* | *0.598* | *0.622 ± 0.028* | | |
 
 **How big is noise?** The first and last rows are the same configuration
 apart from padding, which doesn't change what the model computes. Their
@@ -104,6 +104,12 @@ like the corpus, which doesn't exist; the test split must not be used for
 selection. It is reported, not chosen.
 
 ## Choosing the final configuration
+
+*Updated 2026-10-02.* Repeated on seeds 1 and 7, the readable label's lead
+over the baseline disappears (+0.005 over 15 paired folds, 8 better):
+[noise-floor-cv-2026-10-02.md](noise-floor-cv-2026-10-02.md). The choice
+below was made on seed 42 alone and stands as a configuration, not as an
+improvement.
 
 The rule, fixed before the combined run started: combine every change whose
 CV mean beat the baseline (balanced, source, label; `prior` can't join
@@ -133,13 +139,13 @@ negative, 166 neutral, 94 positive):
 | configuration | CV dev | test macro-F1 (seeds 42, 1, 7) | mean ± sd | average of the 3 models | negative F1 | neutral F1 | positive F1 | accuracy |
 |---|---|---|---|---|---|---|---|---|
 | base FinBERT, zero-shot | — | 0.571 | — | — | 0.30 | 0.78 | 0.64 | 0.70 |
-| E1, 30 Sep: aspect key | 0.622 | 0.607, 0.560, 0.563 | 0.577 ± 0.027 | 0.573 | 0.44 | 0.66 | 0.63 | 0.66, 0.60, 0.60 |
+| 30 Sep, sentence + aspect: aspect key | 0.622 | 0.607, 0.560, 0.563 | 0.577 ± 0.027 | 0.573 | 0.44 | 0.66 | 0.63 | 0.66, 0.60, 0.60 |
 | **1 Oct: readable aspect label** | **0.637** | **0.630, 0.617, 0.565** | **0.604 ± 0.035** | **0.615** | 0.45 | 0.70 | 0.66 | 0.68, 0.67, 0.61 |
 | TF-IDF + logistic regression | — | 0.515 | — | — | 0.35 | 0.65 | 0.55 | 0.57 |
 | VADER lexicon | — | 0.427 | — | — | 0.24 | 0.50 | 0.54 | 0.49 |
 
 Per-class F1 is the mean over the three seeds. Each seed trains on the same
-85/15 split as the E1 model with that seed, so the pairs compare directly:
+85/15 split as the 30 Sep sentence-plus-aspect model with that seed, so the pairs compare directly:
 +0.022, +0.057 and +0.002.
 
 **Where the errors are** (counts out of 299; the 3-model average in the
@@ -148,12 +154,12 @@ last column of each group):
 | | errors | neutral called polar | polar called neutral | positive ↔ negative |
 |---|---|---|---|---|
 | base FinBERT | 90 | 15 | 70 | 5 |
-| E1 seeds 42, 1, 7 / average | 102, 120, 120 / 114 | 48, 82, 73 / 70 | 41, 23, 35 / 31 | 13, 15, 12 / 13 |
+| 30 Sep seeds 42, 1, 7 / average | 102, 120, 120 / 114 | 48, 82, 73 / 70 | 41, 23, 35 / 31 | 13, 15, 12 / 13 |
 | label seeds 42, 1, 7 / average | 96, 99, 118 / 101 | 52, 50, 75 / 57 | 34, 37, 29 / 32 | 10, 12, 14 / 12 |
 
 **Accuracy by source** (seeds 42, 1, 7 / average of the three):
 
-| source (test rows) | base FinBERT | E1, 30 Sep | readable label, 1 Oct |
+| source (test rows) | base FinBERT | sentence + aspect, 30 Sep | readable label, 1 Oct |
 |---|---|---|---|
 | Reddit (184) | 0.70 | 0.64, 0.51, 0.58 / 0.56 | 0.66, 0.63, 0.55 / 0.63 |
 | earnings (79) | 0.73 | 0.72, 0.78, 0.67 / 0.76 | 0.73, 0.75, 0.72 / 0.73 |
@@ -162,7 +168,7 @@ last column of each group):
 
 The error and per-source tables come from re-scoring the saved models on the
 CPU (`train.evaluate`'s functions with the device set to CPU, while the GPU
-ran J2); every macro-F1 matched the GPU evaluation to four decimals.
+ran the LLM aspect classifier); every macro-F1 matched the GPU evaluation to four decimals.
 
 ## What it shows
 

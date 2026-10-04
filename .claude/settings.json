@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest *)",
+      "Bash(.venv-plp/bin/python3 -m pytest *)",
+      "Bash(.venv-plp/bin/python3 docs/diagrams/check_sources.py)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Edit(.env)",
+      "Edit(/data/plp.db)",
+      "Bash(git add -A)",
+      "Bash(git add -A *)",
+      "Bash(git add --all)",
+      "Bash(git add --all *)",
+      "Bash(git add .)",
+      "Bash(git commit -a *)",
+      "Bash(git commit -am *)",
+      "Bash(git commit --all *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)"
+    ]
+  }
+}

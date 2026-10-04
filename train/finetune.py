@@ -8,11 +8,11 @@ pairs or a sentence in both splits (see check_splits there).
 Sentence-pair (NLI-style) input formulation:
   [CLS] {sentence} [SEP] {aspect} [SEP]  ->  3-way softmax
 One model for all aspects (aspect supplied as context), NOT a model-per-aspect
-— splitting ~1,000 examples across 6-10 aspects would leave ~100 each, too
+- splitting ~1,000 examples across 6-10 aspects would leave ~100 each, too
 few to fine-tune anything.
 
 Training config: LR 2e-5, batch 16, max_len 128, warmup 10%, early stopping
-on dev macro-F1, fixed seed (report mean +/- std across >=3 seeds — a single
+on dev macro-F1, fixed seed (report mean +/- std across >=3 seeds - a single
 run's F1 can be seed noise at this data size). Each batch is padded to its own
 longest sentence.
 
@@ -47,19 +47,30 @@ from torch.utils.data import Dataset
 from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
                           DataCollatorWithPadding, EarlyStoppingCallback, Trainer,
                           TrainingArguments)
-import yaml
 
-from train.labels import check_splits
+from train.labels import LABELS, check_splits
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CANDIDATES_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
 MODEL_OUT_DIR = os.path.join(BASE_DIR, "models", "finbert-absa")
 BASE_MODEL = "ProsusAI/finbert"
-LABELS = ["negative", "neutral", "positive"]
 LABEL2ID = {l: i for i, l in enumerate(LABELS)}
 
 
-ASPECTS_CONFIG = os.path.join(BASE_DIR, "config", "aspects.yaml")
+def head_label2id(model_name: str = None) -> dict[str, int]:
+    """The label ids to train with: the pretrained head's own order when it
+    names the three sentiment classes (ProsusAI/finbert: positive 0,
+    negative 1, neutral 2), else LABEL2ID for a head with no class meaning.
+
+    Fine-tuning keeps the pretrained head, whose shape matches. Training with
+    a different order, as every model up to 3 Oct 2026 did, starts each
+    output answering for the wrong class, which the model must then unlearn."""
+    from transformers import AutoConfig
+    cfg = AutoConfig.from_pretrained(model_name or BASE_MODEL)
+    order = {str(k).lower(): int(v) for k, v in (cfg.label2id or {}).items()}
+    return order if set(order) == set(LABELS) else dict(LABEL2ID)
+
+
 
 
 class PairDataset(Dataset):
@@ -118,8 +129,8 @@ class WeightedTrainer(Trainer):
 
 def aspect_labels() -> dict[str, str]:
     """Aspect key -> readable label from config/aspects.yaml."""
-    with open(ASPECTS_CONFIG, encoding="utf-8") as f:
-        return {k: v.get("label", k) for k, v in yaml.safe_load(f)["aspects"].items()}
+    from config import aspect_taxonomy
+    return aspect_taxonomy.labels()
 
 
 def corpus_shares(column: str) -> dict[str, float]:
@@ -129,8 +140,11 @@ def corpus_shares(column: str) -> dict[str, float]:
     conn = get_connection()
     try:
         if column == "label":
+            # Base FinBERT's labels only: with a fine-tuned version stored too, MIN(label) would mix the two.
+            from config.model_version import BASE_VERSION
             rows = conn.execute("SELECT label, COUNT(*) FROM (SELECT sentence_id, MIN(label) AS label "
-                                "FROM aspect_sentiment GROUP BY sentence_id) GROUP BY label").fetchall()
+                                "FROM aspect_sentiment WHERE model_version = ? GROUP BY sentence_id) "
+                                "GROUP BY label", (BASE_VERSION,)).fetchall()
         elif column == "source":
             rows = conn.execute("SELECT source, COUNT(*) FROM sentences GROUP BY source").fetchall()
         else:
@@ -164,12 +178,13 @@ def _load_labeled(split: str) -> pd.DataFrame:
     if df.empty:
         raise ValueError(
             f"No labeled rows found for split='{split}'. Labeling needs to happen "
-            "before this script can run — see docs/annotation-guideline.md."
+            "before this script can run - see docs/annotation-guideline.md."
         )
     return df
 
 
 INPUT_FORMAT_FILE = "input_format.json"
+DEV_IDS_FILE = "dev_ids.json"
 
 
 def write_input_format(model_dir: str, with_aspect: bool, aspect_text: str = "key") -> None:
@@ -201,14 +216,16 @@ def aspect_inputs(df: pd.DataFrame, aspect_text: str = "key") -> list[str]:
     return df["aspect"].tolist()
 
 
-def _tokenize(tokenizer, df: pd.DataFrame, with_aspect: bool = True, aspect_text: str = "key"):
-    """Unpadded encodings (the collator pads per batch)."""
+def _tokenize(tokenizer, df: pd.DataFrame, with_aspect: bool = True, aspect_text: str = "key",
+              label2id: dict[str, int] | None = None):
+    """Unpadded encodings (the collator pads per batch), with labels as ids in
+    `label2id`'s order (LABEL2ID if not given)."""
     texts = df["text"].tolist()
     if with_aspect:   # sentence-pair: [CLS] sentence [SEP] aspect [SEP]
         enc = tokenizer(texts, aspect_inputs(df, aspect_text), truncation=True, max_length=128)
     else:             # sentence alone: [CLS] sentence [SEP]
         enc = tokenizer(texts, truncation=True, max_length=128)
-    labels = [LABEL2ID[l] for l in df["label"]]
+    labels = [(label2id or LABEL2ID)[l] for l in df["label"]]
     return enc, labels
 
 
@@ -254,14 +271,16 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
         train_df, dev_df = fold_split(train_dev_df, folds, fold, seed)
 
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-    train_enc, train_labels = _tokenize(tokenizer, train_df, with_aspect, aspect_text)
-    dev_enc, dev_labels = _tokenize(tokenizer, dev_df, with_aspect, aspect_text)
+    label2id = head_label2id()
+    id2label = {i: l for l, i in label2id.items()}
+    train_enc, train_labels = _tokenize(tokenizer, train_df, with_aspect, aspect_text, label2id)
+    dev_enc, dev_labels = _tokenize(tokenizer, dev_df, with_aspect, aspect_text, label2id)
 
     if class_weights == "balanced":
         cw = compute_class_weight("balanced", classes=np.arange(len(LABELS)), y=train_labels).tolist()
     elif class_weights == "prior":
         by_label = ratio_weights(train_df["label"].tolist(), corpus_shares("label"))
-        cw = [by_label.get(l, 1.0) for l in LABELS]
+        cw = [by_label.get(id2label[i], 1.0) for i in range(len(LABELS))]   # in the head's order
     elif class_weights == "none":
         cw = None
     else:
@@ -270,17 +289,16 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
     if source_weights:
         by_source = ratio_weights(train_df["source"].tolist(), corpus_shares("source"))
         row_weights = [by_source[s] for s in train_df["source"]]
-    print(f"Class weights (neg/neu/pos): {cw if cw is not None else 'none'}; "
+    print(f"Class weights ({'/'.join(id2label[i][:3] for i in range(len(LABELS)))}): "
+          f"{cw if cw is not None else 'none'}; "
           f"source weights: {'on' if source_weights else 'off'}; aspect text: {aspect_text}")
 
     model = AutoModelForSequenceClassification.from_pretrained(
-        BASE_MODEL, num_labels=len(LABELS), id2label={i: l for l, i in LABEL2ID.items()},
-        label2id=LABEL2ID,
+        BASE_MODEL, num_labels=len(LABELS), id2label=id2label, label2id=label2id,
     )
 
-    # transformers 5.x dropped warmup_ratio from TrainingArguments (confirmed live,
-    # not assumed — a smoke test caught this before real labeled data existed) —
-    # compute the equivalent step count by hand to preserve the intended 10% warmup.
+    # transformers 5.x has no warmup_ratio in TrainingArguments, so compute the
+    # step count for a 10% warmup here.
     steps_per_epoch = max(1, len(train_df) // batch_size)
     total_steps = steps_per_epoch * epochs
     warmup_steps = max(1, round(0.10 * total_steps))
@@ -326,6 +344,11 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
     trainer.save_model(final_dir)
     tokenizer.save_pretrained(final_dir)
     write_input_format(final_dir, with_aspect, aspect_text)
+    # The exact dev rows, so a later step that tunes on dev (the neutral margin
+    # in train/error_analysis.py) uses these rows, not a reshuffle of a file
+    # that may have grown since.
+    with open(os.path.join(final_dir, DEV_IDS_FILE), "w") as f:
+        json.dump(dev_df[["sentence_id", "aspect"]].values.tolist(), f)
     # Per-epoch checkpoints carry optimizer state (~1.2 GB each); the best
     # epoch is already in final/, so they are only disk use once it is saved.
     for name in os.listdir(training_args.output_dir):

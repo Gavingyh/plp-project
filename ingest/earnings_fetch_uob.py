@@ -20,7 +20,7 @@ capture. The bytes are UOB's own published PDF; only the transport differs.
 The archived URL is recorded so provenance stays traceable.
 
 LIMITS worth knowing before relying on this:
-  - Coverage thins out for recent quarters — the archive lags publication, so
+  - Coverage thins out for recent quarters - the archive lags publication, so
     the last quarter or two is usually missing. Check the per-year counts the
     dry run prints.
   - A capture can be a WAF stub rather than a PDF. Downloads are verified by
@@ -127,7 +127,7 @@ def download(entries: list[dict], out_dir: str = OUT_DIR) -> dict:
             resp = requests.get(wayback_url, timeout=120)
             resp.raise_for_status()
         except Exception as e:
-            logger.warning("%s: download failed — %s", entry["filename"], e)
+            logger.warning("%s: download failed - %s", entry["filename"], e)
             failed += 1
             continue
 
@@ -135,7 +135,7 @@ def download(entries: list[dict], out_dir: str = OUT_DIR) -> dict:
             # Usually a WAF stub or an archive error page captured as if it
             # were the document. Writing it would produce a file that fails
             # extraction much later, with a confusing message.
-            logger.warning("%s: not a PDF (%d bytes) — discarded",
+            logger.warning("%s: not a PDF (%d bytes) - discarded",
                            entry["filename"], len(resp.content))
             failed += 1
             continue

@@ -7,6 +7,13 @@ Prerequisites: [tfidf-versus-contextual-embeddings](tfidf-versus-contextual-embe
 
 ## 1. Why it matters here (Understand)
 
+> **Updated 2026-10-01.** A 25 Sep run on 42,690 sentences gave 338
+> clusters, which the team labelled by hand into the ten-aspect taxonomy
+> (DESIGN decision 21). A `min_cluster_size` sweep on all 44,345 sentences
+> found 358 clusters at 10, one cluster holding nearly everything at 25 and
+> 50, and 25 at 100 ([evidence](../../docs/evidence/aspect-discovery-sweep-2026-09-30.md)).
+> The 281-cluster analysis below is the 11 Sep run, kept as written.
+
 The project's unsupervised text-mining deliverable is aspect discovery: letting
 the data propose which financial topics people discuss, rather than assuming
 the four the proposal named. That is a clustering problem over sentence

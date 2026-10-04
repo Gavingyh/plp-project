@@ -4,11 +4,11 @@ Alpha Vantage NEWS_SENTIMENT ingestion (free tier: 25 req/day).
 Per docs/DESIGN.md (finding (b)): Alpha Vantage's news coverage is overwhelmingly
 US-listed tickers, and SGX listings (D05.SI / O39.SI / U11.SI) are generally not
 indexed. This adapter exists so the team can *prove* that empirically
-rather than assume it — if it returns zero rows across all three tickers, that
+rather than assume it - if it returns zero rows across all three tickers, that
 confirms the finding and Alpha Vantage is dropped from the pipeline.
 
 Per the original constraint carried over from news_pull.py: Alpha Vantage's own
-`overall_sentiment_score` must NOT be used as a training label — only the raw
+`overall_sentiment_score` must NOT be used as a training label - only the raw
 title/summary text is kept.
 
 USAGE:
@@ -37,16 +37,15 @@ AV_KEY = os.environ.get("ALPHAVANTAGE_KEY")
 
 def pull() -> list[dict]:
     if not AV_KEY:
-        logger.warning("Skipped — set ALPHAVANTAGE_KEY in .env to run this.")
+        logger.warning("Skipped - set ALPHAVANTAGE_KEY in .env to run this.")
         return []
 
     docs = []
     for bank, queries in BANKS.items():
-        # AV's ticker validator rejects periods ("Invalid ticker format" for
-        # "D05.SI" — confirmed live), so strip the exchange suffix. This is a
-        # format fix only: valid-format tickers ("D05", "D05SI", "D05-SI")
-        # were also tested live and all returned 0 results — AV genuinely
-        # doesn't index SGX-listed names, format aside (see docs/DESIGN.md).
+        # Alpha Vantage rejects periods in tickers ("Invalid ticker format" for
+        # "D05.SI"), so strip the exchange suffix. It changes nothing in
+        # practice: "D05", "D05SI" and "D05-SI" all return 0 results, because
+        # Alpha Vantage doesn't index SGX-listed names (docs/DESIGN.md).
         ticker = queries[2].split(".")[0]  # "D05.SI" -> "D05"
         url = "https://www.alphavantage.co/query"
         params = {
@@ -70,7 +69,7 @@ def pull() -> list[dict]:
                 if not body:
                     continue
                 resolved_bank = resolve_bank(body, fallback=bank)
-                # Deliberately not copying overall_sentiment_score — see module docstring.
+                # Deliberately not copying overall_sentiment_score - see module docstring.
                 docs.append({
                     "doc_id": make_doc_id("alphavantage", a.get("url") or title),
                     "source": "alphavantage",
@@ -85,8 +84,8 @@ def pull() -> list[dict]:
                     "raw": a,
                 })
         except Exception as e:
-            logger.error(f"{bank}: ERROR — {e}")
-        time.sleep(15)  # free tier is 25 req/day — space calls out, avoid burning quota fast
+            logger.error(f"{bank}: ERROR - {e}")
+        time.sleep(15)  # free tier is 25 req/day - space calls out, avoid burning quota fast
 
     return docs
 

@@ -2,15 +2,11 @@
 Tests for the OpenAI and Gemini backends (chatbot/backends/openai_backend.py,
 gemini_backend.py).
 
-IMPORTANT DIFFERENCE from tests/test_chatbot_backends.py's Ollama tests:
-those are pinned copies of REAL responses from a running Ollama instance.
-No OPENAI_API_KEY or GEMINI_API_KEY is available in this dev environment, so
-the mocked responses here are written from each provider's DOCUMENTED
-contract, not a verified real response. These tests confirm the code
-handles that documented shape correctly — they cannot confirm the
-documented shape is what the real API actually returns today. See both
-backend modules' docstrings for the specific risk areas (Gemini's schema
-type-casing in particular).
+Unlike the Ollama tests in tests/test_chatbot_backends.py, which replay
+responses recorded from a running Ollama, these responses are written from
+each provider's documentation (no OpenAI key was available, and the Gemini
+tests predate its live check). They test that the code handles the
+documented shape, not that the live API still returns it.
 """
 
 import copy
@@ -34,13 +30,9 @@ class _FakePost:
         self.requests = []
 
     def __call__(self, url, params=None, headers=None, json=None, timeout=None):
-        # Snapshot with deepcopy — the real `requests` library serializes the
-        # payload to bytes immediately inside post(), so it can never see a
-        # caller's later mutations. A live reference here would (and did,
-        # before this fix): both backends keep appending to the same
-        # `contents`/`messages` list across loop iterations, so without a
-        # snapshot this mock would show a later iteration's state instead of
-        # what was actually sent at call time.
+        # Deep-copy the payload, as `requests` serialises it at call time: both
+        # backends keep appending to the same `contents`/`messages` list, so a
+        # stored reference would show a later state than the one sent.
         self.requests.append({"url": url, "params": params, "headers": headers,
                                "json": copy.deepcopy(json)})
         payload = self._responses.pop(0)
@@ -78,7 +70,7 @@ def test_openai_backend_requires_key():
         OpenAIBackend(api_key="")
 
 
-# Written from OpenAI's documented Chat Completions contract — NOT a pinned
+# Written from OpenAI's documented Chat Completions contract - NOT a pinned
 # real response (no key available). The one detail this test exists to
 # guard is real and important: `arguments` is a JSON STRING here, unlike
 # Ollama's pre-parsed dict.
@@ -131,6 +123,70 @@ def test_openai_backend_401_gives_clear_error(monkeypatch):
         backend.ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
 
 
+def test_openai_backend_uses_a_compatible_providers_base_url(monkeypatch):
+    fake_post = _FakePost([_OPENAI_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.groq.com/openai/v1/")
+    monkeypatch.setenv("OPENAI_MODEL", "openai/gpt-oss-120b")
+    backend = get_backend("openai")
+    backend.ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert fake_post.requests[0]["url"] == "https://api.groq.com/openai/v1/chat/completions"
+    assert fake_post.requests[0]["json"]["model"] == "openai/gpt-oss-120b"
+
+
+def test_openai_backend_defaults_to_openai(monkeypatch):
+    fake_post = _FakePost([_OPENAI_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    get_backend("openai").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert fake_post.requests[0]["url"] == "https://api.openai.com/v1/chat/completions"
+
+
+def test_openai_backend_sends_back_only_standard_message_fields(monkeypatch):
+    """A reasoning model's extra fields (Groq's gpt-oss returns `reasoning`) aren't echoed back."""
+    with_reasoning = copy.deepcopy(_OPENAI_TOOL_CALL_RESPONSE)
+    with_reasoning["choices"][0]["message"]["reasoning"] = "I should call get_sentiment."
+    fake_post = _FakePost([with_reasoning, _OPENAI_FINAL_ANSWER_RESPONSE])
+    monkeypatch.setattr("requests.post", fake_post)
+    OpenAIBackend(api_key="k").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assistant = next(m for m in fake_post.requests[1]["json"]["messages"] if m["role"] == "assistant")
+    assert set(assistant) == {"role", "content", "tool_calls"} and assistant["content"] == ""
+
+
+def test_openai_backend_waits_out_a_rate_limit(monkeypatch):
+    fake_post = _FakePost([_OPENAI_FINAL_ANSWER_RESPONSE])
+    statuses = iter([429, 503, 200])
+    waits = []
+
+    class _Limited:
+        text = "rate limited"
+
+        def __init__(self, code, headers):
+            self.status_code, self.headers = code, headers
+
+    def flaky_post(url, **kwargs):
+        code = next(statuses)
+        if code == 429:
+            return _Limited(429, {"retry-after": "7"})
+        if code == 503:
+            return _Limited(503, {})
+        return fake_post(url, **kwargs)
+
+    monkeypatch.setattr("requests.post", flaky_post)
+    monkeypatch.setattr("chatbot.backends.openai_backend.time.sleep", waits.append)
+    answer = OpenAIBackend(api_key="k").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+    assert answer == "The sentiment for DBS is neutral."
+    assert waits == [7.0, 15]                        # Retry-After when given, else the second default
+
+
+def test_openai_backend_400_includes_error_body(monkeypatch):
+    monkeypatch.setattr("requests.post", _FakePost([{}], status_code=400))
+    with pytest.raises(RuntimeError, match="fake error body"):
+        OpenAIBackend(api_key="k").ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
+
+
 # ---------------------------------------------------------------------------
 # Gemini backend
 # ---------------------------------------------------------------------------
@@ -142,7 +198,7 @@ def test_gemini_backend_requires_key():
 
 def test_uppercase_schema_types_recursive():
     # This is the highest-risk conversion in the whole module (see
-    # gemini_backend.py docstring) — test it directly and thoroughly.
+    # gemini_backend.py docstring) - test it directly and thoroughly.
     schema = {
         "type": "object",
         "properties": {
@@ -160,7 +216,7 @@ def test_uppercase_schema_types_recursive():
     assert result["properties"]["nested"]["properties"]["flag"]["type"] == "BOOLEAN"
 
 
-# Written from Google's documented generateContent contract — NOT a pinned
+# Written from Google's documented generateContent contract - NOT a pinned
 # real response (no key available). See gemini_backend.py docstring for the
 # specific parts of this shape that are most likely to be wrong.
 _GEMINI_TOOL_CALL_RESPONSE = {
@@ -224,7 +280,7 @@ def test_gemini_backend_no_candidates_does_not_crash(monkeypatch):
 
 def test_auto_detect_priority_openai_over_gemini(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")                     # auto-detection only when asked for
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
     monkeypatch.setenv("GEMINI_API_KEY", "fake")
     backend = get_backend()
@@ -234,15 +290,32 @@ def test_auto_detect_priority_openai_over_gemini(monkeypatch):
 def test_auto_detect_gemini_when_only_gemini_key_present(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
     monkeypatch.setenv("GEMINI_API_KEY", "fake")
     backend = get_backend()
     assert isinstance(backend, GeminiBackend)
 
 
+def test_the_default_is_ollama_even_with_a_gemini_key(monkeypatch):
+    # Decided 4 Oct 2026: the demo model is local; a key in .env no longer
+    # switches the chatbot to a hosted model.
+    from chatbot.backends.ollama_backend import OllamaBackend
+    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
+    backend = get_backend()
+    assert isinstance(backend, OllamaBackend) and backend.model == "llama3.1:8b"
+
+
+def test_gemini_is_one_setting_away(monkeypatch):
+    monkeypatch.setenv("CHATBOT_BACKEND", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+    assert isinstance(get_backend(), GeminiBackend)
+
+
 def test_explicit_backend_name_overrides_auto_detect(monkeypatch):
     # Claude and OpenAI keys are both present (auto-detect would pick Claude
-    # first), but an explicit name must win regardless — and still needs its
+    # first), but an explicit name must win regardless - and still needs its
     # own key, which is set here too.
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
     monkeypatch.setenv("OPENAI_API_KEY", "fake")

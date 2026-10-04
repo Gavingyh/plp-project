@@ -14,6 +14,14 @@ about before scoring it.
 
 It is also where the project's most significant unresolved problem lives.
 
+> **Updated 2026-10-01.** Measured against 1,277 human aspect labels,
+> seed-centroid assignment picks the human's aspect 41% of the time; an LLM
+> classifier picks it 73% of the time (`llama3.1:8b`) but isn't yet applied
+> to the corpus. See [llms-as-classifiers-and-raters](../01-text-analytics/llms-as-classifiers-and-raters.md)
+> and [the evidence](../../docs/evidence/llm-aspect-classifier-2026-10-01.md).
+> The taxonomy is now ten aspects plus `other` (DESIGN decision 21); the
+> four-aspect analysis below is kept as written.
+
 ---
 
 ## 2. The concept (Understand / Apply)

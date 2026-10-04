@@ -102,9 +102,12 @@ broken generally or only past the ceiling. **A size-dependent query needs a
 test that exercises it above the size limit.**
 
 **3. The fine-tune pipeline had two bugs nobody could see.**
-`train/finetune.py` cannot run for real — it needs labelled data that does not
-exist. A smoke test with synthetic labels found two genuine bugs in code that
-had never executed.
+`train/finetune.py` could not run for real until labels existed (they did
+from 27 Sep). A smoke test with synthetic labels found two genuine bugs in
+code that had never executed. A third went unseen until 1 Oct because no
+test checked it: class weights were computed and printed but never passed
+to the loss; `tests/test_finetune_options.py` now checks the weighted loss
+by hand.
 
 **4. A start script could have killed an unrelated process.**
 `scripts/start.sh` refuses a port it does not own. `tests/test_scripts.py`
@@ -159,6 +162,25 @@ Nothing here periodically re-validates against the live API, and for a project
 of this lifespan that is an acceptable gap worth naming.
 
 ---
+
+### A confirmed bug as a strict expected failure (3 Oct 2026)
+
+The project's `/validate` workflow has reviewer agents look for bugs and a
+tester agent write the smallest test that would fail if each bug is real.
+A test that confirms a bug is marked `@pytest.mark.xfail(strict=True)`:
+
+- the suite stays green while the bug is open, so it doesn't block other
+  work;
+- the test *fails* the moment the bug is fixed (an unexpected pass under
+  `strict`), which forces whoever fixed it to remove the marker in the same
+  commit. The test then guards against the bug coming back.
+
+Two rules came out of using it. Build such tests on synthetic data: one
+written against the live database could flip when the data changes, not
+when the code does. And keep them in files named for what they test
+(`test_validate_api_integrity.py`), not for a claim's code. On 3 Oct this
+recorded, and then retired, 13 confirmed bugs: five in the API and eight in
+the chatbot's grounding guards.
 
 ## 5. Evaluate
 

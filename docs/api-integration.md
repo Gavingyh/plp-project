@@ -126,8 +126,9 @@ see "per-aspect scores" below.
 server's default (`CHATBOT_BACKEND` in `.env`); anything else, or a message
 `role` other than `user` or `assistant`, gets HTTP 422. If the backend fails
 (Ollama not running, a missing or rejected key) the reply is HTTP 503 with
-the reason in `detail`. The Gemini backend never receives Reddit evidence
-text. The response:
+the reason in `detail`. No hosted backend (Gemini, Claude, OpenAI or Groq)
+receives Reddit or CNA evidence text, or text from a source not listed in
+`config/sources.yaml`, nor earlier answers that may quote them. The response:
 
 ```json
 {"question": "And OCBC?", "answer": "…", "guard": null,

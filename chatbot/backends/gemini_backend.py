@@ -33,9 +33,11 @@ import time
 
 import requests
 
-from config import sources
 from config.logging_config import get_logger
 from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
+# The filter every hosted backend applies; imported here so the names stay where they were.
+from chatbot.backends.base import (EARLIER_ANSWER, WITHHELD, WITHHELD_TEAM_ONLY, WITHHELD_UNKNOWN,  # noqa: F401
+                                   history_for_gemini, withhold_reddit)
 
 logger = get_logger(__name__)
 
@@ -76,53 +78,6 @@ def _to_gemini_tools(claude_tool_schemas: list[dict]) -> list[dict]:
     }]
 
 
-# Gemini's free tier may have its inputs read by people, so Reddit evidence
-# text (other people's posts) and CNA text (which stays within the team)
-# never go to it (CLAUDE.md). Enforced here, not
-# left to the caller: the API and the dashboard pick Gemini by default when its
-# key is the one set (4 Oct 2026). The model still sees that a Reddit sentence
-# exists, its bank, date, sentiment and id, and can't quote it: a quote it
-# writes is then invented, and the citation check flags it.
-WITHHELD = "[text by a member of the public (Reddit), withheld from the hosted model]"
-WITHHELD_TEAM_ONLY = "[CNA text, kept within the team, withheld from the hosted model]"
-WITHHELD_UNKNOWN = "[text from a source not cleared for the hosted model, withheld]"
-
-
-def withhold_reddit(name: str, content):
-    """A tool result as Gemini may see it: evidence written by members of the
-    public or kept within the team (config/sources.yaml, personal_text and
-    team_only) without its text, link or citation. Evidence from a source the
-    config doesn't list, or with no source, is withheld too."""
-    if name != "search_evidence" or not isinstance(content, dict):
-        return content
-    personal, team_only, known = (sources.personal_text_sources(), sources.team_only_sources(),
-                                  sources.weights().keys())
-    items = []
-    for item in content.get("results") or []:
-        source = item.get("source")
-        if source in personal or "reddit.com" in str(item.get("url") or ""):
-            marker = WITHHELD
-        elif source in team_only:
-            marker = WITHHELD_TEAM_ONLY
-        elif source not in known:
-            marker = WITHHELD_UNKNOWN
-        else:
-            items.append(item)
-            continue
-        items.append({**item, "text": marker, "url": None, "cite_as": None})
-    return {**content, "results": items}
-
-
-EARLIER_ANSWER = "[an earlier answer, not shown: it may quote Reddit posts or CNA articles]"
-
-
-def history_for_gemini(history: list | None) -> list:
-    """Earlier turns with each earlier answer replaced by a placeholder: an
-    answer may quote or paraphrase Reddit posts that another model, or the
-    harness, retrieved, and picking quotes out of it missed cut, wrapped and
-    nested ones (4 Oct 2026). The user's own questions stay, and the bank and
-    aspect travel in the conversation state, so follow-ups still resolve."""
-    return [{**h, "content": EARLIER_ANSWER} if h.get("role") == "assistant" else h for h in history or []]
 
 
 class GeminiBackend(LLMBackend):

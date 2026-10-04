@@ -9,7 +9,8 @@ could be swapped in for school-project use without needing an API key.
 import sys
 
 from config.logging_config import get_logger
-from chatbot.backends.base import BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor
+from chatbot.backends.base import (BackendUnavailable, DEFAULT_TEMPERATURE, History, LLMBackend, ToolExecutor,
+                                   history_for_hosted, withheld_tool_result)
 
 logger = get_logger(__name__)
 
@@ -39,7 +40,7 @@ class ClaudeBackend(LLMBackend):
         import anthropic  # imported here so importing this module doesn't require the package at load time
 
         client = anthropic.Anthropic(api_key=self._api_key)
-        messages = list(history or []) + [{"role": "user", "content": question}]
+        messages = history_for_hosted(history) + [{"role": "user", "content": question}]
 
         for _ in range(MAX_TOOL_ITERATIONS):
             response = client.messages.create(
@@ -58,7 +59,8 @@ class ClaudeBackend(LLMBackend):
                     logger.info("tool call: %s(%s)", call.name, call.input)
                 result_json = tool_executor(call.name, call.input)
                 tool_results.append({
-                    "type": "tool_result", "tool_use_id": call.id, "content": result_json,
+                    "type": "tool_result", "tool_use_id": call.id,
+                    "content": withheld_tool_result(call.name, result_json),
                 })
             messages.append({"role": "user", "content": tool_results})
 

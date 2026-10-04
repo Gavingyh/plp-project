@@ -372,3 +372,75 @@ def test_gemini_never_receives_cna_text():
                             "url": "https://www.channelnewsasia.com/x", "cite_as": "[DBS, 2026-01-01]"}]}
     item = withhold_reddit("search_evidence", content)["results"][0]
     assert item["text"] == WITHHELD_TEAM_ONLY and item["url"] is None and item["cite_as"] is None
+
+
+# --- Every hosted backend withholds Reddit, CNA and unlisted text (decided 4 Oct 2026) ---
+
+_EVIDENCE = {"query": "q", "results": [
+    {"sentence_id": "a" * 24, "source": "arctic_shift", "text": "my OCBC app keeps crashing lol",
+     "url": "https://www.reddit.com/r/singaporefi/comments/x/", "cite_as": "[OCBC, 2025-01-01]"},
+    {"sentence_id": "c" * 24, "source": "cna", "text": "DBS posted record profit, CNA reported.",
+     "url": "https://www.channelnewsasia.com/x", "cite_as": "[DBS, 2026-01-02]"},
+    {"sentence_id": "t" * 24, "source": "telegram", "text": "my UOB card got blocked", "url": "https://t.me/x"},
+    {"sentence_id": "b" * 24, "source": "google_news", "text": "OCBC raised its dividend.",
+     "url": "https://news.google.com/1"}]}
+_HISTORY = [{"role": "user", "content": "quotes on OCBC?"},
+            {"role": "assistant", "content": 'One user wrote "my OCBC app keeps crashing lol".'}]
+
+
+def _assert_nothing_private_left(sent: list[str]):
+    from chatbot.backends.base import EARLIER_ANSWER, WITHHELD, WITHHELD_TEAM_ONLY, WITHHELD_UNKNOWN
+    blob = "\n".join(sent)
+    for private in ("keeps crashing", "reddit.com", "record profit", "channelnewsasia", "card got blocked"):
+        assert private not in blob, private
+    assert WITHHELD in blob and WITHHELD_TEAM_ONLY in blob and WITHHELD_UNKNOWN in blob
+    assert "OCBC raised its dividend." in blob                  # cleared news still goes
+    assert EARLIER_ANSWER in blob and "quotes on OCBC?" in blob   # the user's question stays
+
+
+def test_claude_never_receives_reddit_cna_or_unlisted_text(monkeypatch):
+    import types
+    import anthropic
+    sent = []
+    block = types.SimpleNamespace
+    replies = iter([
+        block(content=[block(type="tool_use", id="t1", name="search_evidence", input={"query": "q"})]),
+        block(content=[block(type="text", text="Done.")]),
+    ])
+
+    class FakeClient:
+        def __init__(self, api_key=None):
+            self.messages = self
+
+        def create(self, **kw):
+            sent.append(json.dumps(kw, default=str))
+            return next(replies)
+    monkeypatch.setattr(anthropic, "Anthropic", FakeClient)
+    answer = ClaudeBackend(api_key="k").ask("more?", "system", [], lambda n, a: json.dumps(_EVIDENCE),
+                                            verbose=False, history=_HISTORY)
+    assert answer == "Done."
+    _assert_nothing_private_left(sent)
+
+
+def test_openai_never_receives_reddit_cna_or_unlisted_text(monkeypatch):
+    from chatbot.backends.openai_backend import OpenAIBackend
+    sent = []
+    replies = iter([
+        {"choices": [{"message": {"content": "", "tool_calls": [
+            {"id": "c1", "type": "function", "function": {"name": "search_evidence", "arguments": '{"query": "q"}'}}]}}]},
+        {"choices": [{"message": {"content": "Done."}}]},
+    ])
+
+    def fake_chat(self, messages, tools):
+        sent.append(json.dumps(messages))
+        return next(replies)
+    monkeypatch.setattr(OpenAIBackend, "_chat", fake_chat)
+    answer = OpenAIBackend(api_key="k").ask("more?", "system", [], lambda n, a: json.dumps(_EVIDENCE),
+                                            verbose=False, history=_HISTORY)
+    assert answer == "Done."
+    _assert_nothing_private_left(sent)
+
+
+def test_a_tool_result_that_is_not_json_passes_through():
+    from chatbot.backends.base import withheld_tool_result
+    assert withheld_tool_result("search_evidence", "tool error: no such bank") == "tool error: no such bank"

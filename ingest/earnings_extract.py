@@ -193,7 +193,9 @@ def pull() -> list[dict]:
                 # Falls back to ingestion time only for files whose name carries
                 # no recognisable period.
                 "published_at": _quarter_to_announcement_date(fname) or now_iso(),
-                "url": f"file://{path}",
+                # Relative to the repository (decided 4 Oct 2026): an absolute path
+                # carried the developer's home folder into the database and git.
+                "url": os.path.relpath(path, BASE_DIR).replace(os.sep, "/"),
                 "ingested_at": now_iso(),
                 "raw": {"filename": fname, "n_prose_lines": len(paragraphs)},
             })

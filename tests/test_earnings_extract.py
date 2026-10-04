@@ -193,3 +193,17 @@ def test_fix_earnings_dates_refuses_a_database_that_does_not_exist(tmp_path, mon
     assert exit_info.value.code != 0
     assert not typo.exists()
     assert "pl.db" in capsys.readouterr().err
+
+
+def test_pdf_links_are_relative_to_the_repository(tmp_path, monkeypatch):
+    # Decided 4 Oct 2026: no absolute path (and so no home folder) in the URL.
+    import ingest.earnings_extract as ee
+    pdf_dir = tmp_path / "data" / "earnings_pdfs"
+    (pdf_dir / "DBS").mkdir(parents=True)
+    (pdf_dir / "DBS" / "2Q26_results.pdf").write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(ee, "BASE_DIR", str(tmp_path))
+    monkeypatch.setattr(ee, "PDF_DIR", str(pdf_dir))
+    monkeypatch.setattr(ee, "extract_prose", lambda path: ["DBS reported record net profit for the quarter."])
+    docs = ee.pull()
+    assert [d["url"] for d in docs] == ["data/earnings_pdfs/DBS/2Q26_results.pdf"]
+    assert docs[0]["doc_id"] == ee.make_doc_id("earnings", "DBS:2Q26_results.pdf")   # ids don't depend on the path

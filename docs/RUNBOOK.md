@@ -155,6 +155,18 @@ llm`, take a snapshot (below), and run the evaluations again. On another
 device (a CUDA PC, or the Mac's GPU without `--cpu`) the fine-tuned pairs
 are scored again, since the cache is kept per device.
 
+In the same week, earnings-PDF links become relative paths (decided 4 Oct):
+`scripts/rewrite_pdf_paths.py` counts by default and writes only with
+`--apply`, and refuses `data/plp.db` without `--real-db` (it backs it up
+first). On 4 Oct the dry run found 178 documents and 12,254 sentences in the
+database and in each of the five snapshots, and 2,234 links in 21 committed
+files under `data/`.
+
+```bash
+.venv-plp/bin/python3 scripts/rewrite_pdf_paths.py --db data/plp.db --snapshots --files            # counts only
+.venv-plp/bin/python3 scripts/rewrite_pdf_paths.py --db data/plp.db --real-db --snapshots --files --apply
+```
+
 `aggregate.preview --per-seed` scores the LLM-aspect pairs with each model
 alone and prints the spread of every bank's headline between seeds.
 

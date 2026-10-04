@@ -57,13 +57,13 @@ def _output_paths(tag: str | None) -> tuple[str, str]:
 
 
 def _describe_model(backend_name: str | None) -> str:
-    """Which model actually answered - 'auto-detected' isn't reproducible."""
+    """Which model actually answered - 'the configured default' isn't reproducible."""
     try:
         from chatbot.backends import get_backend
         backend = get_backend(backend_name)
         return f"{type(backend).__name__} / {getattr(backend, 'model', 'unknown')}"
     except Exception:
-        return backend_name or "auto-detected"
+        return backend_name or "the configured default"
 
 logger = get_logger(__name__)
 
@@ -199,7 +199,7 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
     lines = [
         f"# Chatbot evaluation summary",
         f"",
-        f"Model: `{model_desc or 'auto-detected'}`  ",
+        f"Model: `{model_desc or 'the configured default'}`  ",
         f"Intent classifier: `{settings.get('models.intent')}`  ",
         f"Run at: {datetime.now(timezone.utc).isoformat()}  ",
         f"Questions: {n}  ",

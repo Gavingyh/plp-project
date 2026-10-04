@@ -169,5 +169,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-dir", nargs="+", default=None,
                         help="one or more fine-tuned models; with several, their average is reported too")
+    parser.add_argument("--labels", default=None,
+                        help=f"labelled file to score on, default {CANDIDATES_PATH}")
     args = parser.parse_args()
+    if args.labels:
+        CANDIDATES_PATH = args.labels
     run(model_dir=args.model_dir)

@@ -29,7 +29,7 @@ GARBLE_SINGLE_SHARE = 0.4   # share of one-letter tokens above which text is let
 TABLE_NUMERIC_RATIO = 1.5   # numeric tokens per word at or above which a line is a table row
 
 
-PDF_SOURCES = {"earnings"}   # debris comes from PDF extraction
+PDF_SOURCES = {"earnings", "sgx_research"}   # debris comes from PDF extraction
 
 
 def fragment_reason(text: str, source: str | None = None) -> str | None:

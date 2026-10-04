@@ -24,6 +24,7 @@ only a fine-tuned model can do.
 
 USAGE:
   python -m sentiment.score
+  python -m sentiment.score --sources sgx_research   # only these sources' sentences
 """
 
 import torch
@@ -94,12 +95,13 @@ def classify_sentences(texts: list[str]) -> list[tuple[str, float]]:
     return results
 
 
-def run() -> dict:
+def run(sources: set[str] | None = None) -> dict:
     init_db()
     conn = get_connection()
     conn.executescript(_SCHEMA)
 
-    rows = conn.execute("""
+    where = f" AND s.source IN ({','.join('?' * len(sources))})" if sources else ""
+    rows = conn.execute(f"""
         SELECT sa.sentence_id, sa.aspect, s.text
         FROM sentence_aspects sa
         JOIN sentences s ON s.sentence_id = sa.sentence_id
@@ -107,8 +109,8 @@ def run() -> dict:
             SELECT 1 FROM aspect_sentiment ase
             WHERE ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect
               AND ase.model_version = ?
-        )
-    """, (MODEL_VERSION,)).fetchall()
+        ){where}
+    """, (MODEL_VERSION, *sorted(sources or ()))).fetchall()
 
     if not rows:
         conn.close()
@@ -148,5 +150,9 @@ def run() -> dict:
 
 
 if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser(description="Score sentence-aspect pairs with base FinBERT.")
+    ap.add_argument("--sources", nargs="+", help="score only sentences from these sources")
+    args = ap.parse_args()
     setup_logging()
-    logger.info("Scoring complete: %s", run())
+    logger.info("Scoring complete: %s", run(set(args.sources) if args.sources else None))

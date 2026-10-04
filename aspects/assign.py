@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_sentence_aspects_aspect ON sentence_aspects(aspec
 
 
 def _load_config() -> dict:
-    with open(CONFIG_PATH) as f:
+    with open(CONFIG_PATH, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

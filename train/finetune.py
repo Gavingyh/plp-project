@@ -118,7 +118,7 @@ class WeightedTrainer(Trainer):
 
 def aspect_labels() -> dict[str, str]:
     """Aspect key -> readable label from config/aspects.yaml."""
-    with open(ASPECTS_CONFIG) as f:
+    with open(ASPECTS_CONFIG, encoding="utf-8") as f:
         return {k: v.get("label", k) for k, v in yaml.safe_load(f)["aspects"].items()}
 
 
@@ -184,7 +184,7 @@ def read_input_spec(model_dir: str) -> dict:
     path = os.path.join(model_dir, INPUT_FORMAT_FILE)
     spec = {"with_aspect": True, "aspect_text": "key"}
     if os.path.exists(path):
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             spec.update(json.load(f))
     return spec
 
@@ -351,7 +351,11 @@ if __name__ == "__main__":
                         help="weight rows so the source mix matches the corpus")
     parser.add_argument("--aspect-text", choices=["key", "label"], default="key",
                         help="feed the aspect key or its readable label")
+    parser.add_argument("--labels", default=None,
+                        help=f"labelled file to train on, default {CANDIDATES_PATH}")
     args = parser.parse_args()
+    if args.labels:
+        CANDIDATES_PATH = args.labels
     if (args.folds is None) != (args.fold is None):
         parser.error("--folds and --fold go together")
     metrics = run(seed=args.seed, epochs=args.epochs, lr=args.lr, batch_size=args.batch_size,

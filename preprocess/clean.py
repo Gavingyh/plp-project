@@ -89,6 +89,7 @@ CLEANERS = {
     "cna": clean_cna,
     "arctic_shift": clean_reddit,
     "earnings": clean_earnings,
+    "sgx_research": clean_earnings,   # PDF prose, tables already dropped at extraction
 }
 
 

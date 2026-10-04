@@ -28,15 +28,22 @@ _NUMBER = re.compile(r"(?<![\w.])(?<![A-Za-z]-)[-+−]?\d{1,3}(?:,\d{3})+(?:\.\d
 # "declined 4321" for dates and hid the figures (4 Oct 2026).
 _MONTH = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?"
           r"|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?")
+# The same, capitalised only ("May", not the verb "may"), for a date written without its year.
+_MONTH_NAME = (r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?"
+               r"|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b\.?")
+_DAY = r"(?:3[01]|[12]\d|0?[1-9])(?!\d)"
 
 _STRIP_FIRST = [
     re.compile(r"https?://\S+"),                   # URLs carry ids and dates
     re.compile(rf"\b{_MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}\b", re.IGNORECASE),  # "September 24th, 2026"
     re.compile(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTH},?\s+\d{{4}}\b", re.IGNORECASE),  # "24 September 2026"
     re.compile(rf"\b{_MONTH}\s+\d{{4}}\b", re.IGNORECASE),                                   # "September 2026"
-    # A day without its year ("runs to September 25th", 4 Oct 2026), not "September 0.34".
-    re.compile(rf"\b{_MONTH}\s+\d{{1,2}}(?:st|nd|rd|th)?\b(?![.,]\d)", re.IGNORECASE),
-    re.compile(rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTH}", re.IGNORECASE),                  # "25 Sep"
+    # A day without its year ("runs to September 25th", "to 24 Sep"; 4 Oct 2026). Kept
+    # narrow, since a looser pattern hid figures ("0.45 may suggest", "in September 45
+    # sentences"): a capitalised month, a day from 1 to 31 not inside a decimal, and
+    # after the month either an ordinal or punctuation, so a count can't pass for a day.
+    re.compile(rf"\b{_MONTH_NAME}\s+{_DAY}(?:(?:st|nd|rd|th)\b|(?=\s*(?:[,;:)]|\.(?!\d)|$)))"),
+    re.compile(rf"(?<![\w.]){_DAY}(?:st|nd|rd|th)?\s+{_MONTH_NAME}"),
     re.compile(r"\b[0-9a-f]{24}\b"),               # sentence ids
     re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?"),  # ISO dates and timestamps
     re.compile(r"^\s*\d+[.)]\s", re.MULTILINE),     # numbered-list markers

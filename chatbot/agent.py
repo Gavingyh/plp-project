@@ -60,6 +60,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from chatbot.backends import get_backend
+from config import aspect_taxonomy
 from config.sources import label as source_label
 from config.logging_config import get_logger, setup_logging
 from chatbot import intent as intents
@@ -173,12 +174,16 @@ def _for_model(obj):
 # Fields whose words a model may put in quote marks without citing anything.
 # On 4 Oct a reading written as "clearly positive" was taken for an invented
 # quote and removed, leaving "with a reading of." in the answer.
+# Only wording the code writes counts: a topic name the model could set by
+# passing its own text as the aspect would let it quote anything (found in
+# validation, 4 Oct 2026), so a topic name counts only if it is a real one.
 _WORDING_KEYS = frozenset({"reading", "topic_name", "source_name", "trend_in_words", "month_on_month"})
+_TOPIC_NAMES = frozenset(_norm_text(name) for name in [*aspect_taxonomy.labels().values(), "overall"])
 
 
 def _collect_wording(obj, out: set[str], key=None) -> None:
     if isinstance(obj, str):
-        if key in _WORDING_KEYS:
+        if key in _WORDING_KEYS and (key != "topic_name" or _norm_text(obj) in _TOPIC_NAMES):
             out.add(_norm_text(obj).strip(" .,;:"))
     elif isinstance(obj, dict):
         for k, v in obj.items():
@@ -275,6 +280,8 @@ class _ToolCallTracker:
         return self.verified_sentence_ids | self.earlier_ids
 
     def answer_has_unverified_citation(self, answer: str) -> bool:
+        if _BARE_MARK.search(answer or ""):
+            return True       # "[2]": the model cites with cite_as; a bare number points at nothing it retrieved
         if self.unverified_urls(answer):
             return True
         if unverified_sentence_ids(answer, self.known_ids()):
@@ -331,6 +338,10 @@ def _remove_inline(text: str, quotes: list[str] | None = None, urls: list[str] |
 
 
 _CITATION_MARK = re.compile(r"\[E\d+\]|\[[^\[\]\n]*sentence[_\s]?id[^\[\]\n]*\]", re.IGNORECASE)
+# A bare numbered marker, as the reader sees citations once number_citations has run. The
+# model never writes one legitimately (it copies cite_as); one in its text came from an
+# earlier answer it was shown, or was made up, and points at no source of this turn.
+_BARE_MARK = re.compile(r"[ \t]*\[\d{1,2}\]")
 
 
 def _remove_spans(text: str, spans: list[str], ids: list[str]) -> str:
@@ -361,7 +372,7 @@ def strip_unsearched_evidence(answer: str) -> str:
     evidence section (from its heading to the next known section), any later
     line carrying a quote, URL or sentence id, and any quote, URL or id inside
     the first paragraph, which is otherwise kept as written."""
-    head, _, rest = answer.partition("\n\n")
+    head, _, rest = _BARE_MARK.sub("", answer).partition("\n\n")
     head = _remove_inline(head)
     kept, skipping = [], False
     for line in rest.split("\n"):
@@ -414,7 +425,8 @@ def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode
     if tracker.search_evidence_called:
         # The whole answer at once: a quote can wrap onto the next line, and an
         # invented sentence id must go too (4 Oct 2026: both survived).
-        cleaned = _remove_spans(answer, tracker.unverified_quotes(answer) + tracker.unverified_urls(answer),
+        cleaned = _remove_spans(_BARE_MARK.sub("", answer),
+                                tracker.unverified_quotes(answer) + tracker.unverified_urls(answer),
                                 unverified_sentence_ids(answer, tracker.known_ids()))
         return cleaned + EVIDENCE_UNMATCHED_NOTE, tracker.answer_has_unverified_citation(cleaned)
     stripped = strip_unsearched_evidence(answer)
@@ -547,8 +559,12 @@ def ask(question: str, verbose: bool = True, backend_name: str | None = None,
 
 def _strip_warnings(answer: str) -> str:
     """For turns rebuilt from plain messages (the API's history), which carry no
-    model_answer: the text before the first warning the harness appends."""
-    return answer.split("\n\n⚠️")[0]
+    model_answer: the text before the first warning the harness appends, without
+    the numbered markers and the list of sources the reader saw. Neither can be
+    checked on a later turn, which has no record of the searches behind them
+    (found in validation, 4 Oct 2026)."""
+    text = answer.split("\n\n⚠️")[0].split("\n\nSources:\n")[0]
+    return _BARE_MARK.sub("", text)
 
 
 class Conversation:

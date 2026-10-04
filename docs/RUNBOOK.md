@@ -540,7 +540,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-1162 tests in `tests/`; `pytest -q` from the repository root runs 1209,
+1176 tests in `tests/`; `pytest -q` from the repository root runs 1223,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.

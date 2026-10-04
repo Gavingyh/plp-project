@@ -318,10 +318,12 @@ def reading(score: float) -> str:
     return f"clearly {side}"
 
 
-def _topic_name(aspect: str | None) -> str:
+def _topic_name(aspect: str | None) -> str | None:
+    """The topic's readable name; None for an aspect that isn't a real one, so
+    the model's own text never comes back to it as a topic name."""
     if not aspect or aspect == "ALL":
         return "overall"
-    return aspect_taxonomy.labels().get(aspect, aspect)
+    return aspect_taxonomy.labels().get(aspect)
 
 
 def _for_reader(result: dict) -> dict:
@@ -397,14 +399,33 @@ def _month_on_month(series: list[dict]) -> dict:
         return {"month_on_month_available": False}
     latest, previous = series[-1], series[-2]
     change = round(_unshrunk(latest) - _unshrunk(previous), 4)
-    stable = settings.get("trend.stable_within")
-    direction = "up" if change > stable else "down" if change < -stable else "about the same"
+    direction = _settled(_direction(change), latest["score"] - previous["score"])
+    words = (f"{_month_name(latest)} {_compared(direction)} {_month_name(previous)}." if direction != "unclear"
+             else f"{_month_name(latest)} against {_month_name(previous)}: {_TOO_FEW}.")
     return {"month_on_month_available": True,
             "latest_month": {**latest, "reading": reading(latest["score"])},
             "previous_month": {**previous, "reading": reading(previous["score"])},
             "change_from_previous_month": change,
             "month_on_month": direction,
-            "trend_in_words": f"{_month_name(latest)} {_compared(direction)} {_month_name(previous)}."}
+            "trend_in_words": words}
+
+
+_TOO_FEW = "too few sentences in one of them to say which way sentiment moved"
+
+
+def _direction(change: float) -> str:
+    stable = settings.get("trend.stable_within")
+    return "up" if change > stable else "down" if change < -stable else "about the same"
+
+
+def _settled(direction: str, printed_change: float) -> str:
+    """The direction, or "unclear" when the scores the sentence prints point
+    another way. The printed scores are the index's, which pull a thin period
+    towards 0; the direction is worked out before that pull. Saying "up" beside
+    a lower printed score contradicts the figures (found in validation, 4 Oct
+    2026: "(+0.27, 6 sentences) was up on (+0.44, 200 sentences)")."""
+    plain = {"improving": "up", "declining": "down", "stable": "about the same"}.get(direction, direction)
+    return direction if _direction(printed_change) == plain else "unclear"
 
 
 _COMPARED = {"up": "was up on", "improving": "was up on", "down": "was down on", "declining": "was down on"}
@@ -439,9 +460,11 @@ def chat_get_trend(bank: str, aspect: str | None = None) -> dict:
             out[window] = _for_reader(out[window])
     if out.get("trend_available"):
         recent, base = out["recent_7d"], out["baseline_30d"]
-        out["trend_in_words"] = (f"The last 7 days {_figures(recent['score'], recent['n'])} "
-                                 f"{_compared(out['direction']).replace('was', 'were')} the last 30 days "
-                                 f"{_figures(base['score'], base['n'])}.")
+        out["direction"] = _settled(out["direction"], recent["score"] - base["score"])
+        week, month = (f"The last 7 days {_figures(recent['score'], recent['n'])}",
+                       f"the last 30 days {_figures(base['score'], base['n'])}")
+        out["trend_in_words"] = (f"{week} {_compared(out['direction']).replace('was', 'were')} {month}."
+                                 if out["direction"] != "unclear" else f"{week} against {month}: {_TOO_FEW}.")
     else:                                    # the 7- and 30-day windows were too thin
         series, error = _monthly_series(bank, aspect)
         out.update(_month_on_month(series))

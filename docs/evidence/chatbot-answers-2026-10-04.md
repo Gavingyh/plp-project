@@ -12,8 +12,13 @@ enforcement, aspect query), at temperature 0.2, one run per configuration.
 
 ## Before: seven questions in the dashboard
 
-Asked on the Ask page, on `main`, 4 Oct around 13:00. Times are from
-sending the question to the answer appearing; two were not timed.
+Asked on the Ask page, on `main`, early in the afternoon of 4 Oct. The
+answers and times were read off the page in a browser and not saved to a
+file; times are from sending the question to the answer appearing, and two
+were not timed. The figures match the database, and the same questions put
+through `main`'s code later gave the same kind of answer: "0.122 out of 1",
+"No specific quotes or articles were found", UOB's dividend score called
+"slightly negative", and for the trend "there isn't enough recent data".
 
 | question | time | what came back |
 |---|---|---|
@@ -36,9 +41,9 @@ The causes, in the code:
   negative.
 - `get_trend` sent the monthly series only when the 7- and 30-day windows
   (counted back from when the index was last built, 30 Sep) both had enough
-  sentences. The 7-day window had fewer than 5 for 12 of the 32 bank-topic
-  pairs, UOB's net interest margin among them, and those questions got the
-  all-time score alone.
+  sentences. The 7-day window had fewer than 5 for 13 of the 33 bank-topic
+  pairs (10 of the 30 named topics), UOB's net interest margin (3) among
+  them, and those questions got the all-time score alone.
 - Evidence search ranked results-report prose highest, and the same report
   sentence appeared once a quarter with only the quarter changed.
 
@@ -108,7 +113,7 @@ trimmed run, where one question timed out):
 | score given with its scale | 0 of 17 | 13 of 16 | 11 of 13 | 17 of 18 | 11 of 17 | 8 of 17 | 13 of 19 |
 | a share in % | 5 | 19 | 15 | 19 | 20 | 11 | 13 |
 | words, median | 72 | 65 | 70 | 62 | 68 | 71 | 64 |
-| seconds per answer, median | not timed | 27 | 66 | 60 | 68 | 42 | 61 |
+| seconds per answer, median | not timed | 27 | 66 | 60 | 68 | 41 | 61 |
 | minutes for the 32 questions | 16 | 14 | 29 | 27 | 28 | 22 | 27 |
 
 What the kept version does better than before: no labelled sections, no
@@ -142,11 +147,15 @@ before the next.
    guidance"). The trend tool also gave two comparisons at once (the last
    week rising, the last month falling) and the model blended them.
 3. **Round 3.** The right tool back to 23 of 24, and 17 of 18 scores with
-   their scale. The seven dashboard questions, asked next, showed what the
-   checks can't: asked about DBS alone, the model said DBS ranked above
-   OCBC, and asked about OCBC, that OCBC ranked below both; OCBC is the
-   highest. And a reading the model put in quote marks was removed as an
-   invented quote, leaving "with a reading of." in the answer.
+   their scale. The seven dashboard questions, asked in the browser at this
+   point, showed what the checks can't see: asked about DBS alone, the model
+   said DBS ranked above OCBC, and asked about OCBC, that OCBC ranked below
+   both; OCBC is the highest. Those answers were not saved, and the browser
+   test turned out to be running the round-1 code the dashboard had loaded
+   when the Ask page was first opened. With each bank's score now carrying
+   the other two, the seven questions were asked again in Python (their
+   rankings right), and a reading the model put in quote marks was removed
+   as an invented quote, leaving "with a reading of." in the answer.
 4. **Final.** One bank's score now came with the other two and the
    ranking, and a quoted reading or topic name was not taken for evidence.
    Every check held; the two flagged figures were the model's own errors
@@ -156,7 +165,7 @@ before the next.
    the tool results the model reads are longer and the answers say more.
 5. **Trimmed.** The model was given fewer fields (no links, ids or raw
    counts; six months of history instead of twelve) and a prompt a quarter
-   shorter asking for 50 to 100 words. The median fell to 42 seconds, but
+   shorter asking for 50 to 100 words. The median fell to 41 seconds, but
    the right tool fell to 20 of 24 (one a time-out) and scores with their
    scale to 8 of 17; in the dashboard questions the model reused topic
    scores from earlier answers without fetching them and worked out its own
@@ -174,6 +183,34 @@ before the next.
    model in practice, since every run here used the local one. So the kept
    version shows each evidence result's link again, which the mix run didn't:
    its evidence answers read a little more than measured.
+
+## After validation
+
+The branch's validation (`docs/validation/2026-10-04-chatbot-answers.md`)
+found three holes the change had opened in the checks, and a trend
+sentence that could contradict its own figures. All four were fixed with
+tests (`tests/test_validate_chatbot_reader_*.py`):
+
+- The figure check's new pattern for dates without a year also hid real
+  figures ("0.45 may suggest caution", "In September 45 sentences"). It now
+  takes only a capitalised month and a day from 1 to 31, followed by an
+  ordinal or punctuation.
+- A topic name counted as the tool's own wording, so a model passing its own
+  text as the aspect could then quote that text unchecked. Only real topic
+  names count now.
+- Through the API, the numbered markers and the list of sources the reader
+  saw went back to the model as history, and a bare "[2]" passed unchecked.
+  History drops both, and a bare marker in the model's text is flagged (and
+  removed in strip mode).
+- A trend sentence printed the index's scores beside a direction worked out
+  before shrinkage, so a thin month could read "(+0.27, 6 sentences) was up
+  on (+0.44, 200 sentences)". When the two disagree it now says there are
+  too few sentences to tell.
+
+Re-run over the recorded answers of the before, round 3, final, trimmed and
+mix runs, the fixed figure check flags exactly what it flagged before, and
+none of those answers has a bare marker in the model's text, so the tables
+above stand.
 
 ## The seven questions again, after
 
@@ -198,17 +235,26 @@ questions. Before, the 32 questions took 16 minutes, about 35 seconds for
 each answer the model wrote.
 
 Ollama's own timings, on three questions asked through `main` and through
-the final round's version one after the other, show two causes. The second
-model call, which reads the tool's result, took about 3.5 to 8.5 seconds on
-`main` and 6 to 17 on the branch, because the results are longer. And the
+the final round's version, show what the change costs. The second model
+call, which reads the tool's result, took about 3.5 to 8.5 seconds on
+`main` and 6 to 17 on the branch, because the results are longer; and the
 answers say more (ranking, topics, shares), at about 5 to 9 tokens a second
-on this Mac that day. Per question: 20 against 46 seconds (DBS overall), 34
-against 63 (a trend) and 82 against 84 (a comparison, where `main`'s answer
-ran to 387 tokens). Leaving links, ids and raw counts out of what the model
-reads took the median from 68 to 61 seconds (links have since gone back in,
-for the privacy filter); a shorter prompt took it to 42
-but made the answers less complete. Ollama here runs one slot with a
-4,096-token window; an 8,192-token window made no difference.
+on this Mac that day. Asked alternately, the per-question times were 20
+against 46 seconds (DBS overall), 34 against 63 (a trend) and 82 against 84
+(a comparison, where `main`'s answer ran to 387 tokens), but about half of
+each gap was the branch re-reading its whole prompt on every first call
+(14.6 to 26.1 seconds, against 0.4 to 0.6 on `main`): alternating the two
+versions kept the branch's prompt out of Ollama's cache. Asked as a block,
+the branch re-read it only for the first question (37.9 seconds, then 0.6
+and 0.5).
+
+The mix run's median, 61 seconds, against the final run's 68, can't be put
+down to the fields left out: it is one run each, within the load noise
+below, and the committed version (links back in) was not timed. A shorter
+prompt (the trimmed run) gave 41 seconds, with less complete answers.
+Ollama ran one slot with a 4,096-token window (the runner's command line,
+`-c 4096 -np 1`, seen with `ps` on 4 Oct); an 8,192-token window didn't make
+it faster (two of three questions were slower, within the noise).
 
 Run times move with the Mac's load (the same first question took between 32
 and 108 seconds across the rounds), so the minutes in the table are a guide,

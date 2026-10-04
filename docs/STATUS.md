@@ -74,7 +74,7 @@ By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
 Codebase on 2026-10-04: 22,344 lines of Python in git (13,748 excluding
-tests), 1162 tests in `tests/` (1209 with the diagram and notebook checks).
+tests), 1176 tests in `tests/` (1223 with the diagram and notebook checks).
 
 These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
 loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
@@ -128,16 +128,19 @@ Streamlit dashboard (`dashboard/`) is maintained by a teammate and reads the
 database directly; it was removed on 2026-10-01 and restored the same night
 with the teammate's redesign (DESIGN decision 23, amended).
 
-**Chatbot answers for a retail investor (4 Oct).** Answers lead with a plain
-sentence, give a score once with its scale and its reading in words, the
-shares of positive and negative sentences, how the bank ranks among the three
-and which topics lift or drag it, and show citations as numbered sources. The
-readings, shares, rankings and trend sentence are computed in code and handed
-to the model, not left to it (DESIGN decision 25); the API is unchanged.
-Before and after on the 32-question gold set:
-[evidence](evidence/chatbot-answers-2026-10-04.md).
+**Chatbot answers for a retail investor (4 Oct, branch `fix/chatbot-answers`).**
+The prompt asks for a plain opening sentence, a score once with its scale
+and its reading in words, the shares of positive and negative sentences, how
+the bank ranks among the three and which topics lift or drag it; citations
+the model copies show as numbered sources. The model doesn't always follow
+it: in the kept version's run of the 32-question gold set, 13 of the 19
+answers giving a score gave its scale, and none had labelled sections (23 of
+26 before). The readings, shares, rankings and trend sentence are computed
+in code and handed to the model (DESIGN decision 25); the API is unchanged.
+Answers take about a minute on the M1, against about 35 seconds before.
+[Evidence](evidence/chatbot-answers-2026-10-04.md).
 
-**Engineering.** 1162 tests (external APIs mocked with captured payloads),
+**Engineering.** 1176 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the API and Ollama. A clean copy installs
 and runs from the README on Python 3.14

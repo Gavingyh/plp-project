@@ -1053,9 +1053,12 @@ other-bank questions through to the model, which declined them.
   boilerplate. Now the readings, shares, rankings and the trend sentence are
   computed in code and handed to the model, the prompt is a guide to
   writing for a retail investor, and citations show as numbered sources.
-  Five evaluation rounds on the 32-question gold set, with what each found:
-  `docs/evidence/chatbot-answers-2026-10-04.md`. Answers are slower on the
-  local model.
+  Six runs of the 32-question gold set on the branch, plus the before run,
+  with what each found: `docs/evidence/chatbot-answers-2026-10-04.md`.
+  Answers are slower on the local model (about a minute). Validated
+  (`docs/validation/2026-10-04-chatbot-answers.md`): API integrity held;
+  three holes the change opened in the grounding checks and a trend sentence
+  that could contradict its figures were found and fixed with tests.
 - **Found on the way:** the full test suite stops a running API
   (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
   keeps the chatbot code it first loaded, so restart it after changing
@@ -1066,6 +1069,6 @@ other-bank questions through to the model, which declined them.
   every run used the local model, so nothing left the machine.
 
 **Needs a human (4 Oct, afternoon):** review and merge
-`fix/chatbot-answers` (with `/validate` first); write new test questions
+`fix/chatbot-answers` (re-run `/validate` on the fixes first); write new test questions
 apart from the prompt, since the gold set was used to tune it; decide
 whether slower, fuller answers are worth it on the demo Mac.

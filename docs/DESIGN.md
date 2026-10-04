@@ -563,18 +563,30 @@ Decided:
   enough sentences, else the latest month against the one before (the change
   computed before shrinkage, as for 7 against 30 days). The API's results are
   unchanged.
-- Found in the evaluation rounds and fixed: the model invented comparisons
-  between banks it hadn't fetched, which is why one bank's score now carries
+- Found in the evaluation rounds and the dashboard tests, and fixed: the
+  model invented comparisons between banks it hadn't fetched, which is why one bank's score now carries
   the other two; it misread the monthly series and blended a rising week with
   a falling month, which is why the trend is written out; it judged the
   overall mood from evidence filtered to one side, so the prompt keeps the
   sentiment filter for questions about complaints or praise; and a reading it
-  put in quote marks was removed as an invented quote, so a reading or topic
-  name a tool returned no longer counts as a quote. The figure check skips a
-  date written without its year ("September 25th").
+  put in quote marks was removed as an invented quote, so a reading or a
+  real topic name a tool returned no longer counts as a quote. The figure
+  check skips a date written without its year ("September 25th").
+- Found in validation and fixed (`docs/validation/2026-10-04-chatbot-answers.md`):
+  the first pattern for such dates also hid real figures ("0.45 may",
+  "September 45 sentences"), so it now takes only a capitalised month and a
+  day from 1 to 31 followed by an ordinal or punctuation; a topic name the
+  model could set by passing its own text as the aspect let it quote that
+  text, so only real topic names count; the numbered markers and sources the
+  reader saw went back to the model through the API's history, so history
+  drops them and a bare "[2]" in the model's text is flagged; and when a
+  trend's printed scores point another way from its direction, the sentence
+  says there are too few sentences to tell.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or
-  negative sentence is lifted 0.03 over a neutral one. Each result names its
+  negative sentence is lifted 0.03 over a neutral one when the search is
+  filtered by topic or sentiment (the only time retrieval returns a
+  sentence's label). Each result names its
   source ("Reddit", "news", "CNA", "bank results report", from
   `config/sources.yaml`).
 - The reader sees numbered citations and a list of sources. The checks still

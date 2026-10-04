@@ -98,17 +98,17 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:777` | `class Conversation:` |
-| state fields | `chatbot/agent.py:783` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:787` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:681` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:694` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:381` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:468` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:809` | `class Conversation:` |
+| state fields | `chatbot/agent.py:815` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:819` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:713` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:726` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:413` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:500` | `def answer_has_unverified_citation(self, answer: str)` |
 | intent | `chatbot/intent.py:106` | `def classify_intent(question: str` |
 | reply_for | `chatbot/intent.py:125` | `def reply_for(intent` |
-| guards | `chatbot/guards.py:200` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
-| intent and model_answer kept | `chatbot/agent.py:687` | `intent: str` |
+| guards | `chatbot/guards.py:215` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
+| intent and model_answer kept | `chatbot/agent.py:719` | `intent: str` |
 | tools | `chatbot/tools.py:646` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |

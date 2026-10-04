@@ -1077,7 +1077,15 @@ other-bank questions through to the model, which declined them.
   found one missing or stray quote mark shifted the pairing and hid the next
   quote; the earlier pattern and the pairing now run together, single-quoted
   passages of three words or more are checked, and the limits left are
-  listed on the evidence page.
+  listed on the evidence page. A sixth
+  (`docs/validation/2026-10-05-chatbot-answers-sixth-check.md`) found the
+  words after a nested quote unchecked, scare quotes in single marks
+  stripped and "Data runs to September 25 for DBS" flagged, among others;
+  straight and curly quotes may now hold each other, a straight mark or a
+  closing mark used to open now opens and closes beside any punctuation,
+  single quotes count from six words, a returned day is a date unless a
+  count or a share follows it, and `scripts/replay_checks.py` re-runs the
+  checks over every recorded answer.
 - **Found on the way:** the full test suite stops a running API
   (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
   keeps the chatbot code it first loaded, so restart it after changing

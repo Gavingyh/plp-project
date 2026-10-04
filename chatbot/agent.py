@@ -81,63 +81,94 @@ logger = get_logger(__name__)
 _URL_PATTERN = re.compile(r"(?:https?://|www\.)[^\s)\]}\"'“”]+"
                           r"|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/[^\s)\]}\"'“”]*",
                           re.IGNORECASE)
-# A purported verbatim quote, known by what stands around its marks (as in commit
-# f4b9145): it opens after whitespace or punctuation and closes before it, so the
-# gap between two short quotes ('"buy". ... as "hold"') isn't mistaken for one
-# long quote, and an inch mark ('a 6" phone') opens nothing. Straight or curly
-# quotes, wrapped in markdown emphasis or not, may run across a single line
-# break. After its closing mark a quote may meet a dash, slash, apostrophe or
-# marker ('"..."—', '"..."[2]'). Mixed marks and a quote never closed by the end
-# of its line count too: an answer cut short at the length limit ends in an open
-# quote. Changed since f4b9145 (validation, 4 Oct 2026): a quote holds no other
-# double quote mark, so it never runs past a closing mark of another style
-# ('"...”(Reddit) ... a 6" phone' ran on to the inch mark); mixed marks may wrap
-# a line too; a straight mark closing a curly quote stands where any closing
-# mark would; angle quotes (« ») count like curly ones; and a quote opened with
-# a closing mark (»...«, ”...”) follows the same rule.
+# A purported verbatim quote (as in commit f4b9145, changed in validations on 4
+# and 5 Oct 2026). A curly or angle quote (“...”, «...») is known by its own
+# marks. A mark that can also stand elsewhere, a straight one or a closing mark
+# used to open (»...«, ”...”), is known by what stands around it too: it opens
+# only where no letter or digit stands before it, and closes only where none
+# follows, so an inch mark ('a 6" phone') opens nothing and the gap between two
+# short quotes ('"buy". ... as "hold"') isn't read as one long quote, while
+# brackets, table bars and other punctuation ('"..."(Reddit)', '|”...”|') don't
+# hide a quote. A quote holds no other double quote mark, so it never runs past a
+# closing mark of another style ('"...”(Reddit) ... a 6" phone' ran on to the
+# inch mark), with two exceptions. It may hold an inch mark (_INCH). And a
+# straight quote may hold whole curly quotes and a curly quote whole straight
+# ones ('“I asked them "..." and they said ...”'), the outer quote then being
+# checked whole (validation, 5 Oct 2026: the words after the inner quote went
+# unchecked); only those two, as on made-up answers a quote with mixed marks
+# that could hold one read the closing mark of one quote and the opening mark of
+# another as one quote around a third. Quotes, wrapped in markdown emphasis or
+# not, may run across a single line break. Mixed marks count, and so does a
+# straight quote never closed by the end of its line (an answer cut short at the
+# length limit ends in an open quote); that one opens only after a space,
+# bracket, colon, dash or emphasis mark, so the closing mark of a short quote
+# ('"Bad!"(Reddit) ...') doesn't open one to the line's end.
+_NOT_AFTER_WORD = r"(?<![^\W_])"                            # no letter or digit before the mark
+_NOT_BEFORE_WORD = r"(?![^\W_])"                            # nor after it
+# A quote inside a quote opens and closes like a quote: no letter or digit
+# outside its marks, no space inside them. So the closing mark of one quote and
+# the opening mark of the next ('“...it" and "fees...”') are never a pair.
+_INNER = r'(?![\s"“”«»])[^"“”«»\n]*(?<!\s)'
+_CURLY_INSIDE = rf'{_NOT_AFTER_WORD}“{_INNER}”{_NOT_BEFORE_WORD}'
+_STRAIGHT_INSIDE = rf'{_NOT_AFTER_WORD}"{_INNER}"{_NOT_BEFORE_WORD}'
+# An inch mark ('my 6" phone'): a straight mark after a digit, before no letter
+# or digit. Any quote but one left open may hold one: on `main` a curly quote held
+# any straight mark, and from 6e1560f none, so '“my 6" phone ...”' went
+# unchecked. In a quote that closes with a straight mark it is read as the close
+# wherever the quote is long enough to end there.
+_INCH = r'(?<=\d)"(?![^\W_])'
+_HOLDS_INCH = rf'(?:[^"“”«»\n]|{_INCH}|\n(?!\n))'                    # no double mark but an inch mark, no blank line
+_HOLDS_CURLY = rf'(?:[^"“”«»\n]|{_CURLY_INSIDE}|{_INCH}|\n(?!\n))'     # ... or a whole curly quote
+_HOLDS_STRAIGHT = rf'(?:[^"“”«»\n]|{_STRAIGHT_INSIDE}|{_INCH}|\n(?!\n))'  # ... or a whole straight quote
 _QUOTE_REGEX = re.compile(
-    r'(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s](?:[^"“”«»\n]|\n(?!\n)){8,}?[^"\s]"(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)'
-    r'|“(?:[^"“”«»\n]|\n(?!\n)){10,}?”'
-    r'|«(?:[^"“”«»\n]|\n(?!\n)){10,}?»'
-    r'|“(?:[^"“”«»\n]|\n(?!\n)){9,}?[^"“”«»\s]"(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)'
-    r'|(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s](?:[^"“”«»\n]|\n(?!\n)){9,}?”'
+    rf'{_NOT_AFTER_WORD}"(?![\s"]){_HOLDS_CURLY}{{10,}}?(?<!\s)"{_NOT_BEFORE_WORD}'
+    rf'|“{_HOLDS_STRAIGHT}{{10,}}?”'
+    rf'|«{_HOLDS_INCH}{{10,}}?»'
+    rf'|“{_HOLDS_INCH}{{10,}}?(?<!\s)"{_NOT_BEFORE_WORD}'
+    rf'|{_NOT_AFTER_WORD}"(?![\s"]){_HOLDS_INCH}{{10,}}?”'
     r'|(?:^|(?<=[\s(\[\]:—–*_-]))"[^"\s][^"“”«»\n]{9,}(?=\n|\Z)'
-    r'|(?:^|(?<=[\s(\[\]:—–*_-]))»[^"“”«»\s](?:[^"“”«»\n]|\n(?!\n)){8,}?[^"“”«»\s]«(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)'
-    r'|(?:^|(?<=[\s(\[\]:—–*_-]))”[^"“”«»\s](?:[^"“”«»\n]|\n(?!\n)){8,}?[^"“”«»\s]”(?=[\s.,;:!?)\]*_\[—–/\'’-]|$)')
-# A passage in single quotes, by the same rule, of three words or more: an
-# apostrophe inside a word ("OCBC's", "don't") neither opens nor closes one, and
-# a quote must open on a letter, so "the '08 crisis ... banks' margins" is not
-# one. Two words in single quotes ('strong buy') are a term, not a quote.
+    rf'|{_NOT_AFTER_WORD}»[^"“”«»\s]{_HOLDS_INCH}{{8,}}?[^"“”«»\s]«{_NOT_BEFORE_WORD}'
+    rf'|{_NOT_AFTER_WORD}”[^"“”«»\s]{_HOLDS_INCH}{{8,}}?[^"“”«»\s]”{_NOT_BEFORE_WORD}')
+# A passage in single quotes, of six words or more (_QuoteSpans._SINGLE_WORDS):
+# shorter ones are mostly terms or scare quotes ('strong buy', 'customer first
+# digital approach'), not quotes (validation, 5 Oct 2026: three words stripped a
+# scare quote as invented). An apostrophe inside a word ("OCBC's", "don't")
+# neither opens nor closes one, and a quote must open on a letter, so "the '08
+# crisis ... banks' margins" is not one. It opens after a space, bracket, colon,
+# dash, emphasis mark or table bar.
 _SINGLE_QUOTE = re.compile(
-    r"(?:^|(?<=[\s(\[\]:—–*_-]))['‘](?=[^\W\d_])(?:[^'‘’\n]|(?<=\w)['’](?=\w)|\n(?!\n)){10,}?"
+    r"(?:^|(?<=[\s(\[\]:—–*_|-]))['‘](?=[^\W\d_])(?:[^'‘’\n]|(?<=\w)['’](?=\w)|\n(?!\n)){10,}?"
     r"(?<=[^\s'‘’])['’](?!\w)")
 
 
 class _QuoteSpans:
     """Quoted passages in an answer, from two detectors that each catch what the
-    other misses (validation, 4 Oct 2026; five rounds found a new shape each).
+    other misses (validations, 4 and 5 Oct 2026; each round found a new shape).
 
-    First, _QUOTE_REGEX: it knows a quote by what stands around its marks, so
-    one stray or missing mark ('a 6" phone', an unclosed quote) never shifts
-    the quotes after it. Then, in the text between its quotes, each paragraph's
-    marks are paired in order, first with second and third with fourth, as a
-    reader pairs them, whatever stands around them: '"..."(Reddit)', a table
-    cell '|"..."|', a space inside the marks. With nothing open, a closing
+    First, _QUOTE_REGEX: a curly or angle quote by its own marks, a straight
+    one or one opened with a closing mark also by the letters and digits
+    around its marks, so one stray or missing mark ('a 6" phone', an unclosed
+    quote) never shifts the quotes after it. Then, in the text between its
+    quotes, each paragraph's marks are paired in order, first with second and
+    third with fourth, as a reader pairs them, whatever stands around them: a
+    space inside the marks, a letter against one. With nothing open, a closing
     mark (” or ») opens nothing, and nor does an inch mark ('a 6" phone'). A
     pair around fewer than ten characters ('"buy"') is a word in quote marks,
     not a quote, but still takes its two marks, so the gap between two short
     quotes is never read as one. A mark left without a partner opens a quote
     that runs to the end of its line, or to the next quote the regex found,
     stopping before a citation; a mark closing a word ('bad" ') opens no such quote.
-    Last, single-quoted passages (_SINGLE_QUOTE) where neither found a quote.
-    Offers a compiled pattern's finditer, search and findall, the spans in text
-    order and never overlapping, so its callers read like any regex's."""
+    Last, single-quoted passages of six words or more (_SINGLE_QUOTE) where
+    neither found a quote. Offers a compiled pattern's finditer, search and
+    findall, the spans in text order and never overlapping, so its callers
+    read like any regex's."""
 
     _DOUBLE = '"\u201c\u201d\u00ab\u00bb'
     _MARK = re.compile(f"[{_DOUBLE}]")
     _PARAGRAPH = re.compile(r"(?:[^\n]|\n(?![ \t]*\n))+")
     _CITATION = re.compile(r"[ \t]*\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id")
     _SHORTEST = 10
+    _SINGLE_WORDS = 6
 
     class _Span:
         def __init__(self, text: str, start: int, end: int):
@@ -220,7 +251,8 @@ class _QuoteSpans:
         gaps = zip([0] + [e for _, e in spans], [s for s, _ in spans] + [len(text)])
         spans += [p for s, e in gaps if s < e for p in self._paired(text, s, e)]
         for m in _SINGLE_QUOTE.finditer(text):
-            if len(m.group(0)[1:-1].split()) >= 3 and not any(s < m.end() and m.start() < e for s, e in spans):
+            if len(m.group(0)[1:-1].split()) >= self._SINGLE_WORDS \
+                    and not any(s < m.end() and m.start() < e for s, e in spans):
                 spans.append((m.start(), m.end()))
         for s, e in sorted(spans):
             yield self._Span(text, s, e)

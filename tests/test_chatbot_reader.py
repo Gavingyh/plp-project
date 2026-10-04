@@ -303,6 +303,31 @@ def test_a_range_running_past_the_returned_days_is_checked():
     assert unverified_numbers("In September 25-30% were negative.", DAYS_RETURNED) == ["25", "30%"]
 
 
+# Validation, 5 Oct 2026: a returned day with a word after it was flagged ("Data runs to
+# September 25 for DBS"); now it is a date unless a count or a share follows it.
+@pytest.mark.parametrize("answer", [
+    "Data runs to September 25 for DBS.", "On September 25 DBS scored 0.31.", "As of September 25 the score was 0.31.",
+    "The September 25 data show 0.31.", "Data runs to September 25 with 45 sentences.", "Sept 25 & 45 sentences",
+    "Data runs to Sep 25 in all three banks.", "Data covers Sept 25-26 for DBS.",
+])
+def test_a_returned_day_before_another_word_is_a_date(answer):
+    assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == []
+
+
+@pytest.mark.parametrize("answer, figures", [
+    ("In September 25 more negative posts appeared.", ["25"]),
+    ("In September 25 negative and 20 positive sentences.", ["25", "20"]),
+    ("In September 25 were negative.", ["25"]),
+    ("In September 25 out of 45 posts were negative.", ["25"]),
+    ("In September 25 per cent were negative.", ["25"]),
+    ("In September 25 to 30% of posts were negative.", ["25", "30%"]),
+    ("In September 25 to 30 per cent were negative.", ["25", "30"]),
+    ("From Sept 25 to 26 posts were negative.", ["26"]),     # a range of returned days, then a count: as before
+])
+def test_a_returned_day_before_a_count_or_a_share_is_checked(answer, figures):
+    assert unverified_numbers(answer, DAYS_RETURNED) == figures
+
+
 def test_the_model_reads_fewer_fields_than_the_turn_records(monkeypatch):
     # Links, ids and counts cost prompt tokens without helping an answer; the checks and the
     # numbered sources still need them, so the record keeps them.

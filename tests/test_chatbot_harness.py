@@ -428,11 +428,11 @@ def test_an_inch_mark_an_apostrophe_or_a_term_in_quote_marks_is_no_quote(answer)
 
 def test_quotes_are_found_in_text_order_and_never_overlap():
     answer = (f'"{QUOTED_REAL}" and a 6" phone, then "{QUOTED_INVENTED}"(Reddit), «another quote here» and '
-              "'a single quoted passage here' and “a curly quote here”.")
+              "'a single quoted passage runs here' and “a curly quote here”.")
     spans = list(agent._QUOTE_PATTERN.finditer(answer))
     assert [m.group(0) for m in spans] == [
         '"What do you think of "', '" with the 0.5% fees?"', f'"{QUOTED_INVENTED}"',
-        "«another quote here»", "'a single quoted passage here'", "“a curly quote here”"]
+        "«another quote here»", "'a single quoted passage runs here'", "“a curly quote here”"]
     assert all(a.end() <= b.start() for a, b in zip(spans, spans[1:]))
 
 
@@ -486,4 +486,109 @@ def test_a_marker_left_by_dropping_one_inside_it_goes_too_and_both_are_checked(m
      ['"the app keeps crashing on payday']),
 ])
 def test_mixed_quote_marks_close_where_the_quote_does(answer, quotes):
+    assert agent._QUOTE_PATTERN.findall(answer) == quotes
+
+
+# --- quote detection after the sixth validation (5 Oct 2026) -----------------------------
+# A straight mark, or a closing mark used to open, now opens where no letter or digit stands
+# before it and closes where none follows; a straight quote may hold curly ones and a curly
+# quote straight ones, checked whole; a single-quoted passage counts from six words.
+
+QUOTE_A = "the app keeps logging me out every single time i open it"
+QUOTE_B = "fees are far too high for retail customers like me"
+QUOTE_INVENTED_TAIL = "and they said the bank cheats everyone"
+
+
+def _two_quote_tracker():
+    items = [{"sentence_id": c * 24, "bank": "DBS", "source": "arctic_shift", "date": "2026-09-01", "text": t,
+              "url": f"https://r.example/{c}", "cite_as": f"[DBS, 2026-09-01, sentence_id {c * 24}]"}
+             for c, t in (("a", QUOTE_A), ("b", QUOTE_B))]
+    return agent._ToolCallTracker.from_calls([{"name": "search_evidence", "arguments": {"query": "q"},
+                                               "result": {"results": items}}])
+
+
+@pytest.mark.parametrize("answer, quotes", [
+    # Beside a bracket, a table bar or a closing mark used to open: the pattern finds these itself now.
+    (f'One said "{QUOTE_A}"(Reddit) and "{QUOTE_B}"|', [f'"{QUOTE_A}"', f'"{QUOTE_B}"']),
+    (f"| DBS |”{QUOTE_A}”| x |", [f"”{QUOTE_A}”"]),
+    (f"One said ”{QUOTE_A}”(Reddit).", [f"”{QUOTE_A}”"]),
+    (f"|DBS|»{QUOTE_A}«|", [f"»{QUOTE_A}«"]),
+    # Markdown emphasis still opens and closes a quote: "_" is no letter or digit here.
+    (f'He said _"{QUOTE_A}"_ today.', [f'"{QUOTE_A}"']),
+    # A quote holding a quote in the other style is one quote.
+    (f'One wrote “I asked them "{QUOTE_A}" {QUOTE_INVENTED_TAIL}” ok',
+     [f'“I asked them "{QUOTE_A}" {QUOTE_INVENTED_TAIL}”']),
+    (f'One wrote "I asked them “{QUOTE_A}” {QUOTE_INVENTED_TAIL}" ok',
+     [f'"I asked them “{QUOTE_A}” {QUOTE_INVENTED_TAIL}"']),
+    # The closing mark of one quote and the opening mark of the next are no quote inside a quote.
+    (f'Users: “{QUOTE_A}" and "{QUOTE_B}” today.', [f'“{QUOTE_A}"', f'"{QUOTE_B}”']),
+    # Nor, around a quote between them, in a quote with mixed marks or in angle marks (these hold none).
+    (f'“ {QUOTE_INVENTED_TAIL} "; one said “{QUOTE_B}” and ”{QUOTE_A}”.',
+     [f'“ {QUOTE_INVENTED_TAIL} "', f"“{QUOTE_B}”", f"”{QUOTE_A}”"]),
+    (f'Users wrote: » {QUOTE_B} «, while "{QUOTE_A}" and »{QUOTE_INVENTED_TAIL}«.',
+     [f'"{QUOTE_A}"', f"»{QUOTE_INVENTED_TAIL}«"]),
+    # An unclosed quote before one the pattern finds: the pairing checks the fragment before it.
+    (f'One said "{QUOTE_A}. Another wrote "{QUOTE_B}"(Reddit) and more.',
+     [f'"{QUOTE_A}. Another wrote', f'"{QUOTE_B}"']),
+    # The closing mark of a short quote, after punctuation, opens nothing.
+    ('"Bad!"(Reddit) and the rest of the line runs on here', []),
+    ('Analysts rated it "buy!". The average target is SGD 78.14 now.', []),
+    ('It is a 6" phone, "cheap!"(Reddit) and light', []),
+])
+def test_quotes_beside_brackets_bars_and_nested_quotes(answer, quotes):
+    assert agent._QUOTE_PATTERN.findall(answer) == quotes
+
+
+@pytest.mark.parametrize("answer", [
+    f'One wrote “I asked them "{QUOTE_A}" {QUOTE_INVENTED_TAIL}” [DBS, 2026-09-01, sentence_id {"a" * 24}]',
+    f'One wrote "I asked them “{QUOTE_A}” {QUOTE_INVENTED_TAIL}" [DBS, 2026-09-01, sentence_id {"a" * 24}]',
+])
+def test_strip_removes_a_quote_whose_words_after_a_real_inner_quote_are_invented(answer):
+    out, flagged = agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip")
+    assert "cheats everyone" not in out and not flagged
+
+
+@pytest.mark.parametrize("answer", [
+    f'Users: “{QUOTE_A}" and "{QUOTE_B}” today.',
+    f'One said "{QUOTE_A}"(Reddit) and | DBS |”{QUOTE_B}”| x |',
+])
+def test_real_quotes_in_these_shapes_are_kept_unflagged(answer):
+    assert agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip") == (answer, False)
+
+
+def test_a_real_sentence_with_a_quote_in_it_may_be_quoted_in_curly_marks():
+    answer = f'One user asked “{QUOTED_REAL}” [DBS, 2026-09-01, sentence_id {QUOTE_SID}]'
+    assert agent._QUOTE_PATTERN.findall(answer) == [f"“{QUOTED_REAL}”"]
+    assert agent.enforce_evidence(answer, _quote_tracker(), "q", "strip") == (answer, False)
+
+
+@pytest.mark.parametrize("answer, quotes", [
+    ("DBS's 'customer first digital approach' is praised.", []),          # a scare quote, five words or fewer
+    ("Analysts call it 'a clear buy on value'.", []),                       # five words
+    ("One said 'the app logs me out daily now' today.", ["'the app logs me out daily now'"]),   # six words
+    (f"| DBS |'{QUOTE_A}'| x |", [f"'{QUOTE_A}'"]),                        # opened after a table bar
+])
+def test_a_single_quoted_passage_counts_from_six_words(answer, quotes):
+    assert agent._QUOTE_PATTERN.findall(answer) == quotes
+
+
+INCH_TAIL = 'my 6" phone is the worst and DBS will cut its dividend'
+
+
+@pytest.mark.parametrize("marks", [("“", "”"), ('"', '"'), ("«", "»"), ("»", "«"), ('"', "”"), ("”", "”")])
+def test_a_quote_holding_an_inch_mark_is_one_quote_and_checked(marks):
+    # Since 6e1560f a curly quote held no straight mark, so this one went unchecked; on main it was flagged.
+    answer = f"One said {marks[0]}{INCH_TAIL}{marks[1]}."
+    assert agent._QUOTE_PATTERN.findall(answer) == [f"{marks[0]}{INCH_TAIL}{marks[1]}"]
+    out, flagged = agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip")
+    assert "cut its dividend" not in out and not flagged
+
+
+@pytest.mark.parametrize("answer, quotes", [
+    # A straight mark after a number still closes a quote long enough to end there.
+    ('Analysts said “the target price is SGD 78" on average, and “the dividend looks safe for now”.',
+     ['“the target price is SGD 78"', "“the dividend looks safe for now”"]),
+    ('The screen is 6" wide and the 55" TV is "far too bright for the branch" ok', ['"far too bright for the branch"']),
+])
+def test_a_straight_mark_after_a_number_still_closes_or_opens_nothing(answer, quotes):
     assert agent._QUOTE_PATTERN.findall(answer) == quotes

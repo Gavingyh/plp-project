@@ -56,12 +56,24 @@ _YEARLESS_DATE = re.compile(
     rf"(?:[ \t]*(?:[-–]|to\b|and\b)[ \t]*(?P<day1b>\d{{1,2}})(?P<ord1b>st|nd|rd|th)?\b)?(?![.,]\d|[ \t]*%)"
     rf"|(?<![\w.])(?P<day2>\d{{1,2}})(?:st|nd|rd|th)?[ \t]+(?:of[ \t]+)?(?P<month2>{_MONTH})",
     re.IGNORECASE)
-# After a month, a returned day is a date only where the date ends: at an
-# ordinal ("25th"), punctuation, the end of a line, or "and" or "to". A word
-# after it makes it a count: "In September 25 sentences were negative", with
-# data to 25 September, hid the 25 (validation, 4 Oct 2026).
-_DATE_ENDS = re.compile(r"[ \t]*(?:\n|\Z|[.,;:!?()\[\]{}\"'’”*_—]|[-–](?![ \t]*\d)|(?:and|to)\b)",
-                        re.IGNORECASE)
+# After a month, a returned day is a date unless a count or a share follows it:
+# a word that counts things, after up to two that describe them ("In September
+# 25 sentences were negative", "25 more negative posts"), a sentiment ("25
+# negative and 20 positive"), "of" or "were" ("25 of them"), or a share ("25 to
+# 30% of posts", "25 per cent"). With data to 25 September, a validation on 4
+# Oct 2026 found the first hidden; the rule that fixed it, a date only where the
+# date ends, flagged "Data runs to September 25 for DBS" (validation, 5 Oct
+# 2026). A count word on the next line is not read: a line end ends a date.
+_COUNT_WORD = (r"(?:sentences|posts|mentions|comments|articles|tweets|threads|replies|reviews|people|users"
+               r"|analysts|items|results|reports|headlines|stories|times|points)\b")
+_SHARE = r"(?:%|[ \t]+(?:per[ \t]?cent|percent|pct)\b)"
+_SHARE_FOLLOWS = re.compile(_SHARE, re.IGNORECASE)
+_COUNT_FOLLOWS = re.compile(
+    rf"[ \t]+(?:(?:negative|positive|neutral|new|more|other|reddit|news|cna)[ \t]+){{0,2}}{_COUNT_WORD}"
+    rf"|[ \t]+(?:of|out[ \t]+of|were|negative|positive|neutral)\b"
+    rf"|{_SHARE}"
+    rf"|[ \t]*(?:to\b|[-–])[ \t]*\d+(?:\.\d+)?[ \t]*{_SHARE}",
+    re.IGNORECASE)
 _ISO_DAY = re.compile(r"\b\d{4}-(\d{2})-(\d{2})")
 # Where tools write dates. Only these count: a date in the model's own search
 # query, in a link or in a quoted sentence would let the model vouch for itself.
@@ -94,12 +106,15 @@ def _without_tool_dates(text: str, tool_results) -> str:
             return " " if (month, int(m.group("day2"))) in days else m.group(0)
         if (month, int(m.group("day1"))) not in days:
             return m.group(0)
-        if m.group("day1b"):                     # "Sept 25-26": both days returned, the range ends there
-            if (month, int(m.group("day1b"))) in days and (m.group("ord1b") or _DATE_ENDS.match(m.string, m.end())):
-                return " "
+        counted = _COUNT_FOLLOWS.match(m.string, m.end())
+        if m.group("day1b"):
+            if _SHARE_FOLLOWS.match(m.string, m.end()):   # "25 to 30 per cent": a share, both checked
+                return m.group(0)
+            if (month, int(m.group("day1b"))) in days and (m.group("ord1b") or not counted):
+                return " "                       # "Sept 25-26": both days returned, no count after them
             first_end = m.end("ord1") if m.group("ord1") else m.end("day1")
             return " " + m.string[first_end:m.end()]     # the first day alone; what follows it is checked
-        return " " if m.group("ord1") or _DATE_ENDS.match(m.string, m.end()) else m.group(0)
+        return " " if m.group("ord1") or not counted else m.group(0)
 
     return _YEARLESS_DATE.sub(blank, text) if days else text
 

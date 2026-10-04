@@ -559,8 +559,8 @@ personal names are kept in the repository.
 
 | # | Decision | Evidence available | Who decides |
 |---|---|---|---|
-| 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source. *Decided 2026-09-30: ten data-derived aspects (DESIGN decision 21)* | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team plus supervisor. It changes what was proposed. |
+| 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source. *Decided 2026-09-30: ten data-derived aspects (DESIGN decision 21)* | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team. It changes what was proposed, so the report must explain it. |
 | 2 | **Default local model.** On gold set v2 (1 Oct) `llama3.1:8b` carried a citation warning on 11 of 32 answers against `llama3.2:3b`'s 15, but is noticeably slower | `docs/evidence/chatbot-eval-build-2026-10-01.md` | Team |
 | 3 | **Advice-declining fix.** *Done 2026-09-26:* the input guard declines 7 of 7, where prompts alone managed 2–3 of 7 | `docs/evidence/chatbot-harness-2026-09-26.md` | — |
-| 4 | **Whether blending is right at all.** Management commentary and retail chatter in one index is a legitimate methodological question, currently resolved in favour of the proposal with composition made visible | Per-source rows in `sentiment_index` | Team plus supervisor |
+| 4 | **Whether blending is right at all.** Management commentary and retail chatter in one index is a legitimate methodological question, currently resolved in favour of the proposal with composition made visible | Per-source rows in `sentiment_index` | Team |
 | 5 | **Labelling split across four people**, and whether to reduce the per-class target given `asset_quality` has only 58 candidate rows | `docs/STATUS.md` labelling section | Team |

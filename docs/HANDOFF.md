@@ -123,13 +123,12 @@ labelling section of [RUNBOOK.md](RUNBOOK.md). Three rules that matter:
   class overall, not per aspect; the re-drawn set adds a floor of about 80
   rows per aspect. PLAN.md section 6.)
 
-### 3. Settle the aspect taxonomy — team plus supervisor
+### 3. Settle the aspect taxonomy
 
-> **Decided by the team 2026-09-26, to confirm with the supervisor.** Keep the
-> proposal's four aspects plus `other`, assigned by a local LLM, one per
-> sentence (DESIGN decision 16). The supervisor's input is still needed
-> because the method differs from the proposal. Evidence as it stood on
-> 2026-09-11:
+> **Decided by the team 2026-09-26.** Keep the proposal's four aspects plus
+> `other`, assigned by a local LLM, one per sentence (DESIGN decision 16).
+> The report must explain it, because the method differs from the proposal.
+> Evidence as it stood on 2026-09-11:
 
 This is now well evidenced and needs a decision, not more analysis. Dropping
 the proposal's four a-priori aspects changes what was proposed, so it is not a
@@ -473,7 +472,6 @@ first fine-tuning) is now in the repository. Evidence:
      A small second round would fix both.
   3. The cluster labels behind the taxonomy were drafted with an AI
      assistant: put that in the GenAI declaration.
-  4. Confirm the taxonomy change with the supervisor (PLAN, supervisor sign-off).
 - **Gemini.** A free-tier `GEMINI_API_KEY` is in `.env`, for the chatbot
   only. It works (the first key didn't), and the backend is now verified live
   ([evidence](evidence/gemini-backend-2026-09-30.md)). While a key is set,

@@ -171,10 +171,6 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
         <div class="title"><label for="p-validate">Check the aspect classifier's validation sample</label><span class="tag crit">Week 1</span></div>
         <div class="why">About 100 sentences with the LLM's chosen aspect. Mark each right or wrong using the aspect definitions in <code>docs/annotation-guideline.md</code>. It decides whether the full run goes ahead as designed.</div>
       </div></li>
-      <li class="item"><input type="checkbox" id="p-supervisor"><div class="body">
-        <div class="title"><label for="p-supervisor">Confirm two things with the supervisor</label><span class="tag when">By ~5 Oct</span></div>
-        <div class="why">That the taxonomy is now ten data-derived aspects instead of the proposal's four, still to be assigned by an LLM (supervisor sign-off, DESIGN decision 21), and whether retail chatter and management commentary belong in one index (the blended-index decision).</div>
-      </div></li>
       <li class="item"><input type="checkbox" id="p-agree"><div class="body">
         <div class="title"><label for="p-agree">Agreement round</label><span class="tag crit">Week 2</span></div>
         <div class="why">Two people label the same 150 rows of the re-drawn sheet independently. κ ≥ 0.6 for aspect and for sentiment before the rest is split up; below that, tighten the guideline and redo the sample.</div>
@@ -315,10 +311,10 @@ button.reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
     </div>
     <div class="plan">
       <div class="week"><div class="d">28 Sep<small>gate: candidates re-drawn</small></div>
-        <div><h3>People</h3><ul><li>Rotate keys; fill roles</li><li>Check the classifier's validation sample</li><li>Book the supervisor meeting</li></ul></div>
+        <div><h3>People</h3><ul><li>Rotate keys; fill roles</li><li>Check the classifier's validation sample</li></ul></div>
         <div><h3>AI</h3><ul><li>Aspect classifier, full run overnight</li><li>Re-draw and pre-label candidates</li></ul></div></div>
       <div class="week"><div class="d">5 Oct<small>gate: κ ≥ 0.6; aspects and blending decided</small></div>
-        <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>Supervisor meeting</li><li>NER gold set; CNA load reviewed</li></ul></div>
+        <div><h3>People</h3><ul><li>Agreement round, then full labelling</li><li>NER gold set; CNA load reviewed</li></ul></div>
         <div><h3>AI</h3><ul><li>Discovery re-run and sweep; NER</li><li>Frozen chatbot evaluation set; dashboard fixes</li><li>Report structure and drafts</li></ul></div></div>
       <div class="week"><div class="d">12 Oct<small>gate: ~1,000 labelled; model trained</small></div>
         <div><h3>People</h3><ul><li>Finish labelling</li><li>Decide on passing mentions</li></ul></div>

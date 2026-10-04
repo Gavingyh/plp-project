@@ -44,8 +44,7 @@ fine-tuned deep neural network; Python.
 
 | decision | who | by |
 |---|---|---|
-| **Supervisor sign-off:** confirm the LLM-aspects decision with the supervisor. It keeps the proposal's aspects but changes how they are assigned, which the report must explain | team, supervisor | 5 Oct |
-| **Blended index:** one blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text | team, supervisor | 5 Oct |
+| **Blended index:** one blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text | team | 5 Oct |
 | **Demo model:** the default chatbot model for the demo. `llama3.1:8b` fabricates citations 13% of the time, `llama3.2:3b` 43–48%, but the 8B is slower. The harness now detects fabrication but can't prevent it, so this choice decides how many flagged answers a demo shows | team | 19 Oct |
 | **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
 | **Passing mentions:** stricter relevance filtering for passing mentions ("paid via DBS PayNow"). It changes the data, so it must be decided before the final pipeline run | team | 12 Oct |
@@ -171,8 +170,8 @@ The original ordering: labelling gates the DNN, and aspects gate labelling
 
 | week | gate at the end of the week | people | AI |
 |---|---|---|---|
-| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled | Rotate API keys; fill roles; check the aspect classifier's 100-sentence validation sample; book the supervisor meeting | Aspect-classifier prompt and validation run; full run overnight; re-draw candidates; update the labelling sheet and tools for aspect + sentiment |
-| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; supervisor sign-off and blended index decided | Agreement round (two people, 150 rows), then full labelling; supervisor meeting; NER gold set; CNA load reviewed (loaded 26 Sep) | Discovery re-run and sweep; NER step; frozen chatbot evaluation set; report structure and datasets/methods drafts |
+| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled | Rotate API keys; fill roles; check the aspect classifier's 100-sentence validation sample | Aspect-classifier prompt and validation run; full run overnight; re-draw candidates; update the labelling sheet and tools for aspect + sentiment |
+| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; blended index decided | Agreement round (two people, 150 rows), then full labelling; NER gold set; CNA load reviewed (loaded 26 Sep) | Discovery re-run and sweep; NER step; frozen chatbot evaluation set; report structure and datasets/methods drafts |
 | 12 – 18 Oct | ~1,000 rows labelled; model trained | Finish labelling; decide on passing mentions | Fine-tune (3 seeds); evaluate sentiment, aspect categorisation and NER; re-score the corpus |
 | 19 – 25 Oct | Results frozen | Interpret results; transcript reading; SASSI sessions; decide the demo model and the OpenAI backend; rehearse | Chatbot evaluation; results tables and figures; video script; clean-copy install test |
 | 26 Oct – 1 Nov | Submitted | Conclusions, contribution summaries, GenAI declaration; record the video; final read-through; submit | Final snapshot and data report; second clean-copy test |

@@ -389,9 +389,8 @@ The per-source breakdown remains the honest way to read blended figures.
 > evaluated against. The rest of this section is the history.
 >
 > **Decided 2026-09-26.** Keep the proposal's four aspects plus `other`, and
-> assign them with a local LLM, one per sentence (DESIGN decision 16), to be
-> confirmed with the supervisor (an open decision in PLAN.md). The analysis below is the
-> evidence behind that decision.
+> assign them with a local LLM, one per sentence (DESIGN decision 16). The
+> analysis below is the evidence behind that decision.
 
 The taxonomy is still the proposal's four a-priori aspects. The earlier
 finding — that clustering found only a coarse consumer-banking versus
@@ -480,8 +479,8 @@ Full table, caveats and the argument against over-reading it are in
 [evidence/taxonomy-comparison-2026-09-11.md](evidence/taxonomy-comparison-2026-09-11.md).
 The short version of the caveat: coarser taxonomies separate more easily
 partly as arithmetic, and none of this measures whether assignments are
-*correct*. This remains a judgement call for the team and supervisor, not
-something to settle in code.
+*correct*. This remains a judgement call for the team, not something to
+settle in code.
 
 ### 4. Model backends never verified
 
@@ -553,7 +552,7 @@ Roughly in order of value.
    from the Wayback Machine, which is not behind the WAF that blocks UOB's
    IR site. See `ingest/earnings_fetch_uob.py`.
 3. **Settle the aspect taxonomy.** Re-run discovery on the enriched corpus,
-   review with the supervisor, freeze the decision.
+   review it as a team, freeze the decision.
 4. **Fix advice-declining, and switch the default local model.** The
    evaluation above has been run; two actions fall out of it. Advice-seeking
    questions are declined only 3/7 of the time on every model tested, which

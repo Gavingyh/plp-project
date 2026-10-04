@@ -50,7 +50,7 @@ refreshed, evidence-linked read of what is being said about the three banks.
 |---|---|---|
 | **Retail reader** | A quick read on sentiment per bank and aspect, with the evidence behind it and an honest signal when data is thin | the Streamlit dashboard (`dashboard/`, a teammate's), chatbot |
 | **Dashboard builder or API consumer** | Every number, its evidence and the chat, as JSON | FastAPI REST API ([api-integration.md](../api-integration.md)) |
-| **Teammate, marker, supervisor** | To reproduce every number, see what is unfinished, and judge what the numbers support | Docs, evidence files, verification ledger, test suite |
+| **Teammate, marker** | To reproduce every number, see what is unfinished, and judge what the numbers support | Docs, evidence files, verification ledger, test suite |
 
 The third user is not an afterthought. This is a graded practice module whose
 deliverables include a report, a demo video and source code, so

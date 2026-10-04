@@ -12,9 +12,9 @@ gantt
   todayMarker off
 
   section People
-  Keys, roles, classifier sample, book supervisor   :p1, 2026-09-28, 7d
+  Keys, roles, classifier sample                    :p1, 2026-09-28, 7d
   Agreement round, then labelling                   :p2, 2026-10-05, 14d
-  Supervisor, NER gold set, CNA loaded              :p3, 2026-10-05, 7d
+  NER gold set, CNA loaded                          :p3, 2026-10-05, 7d
   Interpret results, transcripts, SASSI, rehearse   :p4, 2026-10-19, 7d
   Write conclusions, record video, submit           :p5, 2026-10-26, 7d
 
@@ -50,10 +50,10 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| week 1 and its gate | `docs/PLAN.md:174` | `| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled |` |
-| week 2 and its gate | `docs/PLAN.md:175` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; supervisor sign-off and blended index decided |` |
-| week 3 and its gate | `docs/PLAN.md:176` | `| 12 – 18 Oct | ~1,000 rows labelled; model trained |` |
-| week 4 and its gate | `docs/PLAN.md:177` | `| 19 – 25 Oct | Results frozen |` |
-| week 5 and its gate | `docs/PLAN.md:178` | `| 26 Oct – 1 Nov | Submitted |` |
+| week 1 and its gate | `docs/PLAN.md:173` | `| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled |` |
+| week 2 and its gate | `docs/PLAN.md:174` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; blended index decided |` |
+| week 3 and its gate | `docs/PLAN.md:175` | `| 12 – 18 Oct | ~1,000 rows labelled; model trained |` |
+| week 4 and its gate | `docs/PLAN.md:176` | `| 19 – 25 Oct | Results frozen |` |
+| week 5 and its gate | `docs/PLAN.md:177` | `| 26 Oct – 1 Nov | Submitted |` |
 | submission date | `docs/PLAN.md:16` | `All due **Sunday 1 November 2026**.` |
-| fallback if labelling slips | `docs/PLAN.md:180` | `If labelling slips, the fallback is to fine-tune` |
+| fallback if labelling slips | `docs/PLAN.md:179` | `If labelling slips, the fallback is to fine-tune` |

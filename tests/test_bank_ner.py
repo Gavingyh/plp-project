@@ -21,7 +21,7 @@ def test_resolution_table(mention, expected):
 
 
 @pytest.mark.parametrize("text,expected", [
-    ("I opened a POSB account last year.", ["DBS"]),                    # alias matching misses POSB
+    ("I opened a POSB account last year.", ["DBS"]),                    # POSB is DBS's retail brand
     ("my dbs card got declined again", ["DBS"]),                       # lowercase Reddit text
     ("UOB Kay Hian raised its target for OCBC.", ["OCBC"]),            # the broker isn't UOB
     ("I bought shares on DBS Vickers and UOB.", ["UOB"]),
@@ -68,7 +68,7 @@ def test_evaluate_needs_labelled_rows_and_compares_both_methods():
     res = ner.evaluate(gold)
     overall = res[res["case"] == "ALL"].set_index("method")
     assert overall.loc["NER", "exact"] == 1.0
-    assert overall.loc["alias matching", "exact"] == 0.0                     # misses POSB, takes the broker as UOB
+    assert overall.loc["alias matching", "exact"] == 0.5                     # finds POSB (since 4 Oct), takes the broker as UOB
     with pytest.raises(ValueError, match="no labelled rows"):
         ner.evaluate(gold.assign(annotator=""))
 

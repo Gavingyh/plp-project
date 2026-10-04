@@ -296,7 +296,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    backend: Literal["claude", "openai", "gemini", "ollama"] | None = None  # None: auto-detect
+    backend: Literal["claude", "openai", "gemini", "ollama"] | None = None  # None: the server's CHATBOT_BACKEND (ollama by default)
 
     @field_validator("backend", mode="before")
     @classmethod

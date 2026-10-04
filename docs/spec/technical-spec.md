@@ -238,8 +238,8 @@ Local models available through Ollama:
 
 | model | size | notes |
 |---|---|---|
-| `llama3.2:3b` | 2.0 GB | Current default. Fast; on gold set v2 (1 Oct) 15 of 32 answers carried a citation warning |
-| `llama3.1:8b` | 4.9 GB | 11 of 32 on the same set; slower. The better default where it fits |
+| `llama3.2:3b` | 2.0 GB | The default until 4 Oct. On gold set v2 (1 Oct) 15 of 32 answers carried a citation warning; on 4 Oct no faster than the 8B (median 20.7 s against 22.2 s a question) |
+| `llama3.1:8b` | 4.9 GB | The default since 4 Oct (the demo model). 11 of 32 on the same set |
 | `phi4-mini` | 2.5 GB | Called a tool 0 of 16 times; fabricated in 83% of answers |
 | `gemma3:4b` | 3.3 GB | No Ollama tool-calling support; all 23 questions error |
 | `qwen3:4b` | 2.5 GB | Emits a hidden reasoning chain first; roughly 7x slower per chatbot call. For aspect classification `--no-think` turns it off (1.3 s a sentence) |
@@ -255,8 +255,8 @@ Local models available through Ollama:
 | `NEWSAPI_KEY` | — | `ingest/newsapi.py` |
 | `ALPHAVANTAGE_KEY` | — | `ingest/alphavantage.py` (contributes nothing) |
 | `REDDIT_CLIENT_ID` / `_SECRET` / `_USER_AGENT` | — | Unused; Arctic Shift needs no key |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | — | Backend auto-detection, preferring Claude, then OpenAI, then Gemini |
-| `CHATBOT_BACKEND` | auto | Forces `ollama` \| `claude` \| `openai` \| `gemini` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | — | The hosted backends' keys; with `CHATBOT_BACKEND=auto` the first one set is used (Claude, then OpenAI, then Gemini) |
+| `CHATBOT_BACKEND` | `ollama` | `ollama` \| `claude` \| `openai` \| `gemini` \| `auto` (since 4 Oct the default is Ollama, not the first key set) |
 | `CLAUDE_MODEL` / `OPENAI_MODEL` / `GEMINI_MODEL` / `OLLAMA_MODEL` | per backend | Model override (`GEMINI_CHAT_MODEL` is also read for Gemini; default `gemini-3.8-flash`) |
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | The `openai` backend's address; any OpenAI-compatible provider, e.g. `https://api.groq.com/openai/v1` |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama backend and the service scripts |
@@ -265,7 +265,7 @@ Local models available through Ollama:
 | `LOG_FILE` | `data/logs/plp.log` | `none` disables file logging |
 | `PLP_API_PORT` | 8000 | `scripts/start.sh`, `stop.sh`, `status.sh` |
 | `PLP_DASHBOARD_PORT` | 8501 | the same scripts, for the dashboard |
-| `CHATBOT_ENFORCE_EVIDENCE` | `off` | `strip` removes evidence no search returned; `search` also adds real quotes the harness finds |
+| `CHATBOT_ENFORCE_EVIDENCE` | `strip` | `strip` removes evidence no search returned; `search` also adds real quotes the harness finds; `off` only flags it |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's hidden thinking off (qwen3) |
 
 `.env.example` is tracked, so every value in it must be a placeholder. Real
@@ -560,7 +560,7 @@ personal names are kept in the repository.
 | # | Decision | Evidence available | Who decides |
 |---|---|---|---|
 | 1 | **Aspect taxonomy.** Keep the proposal's four, adopt a data-derived alternative, or use different taxonomies per source. *Decided 2026-09-30: ten data-derived aspects (DESIGN decision 21)* | `docs/evidence/aspect-discovery-2026-09-11.md`, `docs/evidence/taxonomy-comparison-2026-09-11.md`, `aspects/compare_taxonomies.py --sweep` | Team. It changes what was proposed, so the report must explain it. |
-| 2 | **Default local model.** On gold set v2 (1 Oct) `llama3.1:8b` carried a citation warning on 11 of 32 answers against `llama3.2:3b`'s 15, but is noticeably slower | `docs/evidence/chatbot-eval-build-2026-10-01.md` | Team |
+| 2 | **Default local model.** *Decided 4 Oct: `llama3.1:8b`.* On gold set v2 (1 Oct) it carried a citation warning on 11 of 32 answers against `llama3.2:3b`'s 15, and on 4 Oct the 3B was no faster | `docs/evidence/chatbot-eval-build-2026-10-01.md` | Team |
 | 3 | **Advice-declining fix.** *Done 2026-09-26:* the input guard declines 7 of 7, where prompts alone managed 2–3 of 7 | `docs/evidence/chatbot-harness-2026-09-26.md` | — |
 | 4 | **Whether blending is right at all.** Management commentary and retail chatter in one index is a legitimate methodological question, currently resolved in favour of the proposal with composition made visible | Per-source rows in `sentiment_index` | Team |
 | 5 | **Labelling split across four people**, and whether to reduce the per-class target given `asset_quality` has only 58 candidate rows | `docs/STATUS.md` labelling section | Team |

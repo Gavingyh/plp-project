@@ -383,16 +383,19 @@ with `/suggest`.
 
 ### Chatbot backends
 
-With no API key set, the chatbot uses a local model via Ollama:
+By default the chatbot uses the local demo model, `llama3.1:8b`, via Ollama
+(decided 4 Oct), whatever API keys `.env` holds:
 
 ```bash
-ollama pull llama3.2:3b
+ollama pull llama3.1:8b
 ollama serve
 ```
 
-Set `CHATBOT_BACKEND` to `ollama`, `claude`, `openai` or `gemini` to force
-one; otherwise it auto-detects from whichever key is present, so a Gemini key
-in `.env` makes Gemini the default unless `CHATBOT_BACKEND=ollama` is set.
+To use Gemini instead, set `CHATBOT_BACKEND=gemini` (in `.env` or the shell,
+for example `CHATBOT_BACKEND=gemini scripts/start.sh api`); `claude` and
+`openai` work the same way, each with its own key. `CHATBOT_BACKEND=auto`
+picks the first key set (Claude, then OpenAI, then Gemini), as the default
+did before 4 Oct.
 
 **Gemini** (`GEMINI_API_KEY`, the team's key is for the chatbot only): the
 model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
@@ -418,8 +421,8 @@ OPENAI_API_KEY=<the Groq key>
 OPENAI_MODEL=openai/gpt-oss-120b        # or llama-3.3-70b-versatile, qwen/qwen3.8-27b
 ```
 
-With that key set, auto-detection picks this backend over Gemini and Ollama;
-set `CHATBOT_BACKEND` to choose another. Groq's free tier allowed 8,000
+Then set `CHATBOT_BACKEND=openai` to use it (or `auto`, which prefers it
+over Gemini). Groq's free tier allowed 8,000
 tokens a minute on 2026-09-30, about one question a minute with this
 chatbot's prompt and tools; the backend waits out a 429 or 503 (after
 Groq's `Retry-After` when sent) four times. Not yet run against Groq: the
@@ -454,12 +457,14 @@ changed:
 
 | setting | default | effect |
 |---|---|---|
+| `CHATBOT_BACKEND` | `ollama` (since 4 Oct) | `gemini`, `claude` or `openai` to use a hosted model; `auto` picks the first API key set |
+| `OLLAMA_MODEL` | `llama3.1:8b` (since 4 Oct) | the local chatbot model, used when the backend is Ollama (the default) |
 | `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
-| `CHATBOT_ENFORCE_EVIDENCE` | `off` | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds |
+| `CHATBOT_ENFORCE_EVIDENCE` | `strip` (since 4 Oct) | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds; `off` only flags it |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
-| `CHATBOT_ASPECT_QUERY` | unset (off) | `1` makes evidence search, when given an aspect, rank by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
+| `CHATBOT_ASPECT_QUERY` | on (since 4 Oct) | `0` turns it off. On, evidence search, when given an aspect, ranks by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
 
 The terminal chat remembers the last three turns, so follow-ups like
 "and OCBC?" work. The API is stateless: send earlier turns in `history`:

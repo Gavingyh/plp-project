@@ -233,7 +233,9 @@ candidate set. A small lexical-overlap boost is added so exact identifiers
 
 The project needs to be runnable by someone without an API key. Backend
 selection auto-detects: a hosted model if a key is present, Ollama
-otherwise. `llama3.2:3b` is the default — its tool-calling was confirmed
+otherwise. *Changed 2026-10-04:* the default is Ollama with `llama3.1:8b`, the
+demo model, whatever keys are set; `CHATBOT_BACKEND=auto` keeps the old
+behaviour (PLAN section 2). `llama3.2:3b` is the default — its tool-calling was confirmed
 against a running instance, and it is roughly seven times faster per call
 than `qwen3:4b`, which emits a hidden reasoning chain first.
 

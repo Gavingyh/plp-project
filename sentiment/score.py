@@ -28,6 +28,7 @@ error. If the check fails, rerun with --cpu.
 
 USAGE:
   python -m sentiment.score [--cpu]
+  python -m sentiment.score --sources sgx_research   # only these sources' sentences
 """
 
 import torch
@@ -107,12 +108,13 @@ def classify_sentences(texts: list[str]) -> list[tuple[str, float]]:
     return results
 
 
-def run() -> dict:
+def run(sources: set[str] | None = None) -> dict:
     init_db()
     conn = get_connection()
     conn.executescript(_SCHEMA)
 
-    rows = conn.execute("""
+    where = f" AND s.source IN ({','.join('?' * len(sources))})" if sources else ""
+    rows = conn.execute(f"""
         SELECT sa.sentence_id, sa.aspect, s.text
         FROM sentence_aspects sa
         JOIN sentences s ON s.sentence_id = sa.sentence_id
@@ -120,8 +122,8 @@ def run() -> dict:
             SELECT 1 FROM aspect_sentiment ase
             WHERE ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect
               AND ase.model_version = ?
-        )
-    """, (MODEL_VERSION,)).fetchall()
+        ){where}
+    """, (MODEL_VERSION, *sorted(sources or ()))).fetchall()
 
     if not rows:
         return _finetuned_pass(conn, {"already_scored_or_no_assignments": True, "newly_scored": 0})
@@ -177,9 +179,11 @@ if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="Score assigned (sentence, aspect) pairs with base FinBERT.")
     p.add_argument("--cpu", action="store_true", help="run on the CPU instead of the GPU")
-    if p.parse_args().cpu:
+    p.add_argument("--sources", nargs="+", help="score only sentences from these sources")
+    args = p.parse_args()
+    if args.cpu:
         import train.evaluate
         best_device = lambda: "cpu"  # noqa: E731  (read by _get_model)
         train.evaluate.best_device = best_device       # the fine-tuned pass
     setup_logging()
-    logger.info("Scoring complete: %s", run())
+    logger.info("Scoring complete: %s", run(set(args.sources) if args.sources else None))

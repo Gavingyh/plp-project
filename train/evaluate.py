@@ -174,8 +174,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-dir", nargs="+", default=None,
                         help="one or more fine-tuned models; with several, their average is reported too")
+    parser.add_argument("--labels", default=None,
+                        help=f"labelled file to score on, default {CANDIDATES_PATH}")
     parser.add_argument("--cpu", action="store_true", help="run every model on the CPU instead of the GPU")
     args = parser.parse_args()
+    if args.labels:
+        CANDIDATES_PATH = args.labels
     if args.cpu:
         import sentiment.score
         best_device = sentiment.score.best_device = lambda: "cpu"  # noqa: E731  (read at call time)

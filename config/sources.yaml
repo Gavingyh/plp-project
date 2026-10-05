@@ -28,3 +28,4 @@ sources:
   yahoo_news:   {weight: 1.5, personal_text: false, team_only: false, label: "news"}
   newsapi:      {weight: 1.5, personal_text: false, team_only: false, label: "news"}
   alphavantage: {weight: 1.5, personal_text: false, team_only: false, label: "news"}
+  sgx_research: {weight: 1.0, personal_text: false, team_only: true,  label: "broker research"}   # broker research PDFs: third-party text

@@ -306,15 +306,44 @@ def test_a_range_running_past_the_returned_days_is_checked():
 # Validation, 5 Oct 2026: a returned day with a word after it was flagged ("Data runs to
 # September 25 for DBS"). After the seventh validation (5 Oct 2026) a returned day after a
 # month is a date only where it clearly reads as one: after "on", "as of", "the", "runs to"
-# (a range also after "from"), or before punctuation, a line end or a word such as "for".
+# (a range also after "from"), or before punctuation, a line end or a word such as "until".
 @pytest.mark.parametrize("answer", [
     "Data runs to September 25 for DBS.", "On September 25 DBS scored 0.31.", "As of September 25 the score was 0.31.",
     "The September 25 data show 0.31.", "Data runs to September 25 with 45 sentences.",
-    "Data runs to Sep 25 in all three banks.", "Data covers Sept 25-26 for DBS.",
+    "Data runs to Sep 25 in all three banks.",
     "From Sept 25 to 26 posts were negative.",     # a range after "from": a date range (until 5 Oct, ["26"])
 ])
 def test_a_returned_day_before_another_word_is_a_date(answer):
     assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == []
+
+
+def test_a_returned_day_before_for_is_checked():
+    # After the eighth validation (5 Oct 2026) "for" no longer makes a returned day a date:
+    # "September 25 for DBS against 40 for UOB" hid the 25. A real date before "for" with no
+    # "on", "as of", "the" or "runs to" before it is flagged, an accepted false alarm.
+    assert unverified_numbers("Data covers Sept 25-26 for DBS.", DAYS_RETURNED) == ["25", "26"]
+    assert unverified_numbers("Data runs to Sept 25-26 for DBS.", DAYS_RETURNED) == []
+
+
+# After the eighth validation (5 Oct 2026): before a comma a returned day reads as a date
+# only when no number follows in the rest of its clause, or one right after the comma;
+# before an opening bracket, only when no number follows and no "of" stands inside it.
+@pytest.mark.parametrize("answer, figures", [
+    ("September 25, 45 posts.", []),                         # one number, right after the comma
+    ("September 25, the latest data.", []),                  # no number in the rest of the clause
+    ("September 25 (the latest data).", []),
+    ("September 25; 31 posts.", ["31"]),                     # the clause ends at the day
+    ("September 25, 31 and 45 posts.", ["25", "31"]),        # a list of counts
+    ("September 25, 31, 45 posts.", ["25", "31"]),
+    ("In September 25 (out of 45) posts were negative.", ["25"]),   # "of" inside the bracket
+    ("In September 25 [out of 45] posts were negative.", ["25"]),
+    ("September 25 (DBS) and 45 (OCBC) posts.", ["25"]),     # a number after the bracket
+    ("September 25 [the latest].", []),
+    # A number later in the clause: the day is checked, a false alarm when it is a date.
+    ("September 25, DBS had 45 posts.", ["25"]),
+])
+def test_a_returned_day_before_a_comma_or_a_bracket(answer, figures):
+    assert unverified_numbers(answer, DAYS_RETURNED) == figures
 
 
 @pytest.mark.parametrize("answer, figures", [

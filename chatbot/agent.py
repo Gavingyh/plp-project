@@ -141,11 +141,11 @@ _QUOTE_REGEX = re.compile(
 # first digital approach'), not a quote (validation, 5 Oct 2026: three words
 # stripped a scare quote as invented). So one counts from six words
 # (_QuoteSpans._SINGLE_WORDS), or from three where it reads as a quote: right after
-# a colon or a word that introduces one ("One user wrote '...'"), or right before a
-# citation or a source tag (validation, 5 Oct 2026: a five-word invented quote after
-# "wrote" passed). An apostrophe inside a word ("OCBC's", "don't") neither opens
-# nor closes one, and a quote must open on a letter, so "the '08 crisis ... banks'
-# margins" is not one. It opens after a space, bracket, colon, dash, emphasis mark
+# a verb of saying ("One user wrote '...'") or a speaker and a colon ("One user:
+# '...'"), or right before a citation or a source tag (validation, 5 Oct 2026: a
+# five-word invented quote after "wrote" passed). An apostrophe inside a word
+# ("OCBC's", "don't") neither opens nor closes one, and a quote must open on a
+# letter, so "the '08 crisis ... banks' margins" is not one. It opens after a space, bracket, colon, dash, emphasis mark
 # or table bar, with any of the three marks (’ too: '’...’', as typed in Sweden or
 # Finland, or by a smart-quote slip), and closes with any of them.
 _SINGLE_QUOTE = re.compile(
@@ -193,26 +193,30 @@ class _QuoteSpans:
     _LATIN_NEXT = re.compile(r"[*_`]*[A-Za-z0-9]")       # ... from A to Z or 0 to 9
     _SINGLE_WORDS = 6
     _SINGLE_CUED_WORDS = 3
-    # A single-quoted passage of three to five words is a quote right after one of
-    # these words, in any of their forms, or a colon (within the three words
-    # before its opening mark), or right before a citation, cite_as, a numbered
-    # marker or a source tag ("(Reddit)", "(CNA)", "(news)").
+    # A single-quoted passage of three to five words is a quote right after a verb
+    # of saying in the past tense or the present, never in a form that is also a
+    # noun (validation, 5 Oct 2026: "post", "report" and "note" made terms into
+    # quotes, "Users report 'long queue times'"), or "put it" or "call it", among
+    # the three words before its opening mark; or right after a speaker and a
+    # colon ("One user: '...'", "Another: '...'"), a colon after anything else
+    # being a label ("Note: 'fees are high' is the theme"); or right before a
+    # citation, cite_as, a numbered marker or a source tag ("(Reddit)", "(CNA)",
+    # "(news)").
     _CUE_WORDS = frozenset("""
-        said say says saying  wrote write writes writing written  posted post posts posting
-        commented comment comments commenting  complained complain complains complaining
-        noted note notes noting  stated state states stating  claimed claim claims claiming
-        mentioned mention mentions mentioning  reported report reports reporting
-        described describe describes describing  called call calls calling  asked ask asks asking
-        added add adds adding  replied reply replies replying  tweeted tweet tweets tweeting
-        quoted quote quotes quoting  put puts""".split())
-    _CUE_COLON = re.compile(r":(?:[\s*_]*[^\s:]+){0,3}[\s*_]*\Z")     # a colon, at most three words before
+        said say says  wrote write writes  complained complain complains  posted  commented
+        tweeted  replied  added  asked  claimed  stated  quoted""".split())
+    _CUE_PAIRS = frozenset({("put", "it"), ("call", "it"), ("calls", "it"), ("called", "it")})
+    _CUE_COLON = re.compile(r"(?:\b(?:one|a|another)[ \t]+(?:[^\W\d_]+[ \t]+)?(?:user|post|comment|reply|tweet"
+                            r"|poster|commenter|redditor|reader|investor|customer|reviewer|analyst)s?|\banother)"
+                            r"[*_]*[ \t]*:[\s*_]*\Z", re.IGNORECASE)                # a speaker, then a colon
     _CITED_NEXT = re.compile(r"[ \t.,;:!?*_]{0,3}(?:\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id|\(?\[?cite_as\b"
                              r"|\[E?\d{1,3}(?:[ \t]*[,\u2013-][ \t]*E?\d{1,3})*\]"
                              r"|\((?:source:?[ \t]*)?(?:reddit|cna|news|bank results report)\b)", re.IGNORECASE)
 
     class _Span:
-        def __init__(self, text: str, start: int, end: int):
+        def __init__(self, text: str, start: int, end: int, after: tuple[int, int] | None = None):
             self._text, self._start, self._end = text, start, end
+            self.after = after      # words after a closing mark (_after_closes): the quote before them
 
         def group(self, index: int = 0) -> str:
             return self._text[self._start:self._end]
@@ -274,18 +278,49 @@ class _QuoteSpans:
         phone'), are not a pair to a reader."""
         return not text[opened + 1].isspace() and not text[closed - 1].isspace()
 
+    def _glued_end(self, text: str, i: int) -> int | None:
+        """Where the words glued to the closing mark at i may end as a quote: a
+        citation on their line before any other mark, or the next double quote
+        mark in their paragraph if it reads as a closing one, with no letter or
+        digit right after it, emphasis marks aside (an inch mark too); else
+        None, and they read as the model's own words."""
+        m = self._MARK.search(text, i + 1)
+        line_end = text.find("\n", i + 1)
+        line_end = len(text) if line_end == -1 else line_end
+        cite = self._CITATION.search(text, i + 1, min(line_end, m.start() if m else len(text)))
+        if cite:
+            return cite.start()
+        if m is None or re.search(r"\n[ \t]*\n", text[i:m.start()]) or self._WORD_NEXT.match(text, m.start() + 1):
+            return None
+        return m.start()
+
+    def _opens_glued(self, text: str, i: int) -> bool:
+        """Whether the second mark of a pair around fewer than ten characters,
+        at i, with a letter or digit right after it, opens a quote all the same:
+        the words after it, ten or more characters, end where a quote may end
+        (_glued_end): '"x"OCBC will cut its dividend next year for sure"', or
+        before a citation, or with an inch mark, '... by 5"', which is never a
+        mark the checks can't place. With none of these after it ('"DBS"and
+        "OCBC"', '"buy-now"s offer') it only closes a word in quote marks."""
+        j = self._glued_end(text, i) if self._WORD_NEXT.match(text, i + 1) else None
+        return j is not None and len(text[i + 1:j].strip()) >= self._SHORTEST
+
     def _paired(self, text: str, start: int, end: int, taken: set):
         """(start, end) of the quotes found by pairing marks within text[start:end];
         the marks of a pair too short to be a quote go into `taken` if they read
-        as a word in quote marks (_word_in_marks). A mark that only opens, where
-        it reads as an opening one (_only_opens), closes nothing: the quote open
-        before it ends there, unclosed, and it opens the next ('a stray " here,
-        he wrote „...'). Nor is a pair too short to be a quote one whose second
-        mark opens a quote, a letter or digit right after it ('a stray " here
-        "...'): the first mark is left unplaced, and the second opens a quote;
-        nor one whose second mark can't open one but has a letter from A to Z
-        or a digit right after it ('“x”OCBC ...'): both are left unplaced. In
-        Chinese, where no space follows a closing mark, '“应用”的' is a pair. A straight
+        as a word in quote marks (_word_in_marks), whatever follows the second
+        ('"buy"', '"DBS"and', '"buy-now"s', in Chinese '“应用”的'): validation, 5
+        Oct 2026, where a letter right after the second left both unplaced and
+        took a correct line in strip mode. Unless that second mark, with a letter
+        or digit right after it, is followed by a citation or a mark that reads
+        as a closing one ten or more characters on (_opens_glued): then it opens
+        a quote, and the first is left unplaced, as before. A mark that only
+        opens, where it reads as an opening one (_only_opens), closes nothing:
+        the quote open before it ends there, unclosed, and it opens the next ('a
+        stray " here, he wrote „...'). Nor is a pair too short to be a quote, and
+        not a word in quote marks, one whose second mark opens a quote, a letter
+        or digit right after it ('a stray " here "...'): the first mark is left
+        unplaced, and the second opens a quote. A straight
         mark after a space, left open at the end of a paragraph before fewer
         than ten characters ('and a stray " here'), is a stray mark, taken;
         after anything else ('...for sure!" ok') it reads as a closing mark,
@@ -309,14 +344,14 @@ class _QuoteSpans:
                 elif long_enough:
                     yield opened, i + 1
                     opened = None
-                elif self._opens(text, i, following) and self._WORD_NEXT.match(text, i + 1):
-                    opened = i
-                elif self._LATIN_NEXT.match(text, i + 1):
-                    opened = None     # '“x”OCBC ...': no word in quote marks, and nothing opens
-                else:                 # '"buy"', or in Chinese '“应用”的', no space after the closing mark
-                    if self._word_in_marks(text, opened, i):
-                        taken.update((opened, i))
+                elif self._word_in_marks(text, opened, i) and not self._opens_glued(text, i):
+                    taken.update((opened, i))      # '"buy"', '"DBS"and', '"buy-now"s', in Chinese '“应用”的'
                     opened = None
+                elif self._WORD_NEXT.match(text, i + 1) and (self._opens(text, i, following)
+                                                             or self._opens_glued(text, i)):
+                    opened = i        # 'a stray " here "...', '“x”OCBC ... for sure”': it opens the next quote
+                else:
+                    opened = None     # two marks no reader pairs ('...sure" and a 6" phone')
             if opened is not None and not self._closes_a_word(text, opened):
                 line_end = text.find("\n", opened, para.end())
                 line_end = para.end() if line_end == -1 else line_end
@@ -343,28 +378,33 @@ class _QuoteSpans:
             yield start, end
 
     def _cued(self, text: str, m: re.Match) -> bool:
-        """Whether a single-quoted passage reads as a quote: a colon or a quoting
-        word among the three words before it ("One user wrote '...'", "Their
-        view: very much '...'"), or a citation or a source tag right after it."""
+        """Whether a single-quoted passage reads as a quote: a verb of saying,
+        "put it" or "call it" among the three words before it ("One user wrote
+        '...'", "As one user put it, '...'"), a speaker and a colon right before
+        it ("One user: '...'"), or a citation or a source tag right after it."""
         before = text[max(0, m.start() - 80):m.start()].split("\n\n")[-1]
         if self._CUE_COLON.search(before):
             return True
-        if any(w.lower() in self._CUE_WORDS for w in re.findall(r"[^\W\d_]+", before)[-3:]):
+        words = [w.lower() for w in re.findall(r"[^\W\d_]+", before)[-3:]]
+        if any(w in self._CUE_WORDS for w in words) or any(p in self._CUE_PAIRS for p in zip(words, words[1:])):
             return True
         return bool(self._CITED_NEXT.match(text, m.end()))
 
     def _after_closes(self, text: str, spans: list[tuple[int, int]]):
-        """(start, end) of the words right after a quote's closing mark that has
-        a letter from A to Z or a digit right after it, emphasis marks aside
-        ('... Another wrote ”OCBC will ...'; in Chinese, where no space follows a
-        closing mark, a character does): such a mark may be the next quote's opening
-        mark, taken as this one's close (validation, 5 Oct 2026: '“my rate
-        went up to 5" in one post. Another wrote ”...' hid the second quote).
-        They run to the next double quote mark but an inch mark, or to the end
-        of the line, stopping before a citation, and count from ten characters,
-        as any quote does, so a word in quote marks inside a quote ('"What do
-        you think of "DBS Robot" with the fees?"') makes none."""
-        for _, e in spans:
+        """(start, end, the quote before) of the words right after a quote's
+        closing mark that has a letter from A to Z or a digit right after it,
+        emphasis marks aside ('... Another wrote ”OCBC will ...'; in Chinese,
+        where no space follows a closing mark, a character does): such a mark may
+        be the next quote's opening mark, taken as this one's close (validation,
+        5 Oct 2026: '“my rate went up to 5" in one post. Another wrote ”...' hid
+        the second quote). They run to the next double quote mark but an inch
+        mark, or to the end of the line, stopping before a citation, and count
+        from ten characters, as any quote does, so a word in quote marks inside a
+        quote ('"What do you think of "DBS Robot" with the fees?"') makes none.
+        The checks read them as a quote only after a quote that is itself
+        unverified, or where they end where a quote may end
+        (_ToolCallTracker.quotes_to_check)."""
+        for s, e in spans:
             if text[e - 1] not in self._DOUBLE or not self._LATIN_NEXT.match(text, e):
                 continue
             mark = next((m for m in self._MARK.finditer(text, e) if not _INCH_MARK.match(text, m.start())), None)
@@ -375,15 +415,17 @@ class _QuoteSpans:
             while stop > e and text[stop - 1] in " \t":
                 stop -= 1
             if len(text[e:stop].strip()) >= self._SHORTEST:
-                yield e, stop
+                yield e, stop, (s, e)
 
-    def _layout(self, text: str) -> tuple[list[tuple[int, int]], set]:
-        """The quotes' (start, end) in text order, and the marks short pairs took."""
+    def _layout(self, text: str) -> tuple[list[tuple[int, int]], set, dict]:
+        """The quotes' (start, end) in text order, the marks short pairs took, and
+        for the words after a closing mark (_after_closes) the quote before them."""
         taken: set = set()
         spans = list(self._regex_spans(text))
         gaps = zip([0] + [e for _, e in spans], [s for s, _ in spans] + [len(text)])
         spans += [p for s, e in gaps if s < e for p in self._paired(text, s, e, taken)]
-        spans += list(self._after_closes(text, sorted(spans)))
+        after = {(s, e): before for s, e, before in self._after_closes(text, sorted(spans))}
+        spans += list(after)
         for m in _SINGLE_QUOTE.finditer(text):
             words = len(m.group(0)[1:-1].split())
             if not (words >= self._SINGLE_WORDS or (words >= self._SINGLE_CUED_WORDS and self._cued(text, m))):
@@ -392,12 +434,13 @@ class _QuoteSpans:
             if all(m.start() <= s and e <= m.end() for s, e in inside):
                 # 'He said "..." and ...', as quoted in Britain: the outer quote is checked whole
                 spans = [x for x in spans if x not in inside] + [(m.start(), m.end())]
-        return sorted(spans), taken
+        return sorted(spans), taken, after
 
     def finditer(self, text: str | None):
         text = text or ""
-        for s, e in self._layout(text)[0]:
-            yield self._Span(text, s, e)
+        spans, _, after = self._layout(text)
+        for s, e in spans:
+            yield self._Span(text, s, e, after.get((s, e)))
 
     def search(self, text: str | None):
         return next(self.finditer(text), None)
@@ -405,18 +448,37 @@ class _QuoteSpans:
     def findall(self, text: str | None) -> list[str]:
         return [m.group(0) for m in self.finditer(text)]
 
+    # What may stand between a quote's closing mark and a stray mark after it:
+    # spaces, punctuation and emphasis marks, around one citation or numbered marker.
+    _STRAY_BETWEEN = re.compile(r"[ \t.,;:!?*_]*(?:(?:\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id [0-9a-f]{24}\]"
+                                r"|\[\d{1,3}(?:[ \t]*[,–-][ \t]*\d{1,3})*\])[ \t.,;:!?*_]*)?")
+    _STRAY_AFTER = re.compile(r"[ \t.,;:!?*_)\]]*(?:\n|\Z)")     # nothing but punctuation to the line end
+
+    def _stray_after_a_quote(self, text: str, i: int, spans: list[tuple[int, int]]) -> bool:
+        """Whether the mark at i, with no letter or digit after it on its line,
+        stands right after a quote's closing mark on that line, or after a
+        citation right after one ('"..." [DBS, 2026-09-01, sentence_id ...]."',
+        '"...""'): a stray mark, as nothing stands between them for it to close
+        or open (validation, 5 Oct 2026: such a mark took a correct line)."""
+        if not self._STRAY_AFTER.match(text, i + 1):
+            return False
+        ends = [e for _, e in spans if e <= i and text[e - 1] in self._DOUBLE]
+        return bool(ends) and bool(self._STRAY_BETWEEN.fullmatch(text, max(ends), i))
+
     def loose(self, text: str | None) -> list[int]:
         """Positions of the double quote marks the detectors couldn't place: not
         a mark of a quote found, nor inside one, nor one of the two marks around
         a word in quote marks ('"buy"', '”ok”', '»ok«'), nor a stray straight
-        mark before a few words at the end of a paragraph, nor an inch mark.
-        Such a mark may belong to a quote the detectors missed, so the checks
-        count it as evidence they can't verify."""
+        mark before a few words at the end of a paragraph, nor a stray mark at
+        the end of its line right after a quote's closing mark or a citation
+        after one (_stray_after_a_quote), nor an inch mark. Such a mark may
+        belong to a quote the detectors missed, so the checks count it as
+        evidence they can't verify."""
         text = text or ""
-        spans, taken = self._layout(text)
+        spans, taken, _ = self._layout(text)
         marks = [m.start() for m in self._MARK.finditer(text)]
         out = [i for i in marks if i not in taken and not _INCH_MARK.match(text, i)
-               and not any(s <= i < e for s, e in spans)]
+               and not any(s <= i < e for s, e in spans) and not self._stray_after_a_quote(text, i, spans)]
         pairs = {"\u201d": "\u201d", "\u00bb": "\u00ab"}
         short = set()
         for i, j in zip(marks, marks[1:]):
@@ -652,10 +714,29 @@ class _ToolCallTracker:
             return strict
         return not all(any(p in t for t in known) for p in pieces)
 
+    def quotes_to_check(self, answer: str):
+        """The quotes in quote marks the checks read: every one found, but the
+        words after a closing mark (_QuoteSpans._after_closes) only where the
+        quote before them is not one a search returned (quote_unverified,
+        strict: a quote too short to check counts as unverified), or where they
+        end where a quote may end, before a citation or a mark that reads as a
+        closing one (_QuoteSpans._glued_end: '“...”OCBC will cut its dividend
+        next year for sure" [...]."', or with an inch mark, '... by 5"'). After
+        a quote a search returned, this turn or an earlier one, they are
+        otherwise the model's own words, glued to the mark (validation, 5 Oct
+        2026: 'One user: “...”DBS also scored 0.31.' lost its last sentence in
+        strip mode)."""
+        text = answer or ""
+        for m in _QUOTE_PATTERN.finditer(text):
+            if m.after is not None and _QUOTE_PATTERN._glued_end(text, m.start() - 1) is None and \
+                    not self.quote_unverified(text[m.after[0]:m.after[1]].strip(_QUOTE_MARKS), strict=True):
+                continue
+            yield m
+
     def unverified_quotes(self, answer: str, strict: bool = False) -> list[str]:
         """Quotes in the answer (in quote marks, or a markdown blockquote line)
         whose text is unverified (quote_unverified)."""
-        spans = [(m.group(0), m.group(0).strip(_QUOTE_MARKS)) for m in _QUOTE_PATTERN.finditer(answer or "")]
+        spans = [(m.group(0), m.group(0).strip(_QUOTE_MARKS)) for m in self.quotes_to_check(answer)]
         spans += [(m.group(0), m.group(1)) for m in _BLOCKQUOTE.finditer(answer or "")]
         return [span for span, inner in spans if self.quote_unverified(inner, strict)]
 
@@ -780,7 +861,7 @@ def _unverified_runs(text: str, tracker: "_ToolCallTracker") -> list[str]:
     2026)."""
     runs: list[tuple[int, int]] = []
     open_run = False
-    for m in _QUOTE_PATTERN.finditer(text):
+    for m in tracker.quotes_to_check(text):
         if not tracker.quote_unverified(m.group(0).strip(_QUOTE_MARKS)):
             open_run = False
             continue
@@ -798,11 +879,17 @@ def _strip_unverified(answer: str, tracker: "_ToolCallTracker") -> str:
     no search returned and the words between two such quotes on one line;
     again on the result, until nothing changes. The lines go first, as read in
     the model's own text: a mark that removing a quote would let the detectors
-    place is still one they couldn't place where the model wrote it."""
+    place is still one they couldn't place where the model wrote it. So are
+    the words glued to a closing mark that read as a quote there
+    (_ToolCallTracker.quotes_to_check): they go too, though the line of the
+    mark that may close them went first ('“...”OCBC will cut ...' and a lone
+    mark on the next line)."""
     text = answer
     for _ in range(_STRIP_PASSES):
+        glued = [m.group(0) for m in tracker.quotes_to_check(text)
+                 if m.after is not None and tracker.quote_unverified(m.group(0).strip(_QUOTE_MARKS))]
         cleaned = _without_loose_lines(text)
-        quotes = _unverified_runs(cleaned, tracker)
+        quotes = _unverified_runs(cleaned, tracker) + glued
         quotes += [m.group(0) for m in _BLOCKQUOTE.finditer(cleaned) if tracker.quote_unverified(m.group(1))]
         cleaned = _remove_spans(cleaned, quotes + tracker.unverified_urls(cleaned),
                                 unverified_sentence_ids(cleaned, tracker.known_ids()))

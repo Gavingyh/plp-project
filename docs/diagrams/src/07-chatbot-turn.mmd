@@ -1,6 +1,6 @@
 flowchart TB
   accTitle: One chatbot turn
-  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check and a figure check, and the citations it retrieved are numbered with their sources listed, before it is shown.
+  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check (a quote mark the checks can't place counts as unretrieved evidence) and a figure check, and the citations it retrieved are numbered with their sources listed, before it is shown.
 
   q(["Question"])
   cls{"Intent classifier (local model):<br/>what is the question asking for?"}
@@ -13,7 +13,7 @@ flowchart TB
   budget["Answer: couldn't finish<br/>within the budget"]
   emp{"Empty, or just braces?"}
   empR["Fixed reply: couldn't answer,<br/>with an example question"]
-  cite{"Cites evidence it didn't retrieve?<br/>URL, quote or sentence id"}
+  cite{"Cites evidence it didn't retrieve?<br/>URL, quote or sentence id, or a quote<br/>mark the checks can't place"}
   w1["Append VERIFICATION WARNING"]
   num{"States a figure<br/>no tool returned?"}
   w2["Append NUMBER CHECK"]

@@ -32,13 +32,19 @@ subprocess (PYTHONPATH set to that directory, so it imports that commit's
 chatbot code) over the current data/eval/, compares that snapshot with the
 current code's, and removes the directory.
 
-Runs that quote CNA text are kept out of git (the Caveats on the evidence
-page): one missing on this machine is reported as missing.
+It reads only the results files git tracks (validation, 5 Oct 2026: a
+comparison quoted on the evidence page counted runs kept out of git, so a
+checkout printed other lines). Runs that quote CNA text are kept out of git
+(the Caveats on the evidence page); --include-untracked reads them too where
+they are on disk, and the first line printed says how many files were read and
+how many of those git doesn't track. A folder outside any git repository (a
+test's) is read whole.
 
 USAGE (from the repository root):
-  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --against 7446c89       # a commit's checks
+  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --against 31c7e98       # a commit's checks
   HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --save before.json     # before the change
   HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --compare before.json  # after it
+  ... --include-untracked     # also the runs git doesn't track, on the machine that has them
 """
 
 import argparse
@@ -62,6 +68,8 @@ from chatbot.judge import load_results, model_answer  # noqa: E402
 
 EVAL_DIR = os.path.join(ROOT, "data", "eval")
 SEVEN = ["defaults_v2", "reader_v2", "reader2_v2", "reader3_v2", "final_v2", "final2_v2", "mix_v2"]
+GOLD = "chatbot_eval_results*.jsonl"               # gold-set runs
+MULTITURN = "chatbot_multiturn_results*.jsonl"     # multi-turn runs
 
 
 def _name(path: str, prefix: str) -> str:
@@ -77,15 +85,37 @@ def _model_results(calls: list[dict]) -> list:
     return [c.get("result") for c in calls if c.get("by") != "harness"]
 
 
-def recorded_flags(eval_dir: str = EVAL_DIR) -> list[str]:
+def _tracked(eval_dir: str) -> set[str] | None:
+    """The real paths of the files git tracks in eval_dir; None if it is in no git repository."""
+    out = subprocess.run(["git", "-C", eval_dir, "ls-files", "-z", "--", "."], capture_output=True, text=True)
+    if out.returncode:
+        return None
+    return {os.path.realpath(os.path.join(eval_dir, p)) for p in out.stdout.split("\0") if p}
+
+
+def results_files(eval_dir: str = EVAL_DIR, include_untracked: bool = False,
+                  patterns: tuple[str, ...] = (GOLD, MULTITURN)) -> list[str]:
+    """The results files the replay reads: those matching the patterns that git
+    tracks, or with include_untracked every one on disk. A folder in no git
+    repository is read whole."""
+    tracked = None if include_untracked else _tracked(eval_dir)
+    return [p for pattern in patterns for p in sorted(glob.glob(os.path.join(eval_dir, pattern)))
+            if tracked is None or os.path.realpath(p) in tracked]
+
+
+def recorded_flags(eval_dir: str = EVAL_DIR, include_untracked: bool = False) -> list[str]:
     """One line per gold-set run: the answers whose figure or citation flags now
     differ from those recorded when the run was made."""
     named = [os.path.join(eval_dir, f"chatbot_eval_results_{t}.jsonl") for t in SEVEN]
-    paths = named + sorted(p for p in glob.glob(os.path.join(eval_dir, "chatbot_eval_results_*_v2*.jsonl"))
-                           if p not in named)
+    paths = named + [p for p in results_files(eval_dir, include_untracked, ("chatbot_eval_results_*_v2*.jsonl",))
+                     if p not in named]
+    tracked = None if include_untracked else _tracked(eval_dir)
     lines = []
     for path in paths:
         tag = _name(path, "chatbot_eval_results")
+        if tracked is not None and os.path.realpath(path) not in tracked:     # the same line on any machine
+            lines.append(f"{tag}: not tracked by git, so not read (--include-untracked reads it)")
+            continue
         if not os.path.exists(path):
             lines.append(f"{tag}: missing")
             continue
@@ -108,14 +138,14 @@ def recorded_flags(eval_dir: str = EVAL_DIR) -> list[str]:
     return lines
 
 
-def _answers(eval_dir: str):
+def _answers(eval_dir: str, include_untracked: bool = False):
     """(key, question, answer, calls, earlier searches) for every answer a model wrote in a recorded run."""
-    for path in sorted(glob.glob(os.path.join(eval_dir, "chatbot_eval_results*.jsonl"))):
+    for path in results_files(eval_dir, include_untracked, (GOLD,)):
         run = _name(path, "chatbot_eval_results")
         for r in load_results(path):
             if not r.get("error") and not r.get("input_guard") and model_answer(r):
                 yield f"{run}/{r['id']}", r.get("question", ""), model_answer(r), r.get("tool_calls") or [], []
-    for path in sorted(glob.glob(os.path.join(eval_dir, "chatbot_multiturn_results*.jsonl"))):
+    for path in results_files(eval_dir, include_untracked, (MULTITURN,)):
         run = _name(path, "chatbot_multiturn_results")
         searches: dict = {}         # each conversation's earlier searches, which a follow-up may quote
         for r in load_results(path):
@@ -126,16 +156,16 @@ def _answers(eval_dir: str):
             searches.setdefault(r.get("scenario"), []).extend(c for c in calls if c.get("name") == "search_evidence")
 
 
-def loose_marks(eval_dir: str = EVAL_DIR) -> list[str]:
+def loose_marks(eval_dir: str = EVAL_DIR, include_untracked: bool = False) -> list[str]:
     """The recorded answers holding a double quote mark the checks can't place
     (chatbot.agent._QuoteSpans.loose)."""
-    return [key for key, _, answer, _, _ in _answers(eval_dir) if _QUOTE_PATTERN.loose(answer)]
+    return [key for key, _, answer, _, _ in _answers(eval_dir, include_untracked) if _QUOTE_PATTERN.loose(answer)]
 
 
-def snapshot(eval_dir: str = EVAL_DIR) -> dict:
+def snapshot(eval_dir: str = EVAL_DIR, include_untracked: bool = False) -> dict:
     """Each recorded answer's checks, as the live path runs them in strip mode."""
     out = {}
-    for key, question, answer, calls, earlier in _answers(eval_dir):
+    for key, question, answer, calls, earlier in _answers(eval_dir, include_untracked):
         results = _model_results(calls)
         tracker = _ToolCallTracker.from_calls(calls, earlier)
         stripped, still = enforce_evidence(answer, tracker, question, "strip")
@@ -153,11 +183,12 @@ def snapshot(eval_dir: str = EVAL_DIR) -> dict:
     return out
 
 
-def snapshot_at(commit: str, eval_dir: str = EVAL_DIR, repo: str = ROOT) -> dict:
+def snapshot_at(commit: str, eval_dir: str = EVAL_DIR, repo: str = ROOT, include_untracked: bool = False) -> dict:
     """The snapshot of the answers in eval_dir as the chatbot code of `commit`
     makes it: the commit's tracked files go into a temporary directory (git
     archive, which changes no branch, worktree or index), this script runs
-    there in a subprocess, importing that code, and the directory is removed."""
+    there in a subprocess, importing that code, over the same results files,
+    and the directory is removed."""
     tmp = tempfile.mkdtemp(prefix="replay_checks_")
     try:
         archive = subprocess.Popen(["git", "-C", repo, "archive", commit], stdout=subprocess.PIPE)
@@ -169,8 +200,9 @@ def snapshot_at(commit: str, eval_dir: str = EVAL_DIR, repo: str = ROOT) -> dict
         os.makedirs(os.path.dirname(script), exist_ok=True)
         shutil.copyfile(os.path.abspath(__file__), script)     # this script, that commit's checks
         saved = os.path.join(tmp, "snapshot.json")
+        also = ["--include-untracked"] if include_untracked else []
         subprocess.run([sys.executable, script, "--save", saved, "--snapshot-only",
-                        "--eval-dir", os.path.abspath(eval_dir)],
+                        "--eval-dir", os.path.abspath(eval_dir)] + also,
                        env={**os.environ, "PYTHONPATH": tmp}, cwd=tmp, check=True, stdout=subprocess.DEVNULL)
         with open(saved) as f:
             return json.load(f)
@@ -201,18 +233,28 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--compare", help="a snapshot saved before a change: print the answers that differ from it")
     p.add_argument("--against", metavar="COMMIT",
                    help="a commit: print the answers whose checks differ from those of that commit's code")
+    p.add_argument("--include-untracked", action="store_true",
+                   help="also read the results files git doesn't track (runs kept out of git, where they are on disk)")
     p.add_argument("--eval-dir", default=EVAL_DIR, help=argparse.SUPPRESS)
     p.add_argument("--repo", default=ROOT, help=argparse.SUPPRESS)                     # the repository --against reads
     p.add_argument("--snapshot-only", action="store_true", help=argparse.SUPPRESS)    # as --against runs it
     args = p.parse_args(argv)
+    untracked = args.include_untracked
     if not args.snapshot_only:
+        files, tracked = results_files(args.eval_dir, untracked), _tracked(args.eval_dir)
+        print(f"Results files read: {len(files)}; not tracked by git: "
+              f"{0 if tracked is None else sum(os.path.realpath(f) not in tracked for f in files)}")
+        left_out = len(results_files(args.eval_dir, True)) - len(files)
+        if left_out:                    # on stderr, so the report reads the same on a checkout
+            print(f"({left_out} results files here are not tracked by git and were not read; "
+                  "--include-untracked reads them)", file=sys.stderr)
         print("Gold-set runs, flags now against those recorded when the run was made:")
-        for line in recorded_flags(args.eval_dir):
+        for line in recorded_flags(args.eval_dir, untracked):
             print("  " + line)
-    now = snapshot(args.eval_dir)
+    now = snapshot(args.eval_dir, untracked)
     print(f"Every recorded answer: {len(now)}")
     if not args.snapshot_only:          # an older commit's code may have no such check
-        loose = loose_marks(args.eval_dir)
+        loose = loose_marks(args.eval_dir, untracked)
         print(f"  holding a quote mark the checks can't place: {len(loose)}")
         for key in loose:
             print("    " + key)
@@ -228,7 +270,7 @@ def main(argv: list[str] | None = None) -> None:
         for line in differ:
             print("    " + line)
     if args.against:
-        differ = compare(snapshot_at(args.against, args.eval_dir, args.repo), now)
+        differ = compare(snapshot_at(args.against, args.eval_dir, args.repo, untracked), now)
         print(f"  differing from the checks of {args.against}: {len(differ)}")
         for line in differ:
             print("    " + line)

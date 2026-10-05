@@ -688,7 +688,10 @@ def test_a_quote_in_low_nine_marks_is_checked(marks):
 
 @pytest.mark.parametrize("answer, quotes", [
     ("One user wrote 'banks charge hidden fees' today.", ["'banks charge hidden fees'"]),   # a quoting word
-    ("Their view: 'banks charge hidden fees' today.", ["'banks charge hidden fees'"]),       # a colon
+    ("One user: 'banks charge hidden fees' today.", ["'banks charge hidden fees'"]),         # a speaker and a colon
+    # A colon after anything but a speaker is a label: since the eighth validation (5 Oct 2026)
+    # it cues no quote ("Note: 'fees are high' is the theme"; until then, a quote).
+    ("Their view: 'banks charge hidden fees' today.", []),
     (f"Fees are 'far too high here' {CITE_A}", ["'far too high here'"]),                   # a citation
     ("Fees are 'far too high here' (Reddit).", ["'far too high here'"]),                    # a source tag
     ("Fees are 'far too high here' for many.", []),                                          # a term
@@ -717,7 +720,12 @@ def test_a_real_quote_is_the_same_quote_without_its_end_punctuation(answer):
     ('Rated ”buy” and »Tier 1« by most.', []),
     ('用户说“应用很慢”。', []),                   # in Chinese, a letter against both marks
     ('“DBS”的应用', []),
-    ('“x”OCBC will cut', ["“", "”"]),           # a letter from A to Z after the closing mark: no word
+    # A word in quote marks whatever follows its closing mark, since the eighth validation
+    # (5 Oct 2026: '"DBS"and' took its line; until then both marks were left unplaced here) ...
+    ('“x”OCBC will cut', []),
+    # ... unless a mark that reads as a closing one follows ten or more characters on: then
+    # the closing mark opens a quote, and the first is left unplaced.
+    (f'“x”{QUOTED_INVENTED}”', ["“"]),
 ])
 def test_two_marks_are_a_short_pair_only_around_a_word(answer, loose):
     assert [answer[i] for i in agent._QUOTE_PATTERN.loose(answer)] == loose
@@ -773,7 +781,8 @@ def test_the_words_after_a_closing_mark_that_reads_as_an_opening_one_are_checked
 @pytest.mark.parametrize("answer, quotes", [
     ("Users say 'banks charge hidden fees' a lot.", ["'banks charge hidden fees'"]),           # any form of a cue
     ("As one user put it, 'banks charge hidden fees'.", ["'banks charge hidden fees'"]),
-    ("Their view: very much 'banks charge hidden fees'.", ["'banks charge hidden fees'"]),     # a colon, two words back
+    ("Their view: very much 'banks charge hidden fees'.", []),     # a label's colon: no cue since 5 Oct 2026
+    ("Another: 'banks charge hidden fees'.", ["'banks charge hidden fees'"]),                 # a speaker's
     ("Note: one two three four 'banks charge hidden fees'.", []),                              # four words back
     ("Fees are 'far too high here' (source: Reddit).", ["'far too high here'"]),
     ("Fees are 'far too high here' [1, 2].", ["'far too high here'"]),
@@ -788,9 +797,11 @@ def test_single_quotes_after_any_form_of_a_cue_or_before_any_citation(answer, qu
 
 def test_a_mark_strip_could_place_only_after_removing_a_quote_still_takes_its_line():
     # Each pass reads the marks as the model wrote them before it removes any quote: here
-    # removing the invented quote would leave '«„', which reads as a pair.
+    # removing the invented quote would leave '«„', which reads as a pair. (The last „,
+    # right after a closing mark at the end of its line, is a stray since the eighth
+    # validation, 5 Oct 2026; the first « still takes the line.)
     answer = f"DBS reads slightly positive.\n«„{QUOTED_INVENTED} «„"
-    assert [answer[i] for i in agent._QUOTE_PATTERN.loose(answer)] == ["«", "„"]
+    assert [answer[i] for i in agent._QUOTE_PATTERN.loose(answer)] == ["«"]
     assert agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip") == \
         ("DBS reads slightly positive." + agent.EVIDENCE_UNMATCHED_NOTE, False)
 
@@ -807,3 +818,80 @@ def test_the_words_after_a_real_quote_inside_another_are_checked(answer):
     out, flagged = agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip")
     assert "next year for sure" not in out or flagged
     assert _two_quote_tracker().answer_has_unverified_citation(answer)
+
+
+# --- after the eighth validation (5 Oct 2026) --------------------------------------------
+# Two marks around fewer than ten characters with no space just inside them are a word in
+# quote marks whatever follows ('"DBS"and'), unless a mark that reads as a closing one stands
+# ten or more characters on; the words glued to a quote's closing mark are checked only after
+# a quote no search returned, or when they hold an inch mark; a mark at the end of its line
+# right after a quote's closing mark, or its citation, is a stray; and single quotes are cued
+# by a verb of saying or a speaker's colon, not by a noun or a label's colon.
+
+@pytest.mark.parametrize("answer", [
+    f'"x"{QUOTED_INVENTED}"',               # a closing mark ten or more characters on
+    f'“x”{QUOTED_INVENTED}”',
+    f'«x»{QUOTED_INVENTED}»',
+    f'"x"{QUOTED_INVENTED} by 5"',          # an inch mark, never a mark the checks can't place
+    f'“x”{QUOTED_INVENTED} by 5"',
+    f'"x"{QUOTED_INVENTED}\n"',             # on the next line of the paragraph
+])
+@pytest.mark.parametrize("searched", [True, False], ids=["after a search", "no search"])
+def test_an_invented_quote_glued_to_a_word_in_quote_marks_is_removed_or_flagged(answer, searched):
+    tracker = _two_quote_tracker() if searched else agent._ToolCallTracker()
+    assert tracker.answer_has_unverified_citation(answer)
+    out, flagged = agent.enforce_evidence(answer, tracker, "q", "strip")
+    assert "next year for sure" not in out or flagged
+
+
+@pytest.mark.parametrize("answer", [
+    '“DBS”and «OCBC» both rose.',
+    '"buy"s and "sell"s are common.',
+    'Rated "buy"by most, "hold" by some.',
+])
+def test_a_word_in_quote_marks_with_a_letter_after_it_is_kept(answer):
+    assert agent._QUOTE_PATTERN.loose(answer) == []
+    assert agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip") == (answer, False)
+
+
+def test_the_words_glued_to_a_real_quote_are_the_models_own():
+    answer = f'One user: “{QUOTE_A}”DBS also scored 0.31.'
+    assert agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip") == (answer, False)
+    # So in a follow-up with no search, after a quote an earlier turn's search returned.
+    assert agent.enforce_evidence(answer, agent._ToolCallTracker(_two_quote_tracker().calls), "q", "strip") == \
+        (answer, False)
+
+
+@pytest.mark.parametrize("answer", [
+    f'One user: “{QUOTED_INVENTED} now”{QUOTE_INVENTED_TAIL} today',    # after an invented quote
+    f'One user: “very strong”{QUOTED_INVENTED}',                        # after one too short to check
+    f'One user: “{QUOTE_A}”{QUOTED_INVENTED} by 5"',                    # holding an inch mark
+])
+def test_the_words_glued_to_a_closing_mark_are_checked_where_they_may_be_a_quote(answer):
+    out, flagged = agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip")
+    assert ("next year for sure" not in out and "cheats everyone" not in out) or flagged
+
+
+@pytest.mark.parametrize("answer, loose", [
+    (f'He said "{QUOTE_A}""', []),                  # right after the closing mark, at the line end
+    (f'He said "{QUOTE_A}" {CITE_A}."', []),        # after the quote's citation
+    (f'He said "{QUOTE_A}" [2]".', []),
+    (f'He said “{QUOTE_A}”» ok', ["»"]),            # words after it
+    (f'He said "{QUOTE_A}" and then"', ['"']),      # words between
+    (f'He said "{QUOTE_A}"\n"', ['"']),             # not on the quote's line
+])
+def test_a_stray_mark_right_after_a_quote_or_its_citation_is_placed(answer, loose):
+    assert [answer[i] for i in agent._QUOTE_PATTERN.loose(answer)] == loose
+
+
+@pytest.mark.parametrize("answer, quotes", [
+    ("**One user:** 'banks charge hidden fees'", ["'banks charge hidden fees'"]),     # a speaker's colon
+    ("One Reddit user: 'banks charge hidden fees'", ["'banks charge hidden fees'"]),
+    ("A user posted 'banks charge hidden fees'", ["'banks charge hidden fees'"]),      # a verb of saying
+    ("Users call it 'banks charge hidden fees'", ["'banks charge hidden fees'"]),
+    ("Users call the app 'buggy and slow' often.", []),                               # a noun's form, a label
+    ("Posts say little; posts like 'DBS down again' were common.", []),
+    ("Summary: 'fees are high' is the theme.", []),
+])
+def test_single_quotes_are_cued_by_a_verb_of_saying_or_a_speakers_colon(answer, quotes):
+    assert agent._QUOTE_PATTERN.findall(answer) == quotes

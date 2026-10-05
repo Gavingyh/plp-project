@@ -157,3 +157,52 @@ def test_against_a_commit_that_is_not_there_stops_and_leaves_no_trace(tmp_path, 
     with pytest.raises(SystemExit, match="could not extract"):
         replay_checks.snapshot_at("0" * 40, _folder(tmp_path), str(repo))
     assert list(scratch.iterdir()) == []
+
+
+# Only the results files git tracks are read, unless --include-untracked: runs that quote CNA
+# text are kept out of git, so a comparison counting them can't be re-run from a checkout
+# (eighth validation, 5 Oct 2026). A made-up repository holds one tracked run and one not.
+
+def _git_folder(tmp_path):
+    repo = tmp_path / "results_repo"
+    folder = repo / "data" / "eval"
+    folder.mkdir(parents=True)
+    row = {"id": "q-1", "question": "DBS app?", "model_answer": f'Users say "{REAL}" and the score is 0.31 on 46.',
+           "tool_calls": [SEARCH, SCORE], "unverified_numbers": ["46"], "citation_fabricated": False}
+    _write(folder / "chatbot_eval_results_demo_v2.jsonl", [row])
+    _write(folder / "chatbot_eval_results_reader_v2.jsonl", [row])        # a named run, not tracked
+    _git(tmp_path, "init", "-q", str(repo))
+    _git(repo, "add", "data/eval/chatbot_eval_results_demo_v2.jsonl")
+    _git(repo, "commit", "-q", "-m", "one run")
+    return str(folder)
+
+
+def test_only_the_runs_git_tracks_are_read_unless_asked(tmp_path, capsys):
+    folder = _git_folder(tmp_path)
+    assert [os.path.basename(p) for p in replay_checks.results_files(folder)] == ["chatbot_eval_results_demo_v2.jsonl"]
+    assert len(replay_checks.results_files(folder, include_untracked=True)) == 2
+    assert "reader_v2: not tracked by git, so not read (--include-untracked reads it)" in \
+        replay_checks.recorded_flags(folder)
+    replay_checks.main(["--eval-dir", folder])
+    out, err = capsys.readouterr()
+    assert out.startswith("Results files read: 1; not tracked by git: 0\n") and "Every recorded answer: 1\n" in out
+    assert "1 results files here are not tracked by git and were not read" in err
+    replay_checks.main(["--eval-dir", folder, "--include-untracked"])
+    out, err = capsys.readouterr()
+    assert out.startswith("Results files read: 2; not tracked by git: 1\n") and "Every recorded answer: 2\n" in out
+    assert "reader_v2: 1 answers" in out and err == ""
+
+
+def test_against_reads_the_same_runs_as_the_comparison_it_makes(tmp_path, capsys, monkeypatch):
+    import tempfile
+    folder = _git_folder(tmp_path)
+    repo, commit = _stub_repo(tmp_path)
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(scratch))
+    replay_checks.main(["--against", commit, "--eval-dir", folder, "--repo", str(repo)])
+    assert f"differing from the checks of {commit}: 1\n    demo_v2/q-1: figures" in capsys.readouterr().out
+    replay_checks.main(["--against", commit, "--eval-dir", folder, "--repo", str(repo), "--include-untracked"])
+    out = capsys.readouterr().out
+    assert f"differing from the checks of {commit}: 2" in out and "reader_v2/q-1: figures" in out
+    assert "only in" not in out

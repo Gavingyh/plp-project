@@ -575,8 +575,8 @@ Decided:
   sentiment filter for questions about complaints or praise; and a reading it
   put in quote marks was removed as an invented quote, so a reading or a
   real topic name a tool returned no longer counts as a quote.
-- Seven validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
-  and the sixth and seventh, of 5 Oct) found gaps the change had opened in
+- Eight validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
+  and the sixth to eighth, of 5 Oct) found gaps the change had opened in
   the grounding checks, and some old ones. Each way of spotting quotes caught
   what the last missed and missed something new, so two detectors now run
   together, with a safety net under them. A pattern finds curly and angle
@@ -589,26 +589,33 @@ Decided:
   with a straight mark, an inch mark can be read as the close. In the text
   between its quotes, each paragraph's marks are paired in order, a mark
   opening only where it reads as an opening one (low-9 marks, „...“,
-  included), a pair around fewer than ten characters being a word, not a
-  quote, and an unpaired mark opening a quote to the end of its line. A
-  double quote mark none of this places flags the answer, and strip mode
-  removes its line; strip also removes the words between two removed quotes
-  on one line, and runs again until nothing changes. A single-quoted passage
-  counts from six words, or from three after a quoting word or a colon or
-  before a citation. A quote is compared without the punctuation at its
-  ends. A date without its year is skipped by the figure check only when a
-  tool's date field has that month and day, no decimal, thousands group or
-  "%" follows it and, after a month, it reads as a date: after "on", "as
-  of", "the" or "runs to", or before punctuation, a line end or a word such
-  as "for"; elsewhere ("In September 25 customers complained") it is a
-  figure to check. Around them: the checks read the model's own text before
+  included), a pair around fewer than ten characters being a word in quote
+  marks whatever follows it, not a quote, and an unpaired mark opening a
+  quote to the end of its line. Words glued to a quote's closing mark are
+  checked as a quote only after one no search returned, or where a citation
+  or a closing mark ends them. A double quote mark none of this places
+  flags the answer, and strip mode removes its line (a stray mark at a
+  line's end right after a quote or its citation is placed); strip also
+  removes the words between two removed quotes on one line, and runs again
+  until nothing changes. A single-quoted passage counts from six words, or
+  from three after a verb of saying or a speaker's colon or before a
+  citation. A quote is compared without the punctuation at its ends. A date
+  without its year is skipped by the figure check only when a tool's date
+  field has that month and day, no decimal, thousands group or "%" follows
+  it and, after a month, it reads as a date: after "on", "as of", "the" or
+  "runs to", or before punctuation, a line end or a word such as "until"
+  (before a comma or a bracket only with no number later in its clause, or
+  one right after the comma); elsewhere ("In September 25 customers
+  complained", "September 25 for DBS against 40 for UOB") it is a figure to
+  check. Around them: the checks read the model's own text before
   the bare markers it wrote ("[2]") are dropped, and a dropped marker's
   figures are still checked; a marker inside a quote is shown only if the
   quoted sentence has it; history rebuilt for the API drops markers and
   sources; only real topic names count as tool wording; and a trend sentence
   whose printed scores point the other way says it's too close to call. The
   findings, their tests, the known limits and a re-run over every recorded
-  answer (`scripts/replay_checks.py --against <commit>`) are in
+  answer git tracks (`scripts/replay_checks.py --against <commit>`;
+  `--include-untracked` adds the runs kept out of git) are in
   `docs/evidence/chatbot-answers-2026-10-04.md`. Whether the Grounded
   chatbot claim keeps "never" is a decision on the team to-do.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most

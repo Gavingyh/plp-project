@@ -63,24 +63,36 @@ _YEARLESS_DATE = re.compile(
 # fixed list followed it). It reads as a date after "on", "as of", "as at",
 # "the", "dated" or "runs to" (or "ran", "run", "running" to): "On September 25
 # DBS scored 0.31", "the September 25 data"; a range also after "from" or
-# "between". Or before a line end, punctuation other than "%" (a dash, an em
-# dash too, only when no digit follows it), "and", "&", "to" or "/" not before
-# a number, an article or determiner, or a word such as "for", "until" or
-# "when" (_READS_AS_DATE_AFTER). Before any other word, listed or not, or a
-# number, it is checked ("In September 25 or so posts", "September 25th
-# sentences"), and so are both ends of such a range. A share after the day or
-# the range ("25 per cent", "25 to 30% of posts") means both numbers are checked.
+# "between". Or before a line end, punctuation other than "%", "," or an
+# opening bracket (a dash, an em dash too, only when no digit follows it),
+# "and", "&", "to" or "/" not before a number, an article or determiner, or a
+# word such as "until" or "when" (_READS_AS_DATE_AFTER). Before a comma it reads
+# as a date only when no number follows in the rest of its clause (to the next
+# ".", ";", ":", "!", "?" or line end), or just one, right after the comma
+# ("September 25, 45 posts"); before an opening bracket, ( or [, only when no
+# number follows in the rest of its clause and no "of" stands inside the
+# bracket (validation, 5 Oct 2026: "In September 25, 31 and 40 posts", "In
+# September 25 (out of 40) posts" and "September 25 for DBS against 40 for UOB"
+# hid the 25, so "for" is no longer a word a date stands before). Before any
+# other word, listed or not, or a number, it is checked ("In September 25 or so
+# posts", "September 25th sentences"), and so are both ends of such a range. A
+# share after the day or the range ("25 per cent", "25 to 30% of posts") means
+# both numbers are checked.
 _SHARE = r"(?:%|[ \t]+(?:per[ \t]?cent|percent|pct)\b)"
 _SHARE_AFTER = re.compile(rf"{_SHARE}|[ \t]*(?:to\b|[-–])[ \t]*\d+(?:\.\d+)?[ \t]*{_SHARE}", re.IGNORECASE)
 _READS_AS_DATE_BEFORE = re.compile(
     r"(?:\b(?:on|the|dated)|\bas[ \t]+(?:of|at)|\b(?:runs|ran|run|running)[ \t]+to)[ \t]+\Z", re.IGNORECASE)
 _RANGE_READS_AS_DATE_BEFORE = re.compile(r"\b(?:from|between)[ \t]+\Z", re.IGNORECASE)
+_NO_NUMBER_TO_CLAUSE_END = r"(?=[^\d\n.;:!?]*(?:[\n.;:!?]|\Z))"     # no digit before the clause ends
 _READS_AS_DATE_AFTER = re.compile(
     r"[ \t]*(?:\n|\Z)"                                             # a line end or the end of the text
-    r"|[ \t]*(?:[.,;:!?()\[\]\"'’”*_]|[-–—](?![ \t]*\d))"          # punctuation but "%", a dash not before a digit
+    r"|[ \t]*(?:[.;:!?)\]\"'’”*_]|[-–—](?![ \t]*\d))"              # punctuation but %, a comma or bracket below
+    rf"|[ \t]*,{_NO_NUMBER_TO_CLAUSE_END}"                          # a comma, no number to the clause end
+    rf"|[ \t]*,[ \t]*[-+−]?\d+(?:,\d{{3}})*(?:\.\d+)?%?{_NO_NUMBER_TO_CLAUSE_END}"   # ... or one, right after it
+    rf"|[ \t]*[(\[](?![^)\]\n]*\bof\b){_NO_NUMBER_TO_CLAUSE_END}"    # a bracket, no "of" in it, no number after
     r"|[ \t]*(?:and\b|&|to\b|/)(?![ \t]*\d)"                       # "and", "&", "to" or "/" not before a number
     r"|[ \t]+(?:the|a|an|this|that|its|their"                      # an article or determiner
-    r"|for|until|till|through|when|while|after|before|since|during|as)\b",
+    r"|until|till|through|when|while|after|before|since|during|as)\b",
     re.IGNORECASE)
 _ISO_DAY = re.compile(r"\b\d{4}-(\d{2})-(\d{2})")
 # Where tools write dates. Only these count: a date in the model's own search

@@ -191,10 +191,10 @@ before the next.
 
 ## After validation
 
-Seven validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
+Eight validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
 and `docs/validation/2026-10-05-chatbot-answers-*-check.md`) each found gaps
 the change had opened in the checks, or old ones it had not closed. The
-checks as they stand after the seventh:
+checks as they stand after the eighth:
 
 - **Quotes** are found by two detectors together, as each catches shapes the
   other misses. A pattern first finds a quote in curly or angle marks by its
@@ -218,28 +218,44 @@ checks as they stand after the seventh:
   digit ('»...»'), and an opening mark typed to close ('...for sure“ ok')
   not at all. A pair around fewer than ten characters with no space just
   inside either mark ('"buy"', '"Tier 1"') is a word in quote marks, not a
-  quote. A mark left without a partner opens a quote that runs to the end of
-  its line, or to the next quote, stopping before a citation. The words
-  right after a quote's closing mark that has a letter from A to Z or a
-  digit right after it ('... Another wrote ”OCBC will ...') are checked as a
-  quote too, as that mark may be the next quote's opening one. Last, a
-  passage in single marks (' ‘ ’) counts from six words, or from three after
-  a quoting word in any of its forms ("said", "say", "wrote", "posted",
-  "complained", "called" and others) or a colon among the three words before
-  it, or before a citation or a source tag ("(Reddit)"); other short ones
-  are terms or scare quotes ('customer first digital approach'). An
-  apostrophe inside a word ("OCBC's") neither opens nor closes one, and a
-  passage in single marks holding a quote in double marks is checked whole.
+  quote, whatever follows its closing mark ('"DBS"and', '"buy-now"s'); only
+  where a citation, or a mark that reads as a closing one (no letter or
+  digit right after it, an inch mark too), follows ten or more characters
+  on does that closing mark open a quote ('"x"OCBC will cut ... for sure"').
+  A mark left without a partner opens a quote that runs to the end of its
+  line, or to the next quote, stopping before a citation. The words right
+  after a quote's closing mark that has a letter from A to Z or a digit
+  right after it ('... Another wrote ”OCBC will ...') may be a quote, as that
+  mark may be the next quote's opening one: they are checked after a quote
+  no search returned, or one too short to check, and wherever a citation or
+  a mark that reads as a closing one ends them; after a quote a search
+  returned they are otherwise the model's own words ('One user: “...”DBS
+  also scored 0.31.'). Last, a passage in single marks (' ‘ ’) counts from
+  six words, or from three after a verb of saying among the three words
+  before it ("said", "say", "says", "wrote", "write", "writes",
+  "complained", "complain", "complains", "posted", "commented", "tweeted",
+  "replied", "added", "asked", "claimed", "stated", "quoted", or "put it",
+  "call it", "calls it", "called it"), after a speaker and a colon ("One
+  user: '...'", "Another: '...'"), or before a citation or a source tag
+  ("(Reddit)"). A noun ("report", "note", "post") or a label's colon
+  ("Note: '...'") cues none, and other short ones are terms or scare quotes
+  ('customer first digital approach'). An apostrophe inside a word
+  ("OCBC's") neither opens nor closes one, and a passage in single marks
+  holding a quote in double marks is checked whole.
 - **A quote mark the checks can't place**, a double mark that is not a mark
   of a quote found, not inside one, not around a word in quote marks, not an
-  inch mark and not a stray straight mark after a space before a few words at
-  the end of a paragraph, may belong to a quote the detectors missed. It
+  inch mark, not a stray straight mark after a space before a few words at
+  the end of a paragraph, and not a stray mark at the end of its line right
+  after a quote's closing mark or a citation right after one ('"..."
+  [DBS, ...]."', '"...""'), may belong to a quote the detectors missed. It
   flags the answer in every mode, and strip mode removes its line, with the
   line's citation.
 - **Strip mode** after a search removes each line holding such a mark, read
   before anything else is removed, then each quote, link and sentence id no
   search returned, and the words between two removed quotes on one line when
-  no kept quote stands between them. It runs again on its result until
+  no kept quote stands between them. Words glued to a closing mark that read
+  as a quote where the model wrote them go too, though the line of a mark
+  that may close them went first. It runs again on its result until
   nothing changes, at most ten times, and whatever is left is flagged.
   Without a search, a line holding such a mark goes like a line holding a
   quote, in the first paragraph too.
@@ -260,17 +276,24 @@ checks as they stand after the seventh:
   and day. After a month, such a day, ordinal or not, is a date only where it
   clearly reads as one: after "on", "as of", "as at", "the", "dated" or "runs
   to" (a range also after "from" or "between"), or before a line end,
-  punctuation other than "%" (a dash only when no digit follows it), "and",
-  "&", "to" or "/" not followed by a number, an article or determiner, or one
-  of "for", "until", "till", "through", "when", "while", "after", "before",
-  "since", "during" and "as". Anywhere else it is a figure to check: with
-  data to 25 September, "In September 25 customers complained" and
-  "September 25th sentences" are counts to check, and "Data runs to
-  September 25 for DBS" a date. A share after the day ("25 per cent", "25 to
-  30% of posts") means both numbers are checked, and so are both ends of a
-  range not read as a date. A day followed by a decimal, a thousands group
-  or "%" is never a date. A date in the model's own search query, a link or
-  a quoted sentence vouches for nothing, and "may" in lower case is the verb.
+  punctuation other than "%", a comma or an opening bracket (a dash only when
+  no digit follows it), "and", "&", "to" or "/" not followed by a number, an
+  article or determiner, or one of "until", "till", "through", "when",
+  "while", "after", "before", "since", "during" and "as". Before a comma it
+  is a date only when no number follows in the rest of its clause (to the
+  next full stop, semicolon, colon, "!", "?" or line end), or just one, right
+  after the comma ("September 25, 45 posts"); before an opening bracket, (
+  or [, only when no number follows in the rest of its clause and no "of"
+  stands inside the bracket. Anywhere else it is a figure to check: with
+  data to 25 September, "In September 25 customers complained", "September
+  25th sentences", "In September 25, 31 and 40 posts", "In September 25 (out
+  of 40) posts" and "September 25 for DBS against 40 for UOB" are counts to
+  check, and "Data runs to September 25 for DBS" a date. A share after the
+  day ("25 per cent", "25 to 30% of posts") means both numbers are checked,
+  and so are both ends of a range not read as a date. A day followed by a
+  decimal, a thousands group or "%" is never a date. A date in the model's
+  own search query, a link or a quoted sentence vouches for nothing, and
+  "may" in lower case is the verb.
 - **Tool wording**: a reading or a real topic name in quote marks is not a
   quote; a topic name the model set by passing its own text as the aspect is
   not exempt.
@@ -347,32 +370,65 @@ What each validation found, in short:
    real one whose closing mark, after punctuation, was read as a stray mark.
    Each is now caught; and so that real quotes in mixed marks ('»...»',
    '"...“') don't lose their line, those are read as pairs.
+8. The eighth (5 Oct): 31c7e98's date rule still hid a count before a
+   comma, a bracket or "for" ("In September 25, 31 and 40 posts were
+   negative", "In September 25 (out of 40) posts", "September 25 for DBS
+   against 40 for UOB"). Its quote rules removed correct text in four
+   shapes: the model's own words glued to a real quote's closing mark ('One
+   user: “...”DBS also scored 0.31.'), a word in quote marks with a letter
+   right after it ('"DBS"and "OCBC" both rose.', which lost its whole line),
+   a term in single marks after a noun or a label ("Users report 'long queue
+   times'", "Note: 'fees are high' is the theme"), and a correct line with a
+   stray mark after its quote's citation. And the replay comparison on this
+   page counted five results runs kept out of git, so a checkout printed
+   other lines. The changes are the rules above: a comma or a bracket after
+   a returned day ends a date only with no number later in its clause (or
+   one right after the comma), and "for" no longer does; a word in quote
+   marks keeps both its marks whatever follows; the words glued to a quote's
+   closing mark are checked after an unverified quote, or where a citation
+   or a closing mark ends them; single quotes are cued by verbs of saying
+   and a speaker's colon only; a stray mark at the end of its line after a
+   quote or its citation is placed; and `scripts/replay_checks.py` reads
+   only the results files git tracks unless asked. Checking these changes
+   against 31c7e98 on generated answers, invented quotes and correct ones in
+   many combined shapes, found invented quotes that 31c7e98 caught and a
+   first draft of these rules missed: glued words ended by an inch mark, by a
+   mark on the next line, or by a closing mark that a stray mark after a
+   citation paired with. Each is now caught. The only invented quotes
+   31c7e98 caught that pass now are glued words with nothing after them that
+   could end a quote (Known limits), and no correct answer it kept as
+   written is changed now.
 
 Each finding has a test, in `tests/test_validate_chatbot_*.py` or, for two of
 the fifth's ("Sept 25-26" read as a date, and the neutral share), in
 `tests/test_chatbot_reader.py`. One, the seventh's merged nested quotes, stays
 marked as expected to fail, as a recorded limit (below). The gaps found while
-checking the sixth's and the seventh's changes are tested in
-`tests/test_chatbot_harness.py`.
+checking the sixth's, the seventh's and the eighth's changes are tested in
+`tests/test_chatbot_harness.py` (dates in `tests/test_chatbot_reader.py`, the
+replay's choice of files in `tests/test_replay_checks.py`).
 
 `scripts/replay_checks.py` re-runs the citation check, the figure check and
-strip mode over every answer recorded under `data/eval/`, compares each
-gold-set run's flags with those recorded when it was made, and counts the
-answers holding a quote mark the checks can't place. With `--against
-<commit>` it also compares every answer's checks with that commit's: it
-extracts the commit's files into a temporary folder and runs its code there,
-changing nothing in the repository. On 5 Oct, `HF_HUB_OFFLINE=1
-.venv-plp/bin/python3 scripts/replay_checks.py --against 7446c89` printed:
+strip mode over every answer recorded in the results files under
+`data/eval/` that git tracks, compares each gold-set run's flags with those
+recorded when it was made, and counts the answers holding a quote mark the
+checks can't place. Its first line says how many results files it read and
+how many of those git doesn't track. With `--against <commit>` it also
+compares every answer's checks with that commit's: it extracts the commit's
+files into a temporary folder and runs its code there over the same results
+files, changing nothing in the repository. On 5 Oct, after the eighth
+validation's fixes, `HF_HUB_OFFLINE=1 .venv-plp/bin/python3
+scripts/replay_checks.py --against 31c7e98` printed:
 
 ```
+Results files read: 36; not tracked by git: 0
 Gold-set runs, flags now against those recorded when the run was made:
   defaults_v2: 26 answers; figure flags changed none; citation flags changed none
-  reader_v2: 26 answers; figure flags changed [('thin-2', ['25'], [])]; citation flags changed none
-  reader2_v2: 26 answers; figure flags changed none; citation flags changed none
-  reader3_v2: 26 answers; figure flags changed none; citation flags changed none
-  final_v2: 26 answers; figure flags changed none; citation flags changed none
+  reader_v2: not tracked by git, so not read (--include-untracked reads it)
+  reader2_v2: not tracked by git, so not read (--include-untracked reads it)
+  reader3_v2: not tracked by git, so not read (--include-untracked reads it)
+  final_v2: not tracked by git, so not read (--include-untracked reads it)
   final2_v2: 25 answers; figure flags changed none; citation flags changed none
-  mix_v2: 26 answers; figure flags changed none; citation flags changed none
+  mix_v2: not tracked by git, so not read (--include-untracked reads it)
   llama3b_v2: not compared (recorded before the model's own text was kept)
   llama3b_v2_strip: not compared (recorded before the model's own text was kept)
   llama8b_v2: not compared (recorded before the model's own text was kept)
@@ -382,37 +438,37 @@ Gold-set runs, flags now against those recorded when the run was made:
   llama8b_v2_intent_strip: 26 answers; figure flags changed [('consensus-1', ['6%', '41%', '47%', '6%'], [])]; citation flags changed none
   llama8b_v2_strip: not compared (recorded before the model's own text was kept)
   qwen3_4b_nothink_v2: not compared (recorded before the model's own text was kept)
-Every recorded answer: 670
+Every recorded answer: 540
   holding a quote mark the checks can't place: 0
-  differing from the checks of 7446c89: 5
-    llama3.1_8b/evidence-1: strip
+  differing from the checks of 31c7e98: 1
     llama3.2_3b_harness_t0.2/lookup-3: quotes
-    llama3b_v2/evidence-2: strip
-    llama8b_v2/lookup-8: strip_cited True -> False; strip
-    llama8b_v2_aspectquery/lookup-8: strip_cited True -> False; strip
 ```
 
-So the seven runs flag what they flagged when they were made, except round
-1's false alarm on "September 25th" (`thin-2`), cleared because a tool had
-returned that date: the tables above stand. Two runs outside the tables no
+Five of the seven runs in the tables (`reader_v2`, `reader2_v2`, `reader3_v2`,
+`final_v2` and `mix_v2`) are kept out of git because they quote CNA text, and
+`--include-untracked` adds them on the team's machine that has them: there
+the same command printed `Results files read: 41; not tracked by git: 5` and
+`Every recorded answer: 670`, none holding a mark the checks can't place, the
+same one answer differing from 31c7e98's checks, and one flag changed in
+those five runs since they were made: round 1's false alarm on "September
+25th" (`reader_v2`, `thin-2`), cleared because a tool had returned that date.
+So the seven runs flag what they flagged when they were made, but for that
+false alarm, and the tables above stand. Two runs outside the tables no
 longer flag one answer's analyst shares (`consensus-1`): since 4 Oct the
-figure check works them out from the counts per rating. None of the 670
-recorded answers holds a quote mark the checks can't place. Against
-7446c89's checks, five answers change; no flag on the model's own text
-changes, and two answers are no longer flagged after strip:
-
-- `llama3.1_8b/evidence-1` and `llama3b_v2/evidence-2`: two quotes no search
-  returned stand on one line, and the words between them now go with them
-  (in the second, a line of JSON the model wrote).
-- `llama8b_v2/lookup-8` and `llama8b_v2_aspectquery/lookup-8`: a sentence a
-  search returned, quoted with two links in it that no search returned as
-  links. Strip removed the links, which left a quote no longer matching the
-  sentence; until now the answer was left so, flagged, and now strip runs
-  again and removes that quote too.
-- `llama3.2_3b_harness_t0.2/lookup-3`: two source names of three words in
-  single quotes after "cite_as:" ('DBS analyst report') count as quotes
-  again, as a colon before them now cues one; that answer, written without a
-  search, is flagged and stripped as before.
+figure check works them out from the counts per rating. Against 31c7e98's
+checks one answer changes, and none of its flags: in
+`llama3.2_3b_harness_t0.2/lookup-3`, two source names of three words in
+single quotes after "cite_as:" ('DBS analyst report') no longer count as
+quotes, as a label's colon no longer cues one (as on 7446c89); that answer,
+written without a search, is flagged and stripped as before. Against
+7446c89, with `--include-untracked`, four answers differ, all from the
+seventh's changes: in `llama3.1_8b/evidence-1` and `llama3b_v2/evidence-2`
+two quotes no search returned stand on one line, and the words between them
+now go with them (in the second, a line of JSON the model wrote); in
+`llama8b_v2/lookup-8` and `llama8b_v2_aspectquery/lookup-8` a sentence a
+search returned is quoted with two links in it that no search returned as
+links, and strip, which once left the quote that removing the links had
+altered, flagged, now runs again and removes it too.
 
 **Known limits.** No check that reads quote marks can promise to find every
 quote. What is left:
@@ -421,10 +477,13 @@ quote. What is left:
   search a quote of two words passes unchecked; without a search it counts
   as invented.
 - A single quote mark is also an apostrophe. A passage in single marks of
-  three to five words is checked only after a quoting word or a colon among
-  the three words before it, or before a citation or a source tag; with none
-  of these it is not checked, nor is one of one or two words, one that opens
-  on a digit or one that holds a plural possessive ("the banks' fees"). A
+  three to five words is checked only after one of the verbs of saying above
+  among the three words before it, after a speaker and a colon, or before a
+  citation or a source tag; with none of these it is not checked, so after
+  another verb ("noted", "reported", "mentioned"), a noun or a label's colon
+  ("Note:") an invented quote of three to five words passes, and nor is one
+  of one or two words, one that opens on a digit or one that holds a plural
+  possessive ("the banks' fees") checked. A
   single-quoted quote holding another in single marks hides the words after
   the inner one, and single marks never count as marks the checks can't
   place.
@@ -448,6 +507,13 @@ quote. What is left:
   marks, like '"Tier 1"', and the words after it pass.
 - A line holding a quote mark the checks can't place goes whole in strip
   mode, correct text and real quotes on it included.
+- Words glued to a closing mark, with no space between ('"x"OCBC will
+  ...', or '“...”OCBC will ...' after a quote a search returned), are the
+  model's own words unless a citation or a mark that reads as a closing one
+  ends them. So an invented quote written so, with nothing after it that
+  could close it, passes, and the model's own words written so before a
+  citation or a stray closing mark ('"buy"by most analysts [DBS, ...]',
+  '“...”DBS fell 5" ok') are removed.
 - A quote left open runs to the end of its line, so a real quote that lost
   its closing mark is removed with the words after it on that line.
 - Marks other than " “ ” « » „ ‟ and ' ‘ ’ (for example ‹...›, ‚...‘ or
@@ -458,9 +524,14 @@ quote. What is left:
   reader sees; its figures are still checked.
 - After a month, a returned day is checked unless it reads as a date in one
   of the ways above, so a real date before any other word is flagged ("Data
-  covers September 25 in all three banks", "Sept 25/26"), and a count
-  written where a date reads naturally is taken for the date ("Based on
-  September 25 posts"). A day before its month ("25 September") is always a
+  covers September 25 in all three banks", "Sept 25/26"), and so is one
+  before "for", a comma or a bracket with a number later in its clause and
+  no "on", "as of", "the" or "runs to" before it ("Data covers September 25
+  for DBS", "By September 25, DBS scored 0.31", "September 25 (45 posts)").
+  A count written where a date reads naturally is taken for the date
+  ("Based on September 25 posts"), and so is one before a comma with a
+  single number right after it ("In September 25, 31 posts were negative"
+  checks only the 31). A day before its month ("25 September") is always a
   date when a tool returned it.
 
 Whether the Grounded chatbot claim keeps "never", or names what is checked and

@@ -1116,3 +1116,15 @@ whether slower, fuller answers are worth it on the demo Mac.
   only where it reads as one, and `scripts/replay_checks.py --against
   <commit>` compares with any commit's checks; merged nested quotes stay a
   recorded limit, with the others on the evidence page.
+- **Eighth validation**
+  (`docs/validation/2026-10-05-chatbot-answers-eighth-check.md`): a count
+  before a comma, a bracket or "for" was still hidden, and the seventh's quote
+  rules removed correct text in four shapes. Now a comma or bracket after a
+  returned day ends a date only with no number later in its clause (or one
+  right after the comma) and "for" no longer does, a word in quote marks keeps
+  its marks whatever follows, words glued to a real quote's closing mark stay
+  unless a citation or a closing mark ends them, single quotes are cued only
+  by verbs of saying or a speaker's colon, a stray mark after a quote or its
+  citation at a line's end is placed, and `scripts/replay_checks.py` reads
+  only the results files git tracks (`--include-untracked` adds the five runs
+  that quote CNA text).

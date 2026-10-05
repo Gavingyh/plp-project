@@ -216,3 +216,118 @@ replacing the CPU build, `rapidocr-onnxruntime`, `wordninja`, the spaCy model
 `--labels` on `train.finetune` and `train.evaluate`, `tests/test_sgx_research_extract.py`,
 `tests/test_source_round.py`, and `data/labeled/sgx_research/` (`candidates.csv`,
 `test_blind.csv`, `claude_prelabels.csv`, `claude_prelabels/`).
+
+## Retrain with the human-reviewed SGX sheet (5 Oct)
+
+The annotator's sheet (`data/labeled/sgx_research/candidates.csv`, annotator A, all 280
+train/dev rows) came back. Three things were repaired first:
+
+- The sheet had been saved in a non-UTF-8 encoding, which replaced curly quotes, dashes and
+  bullets in 30 sentences with `?€?`. The text was restored from the database (it is never
+  an annotator's column); the file as saved is kept as
+  `candidates.edited-2026-10-04.bak.csv` (not in git).
+- The annotator had typed the sentiment into the `llm_prelabel` column as well as `label`.
+  `llm_prelabel` was restored to the model's original suggestion
+  (`claude_prelabels.csv`). Against those suggestions, the annotator's sentiment differs on
+  17 of 280 rows (93.9% agreement) and the aspect on 14 (95.0%).
+- `not_about_bank` was set to false on all 280 rows, as the annotator confirmed every sentence
+  is about a bank. The 9 rows the model had flagged (disclaimer text, a rating legend, a table
+  row) are therefore in the training data.
+
+The SGX test sheet (`test_blind.csv`) is still empty, so the retrain uses no SGX test rows
+and **has not been evaluated**: the annotator is labelling the test sheet first.
+
+Code: the retrain ran on this branch after merging `origin/main`, so it uses the fixed
+training code (the 3 Oct head-order fix; every model before it started with each output
+answering for the wrong class). Conflicts in `aggregate/index.py`, `sentiment/score.py`,
+`train/evaluate.py` and `train/finetune.py` were resolved by keeping upstream's settings and
+both sides' flags. `sgx_research` is in `config/sources.yaml` with weight 1.0 and
+`team_only: true`, which withholds its text from hosted chatbot backends the way CNA's is
+(third-party research; the two config tests were updated to say so; reverse it if the team
+decides otherwise).
+
+```bash
+python -m train.source_round merge --round data/labeled/sgx_research --candidates data/labeled/sgx_research/candidates.csv --blind data/labeled/sgx_research/test_blind.csv
+python -m train.source_round combine --round data/labeled/sgx_research
+for s in 42 1 7; do python -m train.finetune --seed $s --epochs 8 --aspect-text label     --labels data/labeled/combined/candidates.csv --out-dir models/sgx-retrain/label; done
+```
+
+Training data (`data/labeled/combined/candidates.csv`): 1,258 train/dev rows (the original 978
+plus 280 SGX) and the original 299 test rows (Reddit 184, earnings 79, Google News 34, Yahoo
+News 2). None of the 280 SGX rows is a near-copy (word-set Jaccard 0.6) of an original test
+sentence. The configuration is unchanged from 1 Oct and 4 Oct (8 epochs at most, early stopping
+with patience 2, learning rate 2e-5, batch 16, readable aspect label, plain cross-entropy). The
+85/15 train/dev split is redrawn from the larger pool, so dev rows differ from the earlier
+runs'. On the RTX 5070 Ti each seed took 14 to 39 seconds.
+
+Dev macro-F1 of the best epoch (189 dev rows; not comparable with the test figures, and not
+comparable across seeds since each seed's dev rows differ): seed 42 0.669 (ran all 8 epochs),
+seed 1 0.635 (best epoch 1, stopped after 3), seed 7 0.655 (best epoch 4, stopped after 6).
+
+| model | SHA-256 of `model.safetensors` |
+|---|---|
+| `models/sgx-retrain/label/seed_42/final` | `039fba7d3804f0c9e8abc09d58056c2668b5787dc01c6138872e5e65719473a8` |
+| `models/sgx-retrain/label/seed_1/final` | `365de445f843938906be45d2e3196f82d0a52a6487f4a8ae54f5aac8ab19180b` |
+| `models/sgx-retrain/label/seed_7/final` | `31355209ec0efd8ea0627fe527a129ca8ac26aee123969deaeb95b77d047e8f9` |
+
+**Next:** when the SGX test rows are labelled, `merge` and `combine` again, then
+`train.evaluate --labels data/labeled/combined/candidates.csv --model-dir models/sgx-retrain/label/seed_{42,1,7}/final`
+for the combined test split, and the default labels for the original 299 rows alone, to compare
+with the 1 Oct and 4 Oct models. Nothing is adopted: the database and reported results still use
+the 1 Oct models.
+
+## Evaluation with the human-labelled SGX test rows (6 Oct)
+
+The annotator filled the blind test sheet (100 rows, no model output shown); `annotator` was left
+empty. The sheet had again been saved in the Windows encoding, so 8 texts were restored from the
+database (the edited file is kept as `test_blind.edited-2026-10-06.bak.csv`, not in git).
+Against the model's labels for the same rows (kept in a separate file, never shown), the
+annotator's sentiment agrees on 77.0% and the aspect on 65.0%. On the train rows, where the model's
+suggestion was visible, the figures were 93.9% and 95.0%: the visible suggestion is most of the
+difference, the anchoring the 27 Sep round found. These blind labels are the independent ones.
+
+`merge` and `combine` rebuilt the combined file, written to `data/labeled/combined_sgx_test/`
+because `data/labeled/combined/candidates.csv` was locked by another program (once it was closed,
+`combine` rebuilt `data/labeled/combined/candidates.csv`, byte-identical to this copy, so either
+path gives the same file; the scoring above used this one): 1,258 train/dev rows
+and **399 test rows (the original 299 plus the 100 SGX)**; the leak check passes and no SGX test row
+is a near-copy (Jaccard 0.6) of a train row. SGX test labels: 42 positive, 35 neutral, 23 negative
+(DBS 23, OCBC 38, UOB 39).
+
+One scoring run per configuration, chosen before any test score existed (the 1 Oct configuration,
+unchanged); nothing was selected on these numbers. Macro-F1, `train.evaluate`; seeds in the order
+42 / 1 / 7; "old" are the 1 Oct models from the Hugging Face repo (trained without SGX data, and
+with the head-order flaw), "new" the three retrained seeds:
+
+| test split | base FinBERT | old seeds (mean) | old, 3 averaged | new seeds (mean) | new, 3 averaged |
+|---|---|---|---|---|---|
+| original 299 | 0.571 | 0.630 / 0.617 / 0.565 (0.604) | 0.615 | 0.631 / 0.589 / 0.611 (0.610) | 0.631 |
+| SGX 100 | 0.687 | 0.540 / 0.643 / 0.577 (0.587) | 0.596 | 0.696 / 0.665 / 0.687 (0.683) | **0.735** |
+| combined 399 | 0.648 | 0.618 / 0.636 / 0.579 (0.611) | 0.620 | 0.665 / 0.622 / 0.647 (0.645) | **0.674** |
+
+The old models' original-299 scores reproduce the 1 Oct report (0.630, 0.617, 0.565; average 0.615).
+Accuracy of the new averaged model on the combined split is 0.71 (base 0.70), and on the SGX rows
+0.74 (base 0.69).
+
+What it shows:
+
+1. **The SGX training rows help on analyst text.** On the SGX test rows the averaged model goes from
+   0.596 (trained without SGX) to 0.735, and the seed mean from 0.587 to 0.683. That is the
+   in-register effect one would expect from 280 in-register rows.
+2. **They do not move the original 299.** The seed mean is 0.610 against 0.604 and the average 0.631
+   against 0.615, differences well inside the seed-to-seed spread (about 0.03). The team's 4 Oct
+   retrain without SGX data scored a seed mean of 0.621 and an average of 0.634
+   ([retrain-2026-10-04.md](retrain-2026-10-04.md), upstream), so there is no sign of harm and no sign
+   of a gain on the other sources.
+3. **Base FinBERT is strong on analyst text** (0.687 on the SGX rows, accuracy 0.69): the report
+   register is formal and polar, closer to what FinBERT was pretrained on. The new individual seeds
+   only match it (0.683 mean); the averaged model is ahead (0.735).
+
+Caveats: the SGX split is 100 sentences (23 DBS), so a difference of several points of macro-F1 is
+inside the noise (one sentence moves a class's F1 by about 0.02 to 0.03), and the averaged-model gain
+over base on SGX (+0.05) is the least certain figure here. The new models' dev rows differ from the
+old ones'. Three seeds cannot separate the effect of the head-order fix from the effect of the added
+data; the 4 Oct retrain isolates the fix, and the comparison in item 2 is across runs on different
+machines. The 9 junk rows the model had flagged are in the training data.
+
+Every other metric (precision, recall and F1 per class, macro and weighted averages, accuracy by source, and the error breakdown) is in [sgx-research-evaluation-2026-10-06.md](sgx-research-evaluation-2026-10-06.md).

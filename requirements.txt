@@ -45,3 +45,10 @@ trafilatura
 
 # news ingestion (ingest/yahoo_news.py; google_news.py uses feedparser above)
 yfinance>=1.7  # get_news(count=, tab=) — the version verified live
+
+# Broker research PDFs (ingest/sgx_research_extract.py): OCR for the scanned reports,
+# and a word splitter for OCR output that drops the spaces
+rapidocr-onnxruntime>=1.2.0
+wordninja>=2.0.0
+# GPU training on an RTX 50-series card needs the CUDA 13 build of torch, not the PyPI default:
+#   pip install "torch==2.14.0+cu130" --index-url https://download.pytorch.org/whl/cu130

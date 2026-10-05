@@ -13,8 +13,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_weights_are_the_ones_the_stored_index_was_built_with():
+    # sgx_research (broker reports, added 4 Oct) is not in the stored index; it counts like earnings
     assert sources.weights() == {"earnings": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0,
-                                 "yahoo_news": 1.5, "google_news": 1.5, "cna": 1.5}
+                                 "yahoo_news": 1.5, "google_news": 1.5, "cna": 1.5, "sgx_research": 1.0}
     assert sources.default_weight() == 1.0
 
 
@@ -22,8 +23,9 @@ def test_only_reddit_is_text_written_by_the_public():
     assert sources.personal_text_sources() == {"arctic_shift"}
 
 
-def test_only_cna_must_stay_within_the_team():
-    assert sources.team_only_sources() == {"cna"}
+def test_only_cna_and_the_broker_reports_must_stay_within_the_team():
+    # third-party articles and research: CNA's, and the brokers' (sgx_research)
+    assert sources.team_only_sources() == {"cna", "sgx_research"}
 
 
 def test_every_source_the_ingesters_write_is_configured():

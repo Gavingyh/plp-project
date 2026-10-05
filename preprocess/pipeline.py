@@ -13,6 +13,7 @@ all key off sentence_id from here.
 
 USAGE:
   python -m preprocess.pipeline
+  python -m preprocess.pipeline --sources sgx_research   # only these sources' documents
 """
 
 import hashlib
@@ -56,7 +57,11 @@ def _sentence_id(doc_id: str, start: int, end: int) -> str:
 # CNA is left out on purpose: its documents are whole articles, not a
 # headline and a line, and a long article strays into other banks and the
 # wider market, so a sentence must name the bank itself.
-_INHERIT_DOC_BANK_SOURCES = {"newsapi", "alphavantage", "yahoo_news", "google_news", "earnings"}
+# sgx_research: broker reports are long, but each one is about one company or a
+# whole sector. A report on one bank passes its bank to sentences that say "the
+# group" or "we"; a sector report has doc bank MULTI and needs an explicit name.
+_INHERIT_DOC_BANK_SOURCES = {"newsapi", "alphavantage", "yahoo_news", "google_news", "earnings",
+                             "sgx_research"}
 
 
 def _resolve_sentence_bank(sentence_text: str, doc_bank: str, source: str) -> str | None:
@@ -73,12 +78,14 @@ def _resolve_sentence_bank(sentence_text: str, doc_bank: str, source: str) -> st
     return None  # no explicit mention, and either MULTI or a source we don't inherit for - drop
 
 
-def fetch_unprocessed_documents(conn) -> list[dict]:
-    rows = conn.execute("""
+def fetch_unprocessed_documents(conn, sources: set[str] | None = None) -> list[dict]:
+    """Documents with no sentences yet; only those of `sources` when given."""
+    where = f" AND d.source IN ({','.join('?' * len(sources))})" if sources else ""
+    rows = conn.execute(f"""
         SELECT d.doc_id, d.source, d.bank, d.body, d.published_at, d.url
         FROM documents d
-        WHERE NOT EXISTS (SELECT 1 FROM sentences s WHERE s.doc_id = d.doc_id)
-    """).fetchall()
+        WHERE NOT EXISTS (SELECT 1 FROM sentences s WHERE s.doc_id = d.doc_id){where}
+    """, sorted(sources or ())).fetchall()
     cols = ["doc_id", "source", "bank", "body", "published_at", "url"]
     return [dict(zip(cols, r)) for r in rows]
 
@@ -87,13 +94,13 @@ def load_existing_hashes(conn) -> set[str]:
     return {r[0] for r in conn.execute("SELECT DISTINCT norm_hash FROM sentences").fetchall()}
 
 
-def run() -> dict:
+def run(sources: set[str] | None = None) -> dict:
     init_db()
     conn = get_connection()
     stats = {"documents_processed": 0, "sentences_kept": 0, "dropped_short": 0,
               "dropped_ambiguous_bank": 0, "dropped_duplicate": 0, "dropped_cleaner_empty": 0}
     try:
-        docs = fetch_unprocessed_documents(conn)
+        docs = fetch_unprocessed_documents(conn, sources)
         seen_hashes = load_existing_hashes(conn)
         to_insert = []
 
@@ -138,9 +145,13 @@ def run() -> dict:
 
 
 if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser(description="Documents -> sentences.")
+    ap.add_argument("--sources", nargs="+", help="process only documents from these sources")
+    args = ap.parse_args()
     setup_logging()
     logger.info(f"Run started: {datetime.now().isoformat()}")
-    stats = run()
+    stats = run(set(args.sources) if args.sources else None)
     logger.info("=" * 50)
     for k, v in stats.items():
         logger.info(f"  {k:28s} {v}")

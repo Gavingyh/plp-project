@@ -575,31 +575,41 @@ Decided:
   sentiment filter for questions about complaints or praise; and a reading it
   put in quote marks was removed as an invented quote, so a reading or a
   real topic name a tool returned no longer counts as a quote.
-- Six validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
-  and the sixth, of 5 Oct) found gaps the change had opened in the grounding
-  checks, and some old ones. Each way of spotting quotes caught what the last
-  missed and missed something new, so two detectors now run together. A
-  pattern finds curly and angle quotes by their own marks, and straight
-  quotes and those opened with a closing mark also by what stands next to
-  their marks (no letter or digit before the opening mark or after the
-  closing one), so one stray or missing mark never shifts the quotes after
-  it; a straight quote may hold curly ones and a curly quote straight ones,
-  checked whole, and a quote may hold an inch mark. In the text between its
-  quotes, each paragraph's marks are paired in order, whatever stands around
-  them, a pair around fewer than ten characters being a word, not a quote,
-  and an unpaired mark opening a quote to the end of its line. A
-  single-quoted passage counts from six words. A date without its year is
-  skipped by the figure check only when a tool's date field has that month
-  and day, no decimal, thousands group or "%" follows it and, after a month,
-  no count word or share does ("In September 25 sentences"). Around them:
-  the checks read the model's own text before the bare markers it wrote
-  ("[2]") are dropped, and a dropped marker's figures are still checked; a
-  marker inside a quote is shown only if the quoted sentence has it; history
-  rebuilt for the API drops markers and sources; only real topic names count
-  as tool wording; and a trend sentence whose printed scores point the other
-  way says it's too close to call. The findings, their tests, the known
-  limits and a re-run over every recorded answer (`scripts/replay_checks.py`)
-  are in `docs/evidence/chatbot-answers-2026-10-04.md`. Whether the Grounded
+- Seven validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
+  and the sixth and seventh, of 5 Oct) found gaps the change had opened in
+  the grounding checks, and some old ones. Each way of spotting quotes caught
+  what the last missed and missed something new, so two detectors now run
+  together, with a safety net under them. A pattern finds curly and angle
+  quotes by their own marks, and straight quotes and those opened with a
+  closing mark also by what stands next to their marks (no letter or digit
+  before the opening mark or after the closing one), so one stray or missing
+  mark never shifts the quotes after it; a straight quote may hold curly ones
+  and a curly quote straight ones, checked whole. A quote closed with a curly
+  or angle mark may hold an inch mark ('“my 6" phone ...”'); in one closed
+  with a straight mark, an inch mark can be read as the close. In the text
+  between its quotes, each paragraph's marks are paired in order, a mark
+  opening only where it reads as an opening one (low-9 marks, „...“,
+  included), a pair around fewer than ten characters being a word, not a
+  quote, and an unpaired mark opening a quote to the end of its line. A
+  double quote mark none of this places flags the answer, and strip mode
+  removes its line; strip also removes the words between two removed quotes
+  on one line, and runs again until nothing changes. A single-quoted passage
+  counts from six words, or from three after a quoting word or a colon or
+  before a citation. A quote is compared without the punctuation at its
+  ends. A date without its year is skipped by the figure check only when a
+  tool's date field has that month and day, no decimal, thousands group or
+  "%" follows it and, after a month, it reads as a date: after "on", "as
+  of", "the" or "runs to", or before punctuation, a line end or a word such
+  as "for"; elsewhere ("In September 25 customers complained") it is a
+  figure to check. Around them: the checks read the model's own text before
+  the bare markers it wrote ("[2]") are dropped, and a dropped marker's
+  figures are still checked; a marker inside a quote is shown only if the
+  quoted sentence has it; history rebuilt for the API drops markers and
+  sources; only real topic names count as tool wording; and a trend sentence
+  whose printed scores point the other way says it's too close to call. The
+  findings, their tests, the known limits and a re-run over every recorded
+  answer (`scripts/replay_checks.py --against <commit>`) are in
+  `docs/evidence/chatbot-answers-2026-10-04.md`. Whether the Grounded
   chatbot claim keeps "never" is a decision on the team to-do.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or

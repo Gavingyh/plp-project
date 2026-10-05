@@ -1,9 +1,12 @@
 """Tests for scripts/replay_checks.py: the grounding checks re-run over recorded answers,
-on a made-up results folder (no model, no data/eval/)."""
+on a made-up results folder and, for --against, a made-up git repository (no model, no
+data/eval/)."""
 
 import importlib.util
 import json
 import os
+
+import pytest
 
 _spec = importlib.util.spec_from_file_location(
     "replay_checks", os.path.join(os.path.dirname(__file__), "..", "scripts", "replay_checks.py"))
@@ -52,6 +55,17 @@ def test_a_snapshot_holds_every_answer_and_no_text(tmp_path, capsys):
     assert "Every recorded answer: 3" in capsys.readouterr().out
 
 
+def test_the_answers_holding_a_mark_the_checks_cannot_place_are_counted(tmp_path, capsys):
+    folder = _folder(tmp_path)
+    _write(tmp_path / "chatbot_eval_results_odd_v2.jsonl", [
+        {"id": "q-3", "question": "DBS app?", "model_answer": 'One user said the bank cheats everyone" here.',
+         "tool_calls": [SEARCH], "unverified_numbers": [], "citation_fabricated": True}])
+    assert replay_checks.loose_marks(folder) == ["odd_v2/q-3"]
+    replay_checks.main(["--eval-dir", folder])
+    out = capsys.readouterr().out
+    assert "holding a quote mark the checks can't place: 1\n    odd_v2/q-3" in out
+
+
 def test_compare_names_the_answers_whose_checks_changed(tmp_path, capsys):
     folder = _folder(tmp_path)
     snap = tmp_path / "before.json"
@@ -65,3 +79,81 @@ def test_compare_names_the_answers_whose_checks_changed(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "differing from" in out and ": 2" in out
     assert "demo_v2/q-1: figures [] -> ['46']" in out and "demo/mt-1/2: strip" in out
+
+
+# --against: a commit's checks, from its tracked files, without touching the repository.
+# A made-up repository whose chatbot code flags nothing stands in for an older commit.
+
+_STUB = {
+    "chatbot/__init__.py": "",
+    "chatbot/agent.py": (
+        "import re\n"
+        "EVIDENCE_FOUND_HEADING = '\\n\\nEvidence found by the system'\n"
+        "_BARE_MARK = re.compile(r'\\[\\d+\\]')\n"
+        "_QUOTE_PATTERN = re.compile(r'\"[^\"]+\"')\n"
+        "class _ToolCallTracker:\n"
+        "    dropped_marks = []\n"
+        "    @classmethod\n"
+        "    def from_calls(cls, calls, earlier=None):\n"
+        "        return cls()\n"
+        "    def answer_has_unverified_citation(self, answer):\n"
+        "        return False\n"
+        "def enforce_evidence(answer, tracker, question, mode):\n"
+        "    return answer, False\n"),
+    "chatbot/guards.py": "def unverified_numbers(answer, tool_results, question=''):\n    return []\n",
+    "chatbot/judge.py": (
+        "import json\n"
+        "def load_results(path):\n"
+        "    with open(path) as f:\n"
+        "        return [json.loads(line) for line in f if line.strip()]\n"
+        "def model_answer(r):\n"
+        "    return r['model_answer'] if r.get('model_answer') is not None else (r.get('answer') or '')\n"),
+}
+
+
+def _git(repo, *args):
+    import subprocess
+    return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, text=True,
+                          env={**os.environ, "GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.com",
+                               "GIT_COMMITTER_NAME": "test", "GIT_COMMITTER_EMAIL": "test@example.com"}).stdout
+
+
+def _stub_repo(tmp_path):
+    repo = tmp_path / "repo"
+    for path, text in _STUB.items():
+        (repo / path).parent.mkdir(parents=True, exist_ok=True)
+        (repo / path).write_text(text)
+    _git(repo.parent, "init", "-q", str(repo))
+    _git(repo, "add", *_STUB)
+    _git(repo, "commit", "-q", "-m", "stub checks")
+    return repo, _git(repo, "rev-parse", "HEAD").strip()
+
+
+def test_against_compares_with_a_commits_checks_and_leaves_no_trace(tmp_path, capsys, monkeypatch):
+    import tempfile
+    folder = _folder(tmp_path)
+    repo, commit = _stub_repo(tmp_path)
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(scratch))      # where the commit's files are extracted
+    state = [_git(repo, "status", "--porcelain"), _git(repo, "worktree", "list"), _git(repo, "branch", "-a"),
+             _git(repo, "rev-parse", "HEAD")]
+    replay_checks.main(["--against", commit, "--eval-dir", folder, "--repo", str(repo)])
+    out = capsys.readouterr().out
+    # The stub flags no figure; today's code flags the 46 no tool returned.
+    assert f"differing from the checks of {commit}: 1" in out
+    assert "demo_v2/q-1: figures [] -> ['46']; strip_figures [] -> ['46']" in out
+    assert list(scratch.iterdir()) == []                         # the extracted files are gone
+    assert state == [_git(repo, "status", "--porcelain"), _git(repo, "worktree", "list"),
+                     _git(repo, "branch", "-a"), _git(repo, "rev-parse", "HEAD")]
+
+
+def test_against_a_commit_that_is_not_there_stops_and_leaves_no_trace(tmp_path, monkeypatch):
+    import tempfile
+    repo, _ = _stub_repo(tmp_path)
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(scratch))
+    with pytest.raises(SystemExit, match="could not extract"):
+        replay_checks.snapshot_at("0" * 40, _folder(tmp_path), str(repo))
+    assert list(scratch.iterdir()) == []

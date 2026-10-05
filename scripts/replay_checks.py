@@ -12,17 +12,31 @@ It prints two things:
      figure or citation flags now differ from those recorded when the run was
      made. Only runs that recorded the model's own text (model_answer) can be
      compared.
-  2. Over every recorded answer (gold-set and multi-turn runs): with --save, a
+  2. Over every recorded answer (gold-set and multi-turn runs): how many hold
+     a double quote mark the checks can't place (which flags an answer, and
+     takes its line in strip mode), and which; with --save, a
      snapshot of each answer's citation flag, figure flags, the quotes found in
      it, its strip result and the flags left after strip; with --compare, the
-     answers whose entry differs from a snapshot saved before a change. A
-     snapshot holds flags, figures and digests but no answer text, so it can
-     be committed although some runs quote CNA text.
+     answers whose entry differs from a snapshot saved before a change; with
+     --against, the answers whose entry differs from the snapshot a commit's
+     chatbot code makes of the same recorded answers. A snapshot holds flags,
+     figures and digests but no answer text, so it can be committed although
+     some runs quote CNA text.
+
+--against makes a comparison anyone can re-run from the repository
+(validation, 5 Oct 2026: one on the evidence page rested on a snapshot kept
+only in a session's scratch folder). It extracts the commit's tracked files
+into a temporary directory with `git archive <commit> | tar -x`, which changes
+no branch, worktree or index of the repository, runs this script there in a
+subprocess (PYTHONPATH set to that directory, so it imports that commit's
+chatbot code) over the current data/eval/, compares that snapshot with the
+current code's, and removes the directory.
 
 Runs that quote CNA text are kept out of git (the Caveats on the evidence
 page): one missing on this machine is reported as missing.
 
 USAGE (from the repository root):
+  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --against 7446c89       # a commit's checks
   HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --save before.json     # before the change
   HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --compare before.json  # after it
 """
@@ -33,7 +47,10 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -109,6 +126,12 @@ def _answers(eval_dir: str):
             searches.setdefault(r.get("scenario"), []).extend(c for c in calls if c.get("name") == "search_evidence")
 
 
+def loose_marks(eval_dir: str = EVAL_DIR) -> list[str]:
+    """The recorded answers holding a double quote mark the checks can't place
+    (chatbot.agent._QuoteSpans.loose)."""
+    return [key for key, _, answer, _, _ in _answers(eval_dir) if _QUOTE_PATTERN.loose(answer)]
+
+
 def snapshot(eval_dir: str = EVAL_DIR) -> dict:
     """Each recorded answer's checks, as the live path runs them in strip mode."""
     out = {}
@@ -128,6 +151,31 @@ def snapshot(eval_dir: str = EVAL_DIR) -> dict:
             "strip_figures": unverified_numbers(checked, results, question),
         }
     return out
+
+
+def snapshot_at(commit: str, eval_dir: str = EVAL_DIR, repo: str = ROOT) -> dict:
+    """The snapshot of the answers in eval_dir as the chatbot code of `commit`
+    makes it: the commit's tracked files go into a temporary directory (git
+    archive, which changes no branch, worktree or index), this script runs
+    there in a subprocess, importing that code, and the directory is removed."""
+    tmp = tempfile.mkdtemp(prefix="replay_checks_")
+    try:
+        archive = subprocess.Popen(["git", "-C", repo, "archive", commit], stdout=subprocess.PIPE)
+        untar = subprocess.run(["tar", "-x", "-C", tmp], stdin=archive.stdout)
+        archive.stdout.close()
+        if archive.wait() or untar.returncode:
+            raise SystemExit(f"could not extract {commit} from {repo}")
+        script = os.path.join(tmp, "scripts", "replay_checks.py")
+        os.makedirs(os.path.dirname(script), exist_ok=True)
+        shutil.copyfile(os.path.abspath(__file__), script)     # this script, that commit's checks
+        saved = os.path.join(tmp, "snapshot.json")
+        subprocess.run([sys.executable, script, "--save", saved, "--snapshot-only",
+                        "--eval-dir", os.path.abspath(eval_dir)],
+                       env={**os.environ, "PYTHONPATH": tmp}, cwd=tmp, check=True, stdout=subprocess.DEVNULL)
+        with open(saved) as f:
+            return json.load(f)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def compare(before: dict, now: dict) -> list[str]:
@@ -151,13 +199,23 @@ def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--save", help="write a snapshot of every recorded answer's checks to this file")
     p.add_argument("--compare", help="a snapshot saved before a change: print the answers that differ from it")
+    p.add_argument("--against", metavar="COMMIT",
+                   help="a commit: print the answers whose checks differ from those of that commit's code")
     p.add_argument("--eval-dir", default=EVAL_DIR, help=argparse.SUPPRESS)
+    p.add_argument("--repo", default=ROOT, help=argparse.SUPPRESS)                     # the repository --against reads
+    p.add_argument("--snapshot-only", action="store_true", help=argparse.SUPPRESS)    # as --against runs it
     args = p.parse_args(argv)
-    print("Gold-set runs, flags now against those recorded when the run was made:")
-    for line in recorded_flags(args.eval_dir):
-        print("  " + line)
+    if not args.snapshot_only:
+        print("Gold-set runs, flags now against those recorded when the run was made:")
+        for line in recorded_flags(args.eval_dir):
+            print("  " + line)
     now = snapshot(args.eval_dir)
     print(f"Every recorded answer: {len(now)}")
+    if not args.snapshot_only:          # an older commit's code may have no such check
+        loose = loose_marks(args.eval_dir)
+        print(f"  holding a quote mark the checks can't place: {len(loose)}")
+        for key in loose:
+            print("    " + key)
     if args.save:
         with open(args.save, "w") as f:      # one answer a line, so two snapshots diff line by line
             f.write("{\n" + ",\n".join(f"{json.dumps(k)}: {json.dumps(v, sort_keys=True)}"
@@ -167,6 +225,11 @@ def main(argv: list[str] | None = None) -> None:
         with open(args.compare) as f:
             differ = compare(json.load(f), now)
         print(f"  differing from {args.compare}: {len(differ)}")
+        for line in differ:
+            print("    " + line)
+    if args.against:
+        differ = compare(snapshot_at(args.against, args.eval_dir, args.repo), now)
+        print(f"  differing from the checks of {args.against}: {len(differ)}")
         for line in differ:
             print("    " + line)
 

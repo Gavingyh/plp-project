@@ -304,11 +304,14 @@ def test_a_range_running_past_the_returned_days_is_checked():
 
 
 # Validation, 5 Oct 2026: a returned day with a word after it was flagged ("Data runs to
-# September 25 for DBS"); now it is a date unless a count or a share follows it.
+# September 25 for DBS"). After the seventh validation (5 Oct 2026) a returned day after a
+# month is a date only where it clearly reads as one: after "on", "as of", "the", "runs to"
+# (a range also after "from"), or before punctuation, a line end or a word such as "for".
 @pytest.mark.parametrize("answer", [
     "Data runs to September 25 for DBS.", "On September 25 DBS scored 0.31.", "As of September 25 the score was 0.31.",
-    "The September 25 data show 0.31.", "Data runs to September 25 with 45 sentences.", "Sept 25 & 45 sentences",
+    "The September 25 data show 0.31.", "Data runs to September 25 with 45 sentences.",
     "Data runs to Sep 25 in all three banks.", "Data covers Sept 25-26 for DBS.",
+    "From Sept 25 to 26 posts were negative.",     # a range after "from": a date range (until 5 Oct, ["26"])
 ])
 def test_a_returned_day_before_another_word_is_a_date(answer):
     assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == []
@@ -322,9 +325,37 @@ def test_a_returned_day_before_another_word_is_a_date(answer):
     ("In September 25 per cent were negative.", ["25"]),
     ("In September 25 to 30% of posts were negative.", ["25", "30%"]),
     ("In September 25 to 30 per cent were negative.", ["25", "30"]),
-    ("From Sept 25 to 26 posts were negative.", ["26"]),     # a range of returned days, then a count: as before
+    ("Sept 25 & 45 sentences", ["25"]),      # "&" before a number: no date (until 5 Oct, read as one)
 ])
 def test_a_returned_day_before_a_count_or_a_share_is_checked(answer, figures):
+    assert unverified_numbers(answer, DAYS_RETURNED) == figures
+
+
+# The rule after the seventh validation (5 Oct 2026), each way a returned day reads as a date,
+# and the false alarms it accepts (docs/evidence/chatbot-answers-2026-10-04.md, Known limits).
+@pytest.mark.parametrize("answer", [
+    "As at September 25 the score was 0.31.", "Figures dated September 25 show 0.31.",
+    "The data ran to September 25, with 45 sentences.", "Data runs to **September 25**.",
+    "Data to Sept 25 and DBS scored 0.31.", "Data to September 25 when DBS scored 0.31.",
+    "Data to September 25th - DBS scored 0.31.", "Between Sept 25 and 26 DBS scored 0.31.",
+    "Data to September 25 — the latest.",
+])
+def test_a_returned_day_that_reads_as_a_date_is_not_a_figure(answer):
+    assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == []
+
+
+@pytest.mark.parametrize("answer, figures", [
+    ("September 25th sentences were negative.", ["25"]),           # an ordinal day is no longer always a date
+    ("In September 25th negative posts appeared.", ["25"]),
+    ("In September 25 to 26 posts were negative.", ["25", "26"]),  # a range not read as a date: both ends
+    ("Sept 25 and 26 posts were negative.", ["25", "26"]),
+    ("September 25 — 30 posts were negative.", ["25", "30"]),   # a dash before a number, an em dash too
+    ("September 25—30 posts were negative.", ["25", "30"]),
+    # False alarms the rule accepts: a returned date before a word it doesn't list.
+    ("Data covers September 25 in all three banks.", ["25"]),
+    ("Data to Sept 25/26.", ["25", "26"]),
+])
+def test_a_returned_day_that_does_not_read_as_a_date_is_checked(answer, figures):
     assert unverified_numbers(answer, DAYS_RETURNED) == figures
 
 

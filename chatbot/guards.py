@@ -56,23 +56,31 @@ _YEARLESS_DATE = re.compile(
     rf"(?:[ \t]*(?:[-–]|to\b|and\b)[ \t]*(?P<day1b>\d{{1,2}})(?P<ord1b>st|nd|rd|th)?\b)?(?![.,]\d|[ \t]*%)"
     rf"|(?<![\w.])(?P<day2>\d{{1,2}})(?:st|nd|rd|th)?[ \t]+(?:of[ \t]+)?(?P<month2>{_MONTH})",
     re.IGNORECASE)
-# After a month, a returned day is a date unless a count or a share follows it:
-# a word that counts things, after up to two that describe them ("In September
-# 25 sentences were negative", "25 more negative posts"), a sentiment ("25
-# negative and 20 positive"), "of" or "were" ("25 of them"), or a share ("25 to
-# 30% of posts", "25 per cent"). With data to 25 September, a validation on 4
-# Oct 2026 found the first hidden; the rule that fixed it, a date only where the
-# date ends, flagged "Data runs to September 25 for DBS" (validation, 5 Oct
-# 2026). A count word on the next line is not read: a line end ends a date.
-_COUNT_WORD = (r"(?:sentences|posts|mentions|comments|articles|tweets|threads|replies|reviews|people|users"
-               r"|analysts|items|results|reports|headlines|stories|times|points)\b")
+# After a month, a returned day, ordinal or not, is a date only where it
+# clearly reads as one; anywhere else it is a figure to check (validation, 5 Oct
+# 2026: with data to 25 September, "In September 25 customers complained" hid
+# the 25, under a rule that took the day for a date unless a count word from a
+# fixed list followed it). It reads as a date after "on", "as of", "as at",
+# "the", "dated" or "runs to" (or "ran", "run", "running" to): "On September 25
+# DBS scored 0.31", "the September 25 data"; a range also after "from" or
+# "between". Or before a line end, punctuation other than "%" (a dash, an em
+# dash too, only when no digit follows it), "and", "&", "to" or "/" not before
+# a number, an article or determiner, or a word such as "for", "until" or
+# "when" (_READS_AS_DATE_AFTER). Before any other word, listed or not, or a
+# number, it is checked ("In September 25 or so posts", "September 25th
+# sentences"), and so are both ends of such a range. A share after the day or
+# the range ("25 per cent", "25 to 30% of posts") means both numbers are checked.
 _SHARE = r"(?:%|[ \t]+(?:per[ \t]?cent|percent|pct)\b)"
-_SHARE_FOLLOWS = re.compile(_SHARE, re.IGNORECASE)
-_COUNT_FOLLOWS = re.compile(
-    rf"[ \t]+(?:(?:negative|positive|neutral|new|more|other|reddit|news|cna)[ \t]+){{0,2}}{_COUNT_WORD}"
-    rf"|[ \t]+(?:of|out[ \t]+of|were|negative|positive|neutral)\b"
-    rf"|{_SHARE}"
-    rf"|[ \t]*(?:to\b|[-–])[ \t]*\d+(?:\.\d+)?[ \t]*{_SHARE}",
+_SHARE_AFTER = re.compile(rf"{_SHARE}|[ \t]*(?:to\b|[-–])[ \t]*\d+(?:\.\d+)?[ \t]*{_SHARE}", re.IGNORECASE)
+_READS_AS_DATE_BEFORE = re.compile(
+    r"(?:\b(?:on|the|dated)|\bas[ \t]+(?:of|at)|\b(?:runs|ran|run|running)[ \t]+to)[ \t]+\Z", re.IGNORECASE)
+_RANGE_READS_AS_DATE_BEFORE = re.compile(r"\b(?:from|between)[ \t]+\Z", re.IGNORECASE)
+_READS_AS_DATE_AFTER = re.compile(
+    r"[ \t]*(?:\n|\Z)"                                             # a line end or the end of the text
+    r"|[ \t]*(?:[.,;:!?()\[\]\"'’”*_]|[-–—](?![ \t]*\d))"          # punctuation but "%", a dash not before a digit
+    r"|[ \t]*(?:and\b|&|to\b|/)(?![ \t]*\d)"                       # "and", "&", "to" or "/" not before a number
+    r"|[ \t]+(?:the|a|an|this|that|its|their"                      # an article or determiner
+    r"|for|until|till|through|when|while|after|before|since|during|as)\b",
     re.IGNORECASE)
 _ISO_DAY = re.compile(r"\b\d{4}-(\d{2})-(\d{2})")
 # Where tools write dates. Only these count: a date in the model's own search
@@ -106,15 +114,17 @@ def _without_tool_dates(text: str, tool_results) -> str:
             return " " if (month, int(m.group("day2"))) in days else m.group(0)
         if (month, int(m.group("day1"))) not in days:
             return m.group(0)
-        counted = _COUNT_FOLLOWS.match(m.string, m.end())
-        if m.group("day1b"):
-            if _SHARE_FOLLOWS.match(m.string, m.end()):   # "25 to 30 per cent": a share, both checked
-                return m.group(0)
-            if (month, int(m.group("day1b"))) in days and (m.group("ord1b") or not counted):
-                return " "                       # "Sept 25-26": both days returned, no count after them
-            first_end = m.end("ord1") if m.group("ord1") else m.end("day1")
-            return " " + m.string[first_end:m.end()]     # the first day alone; what follows it is checked
-        return " " if m.group("ord1") or not counted else m.group(0)
+        if _SHARE_AFTER.match(m.string, m.end()):        # "25 per cent", "25 to 30% of posts": both checked
+            return m.group(0)
+        ranged = m.group("day1b") is not None
+        before = m.string[:m.start()]
+        if not (_READS_AS_DATE_BEFORE.search(before) or (ranged and _RANGE_READS_AS_DATE_BEFORE.search(before))
+                or _READS_AS_DATE_AFTER.match(m.string, m.end())):
+            return m.group(0)                    # "In September 25 customers": the day, and a range's both ends, checked
+        if not ranged or (month, int(m.group("day1b"))) in days:
+            return " "                           # "Data runs to September 25", "Sept 25-26."
+        first_end = m.end("ord1") if m.group("ord1") else m.end("day1")
+        return " " + m.string[first_end:m.end()]     # "Sept 25-27.": the first day alone; the second is checked
 
     return _YEARLESS_DATE.sub(blank, text) if days else text
 

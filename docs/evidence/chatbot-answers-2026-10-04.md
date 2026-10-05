@@ -191,32 +191,62 @@ before the next.
 
 ## After validation
 
-Six validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
-and `docs/validation/2026-10-05-chatbot-answers-sixth-check.md`) each found
-gaps the change had opened in the checks, or old ones it had not closed. The
-checks as they stand after the sixth:
+Seven validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
+and `docs/validation/2026-10-05-chatbot-answers-*-check.md`) each found gaps
+the change had opened in the checks, or old ones it had not closed. The
+checks as they stand after the seventh:
 
 - **Quotes** are found by two detectors together, as each catches shapes the
   other misses. A pattern first finds a quote in curly or angle marks by its
   own marks. A straight mark, or a closing mark used to open a quote (»...«,
   ”...”), can also stand elsewhere, so for those the pattern looks at what
   stands next to the marks: such a quote opens only where no letter or digit
-  stands before its mark, and closes only where none follows. So an inch mark
-  ('a 6" phone') opens nothing and a stray or missing mark never moves the
-  quotes after it, while a bracket, a table bar or other punctuation beside
-  the marks ('"..."(Reddit)', '|”...”|') hides nothing. A quote holds no
-  other double quote mark but an inch mark, except that a straight quote may
-  hold whole curly quotes and a curly quote whole straight ones; such a quote
-  ('“I asked them "..." and they said ...”') is checked whole. Then, in the
-  text between the pattern's quotes, each paragraph's marks are paired in
-  order, as a reader pairs them, whatever stands around them: a space inside
-  the marks, a letter against one. A pair around fewer than ten characters
-  ('"buy"') is a word in quote marks, not a quote. A mark left without a
-  partner opens a quote that runs to the end of its line, or to the next
-  quote, stopping before a citation. Last, a passage in single quotes counts
-  from six words, as shorter ones are terms or scare quotes ('customer first
-  digital approach'); an apostrophe inside a word ("OCBC's") neither opens
-  nor closes one.
+  stands before its mark, and closes only where none follows. So an inch
+  mark ('a 6" phone') opens nothing and a stray or missing mark never moves
+  the quotes after it, while a bracket, a table bar or other punctuation
+  beside the marks ('"..."(Reddit)', '|”...”|') hides nothing. A quote holds
+  no other double quote mark, except that a straight quote may hold whole
+  curly quotes and a curly quote whole straight ones; such a quote ('“I
+  asked them "..." and they said ...”') is checked whole. A quote closed
+  with a curly or angle mark may hold an inch mark ('“my 6" phone ...”'); in
+  one closed with a straight mark, an inch mark after its first ten
+  characters reads as the close. Then, in the text between the pattern's
+  quotes, each paragraph's marks are paired in order, as a reader pairs
+  them, whatever stands around them: a space inside the marks, a letter
+  against one. A mark opens a quote only where it reads as an opening one: a
+  low-9 mark („...“) like “, a closing mark (” or ») only before a letter or
+  digit ('»...»'), and an opening mark typed to close ('...for sure“ ok')
+  not at all. A pair around fewer than ten characters with no space just
+  inside either mark ('"buy"', '"Tier 1"') is a word in quote marks, not a
+  quote. A mark left without a partner opens a quote that runs to the end of
+  its line, or to the next quote, stopping before a citation. The words
+  right after a quote's closing mark that has a letter from A to Z or a
+  digit right after it ('... Another wrote ”OCBC will ...') are checked as a
+  quote too, as that mark may be the next quote's opening one. Last, a
+  passage in single marks (' ‘ ’) counts from six words, or from three after
+  a quoting word in any of its forms ("said", "say", "wrote", "posted",
+  "complained", "called" and others) or a colon among the three words before
+  it, or before a citation or a source tag ("(Reddit)"); other short ones
+  are terms or scare quotes ('customer first digital approach'). An
+  apostrophe inside a word ("OCBC's") neither opens nor closes one, and a
+  passage in single marks holding a quote in double marks is checked whole.
+- **A quote mark the checks can't place**, a double mark that is not a mark
+  of a quote found, not inside one, not around a word in quote marks, not an
+  inch mark and not a stray straight mark after a space before a few words at
+  the end of a paragraph, may belong to a quote the detectors missed. It
+  flags the answer in every mode, and strip mode removes its line, with the
+  line's citation.
+- **Strip mode** after a search removes each line holding such a mark, read
+  before anything else is removed, then each quote, link and sentence id no
+  search returned, and the words between two removed quotes on one line when
+  no kept quote stands between them. It runs again on its result until
+  nothing changes, at most ten times, and whatever is left is flagged.
+  Without a search, a line holding such a mark goes like a line holding a
+  quote, in the first paragraph too.
+- **A quote is compared** with what the searches returned piece by piece, cut
+  at an ellipsis, each piece of three or more words without the punctuation
+  and spaces at its ends, so a sentence quoted with a comma inside the
+  closing mark ('"...night,"') is the sentence returned.
 - **Numbered markers** the model writes ("[2]", "[2, 3]", "[12-45]") are
   dropped only after the checks have read the model's own text and removed
   any unretrieved quote or link; a drop that leaves a new marker ("[1[2]]"
@@ -227,16 +257,20 @@ checks as they stand after the sixth:
   of sources the reader saw.
 - **A date without its year** is skipped by the figure check only when a
   tool's date field (`data_runs_to`, an evidence item's date) has that month
-  and day. After a month, such a day is a date unless a count or a share
-  follows it: a word that counts things ("sentences", "posts" and the like,
-  after up to two words such as "negative" or "Reddit"), "of", "were", a
-  sentiment ("25 negative and 20 positive") or a share ("25 per cent", "25 to
-  30% of posts"). With data to 25 September, "In September 25 sentences were
-  negative" is a count to check and "Data runs to September 25 for DBS" a
-  date. A day followed by a decimal, a thousands group or "%" is never a
-  date; a range of returned days ("Sept 25-26") is. A date in the model's own
-  search query, a link or a quoted sentence vouches for nothing, and "may" in
-  lower case is the verb.
+  and day. After a month, such a day, ordinal or not, is a date only where it
+  clearly reads as one: after "on", "as of", "as at", "the", "dated" or "runs
+  to" (a range also after "from" or "between"), or before a line end,
+  punctuation other than "%" (a dash only when no digit follows it), "and",
+  "&", "to" or "/" not followed by a number, an article or determiner, or one
+  of "for", "until", "till", "through", "when", "while", "after", "before",
+  "since", "during" and "as". Anywhere else it is a figure to check: with
+  data to 25 September, "In September 25 customers complained" and
+  "September 25th sentences" are counts to check, and "Data runs to
+  September 25 for DBS" a date. A share after the day ("25 per cent", "25 to
+  30% of posts") means both numbers are checked, and so are both ends of a
+  range not read as a date. A day followed by a decimal, a thousands group
+  or "%" is never a date. A date in the model's own search query, a link or
+  a quoted sentence vouches for nothing, and "may" in lower case is the verb.
 - **Tool wording**: a reading or a real topic name in quote marks is not a
   quote; a topic name the model set by passing its own text as the aspect is
   not exempt.
@@ -280,26 +314,55 @@ What each validation found, in short:
    closing mark beside a table bar or bracket ('|”...”|') went unchecked; and
    with data to 25 September, "September 25 to 30% of posts" hid the 25 while
    "Data runs to September 25 for DBS" was flagged. It also found figures on
-   this page from comparisons nobody had saved; they are gone. The pattern's
-   straight quotes and those opened with a closing mark now open and close
-   beside any punctuation, straight and curly quotes may hold each other,
-   single quotes count from six words, and a returned day is a date unless a
-   count or a share follows it. Checking these changes showed one more gap
-   from the fifth's: a curly quote holding an inch mark ('“my 6" phone ...”')
-   went unchecked, where `main` flagged it. Any quote but one left open may
-   now hold an inch mark.
+   this page from comparisons nobody had saved; they are gone. The fix
+   (7446c89) let the pattern's straight quotes and those opened with a
+   closing mark open and close beside any punctuation and straight and curly
+   quotes hold each other, counted single quotes from six words, and took a
+   returned day for a date unless a count or a share followed it. Checking
+   it showed one more gap from the fifth's: a curly quote holding an inch
+   mark ('“my 6" phone ...”') went unchecked, where `main` flagged it, so
+   quotes were let hold an inch mark.
+7. The seventh (5 Oct): 7446c89's date rule hid a count before any word not
+   on its list ("In September 25 customers complained", "25 or so posts"),
+   and an ordinal day was always a date ("September 25th sentences"); a
+   curly or angle quote holding an inch mark ran on to the next quote's
+   opening mark, so an invented quote after it ('“my rate went up to 5" in
+   one post. Another wrote ”...”') stayed, unflagged, after strip; a
+   single-quoted invented quote of five words went unchecked after "wrote";
+   „...“ marks were not read, and a real quote with a comma inside its
+   closing mark was removed as invented (both also on `main`); a quote
+   holding two quotes of the other style was removed whole, a real one
+   inside it too; and the replay comparison on this page rested on a
+   snapshot kept only in a session's scratch folder. The changes are the
+   rules above: a mark the checks can't place takes its line, the words
+   between two removed quotes go with them, strip runs until nothing
+   changes, low-9 marks are read, single quotes count from three words with
+   a cue, a quote is compared without its end punctuation, a returned day is
+   a date only where it reads as one, and `scripts/replay_checks.py
+   --against <commit>` compares with any commit's checks. Checking these
+   changes on made-up answers with several odd shapes at once found more
+   ways for one quote to take another's mark: a quote's closing mark read as
+   a pair with an inch mark after it, an opening mark typed to close, the
+   next quote's opening mark taken as a quote's close, and a quote holding a
+   real one whose closing mark, after punctuation, was read as a stray mark.
+   Each is now caught; and so that real quotes in mixed marks ('»...»',
+   '"...“') don't lose their line, those are read as pairs.
 
 Each finding has a test, in `tests/test_validate_chatbot_*.py` or, for two of
 the fifth's ("Sept 25-26" read as a date, and the neutral share), in
-`tests/test_chatbot_reader.py`; none is now marked as expected to fail. The
-inch mark found while checking this round's changes is tested in
+`tests/test_chatbot_reader.py`. One, the seventh's merged nested quotes, stays
+marked as expected to fail, as a recorded limit (below). The gaps found while
+checking the sixth's and the seventh's changes are tested in
 `tests/test_chatbot_harness.py`.
 
 `scripts/replay_checks.py` re-runs the citation check, the figure check and
-strip mode over every answer recorded under `data/eval/`, and compares each
-gold-set run's flags with those recorded when it was made. On 5 Oct it was run
-with `--save before.json` on the checks of commit 7475804, then with
-`--compare before.json` on this round's; the second run printed:
+strip mode over every answer recorded under `data/eval/`, compares each
+gold-set run's flags with those recorded when it was made, and counts the
+answers holding a quote mark the checks can't place. With `--against
+<commit>` it also compares every answer's checks with that commit's: it
+extracts the commit's files into a temporary folder and runs its code there,
+changing nothing in the repository. On 5 Oct, `HF_HUB_OFFLINE=1
+.venv-plp/bin/python3 scripts/replay_checks.py --against 7446c89` printed:
 
 ```
 Gold-set runs, flags now against those recorded when the run was made:
@@ -320,19 +383,36 @@ Gold-set runs, flags now against those recorded when the run was made:
   llama8b_v2_strip: not compared (recorded before the model's own text was kept)
   qwen3_4b_nothink_v2: not compared (recorded before the model's own text was kept)
 Every recorded answer: 670
-  differing from before.json: 1
+  holding a quote mark the checks can't place: 0
+  differing from the checks of 7446c89: 5
+    llama3.1_8b/evidence-1: strip
     llama3.2_3b_harness_t0.2/lookup-3: quotes
+    llama3b_v2/evidence-2: strip
+    llama8b_v2/lookup-8: strip_cited True -> False; strip
+    llama8b_v2_aspectquery/lookup-8: strip_cited True -> False; strip
 ```
 
 So the seven runs flag what they flagged when they were made, except round
 1's false alarm on "September 25th" (`thin-2`), cleared because a tool had
 returned that date: the tables above stand. Two runs outside the tables no
 longer flag one answer's analyst shares (`consensus-1`): since 4 Oct the
-figure check works them out from the counts per rating. Over all 670 recorded
-answers, this round's change alters one answer's quotes and no flag or strip
-result: two source names of three words in single quotes ('DBS analyst
-report') are no longer read as quotes; that answer, written without a search,
-is flagged as before for its quotes and links.
+figure check works them out from the counts per rating. None of the 670
+recorded answers holds a quote mark the checks can't place. Against
+7446c89's checks, five answers change; no flag on the model's own text
+changes, and two answers are no longer flagged after strip:
+
+- `llama3.1_8b/evidence-1` and `llama3b_v2/evidence-2`: two quotes no search
+  returned stand on one line, and the words between them now go with them
+  (in the second, a line of JSON the model wrote).
+- `llama8b_v2/lookup-8` and `llama8b_v2_aspectquery/lookup-8`: a sentence a
+  search returned, quoted with two links in it that no search returned as
+  links. Strip removed the links, which left a quote no longer matching the
+  sentence; until now the answer was left so, flagged, and now strip runs
+  again and removes that quote too.
+- `llama3.2_3b_harness_t0.2/lookup-3`: two source names of three words in
+  single quotes after "cite_as:" ('DBS analyst report') count as quotes
+  again, as a colon before them now cues one; that answer, written without a
+  search, is flagged and stripped as before.
 
 **Known limits.** No check that reads quote marks can promise to find every
 quote. What is left:
@@ -340,30 +420,48 @@ quote. What is left:
 - A quote is checked through its pieces of three or more words, so after a
   search a quote of two words passes unchecked; without a search it counts
   as invented.
-- A single quote mark is also an apostrophe: a single-quoted passage of fewer
-  than six words is not checked, nor one that opens on a digit or holds a
-  plural possessive ("the banks' fees").
-- Only a straight quote holding curly ones, or a curly quote holding straight
-  ones, is checked whole. In any other quote that holds a quote of ten or
-  more characters (in the same style, or in mixed, angle or single marks),
-  the words after the inner quote are not checked. A quote checked whole is
-  removed whole, so a real sentence quoted with quote marks its source
-  doesn't have is removed too.
+- A single quote mark is also an apostrophe. A passage in single marks of
+  three to five words is checked only after a quoting word or a colon among
+  the three words before it, or before a citation or a source tag; with none
+  of these it is not checked, nor is one of one or two words, one that opens
+  on a digit or one that holds a plural possessive ("the banks' fees"). A
+  single-quoted quote holding another in single marks hides the words after
+  the inner one, and single marks never count as marks the checks can't
+  place.
+- A quote holding another of ten or more characters is checked whole when
+  one is straight and the other curly, or one in single marks and the other
+  in double. With other marks the words after the inner quote are not read
+  as part of the quote: in double marks the outer quote's closing mark is
+  then left over, which flags the answer and takes the line in strip mode,
+  even for a real sentence quoted whole ('"What do you think of "DBS Robot
+  app" with the fees?"'). A quote checked whole is removed whole, so a real
+  quote inside it goes with it (the seventh's merged nested quotes), and a
+  real sentence quoted with quote marks its source doesn't have is removed
+  too.
 - In a quote closed by a straight mark, an inch mark after its first ten
   characters ('"the screen is 6" wide ..."') is read as the close, and the
-  words after it are not checked.
-- Two or more odd shapes at once (a quote left open, a stray mark, spaces
-  inside the marks, mixed marks, a letter against a mark) can still hide a
-  quote.
+  words after it are not checked: if the quote's own closing mark follows on
+  the line, it is left over, which flags the answer and takes the line in
+  strip mode, but if the quote was also left open, the words after the inch
+  mark pass. A straight quote left open with an inch mark in its first ten
+  characters ('"my 6" phone is ...', never closed) reads as a word in quote
+  marks, like '"Tier 1"', and the words after it pass.
+- A line holding a quote mark the checks can't place goes whole in strip
+  mode, correct text and real quotes on it included.
 - A quote left open runs to the end of its line, so a real quote that lost
   its closing mark is removed with the words after it on that line.
+- Marks other than " “ ” « » „ ‟ and ' ‘ ’ (for example ‹...›, ‚...‘ or
+  「...」) are not read, and several odd shapes at once can still hide a
+  quote: '"unclosed and ” <invented> " ok', with a quote left open, a closing
+  mark used to open, spaces inside the marks and a few words after, passes.
 - A marker range the model writes ("[12-45]") is dropped from what the
   reader sees; its figures are still checked.
-- After a month, a returned day counts as a figure only before a count word
-  from a fixed list, "of", "were", a sentiment or a share. A count before any
-  other word ("In September 25 very angry posts"), or with its count word on
-  the next line, is hidden when it equals a returned day; a date before a
-  count word ("the September 25 reports") is flagged.
+- After a month, a returned day is checked unless it reads as a date in one
+  of the ways above, so a real date before any other word is flagged ("Data
+  covers September 25 in all three banks", "Sept 25/26"), and a count
+  written where a date reads naturally is taken for the date ("Based on
+  September 25 posts"). A day before its month ("25 September") is always a
+  date when a tool returned it.
 
 Whether the Grounded chatbot claim keeps "never", or names what is checked and
 cites this list, is a team decision on the team to-do

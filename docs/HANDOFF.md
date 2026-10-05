@@ -1077,15 +1077,8 @@ other-bank questions through to the model, which declined them.
   found one missing or stray quote mark shifted the pairing and hid the next
   quote; the earlier pattern and the pairing now run together, single-quoted
   passages of three words or more are checked, and the limits left are
-  listed on the evidence page. A sixth
-  (`docs/validation/2026-10-05-chatbot-answers-sixth-check.md`) found the
-  words after a nested quote unchecked, scare quotes in single marks
-  stripped and "Data runs to September 25 for DBS" flagged, among others;
-  straight and curly quotes may now hold each other, a straight mark or a
-  closing mark used to open now opens and closes beside any punctuation,
-  single quotes count from six words, a returned day is a date unless a
-  count or a share follows it, and `scripts/replay_checks.py` re-runs the
-  checks over every recorded answer.
+  listed on the evidence page. The sixth and seventh validations, of 5 Oct,
+  are under 5 October below.
 - **Found on the way:** the full test suite stops a running API
   (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
   keeps the chatbot code it first loaded, so restart it after changing
@@ -1099,3 +1092,27 @@ other-bank questions through to the model, which declined them.
 `fix/chatbot-answers` (re-run `/validate` on the fixes first); write new test questions
 apart from the prompt, since the gold set was used to tune it; decide
 whether slower, fuller answers are worth it on the demo Mac.
+
+### 5 October
+
+- **Chatbot grounding checks, sixth and seventh validations** (branch
+  `fix/chatbot-answers`, not merged). A sixth
+  (`docs/validation/2026-10-05-chatbot-answers-sixth-check.md`) found the
+  words after a nested quote unchecked, scare quotes in single marks
+  stripped and "Data runs to September 25 for DBS" flagged, among others;
+  7446c89 let straight and curly quotes hold each other, let quotes in
+  straight marks or opened with a closing mark open and close beside any
+  punctuation, counted single quotes from six words, took a returned day for
+  a date unless a count or a share followed it, and added
+  `scripts/replay_checks.py` to re-run the checks over every recorded
+  answer. A seventh
+  (`docs/validation/2026-10-05-chatbot-answers-seventh-check.md`) found that
+  date rule hid a count before any word not on its list ("In September 25
+  customers complained"), and a curly quote holding an inch mark ran on to
+  the next quote's opening mark and hid that quote, among others. Now a
+  double quote mark the checks can't place flags the answer and takes its
+  line in strip mode, „...“ marks are read, single quotes count from three
+  words after a quoting word or before a citation, a returned day is a date
+  only where it reads as one, and `scripts/replay_checks.py --against
+  <commit>` compares with any commit's checks; merged nested quotes stay a
+  recorded limit, with the others on the evidence page.

@@ -432,7 +432,8 @@ Two warnings
 can be appended to an answer, and both mean "don't trust this part":
 
 - `⚠️ VERIFICATION WARNING`: the model cited evidence (a quote, sentence id or
-  URL) it never retrieved.
+  URL) it never retrieved, or wrote a quote mark the checks can't place,
+  which may belong to such a quote.
 - `⚠️ NUMBER CHECK`: a figure in the answer matches nothing the tools returned
   for that question. The check is strict: a figure the model derived
   legitimately in an unusual way can also trip it, so read the flagged one.
@@ -540,13 +541,16 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-1494 tests in `tests/`; `pytest -q` from the repository root runs 1541,
+1649 tests in `tests/`; `pytest -q` from the repository root runs 1696,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.
-None is open on 3 Oct 2026. No network calls — external APIs are
-mocked with captured real payloads, so a provider changing its response shape
-surfaces as a failing test rather than a silent production break.
+On 5 Oct 2026 one is left, kept as a recorded limit with its two cases: a
+quote holding two quotes of the other style is removed whole, a real one
+inside it too (`tests/test_validate_chatbot_round7_review_findings.py`).
+No network calls: external APIs are mocked with captured real payloads, so a
+provider changing its response shape surfaces as a failing test rather than
+a silent production break.
 
 On 2026-10-01, 479 ran in 45 seconds on a quiet MacBook Air, and 539 took
 2.1 minutes that evening alongside other jobs; a fresh clone's

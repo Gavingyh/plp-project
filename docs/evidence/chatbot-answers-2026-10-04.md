@@ -892,6 +892,26 @@ here:
   number right after it and no "in" before the month ("September 25, 31
   posts were negative." checks only the 31). A day before its month ("25
   September") is always a date when a tool returned it.
+- Found by the twelfth validation (6 Oct, after 174c77d), left as recorded
+  limits, each a strict expected failure in
+  `tests/test_validate_chatbot_round12_review_findings.py` or
+  `tests/test_validate_chatbot_round12_probes.py`:
+  - A citation behind a source note in the next sentence ('One user called
+    OCBC "a scam". (Reddit, [DBS, ...])', and 'A Reddit post [DBS, ...].',
+    'Source: a Reddit thread [DBS, ...]') doesn't read the quote in the
+    sentence before it, so a word or two in quote marks that no search
+    returned keeps its marks and the citation, unflagged. 174c77d made this
+    so; f7a90fb cut it.
+  - Words in backticks are not read as quote marks: 'One user wrote `OCBC
+    will cut its dividend next year` [DBS, ...].' keeps its citation in both
+    modes (as at f7a90fb).
+  - The figure rule above also lets a retrieved figure vouch for the same
+    number counting something else when two subject words match ("the DBS
+    app had 30 minutes of downtime" for "The DBS app had 30 negative posts.";
+    "DBS raised fees by 45 dollars" for "45 posts about DBS fees").
+  - A returned blockquote whose citation stands on its own '>' line loses
+    that line's '>' in strip mode, so off mode flags the correct answer (as
+    at f7a90fb).
 
 Whether the Grounded chatbot claim keeps "never", or names what is checked and
 cites this list, is a team decision on the team to-do

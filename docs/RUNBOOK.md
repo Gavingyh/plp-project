@@ -543,7 +543,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2290 tests in `tests/`; `pytest -q` from the repository root runs 2337,
+2368 tests in `tests/`; `pytest -q` from the repository root runs 2415,
 adding the diagram and notebook checks. A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.
@@ -552,7 +552,11 @@ recorded limit (evidence page, Known limits): a quote holding two quotes of
 the other style is removed whole, a real one inside it too, two cases
 (`tests/test_validate_chatbot_round7_review_findings.py`); and three
 ordinary dates the figure check flags, accepted false alarms
-(`tests/test_validate_chatbot_round9_probes.py`).
+(`tests/test_validate_chatbot_round9_probes.py`). The twelfth validation added
+25 more cases, all recorded limits too (a source note after a quote keeps its
+citation, a figure vouched for by subject words, text in backticks, a
+blockquote's citation line; `tests/test_validate_chatbot_round12_*.py`): 30
+expected failures in all.
 No network calls: external APIs are mocked with captured real payloads, so a
 provider changing its response shape surfaces as a failing test rather than
 a silent production break.

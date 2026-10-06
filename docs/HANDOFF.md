@@ -1178,6 +1178,16 @@ whether slower, fuller answers are worth it on the demo Mac.
   alarms (DESIGN decisions 25 and 26). What is left stays under Known limits
   on the evidence page, with no further fix round.
 
-**Needs a human (6 Oct):** re-run `/validate` on `fix/chatbot-answers`
-before merging it, for the record of what the last round left; the Grounded
-chatbot claim's wording is still a team decision on the to-do.
+The twelfth validation (`docs/validation/2026-10-06-chatbot-answers-twelfth-check.md`,
+fix first) found four gaps after 174c77d, recorded as limits with strict
+expected failures in `tests/test_validate_chatbot_round12_*.py`: a source note
+after a quote keeps its citation (a regression from 174c77d), a retrieved
+figure vouches for the same number counting something else, text in backticks
+keeps its citation, and a blockquote's citation line is flagged in off mode.
+API integrity was proven every round. The auditor's run returned no report,
+so this round's docs were not re-audited.
+
+**Needs a human (6 Oct):** the Grounded chatbot claim's wording (the team
+to-do; the evidence page's Known limits list is what a reworded claim would
+cite); whether answers of about a minute are acceptable; merging and pushing
+`fix/chatbot-answers`.

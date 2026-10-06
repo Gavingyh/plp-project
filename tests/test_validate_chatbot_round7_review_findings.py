@@ -9,6 +9,7 @@ import pytest
 
 from chatbot.agent import _ToolCallTracker, enforce_evidence
 from chatbot.guards import unverified_numbers
+from tests.quote_marks import removed_flagged_or_unquoted
 
 SID = "a" * 24
 CITE = f"[DBS, 2026-09-01, sentence_id {SID}]"
@@ -44,13 +45,18 @@ def test_unlisted_count_noun_after_returned_day_is_checked(text):
 
 # Inch-holding quote swallows next opener: an inch mark in one quote makes the
 # detector run on to the next quote's opening mark, leaving the invented quote out.
+# Changed to the contract of DESIGN decision 26 (5 Oct 2026): the invented words now
+# stand outside quote marks, where until then strip mode removed them; the citation
+# after them goes, so nothing vouches for them.
 @pytest.mark.parametrize("answer", [
     f'One user said “my rate went up to 5" in one post {CITE}. Another wrote ”{INV}” {CITE}',
     f'- “the fee rose 5" {CITE}\n- ”{INV}” {CITE}',
     f'«fees rose 5" {CITE} and »{INV}« {CITE}',
 ])
 def test_inch_mark_quote_does_not_hide_next_quote(answer):
-    assert _caught(answer, "invented hidden fees")
+    out, flagged = enforce_evidence(answer, _tracker(), "q", "strip")
+    assert removed_flagged_or_unquoted(out, flagged, "invented hidden fees")
+    assert "sentence_id" not in out.split("invented hidden fees")[-1]
 
 
 # Short single-quoted inventions pass: a single-quoted passage under six words

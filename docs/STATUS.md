@@ -25,7 +25,7 @@ carry a dated note saying so.
 | "DBS/OCBC show more positive sentiment than UOB" | No longer an artifact of missing UOB data — all three banks now have earnings coverage (DBS 9,093 sentences, UOB 1,600, OCBC 1,561). DBS still carries ~6x the earnings volume of the other two, so check the per-source breakdown before making a blended claim. |
 | "Fine-tuning improved sentiment classification" | On macro-F1, modestly, and only since 2026-10-01: with the aspect's readable label as input, test macro-F1 0.604 ± 0.035 over three seeds, 0.615 for the three averaged, against base FinBERT zero-shot's 0.571 on the 299-row test split; the gap is about one seed standard deviation ([evidence](evidence/finetune-fixes-2026-10-01.md)). Don't credit the readable label for it: on two more seeds' cross-validation it is no better than the aspect key (+0.005 over 15 paired folds; [evidence](evidence/noise-floor-cv-2026-10-02.md)). Base FinBERT still has the higher accuracy (0.70 against 0.66): the fine-tuned model calls neutral sentences positive or negative more often. The test labels weren't independent of the LLM's suggestions, and all stored scores are still base FinBERT. Retrained on 2026-10-04 after a training bug (the pretrained head's outputs were renamed): every seed beats base (0.621 ± 0.027; 0.634 for the three averaged, accuracy 0.702), but these models are not adopted, a team decision ([evidence](evidence/retrain-2026-10-04.md)). |
 | "The aspect breakdown shows NIM sentiment is Y" | **Not meaningful yet, for any source.** Under the 10-aspect taxonomy (DESIGN decision 21) embedding-similarity assignment gives a sentence 6.4 aspects on average, and annotators changed the matched aspect on 86% of labelled rows ([evidence](evidence/annotation-agreement-2026-09-27.md)); under the earlier four, factual sentences took three or four aspects and evaluative ones fell to `other` ([evidence](evidence/aspect-sentiment-concentration-2026-09-24.md)). The assignment is being replaced (DESIGN decision 16): an LLM classifier (`llama3.1:8b`) matches the human aspect on 0.729 of the 1,277 labelled sentences against 0.413 for the embedding match; it classified the whole corpus on 3 Oct but isn't applied to the database yet ([evidence](evidence/llm-aspect-classifier-2026-10-01.md), [index preview](evidence/index-preview-2026-10-01.md)). Earlier finding, still true: **measured and failing for Reddit.** The 20 highest-similarity Reddit sentences assigned to `net_interest_margin` are all retail banking products (fees, cards, fixed deposits) and none are about margins. Earnings-only rows for that aspect are defensible; Reddit-only and blended ones are not. |
-| "The chatbot cites its sources" | Local models invent citations: on gold set v2 (1 Oct), 15 of 32 answers on the default `llama3.2:3b`, 11 of 32 on `llama3.1:8b`, every one from an answer that never searched for evidence ([evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). A code check flags this; since 2 Oct `CHATBOT_ENFORCE_EVIDENCE=strip` (off by default) removes such evidence: replayed under the stricter checks of 3 Oct, citation warnings fell to 0 on both models (8B 11 → 0, 3B 16 → 0) and answers with a figure no tool returned to 0 on the 8B and 2 on the 3B, both real inventions ([evidence](evidence/chatbot-eval-build-2026-10-01.md)). |
+| "The chatbot cites its sources" | Local models invent citations: on gold set v2 (1 Oct), 15 of 32 answers on the default `llama3.2:3b`, 11 of 32 on `llama3.1:8b`, every one from an answer that never searched for evidence ([evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). A code check flags this; since 2 Oct `CHATBOT_ENFORCE_EVIDENCE=strip` (the default since 4 Oct) removes such evidence: replayed under the stricter checks of 3 Oct, citation warnings fell to 0 on both models (8B 11 → 0, 3B 16 → 0) and answers with a figure no tool returned to 0 on the 8B and 2 on the 3B, both real inventions ([evidence](evidence/chatbot-eval-build-2026-10-01.md)). |
 | "GPT / Gemini backends work" | Gemini works: verified live on 2026-09-30 on numbers-only questions ([evidence](evidence/gemini-backend-2026-09-30.md)). Since 4 Oct every hosted backend (Gemini, Claude, OpenAI or Groq) withholds Reddit, CNA and unlisted-source evidence text and earlier answers, so they never reach a hosted model. The OpenAI backend has never been run: no key exists. Since 1 Oct it also reaches OpenAI-compatible providers such as Groq (`OPENAI_BASE_URL`), equally unverified. |
 | "The chatbot's answers are grounded" | The harness flags invented figures and citations and answers advice and off-topic questions itself, but the local models still invent: on gold set v2 (32 questions, 1 Oct), 15 answers on the 3B and 11 on the 8B carried a citation warning ([evidence](evidence/chatbot-eval-build-2026-10-01.md#live-runs)). Without `strip`, a flagged answer is flagged, not corrected. |
 | "News volume rose sharply in 2026" | An artefact of Google News ranking recent articles higher. Normalise per month before comparing periods ([news-data.md](news-data.md)). |
@@ -73,8 +73,8 @@ By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase on 2026-10-05: 26,880 lines of Python in git (15,181 excluding
-tests), 1789 tests in `tests/` (1836 with the diagram and notebook checks).
+Codebase on 2026-10-06: 29,764 lines of Python in git (16,698 excluding
+tests), 2037 tests in `tests/` (2084 with the diagram and notebook checks).
 
 These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
 loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
@@ -137,10 +137,14 @@ it: in the kept version's run of the 32-question gold set, 13 of the 19
 answers giving a score gave its scale, and none had labelled sections (23 of
 26 before). The readings, shares, rankings and trend sentence are computed
 in code and handed to the model (DESIGN decision 25); the API is unchanged.
-Answers take about a minute on the M1, against about 35 seconds before.
+Strip mode, the default, shows only quotes a search returned: it removes
+the quotes no search returned and takes the quote marks off any other words
+a search doesn't vouch for (DESIGN decision 26, after nine validations of
+the branch). Answers take about a minute on the M1, against about 36 seconds
+before (the before run's log, on the evidence page).
 [Evidence](evidence/chatbot-answers-2026-10-04.md).
 
-**Engineering.** 1789 tests (external APIs mocked with captured payloads),
+**Engineering.** 2037 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the API and Ollama. A clean copy installs
 and runs from the README on Python 3.14

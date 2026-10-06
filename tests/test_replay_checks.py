@@ -63,7 +63,19 @@ def test_the_answers_holding_a_mark_the_checks_cannot_place_are_counted(tmp_path
     assert replay_checks.loose_marks(folder) == ["odd_v2/q-3"]
     replay_checks.main(["--eval-dir", folder])
     out = capsys.readouterr().out
-    assert "holding a quote mark the checks can't place: 1\n    odd_v2/q-3" in out
+    assert "holding a quote mark the detectors can't place: 1\n    odd_v2/q-3" in out
+
+
+def test_the_answers_whose_quote_marks_strip_mode_takes_off_are_counted(tmp_path, capsys):
+    # DESIGN decision 26 (5 Oct 2026): strip mode takes the quote marks off what a search
+    # doesn't vouch for. The real quote of q-1 and the follow-up's keep theirs.
+    folder = _folder(tmp_path)
+    _write(tmp_path / "chatbot_eval_results_odd_v2.jsonl", [
+        {"id": "q-4", "question": "DBS app?", "model_answer": "Users report 'slow and buggy' apps.",
+         "tool_calls": [SEARCH], "unverified_numbers": [], "citation_fabricated": False}])
+    assert replay_checks.unquoted(folder) == ["odd_v2/q-4"]
+    replay_checks.main(["--eval-dir", folder])
+    assert "where strip mode takes quote marks off words it keeps: 1\n    odd_v2/q-4" in capsys.readouterr().out
 
 
 def test_compare_names_the_answers_whose_checks_changed(tmp_path, capsys):

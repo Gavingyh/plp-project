@@ -443,3 +443,88 @@ def test_the_prompt_no_longer_asks_for_labelled_sections():
     assert "No headings or section labels" in SYSTEM_PROMPT
     for field in ("reading", "positive_pct", "ranking_high_to_low", "strongest_topics", "trend_in_words", "source_name"):
         assert field in SYSTEM_PROMPT, field
+
+
+# After the ninth validation (5 Oct 2026): a clause ends at ".", ";", ":", "!" or "?"
+# only before a line end or a space and a capital or a digit, never at the full stop of
+# an abbreviation ("In September 25, vs. 45 in August" hid the 25); after "by", "up to",
+# "through" and the like, a comma with no number right after it ends a date; a bracket
+# ends one only when it holds no digit and no word of approximation and its clause ends
+# right after it; and after "in" a returned day is always checked.
+@pytest.mark.parametrize("answer, figures", [
+    ("In September 25, e.g. 40 posts were negative.", ["25", "40"]),
+    ("In September 25, etc. 40 posts were negative.", ["25", "40"]),
+    ("In September 25, incl. 40 posts were negative.", ["25", "40"]),
+    ("In September 25, cf. 40 in August.", ["25", "40"]),
+    ("In September 25, no. 40 was the worst.", ["25", "40"]),
+    ("In September 25, ca. 40 posts were negative.", ["25", "40"]),
+    ("September 25, the latest data. but 40 posts were negative.", ["25", "40"]),   # no capital: one clause
+    ("September 25, the latest data. 40 posts were negative.", ["40"]),
+    ("September 25, the latest data.\n40 posts were negative.", ["40"]),
+    # the full stop of a month's or a company's short form ends no clause either
+    ("September 25, against Aug. 31 in August.", ["25", "31"]),
+    ("Data covers Sept. 25, DBS Bank Ltd. 37 posts.", ["37"]),
+    ("September 25, avg. 40 a day.", ["25", "40"]),
+])
+def test_a_clause_runs_past_an_abbreviation(answer, figures):
+    assert unverified_numbers(answer, DAYS_RETURNED) == figures
+
+
+@pytest.mark.parametrize("answer, figures", [
+    ("By September 25, DBS scored 0.31.", []),
+    ("Until September 25, DBS scored 0.31.", []),
+    ("Till Sept 25, DBS scored 0.31.", []),
+    ("Data to September 25, DBS scored 0.31.", []),
+    ("Since September 25, DBS scored 0.31.", []),
+    ("Coverage ended September 25, with DBS at 0.31.", []),
+    ("Data covers September 25, with DBS at 0.31.", []),
+    ("Data covering Sept 25-26, DBS scored 0.31.", []),
+    ("By September 25, 45 posts.", []),                                 # one number right after: as before
+    ("By September 25, 31 and 40 posts were negative.", ["25", "40"]),  # a number after the comma: checked
+    ("In September 25, DBS scored 0.31.", ["25"]),                      # no such word before: as before
+])
+def test_a_returned_day_before_a_comma_after_by_or_until_is_a_date(answer, figures):
+    assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == figures
+
+
+@pytest.mark.parametrize("answer, figures", [
+    ("September 25 (the end of the data).", []),
+    ("September 25 (DBS (all)).", []),
+    ("By September 25 (DBS), the score was 0.31.", []),           # "by" before it, no number after the comma
+    # a digit in the bracket: it may hold a count, so the day is one too (the tenth round)
+    ("September 25 (45 posts).", ["25"]),
+    ("Negative posts: September 25 (45 in August).", ["25"]),
+    ("Complaints: September 25 (up from 12).", ["25", "12"]),
+    ("September 25 (out of 45).", ["25"]),
+    ("September 25 (of 40 posts).", ["25", "40"]),
+    # a comma after the bracket ends a date only after "by", "until" and the like
+    ("September 25 (DBS), 45 posts.", ["25"]),
+    ("By September 25 (DBS), 37 (OCBC) posts were negative.", ["25", "37"]),
+    ("September 25 (DBS), 37 and 40 posts.", ["25", "37", "40"]),
+    ("September 25 (approx.).", ["25"]),                         # a word of approximation
+    ("Negative: September 25 (about).", ["25"]),
+    ("Negative: September 25 (or so).", ["25"]),
+    ("September 25 (the latest", ["25"]),                        # never closed
+])
+def test_a_returned_day_before_a_bracket(answer, figures):
+    assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == figures
+
+
+# After "in" a returned day is always checked: "in September" names the month, so the
+# number after it is a count, whatever follows (the tenth round, 5 Oct 2026: "In
+# September 25 (DBS), 45 (OCBC) posts were negative" hid the 25 behind a bracket and a
+# comma). Other words before the month keep the rules above.
+@pytest.mark.parametrize("answer, figures", [
+    ("In September 25 (DBS), 45 (OCBC) posts were negative.", ["25"]),
+    ("In September 25.", ["25"]),
+    ("In Sept 25, DBS scored 0.31.", ["25"]),
+    ("In mid-September 25 posts were negative.", ["25"]),
+    ("In late September 25 posts were negative.", ["25"]),
+    ("Posts in **September 25** were negative.", ["25"]),
+    ("Data runs to September 25.", []),
+    ("On September 25 DBS scored 0.31.", []),
+    ("Within September 25 posts.", ["25"]),                      # not "in": checked by the other rules
+    ("Within September 25.", []),
+])
+def test_a_returned_day_after_in_is_checked(answer, figures):
+    assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == figures

@@ -60,40 +60,116 @@ _YEARLESS_DATE = re.compile(
 # clearly reads as one; anywhere else it is a figure to check (validation, 5 Oct
 # 2026: with data to 25 September, "In September 25 customers complained" hid
 # the 25, under a rule that took the day for a date unless a count word from a
-# fixed list followed it). It reads as a date after "on", "as of", "as at",
+# fixed list followed it). After "in" ("in early", "in mid", "in late") it is
+# always checked: "in September" names the month, so a number after it is a
+# count ("In September 25 (DBS), 45 (OCBC) posts were negative"; the tenth
+# round, 5 Oct 2026). Otherwise it reads as a date after "on", "as of", "as at",
 # "the", "dated" or "runs to" (or "ran", "run", "running" to): "On September 25
 # DBS scored 0.31", "the September 25 data"; a range also after "from" or
 # "between". Or before a line end, punctuation other than "%", "," or an
 # opening bracket (a dash, an em dash too, only when no digit follows it),
 # "and", "&", "to" or "/" not before a number, an article or determiner, or a
-# word such as "until" or "when" (_READS_AS_DATE_AFTER). Before a comma it reads
-# as a date only when no number follows in the rest of its clause (to the next
-# ".", ";", ":", "!", "?" or line end), or just one, right after the comma
-# ("September 25, 45 posts"); before an opening bracket, ( or [, only when no
-# number follows in the rest of its clause and no "of" stands inside the
-# bracket (validation, 5 Oct 2026: "In September 25, 31 and 40 posts", "In
-# September 25 (out of 40) posts" and "September 25 for DBS against 40 for UOB"
-# hid the 25, so "for" is no longer a word a date stands before). Before any
-# other word, listed or not, or a number, it is checked ("In September 25 or so
-# posts", "September 25th sentences"), and so are both ends of such a range. A
-# share after the day or the range ("25 per cent", "25 to 30% of posts") means
-# both numbers are checked.
+# word such as "until" or "when" (_DATE_ENDS_HERE). Before a comma it reads as
+# a date when no number follows in the rest of its clause, or just one, right
+# after the comma ("September 25, 45 posts"); and after "by", "up to",
+# "through", "until", "till", "to", "since", "ends", "ended", "covers" or
+# "covering" when no number follows the comma ("By September 25, DBS scored
+# 0.31": the ninth validation, 5 Oct 2026, found these flagged). Before an
+# opening bracket, ( or [, it reads as a date only when the bracket holds no
+# digit and no word of approximation, and its clause ends right after the
+# closing bracket, or, after one of those words, a comma follows it with no
+# number right after ("The latest post is September 25 (the end of the data).";
+# but "September 25 (45 posts).", "Negative posts: September 25 (45 in
+# August).", "In September 25 (out of 40) posts" and "September 25 (approx.)."
+# are checked). A clause ends at a line end, or at ".", ";", ":", "!" or "?"
+# before a line end or before a space and a capital or a digit, never at the
+# full stop of an abbreviation such as "vs.", "approx." or "i.e." (the ninth
+# validation: "In September 25, vs. 45 in August" hid the 25 at the "." of
+# "vs."). Before any other word, listed or not, or a number, it is checked
+# ("September 25 or so posts", "September 25th sentences"), and so are both
+# ends of such a range. A share after the day or the range ("25 per cent", "25
+# to 30% of posts") means both numbers are checked.
 _SHARE = r"(?:%|[ \t]+(?:per[ \t]?cent|percent|pct)\b)"
 _SHARE_AFTER = re.compile(rf"{_SHARE}|[ \t]*(?:to\b|[-–])[ \t]*\d+(?:\.\d+)?[ \t]*{_SHARE}", re.IGNORECASE)
 _READS_AS_DATE_BEFORE = re.compile(
     r"(?:\b(?:on|the|dated)|\bas[ \t]+(?:of|at)|\b(?:runs|ran|run|running)[ \t]+to)[ \t]+\Z", re.IGNORECASE)
 _RANGE_READS_AS_DATE_BEFORE = re.compile(r"\b(?:from|between)[ \t]+\Z", re.IGNORECASE)
-_NO_NUMBER_TO_CLAUSE_END = r"(?=[^\d\n.;:!?]*(?:[\n.;:!?]|\Z))"     # no digit before the clause ends
-_READS_AS_DATE_AFTER = re.compile(
+_IN_BEFORE = re.compile(r"\bin[ \t]+(?:(?:early|mid|late)[ \t-]+)?[*_]*\Z", re.IGNORECASE)
+_COMMA_READS_AS_DATE_BEFORE = re.compile(
+    r"\b(?:by|up[ \t]+to|through|until|till|to|since|ends|ended|covers|covering)[ \t]+\Z", re.IGNORECASE)
+_DATE_ENDS_HERE = re.compile(
     r"[ \t]*(?:\n|\Z)"                                             # a line end or the end of the text
-    r"|[ \t]*(?:[.;:!?)\]\"'’”*_]|[-–—](?![ \t]*\d))"              # punctuation but %, a comma or bracket below
-    rf"|[ \t]*,{_NO_NUMBER_TO_CLAUSE_END}"                          # a comma, no number to the clause end
-    rf"|[ \t]*,[ \t]*[-+−]?\d+(?:,\d{{3}})*(?:\.\d+)?%?{_NO_NUMBER_TO_CLAUSE_END}"   # ... or one, right after it
-    rf"|[ \t]*[(\[](?![^)\]\n]*\bof\b){_NO_NUMBER_TO_CLAUSE_END}"    # a bracket, no "of" in it, no number after
+    r"|[ \t]*(?:[.;:!?)\]\"'’”*_]|[-–—](?![ \t]*\d))"              # punctuation but %, a comma or bracket
     r"|[ \t]*(?:and\b|&|to\b|/)(?![ \t]*\d)"                       # "and", "&", "to" or "/" not before a number
     r"|[ \t]+(?:the|a|an|this|that|its|their"                      # an article or determiner
     r"|until|till|through|when|while|after|before|since|during|as)\b",
     re.IGNORECASE)
+_CLAUSE_END = re.compile(r"\n|[.;:!?](?=[ \t]*(?:\n|\Z)|\s+[A-Z0-9])")
+_ABBREVIATION = re.compile(r"\b(?:vs|v|approx|appx|abt|est|avg|i\.e|e\.g|etc|incl|excl|cf|no|nos|ca|c|viz|esp"
+                           r"|resp|fig|pp|p|mr|mrs|ms|dr|st|jr|sr|inc|ltd|co|corp|bhd|pte|plc|u\.s|u\.k"
+                           r"|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\.", re.IGNORECASE)
+_COMMA = re.compile(r"[ \t]*,")
+_OPENING_BRACKET = re.compile(r"[ \t]*[(\[]")
+_ONE_NUMBER = re.compile(r"[ \t]*[-+−]?\d+(?:,\d{3})*(?:\.\d+)?%?")
+_NUMBER_NEXT = re.compile(r"[ \t]*[-+−]?\d")
+_ENDS_AFTER_BRACKET = re.compile(r"[ \t]*(?:\n|\Z|[.;:!?)\]\"'’”*_])")
+# In a bracket after a day: a digit ("(out of 45)", "(45 in August)") or a word of
+# approximation ("(approx.)", "(about)", "(or so)") makes the day a count to check.
+_COUNT_IN_BRACKET = re.compile(r"\d|~|\b(?:approx|approximately|appx|about|around|roughly|nearly|almost|some|est"
+                               r"|estimated|or[ \t]+so|give[ \t]+or[ \t]+take)\b", re.IGNORECASE)
+
+
+def _no_number_to_clause_end(text: str, pos: int) -> bool:
+    """Whether no digit stands from pos to the end of its clause."""
+    skip = [m.span() for m in _ABBREVIATION.finditer(text, pos)]
+    end = next((m.start() for m in _CLAUSE_END.finditer(text, pos)
+                if not any(s <= m.start() < e for s, e in skip)), len(text))
+    return not any(ch.isdigit() for ch in text[pos:end])
+
+
+def _date_ends_at_comma(text: str, after: int, before: str) -> bool:
+    """Whether a day before a comma, `after` just past it, reads as a date."""
+    if _COMMA_READS_AS_DATE_BEFORE.search(before) and not _NUMBER_NEXT.match(text, after):
+        return True
+    if _no_number_to_clause_end(text, after):
+        return True
+    one = _ONE_NUMBER.match(text, after)
+    return bool(one) and _no_number_to_clause_end(text, one.end())
+
+
+def _closing_bracket(text: str, i: int) -> int | None:
+    """Where the bracket opened at i closes on its line, if it does."""
+    depth = 0
+    for j in range(i, len(text)):
+        if text[j] == "\n":
+            return None
+        if text[j] in "([":
+            depth += 1
+        elif text[j] in ")]":
+            depth -= 1
+            if depth == 0:
+                return j
+    return None
+
+
+def _reads_as_date_after(text: str, end: int, before: str) -> bool:
+    """Whether what follows a returned day (or range), at end, makes it read as a date."""
+    if _DATE_ENDS_HERE.match(text, end):
+        return True
+    comma = _COMMA.match(text, end)
+    if comma:
+        return _date_ends_at_comma(text, comma.end(), before)
+    bracket = _OPENING_BRACKET.match(text, end)
+    close = _closing_bracket(text, bracket.end() - 1) if bracket else None
+    if close is None or _COUNT_IN_BRACKET.search(text, bracket.end(), close):
+        return False                    # no bracket, or "(45 posts)", "(approx.)": a count
+    if _ENDS_AFTER_BRACKET.match(text, close + 1):
+        return True                     # "September 25 (the end of the data)."
+    comma = _COMMA.match(text, close + 1)
+    return bool(comma) and bool(_COMMA_READS_AS_DATE_BEFORE.search(before)) \
+        and not _NUMBER_NEXT.match(text, comma.end())     # "By September 25 (DBS), the score was 0.31."
+
+
 _ISO_DAY = re.compile(r"\b\d{4}-(\d{2})-(\d{2})")
 # Where tools write dates. Only these count: a date in the model's own search
 # query, in a link or in a quoted sentence would let the model vouch for itself.
@@ -130,8 +206,9 @@ def _without_tool_dates(text: str, tool_results) -> str:
             return m.group(0)
         ranged = m.group("day1b") is not None
         before = m.string[:m.start()]
-        if not (_READS_AS_DATE_BEFORE.search(before) or (ranged and _RANGE_READS_AS_DATE_BEFORE.search(before))
-                or _READS_AS_DATE_AFTER.match(m.string, m.end())):
+        if _IN_BEFORE.search(before) or not (
+                _READS_AS_DATE_BEFORE.search(before) or (ranged and _RANGE_READS_AS_DATE_BEFORE.search(before))
+                or _reads_as_date_after(m.string, m.end(), before)):
             return m.group(0)                    # "In September 25 customers": the day, and a range's both ends, checked
         if not ranged or (month, int(m.group("day1b"))) in days:
             return " "                           # "Data runs to September 25", "Sept 25-26."

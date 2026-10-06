@@ -73,13 +73,19 @@ def test_an_invented_quote_in_the_new_shapes_is_removed_or_flagged(answer):
     f'**"{REAL}"** {CITE}',
     f'_"{REAL}"_ {CITE}',
     f'"{REAL}"(Reddit)',
-    "DBS's 'customer first digital approach' is praised.",
     'On a 6" phone the app is slow.',
     'The 12" and 13" laptops both look fine for "work".',
 ])
 def test_a_correct_answer_is_kept_and_not_flagged(answer):
     out, flagged = enforce_evidence(answer, _tracker(), "q", "strip")
     assert out.startswith(answer) and not flagged
+
+
+def test_a_scare_quote_keeps_its_words_without_its_marks():
+    # Until DESIGN decision 26 (5 Oct 2026) a case of the test above: since then a
+    # passage of three or more words that no search returned loses its quote marks.
+    out, flagged = enforce_evidence("DBS's 'customer first digital approach' is praised.", _tracker(), "q", "strip")
+    assert out == "DBS's customer first digital approach is praised." and not flagged
 
 
 def test_a_real_quote_with_a_comma_inside_its_marks_is_kept():

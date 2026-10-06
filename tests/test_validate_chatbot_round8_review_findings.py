@@ -64,17 +64,20 @@ def test_prose_after_a_closing_mark_is_kept(answer):
     assert out == answer and not flagged
 
 
-# Cue nouns turn terms into quotes
-@pytest.mark.parametrize("answer", [
-    "Users call the app 'buggy and slow' often.",
-    "Analysts report 'strong capital buffers'.",
-    "Reports note 'stable asset quality'.",
-    "Posts like 'DBS down again' were common.",
-    "In the post 'Best bank for savings accounts', users compared rates.",
+# Cue nouns turn terms into quotes. Changed by DESIGN decision 26 (5 Oct 2026): the
+# words stay, but a term of three or more words that no search returned loses its
+# quote marks in strip mode.
+@pytest.mark.parametrize("answer, shown", [
+    ("Users call the app 'buggy and slow' often.", "Users call the app buggy and slow often."),
+    ("Analysts report 'strong capital buffers'.", "Analysts report strong capital buffers."),
+    ("Reports note 'stable asset quality'.", "Reports note stable asset quality."),
+    ("Posts like 'DBS down again' were common.", "Posts like DBS down again were common."),
+    ("In the post 'Best bank for savings accounts', users compared rates.",
+     "In the post Best bank for savings accounts, users compared rates."),
 ])
-def test_a_single_quoted_term_is_not_a_quote(answer):
+def test_a_single_quoted_term_is_not_a_quote(answer, shown):
     out, flagged = enforce_evidence(answer, _searched(), "q", "strip")
-    assert out == answer and not flagged
+    assert out == shown and not flagged
 
 
 # Trailing mark after citation drops answer

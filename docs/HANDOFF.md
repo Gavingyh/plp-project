@@ -1124,7 +1124,39 @@ whether slower, fuller answers are worth it on the demo Mac.
   right after the comma) and "for" no longer does, a word in quote marks keeps
   its marks whatever follows, words glued to a real quote's closing mark stay
   unless a citation or a closing mark ends them, single quotes are cued only
-  by verbs of saying or a speaker's colon, a stray mark after a quote or its
-  citation at a line's end is placed, and `scripts/replay_checks.py` reads
-  only the results files git tracks (`--include-untracked` adds the five runs
-  that quote CNA text).
+  by verbs of saying, a speaker's colon or a citation after them, a stray
+  mark after a quote or its citation at a line's end is placed, and
+  `scripts/replay_checks.py` reads only the results files git tracks
+  (`--include-untracked` adds the five runs that quote CNA text).
+- **Ninth validation and a new design for strip mode**
+  (`docs/validation/2026-10-05-chatbot-answers-ninth-check.md`, verdict
+  rethink): the stray-mark rule added after the eighth hid an invented quote
+  on the next line, words glued to a real quote passed, and "In September
+  25, vs. 45" hid a count. The owner chose to change the design (DESIGN
+  decision 26): strip mode removes the quotes no search returned, then takes
+  the quote marks off everything else a search doesn't vouch for (the
+  line-removal net and the stray-mark rule went), so what it leaves in quote
+  marks is text a search returned word for word, checked by a property test
+  on 3,000 made-up answers; dates no longer end a clause at an abbreviation,
+  and "By September 25," reads as a date.
+
+### 6 October
+
+- **`main` merged into `fix/chatbot-answers`** (f2544fd): the teammate's
+  broker research source (`sgx_research`, labelled "broker research" in
+  `config/sources.yaml`) and its tests. It changed no chatbot code and added
+  no results file under `data/eval/`; the line references its code moved in
+  four diagram pages (03, 04, 06, 11) are updated.
+- **Chatbot grounding checks, the fixes after the ninth validation** (not
+  merged): applied as DESIGN decision 26 sets out, with the date rules on
+  the evidence page. Checking the new strip mode also found that a quoted
+  piece found inside a longer word kept its marks ('"... impressive"' when
+  the source says "unimpressive"); pieces now count only as whole words, and
+  the remaining quotation mark ornaments (❟ ❠ ❮ ❯) are read. Three of the
+  ninth's ordinary dates and the seventh's merged nested quotes stay recorded
+  limits (evidence page, Known limits). The replay against f511f83 prints
+  what it printed on 5 Oct.
+
+**Needs a human (6 Oct):** re-run `/validate` on `fix/chatbot-answers`
+before merging it; the Grounded chatbot claim's wording is still a team
+decision on the to-do.

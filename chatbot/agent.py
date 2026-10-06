@@ -51,6 +51,7 @@ USAGE:
   CHATBOT_BACKEND=claude python -m chatbot.agent "..."   # force hosted
 """
 
+import html
 import json
 import os
 import re
@@ -180,9 +181,20 @@ class _QuoteSpans:
     Offers a compiled pattern's finditer, search and findall, the spans in text
     order and never overlapping, so its callers read like any regex's (a span
     from _after_closes has no marks of its own); and loose, the double quote
-    marks none of them could place, which the checks treat as evidence they
-    can't verify (validation, 5 Oct 2026: a quote holding an inch mark ran on
-    to the next quote's opening mark, and left that quote outside every span)."""
+    marks none of them could place (validation, 5 Oct 2026: a quote holding an
+    inch mark ran on to the next quote's opening mark, and left that quote
+    outside every span), which the replay counts.
+
+    With glued=False the words glued to a closing mark are never a quote: a
+    word in quote marks stays one whatever follows it, and no words after a
+    closing mark are read as a quote (_opens_glued, _after_closes). Strip mode
+    reads quotes so (DESIGN decision 26): such words are the model's own, and
+    taking off the quote marks around them (_demark) does what removing them
+    as a quote did, without removing correct text (the ninth validation, 5 Oct
+    2026). The checks that flag an answer read them as before."""
+
+    def __init__(self, glued: bool = True):
+        self.glued = glued
 
     _DOUBLE = _DOUBLE_MARKS
     _MARK = re.compile(f"[{_DOUBLE}]")
@@ -301,7 +313,10 @@ class _QuoteSpans:
         (_glued_end): '"x"OCBC will cut its dividend next year for sure"', or
         before a citation, or with an inch mark, '... by 5"', which is never a
         mark the checks can't place. With none of these after it ('"DBS"and
-        "OCBC"', '"buy-now"s offer') it only closes a word in quote marks."""
+        "OCBC"', '"buy-now"s offer') it only closes a word in quote marks.
+        Never with glued=False."""
+        if not self.glued:
+            return False
         j = self._glued_end(text, i) if self._WORD_NEXT.match(text, i + 1) else None
         return j is not None and len(text[i + 1:j].strip()) >= self._SHORTEST
 
@@ -424,7 +439,7 @@ class _QuoteSpans:
         spans = list(self._regex_spans(text))
         gaps = zip([0] + [e for _, e in spans], [s for s, _ in spans] + [len(text)])
         spans += [p for s, e in gaps if s < e for p in self._paired(text, s, e, taken)]
-        after = {(s, e): before for s, e, before in self._after_closes(text, sorted(spans))}
+        after = {(s, e): before for s, e, before in self._after_closes(text, sorted(spans))} if self.glued else {}
         spans += list(after)
         for m in _SINGLE_QUOTE.finditer(text):
             words = len(m.group(0)[1:-1].split())
@@ -448,37 +463,23 @@ class _QuoteSpans:
     def findall(self, text: str | None) -> list[str]:
         return [m.group(0) for m in self.finditer(text)]
 
-    # What may stand between a quote's closing mark and a stray mark after it:
-    # spaces, punctuation and emphasis marks, around one citation or numbered marker.
-    _STRAY_BETWEEN = re.compile(r"[ \t.,;:!?*_]*(?:(?:\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id [0-9a-f]{24}\]"
-                                r"|\[\d{1,3}(?:[ \t]*[,–-][ \t]*\d{1,3})*\])[ \t.,;:!?*_]*)?")
-    _STRAY_AFTER = re.compile(r"[ \t.,;:!?*_)\]]*(?:\n|\Z)")     # nothing but punctuation to the line end
-
-    def _stray_after_a_quote(self, text: str, i: int, spans: list[tuple[int, int]]) -> bool:
-        """Whether the mark at i, with no letter or digit after it on its line,
-        stands right after a quote's closing mark on that line, or after a
-        citation right after one ('"..." [DBS, 2026-09-01, sentence_id ...]."',
-        '"...""'): a stray mark, as nothing stands between them for it to close
-        or open (validation, 5 Oct 2026: such a mark took a correct line)."""
-        if not self._STRAY_AFTER.match(text, i + 1):
-            return False
-        ends = [e for _, e in spans if e <= i and text[e - 1] in self._DOUBLE]
-        return bool(ends) and bool(self._STRAY_BETWEEN.fullmatch(text, max(ends), i))
-
     def loose(self, text: str | None) -> list[int]:
         """Positions of the double quote marks the detectors couldn't place: not
         a mark of a quote found, nor inside one, nor one of the two marks around
         a word in quote marks ('"buy"', '”ok”', '»ok«'), nor a stray straight
-        mark before a few words at the end of a paragraph, nor a stray mark at
-        the end of its line right after a quote's closing mark or a citation
-        after one (_stray_after_a_quote), nor an inch mark. Such a mark may
-        belong to a quote the detectors missed, so the checks count it as
-        evidence they can't verify."""
+        mark before a few words at the end of a paragraph, nor an inch mark.
+        Such a mark may belong to a quote the detectors missed. Until the ninth
+        validation (5 Oct 2026) it flagged the answer and took its line in
+        strip mode; now taking off the quote marks strip mode can't vouch for
+        (_demark) covers it, and only the replay counts these
+        (scripts/replay_checks.py). The rule that placed a stray mark at the
+        end of its line after a quote, from f511f83, went: it hid an opening
+        mark there and the invented quote it opened on the next line."""
         text = text or ""
         spans, taken, _ = self._layout(text)
         marks = [m.start() for m in self._MARK.finditer(text)]
         out = [i for i in marks if i not in taken and not _INCH_MARK.match(text, i)
-               and not any(s <= i < e for s, e in spans) and not self._stray_after_a_quote(text, i, spans)]
+               and not any(s <= i < e for s, e in spans)]
         pairs = {"\u201d": "\u201d", "\u00bb": "\u00ab"}
         short = set()
         for i, j in zip(marks, marks[1:]):
@@ -490,6 +491,7 @@ class _QuoteSpans:
 
 
 _QUOTE_PATTERN = _QuoteSpans()
+_STRIP_QUOTES = _QuoteSpans(glued=False)       # how strip mode reads quotes (decision 26)
 _QUOTE_MARKS = "\"\u201c\u201d\u00ab\u00bb\u201e\u201f'\u2018\u2019"
 # A markdown blockquote line ("> OCBC has the worst app..."): quoted text without quote marks.
 # A line opening with a label and a colon ("> **Note:** ...") is the model's own
@@ -504,6 +506,11 @@ _SENTENCE_ID = re.compile(r"\b[0-9a-f]{24}\b")
 # ignored when a quote is compared with what was retrieved: one stored sentence has a "[1]"
 # footnote in it. Found in validation, 4 Oct 2026.
 _BARE_MARK = re.compile(r"[ \t]*\[[1-9]\d{0,2}(?:[ \t]*[,–-][ \t]*[1-9]\d{0,2})*\]")
+# A citation as cite_as writes it, inside a passage: not part of what is quoted.
+_CITE_IN_TEXT = re.compile(r"\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id [0-9a-f]{24}\]")
+# What is trimmed from the ends of each piece of a quoted passage before it is
+# looked up: spaces, punctuation, markdown emphasis and quote marks (_PIECE_ENDS,
+# with every mark strip mode reads, below).
 
 UNVERIFIED_CITATION_WARNING = (
     "\n\n⚠️ VERIFICATION WARNING: this answer cites evidence (a quote, sentence_id or URL) "
@@ -714,7 +721,35 @@ class _ToolCallTracker:
             return strict
         return not all(any(p in t for t in known) for p in pieces)
 
-    def quotes_to_check(self, answer: str):
+    def shown_verified(self, passage: str) -> bool:
+        """Whether a passage may stand in quote marks once strip mode has run
+        (DESIGN decision 26): the tools' own wording (a reading, a real topic
+        name: tool_wording), or text a search returned, this turn or an
+        earlier one: every piece of it, cut at an ellipsis, of any length,
+        without citations, numbered markers and the punctuation, quote marks
+        and emphasis at its ends, in one retrieved text, in order, each as
+        whole words (_whole_words_at: "... impressive" is no piece of
+        "unimpressive", "... 5%" none of "15%"; the tenth round, 6 Oct 2026).
+        Stricter than quote_unverified, which lets pieces under three words
+        pass after a search and takes each piece from any text."""
+        norm = _norm_text(_CITE_IN_TEXT.sub(" ", passage or ""))
+        if norm.strip(" .,;:") in self.tool_wording:
+            return True
+        pieces = [p.strip(_PIECE_ENDS) for p in re.split(r"\.{3}|…", norm)]
+        pieces = [p for p in pieces if p]
+        for text in self.retrieved_text + self.earlier_text:
+            at = 0
+            for p in pieces:
+                at = _whole_words_at(text, p, at)
+                if at < 0:
+                    break
+                at += len(p)
+            else:
+                if pieces:
+                    return True
+        return False
+
+    def quotes_to_check(self, answer: str, pattern: "_QuoteSpans | None" = None):
         """The quotes in quote marks the checks read: every one found, but the
         words after a closing mark (_QuoteSpans._after_closes) only where the
         quote before them is not one a search returned (quote_unverified,
@@ -725,18 +760,18 @@ class _ToolCallTracker:
         a quote a search returned, this turn or an earlier one, they are
         otherwise the model's own words, glued to the mark (validation, 5 Oct
         2026: 'One user: “...”DBS also scored 0.31.' lost its last sentence in
-        strip mode)."""
-        text = answer or ""
-        for m in _QUOTE_PATTERN.finditer(text):
-            if m.after is not None and _QUOTE_PATTERN._glued_end(text, m.start() - 1) is None and \
+        strip mode). Strip mode passes _STRIP_QUOTES, which reads no such words."""
+        text, pattern = answer or "", pattern or _QUOTE_PATTERN
+        for m in pattern.finditer(text):
+            if m.after is not None and pattern._glued_end(text, m.start() - 1) is None and \
                     not self.quote_unverified(text[m.after[0]:m.after[1]].strip(_QUOTE_MARKS), strict=True):
                 continue
             yield m
 
-    def unverified_quotes(self, answer: str, strict: bool = False) -> list[str]:
+    def unverified_quotes(self, answer: str, strict: bool = False, pattern: "_QuoteSpans | None" = None) -> list[str]:
         """Quotes in the answer (in quote marks, or a markdown blockquote line)
         whose text is unverified (quote_unverified)."""
-        spans = [(m.group(0), m.group(0).strip(_QUOTE_MARKS)) for m in self.quotes_to_check(answer)]
+        spans = [(m.group(0), m.group(0).strip(_QUOTE_MARKS)) for m in self.quotes_to_check(answer, pattern)]
         spans += [(m.group(0), m.group(1)) for m in _BLOCKQUOTE.finditer(answer or "")]
         return [span for span, inner in spans if self.quote_unverified(inner, strict)]
 
@@ -747,25 +782,47 @@ class _ToolCallTracker:
     def known_ids(self) -> set[str]:
         return self.verified_sentence_ids | self.earlier_ids
 
-    def answer_has_unverified_citation(self, answer: str) -> bool:
-        if self.unverified_urls(answer):
-            return True
-        # A quote mark the quote detectors couldn't place may belong to a quote
-        # they missed: evidence that can't be verified, with or without a search.
-        if _QUOTE_PATTERN.loose(answer):
-            return True
-        if unverified_sentence_ids(answer, self.known_ids()):
+    def _unretrieved_ids(self, answer: str) -> bool:
+        """A link or sentence id no search returned; with no search this turn, a
+        sentence_id reference without a retrieved id ("[insert sentence_id]")."""
+        if self.unverified_urls(answer) or unverified_sentence_ids(answer, self.known_ids()):
             return True
         if self.search_evidence_called:
-            return bool(self.unverified_quotes(answer))
-        # No search this turn: evidence is real only if an earlier turn's search
-        # returned it, word for word. Otherwise any quote, and any sentence_id
-        # reference without a retrieved id (a placeholder like "[insert
-        # sentence_id]"), is fabricated: both were seen in real answers.
-        if self.unverified_quotes(answer, strict=True):
-            return True
+            return False
         mentions = len(_SENTENCE_ID_PATTERN.findall(answer or ""))
         return mentions > len([i for i in _SENTENCE_ID.findall(answer or "") if i in self.earlier_ids])
+
+    def cites_unretrieved(self, answer: str, pattern: "_QuoteSpans | None" = None) -> bool:
+        """Whether the answer cites evidence no search returned: a link or a
+        sentence id, or a quote the detectors find (pattern; _QUOTE_PATTERN by
+        default) that no search returned. No search this turn: evidence is real
+        only if an earlier turn's search returned it, word for word. Otherwise
+        any quote, and any sentence_id reference without a retrieved id (a
+        placeholder like "[insert sentence_id]"), is fabricated: both were seen
+        in real answers."""
+        if self._unretrieved_ids(answer):
+            return True
+        return bool(self.unverified_quotes(answer, strict=not self.search_evidence_called, pattern=pattern))
+
+    def answer_has_unverified_citation(self, answer: str) -> bool:
+        """Whether the answer, as the model wrote it, cites evidence no search
+        returned (cites_unretrieved), or stands anything in quote marks that
+        strip mode would take them off (_demark): a passage of three or more
+        words a search didn't return word for word, whatever shape its marks
+        take (DESIGN decision 26). The flag in `off` mode, which changes no
+        answer; a word or two in quote marks ('rated "buy"'), an inch mark
+        ('a 6" phone'), an apostrophe and a quote a search returned raise none."""
+        text = _decoded_marks(answer)
+        return self.cites_unretrieved(text) or _demark(text, self) != text
+
+    def shows_unverified(self, answer: str) -> bool:
+        """After strip mode: whether the answer still shows evidence no search
+        returned: a link or sentence id, or a passage a reader sees quoted
+        (_shown_passages) that isn't one. Strip leaves none, by construction:
+        this is the flag strip mode returns. It reads the whole answer, before
+        the harness adds anything."""
+        text = _decoded_marks(answer)
+        return self._unretrieved_ids(text) or bool(_unshown(text, self))
 
     @classmethod
     def from_calls(cls, calls: list[dict], earlier: list[dict] | None = None) -> "_ToolCallTracker":
@@ -792,7 +849,7 @@ def _remove_inline(text: str, quotes: list[str] | None = None, urls: list[str] |
     """Delete quotes, links and sentence-id references from running text, then
     tidy what's left ("as one investor said (https://...)." -> "as one investor said.").
     With lists given, only those; without, every one."""
-    for q in (quotes if quotes is not None else _QUOTE_PATTERN.findall(text)):
+    for q in (quotes if quotes is not None else _STRIP_QUOTES.findall(text)):
         text = text.replace(q, "")
     if quotes is None:
         text = _BLOCKQUOTE.sub("", text)
@@ -814,10 +871,12 @@ def _remove_spans(text: str, spans: list[str], ids: list[str]) -> str:
     """Remove these quotes, links and sentence ids, editing only the lines they
     are on: the rest of the answer keeps its markdown (4 Oct 2026: a whole-answer
     tidy-up took bold and bullets from correct lines). A removed quote's own
-    citation mark ("[E9]") goes with it; a line left empty goes too."""
+    citation mark ("[E9]") goes with it, and so does a backslash right before
+    it, which escaped its opening mark in markdown ('\\"...'); a line left empty
+    goes too."""
     mark = "\x00"
     for span in sorted(set(spans), key=len, reverse=True):      # a quote may wrap a line
-        text = text.replace(span, mark)
+        text = text.replace("\\" + span, mark).replace(span, mark)
     for sid in ids:
         text = re.sub(rf"(?:sentence[_\s]?id[:\s]*)?{sid}", mark, text, flags=re.IGNORECASE)
     out = []
@@ -834,34 +893,19 @@ def _remove_spans(text: str, spans: list[str], ids: list[str]) -> str:
 
 
 # Strip runs again on its own result until nothing changes, as removing a quote
-# can leave a mark or a quote behind; whatever is left after the last pass is
-# flagged by the check that follows.
+# can leave a quote behind.
 _STRIP_PASSES = 10
 
 
-def _loose_lines(text: str) -> set[int]:
-    """The numbers of the lines holding a quote mark the detectors couldn't place."""
-    return {text.count("\n", 0, i) for i in _QUOTE_PATTERN.loose(text)}
-
-
-def _without_loose_lines(text: str) -> str:
-    """The text without each line holding a quote mark the detectors couldn't
-    place, with that line's citation: what it quotes can't be checked."""
-    lines = _loose_lines(text)
-    if not lines:
-        return text
-    return re.sub(r"\n{3,}", "\n\n", "\n".join(line for k, line in enumerate(text.split("\n")) if k not in lines))
-
-
 def _unverified_runs(text: str, tracker: "_ToolCallTracker") -> list[str]:
-    """The unverified quotes in quote marks, as text to remove. Two or more of
-    them on one line with no verified quote between them go as one stretch,
-    the words between them too: words between two invented quotes may be a
-    third whose marks the detectors read as the others' (validation, 5 Oct
-    2026)."""
+    """The unverified quotes in quote marks, as text to remove, read as strip
+    mode reads them (_STRIP_QUOTES). Two or more of them on one line with no
+    verified quote between them go as one stretch, the words between them too:
+    words between two invented quotes may be a third whose marks the detectors
+    read as the others' (validation, 5 Oct 2026)."""
     runs: list[tuple[int, int]] = []
     open_run = False
-    for m in tracker.quotes_to_check(text):
+    for m in tracker.quotes_to_check(text, _STRIP_QUOTES):
         if not tracker.quote_unverified(m.group(0).strip(_QUOTE_MARKS)):
             open_run = False
             continue
@@ -873,69 +917,472 @@ def _unverified_runs(text: str, tracker: "_ToolCallTracker") -> list[str]:
     return [text[s:e] for s, e in runs]
 
 
-def _strip_unverified(answer: str, tracker: "_ToolCallTracker") -> str:
-    """After a search: the answer without each line holding a quote mark the
-    detectors couldn't place, then without the quotes, links and sentence ids
-    no search returned and the words between two such quotes on one line;
-    again on the result, until nothing changes. The lines go first, as read in
-    the model's own text: a mark that removing a quote would let the detectors
-    place is still one they couldn't place where the model wrote it. So are
-    the words glued to a closing mark that read as a quote there
-    (_ToolCallTracker.quotes_to_check): they go too, though the line of the
-    mark that may close them went first ('“...”OCBC will cut ...' and a lone
-    mark on the next line)."""
-    text = answer
+# --- strip mode shows only quotes a search returned (DESIGN decision 26) ------------
+# Nine validations (4 and 5 Oct 2026) each found a quote shape the detectors of
+# the day missed or misread. So strip mode no longer relies on finding every
+# quote: after it removes the quotes the detectors find and no search returned,
+# it takes the quote marks off everything else that a search doesn't vouch for,
+# keeping the words. What is left in quote marks is, by construction, text a
+# search returned word for word, a word or two ('"buy"'), or the tools' own
+# wording; _unshown checks the result as a reader would read its marks.
+
+# Every character a reader may take for a quote mark: those Unicode lists as
+# quotation marks (" “ ” « » „ ‟ ⹂ 「 」 『 』 〝 〞 〟 ﹁ ﹂ ﹃ ﹄ ＂ ｢ ｣, and the single
+# ' ‘ ’ ‚ ‛ ‹ › ＇), the quotation mark ornaments (❝ ❞ ❠ 🙶 🙷 🙸, and the single
+# ❛ ❜ ❟ ❮ ❯) and the double primes (″ ‶). The double ones pair with each other in
+# order, as do the single ones, apart from apostrophes (the tenth round, 5 Oct
+# 2026: ‹...›, 「...」 and ＂...＂ kept their marks after strip, unflagged).
+_DOUBLE_SHOWN = ('"\u201c\u201d\u00ab\u00bb\u201e\u201f\u2e42\u300c\u300d\u300e\u300f\u301d\u301e\u301f'
+                 '\ufe41\ufe42\ufe43\ufe44\uff02\uff62\uff63\u275d\u275e\u2760\u2033\u2036'
+                 '\U0001f676\U0001f677\U0001f678')
+_SINGLE_SHOWN = "'\u2018\u2019\u201a\u201b\u2039\u203a\uff07\u275b\u275c\u275f\u276e\u276f"
+_APOSTROPHES = "'\u2018\u2019\uff07"      # single marks that may be an apostrophe or a possessive: ' ‘ ’ ＇
+_INCHES = '"\u2033'                     # double marks that may be an inch mark: " ″
+_ANY_MARK = re.compile(f"[{_DOUBLE_SHOWN}{_SINGLE_SHOWN}]")
+_PIECE_ENDS = " .,;:!?*_" + _DOUBLE_SHOWN + _SINGLE_SHOWN
+# The marks a reader pairs: all the double ones in order, all the single ones in order,
+# and, as a reader who pairs only marks that look alike, each family on its own (the
+# tenth round, 5 Oct 2026: '‹' read as paired with the possessive in "banks'", while a
+# reader sees it open to the end, the invented words after it too).
+_READINGS = (_DOUBLE_SHOWN, _SINGLE_SHOWN,
+             '"\u201c\u201d\u201e\u201f\uff02\u2033\u2036\u2e42\u275d\u275e\u2760\U0001f676\U0001f677\U0001f678',
+             "\u00ab\u00bb", "\u300c\u300d\uff62\uff63\ufe41\ufe42", "\u300e\u300f\ufe43\ufe44",
+             "\u301d\u301e\u301f", "'\u2018\u2019\uff07\u201a\u201b", "\u2039\u203a", "\u275b\u275c\u275f",
+             "\u276e\u276f")
+# A character reference markdown shows as the character ("&quot;", "&#8220;",
+# "&ldquo;"): one that shows a quote mark is read as that mark.
+_CHAR_REF = re.compile(r"&(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});")
+# Chinese and Japanese are written without spaces: each character counts as a word.
+_CJK = re.compile("[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
+# A line markdown shows as a blockquote ("> ...", "- > ...", "1. - > ...", ">> ..."): its
+# lead-in, its ">" marks, and what it quotes.
+_QUOTE_LINE = re.compile(r"^([ \t]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+)*)((?:>[ \t]?)+)(.*)$", re.MULTILINE)
+# A line that ends the paragraph a blockquote line opens: a blank line, or, indented
+# by at most three spaces, another blockquote line, a bullet, an ordered item numbered
+# 1, a heading, a code fence or a rule. Any other line after a blockquote line is shown
+# inside the blockquote (markdown's lazy continuation: "> a real quote" and, on the next
+# line, "an invented one"; the tenth round, 5 Oct 2026).
+_ENDS_LAZY = re.compile(r"[ \t]*$|[ ]{0,3}(?:>|[-*+][ \t]+\S|1[.)][ \t]+\S|#{1,6}(?:[ \t]|$)|```|~~~"
+                        r"|(?:[-*_][ \t]*){3,}$)")
+# A blockquote line that opens with the label of an aside ("> **Note:** ...") is the
+# model's own note, not a quote (4 Oct 2026: notes were flagged as invented quotes).
+_ASIDE = re.compile(r"[*_]*(?:notes?|n\.b\.|caveats?|disclaimer|tip|warning|important|reminder|update|aside"
+                    r"|summary|takeaways?|bottom line|key points?|context)[*_]*[ \t]*:", re.IGNORECASE)
+# Two marks around a word or two are a pair when their styles match: the second
+# closes what the first opens ('"buy"', '“fees”', '„Tier 1“', '»DBS«', '‘hold’', '「应用」').
+_CLOSES = {'"': '"', "\u201c": "\u201d", "\u201e": "\u201c\u201d", "\u201f": "\u201d", "\u201d": "\u201d",
+           "\u00ab": "\u00bb", "\u00bb": "\u00ab\u00bb", "'": "'", "\u2018": "\u2019", "\u2019": "\u2019",
+           "\u201a": "\u2018\u2019", "\u201b": "\u2019", "\u2039": "\u203a", "\u203a": "\u2039\u203a",
+           "\u300c": "\u300d", "\u300e": "\u300f", "\u301d": "\u301e\u301f", "\ufe41": "\ufe42", "\ufe43": "\ufe44",
+           "\uff02": "\uff02", "\uff07": "\uff07", "\uff62": "\uff63", "\u275d": "\u275e", "\u275b": "\u275c",
+           "\u2760": "\u275d\u275e", "\u275f": "\u275b\u275c", "\u276e": "\u276f", "\u276f": "\u276e\u276f",
+           "\u2033": "\u2033", "\u2036": "\u2033", "\u2e42": "\u201c\u201d",
+           "\U0001f676": "\U0001f677", "\U0001f678": "\U0001f676\U0001f677"}
+
+
+def _decoded_marks(text: str) -> str:
+    """The text with every character reference that markdown shows as a quote
+    mark ("&quot;", "&#8220;", "&ldquo;") written as that mark, so that strip
+    mode reads the marks a reader sees (the tenth round, 5 Oct 2026: a quote
+    in "&quot;" marks kept them, unflagged)."""
+    text = text or ""
+    if "&" not in text:
+        return text
+
+    def one(m: re.Match) -> str:
+        ch = html.unescape(m.group(0))
+        return ch if len(ch) == 1 and _ANY_MARK.match(ch) else m.group(0)
+
+    return _CHAR_REF.sub(one, text)
+
+
+def _word_count(text: str) -> int:
+    """Words as a reader counts them: each run of letters and digits, any other
+    character between two runs parting them ("OCBC-will-cut" is three words),
+    but an apostrophe before a contraction's ending ("OCBC's", "don't") or a
+    point, comma, dash, slash or colon between digits ("0.31", "1,234",
+    "2026-09-25"); and each Chinese or Japanese character."""
+    text = re.sub(r"(?<=[^\W_])['\u2019](?=(?:s|t|d|m|ll|re|ve)(?![^\W_]))", "", text or "", flags=re.IGNORECASE)
+    text = re.sub(r"(?<=\d)[-.,/:](?=\d)", "", text)
+    return sum(max(1, len(_CJK.findall(w))) for w in re.findall(r"[^\W_]+", text))
+
+
+def _glued(a: str, b: str) -> bool:
+    """Whether two characters side by side are parts of one word: both letters
+    or digits, neither a Chinese or Japanese character (each is a word)."""
+    return a.isalnum() and b.isalnum() and not (_CJK.match(a) or _CJK.match(b))
+
+
+_IN_A_NUMBER = "-.,/:"      # between two digits, part of one number ("2.05", "1,234", "2026-09-25")
+
+
+def _whole_words_at(text: str, piece: str, at: int) -> int:
+    """Where piece first stands in text from `at` on as whole words, or -1: no
+    letter or digit glued to either of its ends, nor the rest of a number ("2"
+    of "2.05%"). A quoted piece is the source's words, not part of one ("...
+    impressive" is not in "unimpressive", "... 5%" not in "15%", "the app is
+    sl" not in "the app is slow")."""
+    while (at := text.find(piece, at)) >= 0:
+        end = at + len(piece)
+        before, after = text[max(at - 2, 0):at], text[end:end + 2]
+        cut_before = _glued(before[-1:], piece[:1]) or (
+            piece[:1].isdigit() and len(before) == 2 and before[1] in _IN_A_NUMBER and before[0].isdigit())
+        cut_after = _glued(piece[-1:], after[:1]) or (
+            piece[-1:].isdigit() and len(after) == 2 and after[0] in _IN_A_NUMBER and after[1].isdigit())
+        if not (cut_before or cut_after):
+            return at
+        at += 1
+    return -1
+
+
+def _mark_role(text: str, i: int) -> str:
+    """What the quote mark at i is to a reader. "inch": a straight double mark
+    or a double prime after a digit, before no letter or digit ('a 6" phone').
+    "apostrophe": a straight or curly single mark between two letters or
+    digits ("don't", "OCBC's"), unless a capital follows it and two letters
+    stand before it, as when an opening mark is glued to the word before
+    ("wrote'OCBC ..."). "possessive": such a mark after an s, before no letter
+    or digit ("the banks' fees", "DBS' app"): it closes a quote open before it
+    and opens none. Anything else: "quote"."""
+    prev = text[i - 1] if i > 0 else ""
+    nxt = text[i + 1] if i + 1 < len(text) else ""
+    if text[i] in _INCHES:
+        return "inch" if prev.isdigit() and not nxt.isalnum() else "quote"
+    if text[i] not in _APOSTROPHES:
+        return "quote"
+    if prev.isalnum() and nxt.isalnum():
+        glued = nxt.isupper() and prev.isalpha() and i >= 2 and text[i - 2].isalpha()
+        return "quote" if glued else "apostrophe"
+    if prev and prev in "sS" and not nxt.isalnum():
+        return "possessive"
+    return "quote"
+
+
+def _short_pair(text: str, a: int, b: int) -> bool:
+    """Two marks on one line, in matching styles, around a word or two, with no
+    space just inside either: '"buy"', not the gap '" and "' between two quotes."""
+    inner = text[a + 1:b]
+    return text[b] in _CLOSES.get(text[a], "") and "\n" not in inner and inner[:1].strip() != "" \
+        and inner[-1:].strip() != "" and 1 <= _word_count(inner) <= 2
+
+
+def _verified_pair(text: str, a: int, b: int, tracker: "_ToolCallTracker") -> bool:
+    """Two marks in one paragraph around text a search returned, which the
+    detectors didn't read as one quote: the second part of a real sentence
+    holding a quote of its own ('„What do you think of "DBS Robot" with the
+    fees?“', where they find the first part only)."""
+    inner = text[a + 1:b]
+    return not re.search(r"\n[ \t]*\n", inner) and _word_count(inner) > 0 and tracker.shown_verified(inner)
+
+
+# A citation, or a numbered marker, right after a mark taken off: it would vouch for
+# the model's own words, so it goes with the mark.
+_CITE_AFTER = re.compile(r"[ \t]*(?:\[[A-Z]+, \d{4}-\d{2}-\d{2}, sentence_id [0-9a-f]{24}\]"
+                         r"|\[[1-9]\d{0,2}(?:[ \t]*[,–-][ \t]*[1-9]\d{0,2})*\])")
+
+
+def _without_marks(text: str, positions, citations=()) -> str:
+    """The text without the marks at these positions, keeping the words, and
+    without the citations whose (start, end) are given; a mark between two
+    words, or after punctuation and before a word, gives way to a space
+    ('wrote"OCBC' -> 'wrote OCBC'), and a backslash that escaped a mark goes
+    with it."""
+    chars = list(text)
+    cuts = {s: e for s, e in citations}
+    for i in sorted(set(positions) | set(cuts), reverse=True):     # from the end, so each place still holds
+        if i in cuts:
+            del chars[i:cuts[i]]
+            if i not in positions:
+                continue
+        if i > 0 and chars[i - 1] == "\\":
+            del chars[i - 1]                # '\"' is markdown's way to write '"'
+            i -= 1
+        prev = chars[i - 1] if i > 0 else ""
+        nxt = chars[i + 1] if i + 1 < len(chars) else ""
+        if prev and (prev.isalnum() or prev in ".,;:!?") and nxt.isalnum():
+            chars[i] = " "
+        elif prev in (" ", "\t") and nxt in (" ", "\t"):
+            del chars[i:i + 2]            # 'a stray " here' -> 'a stray here'
+        elif prev in (" ", "\t") and nxt in ("\n", ""):
+            del chars[i - 1:i + 1]        # no space left at the end of a line
+        else:
+            del chars[i]
+    return "".join(chars)
+
+
+def _lines(text: str) -> list[tuple[int, int]]:
+    """(start, end) of each line."""
+    out, pos = [], 0
+    for line in text.split("\n"):
+        out.append((pos, pos + len(line)))
+        pos += len(line) + 1
+    return out
+
+
+def _blocks(text: str):
+    """(start, end) of each line, then of each paragraph: markdown shows the
+    lines of a paragraph as one, so a quote mark may pair across them."""
+    lines, paragraphs, start = _lines(text), [], None
+    for s, e in lines:
+        if text[s:e].strip():
+            start = s if start is None else start
+            last = e
+        elif start is not None:
+            paragraphs.append((start, last))
+            start = None
+    if start is not None:
+        paragraphs.append((start, last))
+    return lines + paragraphs
+
+
+def _blockquotes(text: str) -> list[tuple[int, int]]:
+    """(start, end) of what each blockquote line shows inside its blockquote:
+    its own text, and every line after it that markdown joins to it (lazy
+    continuation), up to a blank line, another blockquote line or a line that
+    opens a block of its own (_ENDS_LAZY); not the text of an aside ("> **Note:**
+    ...")."""
+    lines, out = _lines(text), []
+    for m in _QUOTE_LINE.finditer(text):
+        if _ASIDE.match(m.group(3)):
+            continue
+        end = m.end(3)
+        k = next(n for n, (s, _) in enumerate(lines) if s == m.start()) + 1
+        while k < len(lines) and not _ENDS_LAZY.match(text, lines[k][0], lines[k][1]):
+            end = lines[k][1]
+            k += 1
+        out.append((m.start(3), end))
+    return out
+
+
+def _pairs(text: str, marks: list[int], roles: dict, hi: int, possessive_closes: bool):
+    """(start, end) of the passages these marks show, paired in order, first
+    with second, third with fourth: a mark shaped like an inch mark is none
+    ('a 6" phone') unless it closes a word or two opened with a straight mark
+    ('"Tier 1"'), an apostrophe is none, and a possessive ("banks'") closes a
+    passage open before it, if possessive_closes, and opens none; one left
+    over opens a passage to hi."""
+    out, opened = [], None
+    for i in marks:
+        role = roles[i]
+        if role == "apostrophe" or (role == "possessive" and not possessive_closes):
+            continue
+        if role == "inch" and not (opened is not None and text[opened] == '"'
+                                   and _word_count(text[opened + 1:i]) <= 2):
+            continue
+        if opened is not None:
+            out.append((opened + 1, i))
+            opened = None
+        elif role != "possessive":
+            opened = i
+    if opened is not None:
+        out.append((opened + 1, hi))
+    return out
+
+
+def _shown_passages(text: str) -> list[tuple[int, int, str]]:
+    """(start, end, kind) of every passage a reader sees quoted: "marks" for
+    one in quote marks, in each line and in each paragraph (_blocks), and
+    "blockquote" for what a blockquote shows (_blockquotes). The marks are
+    paired in order (_pairs), as each reading in _READINGS pairs them: all the
+    double ones together, all the single ones, and each family of marks that
+    look alike on its own; and with a possessive read both ways, as closing a
+    passage and as a possessive inside one ("'the banks' fees are high'")."""
+    roles = {m.start(): _mark_role(text, m.start()) for m in _ANY_MARK.finditer(text)}
+    out = set()
+    for lo, hi in _blocks(text):
+        here = [i for i in roles if lo <= i < hi]
+        for reading in _READINGS:
+            marks = [i for i in here if text[i] in reading]
+            if not marks:
+                continue
+            for possessive_closes in ((True, False) if any(roles[i] == "possessive" for i in marks) else (True,)):
+                out.update((s, e, "marks") for s, e in _pairs(text, marks, roles, hi, possessive_closes))
+    return sorted(out) + [(s, e, "blockquote") for s, e in _blockquotes(text)]
+
+
+def _unshown(text: str, tracker: "_ToolCallTracker") -> list[tuple[int, int, str]]:
+    """The passages a reader sees quoted (_shown_passages) of three or more
+    words, citations and numbered markers aside, that are no text a search
+    returned (_ToolCallTracker.shown_verified): what strip mode never shows."""
+    return [(s, e, kind) for s, e, kind in _shown_passages(text)
+            if _word_count(_BARE_MARK.sub(" ", _CITE_IN_TEXT.sub(" ", text[s:e]))) >= 3
+            and not tracker.shown_verified(text[s:e])]
+
+
+def _demarked_lines(text: str, numbers: set[int], quote_lines: set[int] = frozenset()) -> str:
+    """The text with every quote mark on the lines `numbers` taken off, but
+    inch marks, apostrophes and possessives, and their blockquote ">" too; and
+    the blockquote ">" alone off the lines `quote_lines`."""
+    lines = text.split("\n")
+    for k in numbers | quote_lines:
+        line = lines[k]
+        if k in numbers:
+            line = _without_marks(line, [m.start() for m in _ANY_MARK.finditer(line)
+                                         if _mark_role(line, m.start()) == "quote"])
+        lines[k] = _QUOTE_LINE.sub(lambda m: m.group(1) + m.group(3), line)
+    return "\n".join(lines)
+
+
+def _demark(text: str, tracker: "_ToolCallTracker") -> str:
+    """The text with the quote marks taken off what a search doesn't vouch for
+    (_demark_once), again on the result until nothing changes: the detectors
+    can read the marks left in a new way once others are gone, and strip mode
+    run again on its own answer changes nothing. A character reference that
+    shows a quote mark is read as the mark (_decoded_marks). All of the text
+    is read: the harness adds its own evidence only afterwards, so nothing the
+    model wrote passes as the harness's (the tenth round, 5 Oct 2026: an answer
+    that wrote the harness's heading kept the quote marks after it)."""
+    text = _decoded_marks(text)
     for _ in range(_STRIP_PASSES):
-        glued = [m.group(0) for m in tracker.quotes_to_check(text)
-                 if m.after is not None and tracker.quote_unverified(m.group(0).strip(_QUOTE_MARKS))]
-        cleaned = _without_loose_lines(text)
-        quotes = _unverified_runs(cleaned, tracker) + glued
-        quotes += [m.group(0) for m in _BLOCKQUOTE.finditer(cleaned) if tracker.quote_unverified(m.group(1))]
-        cleaned = _remove_spans(cleaned, quotes + tracker.unverified_urls(cleaned),
-                                unverified_sentence_ids(cleaned, tracker.known_ids()))
-        if cleaned == text:
+        once = _demark_once(text, tracker)
+        if once == text:
             break
-        text = cleaned
+        text = once
     return text
 
 
-def _strip_unsearched_once(answer: str) -> tuple[str, bool]:
-    """One pass of strip_unsearched_evidence, and whether it found a line holding
-    a quote mark the detectors couldn't place."""
-    loose = _loose_lines(answer)
+def _demark_once(head: str, tracker: "_ToolCallTracker") -> str:
+    """The text with the quote marks taken off what a search doesn't vouch for,
+    the words kept (DESIGN decision 26). Kept as written: each quote the
+    detectors find (_STRIP_QUOTES) whose every piece a search returned or which
+    is the tools' own wording (_ToolCallTracker.shown_verified), and each
+    blockquote line that is. Kept too: an inch mark, an apostrophe, a
+    possessive, two marks on one line in matching styles around a word or two
+    with no quote mark between them ('rated "buy"', '“fees”'), and two marks
+    with no other between them around text a search returned (_verified_pair).
+    Every other quote mark (_ANY_MARK) goes, with a citation right after it,
+    and every other blockquote ">" (but an aside's). Then, as a reader pairs
+    the marks left and joins lines to a blockquote (_shown_passages), a line
+    where they show a passage of three or more words in quote marks that no
+    search returned (a pair of kept marks read across a quote, say) loses all
+    its quote marks but those three kinds, and a blockquote line whose
+    blockquote shows such a passage loses its ">"; again, until none is left."""
+    # A quote the detectors end at a possessive ("'... the banks' busiest week'") may run
+    # on past it: its marks are left to the pairing below, which reads past possessives.
+    kept = [(m.start(), m.end()) for m in _STRIP_QUOTES.finditer(head)
+            if tracker.shown_verified(m.group(0).strip(_QUOTE_MARKS)) and _mark_role(head, m.end() - 1) != "possessive"]
+    marks = []      # (position, role) of each mark outside a kept quote; a kept quote stands in as a barrier
+    for m in _ANY_MARK.finditer(head):
+        i = m.start()
+        quote = next(((s, e) for s, e in kept if s <= i < e), None)
+        if quote:
+            if not marks or marks[-1] != (quote[0], "kept"):
+                marks.append((quote[0], "kept"))
+            continue
+        role = _mark_role(head, i)
+        if role != "apostrophe":
+            marks.append((i, role))
+    remove, k = [], 0
+    while k < len(marks):
+        i, role = marks[k]
+        following = marks[k + 1] if k + 1 < len(marks) else (None, None)
+        # past possessives, the next mark may close a quote that holds them ("'the banks' fees ...'")
+        n = next((n for n in range(k + 1, len(marks)) if marks[n][1] != "possessive"), None)
+        if role == "quote" and n is not None and n > k + 1 and marks[n][1] == "quote" \
+                and _verified_pair(head, i, marks[n][0], tracker):
+            k = n + 1
+            continue
+        if role == "quote" and following[1] in ("quote", "possessive", "inch") \
+                and (_short_pair(head, i, following[0]) or _verified_pair(head, i, following[0], tracker)):
+            k += 2          # '"buy"', '"Tier 1"' (its closing mark shaped like an inch mark), "'Investors'"
+            continue
+        if role == "quote":
+            remove.append(i)
+            # a single mark's possessive-looking partner closes what it opened ("'long queue times'")
+            if head[i] in _SINGLE_SHOWN and following[1] == "possessive" and "\n" not in head[i:following[0]]:
+                remove.append(following[0])
+                k += 1
+        k += 1
+    # A citation right after a mark taken off, unless the mark is a stray one right after a
+    # quote kept ('"..."" [DBS, ...]'), would vouch for the words before it: it goes too.
+    citations = []
+    for i in remove:
+        cite = _CITE_AFTER.match(head, i + 1)
+        if cite and not any(e == i for _, e in kept):
+            citations.append((i + 1, cite.end()))
+    out = _without_marks(head, remove, citations)
+    out = _QUOTE_LINE.sub(lambda m: m.group(0) if tracker.shown_verified(m.group(3)) or _ASIDE.match(m.group(3))
+                          else m.group(1) + m.group(3), out)
+    out = _without_emptied_lines(head, out)
+    for _ in range(2 * out.count("\n") + 4):
+        bad = _unshown(out, tracker)
+        if not bad:
+            break
+        marked = {n for s, e, kind in bad if kind == "marks"
+                  for n in range(out.count("\n", 0, s), out.count("\n", 0, e) + 1)}
+        quoted = {out.count("\n", 0, s) for s, _, kind in bad if kind == "blockquote"}
+        out = _without_emptied_lines(out, _demarked_lines(out, marked, quoted))
+    return out
+
+
+def _without_emptied_lines(before: str, after: str) -> str:
+    """`after` (the same lines as `before`, quote marks taken off) without the
+    lines that held nothing but quote marks: they go, so that what stood around
+    them stays one paragraph, as it was shown."""
+    return "\n".join(new for old, new in zip(before.split("\n"), after.split("\n")) if new.strip() or not old.strip())
+
+
+def _quoted_line(text: str) -> str:
+    """What a blockquote line quotes, as it is compared with what was retrieved:
+    without citations, and without the quote marks, punctuation and emphasis
+    at its ends ('> "..." [DBS, ...].' quotes the sentence in the marks; until
+    the tenth round, 5 Oct 2026, such a line was compared whole, marks and
+    citation too, and removed as invented)."""
+    return _CITE_IN_TEXT.sub(" ", text).strip(_PIECE_ENDS)
+
+
+def _strip_unverified(answer: str, tracker: "_ToolCallTracker") -> tuple[str, bool]:
+    """After a search: the answer without the quotes (read as _STRIP_QUOTES
+    reads them), blockquote lines, links and sentence ids no search returned,
+    and the words between two such quotes on one line; again on the result,
+    until nothing changes. And whether anything was removed. enforce_evidence
+    then takes the quote marks off whatever a search doesn't vouch for (_demark)."""
+    text, removed = answer, False
+    for _ in range(_STRIP_PASSES):
+        quotes = _unverified_runs(text, tracker)
+        quotes += [m.group(0) for m in _BLOCKQUOTE.finditer(text) if tracker.quote_unverified(_quoted_line(m.group(1)))]
+        cleaned = _remove_spans(text, quotes + tracker.unverified_urls(text),
+                                unverified_sentence_ids(text, tracker.known_ids()))
+        if cleaned == text:
+            break
+        text, removed = cleaned, True
+    return text, removed
+
+
+def _strip_unsearched_once(answer: str) -> str:
+    """One pass of strip_unsearched_evidence."""
     head, _, rest = answer.partition("\n\n")
-    head_lines = head.split("\n")
-    head = _remove_inline("\n".join(line for k, line in enumerate(head_lines) if k not in loose))
+    head = _remove_inline(head)
     kept, skipping = [], False
-    for k, line in enumerate(rest.split("\n"), start=len(head_lines) + 1):
+    for line in rest.split("\n"):
         if _EVIDENCE_HEADING.match(line):
             skipping = True
             continue
         if skipping and _SECTION_HEADING.match(line):
             skipping = False
-        if skipping or k in loose or _URL_PATTERN.search(line) or _QUOTE_PATTERN.search(line) \
+        if skipping or _URL_PATTERN.search(line) or _STRIP_QUOTES.search(line) \
                 or _BLOCKQUOTE.search(line) or _SENTENCE_ID_PATTERN.search(line):
             continue
         kept.append(line)
     body = re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip()
-    return head.rstrip() + ("\n\n" + body if body else ""), bool(loose)
+    return head.rstrip() + ("\n\n" + body if body else "")
 
 
 def strip_unsearched_evidence(answer: str) -> str:
     """The answer without the evidence a model wrote without searching: the
     evidence section (from its heading to the next known section), any later
-    line carrying a quote, URL or sentence id, any line holding a quote mark
-    the detectors couldn't place, and any quote, URL or id inside the first
-    paragraph, which is otherwise kept as written; again on the result, until
-    nothing changes."""
-    text, dropped = answer, False
+    line carrying a quote, URL or sentence id, and any quote, URL or id inside
+    the first paragraph, which is otherwise kept as written; again on the
+    result, until nothing changes. Quotes are read as strip mode reads them
+    (_STRIP_QUOTES); enforce_evidence then takes the quote marks off what is
+    left (_demark)."""
+    text = answer
     for _ in range(_STRIP_PASSES):
-        cleaned, loose = _strip_unsearched_once(text)
-        dropped = dropped or loose
+        cleaned = _strip_unsearched_once(text)
         if cleaned == text:
             break
         text = cleaned
-    return text.lstrip("\n") if dropped else text
+    return text
 
 
 def _harness_search(tracker: _ToolCallTracker, question: str) -> str:
@@ -973,27 +1420,51 @@ def _drop_marks_noted(text: str, tracker: _ToolCallTracker) -> str:
 
 
 def enforce_evidence(answer: str, tracker: _ToolCallTracker, question: str, mode: str) -> tuple[str, bool]:
-    """(new answer, whether the model's own text still cites unretrieved evidence).
-    With no search made, the answer's evidence goes (and in search mode the
-    harness finds real quotes); after a search, only the quotes and links the
-    searches didn't return go. Answers citing nothing unretrieved pass unchanged,
-    but for the bare numbered markers the model wrote outside quotes, which go
-    last: the checks read the model's own text, so a marker can't hide the
-    quote beside it (validation, 4 Oct 2026: dropping it first left '"..."-',
-    which no longer read as a quote)."""
+    """(new answer, whether the answer still cites unretrieved evidence).
+    `off` changes nothing and flags an answer that cites evidence no search
+    returned or stands anything in quote marks a search doesn't vouch for
+    (answer_has_unverified_citation). `strip` and `search` (DESIGN decision 26):
+    with no search made, the answer's evidence goes (and in search mode the
+    harness finds real quotes); after a search, only the quotes, links and ids
+    the searches didn't return go, and a note says so. Then, either way, the
+    quote marks come off whatever a search doesn't vouch for, the words staying
+    (_demark), so what is left in quote marks is text a search returned word
+    for word, a word or two, or the tools' own wording; the flag is then
+    whether anything shown still isn't (shows_unverified), which strip leaves
+    nothing to raise. A character reference markdown shows as a quote mark
+    ("&quot;") is read, and left, as that mark (_decoded_marks); the harness's
+    own text is added after all this. Bare numbered markers the model wrote outside quotes go
+    after the quotes no search returned and before the marks come off: the
+    checks read the model's own text, so a marker can't hide the quote beside
+    it (validation, 4 Oct 2026: dropping it first left '"..."-', which no
+    longer read as a quote), and strip run on its own answer changes nothing."""
     if mode == "off":
         return answer, tracker.answer_has_unverified_citation(answer)
-    if not tracker.answer_has_unverified_citation(answer):
-        return _drop_marks_noted(answer, tracker), False
+    text, removed = _strip_evidence(_decoded_marks(answer), tracker)
+    cleaned = _demark(text, tracker)
+    flagged = tracker.shows_unverified(cleaned)       # checked before any harness search
     if tracker.search_evidence_called:
-        # The whole answer at once: a quote can wrap onto the next line, and an
-        # invented sentence id must go too (4 Oct 2026: both survived).
-        cleaned = _drop_marks_noted(_strip_unverified(answer, tracker), tracker)
-        return cleaned + EVIDENCE_UNMATCHED_NOTE, tracker.answer_has_unverified_citation(cleaned)
-    stripped = _drop_marks_noted(strip_unsearched_evidence(answer), tracker)
-    still_flagged = tracker.answer_has_unverified_citation(stripped)  # checked before any harness search
+        return cleaned + (EVIDENCE_UNMATCHED_NOTE if removed else ""), flagged
+    if not removed:
+        return cleaned, flagged
     found = _harness_search(tracker, question) if mode == "search" else ""
-    return stripped + (found or EVIDENCE_REMOVED_NOTE), still_flagged
+    return cleaned + (found or EVIDENCE_REMOVED_NOTE), flagged
+
+
+def _strip_evidence(answer: str, tracker: _ToolCallTracker) -> tuple[str, bool]:
+    """Strip mode before the quote marks come off: the answer without the
+    evidence no search returned, and its bare numbered markers; and whether any
+    evidence went. After a search, the quotes, links and ids no search returned
+    (_strip_unverified), the whole answer at once: a quote can wrap onto the
+    next line, and an invented sentence id must go too (4 Oct 2026: both
+    survived). With no search, the answer's evidence (strip_unsearched_evidence)
+    if it cites any no search returned, as read by _STRIP_QUOTES."""
+    if tracker.search_evidence_called:
+        cleaned, removed = _strip_unverified(answer, tracker)
+        return _drop_marks_noted(cleaned, tracker), removed
+    if not tracker.cites_unretrieved(answer, _STRIP_QUOTES):
+        return _drop_marks_noted(answer, tracker), False
+    return _drop_marks_noted(strip_unsearched_evidence(answer), tracker), True
 
 
 # A citation as search_evidence's cite_as writes it: "[OCBC, 2026-09-02, sentence_id 32e5...]".
@@ -1055,7 +1526,7 @@ class TurnResult:
     model_answer: str | None = None          # the answer before the harness's warnings were appended
     citation_unverified: bool = False
     unverified_numbers: list = field(default_factory=list)
-    evidence_enforced: str | None = None     # "strip" or "search" if CHATBOT_ENFORCE_EVIDENCE changed the answer
+    evidence_enforced: str | None = None     # "strip" or "search" if CHATBOT_ENFORCE_EVIDENCE removed evidence
 
 
 def answer_turn(question: str, backend_name: str | None = None, history: list | None = None,
@@ -1085,9 +1556,11 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
     mode = enforce_evidence_mode()
     enforced, flagged = enforce_evidence(answer, tracker, question, mode)
     if enforced != answer:
-        if enforced != _drop_bare_marks(answer):      # evidence went, not only a stray marker
+        # Evidence went, not only a stray marker or the quote marks around the model's own words.
+        plain = _drop_bare_marks(_decoded_marks(answer))
+        if enforced not in (plain, _demark(plain, tracker)):
             if verbose:
-                logger.warning("evidence written without a search was removed (%s)", mode)
+                logger.warning("evidence no search returned was removed (%s)", mode)
             result.evidence_enforced = mode
         answer = result.answer = enforced
 

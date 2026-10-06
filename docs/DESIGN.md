@@ -575,49 +575,35 @@ Decided:
   sentiment filter for questions about complaints or praise; and a reading it
   put in quote marks was removed as an invented quote, so a reading or a
   real topic name a tool returned no longer counts as a quote.
-- Eight validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
-  and the sixth to eighth, of 5 Oct) found gaps the change had opened in
-  the grounding checks, and some old ones. Each way of spotting quotes caught
-  what the last missed and missed something new, so two detectors now run
-  together, with a safety net under them. A pattern finds curly and angle
-  quotes by their own marks, and straight quotes and those opened with a
-  closing mark also by what stands next to their marks (no letter or digit
-  before the opening mark or after the closing one), so one stray or missing
-  mark never shifts the quotes after it; a straight quote may hold curly ones
-  and a curly quote straight ones, checked whole. A quote closed with a curly
-  or angle mark may hold an inch mark ('“my 6" phone ...”'); in one closed
-  with a straight mark, an inch mark can be read as the close. In the text
-  between its quotes, each paragraph's marks are paired in order, a mark
-  opening only where it reads as an opening one (low-9 marks, „...“,
-  included), a pair around fewer than ten characters being a word in quote
-  marks whatever follows it, not a quote, and an unpaired mark opening a
-  quote to the end of its line. Words glued to a quote's closing mark are
-  checked as a quote only after one no search returned, or where a citation
-  or a closing mark ends them. A double quote mark none of this places
-  flags the answer, and strip mode removes its line (a stray mark at a
-  line's end right after a quote or its citation is placed); strip also
-  removes the words between two removed quotes on one line, and runs again
-  until nothing changes. A single-quoted passage counts from six words, or
-  from three after a verb of saying or a speaker's colon or before a
-  citation. A quote is compared without the punctuation at its ends. A date
-  without its year is skipped by the figure check only when a tool's date
-  field has that month and day, no decimal, thousands group or "%" follows
-  it and, after a month, it reads as a date: after "on", "as of", "the" or
-  "runs to", or before punctuation, a line end or a word such as "until"
-  (before a comma or a bracket only with no number later in its clause, or
-  one right after the comma); elsewhere ("In September 25 customers
-  complained", "September 25 for DBS against 40 for UOB") it is a figure to
-  check. Around them: the checks read the model's own text before
-  the bare markers it wrote ("[2]") are dropped, and a dropped marker's
-  figures are still checked; a marker inside a quote is shown only if the
-  quoted sentence has it; history rebuilt for the API drops markers and
-  sources; only real topic names count as tool wording; and a trend sentence
-  whose printed scores point the other way says it's too close to call. The
-  findings, their tests, the known limits and a re-run over every recorded
-  answer git tracks (`scripts/replay_checks.py --against <commit>`;
-  `--include-untracked` adds the runs kept out of git) are in
-  `docs/evidence/chatbot-answers-2026-10-04.md`. Whether the Grounded
-  chatbot claim keeps "never" is a decision on the team to-do.
+- Nine validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
+  and the sixth to ninth, of 5 Oct) found gaps the change had opened in the
+  grounding checks, and some old ones. Each way of spotting quotes caught
+  what the last missed and missed something new, so after the ninth the
+  project owner changed the design: strip mode shows only quotes a search
+  returned, whatever the detectors miss (decision 26). The detectors (a
+  pattern, the pairing of quote marks in order, and single-quoted passages
+  from six words, or three after a verb of saying, a speaker's colon or
+  before a citation) still find the quotes strip mode removes and flag an
+  answer in `off` mode. A date without its year is skipped by the figure
+  check only when a tool's date field has that month and day, no decimal,
+  thousands group or "%" follows it and, after a month, it reads as a date:
+  never after "in"; after "on", "as of", "the" or "runs to"; before
+  punctuation, a line end or a word such as "until"; before a comma only
+  with no number later in its clause (a clause never ending at an
+  abbreviation such as "vs."), or one right after the comma, or after "by",
+  "up to", "through" and the like with no number right after it; before a
+  bracket only where it holds no digit and no word of approximation and its
+  clause ends right after it. Elsewhere ("In September 25 customers
+  complained") it is a figure to check. Around them: the checks read the
+  model's own text before the bare markers it wrote ("[2]") are dropped, and
+  a dropped marker's figures are still checked; history rebuilt for the API
+  drops markers and sources; only real topic names count as tool wording;
+  and a trend sentence whose printed scores point the other way says it's
+  too close to call. The findings, their tests, the known limits and a
+  re-run over every recorded answer git tracks (`scripts/replay_checks.py
+  --against <commit>`) are in `docs/evidence/chatbot-answers-2026-10-04.md`.
+  Whether the Grounded chatbot claim keeps "never" is a decision on the team
+  to-do.
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or
   negative sentence is lifted 0.03 over a neutral one when the search is
@@ -642,6 +628,72 @@ reading bands are a judgment, kept in config; and evidence is still ranked
 by FinBERT embeddings, which favour report prose, so the evidence is better
 rather than good. Measured before and after, with the times, in
 `docs/evidence/chatbot-answers-2026-10-04.md`.
+
+### 26. Strip mode shows only quotes a search returned
+
+*2026-10-05, the project owner's decision after the ninth validation.* Nine
+validations of the chatbot answers branch (decision 25) each found a quote
+shape the detectors of the day missed or misread, and each fix to the
+shapes opened another. The ninth found three: a mark at the end of a line,
+read as a stray one after a real quote, hid the invented quote it opened on
+the next line; words glued to a real quote's closing mark ('“...”OCBC will
+cut ...') passed unflagged; and the rule that read such glued words as a
+quote removed correct text ('"DBS"and OCBC rose 5" in the chart.'). The
+owner chose to stop chasing quote shapes and make strip mode, the default,
+grounded by construction.
+
+Decided:
+- The guarantee: after strip mode, every passage of three or more words a
+  reader sees in quote marks (double, single, or a markdown blockquote line)
+  is text a search in the conversation returned, word for word, or the
+  tools' own wording (a reading or a real topic name, decision 25). It holds
+  whatever the detectors get wrong. Quote marks are the characters Unicode
+  lists as quotation marks, the quotation mark ornaments (❝ ❞ ❮ ❯ and the
+  like) and the double primes, also written as character references
+  ("&quot;"); characters that only look like one (ʺ, ״, ′) are not, a known
+  limit on the evidence page.
+- Strip mode first removes, as before, the quotes the detectors find that no
+  search returned, with their citations, and the links and sentence ids no
+  search returned, and a note says so. Words glued to a closing mark are
+  never read as a quote there: they are the model's own.
+- Then it takes the quote marks off everything else a search doesn't vouch
+  for, keeping the words: every double mark, every single mark that is not an
+  apostrophe ("OCBC's") or a possessive ("the banks' fees"), and every
+  blockquote ">". It keeps the marks of a quote whose every piece, cut at an
+  ellipsis, one search result holds, in order, as whole words ("...
+  impressive" is no piece of "unimpressive"); of a word or two in matching
+  marks ('rated "buy"', '“Tier 1”'); an inch mark ('a 6" phone'); and an
+  aside ("> **Note:** ..."). A citation right after a mark taken off goes
+  too, so it can't vouch for the model's own words.
+- Last, it reads the result as a reader pairs the marks (in order, line by
+  line and paragraph by paragraph) and takes every quote mark off a line
+  where that shows a passage of three or more words no search returned; it
+  runs again until nothing changes. The flag strip mode returns is whether
+  anything shown is still not text a search returned, which this leaves
+  nothing to raise.
+- `off` mode changes nothing. It flags an answer whose detected quotes no
+  search returned, as before, or whose quote marks strip mode would take
+  off. The safety net added after the seventh validation (31c7e98), which
+  removed every line holding a mark the detectors couldn't place, and
+  f511f83's rule that placed a stray mark after a quote went: taking off the
+  marks replaces both.
+- Tests: an invented quote passes a test when it is removed, flagged, or no
+  longer in quote marks (`tests/quote_marks.py` reads an answer as a reader
+  does); a correct answer's term of three or more words in quote marks that
+  no search returned loses its marks. `tests/test_chatbot_strip_property.py`
+  checks the guarantee on 3,000 made-up answers, after a search and without,
+  with a fixed seed.
+
+Costs: the model's words stay where their marks go, so an invented quote
+can survive as an unquoted sentence, read as the model's own claim; a term
+of three or more words in quote marks loses its marks ("DBS's customer
+first digital approach"); and in `off` mode the detectors' reading of words
+glued to a closing mark still flags a few correct answers that strip mode
+leaves as they are. The recorded answers barely change: over the 540 that
+git tracks, strip mode takes quote marks off words it keeps in 2, both
+written as JSON by one small model, and no flag changes
+(`docs/evidence/chatbot-answers-2026-10-04.md`). The Grounded chatbot
+claim's wording is the team's decision.
 
 ## Notable implementation details
 

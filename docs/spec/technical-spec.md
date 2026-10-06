@@ -265,7 +265,7 @@ Local models available through Ollama:
 | `LOG_FILE` | `data/logs/plp.log` | `none` disables file logging |
 | `PLP_API_PORT` | 8000 | `scripts/start.sh`, `stop.sh`, `status.sh` |
 | `PLP_DASHBOARD_PORT` | 8501 | the same scripts, for the dashboard |
-| `CHATBOT_ENFORCE_EVIDENCE` | `strip` | `strip` removes evidence no search returned; `search` also adds real quotes the harness finds; `off` only flags it |
+| `CHATBOT_ENFORCE_EVIDENCE` | `strip` | `strip` removes evidence no search returned and takes the quote marks off any other words no search returned (DESIGN decision 26); `search` also adds real quotes the harness finds; `off` only flags it |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's hidden thinking off (qwen3) |
 
 `.env.example` is tracked, so every value in it must be a placeholder. Real
@@ -445,7 +445,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-1789 tests in `tests/` (1836 from the repository root, adding the diagram and
+2037 tests in `tests/` (2084 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.

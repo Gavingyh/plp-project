@@ -13,6 +13,7 @@ import pytest
 from chatbot import agent
 from chatbot.agent import _ToolCallTracker, enforce_evidence
 from chatbot.guards import unverified_numbers
+from tests.quote_marks import in_quote_marks, removed_flagged_or_unquoted
 
 SID = "a" * 24
 CITE = f"[DBS, 2026-09-01, sentence_id {SID}]"
@@ -37,9 +38,6 @@ def _not_searched():
 # without a search.
 @pytest.mark.parametrize("tracker", [_searched, _not_searched], ids=["searched", "not_searched"])
 @pytest.mark.parametrize("answer", [
-    f'"{REAL}"{INVENTED}"',                   # a closing mark with a letter after it
-    f'“{REAL}”{INVENTED}“',
-    f'"{REAL}" *{INVENTED}*"',
     f'for sure!" {INVENTED}',
     f'sure!" "{INVENTED}"',
     f'"x" sure" "{INVENTED}',
@@ -64,6 +62,21 @@ def test_an_invented_quote_is_removed_or_flagged(answer, tracker):
     assert "next year for sure" not in out or flagged
 
 
+# Changed to the contract of DESIGN decision 26 (5 Oct 2026, after the ninth
+# validation): strip mode takes the quote marks off what a search doesn't vouch for,
+# so the words after a real quote's closing mark now stand outside quote marks, as
+# the model's own, where until then they were removed.
+@pytest.mark.parametrize("tracker", [_searched, _not_searched], ids=["searched", "not_searched"])
+@pytest.mark.parametrize("answer", [
+    f'"{REAL}"{INVENTED}"',                   # a closing mark with a letter after it
+    f'“{REAL}”{INVENTED}“',
+    f'"{REAL}" *{INVENTED}*"',
+])
+def test_an_invented_quote_is_removed_flagged_or_no_longer_in_quote_marks(answer, tracker):
+    out, flagged = enforce_evidence(answer, tracker(), "q", "strip")
+    assert removed_flagged_or_unquoted(out, flagged, "next year for sure")
+
+
 def test_answer_turn_strips_an_invented_quote_after_a_closing_mark(monkeypatch):
     class Backend:
         name, model = "fake", "fake"
@@ -78,7 +91,9 @@ def test_answer_turn_strips_an_invented_quote_after_a_closing_mark(monkeypatch):
         "search_evidence": lambda **kw: {"query": kw["query"], "results": [ITEM]}})
     monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
     r = agent.answer_turn("What do people say about the DBS app?", backend=Backend(), verbose=False)
-    assert ("next year for sure" not in r.answer or r.citation_unverified) and REAL in r.answer
+    # Since DESIGN decision 26 (5 Oct 2026): or no longer in quote marks.
+    assert removed_flagged_or_unquoted(r.answer, r.citation_unverified, "next year for sure")
+    assert in_quote_marks(r.answer, REAL)
 
 
 # Correct answers that 31c7e98 still keeps as written.
@@ -117,16 +132,19 @@ def test_a_word_in_quote_marks_without_a_space_after_is_kept(answer):
 # Confirmed, and fixed after this validation: the cue words' noun forms (report,
 # note, post) and a label's colon ("Note:") made a three to five word term in single
 # marks a checked quote, so after a search a correct term was stripped. 7446c89 and
-# main keep them.
-@pytest.mark.parametrize("answer", [
-    "Users report 'long queue times' at branches.",
-    "The bank's report notes 'net interest margin' fell.",
-    "The posts note that 'customer service quality' is down.",
-    "Window: last 90 days. Note: 'fees are high' is the theme.",
+# main keep them. Changed by DESIGN decision 26 (5 Oct 2026): the words stay, but a
+# term of three or more words that no search returned loses its quote marks.
+@pytest.mark.parametrize("answer, shown", [
+    ("Users report 'long queue times' at branches.", "Users report long queue times at branches."),
+    ("The bank's report notes 'net interest margin' fell.", "The bank's report notes net interest margin fell."),
+    ("The posts note that 'customer service quality' is down.",
+     "The posts note that customer service quality is down."),
+    ("Window: last 90 days. Note: 'fees are high' is the theme.",
+     "Window: last 90 days. Note: fees are high is the theme."),
 ])
-def test_a_term_in_single_marks_after_a_cue_noun_is_kept(answer):
+def test_a_term_in_single_marks_after_a_cue_noun_keeps_its_words(answer, shown):
     out, flagged = enforce_evidence(answer, _searched(), "q", "strip")
-    assert out == answer and not flagged
+    assert out == shown and not flagged
 
 
 # Dates: a returned day reads as a date only where it reads as one.

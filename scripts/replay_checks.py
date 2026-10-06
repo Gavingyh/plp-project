@@ -13,8 +13,9 @@ It prints two things:
      made. Only runs that recorded the model's own text (model_answer) can be
      compared.
   2. Over every recorded answer (gold-set and multi-turn runs): how many hold
-     a double quote mark the checks can't place (which flags an answer, and
-     takes its line in strip mode), and which; with --save, a
+     a double quote mark the detectors can't place, and which; in how many
+     strip mode takes quote marks off words it keeps (DESIGN decision 26:
+     marks around anything a search doesn't vouch for), and which; with --save, a
      snapshot of each answer's citation flag, figure flags, the quotes found in
      it, its strip result and the flags left after strip; with --compare, the
      answers whose entry differs from a snapshot saved before a change; with
@@ -157,9 +158,24 @@ def _answers(eval_dir: str, include_untracked: bool = False):
 
 
 def loose_marks(eval_dir: str = EVAL_DIR, include_untracked: bool = False) -> list[str]:
-    """The recorded answers holding a double quote mark the checks can't place
+    """The recorded answers holding a double quote mark the detectors can't place
     (chatbot.agent._QuoteSpans.loose)."""
     return [key for key, _, answer, _, _ in _answers(eval_dir, include_untracked) if _QUOTE_PATTERN.loose(answer)]
+
+
+def unquoted(eval_dir: str = EVAL_DIR, include_untracked: bool = False) -> list[str]:
+    """The recorded answers in which strip mode takes quote marks off words it
+    keeps (chatbot.agent._demark, DESIGN decision 26), after removing the
+    evidence no search returned. Imported here, not above: an older commit's
+    code, which --against runs this script with, has no such step."""
+    from chatbot.agent import _demark, _strip_evidence
+    out = []
+    for key, _, answer, calls, earlier in _answers(eval_dir, include_untracked):
+        tracker = _ToolCallTracker.from_calls(calls, earlier)
+        kept, _ = _strip_evidence(answer, tracker)
+        if _demark(kept, tracker) != kept:
+            out.append(key)
+    return out
 
 
 def snapshot(eval_dir: str = EVAL_DIR, include_untracked: bool = False) -> dict:
@@ -255,8 +271,12 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Every recorded answer: {len(now)}")
     if not args.snapshot_only:          # an older commit's code may have no such check
         loose = loose_marks(args.eval_dir, untracked)
-        print(f"  holding a quote mark the checks can't place: {len(loose)}")
+        print(f"  holding a quote mark the detectors can't place: {len(loose)}")
         for key in loose:
+            print("    " + key)
+        marks_off = unquoted(args.eval_dir, untracked)
+        print(f"  where strip mode takes quote marks off words it keeps: {len(marks_off)}")
+        for key in marks_off:
             print("    " + key)
     if args.save:
         with open(args.save, "w") as f:      # one answer a line, so two snapshots diff line by line

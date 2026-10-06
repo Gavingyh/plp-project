@@ -1198,6 +1198,15 @@ kept behind a dash or bold, figures skipped as years, durations or under 10,
 "45 per cent" checked as a count, and ".87" unread. The branch was then
 merged into `main` and pushed.
 
+Evening, 6 Oct: the chatbot reports each step of a turn as it happens
+(`chatbot/progress.py`; `answer_turn(..., on_step=)` and
+`Conversation.ask(..., on_step=)`): reading the question, each tool call with
+what it asked for and what came back, writing, and checking. On one live
+question (DBS dividends) the intent check took about 15 s, the two tools
+about 30 s and the writing about 25 s. Showing the steps on the Ask page is a
+dashboard change for its owner (team to-do, with the code). Tests:
+`tests/test_chatbot_progress.py`.
+
 **Needs a human (6 Oct):** whether answers of about 47 seconds are
 acceptable (speed options: share the cached prompt between the intent
 classifier and the chatbot, skip the classifier for plain questions, stream

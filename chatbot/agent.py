@@ -69,6 +69,7 @@ from config import aspect_taxonomy
 from config.sources import label as source_label
 from config.logging_config import get_logger, setup_logging
 from chatbot import intent as intents
+from chatbot import progress
 from chatbot import settings
 from chatbot.guards import _ABBREVIATION, is_evidence_text_key, unverified_numbers, unverified_sentence_ids
 from chatbot.prompts import SYSTEM_PROMPT, with_state
@@ -761,6 +762,7 @@ class _ToolCallTracker:
     tool a question actually calls for."""
 
     def __init__(self, earlier: list[dict] | None = None):
+        self.on_step = None                      # progress callback (chatbot/progress.py), or None
         self.search_evidence_called = False
         self.verified_urls: set[str] = set()
         self.verified_sentence_ids: set[str] = set()
@@ -796,6 +798,9 @@ class _ToolCallTracker:
         if by != "model":
             call["by"] = by
         self._record(call)
+        progress.notify(self.on_step, progress.describe_call(name, tool_input, result))
+        if by == "model":
+            progress.notify(self.on_step, progress.Step("think", "Reading the results and writing the answer", done=False))
         return json.dumps(_for_model(result), default=str)
 
     def _record(self, call: dict) -> None:
@@ -2141,25 +2146,37 @@ class TurnResult:
 
 def answer_turn(question: str, backend_name: str | None = None, history: list | None = None,
                 state: dict | None = None, verbose: bool = True, backend=None,
-                earlier_calls: list | None = None) -> TurnResult:
+                earlier_calls: list | None = None, on_step=None) -> TurnResult:
+    """One turn: the answer and everything behind it. on_step, if given, is
+    called with each step as it happens (chatbot/progress.py), for a display
+    of the turn's working while the reader waits."""
     previous = next((h["content"] for h in reversed(history or []) if h.get("role") == "user"), None)
+    progress.notify(on_step, progress.Step("read", "Reading your question", done=False))
     intent = intents.classify_intent(question, state, previous)
     reply = intents.reply_for(intent, question, state)
     if reply:
         if verbose:
             logger.info("intent %s: answered with its fixed reply", intent)
+        progress.notify(on_step, progress.Step("intent", "Answered with a set reply",
+                                               _FIXED_REPLY_KIND.get(intent, "a question this assistant doesn't answer")))
+        progress.notify(on_step, progress.Step("done", "Done"))
         return TurnResult(question=question, answer=reply, guard=intent, intent=intent)
+    progress.notify(on_step, progress.Step("intent", "Understood the question"))
 
     backend = backend or get_backend(backend_name)
     if verbose:
         logger.info("backend: %s (%s)", backend.name, getattr(backend, "model", "?"))
 
     tracker = _ToolCallTracker(earlier_calls)
+    tracker.on_step = on_step
+    progress.notify(on_step, progress.Step("think", "Deciding what to look up, then writing the answer", done=False))
     answer = backend.ask(question, with_state(SYSTEM_PROMPT, state), TOOL_SCHEMAS,
                          tracker.execute, verbose=verbose, history=history)
+    progress.notify(on_step, progress.Step("check", "Checking quotes and figures against the data", done=False))
     if not (answer or "").strip(" \n{}[]\"'"):
         # An empty answer, or a bare "{}" from a model that tried to emit a tool call
         # as text. The replacement is the harness's own text, so it skips the checks.
+        progress.notify(on_step, progress.Step("done", "Done", "the model gave no answer"))
         return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls)
     result = TurnResult(question=question, answer=answer, calls=tracker.calls, intent=intent)
 
@@ -2201,7 +2218,29 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
         result.answer += UNVERIFIED_NUMBER_WARNING.format(
             figures=", ".join(figures), them="it" if len(figures) == 1 else "them")
     result.answer = number_citations(result.answer, tracker)
+    progress.notify(on_step, progress.Step("check", "Checked quotes and figures", _check_summary(result)))
+    progress.notify(on_step, progress.Step("done", "Done"))
     return result
+
+
+# What a set reply answered, for the progress display.
+_FIXED_REPLY_KIND = {"advice": "an investment-advice question", "other_bank": "a bank this assistant doesn't cover",
+                     "greeting": "a greeting", "thanks": "thanks", "goodbye": "a goodbye",
+                     "help": "a question about what this assistant does", "service": "a banking-service request",
+                     "injection": "a request to change the assistant's instructions",
+                     "feedback": "feedback", "off_topic": "an off-topic question"}
+
+
+def _check_summary(result: TurnResult) -> str:
+    """One line on what the checks did to this answer."""
+    notes = []
+    if result.evidence_enforced:
+        notes.append("removed quotes no search returned")
+    if result.citation_unverified:
+        notes.append("flagged evidence it couldn't confirm")
+    if result.unverified_numbers:
+        notes.append("flagged " + ", ".join(result.unverified_numbers))
+    return "; ".join(notes) if notes else "everything matches what the tools returned"
 
 
 def ask(question: str, verbose: bool = True, backend_name: str | None = None,
@@ -2275,10 +2314,10 @@ class Conversation:
             if banks:
                 self.state["banks"] = banks
 
-    def ask(self, question: str, verbose: bool = False) -> TurnResult:
+    def ask(self, question: str, verbose: bool = False, on_step=None) -> TurnResult:
         earlier = [c for t in self.turns[-HISTORY_TURNS:] for c in t.calls if c.get("name") == "search_evidence"]
         r = answer_turn(question, backend_name=self.backend_name, history=self.history(),
-                        state=self.state, verbose=verbose, earlier_calls=earlier)
+                        state=self.state, verbose=verbose, earlier_calls=earlier, on_step=on_step)
         self._update_state(r)
         self.turns.append(r)
         if self.trace_path:

@@ -137,7 +137,7 @@ shasum -a 256 plp-2026-09-30.db.gz   # should match the checksum below
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
 | `plp-2026-09-30.db.gz` (latest; the frozen corpus) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), section 2) |
-| `plp-2026-09-26-v2.db.gz` (superseded) | 28.9MB | `f6aac79a212392747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored under the four-aspect taxonomy; index recomputed |
+| `plp-2026-09-26-v2.db.gz` (superseded) | 28.9MB | `f6aac79a212398747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored under the four-aspect taxonomy; index recomputed |
 | `plp-2026-09-26.db.gz` (superseded) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed; before CNA |
 | `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
 | `plp-2026-09-24.db.gz` (superseded) | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | same day, before embeddings, aspects, sentiment and index were run on the news |
@@ -298,6 +298,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2392 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2439: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2398 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2445: adds the diagram and notebook checks
 ```

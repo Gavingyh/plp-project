@@ -356,6 +356,26 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Source: <code>CLAUDE.md</code> (Success claims); <code>docs/validation/2026-10-06-chatbot-answers-twelfth-check.md</code>; <code>data/eval/chatbot_eval_summary_final3_v2.md</code>.</span>
     </li>
     <li data-o="team">
+      <span class="t">Show the chatbot's steps while it answers <span class="chip team">Dashboard owner</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> a local answer takes about 47 seconds (gold-set median, 6 Oct), and the Ask page shows only "Thinking - a local model can take a minute...". Since 6 Oct the chatbot reports each step as it happens (<code>chatbot/progress.py</code>): reading the question, each tool it calls with what it asked for and what came back ("Looked up DBS sentiment on Dividend Policy (all time): +0.20, moderately positive, 20,643 sentences"), writing, and checking quotes and figures. In <code>dashboard/app.py</code> (the Ask page, around line 512), replace the <code>st.spinner</code> block with a status box fed by <code>on_step</code>; checked with Streamlit's test runner on 1.63:</p>
+      <pre style="grid-column:1/-1;margin:0;overflow-x:auto;font:400 12.5px/1.5 var(--mono);background:var(--code-bg);padding:10px 12px;border-radius:4px">with st.chat_message(&quot;assistant&quot;):
+    with st.status(&quot;Working on it...&quot;, expanded=True) as status:
+        def show(step):
+            if step.done:
+                status.write(f&quot;✓ **{step.title}**&quot; + (f&quot;  \n{step.detail}&quot; if step.detail else &quot;&quot;))
+            else:
+                status.update(label=step.title + &quot;...&quot;)
+        try:
+            answer = st.session_state.conversation.ask(question, on_step=show).answer
+        except Exception as exc:
+            answer = f&quot;The chatbot backend could not be reached: `{exc}`&quot;
+        status.update(label=&quot;Done&quot;, state=&quot;complete&quot;, expanded=False)
+    st.markdown(answer)</pre>
+      <p class="why">Also update the caption above the chat: "A local model may still cite evidence it never retrieved" is out of date. Strip mode now removes or un-quotes evidence no search returned (the reworded Grounded chatbot claim).</p>
+      <span class="meta">Source: HANDOFF, 6 October (evening); <code>tests/test_chatbot_progress.py</code>.</span>
+    </li>
+    <li data-o="team">
       <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>
       <span class="when">by 12 Oct</span>
       <p class="why"><b>Why:</b> the re-score adds the fine-tuned scores beside the base ones, and the dashboard's queries don't filter on <code>model_version</code>, so it would count every sentence twice, and both "See the numbers" panels would crash (their pivots meet duplicate rows). Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot now do.</p>

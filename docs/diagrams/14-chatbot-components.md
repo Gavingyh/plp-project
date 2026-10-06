@@ -98,17 +98,17 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:2227` | `class Conversation:` |
-| state fields | `chatbot/agent.py:2233` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:2237` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:2129` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:2142` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:756` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:908` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:2266` | `class Conversation:` |
+| state fields | `chatbot/agent.py:2272` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:2276` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:2134` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:2147` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:757` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:913` | `def answer_has_unverified_citation(self, answer: str)` |
 | intent | `chatbot/intent.py:106` | `def classify_intent(question: str` |
 | reply_for | `chatbot/intent.py:125` | `def reply_for(intent` |
 | guards | `chatbot/guards.py:312` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
-| intent and model_answer kept | `chatbot/agent.py:2135` | `intent: str` |
+| intent and model_answer kept | `chatbot/agent.py:2140` | `intent: str` |
 | tools | `chatbot/tools.py:646` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |

@@ -252,7 +252,8 @@ def compute_metrics(eval_pred):
 def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
         with_aspect: bool = True, out_dir: str | None = None,
         folds: int | None = None, fold: int | None = None,
-        class_weights: str = "none", source_weights: bool = False, aspect_text: str = "key"):
+        class_weights: str = "none", source_weights: bool = False, aspect_text: str = "key",
+        base_model: str | None = None):
     """Train one model. With folds/fold, train on K-1 folds of train_dev and
     return the dev score on the held-out fold, saving no model."""
     torch.manual_seed(seed)
@@ -270,8 +271,9 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
         # K-fold: a steadier dev estimate than one 15% slice of ~1,000 rows.
         train_df, dev_df = fold_split(train_dev_df, folds, fold, seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-    label2id = head_label2id()
+    base = base_model or BASE_MODEL       # a further-pretrained FinBERT (train/dapt.py), or FinBERT itself
+    tokenizer = AutoTokenizer.from_pretrained(base)
+    label2id = head_label2id(base)
     id2label = {i: l for l, i in label2id.items()}
     train_enc, train_labels = _tokenize(tokenizer, train_df, with_aspect, aspect_text, label2id)
     dev_enc, dev_labels = _tokenize(tokenizer, dev_df, with_aspect, aspect_text, label2id)
@@ -294,7 +296,7 @@ def run(seed: int = 42, epochs: int = 4, lr: float = 2e-5, batch_size: int = 16,
           f"source weights: {'on' if source_weights else 'off'}; aspect text: {aspect_text}")
 
     model = AutoModelForSequenceClassification.from_pretrained(
-        BASE_MODEL, num_labels=len(LABELS), id2label=id2label, label2id=label2id,
+        base, num_labels=len(LABELS), id2label=id2label, label2id=label2id,
     )
 
     # transformers 5.x has no warmup_ratio in TrainingArguments, so compute the
@@ -374,6 +376,8 @@ if __name__ == "__main__":
                         help="weight rows so the source mix matches the corpus")
     parser.add_argument("--aspect-text", choices=["key", "label"], default="key",
                         help="feed the aspect key or its readable label")
+    parser.add_argument("--base-model", default=None,
+                        help=f"model to fine-tune, default {BASE_MODEL} (e.g. train/dapt.py's classifier dir)")
     parser.add_argument("--labels", default=None,
                         help=f"labelled file to train on, default {CANDIDATES_PATH}")
     args = parser.parse_args()
@@ -384,5 +388,6 @@ if __name__ == "__main__":
     metrics = run(seed=args.seed, epochs=args.epochs, lr=args.lr, batch_size=args.batch_size,
                   with_aspect=not args.no_aspect, out_dir=args.out_dir,
                   folds=args.folds, fold=args.fold, class_weights=args.class_weights,
-                  source_weights=args.source_weights, aspect_text=args.aspect_text)
+                  source_weights=args.source_weights, aspect_text=args.aspect_text,
+                  base_model=args.base_model)
     print(metrics)

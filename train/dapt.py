@@ -38,7 +38,7 @@ import time
 import pandas as pd
 import torch
 from transformers import (AutoModelForSequenceClassification, AutoTokenizer, BertForMaskedLM,
-                          DataCollatorForLanguageModeling, Trainer, TrainingArguments)
+                          DataCollatorForLanguageModeling, Trainer, TrainerCallback, TrainingArguments)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")
@@ -80,6 +80,21 @@ def build_corpus(db_path: str = DB_PATH, labels_path: str = LABELS_PATH, limit: 
     return kept, stats
 
 
+class ReleaseMemory(TrainerCallback):
+    """Every 50 steps, give the Mac GPU's cached memory back and log how much is held.
+
+    On 6 Oct 2026 the first full run slowed from about 1 s a step to 100 s
+    after 200 steps, with swap nearly full: on MPS each new batch shape keeps
+    its own cached buffers. Batches are padded to a multiple of 32 tokens (two
+    shapes up to the 64-token cap) and the cache is emptied here."""
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.global_step % 50 == 0 and torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+            print(f"step {state.global_step}: mps allocated {torch.mps.current_allocated_memory() / 2**30:.2f} GB, "
+                  f"driver {torch.mps.driver_allocated_memory() / 2**30:.2f} GB", flush=True)
+
+
 class TextDataset(torch.utils.data.Dataset):
     def __init__(self, encodings):
         self.encodings = encodings
@@ -115,7 +130,7 @@ def save_classifier(mlm: BertForMaskedLM, out_dir: str, tokenizer) -> str:
     return path
 
 
-def run(out_dir: str, epochs: float = 3, lr: float = 5e-5, batch_size: int = 32, max_length: int = 128,
+def run(out_dir: str, epochs: float = 3, lr: float = 5e-5, batch_size: int = 32, max_length: int = 64,
         seed: int = 42, limit: int | None = None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     torch.manual_seed(seed)
@@ -125,17 +140,22 @@ def run(out_dir: str, epochs: float = 3, lr: float = 5e-5, batch_size: int = 32,
     enc = tokenizer(texts, truncation=True, max_length=max_length, return_special_tokens_mask=True)
     data = TextDataset(enc)
     model = mlm_model()
+    # Two half-batches a step: on a 16 GB M1 a 32-sentence batch held 7 GB, mostly the scores
+    # for every vocabulary word at every position (6 Oct 2026); the step is the same.
+    accumulate = 2 if batch_size >= 2 else 1
     steps = max(1, int(len(data) / batch_size * epochs))
     args = TrainingArguments(
         output_dir=os.path.join(out_dir, "checkpoints"), num_train_epochs=epochs, learning_rate=lr,
-        per_device_train_batch_size=batch_size, weight_decay=0.01, warmup_steps=int(0.06 * steps),
+        per_device_train_batch_size=batch_size // accumulate, gradient_accumulation_steps=accumulate,
+        weight_decay=0.01, warmup_steps=int(0.06 * steps),
         logging_steps=50, save_strategy="epoch", save_total_limit=1, seed=seed, report_to=[],
         dataloader_num_workers=0,
         # Sentences are short (median 23 tokens, 6 Oct 2026); batching similar lengths
         # saves padding, which on this M1 is most of the cost.
         train_sampling_strategy="group_by_length")
-    collator = DataCollatorForLanguageModeling(tokenizer, mlm_probability=0.15)
-    trainer = Trainer(model=model, args=args, train_dataset=data, data_collator=collator)
+    collator = DataCollatorForLanguageModeling(tokenizer, mlm_probability=0.15, pad_to_multiple_of=32)
+    trainer = Trainer(model=model, args=args, train_dataset=data, data_collator=collator,
+                      callbacks=[ReleaseMemory()])
     start = time.time()
     out = trainer.train()
     stats.update({"epochs": epochs, "lr": lr, "batch_size": batch_size, "max_length": max_length, "seed": seed,
@@ -154,7 +174,7 @@ if __name__ == "__main__":
     p.add_argument("--epochs", type=float, default=3)
     p.add_argument("--lr", type=float, default=5e-5)
     p.add_argument("--batch-size", type=int, default=32)
-    p.add_argument("--max-length", type=int, default=128)
+    p.add_argument("--max-length", type=int, default=64)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--limit", type=int, default=None, help="use only the first N sentences (smoke test)")
     a = p.parse_args()

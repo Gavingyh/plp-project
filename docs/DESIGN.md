@@ -533,6 +533,223 @@ of its content; the demo model is `llama3.1:8b`; strip enforcement and the
 aspect query are on by default; and the 7- and 30-day figures count back from
 the newest sentence, labelled "as of" its date.
 
+### 25. The chatbot writes for a retail investor, with the figures read for it
+
+*2026-10-04, at the project owner's request.* Tried in the dashboard on 4
+Oct, the chatbot's figures were right but its answers didn't help a retail
+investor. Every answer had the same labelled sections, because the prompt
+asked for "direct answer first, then supporting evidence, then the sample
+size and time window, then caveats". A score was given as "0.122 out of 1"
+with no scale, and +0.124 was called "slightly negative". "Has it changed
+recently?" about UOB's net interest margin got "not available" though 66
+months had enough sentences to score: its 7-day window held too few sentences, and the
+monthly series was only sent when both windows had enough. Evidence was mostly
+results-report boilerplate, often the same sentence once a quarter, cited by
+24-character ids.
+
+Decided:
+- The prompt keeps its grounding rules and replaces the fixed format with a
+  short guide to writing for a retail investor: the answer first in plain
+  words, a score once with its scale, the share of positive and negative
+  sentences, how the bank compares and which topics lift or drag it, no
+  headings, about 60 to 120 words.
+- What a small model can't be trusted to work out is worked out in code and
+  handed to it, in the chatbot's own versions of the tools
+  (`chatbot/tools.py`): each score's reading in words (bands in
+  `config/chatbot.yaml`), the shares, a bank's two strongest and two weakest
+  topics, where a bank ranks among the three with the other two's scores, and
+  the date the data runs to. An evidence search for a bank also returns the
+  bank's score, as `topic_score` or `bank_overall_score`, and the data date:
+  asked what people say and how they feel, the model had searched only,
+  called the mood "neutral" with no score, and given a quote's date as the
+  data's. A trend comes with one sentence that states it
+  (`trend_in_words`): the last 7 days against the last 30 when both have
+  enough sentences, else the latest month against the one before (the change
+  computed before shrinkage, as for 7 against 30 days). The API's results are
+  unchanged.
+- Found in the evaluation rounds and the dashboard tests, and fixed: the
+  model invented comparisons between banks it hadn't fetched, which is why one bank's score now carries
+  the other two; it misread the monthly series and blended a rising week with
+  a falling month, which is why the trend is written out; it judged the
+  overall mood from evidence filtered to one side, so the prompt keeps the
+  sentiment filter for questions about complaints or praise; and a reading it
+  put in quote marks was removed as an invented quote, so a reading or a
+  real topic name a tool returned no longer counts as a quote.
+- Eleven validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`,
+  the sixth to ninth, of 5 Oct, and the tenth and eleventh, of 6 Oct) found
+  gaps the change had opened in the grounding checks, and some old ones.
+  Each way of spotting quotes caught
+  what the last missed and missed something new, so after the ninth the
+  project owner changed the design: strip mode shows only quotes a search
+  returned, whatever the detectors miss (decision 26). After the eleventh
+  the owner made the next round of fixes the last; what it leaves is listed
+  as known limits. The detectors (a
+  pattern, the pairing of quote marks in order, and single-quoted passages
+  from six words, or three after a verb of saying, a speaker's colon or
+  before a citation) still find the quotes strip mode removes; `off` mode
+  flags what strip mode would change. A date without its year is skipped by the figure
+  check only when a tool's date field has that month and day, no decimal,
+  thousands group or "%" follows it and, after a month, it reads as a date:
+  never after "in"; after "on", "as of", "the" or "runs to"; before
+  punctuation, a line end or a word such as "until"; before a comma only
+  with no number later in its clause (a clause never ending at an
+  abbreviation such as "vs."), or one right after the comma, or after "by",
+  "up to", "through" and the like with no number right after it; before a
+  bracket only where it holds no digit and no word of approximation and its
+  clause ends right after it. Elsewhere ("In September 25 customers
+  complained") it is a figure to check. Around them: the checks read the
+  model's own text before the bare markers it wrote ("[2]") are dropped, and
+  a dropped marker's figures are still checked; history rebuilt for the API
+  drops markers and sources; only real topic names count as tool wording;
+  and a trend sentence whose printed scores point the other way says it's
+  too close to call. A figure in retrieved text vouches only for itself,
+  where two of the three words nearest it on either side, common words
+  such as "the" and "of" skipped, are among those round it in the sentence
+  (the tenth validation: a retrieved "37 dollars" vouched for "37 negative
+  posts"; the eleventh: "37% of the" in an unrelated sentence vouched for
+  "37% of the posts"); a figure the model rewords with fewer shared words is
+  checked like any other. The findings, their tests, the known limits and a
+  re-run over every recorded answer git tracks (`scripts/replay_checks.py
+  --against <commit>`) are in `docs/evidence/chatbot-answers-2026-10-04.md`.
+  On 6 Oct the owner reworded the Grounded chatbot claim to what the checks
+  prove, within that page's Known limits (`CLAUDE.md`).
+- Evidence: from 50 candidates, a wording already picked is skipped, at most
+  two come from one source unless too few others match, and a positive or
+  negative sentence is lifted 0.03 over a neutral one when the search is
+  filtered by topic and not by sentiment (retrieval returns a sentence's
+  label only with a filter, and a sentiment filter leaves one label). Each result names its
+  source ("Reddit", "news", "CNA", "bank results report", from
+  `config/sources.yaml`).
+- The reader sees numbered citations and a list of sources. The checks still
+  run on the model's own text, sentence ids included, before the numbering.
+
+Costs: answers are slower on a local model. Two parts were measured: the
+longer tool results take longer to read (2.5 to 12 seconds more per answer),
+and the longer prompt takes longer to read whenever Ollama hasn't cached it
+(14 to 26 seconds); the answers themselves were shorter on two of the three
+timed questions (205 against 387 tokens, 74 against 99) and longer on one
+(169 against 94). A separate id field and raw counts are left out
+of what it reads, to limit that (the turn's record keeps them; an id still
+travels inside the citation the model copies). Links stay: the
+hosted backends' privacy filter knows a Reddit post that came through a news
+feed only by its link, and hiding links let such text through in a test. The
+reading bands are a judgment, kept in config; and evidence is still ranked
+by FinBERT embeddings, which favour report prose, so the evidence is better
+rather than good. Measured before and after, with the times, in
+`docs/evidence/chatbot-answers-2026-10-04.md`.
+
+### 26. Strip mode shows only quotes a search returned
+
+*2026-10-05, the project owner's decision after the ninth validation.* Nine
+validations of the chatbot answers branch (decision 25) each found a quote
+shape the detectors of the day missed or misread, and each fix to the
+shapes opened another. The ninth found three: a mark at the end of a line,
+read as a stray one after a real quote, hid the invented quote it opened on
+the next line; words glued to a real quote's closing mark ('“...”OCBC will
+cut ...') passed unflagged; and the rule that read such glued words as a
+quote removed correct text ('"DBS"and OCBC rose 5" in the chart.'). The
+owner chose to stop chasing quote shapes and make strip mode, the default,
+grounded by construction.
+
+Decided:
+- The guarantee: after strip mode, every passage of three or more words a
+  reader sees in quote marks (double, single, or a markdown blockquote line)
+  is text a search in the conversation returned, word for word, or the
+  tools' own wording (a reading or a real topic name, decision 25), and no
+  citation vouches for words that stood in quote marks and are not (since
+  the tenth validation, 6 Oct 2026; since the twelfth round a citation
+  vouches for its own sentence, below). It holds whatever the detectors get
+  wrong, within the limits of the reader it assumes, which the evidence
+  page's Known limits list: marks paired in order whatever their shape, two
+  inch marks around words read as inch marks, a mark inside a word read as
+  an apostrophe unless it opens a quote glued to the word before, and an
+  aside's blockquote ("> **Note:** ...") left as written. Quote marks are
+  the characters Unicode lists as quotation marks, the quotation mark
+  ornaments (❝ ❞ ❮ ❯ and the like) and the double primes, also written as
+  character references ("&quot;"); characters that only look like one (ʺ,
+  ״, ′) are not, another of those limits.
+- Strip mode first removes, as before, the quotes the detectors find that no
+  search returned, with their citations, and the links and sentence ids no
+  search returned, and a note says so. Words glued to a closing mark are
+  never read as a quote there: they are the model's own.
+- Then it takes the quote marks off everything else a search doesn't vouch
+  for, keeping the words: every double mark, every single mark that is not an
+  apostrophe ("OCBC's") or a possessive ("the banks' fees"; a left-hand mark,
+  ‘, never is), and every blockquote ">". It keeps the marks of a quote whose
+  every piece, cut at an ellipsis, one search result holds, in order, as
+  whole words ("... impressive" is no piece of "unimpressive"); of a word or
+  two in matching marks ('rated "buy"', '“Tier 1”'), unless a citation
+  vouches for them; an inch mark ('a 6" phone'); and an aside ("> **Note:**
+  ...").
+- Then it reads the result as a reader pairs the marks (in order, line by
+  line and paragraph by paragraph) and takes every quote mark off a line
+  where that shows a passage of three or more words no search returned; it
+  runs again until nothing changes. The flag strip mode returns is whether
+  anything shown is still not text a search returned, which this leaves
+  nothing to raise.
+- Last (since the tenth validation, 6 Oct 2026, which found an invented
+  passage that lost its marks keeping a real citation after a full stop or
+  "one user wrote", and '"a scam" [DBS, ...]' kept whole), it cuts each
+  citation that would vouch for words no search returned. Since the twelfth
+  round, the last (the eleventh validation found a citation's paragraph too
+  wide a reach and its words before it too narrow: a scare quote in the
+  sentence before cut a correct citation, a returned word in quote marks
+  shielded invented words before it, and a link or a citation before the
+  words, 'According to [DBS, ...], ...', vouched unchecked), a citation, a
+  link among them, vouches for its own sentence, ended by a full stop, "!",
+  "?" or a semicolon or by a new paragraph or block: for words that stood in
+  quote marks or a blockquote anywhere in it, in the answer as the model
+  wrote it, in what the first step left or in the result, that no search
+  returned, and for a word or two in quote marks no search returned before
+  it, or after it where it introduces the words after it (at most four words
+  before it, or "to", "by" and the like right before it, or a colon after
+  it). After a citation that ends a longer clause or a quote, only three or
+  more words that stood in quote marks count, so a scare quote there ('...
+  at night [DBS, ...], despite the "super app" label.') keeps it. Where only a
+  label stands before it in its sentence it vouches for the sentence before
+  too. It goes where its reach holds such words, which then lose their
+  marks; no note is added for it. Every check reads a carriage return, and
+  the other line separators, as a line feed, and a glued opening mark looks
+  for its closing mark to the end of its paragraph.
+- `off` mode changes nothing. Since the twelfth round it flags exactly what
+  strip mode would change, and no more (the eleventh validation found a
+  returned blockquote with its citation flagged, which strip mode kept);
+  until then it flagged the quotes the detectors found that no search
+  returned, glued words included, and the quote marks or citations strip
+  mode would take off. The safety net added after the seventh validation (31c7e98), which
+  removed every line holding a mark the detectors couldn't place, and
+  f511f83's rule that placed a stray mark after a quote went: taking off the
+  marks replaces both.
+- Tests: an invented quote passes a test when it is removed, flagged, or no
+  longer in quote marks (`tests/quote_marks.py` reads an answer as a reader
+  does); a correct answer's term of three or more words in quote marks that
+  no search returned loses its marks. `tests/test_chatbot_strip_property.py`
+  checks the guarantee on 3,000 made-up answers, after a search and without,
+  with a fixed seed (other seeds by hand), citations and line separators
+  among them.
+
+Costs: the model's words stay where their marks go, so an invented quote
+can survive as an unquoted sentence, read as the model's own claim; a term
+of three or more words in quote marks loses its marks ("DBS's customer
+first digital approach"); and the `off` flag says only that strip mode would
+change the answer, so it is raised for such a term as for invented
+evidence. A citation goes for more than the words right before it: a
+correct paraphrase loses its citation when a word or two in quote marks no
+search returned stands before it in its sentence, and a real quote's when
+three or more invented words that lost their marks follow it there; a word
+or two after a citation that ends a clause is a term, though a reader may
+take the citation to cover it. The recorded answers barely change: over the
+540 that git tracks, strip mode takes quote marks off words it keeps in 2,
+both written as JSON by one small model, no flag changed with this design,
+and neither the tenth validation's changes nor the twelfth round's change a
+strip result or a citation flag. The tenth validation's figure rule (decision
+25) flagged a figure the model took from a retrieved sentence and wrote in
+other words, false alarms in 5 of the 540 answers git tracks and 7 of the
+670 with the runs kept out of git; the twelfth round's rule clears all
+seven, and passes instead a figure moved onto another subject where two of
+its nearest words happen to match (`docs/evidence/chatbot-answers-2026-10-04.md`,
+Known limits). The Grounded chatbot claim was reworded on 6 Oct to what the checks prove, within those limits.
+
 ## Notable implementation details
 
 **Idempotent ingestion.** Every document has a deterministic `doc_id` hashed

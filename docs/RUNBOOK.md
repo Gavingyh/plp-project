@@ -432,7 +432,10 @@ Two warnings
 can be appended to an answer, and both mean "don't trust this part":
 
 - `⚠️ VERIFICATION WARNING`: the model cited evidence (a quote, sentence id or
-  URL) it never retrieved.
+  URL) it never retrieved, or put words no search returned in quote marks.
+  With `CHATBOT_ENFORCE_EVIDENCE` at `strip`, the default, such evidence is
+  removed and the quote marks come off such words first (DESIGN decision
+  26), so the warning shows only with `off`.
 - `⚠️ NUMBER CHECK`: a figure in the answer matches nothing the tools returned
   for that question. The check is strict: a figure the model derived
   legitimately in an unusual way can also trip it, so read the flagged one.
@@ -462,7 +465,7 @@ changed:
 | `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
-| `CHATBOT_ENFORCE_EVIDENCE` | `strip` (since 4 Oct) | `strip` removes evidence no search returned (the Grounded chatbot claim relies on it); `search` also adds real quotes the harness finds; `off` only flags it |
+| `CHATBOT_ENFORCE_EVIDENCE` | `strip` (since 4 Oct) | `strip` removes evidence no search returned and takes the quote marks off any other words no search returned, so only text a search returned stands in quote marks (the Grounded chatbot claim relies on it; DESIGN decision 26); `search` also adds real quotes the harness finds; `off` only flags it |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
 | `CHATBOT_ASPECT_QUERY` | on (since 4 Oct) | `0` turns it off. On, evidence search, when given an aspect, ranks by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
 
@@ -540,13 +543,29 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-1139 tests in `tests/`; `pytest -q` from the repository root runs 1186,
-adding the diagram and notebook checks. A bug that `/validate` confirms gets a
+2392 tests in `tests/`; `pytest -q` from the repository root runs 2439,
+adding the diagram and notebook checks. These are a fresh checkout's counts:
+one test runs per gold-set results file in `data/eval/`, so a machine that
+holds the results kept out of git (they quote CNA text) collects one more for
+each (six on the team's Mac on 6 Oct). A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.
-None is open on 3 Oct 2026. No network calls — external APIs are
-mocked with captured real payloads, so a provider changing its response shape
-surfaces as a failing test rather than a silent production break.
+On 6 Oct 2026 three markers are left, covering five cases, each kept as a
+recorded limit (evidence page, Known limits): a quote holding two quotes of
+the other style is removed whole, a real one inside it too, two cases
+(`tests/test_validate_chatbot_round7_review_findings.py`); and three
+ordinary dates the figure check flags, accepted false alarms
+(`tests/test_validate_chatbot_round9_probes.py`). The twelfth validation added
+25 more cases, all recorded limits too (a source note after a quote keeps its
+citation, a figure vouched for by subject words, text in backticks, a
+blockquote's citation line; `tests/test_validate_chatbot_round12_*.py`), and
+the thirteenth 16 more, also recorded limits (a removed quote's citation kept
+behind a dash or bold, figures skipped as years, durations or under 10, "45
+per cent", ".87"; `tests/test_validate_chatbot_round13_review_findings.py`):
+46 expected failures in all.
+No network calls: external APIs are mocked with captured real payloads, so a
+provider changing its response shape surfaces as a failing test rather than
+a silent production break.
 
 On 2026-10-01, 479 ran in 45 seconds on a quiet MacBook Air, and 539 took
 2.1 minutes that evening alongside other jobs; a fresh clone's

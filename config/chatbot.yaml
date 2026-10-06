@@ -44,5 +44,21 @@ trace_file:       {value: null, env: CHATBOT_TRACE_FILE}
 
 # The trend tool.
 trend:
-  stable_within:  {value: 0.02}          # an unshrunk 7d-vs-30d change this small reads "stable"
-  monthly_points: {value: 12}            # months of series passed to the model
+  stable_within:  {value: 0.02}          # an unshrunk 7d-vs-30d (or month-on-month) change this small reads "stable"
+  monthly_points: {value: 12}            # months of series the trend tool returns (the API too)
+  chat_months:    {value: 6}             # ... of which the chatbot's model is given, when the 7d/30d comparison is too thin
+
+# What the chatbot's model is given to read a score by (chatbot/tools.py, 4 Oct).
+# Scores run from -1 (every sentence negative) to +1 (every sentence positive).
+reading:
+  neutral_below:    {value: 0.05}        # a score nearer 0 than this reads "neutral"
+  slightly_below:   {value: 0.15}        # ... "slightly positive" or "slightly negative"
+  moderately_below: {value: 0.35}        # ... "moderately"; from here on, "clearly"
+topics_each_way:    {value: 2}           # strongest and weakest topics given with a bank's overall score
+
+# Which retrieved sentences the chatbot's model sees (chatbot/tools.py, 4 Oct).
+evidence:
+  pool_factor:      {value: 10}          # rank k times this many candidates, then pick k
+  max_per_source:   {value: 2}           # from one source, unless too few others match
+  same_wording:     {value: 0.7}         # word overlap at which two sentences count as one wording
+  polar_boost:      {value: 0.03}        # added to a positive or negative sentence's rank

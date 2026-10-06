@@ -78,9 +78,18 @@ or UNTESTED. They come from `docs/spec/functional-spec.md`.
   stored index unchanged, and every endpoint that takes `bank`, `window` or
   `bucket` rejects a bad value with HTTP 422.
 - **Grounded chatbot** (functional spec 4.3: no unretrieved evidence, every
-  number matches a tool result): the chatbot never presents evidence or a
-  figure that no tool call returned: such answers are flagged, and with
-  `CHATBOT_ENFORCE_EVIDENCE=strip` the evidence is removed.
+  number matches a tool result): with `CHATBOT_ENFORCE_EVIDENCE=strip` (the
+  default), every passage of three or more words that an answer shows in
+  quote marks is text a search in that conversation returned, word for word
+  (or the tools' own wording, such as a reading or a topic name), and a
+  citation stays only where the quoted words of its sentence were
+  returned; off mode flags what strip mode would change. Every figure is
+  checked against the tools' results and a mismatch is flagged. Both hold
+  within the Known limits listed in
+  `docs/evidence/chatbot-answers-2026-10-04.md`; the model's own wording
+  (paraphrase, how it describes a score) is not checked. Reworded on
+  6 Oct 2026 from "never presents", which twelve validations showed a text
+  check can't prove.
 
 Add a fourth claim, Aspect accuracy (the aspect method against the human
 labels), once the team decides the aspect method.

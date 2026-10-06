@@ -67,11 +67,11 @@ Each row names the file and line an element comes from, and the text that line m
 | Reddit since 7 days ago | `run_daily_batch.py:47` | `since = reddit_since or (datetime.now(timezone.utc) - timedelta(days=7))` |
 | Reddit pull | `run_daily_batch.py:48` | `docs = arctic_shift.pull(since=since)` |
 | consensus | `run_daily_batch.py:54` | `consensus_rows = yahoo_analyst.pull()` |
-| documents without sentences | `preprocess/pipeline.py:80` | `WHERE NOT EXISTS (SELECT 1 FROM sentences s WHERE s.doc_id = d.doc_id)` |
-| split | `preprocess/pipeline.py:105` | `for sent_text, start, end in segment(cleaned):` |
-| attribute bank | `preprocess/pipeline.py:109` | `bank = _resolve_sentence_bank(sent_text` |
-| drop near-duplicates | `preprocess/pipeline.py:114` | `if h in seen_hashes:` |
-| insert sentences | `preprocess/pipeline.py:127` | `INSERT OR IGNORE INTO sentences` |
+| documents without sentences | `preprocess/pipeline.py:87` | `WHERE NOT EXISTS (SELECT 1 FROM sentences s WHERE s.doc_id = d.doc_id)` |
+| split | `preprocess/pipeline.py:112` | `for sent_text, start, end in segment(cleaned):` |
+| attribute bank | `preprocess/pipeline.py:116` | `bank = _resolve_sentence_bank(sent_text` |
+| drop near-duplicates | `preprocess/pipeline.py:121` | `if h in seen_hashes:` |
+| insert sentences | `preprocess/pipeline.py:134` | `INSERT OR IGNORE INTO sentences` |
 | assign refreshes embeddings first | `aspects/assign.py:103` | `update_embeddings()` |
 | embed new sentences | `aspects/embed_store.py:70` | `new_vecs = embed_sentences(` |
 | drop removed ones | `aspects/embed_store.py:64` | `pruned = len(existing_ids)` |
@@ -79,8 +79,8 @@ Each row names the file and line an element comes from, and the text that line m
 | already assigned | `aspects/assign.py:110` | `already = {r[0] for r in conn.execute(` |
 | cosine to centroids | `aspects/assign.py:123` | `sims = {aspect: _cosine(vec, centroid)` |
 | insert aspects | `aspects/assign.py:137` | `INSERT OR IGNORE INTO sentence_aspects` |
-| pairs not yet scored | `sentiment/score.py:119` | `WHERE NOT EXISTS (` |
-| classify, once per sentence | `sentiment/score.py:144` | `predictions = classify_sentences([text_of[i] for i in chunk])` |
-| insert scores | `sentiment/score.py:150` | `INSERT OR IGNORE INTO aspect_sentiment` |
+| pairs not yet scored | `sentiment/score.py:121` | `WHERE NOT EXISTS (` |
+| classify, once per sentence | `sentiment/score.py:146` | `predictions = classify_sentences([text_of[i] for i in chunk])` |
+| insert scores | `sentiment/score.py:152` | `INSERT OR IGNORE INTO aspect_sentiment` |
 | full recompute | `aggregate/index.py:280` | `conn.execute("DELETE FROM sentiment_index")` |
 | insert index rows | `aggregate/index.py:282` | `INSERT INTO sentiment_index` |

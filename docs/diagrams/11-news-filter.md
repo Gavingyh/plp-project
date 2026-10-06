@@ -70,7 +70,7 @@ Each row names the file and line an element comes from, and the text that line m
 | duplicate check | `ingest/news_filter.py:288` | `dup = index.find_duplicate(` |
 | full text over a bare headline | `ingest/news_filter.py:290` | `# Full text beats a headline-only copy, unless a fuller copy is also stored.` |
 | flag: full text kept | `ingest/news_filter.py:294` | `"reason": "kept_full_text_over_headline"` |
-| headline not counted twice | `preprocess/pipeline.py:114` | `if h in seen_hashes:` |
+| headline not counted twice | `preprocess/pipeline.py:121` | `if h in seen_hashes:` |
 | 90% headline similarity | `ingest/news_filter.py:56` | `TITLE_SIMILARITY = 0.90` |
 | within 3 days | `ingest/news_filter.py:57` | `DUP_WINDOW_DAYS = 3` |
 | bank from the text, MULTI | `ingest/news_filter.py:302` | `d = {**d, "bank": banks[0] if len(banks) == 1 else "MULTI"}` |

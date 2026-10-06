@@ -1037,3 +1037,168 @@ a DBS alias at collection (14); read the fixed replies in
 `config/intents.yaml`. Known and not fixed: the number check skips years,
 so a wrong year ("2023" for 2026) passes; the classifier lets two
 other-bank questions through to the model, which declined them.
+
+### 4 October, afternoon
+
+- **Dashboard menu fixed and pushed** (merge a99f271). The sidebar's page
+  names were hidden by a CSS rule written for an older Streamlit, and the
+  address didn't follow the page chosen; both fixed in `dashboard/` with
+  the edit block lifted for it. The teammate who owns `dashboard/` should
+  review the two lines.
+- **Chatbot answers rewritten for a retail investor** (DESIGN decision 25,
+  branch `fix/chatbot-answers`, not merged). In the dashboard the figures
+  were right but every answer had the same labelled sections, scores read
+  "0.122 out of 1", +0.124 was called "slightly negative", a trend question
+  got "not available" though 66 months had enough sentences to score, and evidence was report
+  boilerplate. Now the readings, shares, rankings and the trend sentence are
+  computed in code and handed to the model, the prompt is a guide to
+  writing for a retail investor, and citations show as numbered sources.
+  Six runs of the 32-question gold set on the branch, plus the before run,
+  with what each found: `docs/evidence/chatbot-answers-2026-10-04.md`.
+  Answers are slower on the local model (about a minute). Validated
+  (`docs/validation/2026-10-04-chatbot-answers.md`): API integrity held;
+  three holes the change opened in the grounding checks and a trend sentence
+  that could contradict its figures were found and fixed with tests. A
+  second validation (`docs/validation/2026-10-04-chatbot-answers-recheck.md`)
+  found the marker fix let an invented quote beside "[2]" survive strip mode
+  and flagged real quotes; markers are now dropped, not flagged. A third
+  (`docs/validation/2026-10-04-chatbot-answers-third-check.md`) found the
+  pattern patches still opening gaps, so dates without a year now count only
+  when a tool returned them, and markers are dropped only after the checks.
+  A fourth (`docs/validation/2026-10-04-chatbot-answers-fourth-check.md`)
+  found a returned date could swallow a figure ("September 25.7%") and
+  quote shapes the pattern never matched (also on `main`); quotes were then
+  found by pairing quote marks in order, and dates come only from date
+  fields, never followed by a decimal, a thousands group or "%". An evidence
+  search for a bank now also returns the bank's score (`topic_score` or
+  `bank_overall_score`) and `data_runs_to` (6e8298b): asked what people say
+  and how they feel, the model had searched only and called the mood
+  "neutral". A fifth (`docs/validation/2026-10-04-chatbot-answers-fifth-check.md`)
+  found one missing or stray quote mark shifted the pairing and hid the next
+  quote; the earlier pattern and the pairing now run together, single-quoted
+  passages of three words or more are checked, and the limits left are
+  listed on the evidence page. The sixth and seventh validations, of 5 Oct,
+  are under 5 October below.
+- **Found on the way:** the full test suite stops a running API
+  (`test_stop_is_idempotent` calls the real `stop.sh api`); the dashboard
+  keeps the chatbot code it first loaded, so restart it after changing
+  `chatbot/`; evaluation results now hold CNA text when evidence comes from
+  CNA, so those results files stay out of git. Hiding evidence links from
+  the model to save time let a Reddit post that came through a news feed
+  reach Gemini in the privacy tests; links went back in before commit, and
+  every run used the local model, so nothing left the machine.
+
+**Needs a human (4 Oct, afternoon):** review and merge
+`fix/chatbot-answers` (re-run `/validate` on the fixes first); write new test questions
+apart from the prompt, since the gold set was used to tune it; decide
+whether slower, fuller answers are worth it on the demo Mac.
+
+### 5 October
+
+- **Chatbot grounding checks, sixth and seventh validations** (branch
+  `fix/chatbot-answers`, not merged). A sixth
+  (`docs/validation/2026-10-05-chatbot-answers-sixth-check.md`) found the
+  words after a nested quote unchecked, scare quotes in single marks
+  stripped and "Data runs to September 25 for DBS" flagged, among others;
+  7446c89 let straight and curly quotes hold each other, let quotes in
+  straight marks or opened with a closing mark open and close beside any
+  punctuation, counted single quotes from six words, took a returned day for
+  a date unless a count or a share followed it, and added
+  `scripts/replay_checks.py` to re-run the checks over every recorded
+  answer. A seventh
+  (`docs/validation/2026-10-05-chatbot-answers-seventh-check.md`) found that
+  date rule hid a count before any word not on its list ("In September 25
+  customers complained"), and a curly quote holding an inch mark ran on to
+  the next quote's opening mark and hid that quote, among others. Now a
+  double quote mark the checks can't place flags the answer and takes its
+  line in strip mode, „...“ marks are read, single quotes count from three
+  words after a quoting word or before a citation, a returned day is a date
+  only where it reads as one, and `scripts/replay_checks.py --against
+  <commit>` compares with any commit's checks; merged nested quotes stay a
+  recorded limit, with the others on the evidence page.
+- **Eighth validation**
+  (`docs/validation/2026-10-05-chatbot-answers-eighth-check.md`): a count
+  before a comma, a bracket or "for" was still hidden, and the seventh's quote
+  rules removed correct text in four shapes. Now a comma or bracket after a
+  returned day ends a date only with no number later in its clause (or one
+  right after the comma) and "for" no longer does, a word in quote marks keeps
+  its marks whatever follows, words glued to a real quote's closing mark stay
+  unless a citation or a closing mark ends them, single quotes are cued only
+  by verbs of saying, a speaker's colon or a citation after them, a stray
+  mark after a quote or its citation at a line's end is placed, and
+  `scripts/replay_checks.py` reads only the results files git tracks
+  (`--include-untracked` adds the five runs that quote CNA text).
+- **Ninth validation and a new design for strip mode**
+  (`docs/validation/2026-10-05-chatbot-answers-ninth-check.md`, verdict
+  rethink): the stray-mark rule added after the eighth hid an invented quote
+  on the next line, words glued to a real quote passed, and "In September
+  25, vs. 45" hid a count. The owner chose to change the design (DESIGN
+  decision 26): strip mode removes the quotes no search returned, then takes
+  the quote marks off everything else a search doesn't vouch for (the
+  line-removal net and the stray-mark rule went), so what it leaves in quote
+  marks is text a search returned word for word, checked by a property test
+  on 3,000 made-up answers; dates no longer end a clause at an abbreviation,
+  and "By September 25," reads as a date.
+
+### 6 October
+
+- **`main` merged into `fix/chatbot-answers`** (f2544fd): the teammate's
+  broker research source (`sgx_research`, labelled "broker research" in
+  `config/sources.yaml`) and its tests. It changed no chatbot code and added
+  no results file under `data/eval/`; the line references its code moved in
+  four diagram pages (03, 04, 06, 11) are updated.
+- **Chatbot grounding checks, the fixes after the ninth validation** (not
+  merged): applied as DESIGN decision 26 sets out, with the date rules on
+  the evidence page. Checking the new strip mode also found that a quoted
+  piece found inside a longer word kept its marks ('"... impressive"' when
+  the source says "unimpressive"); pieces now count only as whole words, and
+  the remaining quotation mark ornaments (❟ ❠ ❮ ❯) are read. Three of the
+  ninth's ordinary dates and the seventh's merged nested quotes stay recorded
+  limits (evidence page, Known limits). The replay then compared with
+  f511f83 (on 5 Oct, with 31c7e98, where one answer's quotes differed) and
+  printed a new line, the answers in which strip mode takes quote marks off
+  words it keeps: two `phi4-mini` answers written as JSON, where an empty
+  pair (`"aspect": ""`) loses its marks, which were also the two answers
+  differing from f511f83's checks.
+- **Chatbot grounding checks, the fixes after the tenth validation** (not
+  merged): strip mode cuts a citation that would vouch for words no search
+  returned (words that lost their quote marks, or a word or two in quote
+  marks, which lose theirs too), every check reads a carriage return or
+  other line separator as a line feed, a left-hand mark is never an
+  apostrophe, and a figure in retrieved text vouches only for itself among
+  its words (DESIGN decisions 25 and 26, evidence page). Against 03dc631's
+  checks no strip result of the 670 recorded answers changes, and seven
+  answers now flag a figure the model took from a retrieved sentence and
+  wrote in other words, false alarms the evidence page lists.
+- **Chatbot grounding checks, the fixes after the eleventh validation, the
+  last fix round by the owner's decision** (not merged): a citation, a link
+  among them, vouches for its own sentence, off mode flags exactly what strip
+  mode would change, and a retrieved figure vouches for itself through two of
+  its nearest words, common ones skipped, which clears the seven figure false
+  alarms (DESIGN decisions 25 and 26). What is left stays under Known limits
+  on the evidence page, with no further fix round.
+
+The twelfth validation (`docs/validation/2026-10-06-chatbot-answers-twelfth-check.md`,
+fix first) found four gaps after 174c77d, recorded as limits with strict
+expected failures in `tests/test_validate_chatbot_round12_*.py`: a source note
+after a quote keeps its citation (a regression from 174c77d), a retrieved
+figure vouches for the same number counting something else, text in backticks
+keeps its citation, and a blockquote's citation line is flagged in off mode.
+API integrity was proven every round. The auditor's run returned no report,
+so this round's docs were not re-audited.
+
+Later on 6 Oct, by the owner's decisions: the live check (gold set 23/24
+tool, 8/8 behaviour, 0/32 answers with an unreturned figure, median 47 s;
+multi-turn 9/9; evidence page) and the Grounded chatbot claim reworded in
+`CLAUDE.md` to what the checks prove, within the Known limits (the to-do page
+republished). A final, thirteenth validation
+(`docs/validation/2026-10-06-chatbot-answers-thirteenth-check.md`) found four
+more gaps, all also on `main`, recorded as limits: a removed quote's citation
+kept behind a dash or bold, figures skipped as years, durations or under 10,
+"45 per cent" checked as a count, and ".87" unread. The branch was then
+merged into `main` and pushed.
+
+**Needs a human (6 Oct):** whether answers of about 47 seconds are
+acceptable (speed options: share the cached prompt between the intent
+classifier and the chatbot, skip the classifier for plain questions, stream
+the answer).

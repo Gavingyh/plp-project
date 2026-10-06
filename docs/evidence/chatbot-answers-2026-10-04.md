@@ -1002,3 +1002,42 @@ not a measurement of the change alone.
   (`data/eval/chatbot_eval_results_{reader,reader2,reader3,final,mix}_v2.jsonl`).
   Their summaries are committed, as are the results of the before and
   trimmed runs and of every conversation run, which hold no CNA text.
+
+## Live check after the last round (6 Oct)
+
+On 6 Oct, at commit a6f3cdc (the checks of 174c77d), the 32-question gold set,
+the multi-turn conversations and seven dashboard questions were run again with
+`llama3.1:8b` through Ollama, using the scripts in `data/run/overnight/`
+(`timed_eval.py final3_v2`, `timed_eval.py final3_mt --multi-turn`,
+`ui_questions.py`). Against the mix run of 4 Oct
+(`data/eval/chatbot_eval_summary_mix_v2.md`,
+`data/run/overnight/times_mix_v2.jsonl`):
+
+| | mix run, 4 Oct | live check, 6 Oct |
+|---|---|---|
+| Tool selection | 23/24 | 23/24 |
+| Behaviour (advice declined, no data said) | 7/8 | 8/8 |
+| Answers with a figure no tool returned | 1/32 | 0/32 |
+| Citation fabrication flagged | 0/32 | 0/32 |
+| Evidence written without a search, removed | 6/32 | 3/32 |
+| Median seconds per question | 60 | 47 |
+| Scores stated, with their scale | 13 of 19 | 13 of 20 |
+| Answers giving a share in % | 13 | 14 |
+| Multi-turn turns correct | | 9/9 (4/4 conversations) |
+
+Sources: `data/eval/chatbot_eval_summary_final3_v2.md`,
+`data/eval/chatbot_multiturn_summary_final3_mt.md`,
+`data/run/overnight/times_final3_v2.jsonl` (median 46.85 s, mean 44.0 s,
+23.4 minutes in all) and `readability.py` over both results files. The one
+miss in tool selection is still thin-1. The gold-set results file quotes CNA
+text and is kept out of git with the earlier runs; its summary and the
+multi-turn results are committed.
+
+Of the seven dashboard questions (`data/run/overnight/ui_final3.json`), one
+answer was flagged: asked whether UOB's net interest margin sentiment had
+changed, the model gave the month's change as +0.17 where the tool returned
+0.158, and the figure check marked it. Two errors the checks don't read were
+also seen: an answer said its two quotes came from "bank results reports and
+a Reddit post" when both were results reports, and one called topics with
+"slightly positive" scores the ones "dragging down" the bank. The checks read
+quotes and figures, not the model's own descriptions.

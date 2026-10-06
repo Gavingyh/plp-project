@@ -7,7 +7,9 @@ own words, no longer shown as evidence.
 Written apart from chatbot/agent.py, which reads its own output the same way
 (_shown_passages), so that each checks the other. A reader sees the answer as
 markdown shows it: a character reference ("&quot;", "&#8220;") as the mark it
-stands for. Then the quote marks are paired in order, in each line and in each
+stands for, and a carriage return, alone or before a line feed, as a line end
+(so are the other separators Python breaks lines at, U+2028 among them, to be
+safe). Then the quote marks are paired in order, in each line and in each
 paragraph (markdown shows the lines of a paragraph as one):
 
 - double marks (" “ ” « » „ ‟ ⹂ 「 」 『 』 〝 〞 〟 ﹁ ﹂ ﹃ ﹄ ＂ ｢ ｣ ❝ ❞ ❠ ″ ‶ 🙶 🙷 🙸):
@@ -15,12 +17,17 @@ paragraph (markdown shows the lines of a paragraph as one):
   a digit and before no letter or digit is an inch mark ('a 6" phone'), unless
   it closes a word or two opened with a straight mark ('"Tier 1"'). A mark left
   over opens a passage that runs to the end.
-- single marks (' ‘ ’ ‚ ‛ ‹ › ＇ ❛ ❜ ❟ ❮ ❯) alike, but a straight or curly mark
-  between two letters or digits is an apostrophe ("don't", "OCBC's") unless a
-  capital follows it with two letters before it ("wrote'OCBC"), and such a mark
-  after an s and before no letter or digit ("the banks' fees") opens nothing:
-  read once as closing a passage open before it, once as a possessive inside
-  it.
+- single marks (' ‘ ’ ‚ ‛ ‹ › ＇ ❛ ❜ ❟ ❮ ❯) alike, but a straight or right-hand
+  mark (' ’ ＇) between two letters or digits is an apostrophe ("don't",
+  "OCBC's") unless it opens a quote glued to the word before: a capital
+  follows it with two letters before it ("wrote'OCBC"; after one letter it is
+  a name's, "Côte d'Ivoire"), or neither a capital nor a contraction or possessive
+  ending follows it and a straight or right-hand mark later on its line closes
+  three or more words after it ("wrote'the bank will cut its dividend next
+  year'"). Such a mark after an s and before no letter or digit
+  ("the banks' fees") opens nothing: read once as closing a passage open
+  before it, once as a possessive inside it. A left-hand mark (‘) is neither
+  (the eleventh round, 6 Oct 2026).
 - and, as a reader who pairs only marks that look alike, each family of marks
   on its own (" “ ” „ ‟ ＂ ″ ‶ ⹂ ❝ ❞ ❠; « »; 「 」 ｢ ｣; ' ‘ ’ ＇ ‚ ‛; ‹ ›; ❮ ❯; ...).
 - a blockquote line ("> ...", "- > ...", "1. - > ...") quotes what follows its
@@ -42,7 +49,7 @@ import re
 
 DOUBLE = set('"“”«»„‟⹂「」『』〝〞〟﹁﹂﹃﹄＂｢｣❝❞❠″‶\U0001f676\U0001f677\U0001f678')
 SINGLE = set("'‘’‚‛‹›＇❛❜❟❮❯")
-MAY_BE_APOSTROPHE = set("'‘’＇")
+MAY_BE_APOSTROPHE = set("'’＇")         # a left-hand mark (‘) never is one
 MAY_BE_INCH = set('"″')
 _CJK = re.compile(r"[぀-ヿ㐀-䶿一-鿿豈-﫿]")
 _REFERENCE = re.compile(r"&(#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
@@ -55,11 +62,13 @@ _ASIDE = re.compile(r"[*_]*(note|notes|n\.b\.|caveat|caveats|disclaimer|tip|warn
 
 def as_shown(text: str) -> str:
     """The text with each character reference that stands for a quote mark
-    written as that mark, as markdown shows it."""
+    written as that mark, as markdown shows it, and each line ending a line
+    feed."""
     def one(m):
         ch = html.unescape(m.group(0))
         return ch if ch in DOUBLE or ch in SINGLE else m.group(0)
-    return _REFERENCE.sub(one, text or "")
+    text = re.sub("\r\n|[\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]", "\n", text or "")
+    return _REFERENCE.sub(one, text)
 
 
 def words(text: str) -> int:
@@ -82,6 +91,14 @@ def _single_kind(text: str, i: int) -> str:
     if before.isalnum() and after.isalnum():
         if after.isupper() and before.isalpha() and i > 1 and text[i - 2].isalpha():
             return "mark"
+        if after.isupper() or re.match(r"(s|t|d|m|ll|re|ve)(?![^\W_])", text[i + 1:], re.IGNORECASE):
+            return "apostrophe"         # "Côte d'Ivoire", "don't", "OCBC's"
+        end = text.find("\n", i)
+        for j in range(i + 1, len(text) if end < 0 else end):
+            closes = text[j] in MAY_BE_APOSTROPHE and not text[j - 1].isspace() \
+                and not (j + 1 < len(text) and text[j + 1].isalnum())
+            if closes and words(text[i + 1:j]) >= 3:
+                return "mark"           # "wrote'the bank will cut ... next year'"
         return "apostrophe"
     if before in "sS" and not after.isalnum():
         return "possessive"
@@ -98,8 +115,9 @@ FAMILIES = ['"“”„‟＂″‶⹂❝❞❠\U0001f676\U0001f677\U0001f678', 
             "'‘’＇‚‛", "‹›", "❛❜❟", "❮❯"]
 
 
-def _paired(text: str, lo: int, hi: int, marks, possessive_closes: bool) -> list[str]:
-    """The passages these marks show in text[lo:hi], paired in order."""
+def _paired(text: str, lo: int, hi: int, marks, possessive_closes: bool) -> list[tuple[int, int]]:
+    """(start, end) of the passages these marks show in text[lo:hi], paired in
+    order: from just after the opening mark to the closing mark, or to hi."""
     out, start = [], None
     for i in range(lo, hi):
         if text[i] not in marks:
@@ -115,16 +133,16 @@ def _paired(text: str, lo: int, hi: int, marks, possessive_closes: bool) -> list
             if kind == "apostrophe" or (kind == "possessive" and not possessive_closes):
                 continue
         if start is not None:
-            out.append(text[start + 1:i])
+            out.append((start + 1, i))
             start = None
         elif kind == "mark":
             start = i
     if start is not None:
-        out.append(text[start + 1:hi])
+        out.append((start + 1, hi))
     return out
 
 
-def _passages_in(text: str, lo: int, hi: int) -> list[str]:
+def _passages_in(text: str, lo: int, hi: int) -> list[tuple[int, int]]:
     """Every way a reader may pair the marks here: all the double ones in order,
     all the single ones, each family on its own; a possessive read both as
     closing a passage and as a possessive inside one."""
@@ -152,12 +170,12 @@ def _blockquoted(lines: list[str]) -> list[str]:
     return out
 
 
-def shown_passages(text: str) -> list[str]:
-    """Every passage a reader sees quoted: in quote marks, line by line and
-    paragraph by paragraph, and in a blockquote."""
+def marked_spans(text: str) -> list[tuple[int, int]]:
+    """(start, end) in as_shown(text) of every passage a reader sees in quote
+    marks, line by line and paragraph by paragraph."""
     text = as_shown(text)
-    blocks, offset, lines = [], 0, text.split("\n")
-    for line in lines:
+    blocks, offset = [], 0
+    for line in text.split("\n"):
         blocks.append((offset, offset + len(line)))
         offset += len(line) + 1
     paragraph = []
@@ -168,7 +186,39 @@ def shown_passages(text: str) -> list[str]:
         if paragraph:
             blocks.append((paragraph[0][0], paragraph[-1][1]))
         paragraph = []
-    return [p for lo, hi in blocks for p in _passages_in(text, lo, hi)] + _blockquoted(lines)
+    return [span for lo, hi in blocks for span in _passages_in(text, lo, hi)]
+
+
+def quoted_positions(text: str) -> list[bool]:
+    """For each character of as_shown(text): whether a reader sees it quoted,
+    in quote marks in any of the readings above or in a blockquote."""
+    text = as_shown(text)
+    out = [False] * len(text)
+    for s, e in marked_spans(text):
+        out[s:e] = [True] * (e - s)
+    at = 0
+    lines = text.split("\n")
+    starts = []
+    for line in lines:
+        starts.append(at)
+        at += len(line) + 1
+    for k, line in enumerate(lines):
+        m = _BLOCKQUOTE.match(line)
+        if not m or _ASIDE.match(m.group(1)):
+            continue
+        end = k + 1
+        while end < len(lines) and not _NOT_JOINED.match(lines[end]):
+            end += 1
+        s, e = starts[k] + m.start(1), starts[end - 1] + len(lines[end - 1])
+        out[s:e] = [True] * (e - s)
+    return out
+
+
+def shown_passages(text: str) -> list[str]:
+    """Every passage a reader sees quoted: in quote marks, line by line and
+    paragraph by paragraph, and in a blockquote."""
+    text = as_shown(text)
+    return [text[s:e] for s, e in marked_spans(text)] + _blockquoted(text.split("\n"))
 
 
 def in_quote_marks(text: str, phrase: str) -> bool:

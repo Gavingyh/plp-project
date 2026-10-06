@@ -98,17 +98,17 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:1617` | `class Conversation:` |
-| state fields | `chatbot/agent.py:1623` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:1627` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:1519` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:1532` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:647` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:807` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:1991` | `class Conversation:` |
+| state fields | `chatbot/agent.py:1997` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:2001` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:1893` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:1906` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:696` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:843` | `def answer_has_unverified_citation(self, answer: str)` |
 | intent | `chatbot/intent.py:106` | `def classify_intent(question: str` |
 | reply_for | `chatbot/intent.py:125` | `def reply_for(intent` |
-| guards | `chatbot/guards.py:314` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
-| intent and model_answer kept | `chatbot/agent.py:1525` | `intent: str` |
+| guards | `chatbot/guards.py:311` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
+| intent and model_answer kept | `chatbot/agent.py:1899` | `intent: str` |
 | tools | `chatbot/tools.py:646` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |

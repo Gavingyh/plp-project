@@ -1154,9 +1154,24 @@ whether slower, fuller answers are worth it on the demo Mac.
   the source says "unimpressive"); pieces now count only as whole words, and
   the remaining quotation mark ornaments (❟ ❠ ❮ ❯) are read. Three of the
   ninth's ordinary dates and the seventh's merged nested quotes stay recorded
-  limits (evidence page, Known limits). The replay against f511f83 prints
-  what it printed on 5 Oct.
+  limits (evidence page, Known limits). The replay then compared with
+  f511f83 (on 5 Oct, with 31c7e98, where one answer's quotes differed) and
+  printed a new line, the answers in which strip mode takes quote marks off
+  words it keeps: two `phi4-mini` answers written as JSON, where an empty
+  pair (`"aspect": ""`) loses its marks, which were also the two answers
+  differing from f511f83's checks.
+- **Chatbot grounding checks, the fixes after the tenth validation** (not
+  merged): strip mode cuts a citation that would vouch for words no search
+  returned (words that lost their quote marks, or a word or two in quote
+  marks, which lose theirs too), every check reads a carriage return or
+  other line separator as a line feed, a left-hand mark is never an
+  apostrophe, and a figure in retrieved text vouches only for itself among
+  its words (DESIGN decisions 25 and 26, evidence page). Against 03dc631's
+  checks no strip result of the 670 recorded answers changes, and seven
+  answers now flag a figure the model took from a retrieved sentence and
+  wrote in other words, false alarms the evidence page lists.
 
 **Needs a human (6 Oct):** re-run `/validate` on `fix/chatbot-answers`
 before merging it; the Grounded chatbot claim's wording is still a team
-decision on the to-do.
+decision on the to-do; and whether the seven new figure false alarms (a
+retrieved figure the model rewords is now checked) are an acceptable cost.

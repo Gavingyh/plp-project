@@ -219,11 +219,12 @@ def _without_tool_dates(text: str, tool_results) -> str:
 
 
 # What in a tool result may vouch for an answer (an allow-list, 4 Oct 2026):
-# numeric data fields, and the text of retrieved evidence. Everything else a
-# tool returns is the system's own wording or the model's arguments echoed
-# back (a search query, a window, a "reason" quoting them), timestamps, ids
-# and links, whose digits are not figures. A skip-list of such fields missed
-# new ones twice; an allow-list can't.
+# numeric data fields anywhere, and the text of retrieved evidence for a figure
+# written with its words around it (unverified_numbers). Everything else a tool
+# returns is the system's own wording or the model's arguments echoed back (a
+# search query, a window, a "reason" quoting them), timestamps, ids and links,
+# whose digits are not figures. A skip-list of such fields missed new ones
+# twice; an allow-list can't.
 EVIDENCE_TEXT_KEYS = frozenset({"text"})        # a retrieved sentence's own words
 # The retrieval score: true as written ("relevance of at least 0.58"), but not
 # a figure about a bank, so never read as a percentage or a ratio ("81%").
@@ -267,27 +268,23 @@ def _count_ratios(obj, out: list[float]) -> None:
             _count_ratios(v, out)
 
 
-def _collect_numbers(obj, out: list[float], text_out: list[float], key=None) -> None:
-    """Numeric data fields into `out`; figures written inside retrieved evidence
-    (a sentence's "$0.54 per share") into `text_out`, which may be quoted but
-    are not used to derive percentages. Other strings vouch for nothing."""
+def _collect_numbers(obj, out: list[float], as_written: list[float], key=None) -> None:
+    """Numeric data fields into `out`; those that vouch only as written, not
+    as a percentage (NON_DATA_NUMBER_KEYS), into `as_written`. Strings vouch
+    for nothing here: a figure written inside a retrieved sentence ("$0.54 per
+    share") vouches only for itself, written with that sentence's words around
+    it (unverified_numbers; until the tenth validation, 6 Oct 2026, it vouched
+    for the same number anywhere in the answer, a count of posts too)."""
     if isinstance(obj, bool):
         return
     if isinstance(obj, (int, float)):
-        (text_out if str(key) in NON_DATA_NUMBER_KEYS else out).append(float(obj))
-    elif isinstance(obj, str):
-        if is_evidence_text_key(key):
-            for m in _NUMBER.finditer(obj):
-                try:
-                    text_out.append(_parse(m.group(0))[0])
-                except ValueError:
-                    pass
+        (as_written if str(key) in NON_DATA_NUMBER_KEYS else out).append(float(obj))
     elif isinstance(obj, dict):
         for k, v in obj.items():
-            _collect_numbers(v, out, text_out, k)
+            _collect_numbers(v, out, as_written, k)
     elif isinstance(obj, (list, tuple)):
         for v in obj:
-            _collect_numbers(v, out, text_out, key)
+            _collect_numbers(v, out, as_written, key)
 
 
 def _parse(token: str) -> tuple[float, int, bool]:
@@ -317,30 +314,39 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
     A figure counts as verified if it equals a tool value at the precision it
     is written with, or that value times 100 (a score or share written as a
     percentage), or one tool value as a percentage of another ("12% of
-    mentions were positive"), or a figure written inside retrieved text (a
-    quoted "$0.54 per share"). Years, dates with their year (ISO or written
-    out), a date without its year that matches one a tool returned, list
-    markers, window lengths, numbers under 10 and numbers the user typed are
-    not checked.
+    mentions were positive"). A figure written as a retrieved sentence writes
+    it, among three words in a row that the sentence holds word for word
+    ('"DBS pays $0.54 per share"', in quote marks or not), is that sentence's
+    own and not checked; a figure in retrieved text vouches for nothing else
+    (the tenth validation, 6 Oct 2026).
+    Years, dates with their year (ISO or written out), a date without its
+    year that matches one a tool returned, list markers, window lengths,
+    numbers under 10 and numbers the user typed are not checked.
     """
-    text = answer or ""
+    # chatbot.agent, which reads quotes as strip mode does, imports this module, so
+    # it is imported here, when the check runs. It reads the answer with its line
+    # endings and character references as the other checks do.
+    from chatbot.agent import _decoded_marks, evidence_figures
+    text = _decoded_marks(answer)
+    for s, e in evidence_figures(text, tool_results):       # the retrieved sentence's own figures
+        text = text[:s] + " " * (e - s) + text[e:]
     for pat in _STRIP_FIRST:
         text = pat.sub(" ", text)
     text = _without_tool_dates(text, tool_results)
     question_numbers = {m.group(0).rstrip("%").replace(",", "") for m in _NUMBER.finditer(question or "")}
 
     values: list[float] = []
-    quoted: list[float] = []
-    _collect_numbers(tool_results, values, quoted)
+    as_written: list[float] = []
+    _collect_numbers(tool_results, values, as_written)
     values = list({round(v, 10) for v in values})
-    candidates = values + [v * 100 for v in values] + quoted
-    # A percentage is a fraction times 100, a field named as a percentage, a
-    # ratio of two counts (below) or a figure in retrieved text: 0.12 written
-    # as "0.12%" is a hundred times too small, and a count of 23 written as
-    # "23%" is not a share (accepting any value above 1 let counts pass, 4 Oct).
+    candidates = values + [v * 100 for v in values] + as_written
+    # A percentage is a fraction times 100, a field named as a percentage or a
+    # ratio of two counts (below): 0.12 written as "0.12%" is a hundred times too
+    # small, and a count of 23 written as "23%" is not a share (accepting any
+    # value above 1 let counts pass, 4 Oct).
     percent_fields: list[float] = []
     _percent_fields(tool_results, percent_fields)
-    percent_candidates = [v * 100 for v in values] + percent_fields + quoted
+    percent_candidates = [v * 100 for v in values] + percent_fields + as_written
     ratios: list[float] = []
     _count_ratios(tool_results, ratios)
 

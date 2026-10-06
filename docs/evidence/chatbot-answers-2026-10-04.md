@@ -119,11 +119,12 @@ trimmed run, where one question timed out):
 | minutes for the 32 questions | 16 | 14 | 29 | 27 | 28 | 22 | 27 |
 
 The before run was not timed per answer: its 16 minutes are its span in the
-evaluation's log, `data/logs/plp.log` on 4 Oct (since rotated, on this Mac, to
-`data/logs/plp.log.2`, which git doesn't track). Its first question was logged
-at 13:14:23 and its results written at 13:30:09, 946 seconds; by the times
-each question was logged, the 26 answers the model wrote took 935 of them,
-about 36 seconds each, and the six fixed replies 12.
+evaluation's log, `data/logs/plp.log` on 4 Oct (since rotated, on this Mac,
+to `data/logs/plp.log.3` by 6 Oct; git doesn't track the rotated files). Its
+first question was logged at 13:14:23 and its results written at 13:30:09,
+946 seconds; by the times each question was logged, the 26 answers the model
+wrote took 935 of them, about 36 seconds each on average and 29 at the
+median, and the six fixed replies 12.
 
 What the kept version does better than before: no labelled sections, no
 "out of 1", no filler, no raw ids, and most scores read with their scale and
@@ -198,12 +199,15 @@ before the next.
 
 ## After validation
 
-Nine validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
-and `docs/validation/2026-10-05-chatbot-answers-*-check.md`) each found gaps
+Ten validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`,
+`docs/validation/2026-10-05-chatbot-answers-*-check.md` and
+`docs/validation/2026-10-06-chatbot-answers-tenth-check.md`) each found gaps
 the change had opened in the checks, or old ones it had not closed. After the
 ninth, the project owner chose to stop chasing quote shapes: strip mode, the
 default, now shows only quotes a search returned, whatever the detectors miss
-(DESIGN decision 26). The checks as they stand:
+(DESIGN decision 26). The tenth found gaps at that design's edges: citations
+left on words that lost their quote marks, line endings, marks glued to the
+word before them, and figures in retrieved text. The checks as they stand:
 
 - **Quotes** are found by two detectors together, as each catches shapes the
   other misses. A pattern first finds a quote in curly or angle marks by its
@@ -249,56 +253,95 @@ default, now shows only quotes a search returned, whatever the detectors miss
   sure"'). Strip mode never reads them as a quote: they are the model's own
   words, and the marks around them come off (below).
 - **Strip mode** first removes the quotes the detectors find that no search
-  returned, each with the citation right after it, the links and sentence
-  ids no search returned, and the words between two removed quotes on one
-  line when no kept quote stands between them; it runs again on its result
-  until nothing changes, at most ten times, and a note says evidence was
-  removed. Without a search, if the answer cites evidence no earlier search
+  returned, each with the citation right after it, the links and sentence ids
+  no search returned, and the words between two removed quotes on one line
+  when no kept quote stands between them; it runs again on its result until
+  nothing changes, at most ten times, and a note says evidence was removed. A
+  removed quote that wraps a line leaves its line break and what opens the
+  next line ("1. ", "- ", "> "). Where a reader may read a removed quote's
+  mark as opening the words after it, no citation is left to vouch for them:
+  the opening mark of a quote left open that the detectors end at the next
+  quote stays, for the next step to take off; after a closing mark with words
+  glued to it, the citation that ends them on that line goes with the quote;
+  and so does a citation after the words of a passage that one of the removed
+  quote's marks delimits but that runs on outside it ("'One user said ‚...‘
+  invented words', [DBS, ...]", where the detectors end the quote at ‘). The
+  words stay. Without a search, if the answer cites evidence no earlier search
   returned, it removes the evidence section, any later line holding a quote,
-  link or sentence id, and any quote, link or id in the first paragraph.
-  Then it takes the quote marks off everything else a
-  search doesn't vouch for, keeping the words: every double mark, every
-  single mark but an apostrophe ("OCBC's") or a possessive after an s ("the
-  banks' fees"), and every blockquote ">". The marks it reads are those
-  Unicode lists as quotation marks (" “ ” « » „ ‟ ' ‘ ’ ‚ ‛ ‹ › 「 」 ＂ and
-  the like), the quotation mark ornaments (❝ ❞ ❛ ❜ ❮ ❯ and the like) and the
-  double primes (″ ‶), each also written as a character reference
-  ("&quot;", "&#8220;"). It keeps the marks of a quote the
-  detectors find that one search result, this turn's or an earlier turn's,
-  holds piece by piece, cut at an ellipsis, in order, pieces of any length
-  but each as whole words ("... impressive" is no piece of "unimpressive"),
-  or that is a reading or a real topic name a tool returned; of two marks
-  around such text that the detectors read as two quotes ('„What do you
-  think of "DBS Robot" with the 0.5% fees?“'); of a word or two in matching
-  marks with no space just inside them ('rated "buy"', '„Tier 1“', '»DBS«',
-  "'hold'"); of an inch mark; and of an aside ("> **Note:** ..."). A mark
-  between two words gives way to a space ("wrote'OCBC" becomes "wrote
-  OCBC"), a citation right after a mark taken off goes too, as it would
-  vouch for the model's own words, and a line left holding nothing goes.
-  Last, it reads the answer as a reader pairs the marks, in order, in each
-  line and in each paragraph (markdown shows a paragraph's lines as one):
-  double marks first with second, third with fourth, an inch mark aside
-  unless it closes a word or two opened with a straight mark ('"Tier 1"');
-  single marks alike, a possessive only closing a passage open before it; a
-  mark left over opening a passage to the end; and each family of marks
-  that look alike (" “ ” „, or ‹ ›) also on its own. A line where that shows
-  a passage of three or more words no search returned loses all its quote
-  marks but inch marks, apostrophes and possessives, a blockquote line whose
-  blockquote, with the lines markdown joins to it, shows such a passage
-  loses its ">", and the whole runs again until nothing changes. So after
-  strip mode every passage of three or more words a reader sees in quote
-  marks is text a search returned, word for word, or the tools' own
-  wording; `tests/test_chatbot_strip_property.py` checks this on
-  3,000 made-up answers, after a search and without, with a fixed seed, and
-  `tests/quote_marks.py` reads them as a reader does, written apart from the
-  code it checks. The flag strip mode returns, whether a link, a sentence id
-  or a passage shown is still unverified, has nothing left to raise.
+  link or sentence id, and any quote, link or id in the first paragraph. Then
+  it takes the quote marks off everything else a search doesn't vouch for,
+  keeping the words: every double mark, every single mark but an apostrophe
+  ("OCBC's") or a possessive after an s ("the banks' fees"), and every
+  blockquote ">". A left-hand mark (‘) is neither; a straight or right-hand
+  one between two letters is an apostrophe unless it opens a quote glued to
+  the word before: a capital after it and two letters before it
+  ("wrote'OCBC"), or no contraction or possessive ending after it and a mark
+  later on its line that closes three or more words ("wrote'the bank will cut
+  its dividend next year'"); one letter before a capital is a name's ("Côte
+  d'Ivoire"). The marks it reads are those Unicode lists as quotation marks ("
+  “ ” « » „ ‟ ' ‘ ’ ‚ ‛ ‹ › 「 」 ＂ and the like), the quotation mark ornaments
+  (❝ ❞ ❛ ❜ ❮ ❯ and the like) and the double primes (″ ‶), each also written as
+  a character reference ("&quot;", "&#8220;"). It keeps the marks of a quote
+  the detectors find that one search result, this turn's or an earlier turn's,
+  holds piece by piece, cut at an ellipsis, in order, pieces of any length but
+  each as whole words ("... impressive" is no piece of "unimpressive"), or
+  that is a reading or a real topic name a tool returned; of two marks around
+  such text that the detectors read as two quotes ('„What do you think of "DBS
+  Robot" with the 0.5% fees?“'); of a word or two in matching marks with no
+  space just inside them ('rated "buy"', '„Tier 1“', '»DBS«', "'hold'"),
+  unless a citation vouches for them (below); of an inch mark; and of an aside
+  ("> **Note:** ..."). A mark between two words gives way to a space
+  ("wrote'OCBC" becomes "wrote OCBC"), and a line left holding nothing goes.
+  Then it reads the answer as a reader pairs the marks, in order, in each line
+  and in each paragraph (markdown shows a paragraph's lines as one): double
+  marks first with second, third with fourth, an inch mark aside unless it
+  closes a word or two opened with a straight mark ('"Tier 1"'); single marks
+  alike, a possessive only closing a passage open before it; a mark left over
+  opening a passage to the end; and each family of marks that look alike (" “
+  ” „, or ‹ ›) also on its own. A line where that shows a passage of three or
+  more words no search returned loses all its quote marks but inch marks,
+  apostrophes and possessives, a blockquote line whose blockquote, with the
+  lines markdown joins to it, shows such a passage loses its ">", and the
+  whole runs again until nothing changes. Then it cuts each citation that
+  would vouch for words no search returned. A citation (as cite_as writes it,
+  a numbered marker such as "[1]" or "[E1]", another bracket naming a sentence
+  id, or an id written bare), or a run of them, vouches for what stands before
+  it in its paragraph or list item, back to the citation before it or a quote
+  a search returned; and, where no word stands there and no such quote ends
+  there, or a colon follows it ('[DBS, ...]: ...'), for what follows it, up to
+  the next of these. Where that holds words a reader saw in quote marks, in
+  the answer strip mode read or in its result, or words before a mark taken
+  off that opens no words ('... for sure” [DBS, ...]'), and they are no text a
+  search returned, or holds a word or two in quote marks no search returned,
+  the citation goes, with brackets or a label left holding nothing ("(Source:
+  ...)"), and that word or two loses its marks: 'One user called OCBC "a scam"
+  [DBS, ...]' shows "One user called OCBC a scam", while '"slow" [DBS, ...]'
+  stays as written when a search returned "slow". The words are read on strip
+  mode's result, with where each one stood in what strip mode read, so nothing
+  taken off on the way is missed; this and the steps above run in turn until
+  nothing changes, and no note is added when only a citation goes. So after
+  strip mode every passage of three or more words a reader sees in quote marks
+  is text a search returned, word for word, or the tools' own wording, and no
+  citation vouches for words that stood in quote marks and are not;
+  `tests/test_chatbot_strip_property.py` checks both on 3,000 made-up answers,
+  after a search and without, with a fixed seed (other seeds by hand,
+  `STRIP_PROPERTY_SEEDS=1-60`), and `tests/quote_marks.py` reads them as a
+  reader does, written apart from the code it checks. The flag strip mode
+  returns, whether a link, a sentence id or a passage shown is still
+  unverified, has nothing left to raise.
+- **Line endings**: every check reads a carriage return, alone or before a
+  line feed, as a line feed, as markdown does, and, to be safe, so the other
+  characters Python breaks a line at (U+2028, U+2029, \x0b, \x0c, \x85 and
+  \x1c to \x1e); strip mode returns line feeds, and off mode returns the
+  answer as written (the tenth validation: a blockquote after a lone carriage
+  return passed both, unflagged).
 - **Off mode** changes nothing. It flags an answer that cites a link or
   sentence id no search returned, holds a quote the detectors find that no
   search returned (without a search this turn, any quote an earlier turn's
-  search didn't return), or holds quote marks strip mode would take off. A
-  word or two in quote marks, an inch mark, an apostrophe, a quote a search
-  returned and a reading or topic name raise nothing. A double mark the
+  search didn't return), or holds quote marks or a citation strip mode would
+  take off. A word or two in quote marks that no citation vouches for, an
+  inch mark, an apostrophe, a quote a search returned and a reading or topic
+  name raise nothing. A double mark the
   detectors can't place, which until the ninth validation flagged the answer
   and took its line in strip mode, is now only counted by the replay.
 - **A quote is compared** with what the searches returned piece by piece,
@@ -316,6 +359,15 @@ default, now shows only quotes a search returned, whatever the detectors miss
   quoted sentence has it (one stored sentence has a "[1]" footnote).
   Through the API, history drops the markers and the list of sources the
   reader saw.
+- **A figure in retrieved text** vouches only for itself, written with the
+  sentence's words around it: the figure check takes a figure for a
+  retrieved sentence's own where three words in a row holding it, emphasis
+  marks aside, stand in that sentence word for word, in quote marks or not
+  ('"DBS pays $0.54 per share"', or the sentence copied after its citation).
+  Any other figure must match a numeric field, or a value worked out from
+  them as before (the tenth validation: with "I paid 37 dollars in fees"
+  retrieved, "DBS had 37 negative posts" passed). A word or two in quote
+  marks ('"37"') vouches for nothing.
 - **A date without its year** is skipped by the figure check only when a
   tool's date field (`data_runs_to`, an evidence item's date) has that month
   and day. After a month, such a day, ordinal or not, is a date only where it
@@ -342,10 +394,12 @@ default, now shows only quotes a search returned, whatever the detectors miss
   "no.", "ca." and a few more). Anywhere else it is a figure to check: with
   data to 25 September, "In September 25 customers complained", "September
   25th sentences", "In September 25, 31 and 40 posts", "September 25, vs. 40
-  in August", "In September 25 (out of 40) posts", "September 25 (45
-  posts).", "September 25 (approx.)." and "September 25 for DBS against 40
-  for UOB" are counts to check, and "Data runs to September 25 for DBS" a
-  date. A share after the day ("25 per cent", "25 to 30% of posts") means
+  in August", "In September 25 (out of 40) posts", "September 25 (approx.)."
+  and "September 25 for DBS against 40 for UOB" are counts to check, and
+  "Data runs to September 25 for DBS" a date. "September 25 (45 posts)." is
+  checked too: there the day is a date, flagged as a false alarm the checks
+  accept, as a bracket holding a digit may hold a count (Known limits). A
+  share after the day ("25 per cent", "25 to 30% of posts") means
   both numbers are checked, and so are both ends of a range not read as a
   date. A day followed by a decimal, a thousands group or "%" is never a
   date. A date in the model's own search query, a link or a quoted sentence
@@ -487,13 +541,42 @@ What each validation found, in short:
    a blockquote in a nested list item, the model's own copy of the harness's
    heading, and a piece of a quote found inside a longer word ('"OCBC's
    results are ... impressive"' when the source says "unimpressive").
+10. The tenth (6 Oct): a cited word or two in quote marks that no search
+   returned ('One user called OCBC "a scam" [DBS, ...]') passed strip and off
+   mode unflagged, and read as a cited quote once numbered (also on `main`);
+   an invented passage that lost its marks kept a real citation after a full
+   stop, a comma, a dash, a bracket or "one user wrote" ('One user: ‹...›.
+   [DBS, ...]', from 03dc631), and read as sourced prose; a blockquote after
+   a lone carriage return ('He said\r> ...') passed strip mode and
+   `answer_turn` unchanged, and off mode didn't flag it (also on `main`); an
+   opening mark glued to the word before was read as an apostrophe
+   ("wrote‘the bank will ...’", "wrote'the bank ...'"); and a number in any
+   retrieved sentence vouched for the same number used as a count ("I paid
+   37 dollars in fees" for "37 negative posts", also on `main`). It also
+   found this page comparing a mean with a median, calling "September 25 (45
+   posts)" both a count and a date, and quoting the replay without a line it
+   prints, and the RUNBOOK and HANDOFF out of date; all are fixed. The
+   changes are the rules above: every line ending read as a line feed, a
+   left-hand mark never an apostrophe, a straight one between two letters a
+   quote's opening where a mark later on its line closes three or more
+   words, a citation cut where it would vouch for words no search returned,
+   and a figure in retrieved text vouching only for itself among its words.
+   Checking them on made-up answers (the property test, extended to these
+   shapes, at its fixed seed and at seeds 1 to 60) found more ways for a
+   citation to keep vouching for invented words, each then handled: a quote
+   kept inside a passage left open before it, a possessive read as closing a
+   passage, a mark taken off in a later pass, a removed quote that took a
+   line break or a list marker with it, and a removed quote whose mark also
+   opened the words after it. They are tested in `tests/test_chatbot_harness.py`
+   (after the tenth validation) and `tests/test_chatbot_strip_property.py`.
 
 Each finding has a test, in `tests/test_validate_chatbot_*.py` or, for two of
 the fifth's ("Sept 25-26" read as a date, and the neutral share), in
 `tests/test_chatbot_reader.py`. Two stay marked as expected to fail, as
 recorded limits (below): the seventh's merged nested quotes, and three of the
 ninth's ordinary dates ("September 25 (45 posts).", "Data covers Sept 25-26
-for DBS.", "Data to Sept 25 for all three banks."). Since decision 26 a test
+for DBS.", "Data to Sept 25 for all three banks."); every test of the tenth's
+passes. Since decision 26 a test
 of an invented quote passes when the quote is removed, flagged, or no longer
 in quote marks (`tests/quote_marks.py`); the earlier validations' tests whose invented words
 now stand outside quote marks say so in a comment, as do the tests of
@@ -513,13 +596,15 @@ words it keeps, and names them. Its first line says how many results files
 it read and how many of those git doesn't track. With `--against <commit>`
 it also compares every answer's checks with that commit's: it extracts the
 commit's files into a temporary folder and runs its code there over the same
-results files, changing nothing in the repository. On 6 Oct, after the
-ninth validation's fixes (and the merge of `main`, which added no results
-file), `HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py
---against f511f83` printed:
+results files, changing nothing in the repository; on a machine holding
+results files git doesn't track, a line on stderr says how many it left
+out. On 6 Oct, after the tenth validation's fixes,
+`HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/replay_checks.py --against
+03dc631` printed, in a terminal on this Mac, which holds five such files:
 
 ```
 Results files read: 36; not tracked by git: 0
+(5 results files here are not tracked by git and were not read; --include-untracked reads them)
 Gold-set runs, flags now against those recorded when the run was made:
   defaults_v2: 26 answers; figure flags changed none; citation flags changed none
   reader_v2: not tracked by git, so not read (--include-untracked reads it)
@@ -542,29 +627,44 @@ Every recorded answer: 540
   where strip mode takes quote marks off words it keeps: 2
     phi4-mini_latest/lookup-2
     phi4-mini_latest/lookup-4
-  differing from the checks of f511f83: 2
-    phi4-mini_latest/lookup-2: strip
-    phi4-mini_latest/lookup-4: strip
+  differing from the checks of 03dc631: 5
+    llama3.1_8b_rerun/evidence-1: figures [] -> ['17']; strip_figures [] -> ['17']
+    llama3.2_3b_10aspects_2026-09-30/evidence-2: figures [] -> ['20%']; strip_figures [] -> ['20%']
+    llama3b_v2/evidence-2: figures [] -> ['20%']; strip_figures [] -> ['20%']
+    llama3b_v2_strip/evidence-2: figures [] -> ['20%']; strip_figures [] -> ['20%']
+    llama8b_v2_strip/evidence-2: figures [] -> ['2.1%']; strip_figures [] -> ['2.1%']
 ```
+
+Against 03dc631's checks five answers change, each in its figure flags and
+nothing else: no strip result, citation flag or quote changes in any of the
+540, and the two answers strip mode takes quote marks off are the same two
+as before (`phi4-mini` answers written as JSON without searching, where an
+empty pair, `"aspect": ""`, loses its marks). Each of the five gives a
+figure from a retrieved sentence in other words, which the figure check no
+longer takes for the sentence's own: "due on the 17th" for "due on 17th"
+(`llama3.1_8b_rerun/evidence-1`), "(20% of lending portfolio)" for "About
+20% of UOB’s lending portfolio" (three answers), and "The NPL ratio at UOB
+is at 2.1%" for "NPL ratio at 2.1%" (`llama8b_v2_strip/evidence-2`). Each
+figure is the sentence's, so each new flag is a false alarm (Known limits).
 
 Five of the seven runs in the tables (`reader_v2`, `reader2_v2`, `reader3_v2`,
 `final_v2` and `mix_v2`) are kept out of git because they quote CNA text, and
 `--include-untracked` adds them on the team's machine that has them: there
-the same command printed `Results files read: 41; not tracked by git: 5` and
+the same command printed `Results files read: 41; not tracked by git: 5`,
 `Every recorded answer: 670`, none holding a mark the detectors can't place,
-the same two answers changed by strip mode, and one flag changed in those
-five runs since they were made: round 1's false alarm on "September 25th"
-(`reader_v2`, `thin-2`), cleared because a tool had returned that date. So
-the seven runs flag what they flagged when they were made, but for that
-false alarm, and the tables above stand. Two runs outside the tables no
-longer flag one answer's analyst shares (`consensus-1`): since 4 Oct the
-figure check works them out from the counts per rating. Against f511f83's
-checks two answers change, and none of their flags or figures: both are
-answers `phi4-mini` wrote as JSON without searching, which strip mode
-already cut down to a few JSON fragments, and in each an empty pair of
-quote marks, `"aspect": ""`, now loses its marks (`"aspect": `), as an empty
-pair is no word in quote marks. In no other recorded answer does strip mode
-take quote marks off words it keeps.
+the same two answers changed by strip mode, and seven answers differing from
+03dc631's checks: the five above, and two of these runs' answers that give a
+results report's figure in other words, a non-performing loan ratio that
+"was at 0.9%" (`reader_v2`, `lookup-2`) and a "16% increase" in wealth
+income (`reader2_v2`, `lookup-6`), now flagged. Against the flags recorded
+when they were made, those five runs differ in those two answers and in
+round 1's false alarm on "September 25th" (`reader_v2`, `thin-2`), cleared
+because a tool had returned that date. So with today's checks the tables'
+row of answers with a figure flagged would read 4 for round 1, as recorded
+(one cleared, one new), and 2 for round 2 instead of 1; the other runs, and
+every other row, stand as recorded. Two runs outside the tables no longer
+flag one answer's analyst shares (`consensus-1`): since 4 Oct the figure
+check works them out from the counts per rating.
 
 As no real answer shows more, here is what strip mode now does with
 made-up answers from the tests, after a search that returned "the app is
@@ -575,7 +675,10 @@ slow to load at night" (cited as `[DBS, ...]`):
 | `One user: "the app is slow to load at night" [DBS, ...]. Another: "OCBC will cut its dividend next year for sure" [DBS, ...]` | `One user: "the app is slow to load at night" [DBS, ...]. Another:` and the note that evidence was removed, as before |
 | `“the app is slow to load at night”OCBC will cut its dividend next year for sure.` | the same: the real quote keeps its marks, and the glued words stand outside them |
 | `"the app is slow to load at night" [DBS, ...] "`, and on the next line `OCBC will cut its dividend next year for sure` | the same without the mark at the end of the first line |
-| `"x"OCBC will cut its dividend next year for sure" [DBS, ...]` | `"x"OCBC will cut its dividend next year for sure`: the last mark goes, and the citation after it |
+| `"x"OCBC will cut its dividend next year for sure" [DBS, ...]` | `x OCBC will cut its dividend next year for sure`: the marks go, and the citation that vouches for the words (until the tenth validation `"x"` kept its marks) |
+| `One user called OCBC "a scam" [DBS, ...]` | `One user called OCBC a scam` |
+| `One user: ‹OCBC will cut its dividend next year for sure›. [DBS, ...]` | `One user: OCBC will cut its dividend next year for sure.` |
+| `Users call the app "slow" [DBS, ...].` | the same: a search returned "slow" |
 | `Users report 'long queue times' at branches.` | `Users report long queue times at branches.` |
 | `Rated "buy" by most; a 6" phone; the banks' fees.` | the same |
 
@@ -584,25 +687,43 @@ sees in them is text a search returned. What is left:
 
 - An invented quote whose marks come off stays as the model's own words,
   often after "One user wrote", where a reader may still take it for a
-  quote; the citation after it goes, the sentence stays. The checks don't
-  read paraphrase: words the model gives a source without quote marks
-  pass, as on `main`.
+  quote; the citation that vouches for it goes, the sentence stays. The
+  checks don't read paraphrase: words the model gives a source without
+  quote marks pass, as on `main`.
+- A citation vouches for its paragraph or list item back to the citation
+  before it or a quote a search returned, so it goes for more than the
+  words right before it: a correct paraphrase's citation goes when a word or
+  two in quote marks that no search returned stands before it there ('Users
+  call the app "clunky" and slow [DBS, ...].' shows "Users call the app
+  clunky and slow."), and a real quote's citation goes when a colon follows
+  it and words that lost their quote marks follow the colon. Words written
+  after a quote's citation without quote marks are not read: the citation
+  stays when invented words follow it unquoted.
 - A term of three or more words in quote marks that no search returned loses
   its marks in strip mode ("DBS's 'customer first digital approach'" becomes
   "DBS's customer first digital approach"), and flags the answer in off
   mode.
-- The reader the guarantee assumes reads a straight mark after a digit as an
-  inch mark ('5"') unless it closes a word or two, a single mark between two
-  letters as an apostrophe (but one before a capital with two letters before
-  it, "wrote'OCBC"), and a single mark after an s as a possessive. So two
-  inch marks around words ('by 5" ... to 6"') or a quote opened with a mark
-  between two lower-case letters ("wrote'ocbc ...") are no quote to it.
-  Words are runs of letters and digits, a Chinese or Japanese character
-  counting as one. A blockquote line that opens with an aside's label (">
-  **Note:** ...") keeps its ">". Characters that only look like quote marks
-  and are none (a modifier letter such as ʺ or ʼ, the Hebrew gershayim ״, a
-  prime ′) are not read as quote marks: words between them keep them,
-  unflagged.
+- The reader the guarantee assumes pairs marks in order, whatever their shape,
+  so an opening mark that comes while a passage is open closes it ('"...
+  fees?_“UOB will ...' closes at “, leaving the words after it, and a citation
+  after them, outside quote marks). It reads a straight mark after a digit as
+  an inch mark ('5"') unless it closes a word or two; a straight or right-hand
+  single mark between two letters as an apostrophe, unless a capital follows
+  with two letters before it ("wrote'OCBC") or no contraction ending follows
+  and a mark later on its line closes three or more words ("wrote'the bank
+  will ...'"); a left-hand mark (‘) never as one; and a single mark after an s
+  as a possessive. So two inch marks around words ('by 5" ... to 6"') are no
+  quote to it; a correct line with such a mark before a closing mark three or
+  more words on loses its marks ("ma'am, the banks' fees are high" shows "ma
+  am, the banks fees are high"); a quote glued to a one-letter word and
+  opening with a capital ("a'The bank ...'") reads as a name's apostrophe
+  ("Côte d'Ivoire"); and a left-hand mark typed for an apostrophe ("don‘t")
+  comes off ("don t"). Words are runs of letters and digits, a Chinese or
+  Japanese character counting as one. A blockquote line that opens with an
+  aside's label ("> **Note:** ...") keeps its ">". Characters that only look
+  like quote marks and are none (a modifier letter such as ʺ or ʼ, the Hebrew
+  gershayim ״, a prime ′) are not read as quote marks: words between them keep
+  them, unflagged.
 - A quote cut at an ellipsis keeps its marks when each piece stands in one
   returned text, in order, as whole words, so an ellipsis can drop words
   that change its sense ("the results are not impressive" quoted as '"the
@@ -629,6 +750,11 @@ sees in them is text a search returned. What is left:
   marks strip mode would take off flag the answer as well.
 - A marker range the model writes ("[12-45]") is dropped from what the
   reader sees; its figures are still checked.
+- A figure the model takes from a retrieved sentence but writes in other
+  words ("due on the 17th" for "due on 17th", "a 16% increase" for "grew
+  16%") is checked like any other and flagged unless a numeric field
+  matches: seven of the 670 recorded answers flag such a figure (the replay
+  above).
 - After a month, a returned day is checked unless it reads as a date in one
   of the ways above, so a real date is flagged before any other word ("Data
   covers September 25 in all three banks", "Sept 25/26", "Data covers Sept
@@ -668,8 +794,10 @@ Ask page uses, at about 18:00:
 
 Answers are slower than before on this Mac: the kept version's median is
 61 seconds per answer, and 57 to 82 seconds in the seven dashboard
-questions. Before, the 32 questions took 16 minutes, about 36 seconds for
-each answer the model wrote (the run's log, under Results).
+questions. Before, the 32 questions took 16 minutes: about 36 seconds on
+average for each answer the model wrote, 29 at the median (the run's log,
+under Results); the kept version's answers took 62 on average
+(`data/run/overnight/times_mix_v2.jsonl`).
 
 Ollama's own timings, on three questions asked through `main` and through
 the final round's version (the fuller prompt, every field), show what the
@@ -690,9 +818,9 @@ was not isn't known: with one slot, alternating should have evicted both.
 So the slowdown has two measured parts, reading the longer tool results
 (2.5 to 12 seconds more per answer in that run) and, whenever the prompt
 isn't cached, reading the longer prompt again (14 to 26 seconds); these
-runs don't say how much of the 25-second gap, between the before run's
-average of about 36 seconds an answer and the kept version's median of 61,
-each part makes up. The block run and the window run below used the trimmed version (shorter prompt,
+runs don't say how much of the gap between the before run and the kept
+version, a median of about 29 seconds an answer against 61 (on average 36
+against 62), each part makes up. The block run and the window run below used the trimmed version (shorter prompt,
 fewer fields), started at 16:33: asked as a block, it re-read its prompt
 only for the first question (37.9 seconds, then 0.6 and 0.5).
 

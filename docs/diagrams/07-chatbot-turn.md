@@ -70,24 +70,24 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| intent classifier runs first | `chatbot/agent.py:1536` | `intent = intents.classify_intent(question, state, previous)` |
+| intent classifier runs first | `chatbot/agent.py:1910` | `intent = intents.classify_intent(question, state, previous)` |
 | classifier | `chatbot/intent.py:106` | `def classify_intent(question: str` |
 | fixed reply for the intent | `chatbot/intent.py:125` | `def reply_for(intent` |
-| state and turns passed to the model | `chatbot/agent.py:1548` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
+| state and turns passed to the model | `chatbot/agent.py:1922` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
 | state added to the system prompt | `chatbot/prompts.py:84` | `def with_state(system: str` |
 | last three turns | `config/chatbot.yaml:36` | `turns:        {value: 3}` |
 | tool-call loop, eight calls | `config/chatbot.yaml:22` | `max_tool_iterations: {value: 8}` |
 | loop | `chatbot/backends/ollama_backend.py:84` | `for _ in range(MAX_TOOL_ITERATIONS):` |
 | tool calls? | `chatbot/backends/ollama_backend.py:89` | `tool_calls = message.get("tool_calls") or []` |
 | run the tools | `chatbot/backends/ollama_backend.py:106` | `result_json = tool_executor(name, arguments)` |
-| record calls and results | `chatbot/agent.py:677` | `def execute(self, name: str, tool_input: dict, by: str = "model")` |
+| record calls and results | `chatbot/agent.py:726` | `def execute(self, name: str, tool_input: dict, by: str = "model")` |
 | budget message | `chatbot/backends/ollama_backend.py:113` | `within the tool-call budget` |
-| empty answer check | `chatbot/agent.py:1550` | `if not (answer or "").strip(` |
-| empty answer replaced, checks skipped | `chatbot/agent.py:1553` | `return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY` |
-| citation check | `chatbot/agent.py:1557` | `enforced, flagged = enforce_evidence(answer, tracker, question, mode)` |
-| sentence ids checked | `chatbot/agent.py:788` | `unverified_sentence_ids(answer, self.known_ids())` |
-| quote marks around words no search returned | `chatbot/agent.py:816` | `return self.cites_unretrieved(text) or _demark(text, self) != text` |
-| marks taken off in strip mode | `chatbot/agent.py:1444` | `cleaned = _demark(text, tracker)` |
-| figure check | `chatbot/agent.py:1585` | `figures = unverified_numbers(` |
-| number warning appended | `chatbot/agent.py:1591` | `result.answer += UNVERIFIED_NUMBER_WARNING.format(` |
-| citations numbered, sources listed | `chatbot/agent.py:1593` | `result.answer = number_citations(result.answer, tracker)` |
+| empty answer check | `chatbot/agent.py:1924` | `if not (answer or "").strip(` |
+| empty answer replaced, checks skipped | `chatbot/agent.py:1927` | `return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY` |
+| citation check | `chatbot/agent.py:1931` | `enforced, flagged = enforce_evidence(answer, tracker, question, mode)` |
+| sentence ids checked | `chatbot/agent.py:824` | `unverified_sentence_ids(answer, self.known_ids())` |
+| quote marks around words no search returned | `chatbot/agent.py:855` | `return self.cites_unretrieved(text) or _demark(text, self) != text` |
+| marks taken off in strip mode | `chatbot/agent.py:1818` | `cleaned = _demark(text, tracker)` |
+| figure check | `chatbot/agent.py:1959` | `figures = unverified_numbers(` |
+| number warning appended | `chatbot/agent.py:1965` | `result.answer += UNVERIFIED_NUMBER_WARNING.format(` |
+| citations numbered, sources listed | `chatbot/agent.py:1967` | `result.answer = number_citations(result.answer, tracker)` |

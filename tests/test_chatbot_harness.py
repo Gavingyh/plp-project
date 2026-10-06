@@ -944,8 +944,10 @@ def test_strip_keeps_the_marks_a_search_or_a_reader_vouches_for(answer):
     ("> Fees up", "Fees up"),                                                    # a blockquote no search returned
     (f"- > {QUOTED_INVENTED}", f"- {QUOTED_INVENTED}"),                          # ... in a list item
     ("One user wrote'OCBC might cut fees' today.", "One user wrote OCBC might cut fees today."),
-    # the citation after a mark taken off goes too: it would vouch for the model's own words
-    (f'"x"{QUOTED_INVENTED}" {CITE_A}', f'"x"{QUOTED_INVENTED}'),
+    # the citation after a mark taken off goes too: it would vouch for the model's own words;
+    # since the eleventh round (6 Oct 2026) so do the marks of the word before them, as the
+    # citation vouches for it too (until then: '"x"OCBC will cut ...')
+    (f'"x"{QUOTED_INVENTED}" {CITE_A}', f'x {QUOTED_INVENTED}'),
     # but not after a stray mark right after a quote a search returned
     (f'He said "{QUOTE_A}"" {CITE_A}', f'He said "{QUOTE_A}" {CITE_A}'),
     # a line that held nothing but a mark goes, and its neighbours stay one paragraph
@@ -1171,3 +1173,158 @@ def test_a_quoted_piece_of_whole_words_keeps_its_marks(returned, answer):
 ])
 def test_whole_words_at(text, piece, at):
     assert agent._whole_words_at(text, piece, 0) == at
+
+
+# --- after the tenth validation (6 Oct 2026) ---------------------------------------------
+# Strip mode cuts a citation that would vouch for words that lost their quote marks, or for a
+# word or two in quote marks, that no search returned: a citation vouches for what stands
+# before it in its paragraph or list item, back to the citation before it or a quote a
+# search returned, and, leading what follows it or before a colon, for what follows it. Every
+# line ending reads as a line feed; a left-hand mark is never an apostrophe; a figure in a
+# retrieved sentence vouches only for itself, written with the sentence's words around it.
+
+SID_D = "d" * 24
+CITE_D = f"[DBS, 2026-09-01, sentence_id {SID_D}]"
+REAL_D = "the app is slow to load at night"
+INVENTED_D = "OCBC will cut its dividend next year for sure"
+
+
+def _d_tracker():
+    item = {"sentence_id": SID_D, "bank": "DBS", "source": "reddit", "date": "2026-09-01", "text": REAL_D,
+            "url": "https://r.example/d", "cite_as": CITE_D}
+    return agent._ToolCallTracker.from_calls([{"name": "search_evidence", "arguments": {"query": "q"},
+                                               "result": {"results": [item]}}])
+
+
+@pytest.mark.parametrize("answer, shown", [
+    (f"One user: ‹{INVENTED_D}›, one user wrote {CITE_D}", f"One user: {INVENTED_D}, one user wrote"),
+    (f"One user: ‹{INVENTED_D}›. Source: {CITE_D}", f"One user: {INVENTED_D}."),
+    (f"One user: ‹{INVENTED_D}› ({CITE_D}).", f"One user: {INVENTED_D}."),
+    (f"- {CITE_D}: ‹{INVENTED_D}›", f"- {INVENTED_D}"),                    # a citation leading the words
+    (f"One user: ‹{INVENTED_D}› [E1]", f"One user: {INVENTED_D}"),          # other ways to cite
+    (f"One user: ‹{INVENTED_D}› [sentence_id {SID_D}]", f"One user: {INVENTED_D}"),
+    (f"- > {INVENTED_D} {CITE_D}", f"- {INVENTED_D}"),                     # a blockquote that lost its ">"
+    # a quote kept inside a passage left open: the words after it were quoted too
+    (f'“As one investor put it, "{REAL_D}" {INVENTED_D} {CITE_D}', f'"{REAL_D}" {INVENTED_D}'),
+])
+def test_a_citation_after_words_that_lost_their_quote_marks_goes(answer, shown):
+    out, flagged = agent.enforce_evidence(answer, _d_tracker(), "q", "strip")
+    assert out.split(agent.EVIDENCE_UNMATCHED_NOTE)[0] == shown and not flagged
+    assert _d_tracker().answer_has_unverified_citation(answer)             # off mode flags it
+
+
+@pytest.mark.parametrize("answer", [
+    f'One user: ‹{INVENTED_D}›, while another wrote "{REAL_D}" {CITE_D}.',     # it vouches for the quote kept
+    f"One user: ‹{INVENTED_D}›.\n\nAnother said the app is slow {CITE_D}.",    # another paragraph
+    f"- ‹{INVENTED_D}›\n- the app is slow to load at night {CITE_D}",           # another list item
+])
+def test_a_citation_that_vouches_for_other_words_stays(answer):
+    out, _ = agent.enforce_evidence(answer, _d_tracker(), "q", "strip")
+    assert CITE_D in out and "‹" not in out
+
+
+@pytest.mark.parametrize("answer, shown", [
+    (f'Users call the app "slow" {CITE_D}.', f'Users call the app "slow" {CITE_D}.'),        # a search returned it
+    (f'Users call the app "clunky" {CITE_D}.', "Users call the app clunky."),
+    (f'Users call the app "clunky" and slow {CITE_D}.', "Users call the app clunky and slow."),
+    (f'One user called OCBC “a scam”, {CITE_D}.', "One user called OCBC a scam."),
+    ('Rated "buy" by most; the app is slow.', 'Rated "buy" by most; the app is slow.'),    # no citation: a term
+    (f'Rated "buy" by most.\n\nUsers say "{REAL_D}" {CITE_D}.',
+     f'Rated "buy" by most.\n\nUsers say "{REAL_D}" {CITE_D}.'),
+])
+def test_a_word_or_two_in_quote_marks_with_a_citation_is_checked_like_a_quote(answer, shown):
+    # no note: nothing a search didn't return was removed, only a citation and two marks
+    assert agent.enforce_evidence(answer, _d_tracker(), "q", "strip") == (shown, False)
+    assert _d_tracker().answer_has_unverified_citation(answer) == (shown != answer)    # off mode
+
+
+def test_a_citation_after_words_a_removed_quote_left_quoted_goes():
+    # the detectors end the outer single quote at ‘, the inner quote's closing mark; its own
+    # closing mark comes after "soon", so the words between were quoted too
+    answer = f"'One user said ‚UOB is the worst bank in the world‘ analysts say DBS shares will crash soon', {CITE_D}"
+    out, flagged = agent.enforce_evidence(answer, _d_tracker(), "q", "strip")
+    assert SID_D not in out and "crash soon" in out and not flagged
+
+
+def test_a_removed_quote_that_wraps_a_line_keeps_its_line_break_and_list_marker():
+    assert agent._remove_spans('a "x y z\n1. w" b', ['"x y z\n1. w"'], []) == "a\n1. b"
+
+
+@pytest.mark.parametrize("separator", ["\r", "\r\n", "\u2028", "\u2029", "\x0b", "\x0c", "\x85"])
+def test_every_line_ending_reads_as_a_line_feed(separator):
+    answer = f"He said:{separator}> {INVENTED_D} today{separator}"
+    out, flagged = agent.enforce_evidence(answer, _d_tracker(), "q", "strip")
+    assert removed_flagged_or_unquoted(out, flagged, INVENTED_D) and "\r" not in out
+    assert agent.enforce_evidence(answer, _d_tracker(), "q", "off") == (answer, True)     # off mode changes nothing
+
+
+def test_strip_mode_returns_line_feeds_and_notes_nothing_for_them():
+    assert agent.enforce_evidence("DBS scored 0.31.\r\nIt is mixed.", _d_tracker(), "q", "strip") == \
+        ("DBS scored 0.31.\nIt is mixed.", False)
+
+
+def test_answer_turn_does_not_call_carriage_returns_evidence_removed(monkeypatch):
+    class Backend:
+        name, model = "fake", "fake"
+
+        def ask(self, question, system, schemas, execute, verbose=True, history=None):
+            return "DBS reads slightly positive.\r\nIt is mixed."
+
+    monkeypatch.setattr(agent.intents, "classify_intent", lambda *a, **k: None)
+    monkeypatch.setattr(agent.intents, "reply_for", lambda *a, **k: None)
+    monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
+    r = agent.answer_turn("How is DBS?", backend=Backend(), verbose=False)
+    assert r.answer == "DBS reads slightly positive.\nIt is mixed." and r.evidence_enforced is None
+
+
+@pytest.mark.parametrize("text, at, role", [
+    ("don‘t", 3, "quote"),                                     # a left-hand mark is never an apostrophe
+    ("the banks‘ fees", 9, "quote"),
+    ("wrote'the bank will cut its dividend next year'", 5, "quote"),
+    ("wrote'a scam' today", 5, "apostrophe"),                  # under three words: no quote
+    ("don't think the banks' fees are high", 3, "apostrophe"),
+    ("Côte d'Ivoire's banks and the banks' fees", 6, "apostrophe"),
+])
+def test_mark_roles(text, at, role):
+    assert agent._mark_role(text, at) == role
+
+
+@pytest.mark.parametrize("answer", [
+    "Côte d'Ivoire said the banks' fees are high.",
+    "Don't think the banks' fees are high; it's OCBC's call.",
+    "Rock'n'roll fans and the banks' fees.",             # "'n'" pairs as a word in quote marks
+])
+def test_apostrophes_stay_as_written(answer):
+    assert agent.enforce_evidence(answer, _d_tracker(), "q", "strip") == (answer, False)
+
+
+def test_a_mark_inside_a_word_before_a_closing_mark_opens_a_quote():
+    # a known limit (evidence page): with no contraction ending after it and a mark closing
+    # three or more words later on its line, the mark reads as glued to the word before
+    assert agent.enforce_evidence("ma'am, the banks' fees are high", _d_tracker(), "q", "strip") == \
+        ("ma am, the banks fees are high", False)
+
+
+EVIDENCE_37 = [{"query": "q", "results": [{"sentence_id": SID_D, "text": "I paid 37 dollars in fees at DBS"}]},
+               {"bank": "DBS", "score": 0.31, "n": 45}]
+
+
+@pytest.mark.parametrize("answer, flagged", [
+    ('One user: "I paid 37 dollars in fees".', []),           # quoted with its words
+    ("One user paid 37 dollars in fees.", []),                 # copied with its words, no quote marks
+    ('One user: "paid 37 dollars".', []),
+    ('DBS had "37" negative posts.', ["37"]),                  # a number alone vouches for nothing
+    ("DBS had 37 negative posts out of 45.", ["37"]),
+    ("One user paid 37 in fees.", ["37"]),                     # the sentence's figure in other words
+])
+def test_a_figure_in_a_retrieved_sentence_vouches_only_with_its_words(answer, flagged):
+    assert unverified_numbers(answer, EVIDENCE_37) == flagged
+
+
+def test_a_character_reference_is_no_figure():
+    assert unverified_numbers("One user wrote &#8220;fees are high&#8221;.", []) == []
+
+
+def test_a_carriage_return_ends_a_date_as_a_line_feed_does():
+    tools_ = [{"data_runs_to": "2026-09-25", "score": 0.31}]
+    assert unverified_numbers("Coverage ends September 25\r\nDBS scored 0.31.", tools_) == []

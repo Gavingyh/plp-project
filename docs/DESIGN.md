@@ -575,9 +575,9 @@ Decided:
   sentiment filter for questions about complaints or praise; and a reading it
   put in quote marks was removed as an invented quote, so a reading or a
   real topic name a tool returned no longer counts as a quote.
-- Nine validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`
-  and the sixth to ninth, of 5 Oct) found gaps the change had opened in the
-  grounding checks, and some old ones. Each way of spotting quotes caught
+- Ten validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`,
+  the sixth to ninth, of 5 Oct, and the tenth, of 6 Oct) found gaps the
+  change had opened in the grounding checks, and some old ones. Each way of spotting quotes caught
   what the last missed and missed something new, so after the ninth the
   project owner changed the design: strip mode shows only quotes a search
   returned, whatever the detectors miss (decision 26). The detectors (a
@@ -599,7 +599,10 @@ Decided:
   a dropped marker's figures are still checked; history rebuilt for the API
   drops markers and sources; only real topic names count as tool wording;
   and a trend sentence whose printed scores point the other way says it's
-  too close to call. The findings, their tests, the known limits and a
+  too close to call. A figure in retrieved text vouches only for itself,
+  among three words in a row the sentence holds (the tenth validation: a
+  retrieved "37 dollars" vouched for "37 negative posts"); a figure the
+  model rewords is checked like any other. The findings, their tests, the known limits and a
   re-run over every recorded answer git tracks (`scripts/replay_checks.py
   --against <commit>`) are in `docs/evidence/chatbot-answers-2026-10-04.md`.
   Whether the Grounded chatbot claim keeps "never" is a decision on the team
@@ -646,34 +649,53 @@ Decided:
 - The guarantee: after strip mode, every passage of three or more words a
   reader sees in quote marks (double, single, or a markdown blockquote line)
   is text a search in the conversation returned, word for word, or the
-  tools' own wording (a reading or a real topic name, decision 25). It holds
-  whatever the detectors get wrong. Quote marks are the characters Unicode
-  lists as quotation marks, the quotation mark ornaments (❝ ❞ ❮ ❯ and the
-  like) and the double primes, also written as character references
-  ("&quot;"); characters that only look like one (ʺ, ״, ′) are not, a known
-  limit on the evidence page.
+  tools' own wording (a reading or a real topic name, decision 25), and no
+  citation vouches for words that stood in quote marks and are not (since
+  the tenth validation, 6 Oct 2026). It holds whatever the detectors get
+  wrong, within the limits of the reader it assumes, which the evidence
+  page's Known limits list: marks paired in order whatever their shape, two
+  inch marks around words read as inch marks, a mark inside a word read as
+  an apostrophe unless it opens a quote glued to the word before, and an
+  aside's blockquote ("> **Note:** ...") left as written. Quote marks are
+  the characters Unicode lists as quotation marks, the quotation mark
+  ornaments (❝ ❞ ❮ ❯ and the like) and the double primes, also written as
+  character references ("&quot;"); characters that only look like one (ʺ,
+  ״, ′) are not, another of those limits.
 - Strip mode first removes, as before, the quotes the detectors find that no
   search returned, with their citations, and the links and sentence ids no
   search returned, and a note says so. Words glued to a closing mark are
   never read as a quote there: they are the model's own.
 - Then it takes the quote marks off everything else a search doesn't vouch
   for, keeping the words: every double mark, every single mark that is not an
-  apostrophe ("OCBC's") or a possessive ("the banks' fees"), and every
-  blockquote ">". It keeps the marks of a quote whose every piece, cut at an
-  ellipsis, one search result holds, in order, as whole words ("...
-  impressive" is no piece of "unimpressive"); of a word or two in matching
-  marks ('rated "buy"', '“Tier 1”'); an inch mark ('a 6" phone'); and an
-  aside ("> **Note:** ..."). A citation right after a mark taken off goes
-  too, so it can't vouch for the model's own words.
-- Last, it reads the result as a reader pairs the marks (in order, line by
+  apostrophe ("OCBC's") or a possessive ("the banks' fees"; a left-hand mark,
+  ‘, never is), and every blockquote ">". It keeps the marks of a quote whose
+  every piece, cut at an ellipsis, one search result holds, in order, as
+  whole words ("... impressive" is no piece of "unimpressive"); of a word or
+  two in matching marks ('rated "buy"', '“Tier 1”'), unless a citation
+  vouches for them; an inch mark ('a 6" phone'); and an aside ("> **Note:**
+  ...").
+- Then it reads the result as a reader pairs the marks (in order, line by
   line and paragraph by paragraph) and takes every quote mark off a line
   where that shows a passage of three or more words no search returned; it
   runs again until nothing changes. The flag strip mode returns is whether
   anything shown is still not text a search returned, which this leaves
   nothing to raise.
+- Last (since the tenth validation, 6 Oct 2026, which found an invented
+  passage that lost its marks keeping a real citation after a full stop or
+  "one user wrote", and '"a scam" [DBS, ...]' kept whole), it cuts each
+  citation that would vouch for words no search returned. A citation vouches
+  for what stands before it in its paragraph or list item, back to the
+  citation before it or a quote a search returned, and, where nothing stands
+  there or a colon follows it, for what follows it. It goes where that holds
+  words a reader saw in quote marks, in the answer strip mode read or in its
+  result, that no search returned, or a word or two in quote marks no search
+  returned, which then lose their marks; no note is added for it. The first
+  step leaves no citation to the words a removed quote's mark also opened.
+  Every check reads a carriage return, and the other line separators, as a
+  line feed.
 - `off` mode changes nothing. It flags an answer whose detected quotes no
-  search returned, as before, or whose quote marks strip mode would take
-  off. The safety net added after the seventh validation (31c7e98), which
+  search returned, as before, or whose quote marks or citations strip mode
+  would take off. The safety net added after the seventh validation (31c7e98), which
   removed every line holding a mark the detectors couldn't place, and
   f511f83's rule that placed a stray mark after a quote went: taking off the
   marks replaces both.
@@ -682,18 +704,22 @@ Decided:
   does); a correct answer's term of three or more words in quote marks that
   no search returned loses its marks. `tests/test_chatbot_strip_property.py`
   checks the guarantee on 3,000 made-up answers, after a search and without,
-  with a fixed seed.
+  with a fixed seed (other seeds by hand), citations and line separators
+  among them.
 
 Costs: the model's words stay where their marks go, so an invented quote
 can survive as an unquoted sentence, read as the model's own claim; a term
 of three or more words in quote marks loses its marks ("DBS's customer
 first digital approach"); and in `off` mode the detectors' reading of words
 glued to a closing mark still flags a few correct answers that strip mode
-leaves as they are. The recorded answers barely change: over the 540 that
-git tracks, strip mode takes quote marks off words it keeps in 2, both
-written as JSON by one small model, and no flag changes
-(`docs/evidence/chatbot-answers-2026-10-04.md`). The Grounded chatbot
-claim's wording is the team's decision.
+leaves as they are. A citation goes for more than the words right before
+it: a correct paraphrase loses its citation when a word or two in quote
+marks no search returned stands earlier in its paragraph. The recorded
+answers barely change: over the 540 that git tracks, strip mode takes quote
+marks off words it keeps in 2, both written as JSON by one small model, no
+flag changed with this design, and the tenth validation's changes change no
+strip result (`docs/evidence/chatbot-answers-2026-10-04.md`). The Grounded
+chatbot claim's wording is the team's decision.
 
 ## Notable implementation details
 

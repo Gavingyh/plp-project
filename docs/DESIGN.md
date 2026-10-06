@@ -575,16 +575,19 @@ Decided:
   sentiment filter for questions about complaints or praise; and a reading it
   put in quote marks was removed as an invented quote, so a reading or a
   real topic name a tool returned no longer counts as a quote.
-- Ten validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`,
-  the sixth to ninth, of 5 Oct, and the tenth, of 6 Oct) found gaps the
-  change had opened in the grounding checks, and some old ones. Each way of spotting quotes caught
+- Eleven validations of the branch (`docs/validation/2026-10-04-chatbot-answers*.md`,
+  the sixth to ninth, of 5 Oct, and the tenth and eleventh, of 6 Oct) found
+  gaps the change had opened in the grounding checks, and some old ones.
+  Each way of spotting quotes caught
   what the last missed and missed something new, so after the ninth the
   project owner changed the design: strip mode shows only quotes a search
-  returned, whatever the detectors miss (decision 26). The detectors (a
+  returned, whatever the detectors miss (decision 26). After the eleventh
+  the owner made the next round of fixes the last; what it leaves is listed
+  as known limits. The detectors (a
   pattern, the pairing of quote marks in order, and single-quoted passages
   from six words, or three after a verb of saying, a speaker's colon or
-  before a citation) still find the quotes strip mode removes and flag an
-  answer in `off` mode. A date without its year is skipped by the figure
+  before a citation) still find the quotes strip mode removes; `off` mode
+  flags what strip mode would change. A date without its year is skipped by the figure
   check only when a tool's date field has that month and day, no decimal,
   thousands group or "%" follows it and, after a month, it reads as a date:
   never after "in"; after "on", "as of", "the" or "runs to"; before
@@ -600,9 +603,12 @@ Decided:
   drops markers and sources; only real topic names count as tool wording;
   and a trend sentence whose printed scores point the other way says it's
   too close to call. A figure in retrieved text vouches only for itself,
-  among three words in a row the sentence holds (the tenth validation: a
-  retrieved "37 dollars" vouched for "37 negative posts"); a figure the
-  model rewords is checked like any other. The findings, their tests, the known limits and a
+  where two of the three words nearest it on either side, common words
+  such as "the" and "of" skipped, are among those round it in the sentence
+  (the tenth validation: a retrieved "37 dollars" vouched for "37 negative
+  posts"; the eleventh: "37% of the" in an unrelated sentence vouched for
+  "37% of the posts"); a figure the model rewords with fewer shared words is
+  checked like any other. The findings, their tests, the known limits and a
   re-run over every recorded answer git tracks (`scripts/replay_checks.py
   --against <commit>`) are in `docs/evidence/chatbot-answers-2026-10-04.md`.
   Whether the Grounded chatbot claim keeps "never" is a decision on the team
@@ -651,7 +657,8 @@ Decided:
   is text a search in the conversation returned, word for word, or the
   tools' own wording (a reading or a real topic name, decision 25), and no
   citation vouches for words that stood in quote marks and are not (since
-  the tenth validation, 6 Oct 2026). It holds whatever the detectors get
+  the tenth validation, 6 Oct 2026; since the twelfth round a citation
+  vouches for its own sentence, below). It holds whatever the detectors get
   wrong, within the limits of the reader it assumes, which the evidence
   page's Known limits list: marks paired in order whatever their shape, two
   inch marks around words read as inch marks, a mark inside a word read as
@@ -683,19 +690,33 @@ Decided:
 - Last (since the tenth validation, 6 Oct 2026, which found an invented
   passage that lost its marks keeping a real citation after a full stop or
   "one user wrote", and '"a scam" [DBS, ...]' kept whole), it cuts each
-  citation that would vouch for words no search returned. A citation vouches
-  for what stands before it in its paragraph or list item, back to the
-  citation before it or a quote a search returned, and, where nothing stands
-  there or a colon follows it, for what follows it. It goes where that holds
-  words a reader saw in quote marks, in the answer strip mode read or in its
-  result, that no search returned, or a word or two in quote marks no search
-  returned, which then lose their marks; no note is added for it. The first
-  step leaves no citation to the words a removed quote's mark also opened.
-  Every check reads a carriage return, and the other line separators, as a
-  line feed.
-- `off` mode changes nothing. It flags an answer whose detected quotes no
-  search returned, as before, or whose quote marks or citations strip mode
-  would take off. The safety net added after the seventh validation (31c7e98), which
+  citation that would vouch for words no search returned. Since the twelfth
+  round, the last (the eleventh validation found a citation's paragraph too
+  wide a reach and its words before it too narrow: a scare quote in the
+  sentence before cut a correct citation, a returned word in quote marks
+  shielded invented words before it, and a link or a citation before the
+  words, 'According to [DBS, ...], ...', vouched unchecked), a citation, a
+  link among them, vouches for its own sentence, ended by a full stop, "!",
+  "?" or a semicolon or by a new paragraph or block: for words that stood in
+  quote marks or a blockquote anywhere in it, in the answer as the model
+  wrote it, in what the first step left or in the result, that no search
+  returned, and for a word or two in quote marks no search returned before
+  it, or after it where it introduces the words after it (at most four words
+  before it, or "to", "by" and the like right before it, or a colon after
+  it). After a citation that ends a longer clause or a quote, only three or
+  more words that stood in quote marks count, so a scare quote there ('...
+  at night [DBS, ...], despite the "super app" label.') keeps it. Where only a
+  label stands before it in its sentence it vouches for the sentence before
+  too. It goes where its reach holds such words, which then lose their
+  marks; no note is added for it. Every check reads a carriage return, and
+  the other line separators, as a line feed, and a glued opening mark looks
+  for its closing mark to the end of its paragraph.
+- `off` mode changes nothing. Since the twelfth round it flags exactly what
+  strip mode would change, and no more (the eleventh validation found a
+  returned blockquote with its citation flagged, which strip mode kept);
+  until then it flagged the quotes the detectors found that no search
+  returned, glued words included, and the quote marks or citations strip
+  mode would take off. The safety net added after the seventh validation (31c7e98), which
   removed every line holding a mark the detectors couldn't place, and
   f511f83's rule that placed a stray mark after a quote went: taking off the
   marks replaces both.
@@ -710,16 +731,24 @@ Decided:
 Costs: the model's words stay where their marks go, so an invented quote
 can survive as an unquoted sentence, read as the model's own claim; a term
 of three or more words in quote marks loses its marks ("DBS's customer
-first digital approach"); and in `off` mode the detectors' reading of words
-glued to a closing mark still flags a few correct answers that strip mode
-leaves as they are. A citation goes for more than the words right before
-it: a correct paraphrase loses its citation when a word or two in quote
-marks no search returned stands earlier in its paragraph. The recorded
-answers barely change: over the 540 that git tracks, strip mode takes quote
-marks off words it keeps in 2, both written as JSON by one small model, no
-flag changed with this design, and the tenth validation's changes change no
-strip result (`docs/evidence/chatbot-answers-2026-10-04.md`). The Grounded
-chatbot claim's wording is the team's decision.
+first digital approach"); and the `off` flag says only that strip mode would
+change the answer, so it is raised for such a term as for invented
+evidence. A citation goes for more than the words right before it: a
+correct paraphrase loses its citation when a word or two in quote marks no
+search returned stands before it in its sentence, and a real quote's when
+three or more invented words that lost their marks follow it there; a word
+or two after a citation that ends a clause is a term, though a reader may
+take the citation to cover it. The recorded answers barely change: over the
+540 that git tracks, strip mode takes quote marks off words it keeps in 2,
+both written as JSON by one small model, no flag changed with this design,
+and neither the tenth validation's changes nor the twelfth round's change a
+strip result or a citation flag. The tenth validation's figure rule (decision
+25) flagged a figure the model took from a retrieved sentence and wrote in
+other words, false alarms in 5 of the 540 answers git tracks and 7 of the
+670 with the runs kept out of git; the twelfth round's rule clears all
+seven, and passes instead a figure moved onto another subject where two of
+its nearest words happen to match (`docs/evidence/chatbot-answers-2026-10-04.md`,
+Known limits). The Grounded chatbot claim's wording is the team's decision.
 
 ## Notable implementation details
 

@@ -1170,8 +1170,14 @@ whether slower, fuller answers are worth it on the demo Mac.
   checks no strip result of the 670 recorded answers changes, and seven
   answers now flag a figure the model took from a retrieved sentence and
   wrote in other words, false alarms the evidence page lists.
+- **Chatbot grounding checks, the fixes after the eleventh validation, the
+  last fix round by the owner's decision** (not merged): a citation, a link
+  among them, vouches for its own sentence, off mode flags exactly what strip
+  mode would change, and a retrieved figure vouches for itself through two of
+  its nearest words, common ones skipped, which clears the seven figure false
+  alarms (DESIGN decisions 25 and 26). What is left stays under Known limits
+  on the evidence page, with no further fix round.
 
 **Needs a human (6 Oct):** re-run `/validate` on `fix/chatbot-answers`
-before merging it; the Grounded chatbot claim's wording is still a team
-decision on the to-do; and whether the seven new figure false alarms (a
-retrieved figure the model rewords is now checked) are an acceptable cost.
+before merging it, for the record of what the last round left; the Grounded
+chatbot claim's wording is still a team decision on the to-do.

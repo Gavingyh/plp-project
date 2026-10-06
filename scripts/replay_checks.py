@@ -173,7 +173,7 @@ def unquoted(eval_dir: str = EVAL_DIR, include_untracked: bool = False) -> list[
     for key, _, answer, calls, earlier in _answers(eval_dir, include_untracked):
         tracker = _ToolCallTracker.from_calls(calls, earlier)
         kept, _ = _strip_evidence(answer, tracker)
-        if _demark(kept, tracker) != kept:
+        if _demark(kept, tracker, original=answer) != kept:
             out.append(key)
     return out
 

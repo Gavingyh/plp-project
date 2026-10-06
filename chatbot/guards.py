@@ -273,8 +273,9 @@ def _collect_numbers(obj, out: list[float], as_written: list[float], key=None) -
     as a percentage (NON_DATA_NUMBER_KEYS), into `as_written`. Strings vouch
     for nothing here: a figure written inside a retrieved sentence ("$0.54 per
     share") vouches only for itself, written with that sentence's words around
-    it (unverified_numbers; until the tenth validation, 6 Oct 2026, it vouched
-    for the same number anywhere in the answer, a count of posts too)."""
+    it (unverified_numbers, chatbot.agent.evidence_figures; until the tenth
+    validation, 6 Oct 2026, it vouched for the same number anywhere in the
+    answer, a count of posts too)."""
     if isinstance(obj, bool):
         return
     if isinstance(obj, (int, float)):
@@ -315,10 +316,12 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
     is written with, or that value times 100 (a score or share written as a
     percentage), or one tool value as a percentage of another ("12% of
     mentions were positive"). A figure written as a retrieved sentence writes
-    it, among three words in a row that the sentence holds word for word
-    ('"DBS pays $0.54 per share"', in quote marks or not), is that sentence's
-    own and not checked; a figure in retrieved text vouches for nothing else
-    (the tenth validation, 6 Oct 2026).
+    it, two or more of the three words nearest it on either side, common words
+    such as "the" and "of" skipped, being among those nearest it in that
+    sentence, or inside a quote of that sentence ('"DBS pays $0.54 per
+    share"'), is that sentence's own and not checked
+    (chatbot.agent.evidence_figures); a figure in retrieved text vouches for
+    nothing else (the tenth and eleventh validations, 6 Oct 2026).
     Years, dates with their year (ISO or written out), a date without its
     year that matches one a tool returned, list markers, window lengths,
     numbers under 10 and numbers the user typed are not checked.

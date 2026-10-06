@@ -22,9 +22,9 @@ paragraph (markdown shows the lines of a paragraph as one):
   "OCBC's") unless it opens a quote glued to the word before: a capital
   follows it with two letters before it ("wrote'OCBC"; after one letter it is
   a name's, "Côte d'Ivoire"), or neither a capital nor a contraction or possessive
-  ending follows it and a straight or right-hand mark later on its line closes
-  three or more words after it ("wrote'the bank will cut its dividend next
-  year'"). Such a mark after an s and before no letter or digit
+  ending follows it and a straight or right-hand mark later in its paragraph
+  closes three or more words after it ("wrote'the bank will cut its dividend
+  next year'", on one line or two). Such a mark after an s and before no letter or digit
   ("the banks' fees") opens nothing: read once as closing a passage open
   before it, once as a possessive inside it. A left-hand mark (‘) is neither
   (the eleventh round, 6 Oct 2026).
@@ -93,8 +93,8 @@ def _single_kind(text: str, i: int) -> str:
             return "mark"
         if after.isupper() or re.match(r"(s|t|d|m|ll|re|ve)(?![^\W_])", text[i + 1:], re.IGNORECASE):
             return "apostrophe"         # "Côte d'Ivoire", "don't", "OCBC's"
-        end = text.find("\n", i)
-        for j in range(i + 1, len(text) if end < 0 else end):
+        blank = re.compile(r"\n[ \t]*\n").search(text, i)     # to the paragraph's end: its lines show as one
+        for j in range(i + 1, len(text) if blank is None else blank.start()):
             closes = text[j] in MAY_BE_APOSTROPHE and not text[j - 1].isspace() \
                 and not (j + 1 < len(text) and text[j + 1].isalnum())
             if closes and words(text[i + 1:j]) >= 3:

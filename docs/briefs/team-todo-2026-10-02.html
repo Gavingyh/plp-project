@@ -157,10 +157,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Tue 6 Oct 2026</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Wed 7 Oct 2026</span></div>
   <h1>What the team has to do before 1 November</h1>
   <p class="lede">Every open item, in deadline order, with the reason it has to be done and what it unblocks. Decisions come first because most of the remaining work waits on them. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
-  <div class="countdown"><b>26</b> days to submission · Sun 1 Nov</div>
+  <div class="countdown"><b>25</b> days to submission · Sun 1 Nov</div>
 </header>
 
 <section aria-labelledby="h-path">
@@ -302,10 +302,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Source: bank-ner; local-context questions (DBS Vickers).</span>
     </li>
     <li data-o="decide">
-      <span class="t">Decide the scoring model: the fine-tuned models, or base FinBERT <span class="chip decide">Decision</span></span>
+      <span class="t">Decide the scoring model: base FinBERT, or one of three fine-tuned sets <span class="chip decide">Decision</span></span>
       <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> the stored scores are base FinBERT's, so the DNN the rubric requires doesn't yet affect what the product shows. The 1 Oct seeds were trained from a relabelled head (a bug, fixed 3 Oct). <b>Retrained on 4 Oct</b>, every seed beats base FinBERT (test macro-F1 0.646, 0.592 and 0.625; mean 0.621 ± 0.027 against 0.571), and the average of the three matches base on accuracy (0.702 against 0.699). On the full corpus the retrained average barely moves the headlines (within 0.015 of base with the margin: DBS +0.132, OCBC +0.122, UOB +0.084) and agrees with base FinBERT on every aspect's sign; seed 42 alone still raises every headline, so the level depends on the seed. Two choices: the retrained seeds or the 1 Oct ones, and whether to keep the neutral margin. Tuned on dev for the averaged model, the margin is 0.10 (a single-model stand-in: no clean dev set exists for the three-seed average); on test it makes no measurable difference (0.612 against 0.634 at argmax, paired bootstrap interval −0.058 to +0.009), and the test result can't be used to drop it: keep 0.10 and report argmax beside it. State the criterion first. For the report: the input change chosen on 1 Oct proved no better on two more seeds, so credit no single change for the gain.</p>
-      <span class="meta">Source: retrain and ensemble-margin (4 Oct), finetune-fixes, error-analysis, index-preview, noise-floor-cv. Decision 7 in the decision brief. <code>scripts/rescore.py</code> still defaults to the 1 Oct seeds.</span>
+      <p class="why"><b>Why:</b> the stored scores are base FinBERT's, so the DNN the rubric requires doesn't yet affect what the product shows. The 1 Oct seeds were trained from a relabelled head (a bug, fixed 3 Oct). <b>Retrained on 4 Oct</b>, every seed beats base FinBERT (test macro-F1 0.646, 0.592 and 0.625; mean 0.621 ± 0.027 against 0.571), and the average of the three matches base on accuracy (0.702 against 0.699). On the full corpus the retrained average barely moves the headlines (within 0.015 of base with the margin: DBS +0.132, OCBC +0.122, UOB +0.084) and agrees with base FinBERT on every aspect's sign; seed 42 alone still raises every headline, so the level depends on the seed. Two choices: the retrained seeds or the 1 Oct ones, and whether to keep the neutral margin. Tuned on dev for the averaged model, the margin is 0.10 (a single-model stand-in: no clean dev set exists for the three-seed average); on test it makes no measurable difference (0.612 against 0.634 at argmax, paired bootstrap interval −0.058 to +0.009), and the test result can't be used to drop it: keep 0.10 and report argmax beside it. State the criterion first. For the report: the input change chosen on 1 Oct proved no better on two more seeds, so credit no single change for the gain. <b>New on 7 Oct, a third candidate:</b> FinBERT first further trained on the corpus&#8217;s own unlabelled sentences (every labelled sentence and its near-copies left out), then fine-tuned the same way. On 5-fold cross-validation over the three seeds, paired on identical folds, dev macro-F1 rises from 0.663 to 0.701, better in 13 of 15 folds (95% interval for the gain +0.022 to +0.054). Scored once on test: 0.628 &#177; 0.022 over the seeds against 0.621 &#177; 0.027, and 0.662 for the three averaged against 0.634 (accuracy 0.72 against 0.702). The gain is clear on cross-validation and smaller on the test split; one pretraining run only. Slang was ruled out as the cause first: 27 of 1,280 labelled train/dev rows hold any.</p>
+      <span class="meta">Source: dapt (7 Oct, on the branch <code>experiment/dapt</code> until merged), retrain and ensemble-margin (4 Oct), finetune-fixes, error-analysis, index-preview, noise-floor-cv. Decision 7 in the decision brief. <code>scripts/rescore.py</code> still defaults to the 1 Oct seeds; <code>--models</code> takes the adapted ones.</span>
     </li>
     <li data-o="ai">
       <span class="t">Decide the chatbot's settings: strip invented evidence, and rank evidence by the aspect's name <span class="chip ai">Decided 4 Oct</span></span>
@@ -354,6 +354,26 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="when">decided 6 Oct</span>
       <p class="why"><b>Decided 6 Oct:</b> reworded. In strip mode, the default, every passage of three or more words an answer shows in quote marks is text a search returned, word for word, and a citation stays only where its sentence's quoted words were returned; every figure is checked against the tools' results and a mismatch flagged; both within the Known limits in <code>docs/evidence/chatbot-answers-2026-10-04.md</code>. <b>Why:</b> the old claim said the chatbot "never" presents evidence no tool returned; twelve validations of <code>fix/chatbot-answers</code> (4 to 6 Oct) showed a check reading the model's text can't prove "never". On the gold set of 6 Oct, 0 of 32 answers were flagged for a fabricated citation or a figure no tool returned. The model's own wording (paraphrase, how it describes a score) is not checked.</p>
       <span class="meta">Source: <code>CLAUDE.md</code> (Success claims); <code>docs/validation/2026-10-06-chatbot-answers-twelfth-check.md</code>; <code>data/eval/chatbot_eval_summary_final3_v2.md</code>.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Show the chatbot's steps while it answers <span class="chip team">Dashboard owner</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> a local answer takes about 47 seconds (gold-set median, 6 Oct), and the Ask page shows only "Thinking - a local model can take a minute...". Since 6 Oct the chatbot reports each step as it happens (<code>chatbot/progress.py</code>): reading the question, each tool it calls with what it asked for and what came back ("Looked up DBS sentiment on Dividend Policy (all time): +0.20, moderately positive, 20,643 sentences"), writing, and checking quotes and figures. In <code>dashboard/app.py</code> (the Ask page, around line 512), replace the <code>st.spinner</code> block with a status box fed by <code>on_step</code>; checked with Streamlit's test runner on 1.63:</p>
+      <pre style="grid-column:1/-1;margin:0;overflow-x:auto;font:400 12.5px/1.5 var(--mono);background:var(--code-bg);padding:10px 12px;border-radius:4px">with st.chat_message(&quot;assistant&quot;):
+    with st.status(&quot;Working on it...&quot;, expanded=True) as status:
+        def show(step):
+            if step.done:
+                status.write(f&quot;✓ **{step.title}**&quot; + (f&quot;  \n{step.detail}&quot; if step.detail else &quot;&quot;))
+            else:
+                status.update(label=step.title + &quot;...&quot;)
+        try:
+            answer = st.session_state.conversation.ask(question, on_step=show).answer
+        except Exception as exc:
+            answer = f&quot;The chatbot backend could not be reached: `{exc}`&quot;
+        status.update(label=&quot;Done&quot;, state=&quot;complete&quot;, expanded=False)
+    st.markdown(answer)</pre>
+      <p class="why">Also update the caption above the chat: "A local model may still cite evidence it never retrieved" is out of date. Strip mode now removes or un-quotes evidence no search returned (the reworded Grounded chatbot claim).</p>
+      <span class="meta">Source: HANDOFF, 6 October (evening); <code>tests/test_chatbot_progress.py</code>.</span>
     </li>
     <li data-o="team">
       <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>

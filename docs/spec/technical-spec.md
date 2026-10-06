@@ -445,7 +445,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-2392 tests in `tests/` (2439 from the repository root, adding the diagram and
+2400 tests in `tests/` (2447 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.

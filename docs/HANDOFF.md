@@ -1198,7 +1198,36 @@ kept behind a dash or bold, figures skipped as years, durations or under 10,
 "45 per cent" checked as a count, and ".87" unread. The branch was then
 merged into `main` and pushed.
 
+Evening, 6 Oct: the chatbot reports each step of a turn as it happens
+(`chatbot/progress.py`; `answer_turn(..., on_step=)` and
+`Conversation.ask(..., on_step=)`): reading the question, each tool call with
+what it asked for and what came back, writing, and checking. On one live
+question (DBS dividends) the intent check took about 15 s, the two tools
+about 30 s and the writing about 25 s. Showing the steps on the Ask page is a
+dashboard change for its owner (team to-do, with the code). Tests:
+`tests/test_chatbot_progress.py`.
+
 **Needs a human (6 Oct):** whether answers of about 47 seconds are
 acceptable (speed options: share the cached prompt between the intent
 classifier and the chatbot, skip the classifier for plain questions, stream
 the answer).
+
+### 7 October
+
+Overnight, 6 to 7 Oct, at the owner's request: domain-adaptive pretraining
+(`train/dapt.py`; `train/finetune.py --base-model`). FinBERT's masked-word
+training continued on 43,036 corpus sentences, every labelled sentence and
+its near-copies left out; then the 4 Oct fine-tuning configuration. On
+5-fold cross-validation, seeds 42, 1 and 7, paired on identical folds: dev
+macro-F1 0.663 from FinBERT, 0.701 adapted, better in 13 of 15 folds. Scored
+once on the test split: 0.628 ± 0.022 over the seeds against 0.621 ± 0.027,
+and 0.662 for the three averaged against 0.634
+(`docs/evidence/dapt-2026-10-06.md`). Slang was checked first and is rare (27
+of 1,280 labelled train/dev rows), so no slang dictionary was built. Docker
+Desktop was stopped on 6 Oct to free memory for the run.
+
+**Needs a human (7 Oct):** the team's scoring-model decision now has three
+candidates (the 1 Oct models, the 4 Oct retrain, the adapted models), for the
+re-score week of 12 to 18 Oct; if the adapted models are adopted, the
+Fine-tuning lead claim in `CLAUDE.md` should give their figures.
+

@@ -611,8 +611,8 @@ Decided:
   checked like any other. The findings, their tests, the known limits and a
   re-run over every recorded answer git tracks (`scripts/replay_checks.py
   --against <commit>`) are in `docs/evidence/chatbot-answers-2026-10-04.md`.
-  Whether the Grounded chatbot claim keeps "never" is a decision on the team
-  to-do.
+  On 6 Oct the owner reworded the Grounded chatbot claim to what the checks
+  prove, within that page's Known limits (`CLAUDE.md`).
 - Evidence: from 50 candidates, a wording already picked is skipped, at most
   two come from one source unless too few others match, and a positive or
   negative sentence is lifted 0.03 over a neutral one when the search is
@@ -748,7 +748,7 @@ other words, false alarms in 5 of the 540 answers git tracks and 7 of the
 670 with the runs kept out of git; the twelfth round's rule clears all
 seven, and passes instead a figure moved onto another subject where two of
 its nearest words happen to match (`docs/evidence/chatbot-answers-2026-10-04.md`,
-Known limits). The Grounded chatbot claim's wording is the team's decision.
+Known limits). The Grounded chatbot claim was reworded on 6 Oct to what the checks prove, within those limits.
 
 ## Notable implementation details
 

@@ -80,8 +80,9 @@ or UNTESTED. They come from `docs/spec/functional-spec.md`.
 - **Grounded chatbot** (functional spec 4.3: no unretrieved evidence, every
   number matches a tool result): with `CHATBOT_ENFORCE_EVIDENCE=strip` (the
   default), every passage of three or more words that an answer shows in
-  quote marks is text a search in that conversation returned, word for word,
-  and a citation stays only where the quoted words of its sentence were
+  quote marks is text a search in that conversation returned, word for word
+  (or the tools' own wording, such as a reading or a topic name), and a
+  citation stays only where the quoted words of its sentence were
   returned; off mode flags what strip mode would change. Every figure is
   checked against the tools' results and a mismatch is flagged. Both hold
   within the Known limits listed in

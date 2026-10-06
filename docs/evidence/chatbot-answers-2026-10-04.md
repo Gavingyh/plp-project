@@ -912,11 +912,30 @@ here:
   - A returned blockquote whose citation stands on its own '>' line loses
     that line's '>' in strip mode, so off mode flags the correct answer (as
     at f7a90fb).
+- Found by the thirteenth, final validation (6 Oct, after 420ea79), all also
+  on `main`, left as recorded limits with strict expected failures in
+  `tests/test_validate_chatbot_round13_review_findings.py`:
+  - An invented quote that strip mode removes leaves its citation when
+    anything but a space stands between them: a dash ('"..." — [DBS, ...]'),
+    a closing bold or emphasis mark, a closing bracket, a comma, a table
+    bar, or a line break. The citation then sits beside the model's own
+    claim. Only '"..." [DBS, ...]' and '("..." [DBS, ...])' lose it.
+  - The figure check skips some numbers by design: a whole number from 1990
+    to 2100 written without a comma (read as a year, so "2045 negative
+    posts" passes), a number before day, week, month or year ("negative
+    for 37 days"), and numbers under 10.
+  - A count written as a share in words ("45 per cent of DBS posts", also
+    "percent" and "pct") is checked as a plain number, so a returned count
+    of 45 vouches for it; "45%" is checked as a share.
+  - A figure written without its leading zero (".87") is not read. No
+    recorded answer writes one.
 
-Whether the Grounded chatbot claim keeps "never", or names what is checked and
-cites this list, is a team decision on the team to-do
-(`docs/briefs/team-todo-2026-10-02.html`, "Word the Grounded chatbot claim to
-match what the checks can promise").
+On 6 Oct the owner reworded the Grounded chatbot claim in `CLAUDE.md` to what
+the checks prove, citing this list: in strip mode, every passage of three or
+more words shown in quote marks is text a search returned (or the tools' own
+wording, such as a reading or a topic name), a citation stays only where its
+sentence's quoted words were returned, and every figure is checked as above.
+The team to-do records the decision (`docs/briefs/team-todo-2026-10-02.html`).
 
 ## The seven questions again, after
 

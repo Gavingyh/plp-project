@@ -1187,7 +1187,18 @@ keeps its citation, and a blockquote's citation line is flagged in off mode.
 API integrity was proven every round. The auditor's run returned no report,
 so this round's docs were not re-audited.
 
-**Needs a human (6 Oct):** the Grounded chatbot claim's wording (the team
-to-do; the evidence page's Known limits list is what a reworded claim would
-cite); whether answers of about a minute are acceptable; merging and pushing
-`fix/chatbot-answers`.
+Later on 6 Oct, by the owner's decisions: the live check (gold set 23/24
+tool, 8/8 behaviour, 0/32 answers with an unreturned figure, median 47 s;
+multi-turn 9/9; evidence page) and the Grounded chatbot claim reworded in
+`CLAUDE.md` to what the checks prove, within the Known limits (the to-do page
+republished). A final, thirteenth validation
+(`docs/validation/2026-10-06-chatbot-answers-thirteenth-check.md`) found four
+more gaps, all also on `main`, recorded as limits: a removed quote's citation
+kept behind a dash or bold, figures skipped as years, durations or under 10,
+"45 per cent" checked as a count, and ".87" unread. The branch was then
+merged into `main` and pushed.
+
+**Needs a human (6 Oct):** whether answers of about 47 seconds are
+acceptable (speed options: share the cached prompt between the intent
+classifier and the chatbot, skip the classifier for plain questions, stream
+the answer).

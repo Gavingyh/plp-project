@@ -8,21 +8,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: a left-to-right data-flow board (sources -> processing -> scoring -> store -> serving),
-   then a second lane for building the models and the deliverables; each component is a tinted
-   card whose colour is its status, with its open to-do items inside. Stacks to one column on phones. */
+/* Layout: one backbone (a sentence becoming a number on screen) drawn left to right; four views
+   recolour and refill the same seven stages; a number trace lights the stages a real index cell
+   passed through; the model lineage runs underneath. Stacks to one column on phones. */
 :root {
-  --ground: #f4f6f5;
-  --surface: #ffffff;
-  --ink: #17201d;
-  --muted: #59655f;
-  --rule: #d6dcd9;
-  --accent: #1d6b61;
-  --done: #1e7a4c;      --done-bg: #e3f2e9;
-  --built: #2c5b9c;     --built-bg: #e4ecf8;
-  --decide: #93600c;    --decide-bg: #f8edd6;
-  --people: #6b3fa0;    --people-bg: #efe7f8;
-  --todo: #8a3a33;      --todo-bg: #f7e3e0;
+  --ground: #f4f6f5; --surface: #ffffff; --ink: #17201d; --muted: #59655f; --rule: #d6dcd9;
+  --accent: #1d6b61; --accent-bg: #dff0ec;
+  --done: #1e7a4c;   --done-bg: #e3f2e9;
+  --built: #2c5b9c;  --built-bg: #e4ecf8;
+  --decide: #93600c; --decide-bg: #f8edd6;
+  --people: #6b3fa0; --people-bg: #efe7f8;
+  --todo: #8a3a33;   --todo-bg: #f7e3e0;
   --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -30,298 +26,318 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --ground: #111614; --surface: #181f1c; --ink: #e3eae6; --muted: #9ba8a2; --rule: #2c3532; --accent: #63c3b4;
-    --done: #6fd39b;   --done-bg: #17291f;
-    --built: #8db4ee;  --built-bg: #18243a;
-    --decide: #e7b65c; --decide-bg: #33291a;
-    --people: #c2a3ec; --people-bg: #281d36;
-    --todo: #f09088;   --todo-bg: #36201e;
+    --ground: #111614; --surface: #181f1c; --ink: #e3eae6; --muted: #9ba8a2; --rule: #2c3532;
+    --accent: #63c3b4; --accent-bg: #19302b;
+    --done: #6fd39b; --done-bg: #17291f; --built: #8db4ee; --built-bg: #18243a;
+    --decide: #e7b65c; --decide-bg: #33291a; --people: #c2a3ec; --people-bg: #281d36;
+    --todo: #f09088; --todo-bg: #36201e;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --ground: #111614; --surface: #181f1c; --ink: #e3eae6; --muted: #9ba8a2; --rule: #2c3532; --accent: #63c3b4;
-  --done: #6fd39b;   --done-bg: #17291f;
-  --built: #8db4ee;  --built-bg: #18243a;
-  --decide: #e7b65c; --decide-bg: #33291a;
-  --people: #c2a3ec; --people-bg: #281d36;
-  --todo: #f09088;   --todo-bg: #36201e;
+  --ground: #111614; --surface: #181f1c; --ink: #e3eae6; --muted: #9ba8a2; --rule: #2c3532;
+  --accent: #63c3b4; --accent-bg: #19302b;
+  --done: #6fd39b; --done-bg: #17291f; --built: #8db4ee; --built-bg: #18243a;
+  --decide: #e7b65c; --decide-bg: #33291a; --people: #c2a3ec; --people-bg: #281d36;
+  --todo: #f09088; --todo-bg: #36201e;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--ground); color: var(--ink); font: 400 14.5px/1.5 var(--body); padding-inline: 16px; padding-block: 0 56px; }
-.wrap { max-width: 1320px; margin: 0 auto; }
-header { padding-block: 32px 18px; display: grid; gap: 10px; border-bottom: 1px solid var(--rule); }
+.wrap { max-width: 1360px; margin: 0 auto; }
+header { padding-block: 30px 16px; display: grid; gap: 10px; }
 .eyebrow { font: 500 12px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 16px; }
 h1 { font: 600 clamp(28px, 4.5vw, 38px)/1.1 var(--display); margin: 0; text-wrap: balance; }
-.lede { margin: 0; max-width: 72ch; font-size: 16px; }
+.lede { margin: 0; max-width: 74ch; font-size: 16px; }
 h2 { font: 600 20px/1.2 var(--display); margin: 0 0 4px; text-wrap: balance; }
-.sub { color: var(--muted); margin: 0 0 14px; max-width: 76ch; }
-code { font: 400 .86em/1.4 var(--mono); background: color-mix(in srgb, var(--ink) 7%, transparent); padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+.sub { color: var(--muted); margin: 0 0 12px; max-width: 80ch; }
+code { font: 400 .85em/1.4 var(--mono); background: color-mix(in srgb, var(--ink) 7%, transparent); padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+a { color: var(--accent); text-underline-offset: 2px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* legend and tally */
-.key { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-block: 16px 6px; align-items: center; }
-.key span { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; }
-.sw { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
-.sw.done { background: var(--done-bg); border-color: var(--done); }
-.sw.built { background: var(--built-bg); border-color: var(--built); }
-.sw.decide { background: var(--decide-bg); border-color: var(--decide); }
-.sw.people { background: var(--people-bg); border-color: var(--people); }
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; border-block: 1px solid var(--rule); position: sticky; top: env(safe-area-inset-top, 0px); background: var(--ground); z-index: 2; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; padding: 7px 12px; cursor: pointer; font-size: 13.5px; border-right: 1px solid var(--rule); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.lbl { font: 500 11.5px/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.key span { display: inline-flex; gap: 6px; align-items: center; }
+.sw { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; display: inline-block; }
+.sw.done { background: var(--done-bg); border-color: var(--done); } .sw.built { background: var(--built-bg); border-color: var(--built); }
+.sw.decide { background: var(--decide-bg); border-color: var(--decide); } .sw.people { background: var(--people-bg); border-color: var(--people); }
 .sw.todo { background: var(--todo-bg); border-color: var(--todo); }
-.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin-block: 14px 8px; }
-.tally div { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; }
-.tally b { font: 600 26px/1 var(--display); font-variant-numeric: tabular-nums; }
-.tally .done b { color: var(--done); } .tally .built b { color: var(--built); } .tally .decide b { color: var(--decide); }
-.tally .people b { color: var(--people); } .tally .todo b { color: var(--todo); }
-.tally span { color: var(--muted); font-size: 13px; }
-.blocker { background: var(--decide-bg); border: 1px solid var(--decide); border-radius: 6px; padding: 10px 14px; margin-block: 12px 0; max-width: 100%; }
-.blocker p { margin: 0; }
+.key[data-for] { display: none; }
+[data-view="status"] .key[data-for="status"], [data-view="live"] .key[data-for="live"], [data-view="owner"] .key[data-for="owner"], [data-view="tech"] .key[data-for="tech"] { display: flex; }
 
-/* the flow board */
-section.lane { padding-block: 26px 4px; }
-.board { overflow-x: auto; padding-bottom: 6px; }
-.flow { display: grid; grid-template-columns: repeat(var(--cols), minmax(210px, 1fr)); gap: 0 26px; min-width: calc(var(--cols) * 226px); }
-.col { display: grid; gap: 12px; align-content: start; position: relative; min-width: 0; }
-.col h3 { font: 500 11.5px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
-.col:not(:last-child)::after { content: "\2192"; position: absolute; right: -21px; top: 46px; font: 600 18px/1 var(--body); color: var(--accent); }
-.card { border: 1.5px solid; border-radius: 6px; padding: 10px 11px; display: grid; gap: 6px; min-width: 0; }
-.card.done { background: var(--done-bg); border-color: var(--done); }
-.card.built { background: var(--built-bg); border-color: var(--built); }
-.card.decide { background: var(--decide-bg); border-color: var(--decide); }
-.card.people { background: var(--people-bg); border-color: var(--people); }
-.card.todo { background: var(--todo-bg); border-color: var(--todo); }
-.card h4 { margin: 0; font: 600 15px/1.25 var(--display); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
-.st { font: 500 10px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; white-space: nowrap; color: var(--surface); }
-.done .st { background: var(--done); } .built .st { background: var(--built); } .decide .st { background: var(--decide); }
-.people .st { background: var(--people); } .todo .st { background: var(--todo); }
-.card p { margin: 0; font-size: 13px; color: var(--ink); }
-.card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; border-top: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent); padding-top: 6px; }
-.card li { font-size: 12.5px; line-height: 1.4; display: grid; gap: 1px; }
-.card li .who { font: 500 10.5px/1.3 var(--mono); color: var(--muted); }
-.card li .who b { font-weight: 500; }
-.card li.late .who b { color: var(--todo); }
-.none { font-size: 12.5px; color: var(--muted); font-style: italic; }
-footer { margin-top: 34px; padding-top: 14px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13px; max-width: 90ch; }
-@media (max-width: 760px) {
-  .flow { grid-template-columns: 1fr; min-width: 0; gap: 22px; }
-  .col:not(:last-child)::after { content: "\2193"; right: auto; left: 50%; top: auto; bottom: -21px; }
+/* backbone */
+section.part { padding-block: 22px 4px; }
+.scroll { overflow-x: auto; padding-bottom: 6px; }
+.backbone { display: grid; grid-template-columns: repeat(7, minmax(180px, 1fr)); gap: 0 22px; min-width: 1300px; }
+.stage { position: relative; display: grid; grid-template-rows: auto auto 1fr; gap: 8px; align-content: start; min-width: 0; }
+.stage:not(:last-child)::after { content: "\2192"; position: absolute; right: -18px; top: 22px; font: 600 17px/1 var(--body); color: var(--muted); }
+.head { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 11px; display: grid; gap: 4px; transition: box-shadow .2s, border-color .2s; }
+.head .n { font: 500 11px/1 var(--mono); color: var(--muted); letter-spacing: .06em; }
+.head h3 { margin: 0; font: 600 16px/1.2 var(--display); }
+.head p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.head .scale { font: 500 12.5px/1.35 var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.stage.lit .head { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.stage.lit::after { color: var(--accent); }
+.stage.dim .head { opacity: .55; }
+.panel { border: 1.5px solid var(--rule); border-radius: 6px; padding: 9px 10px; display: none; gap: 6px; font-size: 12.5px; background: var(--surface); min-width: 0; }
+[data-view="status"] .panel.v-status, [data-view="tech"] .panel.v-tech, [data-view="owner"] .panel.v-owner, [data-view="live"] .panel.v-live { display: grid; }
+.panel.done { background: var(--done-bg); border-color: var(--done); } .panel.built { background: var(--built-bg); border-color: var(--built); }
+.panel.decide { background: var(--decide-bg); border-color: var(--decide); } .panel.people { background: var(--people-bg); border-color: var(--people); }
+.panel.todo { background: var(--todo-bg); border-color: var(--todo); }
+.st { justify-self: start; font: 500 10px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; color: var(--surface); }
+.done .st { background: var(--done); } .built .st { background: var(--built); } .decide .st { background: var(--decide); } .people .st { background: var(--people); } .todo .st { background: var(--todo); }
+.panel ul { margin: 0; padding-left: 15px; display: grid; gap: 4px; }
+.panel li { line-height: 1.4; }
+.panel .who { font: 500 10.5px/1.3 var(--mono); color: var(--muted); display: block; }
+.panel .late .who { color: var(--todo); }
+.panel dl { margin: 0; display: grid; gap: 3px; }
+.panel dt { font: 500 10.5px/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.panel dd { margin: 0 0 4px; }
+.links { font-size: 12px; display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.owner-chip { justify-self: start; font: 500 11px/1.2 var(--mono); padding: 3px 6px; border-radius: 3px; background: var(--accent-bg); color: var(--ink); }
+
+/* trace */
+.traces { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 4px 12px; }
+.traces button { border: 1px solid var(--rule); background: var(--surface); border-radius: 6px; padding: 8px 12px; cursor: pointer; text-align: left; display: grid; gap: 1px; }
+.traces button b { font: 600 18px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.traces button span { font-size: 12.5px; color: var(--muted); }
+.traces button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.trace { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 14px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; margin: 0; padding: 0; list-style: none; counter-reset: s; }
+.steps li { display: grid; gap: 3px; align-content: start; counter-increment: s; min-width: 0; }
+.steps li::before { content: counter(s); font: 600 12px/1 var(--mono); color: var(--accent); }
+.steps h4 { margin: 0; font: 600 14.5px/1.25 var(--display); }
+.steps p { margin: 0; font-size: 13px; }
+.bars { display: grid; gap: 4px; margin-top: 2px; }
+.bar { display: grid; grid-template-columns: 92px 1fr 104px; gap: 8px; align-items: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+.bar .track { height: 9px; background: color-mix(in srgb, var(--ink) 8%, transparent); border-radius: 2px; overflow: hidden; }
+.bar .fill { height: 100%; background: var(--accent); }
+.bar .v { color: var(--muted); text-align: right; }
+.formula { font: 400 12.5px/1.6 var(--mono); background: color-mix(in srgb, var(--ink) 5%, transparent); padding: 8px 10px; border-radius: 4px; overflow-x: auto; }
+
+/* lineage */
+.lineage { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 0 20px; min-width: 1120px; }
+.node { position: relative; border: 1.5px solid var(--rule); border-radius: 6px; padding: 10px 11px; background: var(--surface); display: grid; gap: 4px; align-content: start; }
+.node:not(:last-child)::after { content: "\2192"; position: absolute; right: -16px; top: 18px; font: 600 16px/1 var(--body); color: var(--muted); }
+.node h4 { margin: 0; font: 600 15px/1.2 var(--display); }
+.node .big { font: 600 22px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.node p { margin: 0; font-size: 12.5px; }
+.node.live { border-color: var(--done); background: var(--done-bg); }
+.node.cand { border-color: var(--built); background: var(--built-bg); }
+.node .tag { justify-self: start; font: 500 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .05em; padding: 3px 5px; border-radius: 3px; background: var(--ink); color: var(--surface); }
+footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13px; max-width: 95ch; }
+@media (max-width: 780px) {
+  .backbone, .lineage { grid-template-columns: 1fr; min-width: 0; gap: 20px; }
+  .stage:not(:last-child)::after, .node:not(:last-child)::after { content: "\2193"; right: auto; left: 50%; top: auto; bottom: -19px; }
+  .controls { position: static; }
+  .bar { grid-template-columns: 76px 1fr 96px; }
 }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
 
-<div class="wrap">
+<div class="wrap" id="map" data-view="status">
 <header>
   <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Wed 7 Oct 2026</span><span>25 days to submission</span></div>
-  <h1>Where each part of the project stands</h1>
-  <p class="lede">The system as data flows through it, from the sources to what users see, then the work that builds the models and the deliverables. Each part&#8217;s colour is its status, and its open to-do items are listed inside, with who does them and by when.</p>
+  <h1>How a sentence becomes a number on screen</h1>
+  <p class="lede">The whole project as one backbone: six sources are collected, cleaned, given a bank, an aspect and a sentiment, rolled into an index and served to the dashboard and the chatbot. Switch the view to see the same stages by status, technology, who acts next, or what is live. Trace a real number to see the path it took.</p>
 </header>
 
-<div class="key" aria-label="Status colours">
-  <span><i class="sw done"></i>Done and in use</span>
-  <span><i class="sw built"></i>Built and measured, not switched on</span>
-  <span><i class="sw decide"></i>Waiting on a team decision</span>
-  <span><i class="sw people"></i>In progress, people&#8217;s work</span>
-  <span><i class="sw todo"></i>Not started</span>
+<div class="controls">
+  <span class="lbl" id="view-label">View</span>
+  <div class="seg" role="group" aria-labelledby="view-label">
+    <button type="button" id="v-status" data-v="status" aria-pressed="true">Status and to-dos</button>
+    <button type="button" id="v-tech" data-v="tech" aria-pressed="false">Architecture</button>
+    <button type="button" id="v-owner" data-v="owner" aria-pressed="false">Who acts next</button>
+    <button type="button" id="v-live" data-v="live" aria-pressed="false">Live or built</button>
+  </div>
+  <div class="key" data-for="status"><span><i class="sw done"></i>Done</span><span><i class="sw built"></i>Built, not switched on</span><span><i class="sw decide"></i>Waiting on a decision</span><span><i class="sw people"></i>In progress</span><span><i class="sw todo"></i>Not started</span></div>
+  <div class="key" data-for="tech"><span>Code folder, tools and models for each stage</span></div>
+  <div class="key" data-for="owner"><span>The next action at each stage, and whose it is</span></div>
+  <div class="key" data-for="live"><span><i class="sw done"></i>What the dashboard and chatbot use today</span><span><i class="sw built"></i>Built and measured, waiting for the re-score</span></div>
 </div>
 
-<div class="tally" aria-label="Components by status">
-  <div class="done"><b>10</b><span>done and in use</span></div>
-  <div class="built"><b>3</b><span>built, not switched on</span></div>
-  <div class="decide"><b>1</b><span>waiting on a decision</span></div>
-  <div class="people"><b>4</b><span>in progress</span></div>
-  <div class="todo"><b>1</b><span>not started</span></div>
-</div>
-<div class="blocker"><p><b>What holds things up:</b> four team decisions were due on 5 Oct (aspect method, wealth or retail, blind relabelling, the blended index), and the product-feature rule is new. The labels, the retraining, the one re-score (12&#8211;18 Oct) and every evaluation wait on them. Drafts to decide from are on the team to-do.</p></div>
+<section class="part" aria-labelledby="h-backbone">
+  <h2 id="h-backbone">The backbone</h2>
+  <p class="sub">Figures are from <code>data/plp.db</code> on 7 Oct 2026. Data runs from 6 Jan 2020 to 25 Sep 2026, when collection stopped.</p>
+  <div class="scroll">
+  <div class="backbone">
 
-<section class="lane" aria-labelledby="h-flow">
-  <h2 id="h-flow">The data flow</h2>
-  <p class="sub">Sentences are collected from six sources, cleaned and attributed to a bank, given an aspect and a sentiment, rolled up into the index, stored, and served by the API to the dashboard and the chatbot. Counts are from the database on this date; collection stopped on 25 Sep.</p>
-  <div class="board">
-  <div class="flow" style="--cols: 5">
-    <div class="col">
-      <h3>Sources</h3>
-      <div class="card done">
-        <h4>Reddit <span class="st">Done</span></h4>
-        <p>24,675 sentences of posts and comments.</p>
-        <ul><li>Approve refilling three thin months (Sep 2021, May 2024, Mar 2025)<span class="who"><b>Team decision</b> · by 12 Oct</span></li></ul>
-      </div>
-      <div class="card done">
-        <h4>News <span class="st">Done</span></h4>
-        <p>5,817 sentences: Google News, Yahoo, NewsAPI.</p>
-        <p class="none">Nothing open.</p>
-      </div>
-      <div class="card done">
-        <h4>CNA <span class="st">Done</span></h4>
-        <p>1,599 sentences; team-only text.</p>
-        <ul><li>Approve removing 15 CNA articles from git (<code>ingest/cna_articles.json</code>)<span class="who"><b>Team decision</b> · by 12 Oct</span></li></ul>
-      </div>
-      <div class="card done">
-        <h4>Bank results reports <span class="st">Done</span></h4>
-        <p>12,254 sentences from the banks&#8217; own reports.</p>
-        <ul>
-          <li>Approve fixing 6 UOB reports dated by their extraction day<span class="who"><b>Team decision</b> · by 12 Oct</span></li>
-          <li>Store PDF links as relative paths (decided)<span class="who"><b>Claude</b> · at the re-score</span></li>
-        </ul>
-      </div>
-      <div class="card people">
-        <h4>Broker research <span class="st">In progress</span></h4>
-        <p>25 analyst reports, 641 sentences on the Windows PC; not yet in this Mac&#8217;s database. Labels done.</p>
-        <ul>
-          <li>Send the source&#8217;s database rows from the PC<span class="who"><b>Teammate</b> · before the re-score</span></li>
-          <li>Name who labelled the 100 test rows; a second annotator for agreement<span class="who"><b>People</b> · by 12 Oct</span></li>
-        </ul>
-      </div>
-      <div class="card done">
-        <h4>Analyst consensus <span class="st">Done</span></h4>
-        <p>Ratings and price targets from Yahoo Finance.</p>
-        <ul><li class="late">Fix the dashboard panel so UOB shows<span class="who"><b>Dashboard owner · overdue</b> (5 Oct)</span></li></ul>
-      </div>
+    <div class="stage" id="s-sources">
+      <div class="head"><span class="n">1</span><h3>Sources</h3><span class="scale">28,002 documents</span><p>Reddit 21,805 · Google News 5,685 · CNA 207 · bank results reports 178 · Yahoo News 114 · NewsAPI 13. Analyst ratings from Yahoo Finance.</p></div>
+      <div class="panel v-status done"><span class="st">Done</span><p>Collection stopped on 25 Sep. Broker research (25 reports) is labelled but its rows are on the Windows PC only.</p><ul>
+        <li>Approve three repairs: UOB report dates, three thin Reddit months, CNA articles in git<span class="who">Team decision · by 12 Oct</span></li>
+        <li>Send the broker research rows<span class="who">Teammate · before the re-score</span></li></ul></div>
+      <div class="panel v-tech"><dl><dt>Code</dt><dd><code>ingest/</code></dd><dt>How</dt><dd>Arctic Shift API for Reddit; Google News, Yahoo News, NewsAPI and Alpha Vantage feeds; CNA archive; the banks&#8217; investor-relations PDFs (pdfplumber); broker PDFs with OCR (RapidOCR); Yahoo Finance consensus.</dd></dl>
+        <div class="links"><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/05-news-ingestion.md" target="_blank" rel="noopener">News ingestion</a><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/11-news-filter.md" target="_blank" rel="noopener">News filter</a></div></div>
+      <div class="panel v-owner"><span class="owner-chip">Team decision, then teammate</span><p>Approve the three data repairs (by 12 Oct); send the broker research database rows.</p></div>
+      <div class="panel v-live done"><p><b>Live:</b> six sources.</p><p><b>Built, not in this database:</b> broker research, 641 sentences.</p></div>
     </div>
 
-    <div class="col">
-      <h3>Processing</h3>
-      <div class="card done">
-        <h4>Cleaning and sentences <span class="st">Done</span></h4>
-        <p>28,002 documents split into 44,345 sentences; filters for noise and duplicates.</p>
-        <p class="none">Nothing open.</p>
-      </div>
-      <div class="card built">
-        <h4>Bank attribution (NER) <span class="st">Built</span></h4>
-        <p>F1 0.997 against Opus&#8217;s reference, against 0.772 for name matching; not applied.</p>
-        <ul>
-          <li>Label the 201-sentence gold set<span class="who"><b>People</b> · by 11 Oct</span></li>
-          <li>Apply in the one re-score, if adopted<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li>
-        </ul>
-      </div>
-      <div class="card decide">
-        <h4>Aspects <span class="st">Decide</span></h4>
-        <p>Live: seed centroids, 41% match with people. Built: an LLM classifier, 73%; the whole corpus is classified.</p>
-        <ul>
-          <li class="late">Choose the aspect method and the disagreement rule<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
-          <li class="late">Wealth or retail for priority products; 22 local-context answers (draft ready)<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
-        </ul>
-      </div>
+    <div class="stage" id="s-clean">
+      <div class="head"><span class="n">2</span><h3>Clean and attribute</h3><span class="scale">44,345 sentences</span><p>Split into sentences, filtered for noise and duplicates, each tagged with the bank it is about.</p></div>
+      <div class="panel v-status built"><span class="st">Built</span><p>Cleaning is done and in use. A better bank tagger (NER) is built: F1 0.997 against 0.772 for name matching, on Opus&#8217;s reference.</p><ul>
+        <li>Label the 201-sentence NER gold set<span class="who">People · by 11 Oct</span></li></ul></div>
+      <div class="panel v-tech"><dl><dt>Code</dt><dd><code>preprocess/</code>: <code>clean.py</code>, <code>segment.py</code>, <code>bank_ner.py</code>; news relevance filter in <code>ingest/news_filter.py</code></dd><dt>How</dt><dd>Rules and filters; spaCy <code>en_core_web_sm</code> for the bank tagger.</dd></dl>
+        <div class="links"><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/04-pipeline.md" target="_blank" rel="noopener">Pipeline</a></div></div>
+      <div class="panel v-owner"><span class="owner-chip">People</span><p>Label the NER gold set, so the tagger has a human accuracy figure.</p></div>
+      <div class="panel v-live"><p><b>Live:</b> bank names matched by aliases (POSB and DBS Vickers count as DBS).</p><p><b>Built:</b> the NER tagger, applied only in the re-score if adopted.</p></div>
     </div>
 
-    <div class="col">
-      <h3>Scoring and index</h3>
-      <div class="card built">
-        <h4>Sentiment model <span class="st">Built</span></h4>
-        <p>Live: base FinBERT (0.571 test macro-F1). Built: fine-tuned 0.604 (1 Oct) and 0.621 (4 Oct); adapted, 0.701 against 0.663 on cross-validation.</p>
-        <ul>
-          <li>Decide whether a product&#8217;s feature counts as sentiment (draft ready)<span class="who"><b>Team decision</b> · before labelling</span></li>
-          <li>Choose the scoring model<span class="who"><b>Team decision</b> · by 12 Oct</span></li>
-          <li>Pretrain the adapted model again (filter fixed 7 Oct), retrain on final labels<span class="who"><b>Claude</b> · 12&#8211;14 Oct</span></li>
-        </ul>
-      </div>
-      <div class="card done">
-        <h4>Sentiment index <span class="st">Done</span></h4>
-        <p>Per bank and aspect over 7 days, 30 days and all time, by source and blended.</p>
-        <ul>
-          <li class="late">One blended index, or each source side by side<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
-          <li>Re-score and re-aggregate once (windows anchored to the newest data, decided)<span class="who"><b>Claude, with approval</b> · 12&#8211;18 Oct</span></li>
-        </ul>
-      </div>
+    <div class="stage" id="s-aspect">
+      <div class="head"><span class="n">3</span><h3>Aspect</h3><span class="scale">281,744 sentence-aspect pairs</span><p>What each sentence is about: 10 aspects plus &#8220;other&#8221;, about 6.4 per sentence today.</p></div>
+      <div class="panel v-status decide"><span class="st">Decide</span><p>Live centroids match people&#8217;s aspect 41% of the time; the built LLM classifier 73%, and the whole corpus is already classified.</p><ul>
+        <li class="late">Choose the aspect method and disagreement rule<span class="who">Team decision · overdue (5 Oct)</span></li>
+        <li class="late">Wealth or retail for priority products; 22 local-context answers (draft ready)<span class="who">Team decision · overdue (5 Oct)</span></li></ul></div>
+      <div class="panel v-tech"><dl><dt>Code</dt><dd><code>aspects/assign.py</code>, <code>aspects/llm_classify.py</code>, <code>config/aspects.yaml</code></dd><dt>How</dt><dd>Live: FinBERT sentence embeddings compared with each aspect&#8217;s seed-term centroid. Built: <code>llama3.1:8b</code> through Ollama picks one aspect.</dd></dl>
+        <div class="links"><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/22-aspect-method-development.md" target="_blank" rel="noopener">Aspect method</a></div></div>
+      <div class="panel v-owner"><span class="owner-chip">Team decision (overdue)</span><p>Pick the method and rules; everything after this stage waits on it.</p></div>
+      <div class="panel v-live"><p><b>Live:</b> centroids, several aspects a sentence.</p><p><b>Built:</b> one LLM aspect a sentence, for all 44,345.</p></div>
     </div>
 
-    <div class="col">
-      <h3>Store</h3>
-      <div class="card done">
-        <h4>Database and snapshots <span class="st">Done</span></h4>
-        <p>SQLite; the frozen corpus snapshot of 30 Sep, with checksums in the README.</p>
-        <ul>
-          <li>New snapshot after the re-score<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li>
-          <li>Upload the snapshot and model weights to the team folder<span class="who"><b>People</b> · by 18 Oct</span></li>
-        </ul>
-      </div>
+    <div class="stage" id="s-sentiment">
+      <div class="head"><span class="n">4</span><h3>Sentiment</h3><span class="scale">positive · neutral · negative</span><p>A label and a confidence for every sentence-aspect pair.</p></div>
+      <div class="panel v-status built"><span class="st">Built</span><p>Live: base FinBERT. Three fine-tuned sets are built and measured (lineage below); none is switched on.</p><ul>
+        <li>Rule on whether a product&#8217;s feature counts as sentiment (draft ready)<span class="who">Team decision · before labelling</span></li>
+        <li>Choose the scoring model<span class="who">Team decision · by 12 Oct</span></li>
+        <li>Retrain on the final labels<span class="who">Claude · 12&#8211;14 Oct</span></li></ul></div>
+      <div class="panel v-tech"><dl><dt>Code</dt><dd><code>sentiment/score.py</code>; training in <code>train/finetune.py</code>, <code>train/dapt.py</code></dd><dt>How</dt><dd>FinBERT (<code>ProsusAI/finbert</code>, PyTorch and Transformers), fed the sentence and its aspect&#8217;s name.</dd></dl>
+        <div class="links"><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/21-sentiment-model-development.md" target="_blank" rel="noopener">Model development</a></div></div>
+      <div class="panel v-owner"><span class="owner-chip">Team decision, then Claude</span><p>Decide the product-feature rule and the model; Claude retrains and scores.</p></div>
+      <div class="panel v-live"><p><b>Live:</b> base FinBERT, <code>finbert-base-zeroshot-v1</code>.</p><p><b>Built:</b> fine-tuned 1 Oct and 4 Oct; adapted (to pretrain again).</p></div>
     </div>
 
-    <div class="col">
-      <h3>What users see</h3>
-      <div class="card done">
-        <h4>API <span class="st">Done</span></h4>
-        <p>16 FastAPI endpoints; the API integrity claim is proven (every number fetchable, bad input rejected).</p>
-        <ul><li>Re-check after the re-score, with every evaluation<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li></ul>
-      </div>
-      <div class="card people">
-        <h4>Dashboard <span class="st">In progress</span></h4>
-        <p>Streamlit, owned by a teammate; reads the database directly.</p>
-        <ul>
-          <li>Read one model version, before the re-score adds scores<span class="who"><b>Dashboard owner</b> · by 12 Oct</span></li>
-          <li>Show the chatbot&#8217;s steps; update the caption<span class="who"><b>Dashboard owner</b> · by 12 Oct</span></li>
-          <li>Check every tab (five issues found on 4 Oct)<span class="who"><b>Dashboard owner</b> · by 19 Oct</span></li>
-        </ul>
-      </div>
-      <div class="card done">
-        <h4>Chatbot <span class="st">Done</span></h4>
-        <p>Local model with six tools; the Grounded chatbot claim holds within its known limits. Gold set: tools 23/24, behaviour 8/8; about 47 s an answer on this Mac (speed on hold). A hosted model through Groq was verified on 6 Oct (tools 24/24).</p>
-        <ul>
-          <li>Read the fixed replies<span class="who"><b>People</b> · by 12 Oct</span></li>
-          <li>Replace the Gemini key, which the provider rejects (HTTP 401)<span class="who"><b>Owner</b> · before using Gemini</span></li>
-        </ul>
-      </div>
+    <div class="stage" id="s-index">
+      <div class="head"><span class="n">5</span><h3>Index</h3><span class="scale">514 index cells</span><p>Per bank, aspect, source and window (7 days, 30 days, all time), blended across sources.</p></div>
+      <div class="panel v-status done"><span class="st">Done</span><p>In use. Windows will count back from the newest sentence (decided, merges at the re-score).</p><ul>
+        <li class="late">One blended index, or each source side by side<span class="who">Team decision · overdue (5 Oct)</span></li>
+        <li>Re-score and re-aggregate once<span class="who">Claude, with approval · 12&#8211;18 Oct</span></li></ul></div>
+      <div class="panel v-tech"><dl><dt>Code</dt><dd><code>aggregate/index.py</code>, <code>config/sources.yaml</code></dd><dt>How</dt><dd>Confidence- and source-weighted mean of +1, 0, &#8722;1, shrunk towards 0 by n/(n+5); fewer than 5 sentences is &#8220;insufficient data&#8221;. News and CNA count 1.5, Reddit, reports and broker research 1.0.</dd></dl>
+        <div class="links"><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/12-index-computation.md" target="_blank" rel="noopener">Index computation</a></div></div>
+      <div class="panel v-owner"><span class="owner-chip">Team decision, then Claude</span><p>Decide blended or side by side; Claude runs the one re-score after approval.</p></div>
+      <div class="panel v-live done"><p><b>Live:</b> the index of 30 Sep, from base FinBERT and centroid aspects.</p></div>
     </div>
+
+    <div class="stage" id="s-store">
+      <div class="head"><span class="n">6</span><h3>Store and API</h3><span class="scale">16 endpoints</span><p>One SQLite database and dated snapshots, served by a FastAPI service.</p></div>
+      <div class="panel v-status done"><span class="st">Done</span><p>The API integrity claim is proven: every number is fetchable and bad input gets HTTP 422.</p><ul>
+        <li>New snapshot after the re-score; re-check the API<span class="who">Claude · 12&#8211;18 Oct</span></li>
+        <li>Upload the snapshot and model weights<span class="who">People · by 18 Oct</span></li></ul></div>
+      <div class="panel v-tech"><dl><dt>Code</dt><dd><code>ingest/db.py</code>, <code>api/main.py</code></dd><dt>How</dt><dd>SQLite (<code>data/plp.db</code>, snapshot of 30 Sep with checksums); FastAPI with validated inputs; OpenAPI contract in <code>docs/api/</code>.</dd></dl>
+        <div class="links"><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/03-data-model.md" target="_blank" rel="noopener">Data model</a><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/19-api-for-a-dashboard.md" target="_blank" rel="noopener">API</a></div></div>
+      <div class="panel v-owner"><span class="owner-chip">Claude, then people</span><p>Snapshot after the re-score; upload it with the weights.</p></div>
+      <div class="panel v-live done"><p><b>Live:</b> the 30 Sep database and snapshot.</p></div>
+    </div>
+
+    <div class="stage" id="s-users">
+      <div class="head"><span class="n">7</span><h3>What users see</h3><span class="scale">dashboard · chatbot</span><p>Charts and tables per bank and aspect, and a chatbot that answers from the same data.</p></div>
+      <div class="panel v-status people"><span class="st">In progress</span><p>Chatbot done: 23 of 24 right tools, 8 of 8 declines and no-data replies on the gold set; its claim holds within known limits. Dashboard: open items.</p><ul>
+        <li>Dashboard: one model version, the chatbot&#8217;s steps, check every tab<span class="who">Dashboard owner · 12&#8211;19 Oct</span></li>
+        <li class="late">Dashboard: analyst panel misses UOB<span class="who">Dashboard owner · overdue (5 Oct)</span></li>
+        <li>Read the chatbot&#8217;s fixed replies<span class="who">People · by 12 Oct</span></li>
+        <li>Replace the rejected Gemini key<span class="who">Owner</span></li></ul></div>
+      <div class="panel v-tech"><dl><dt>Code</dt><dd><code>dashboard/app.py</code>; <code>chatbot/</code></dd><dt>How</dt><dd>Streamlit, reading the database directly. Chatbot: <code>llama3.1:8b</code> through Ollama with six tools (sentiment, compare, trend, coverage, evidence search, analyst consensus); evidence search uses FinBERT embeddings; quote and figure checks before showing. Groq verified as a hosted option.</dd></dl>
+        <div class="links"><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/07-chatbot-turn.md" target="_blank" rel="noopener">A chatbot turn</a><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/diagrams/13-api-chat.md" target="_blank" rel="noopener">API chat</a></div></div>
+      <div class="panel v-owner"><span class="owner-chip">Dashboard owner; people; owner</span><p>Dashboard fixes; read the fixed replies; a new Gemini key.</p></div>
+      <div class="panel v-live done"><p><b>Live:</b> dashboard and chatbot on the 30 Sep data; chatbot answers in about 47 s on this Mac.</p></div>
+    </div>
+
   </div>
   </div>
 </section>
 
-<section class="lane" aria-labelledby="h-build">
-  <h2 id="h-build">Building the models, then the deliverables</h2>
-  <p class="sub">Labels train and test the models; the evaluations and the report rest on the final ones.</p>
-  <div class="board">
-  <div class="flow" style="--cols: 4">
-    <div class="col">
-      <h3>Labels</h3>
-      <div class="card people">
-        <h4>Labelled data <span class="st">In progress</span></h4>
-        <p>1,277 sentences in the first round and 380 broker research rows; an Opus rater as a check.</p>
-        <ul>
-          <li class="late">Relabel blind: the 299 test rows, and a sample of training rows?<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
-          <li>Top-up sheet, 268 rows<span class="who"><b>People</b> · by 11 Oct</span></li>
-          <li>Active-learning sheet, 150 rows, after the product-feature rule<span class="who"><b>People</b> · after that decision</span></li>
-          <li>Boundary rows, after the economist and wealth rules<span class="who"><b>People</b> · after those decisions</span></li>
-        </ul>
-      </div>
-    </div>
-    <div class="col">
-      <h3>Training</h3>
-      <div class="card built">
-        <h4>Fine-tuning pipeline <span class="st">Built</span></h4>
-        <p>Fine-tuning, cross-validation and adaptive pretraining work and are tested; the final model waits for the final labels.</p>
-        <ul><li>Train the chosen model on the final labels, one machine only<span class="who"><b>Claude</b> · 12&#8211;14 Oct</span></li></ul>
-      </div>
-    </div>
-    <div class="col">
-      <h3>Evaluation</h3>
-      <div class="card people">
-        <h4>Evaluation <span class="st">In progress</span></h4>
-        <p>Automated: test split, cross-validation, the chatbot gold set and its checks. People: still to come.</p>
-        <ul>
-          <li>Re-run every evaluation on the new snapshot<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li>
-          <li>Rate the chatbot&#8217;s answers; SASSI with 5&#8211;8 users<span class="who"><b>People</b> · 19&#8211;25 Oct</span></li>
-          <li>Interpret the results and freeze the tables<span class="who"><b>People</b> · by 25 Oct</span></li>
-        </ul>
-      </div>
-    </div>
-    <div class="col">
-      <h3>Deliverables</h3>
-      <div class="card todo">
-        <h4>Report, video, submission <span class="st">Not started</span></h4>
-        <p>Drafts exist for the approach and the findings; the final parts are the authors&#8217;.</p>
-        <ul>
-          <li>Conclusions, each person&#8217;s contribution, GenAI pros and cons<span class="who"><b>People</b> · by 30 Oct</span></li>
-          <li>Demo video, about 20 minutes, everyone presents<span class="who"><b>People</b> · by 31 Oct</span></li>
-          <li>Final snapshot, data report, clean install test<span class="who"><b>Claude</b> · by 31 Oct</span></li>
-          <li>Peer review and submit<span class="who"><b>People</b> · Sun 1 Nov</span></li>
-        </ul>
-      </div>
-    </div>
+<section class="part" aria-labelledby="h-trace">
+  <h2 id="h-trace">Trace a number</h2>
+  <p class="sub">Pick a figure the dashboard shows. The stages it passed through light up above, and each step below gives the real values from the index.</p>
+  <div class="traces" role="group" aria-label="Figures to trace" id="trace-buttons"></div>
+  <div class="trace" id="trace" aria-live="polite"></div>
+</section>
+
+<section class="part" aria-labelledby="h-lineage">
+  <h2 id="h-lineage">Model lineage</h2>
+  <p class="sub">Which labels trained which model, how each scored, and which one is live. Test scores are macro-F1 on the frozen 299-row test split unless marked.</p>
+  <div class="scroll">
+  <div class="lineage">
+    <div class="node"><h4>Labelled data</h4><span class="big">1,657</span><p>1,277 in the first round (978 train/dev, 299 test, frozen) and 380 broker research (280 and 100). Annotators saw a suggestion while labelling: a blind relabel is a team decision.</p></div>
+    <div class="node live"><span class="tag">Live</span><h4>Base FinBERT</h4><span class="big">0.571</span><p>Not trained on our labels. Scores every stored sentence today.</p></div>
+    <div class="node cand"><span class="tag">Built</span><h4>Fine-tuned, 1 Oct</h4><span class="big">0.604 &#177; 0.035</span><p>Three seeds; the Fine-tuning lead claim&#8217;s figures. Trained with a head-order flaw, fixed 3 Oct.</p></div>
+    <div class="node cand"><span class="tag">Built</span><h4>Retrained, 4 Oct</h4><span class="big">0.621 &#177; 0.027</span><p>Same data with the fix; every seed beats base. The three averaged: 0.634.</p></div>
+    <div class="node cand"><span class="tag">Built</span><h4>Adapted, 6 Oct</h4><span class="big">0.701</span><p>Cross-validation, against 0.663 from FinBERT (13 of 15 folds better). Test 0.628 &#177; 0.022. Its pretraining text held 151 test-related sentences: to pretrain again.</p></div>
+    <div class="node cand"><span class="tag">Built</span><h4>With broker labels, 7 Oct</h4><span class="big">0.652 · 0.751 · 0.690</span><p>Adapted, three averaged, on the original, broker research and all test rows; from FinBERT 0.597, 0.698, 0.649 on the same machine.</p></div>
   </div>
   </div>
 </section>
 
-<footer>As of 7 Oct 2026, from the database, the evidence files and the team to-do (<code>docs/briefs/team-todo-2026-10-07.html</code>), where each item&#8217;s reasons and sources are. &#8220;Built&#8221; means made and measured but not yet used for what the dashboard and chatbot show; switching anything on happens once, in the 12&#8211;18 Oct re-score.</footer>
+<footer>As of 7 Oct 2026. Figures come from <code>data/plp.db</code> (read-only), the evidence files in <code>docs/evidence/</code> and the team to-do (<code>docs/briefs/team-todo-2026-10-07.html</code>), where each to-do item&#8217;s reasons are. The detailed diagrams are in <code>docs/diagrams/</code>. &#8220;Built&#8221; means made and measured but not used for what users see; switching anything on happens once, in the 12&#8211;18 Oct re-score.</footer>
 </div>
+
+<script>
+(function () {
+  var map = document.getElementById("map");
+  var views = document.querySelectorAll("[data-v]");
+  function setView(v) {
+    map.setAttribute("data-view", v);
+    views.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === v)); });
+    try { localStorage.setItem("plp-map-view", v); } catch (e) {}
+  }
+  views.forEach(function (b) { b.addEventListener("click", function () { setView(b.dataset.v); }); });
+  try { var saved = localStorage.getItem("plp-map-view"); if (saved && document.querySelector('[data-v="' + saved + '"]')) setView(saved); } catch (e) {}
+
+  // Index rows as stored in data/plp.db (sentiment_index, model finbert-base-zeroshot-v1, computed 30 Sep 2026).
+  var weights = { "Reddit": 1.0, "Bank reports": 1.0, "Google News": 1.5, "CNA": 1.5, "Yahoo News": 1.5, "NewsAPI": 1.5 };
+  var traces = [
+    { id: "dbs-div", label: "DBS, dividends, all time", score: 0.1989, n: 20643, pos: 4652, neu: 15273, neg: 718, conf: 0.8595,
+      aspect: "dividend_policy", aspectName: "Dividend Policy", bank: "DBS", window: "all_time", windowName: "all time",
+      sources: [["Reddit", 10852, 0.0332], ["Bank reports", 7054, 0.3809], ["Google News", 2019, 0.3383], ["CNA", 649, 0.3359], ["Yahoo News", 54, 0.2398], ["NewsAPI", 15, 0.4104]] },
+    { id: "uob-nim", label: "UOB, net interest margin, last 30 days", score: 0.5465, n: 126, pos: 72, neu: 51, neg: 3, conf: 0.8442,
+      aspect: "net_interest_margin", aspectName: "Net Interest Margin", bank: "UOB", window: "30d", windowName: "the last 30 days",
+      sources: [["Bank reports", 78, 0.544], ["Google News", 32, 0.5778], ["Reddit", 11, 0.0893], ["Yahoo News", 5, 0.2204]] },
+    { id: "ocbc-all", label: "OCBC, overall, all time", score: 0.136, n: 7412, pos: 1664, neu: 4996, neg: 752, conf: 0.8588,
+      aspect: "ALL", aspectName: "all aspects (each sentence counted once)", bank: "OCBC", window: "all_time", windowName: "all time",
+      sources: [["Reddit", 3825, -0.0287], ["Bank reports", 1561, 0.3746], ["Google News", 1446, 0.2183], ["CNA", 435, 0.1284], ["Yahoo News", 141, 0.4523], ["NewsAPI", 4, 0.4444]] }
+  ];
+  var lit = ["s-sources", "s-clean", "s-aspect", "s-sentiment", "s-index", "s-store", "s-users"];
+  function fmt(x, d) { return (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d); }
+  function num(x) { return x.toLocaleString("en-GB"); }
+  var holder = document.getElementById("trace-buttons");
+  traces.forEach(function (t) {
+    var b = document.createElement("button");
+    b.type = "button"; b.id = "t-" + t.id; b.setAttribute("aria-pressed", "false");
+    b.innerHTML = "<b>" + fmt(t.score, 2) + "</b><span>" + t.label + "</span>";
+    b.addEventListener("click", function () { show(t); });
+    holder.appendChild(b);
+  });
+  function show(t) {
+    document.querySelectorAll("#trace-buttons button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.id === "t-" + t.id)); });
+    lit.forEach(function (id) { var el = document.getElementById(id); el.classList.add("lit"); el.classList.remove("dim"); });
+    var max = Math.max.apply(null, t.sources.map(function (s) { return s[1]; }));
+    var bars = t.sources.map(function (s) {
+      return '<div class="bar"><span>' + s[0] + '</span><span class="track"><span class="fill" style="width:' + (100 * s[1] / max).toFixed(1) + '%"></span></span><span class="v">' + num(s[1]) + " · " + fmt(s[2], 2) + "</span></div>";
+    }).join("");
+    var raw = t.score * (t.n + 5) / t.n;
+    var sumN = t.sources.reduce(function (a, s) { return a + s[1]; }, 0);
+    var url = "/sentiment?bank=" + t.bank + (t.aspect === "ALL" ? "" : "&aspect=" + t.aspect) + "&window=" + t.window;
+    document.getElementById("trace").innerHTML =
+      '<p style="margin:0"><b>' + t.label + ': ' + fmt(t.score, 4) + '</b> on a scale from −1 (all negative) to +1 (all positive), from ' + num(t.n) + ' sentences.</p>' +
+      '<ol class="steps">' +
+      '<li><h4>Collected</h4><p>' + num(sumN) + ' sentences about ' + t.bank + ' from ' + t.sources.length + ' sources (sentences · that source’s own score):</p><div class="bars">' + bars + '</div></li>' +
+      '<li><h4>Cleaned and given a bank</h4><p>Each sentence was kept after the noise and duplicate filters and tagged as about ' + t.bank + ' by alias matching.</p></li>' +
+      '<li><h4>Given an aspect</h4><p>' + (t.aspect === "ALL" ? 'Every aspect counts, each sentence once (it may match several).' : 'The centroid method matched these sentences to <b>' + t.aspectName + '</b> (among other aspects a sentence may match).') + '</p></li>' +
+      '<li><h4>Scored</h4><p>Base FinBERT labelled them ' + num(t.pos) + ' positive, ' + num(t.neu) + ' neutral and ' + num(t.neg) + ' negative, with mean confidence ' + t.conf.toFixed(2) + '.</p></li>' +
+      '<li><h4>Rolled into the index</h4><p>Window: ' + t.windowName + '. Each label counts +1, 0 or −1, weighted by its confidence and its source (news and CNA 1.5, others 1.0), giving ' + fmt(raw, 4) + '; shrunk by n/(n+5) = ' + (t.n / (t.n + 5)).toFixed(4) + ' to <b>' + fmt(t.score, 4) + '</b>.</p></li>' +
+      '<li><h4>Served</h4><p>Stored in the <code>sentiment_index</code> table (computed 30 Sep) and returned unchanged by <code>GET ' + url + '</code>, which the dashboard and the chatbot’s sentiment tool read.</p></li>' +
+      '</ol>' +
+      '<div class="formula">score = Σ(label × confidence × source weight) / Σ(confidence × source weight) × n/(n+5)</div>';
+  }
+  show(traces[0]);
+})();
+</script>
 </body>
 </html>

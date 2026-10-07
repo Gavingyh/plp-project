@@ -343,10 +343,11 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="when">by 18 Oct</span>
       <p class="why"><b>Why:</b> neither is in git. The team and the marker need exactly the database and models the report describes; check the SHA-256 values after uploading.</p>
     </li>
-    <li data-o="decide">
-      <span class="t">Verify the OpenAI-compatible backend (a free Groq key) or stop claiming it <span class="chip decide">Decision</span></span>
-      <span class="when">by 19 Oct</span>
-      <p class="why"><b>Why:</b> it is described as working but has never answered a real request. A free Groq key (a person signs up; switch on Zero Data Retention) verifies it and gives the demo a hosted option with larger models.</p>
+    <li data-o="team">
+      <span class="t">Replace the Gemini key <span class="chip team">Owner</span></span>
+      <span class="when">before Gemini is used</span>
+      <p class="why"><b>Why:</b> in the 6 Oct provider evaluation the provider rejected the key (HTTP 401), so the Gemini arm didn&#8217;t run. A new key goes in <code>.env</code>, which only the owner edits. Gemini stays the chatbot&#8217;s backend only, never for labelling.</p>
+      <span class="meta">Source: <code>docs/evidence/chatbot-provider-eval-2026-10-06.md</code>.</span>
     </li>
   </ul>
 </section>
@@ -405,7 +406,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="ai">
       <span class="t">Chatbot speed <span class="chip ai">On hold</span></span>
       <span class="when">until performance is an issue</span>
-      <p class="why"><b>Why on hold:</b> answers take a median of 47 seconds (gold set, 6 Oct). Measured on 7 Oct: writing the answer takes 13–23 s, reading tool results 5–15 s, re-reading the instructions 12–15 s from the second question on; a larger context window was slower on this Mac. Ready options if needed: answer simple lookups from a template, keep the prompt cached, trim tool results (needs a gold-set check), stream the answer, warm the model at start.</p>
+      <p class="why"><b>Why on hold:</b> answers take a median of 47 seconds (gold set, 6 Oct). Measured on 7 Oct: writing the answer takes 13–23 s, reading tool results 5–15 s, re-reading the instructions 12–15 s from the second question on; a larger context window was slower on this Mac. In the 6 Oct provider evaluation the same local model averaged 7.7 seconds a gold-set question (machine not recorded), so the demo machine matters. Ready options if needed: answer simple lookups from a template, keep the prompt cached, trim tool results (needs a gold-set check), stream the answer, warm the model at start.</p>
       <span class="meta">Measurements: <code>data/run/speed/</code> (on the Mac).</span>
     </li>
     <li data-o="ai">
@@ -421,6 +422,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <ul class="refs">
     <li><b>6 Oct, claim wording:</b> the Grounded chatbot claim states what the checks prove, within the Known limits on the chatbot evidence page.</li>
     <li><b>7 Oct, broker reports in git:</b> they stay while the repository is private to the team; remove them, with their history, before any public release.</li>
+    <li><b>6 Oct, hosted backend verified:</b> the chatbot ran the gold sets through Groq (<code>openai/gpt-oss-120b</code>, the OpenAI-compatible backend): right tool 24 of 24, no errors.</li>
     <li><b>7 Oct, order of work:</b> no more retraining or evaluation until the upstream items are cleared.</li>
     <li><b>4 Oct, DBS Vickers counts as DBS</b> (in bank recognition, the news filter and Opus&#8217;s NER reference).</li>
     <li><b>4 Oct, chatbot settings:</b> strip invented evidence and rank evidence by the aspect&#8217;s name, both on by default.</li>

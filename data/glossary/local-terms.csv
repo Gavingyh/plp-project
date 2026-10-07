@@ -1,0 +1,80 @@
+term,aliases,bank,category,definition,sentiment_note,corpus_count,source
+UOB One,UOB One Account; UOB ONE; One Account,UOB,product,UOB's savings account that pays bonus interest when the customer meets conditions such as a monthly card spend and salary credit; also the name of its linked UOB One credit and debit cards.,none; a rate cut on it is often called a nerf,2852,corpus: sentence 007bc602147b0e8a5dda7343
+miles,mile; air miles; mpd; 4mpd; 1.2mpd; 1.4mpd,all,programme,"Air miles earned on credit card spending; 'mpd' means miles per dollar, the rate at which a card earns them.",none,1037,corpus: sentence 00291eef6d0dd92bb3d8ada5
+IBKR,Interactive Brokers,none (competitor),brand,"Interactive Brokers, a low-cost overseas broker often compared with the banks' brokerages.",none,793,corpus: sentence 086b7589661abad7ad3eaf21
+DBS Multiplier,Multiplier Account,DBS,product,"DBS's savings account whose bonus interest rises with the number of DBS product categories used (salary credit, card spend, home loan, insurance, investments).",none,642,"general knowledge, to check"
+OCBC 360,OCBC 360 Account; 360 Account,OCBC,product,"OCBC's savings account that pays bonus interest in tiers for salary credit, saving, card spend, insuring and investing.",none,608,corpus: sentence 01f365be272470ba541d144e
+UOB Lady's Card,UOB Lady's; UOB Lady; UOB Ladies; Lady's card; Lady's Solitaire; Ladys card; Lady's Solitaire card,UOB,product,A UOB credit card for women that gives bonus miles in reward categories the cardholder picks; Solitaire is its higher tier.,none,546,corpus: sentence 01d743d47c2d9dfd3af139d7
+DBS Vickers,Vickers; DBS Vickers Securities,DBS,brand,DBS's own stockbroking subsidiary and trading app.,none,502,docs: docs/PLAN.md; docs: docs/local-context-questions.md
+POSB,POSBank; POSB Bank,DBS,brand,"The former Post Office Savings Bank, owned by DBS since 1998 and run as a DBS brand for mass-market customers.",none,489,docs: docs/PLAN.md
+fixed deposit,FD; FDs; fixed deposits; time deposit,all,product,"A deposit locked for a fixed term at a fixed rate, offered by every bank and often compared on Reddit.",none,450,corpus: sentence 01f55a3bfe998217e4fc9f8a
+UOB Preferred Platinum Visa,UOB PPV; PPV; Preferred Platinum,UOB,product,A UOB credit card giving bonus rewards on contactless and online spending.,none,425,corpus: sentence 0060f7f8e8d8dae32b02f593
+DBS Multi-Currency Account,Multi-Currency Account; Multi Currency Account; DBS MCA; MCA,DBS,product,"A DBS account that holds several currencies, often used to fund overseas brokerage or travel spending.",none,339,corpus: sentence 02a45f1b52da3315e75d2fc2
+UOB EVOL,EVOL; EVOL card,UOB,product,"A UOB credit card giving higher cashback on online and mobile contactless spending, with a monthly minimum spend.",none,290,corpus: sentence 0073b628e24b3462b0484936
+UOB Absolute Cashback,UOB Absolute; Absolute Cashback,UOB,product,A UOB American Express credit card that gives flat cashback on almost all spending.,none,280,corpus: sentence 095208bf3840e9ac80aa2f98
+salary credit,salary crediting; credit salary; credit my salary,all,programme,"Paying one's salary into the account by employer transfer, a common condition for bonus interest.",none,278,corpus: sentence 01b161e4e1205b7977078e94
+MAS,Monetary Authority of Singapore,all,investing,"The Monetary Authority of Singapore, the central bank and bank regulator.",none,276,corpus: sentence 0128e35a5ea8ce9e42741d01
+DBS Altitude,Altitude card; Altitude,DBS,product,A DBS miles credit card that earns air miles on spending.,none,264,corpus: sentence 00f1aa02149f6198163adcb9
+CPF,Central Provident Fund; CPF OA; CPF SA,all,investing,"The Central Provident Fund, Singapore's compulsory savings scheme, whose rates set a floor that bank deposits are compared with.",none,252,"general knowledge, to check"
+SRS,Supplementary Retirement Scheme,all,investing,"The Supplementary Retirement Scheme, a voluntary tax-advantaged retirement account opened at DBS, OCBC or UOB.",none,252,corpus: sentence 001855bae94c15036944fb1b
+moomoo,Futu; Moomoo SG,none (competitor),brand,"Moomoo, a low-cost trading app run by Futu, compared with the banks' brokerages.",none,241,corpus: sentence 086b7589661abad7ad3eaf21
+DBS Woman's World Card,DBS Woman's; DBS Women's; DBS Woman; Woman's World; Women's World; WWMC; WWC,DBS,product,"A DBS Mastercard that earns bonus miles on online spending, popular with miles collectors.",none,235,corpus: sentence 063b47c68e03aa48003ea9cd
+Private Bank,private banking; private banker,all,programme,"A bank's service for very wealthy clients (DBS Private Bank, UOB Private Bank, Bank of Singapore for OCBC).",none,234,corpus: sentence 0bc42732855f33bc4e55c5ff
+SGX,Singapore Exchange,all,investing,"The Singapore Exchange, where the three banks are listed.",none,230,corpus: sentence 043ba78f3b55b74a95f2abe3
+DBS Treasures,Treasures; Treasures Private Client; DBS Treasures Private Client,DBS,programme,DBS's priority banking tier for customers with large deposits and investments.,none; whether it is wealth or retail banking is an open team question,223,corpus: sentence 0bc42732855f33bc4e55c5ff
+Endowus,,none (competitor),brand,"Endowus, a Singapore robo-adviser that also invests CPF and SRS money.",none,216,corpus: sentence 0c8e5222c31fa2e792c5b6c7
+KrisFlyer UOB,UOB KrisFlyer; UOB KF; KrisFlyer UOB card,UOB,product,A UOB credit card co-branded with Singapore Airlines' KrisFlyer programme that earns KrisFlyer miles.,none,213,corpus: sentence 016bfa11efcd6730e64b2751
+UOB Stash,UOB Stash Account; Stash Account,UOB,product,UOB's savings account that pays bonus interest when the monthly average balance does not fall.,none,197,corpus: sentence 009e9a7489e25dbad5b6ea01
+SSB,Singapore Savings Bonds; Singapore Savings Bond,all,investing,"Singapore Savings Bonds, government bonds for individuals bought through the three banks' channels and compared with deposit rates.",none,195,"general knowledge, to check"
+PayNow,Pay Now,none (national),app,"Singapore's national instant transfer scheme by mobile number or NRIC, used through every bank's app.",none,184,"general knowledge, to check"
+lol,lmao; lolol,all,slang,"Internet laugh marker, often softening or marking sarcasm.",softens or marks sarcasm; does not flip polarity (assumed),178,docs: docs/local-context-questions.md
+CDP,Central Depository,all,investing,"The Central Depository, SGX's account in which Singapore shares are held in the investor's own name.",none; a broker being 'CDP' or 'custodian' is a common comparison point,172,corpus: sentence 001b9a993f6c590e6155f3a8
+bonus interest,bonus rate; bonus interest rate,all,programme,"Interest on top of a savings account's base rate, earned by meeting conditions such as salary credit or card spend.",none,167,corpus: sentence 00cdf4e765947028a449f59a
+T-bills,T-bill; T bills; treasury bills; treasury bill,all,investing,"Singapore government six-month and one-year Treasury bills, applied for through the banks and compared with deposit rates.",none,167,corpus: sentence 03aaec23086e66e3fab8240e
+STI,Straits Times Index,all,investing,"The Straits Times Index, the stock index the three banks are in.",none,166,docs: docs/local-context-questions.md
+UOB Kay Hian,Kay Hian; UOB KH; UOBKH; UOB KayHian,none (separate company),brand,A stockbroker listed separately on SGX in which UOB holds about a third; it is not part of UOB.,none,158,docs: docs/local-context-questions.md
+PayLah!,PayLah; DBS PayLah; DBS PayLah!,DBS,app,DBS's mobile wallet app for paying merchants and friends.,none; the 'lah' is not the Singlish particle,152,corpus: sentence 0b022a45a7e0c2917f1e2004; docs: docs/local-context-questions.md
+DBS Remit,DBS remittance,DBS,product,DBS's overseas money transfer service with no fee for some corridors.,none,152,corpus: sentence 00c0158fbc46536194566ab2
+nerf,nerfed; nerfs; nerfing,all,slang,"A gaming word for a product made worse, usually a cut to an account's interest rate or a card's rewards.",negative about the product,147,corpus: sentence 05fa69c3a35c5432820e69cb; docs: docs/local-context-questions.md
+DCA,dollar cost averaging; dollar-cost averaging,all,investing,Dollar cost averaging: investing a fixed amount at regular intervals.,mild; a plan to keep buying may read as positive about the stock (open team question),145,corpus: sentence 0440449c9e8d1b352d0628a3; docs: docs/local-context-questions.md
+Tiger Brokers,Tiger; Tiger Trade,none (competitor),brand,"Tiger Brokers, a low-cost trading app compared with the banks' brokerages.",none; 'tiger' can mean the animal or a beer,138,corpus: sentence 086b7589661abad7ad3eaf21
+DBS Live Fresh,Live Fresh; LiveFresh,DBS,product,A DBS cashback credit card for online and contactless spending.,none,132,corpus: sentence 03827f46afde91d805a93222
+OCBC Premier,OCBC Premier Banking; Premier Banking; Premier Private Client; OCBC Premier Private Client,OCBC,programme,OCBC's priority banking tier for affluent customers.,none; wealth or retail is an open team question,132,corpus: sentence 005ad7b98910b72fd577129f
+UOB Visa Signature,Visa Signature; UOB VS card,UOB,product,A UOB miles credit card giving bonus miles on contactless and foreign currency spending within a monthly spend band (minimum and cap).,none,131,corpus: sentence 0195c8c0236fac53a8233923
+UOB PRVI Miles,PRVI; PRVI Miles; UOB PRVI,UOB,product,A UOB miles credit card.,none,129,corpus: sentence 00291eef6d0dd92bb3d8ada5
+OCBC 365,365 card; OCBC 365 card,OCBC,product,"An OCBC cashback credit card for everyday spending such as dining, groceries and petrol.",none,129,corpus: sentence 1a145ca08d4b61ab889ee0c9
+Great Eastern,Great Eastern Holdings; GE Life,OCBC,brand,A Singapore life insurer controlled by OCBC.,none,109,docs: docs/PLAN.md; docs: docs/local-context-questions.md
+OCBC Frank,Frank account; Frank card,OCBC,product,OCBC's brand of savings account and debit and credit cards; the credit card gives cashback on online and contactless spending.,none,95,corpus: sentence 0804885418fecab84f547559
+Syfe,,none (competitor),brand,"Syfe, a Singapore robo-adviser and cash management platform.",none,95,corpus: sentence 0c8e5222c31fa2e792c5b6c7
+FSMOne,FSM One; FSM,none (competitor),brand,"FSMOne, a local investment platform for funds, bonds and shares.",none,95,corpus: sentence 0b06926468abdb43ad732674
+DBS My Account,DBS MyAccount; MyAccount,DBS,product,DBS's basic multi-currency savings account with no minimum balance or fall-below fee.,none,93,corpus: sentence 0abcd02327faaac47765ed65
+UOB TMRW,TMRW,UOB,app,"UOB's mobile banking app, also the name of its digital banking platform in Southeast Asia.",none,90,corpus: sentence 0150d3b4e3a877fd5fa40525
+DBS Vantage,Vantage card; DBS Vantage card,DBS,product,"A DBS premium miles credit card with an annual fee, airport lounge visits and other travel perks.",none,88,corpus: sentence 0d2501a2d3f0a30efac72a7d
+DBS digiPortfolio,digiPortfolio,DBS,product,DBS's robo-advisory investment portfolio.,none,86,"general knowledge, to check"
+SORA,Singapore Overnight Rate Average; 3M SORA; compounded SORA,all,investing,"The Singapore Overnight Rate Average, the benchmark to which floating home loan rates are pegged.",none,86,corpus: sentence 0ea4989fe68f89909d8f0494; docs: docs/local-context-questions.md
+OCBC Infinity,Infinity card; OCBC Infinity card,OCBC,product,An OCBC cashback credit card with no minimum spend.,none,84,corpus: sentence 0ea1f3e44663fd555320c59b
+DBS yuu card,yuu; DBS yuu,DBS,product,"A DBS credit card co-branded with the yuu rewards programme of local retailers, giving rebates above a monthly minimum spend.",none,83,corpus: sentence 0e0b75765bee7b91a302f4c8
+OCBC Digital,OCBC app; OCBC Digital app; OCBC Pay Anyone,OCBC,app,OCBC's mobile banking app.,none,80,corpus: sentence 00c02a755178ce5325b5a1a2
+OCBC Securities,iOCBC,OCBC,brand,OCBC's stockbroking arm; iOCBC is its trading platform.,none,74,corpus: sentence 086b7589661abad7ad3eaf21
+RSP,regular savings plan; regular shares savings; POSB Invest-Saver; Invest-Saver,all,investing,"A regular savings plan that buys a fixed amount of a stock, ETF or fund every month.",none; a plan to keep buying may read as mildly positive,70,corpus: sentence 10e3991e284892a2afc0edd1
+imo,imho; in my opinion,all,slang,Chat abbreviation: in my opinion.,none,70,"general knowledge, to check"
+UOB Asset Management,UOB AM; UOBAM,UOB,brand,UOB's fund management arm.,none,69,corpus: sentence 17d728ee3d7356f800119318
+OCBC Rewards,OCBC Titanium Rewards; Titanium Rewards; OCBC Titanium,OCBC,product,"OCBC's reward points credit cards for shopping categories, sometimes converted to miles.",none,60,corpus: sentence 0194d6483dca0ccb88f63f8f
+D05,D05.SI; SGX:D05,DBS,investing,DBS Group Holdings' stock code on SGX.,none,59,corpus: sentence 056ed446c0c3c8acd838c1a2
+iirc,,all,slang,Chat abbreviation: if I recall correctly.,none,59,"general knowledge, to check"
+StashAway,Stash Away,none (competitor),brand,"StashAway, a Singapore robo-adviser.",none,54,corpus: sentence 0c8e5222c31fa2e792c5b6c7
+Lion Global Investors,Lion Global; LionGlobal,OCBC,brand,"The fund manager in the OCBC group, known locally for its index funds and money market fund.",none,53,corpus: sentence 13278b92eeeeb240d719612b
+OCBC Blue Chip Investment Plan,BCIP; Blue Chip Investment Plan,OCBC,product,OCBC's monthly regular savings plan into selected SGX blue chips and ETFs.,none,52,"general knowledge, to check"
+UOB Privilege Banking,Privilege Banking; UOB Privilege; Privilege Reserve,UOB,programme,UOB's priority banking tier for affluent customers; Privilege Reserve is the higher tier.,none; wealth or retail is an open team question,49,corpus: sentence 0d76a604944df1f32e5f8606
+digibank,DBS digibank; digibank app,DBS,app,"DBS's mobile and online banking app, and the brand of its digital bank in India and Indonesia.",none,49,corpus: sentence 1a35100f7dd76944b2dbec46
+Webull,,none (competitor),brand,"Webull, a low-cost trading app.",none,46,corpus: sentence 0f141c4ee9f56fcd9a7091f6
+O39,O39.SI; SGX:O39,OCBC,investing,OCBC's stock code on SGX.,none,41,corpus: sentence 0c5d22b6af4a00e12d86d927
+tbh,to be honest,all,slang,Chat abbreviation: to be honest.,none,41,"general knowledge, to check"
+OCBC Voyage,Voyage card,OCBC,product,OCBC's premium miles credit card.,none,39,corpus: sentence 211e1afe67dfea638bfee9e1
+Premier Dividend+,Dividend+; Dividend Plus,OCBC,product,"An OCBC Premier deposit account that pays a bonus interest rate; it is a customer deposit, not the bank's dividend to shareholders.",none; easily misread as dividend policy,38,corpus: sentence 1d331bbd2e93b6ca738c215f; docs: docs/local-context-questions.md
+OCBC RoboInvest,RoboInvest,OCBC,product,OCBC's robo-advisory investment service.,none,32,"general knowledge, to check"
+lor,,all,slang,Singlish particle of resignation ('then just go for uob lor').,"tone only, not sentiment",30,docs: docs/local-context-questions.md
+OCBC 90N,90°N; OCBC 90°N; 90N,OCBC,product,"OCBC's 90°N miles credit card for travellers, in Visa and Mastercard versions.",none,28,corpus: sentence 30fd7a19d670ac89e66d3e52
+U11,U11.SI; SGX:U11,UOB,investing,UOB's stock code on SGX.,none,24,corpus: sentence 1651ae3ffbcdef04db159c38
+lah,,all,slang,Singlish particle that adds emphasis or softens a statement.,"tone only, not sentiment",24,docs: docs/local-context-questions.md
+DBS NAV Planner,NAV Planner,DBS,app,A financial planning tool inside the DBS digibank app.,none,23,corpus: sentence 03b7cbca02500780acbff9bd

@@ -190,8 +190,9 @@ def _was_corrected(round_dir: str, train: pd.DataFrame) -> pd.Series:
     changed = train["label"] != suggested
     path = os.path.join(round_dir, "claude_prelabels.csv")
     if os.path.exists(path):
-        aspects = pd.read_csv(path, dtype=str).set_index("sentence_id")["claude_aspect"]
-        changed = changed | (train["aspect"] != train["sentence_id"].map(aspects))
+        aspects = pd.read_csv(path, dtype=str).drop_duplicates("sentence_id").set_index("sentence_id")["claude_aspect"]
+        suggested_aspect = train["sentence_id"].map(aspects)
+        changed = changed | (suggested_aspect.notna() & (train["aspect"] != suggested_aspect))
     return changed.where(suggested != "", "")
 
 

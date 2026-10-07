@@ -77,7 +77,7 @@ Each row names the file and line an element comes from, and the text that line m
 | clean the labels | `train/labels.py:130` | `def prepare(candidates_path: str, blind_path: str, out_path: str,` |
 | agreement | `train/agreement.py:125` | `def score(pairs: pd.DataFrame` |
 | kappa 0.93 | `docs/evidence/annotation-agreement-2026-09-27.md:34` | `| candidates, both splits | 1,277 | 0.952 | **0.926** |` |
-| fine-tune | `train/finetune.py:252` | `def run(seed: int = 42` |
+| fine-tune | `train/finetune.py:267` | `def run(seed: int = 42` |
 | evaluate | `train/evaluate.py:139` | `def run(model_dir: str` |
 | baseline: base FinBERT | `train/evaluate.py:46` | `def eval_base_finbert_zeroshot(` |
 | baseline: lexicon | `train/evaluate.py:55` | `def eval_lexicon(` |

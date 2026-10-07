@@ -10,9 +10,10 @@ ids of the machine that made them, so its rows are copied, not rebuilt.
 
   export: the source's documents, sentences, aspect assignments and sentiment
           scores, read-only, into a small SQLite file.
-  import: those rows into another database, skipping any already there. Run it
-          on a copy (PLP_DB_PATH or --db), not data/plp.db, unless the team
-          has decided to change the real database.
+  import: those rows into another database that doesn't hold the source yet
+          (refused otherwise: a rebuild elsewhere has other ids, so the source
+          would count twice). Run it on a copy (--db), not data/plp.db, unless
+          the team has decided to change the real database.
 
 USAGE (from the repository root):
   python scripts/source_rows.py export --source sgx_research --out sgx_rows.db            # on the PC
@@ -59,6 +60,12 @@ def import_rows(rows_path: str, db: str) -> dict:
     dst = sqlite3.connect(db)
     counts = {}
     try:
+        sources = [r[0] for r in src.execute("SELECT DISTINCT source FROM sentences")]
+        held = {s: dst.execute("SELECT COUNT(*) FROM sentences WHERE source = ?", (s,)).fetchone()[0] for s in sources}
+        if any(held.values()):
+            # Another machine's rebuild of the same source has other sentence ids, so adding
+            # these would count its sentences twice (validation, 7 Oct 2026).
+            sys.exit(f"{db} already holds {held}; import into a copy that doesn't (a fresh copy of data/plp.db)")
         for table in TABLES:
             cols = [r[1] for r in dst.execute(f"PRAGMA table_info({table})")]
             have = [r[1] for r in src.execute(f"PRAGMA table_info({table})")]

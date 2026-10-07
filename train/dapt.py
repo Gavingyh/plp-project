@@ -10,11 +10,15 @@ the corpus's own text addresses without labels. Slang is too rare to be the
 cause (27 of 1,280 labelled train/dev rows, 6 Oct 2026).
 
 Leakage: no labelled sentence's text enters the pretraining corpus, in any
-split, and nor does any corpus sentence whose text, lower-cased with digits
-and spaces collapsed, matches a labelled one (a results report repeats a
-sentence each quarter with only the figures changed). The Fine-tuning lead
-claim requires that no test text informs training; dropping train and dev
-text too keeps the comparison clean whichever rows a seed holds out.
+split or sheet (by default every labelling file under data/labeled), and nor
+does any corpus sentence that copies one closely: the same text once figures,
+case and spacing are ignored, a sentence holding a labelled one or held in
+one (letters only, from 30 letters: a test sentence split in two by another
+machine's extraction), or one sharing 60% or more of its words with one. The
+Fine-tuning lead claim requires that no test text informs training; leaving
+out train and dev text too keeps the comparison clean whichever rows a seed
+holds out. (Until 7 Oct 2026 only the id and the exact text were checked; a
+validation found 151 test-related sentences in the 6 Oct run's text.)
 
 FinBERT (ProsusAI/finbert) is published without its masked-word head; the
 head starts from bert-base-uncased's, which shares FinBERT's vocabulary. The
@@ -53,44 +57,79 @@ def norm(text: str) -> str:
 
 
 _WORD = re.compile(r"[a-z0]+")
-NEAR = 0.6          # word-set Jaccard: the broker research round's threshold against test rows
+NEAR = 0.6          # word-set Jaccard, all words: the broker research round's threshold against test rows
+HELD = 30           # letters: a sentence holding a labelled one, or held in one, from this length
+
+
+def letters(text: str) -> str:
+    """Letters and the digit mark only: a sentence extracted with a stray bullet, a sidebar
+    line or other spacing on another machine still matches."""
+    return re.sub(r"[^a-z0]", "", norm(text))
+
+
+def labelled_files(root: str = os.path.join(BASE_DIR, "data", "labeled")) -> list[str]:
+    """Every CSV under data/labeled with sentence ids and text: every round, split and sheet,
+    labelled or still to be labelled. The default for what pretraining leaves out, so a
+    labels file can't be forgotten (7 Oct 2026: --db with the default labels kept the
+    broker research test rows)."""
+    out = []
+    for dirpath, _, names in os.walk(root):
+        for name in sorted(names):
+            if name.endswith(".csv"):
+                path = os.path.join(dirpath, name)
+                try:
+                    cols = pd.read_csv(path, nrows=0).columns
+                except Exception:
+                    continue
+                if {"sentence_id", "text"} <= set(cols):
+                    out.append(path)
+    return sorted(out)
 
 
 class NearCopies:
-    """Finds labelled sentences sharing much of a sentence's words (Jaccard >= NEAR), so a
-    repeated sentence with a word or figure changed, or a PDF sentence extracted with a
-    stray bullet or sidebar line on another machine (7 Oct 2026), is left out too.
-    Words in more than 5% of the labelled sentences (and at least 50) are ignored: they can't make two
-    sentences near-copies on their own, and skipping them keeps the search fast."""
+    """Labelled sentences a corpus sentence copies closely: it shares NEAR of their words or
+    more (Jaccard on all words, computed exactly with sparse matrices), or it holds a
+    labelled sentence, or is held in one, letters only, from HELD letters. The second
+    catches a test sentence split in two by another machine's extraction, and one quoted
+    inside a longer headline (validation, 7 Oct 2026: both reached pretraining)."""
 
     def __init__(self, labelled_texts):
-        self.sets = [set(_WORD.findall(norm(t))) for t in labelled_texts]
-        df = {}
-        for words in self.sets:
-            for w in words:
-                df[w] = df.get(w, 0) + 1
-        common = {w for w, n in df.items() if n > max(0.05 * len(self.sets), 50)}
-        self.sets = [ws - common for ws in self.sets]
-        self.common = common
-        self.index = {}
-        for i, ws in enumerate(self.sets):
-            for w in ws:
-                self.index.setdefault(w, []).append(i)
+        from sklearn.feature_extraction.text import CountVectorizer
+        self.labelled_letters = sorted({l for l in (letters(t) for t in labelled_texts) if len(l) >= HELD})
+        self.vectorizer = CountVectorizer(token_pattern=r"[a-z0]+", binary=True, preprocessor=norm)
+        self.labelled = self.vectorizer.fit_transform(list(labelled_texts))
+        self.labelled_sizes = self.labelled.sum(axis=1).A1
+
+    def held(self, text: str) -> bool:
+        t = letters(text)
+        if len(t) < HELD:
+            return False
+        return any(l in t or t in l for l in self.labelled_letters)
+
+    def overlapping(self, texts: list[str], batch: int = 4000) -> list[bool]:
+        """Whether each text shares NEAR of its words with some labelled sentence."""
+        import numpy as np
+        out = []
+        for i in range(0, len(texts), batch):
+            m = self.vectorizer.transform(texts[i:i + batch])
+            sizes = m.sum(axis=1).A1
+            inter = (m @ self.labelled.T).tocoo()
+            best = np.zeros(m.shape[0])
+            union = sizes[inter.row] + self.labelled_sizes[inter.col] - inter.data
+            jac = np.where(union > 0, inter.data / np.maximum(union, 1), 0)
+            np.maximum.at(best, inter.row, jac)
+            out.extend((best >= NEAR) & (sizes >= 3))
+        return out
 
     def near(self, text: str) -> bool:
-        words = set(_WORD.findall(norm(text))) - self.common
-        if len(words) < 3:
-            return False
-        hits = {}
-        for w in words:
-            for i in self.index.get(w, ()):
-                hits[i] = hits.get(i, 0) + 1
-        return any(n / (len(words) + len(self.sets[i]) - n) >= NEAR for i, n in hits.items())
+        return self.held(text) or self.overlapping([text])[0]
 
 
-def build_corpus(db_path: str = DB_PATH, labels_path: str | list[str] = LABELS_PATH, limit: int | None = None):
-    """(texts, stats): every corpus sentence except labelled ones and their near-copies."""
-    paths = [labels_path] if isinstance(labels_path, str) else list(labels_path)
+def build_corpus(db_path: str = DB_PATH, labels_path: str | list[str] | None = None, limit: int | None = None):
+    """(texts, stats): every corpus sentence except labelled ones and their near-copies.
+    labels_path defaults to every labelling file (labelled_files)."""
+    paths = labelled_files() if labels_path is None else (
+        [labels_path] if isinstance(labels_path, str) else list(labels_path))
     labelled = pd.concat([pd.read_csv(p) for p in paths]).drop_duplicates("sentence_id")
     ids = set(labelled["sentence_id"])
     texts = {norm(t) for t in labelled["text"]}
@@ -100,23 +139,30 @@ def build_corpus(db_path: str = DB_PATH, labels_path: str | list[str] = LABELS_P
         rows = conn.execute("SELECT sentence_id, text, source FROM sentences ORDER BY sentence_id").fetchall()
     finally:
         conn.close()
-    kept, by_id, by_text, by_contained, by_source = [], 0, 0, 0, {}
+    by_id = by_text = by_held = by_overlap = 0
+    left = []
     for sid, text, source in rows:
         if sid in ids:
             by_id += 1
-            continue
-        if norm(text) in texts:
+        elif norm(text) in texts:
             by_text += 1
-            continue
-        if near.near(text):
-            by_contained += 1
+        elif near.held(text):
+            by_held += 1
+        else:
+            left.append((text, source))
+    overlapping = near.overlapping([t for t, _ in left])
+    kept, by_source = [], {}
+    for (text, source), over in zip(left, overlapping):
+        if over:
+            by_overlap += 1
             continue
         kept.append(text)
         by_source[source] = by_source.get(source, 0) + 1
     if limit:
         kept = kept[:limit]
     stats = {"corpus_sentences": len(rows), "dropped_labelled_id": by_id,
-             "dropped_matching_labelled_text": by_text, "dropped_near_copy_of_labelled_text": by_contained,
+             "dropped_matching_labelled_text": by_text, "dropped_holding_or_held_in_labelled_text": by_held,
+             "dropped_sharing_most_words_with_labelled_text": by_overlap,
              "kept": len(kept), "kept_by_source": by_source, "labels_files": paths,
              "labelled_rows_excluded": len(labelled)}
     return kept, stats
@@ -174,7 +220,7 @@ def save_classifier(mlm: BertForMaskedLM, out_dir: str, tokenizer) -> str:
 
 def run(out_dir: str, epochs: float = 3, lr: float = 5e-5, batch_size: int = 32, max_length: int = 64,
         seed: int = 42, limit: int | None = None, db_path: str = DB_PATH,
-        labels: str | list[str] = LABELS_PATH) -> dict:
+        labels: str | list[str] | None = None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     torch.manual_seed(seed)
     texts, stats = build_corpus(db_path, labels, limit=limit)
@@ -221,8 +267,9 @@ if __name__ == "__main__":
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--limit", type=int, default=None, help="use only the first N sentences (smoke test)")
     p.add_argument("--db", default=DB_PATH, help="the database whose sentences to read (read-only)")
-    p.add_argument("--labels", nargs="+", default=[LABELS_PATH],
-                   help="labelled files whose sentences are left out (all splits)")
+    p.add_argument("--labels", nargs="+", default=None,
+                   help="labelled files whose sentences are left out (all splits); default every "
+                        "labelling file under data/labeled")
     a = p.parse_args()
     s = run(a.out, a.epochs, a.lr, a.batch_size, a.max_length, a.seed, a.limit, a.db, a.labels)
     print({k: v for k, v in s.items() if k != "loss_log"})

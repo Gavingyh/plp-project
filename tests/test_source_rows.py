@@ -7,6 +7,8 @@ import importlib.util
 import os
 import sqlite3
 
+import pytest
+
 _spec = importlib.util.spec_from_file_location(
     "source_rows", os.path.join(os.path.dirname(__file__), "..", "scripts", "source_rows.py"))
 source_rows = importlib.util.module_from_spec(_spec)
@@ -30,7 +32,7 @@ def _db(path, sources):
     conn.close()
 
 
-def test_export_takes_one_source_and_import_adds_it_once(tmp_path):
+def test_export_takes_one_source_and_import_adds_it_once_only(tmp_path):
     pc, mac, rows = str(tmp_path / "pc.db"), str(tmp_path / "mac.db"), str(tmp_path / "rows.db")
     _db(pc, ["sgx_research", "sgx_research", "arctic_shift"])
     _db(mac, [])
@@ -38,7 +40,7 @@ def test_export_takes_one_source_and_import_adds_it_once(tmp_path):
         {"documents": 2, "sentences": 2, "sentence_aspects": 2, "aspect_sentiment": 2}
     first = source_rows.import_rows(rows, mac)
     assert all(v == {"in_file": 2, "added": 2} for v in first.values())
-    again = source_rows.import_rows(rows, mac)
-    assert all(v["added"] == 0 for v in again.values())
+    with pytest.raises(SystemExit, match="already holds"):       # a second import would count the source twice
+        source_rows.import_rows(rows, mac)
     conn = sqlite3.connect(mac)
     assert conn.execute("SELECT COUNT(*) FROM sentences WHERE source = 'arctic_shift'").fetchone()[0] == 0

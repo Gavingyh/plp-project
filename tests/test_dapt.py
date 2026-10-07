@@ -63,4 +63,4 @@ def test_a_near_copy_with_a_word_changed_or_a_stray_mark_is_left_out(tmp_path):
     texts, stats = build_corpus(db, labels)
     assert not any(t.startswith("Higher NPLs") for t in texts)
     assert "UOB Kay Hian reported a quarterly brokerage commission figure today." in texts
-    assert stats["dropped_near_copy_of_labelled_text"] >= 2
+    assert stats["dropped_holding_or_held_in_labelled_text"] + stats["dropped_sharing_most_words_with_labelled_text"] >= 2

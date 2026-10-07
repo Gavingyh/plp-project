@@ -103,7 +103,10 @@ def test_merge_keeps_only_what_a_person_filled_in(tmp_path):
     assert set(resolved[resolved.split == "train_dev"].sentence_id) == {"t0", "t3"}, \
         "a flagged row and an unfilled row must not become labels, whatever the model suggested"
     t0 = resolved.set_index("sentence_id").loc["t0"]
-    assert t0["aspect"] == "net_interest_margin" and bool(t0["was_corrected"]), "corrected from the pipeline aspect"
+    assert t0["aspect"] == "net_interest_margin" and t0["was_corrected"] in (True, "True"), \
+        "the annotator changed the LLM's suggested aspect"
+    t3 = resolved.set_index("sentence_id").loc["t3"]
+    assert t3["was_corrected"] in (False, "False"), "the annotator kept the LLM's suggestion"
     assert set(resolved[resolved.split == "test"].label) == {"neutral", "positive"}   # lower-cased
 
 
@@ -176,3 +179,14 @@ def test_silver_files_say_the_llm_labelled_them_and_drop_flagged_rows(tmp_path):
     assert report["train_dev"] == 3 and report["test"] == 1          # one flagged row of each dropped
     assert "t2" not in set(resolved["sentence_id"]) and "x1" not in set(resolved["sentence_id"])
     assert not (tmp_path / "resolved_candidates.csv").exists(), "silver must not pose as the human files"
+
+
+@pytest.mark.parametrize("sheet", ["candidates", "blind"])
+def test_merge_refuses_labelled_rows_without_an_annotator(tmp_path, sheet):
+    cand, blind = _filled(tmp_path)
+    path = cand if sheet == "candidates" else blind
+    df = pd.read_csv(path, dtype=str)
+    df.loc[df["label"].notna(), "annotator"] = ""
+    df.to_csv(path, index=False)
+    with pytest.raises(ValueError, match="without an annotator"):
+        merge(str(tmp_path), cand, blind)

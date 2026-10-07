@@ -181,15 +181,37 @@ def _filled(df: pd.DataFrame, what: str) -> pd.DataFrame:
     return out
 
 
+def _was_corrected(round_dir: str, train: pd.DataFrame) -> pd.Series:
+    """Whether the annotator changed the LLM's suggestion: its sentiment, or its aspect
+    (from claude_prelabels.csv). Until 7 Oct 2026 this compared the aspect with the
+    pipeline's nearest-centroid guess, which says nothing about the suggestion. Empty
+    where the row had no suggestion."""
+    suggested = train["llm_prelabel"].fillna("").astype(str).str.strip().str.lower()
+    changed = train["label"] != suggested
+    path = os.path.join(round_dir, "claude_prelabels.csv")
+    if os.path.exists(path):
+        aspects = pd.read_csv(path, dtype=str).set_index("sentence_id")["claude_aspect"]
+        changed = changed | (train["aspect"] != train["sentence_id"].map(aspects))
+    return changed.where(suggested != "", "")
+
+
 def merge(round_dir: str, filled_candidates: str, filled_blind: str, prefix: str = "resolved") -> dict:
     cand = pd.read_csv(os.path.join(round_dir, "candidates.csv"), dtype=str)
     train_done = _filled(pd.read_csv(filled_candidates, dtype=str), "candidates sheet")
     train_done = train_done[train_done["sentence_id"].isin(cand.loc[cand["split"] == "train_dev", "sentence_id"])]
     blind_done = _filled(pd.read_csv(filled_blind, dtype=str), "blind sheet")
 
+    unnamed = [what for what, df in (("candidates sheet", train_done), ("blind sheet", blind_done))
+               if "annotator" not in df or df["annotator"].fillna("").str.strip().eq("").any()]
+    if unnamed:
+        # The report says people labelled these rows; the file must say who (7 Oct 2026: the
+        # broker research round's 100 test rows came through with a blank annotator).
+        raise ValueError(f"labelled rows without an annotator in the {' and the '.join(unnamed)}: "
+                         "fill in who labelled each row (a code such as A)")
+
     train = train_done.assign(split="train_dev", sampling_method="stratified")
-    train["was_corrected"] = train["aspect"] != train["original_aspect"]
     train["llm_prelabel"] = train["llm_prelabel"] if "llm_prelabel" in train else ""
+    train["was_corrected"] = _was_corrected(round_dir, train)
 
     test_base = cand[cand["split"] == "test"].drop(columns=["aspect", "label", "annotator"])
     test = test_base.merge(blind_done[["sentence_id", "aspect", "label", "annotator"]], on="sentence_id")

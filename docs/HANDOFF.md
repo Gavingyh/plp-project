@@ -1230,8 +1230,10 @@ Broker research, reviewed 7 Oct: the 5 to 6 Oct work on the team's Windows
 PC (merged in f2544fd) holds more than the source. The 280 train/dev rows are
 human-labelled (annotator "A", who kept the LLM's suggested sentiment on
 263 of 280 and its aspect on 266: the same anchoring as the first round's
-89%; the file's `was_corrected` compares with the pipeline's aspect, not the
-LLM's). The 100 blind test rows are filled in and agree with the LLM's own
+89%). `was_corrected` compared with the pipeline's aspect, not the LLM's
+suggestion; fixed on 7 Oct in `train.source_round merge` and in the
+committed label files (that column only): 29 of 280 rows changed the
+suggestion. `merge` now refuses labelled rows without an annotator. The 100 blind test rows are filled in and agree with the LLM's own
 test labels far less (sentiment 77 of 100, aspect 65; the LLM flagged 4 rows
 as not about the bank, the sheet none), so they were not copied; no code
 path writes LLM labels into that sheet. Their `annotator` column is blank. A retrain with the 280 rows added was scored on the original 299,

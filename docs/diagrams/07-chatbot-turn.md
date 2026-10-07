@@ -79,7 +79,7 @@ Each row names the file and line an element comes from, and the text that line m
 | fixed reply for the intent | `chatbot/intent.py:125` | `def reply_for(intent` |
 | state and turns passed to the model | `chatbot/agent.py:2179` | `answer = backend.ask(question, with_state(SYSTEM_PROMPT, state)` |
 | state added to the system prompt | `chatbot/prompts.py:84` | `def with_state(system: str` |
-| last three turns | `config/chatbot.yaml:36` | `turns:        {value: 3}` |
+| last three turns | `config/chatbot.yaml:55` | `turns:        {value: 3}` |
 | tool-call loop, eight calls | `config/chatbot.yaml:22` | `max_tool_iterations: {value: 8}` |
 | loop | `chatbot/backends/ollama_backend.py:84` | `for _ in range(MAX_TOOL_ITERATIONS):` |
 | tool calls? | `chatbot/backends/ollama_backend.py:89` | `tool_calls = message.get("tool_calls") or []` |

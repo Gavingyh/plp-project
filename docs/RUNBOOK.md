@@ -569,7 +569,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2424 tests in `tests/`; `pytest -q` from the repository root runs 2471,
+2462 tests in `tests/`; `pytest -q` from the repository root runs 2509,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for

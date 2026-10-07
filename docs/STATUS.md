@@ -73,10 +73,8 @@ By bank: DBS 24,431 · UOB 12,502 · OCBC 7,412 sentences.
 
 Earnings sentences by bank: DBS 9,093 · UOB 1,600 · OCBC 1,561.
 
-Codebase on 2026-10-07: 33,006 lines of Python in git (17,919 excluding
-tests), 2424 tests in `tests/` (2471 with the diagram and notebook checks).
-Codebase on 2026-10-06: 32,081 lines of Python in git (17,457 excluding
-tests), 2436 tests in `tests/` (2483 with the diagram and notebook checks).
+Codebase on 2026-10-07: 34,270 lines of Python in git (18,768 excluding
+tests), 2462 tests in `tests/` (2509 with the diagram and notebook checks).
 
 These figures were taken from `data/plp.db` on 2026-09-26, after CNA was
 loaded (DESIGN decision 20), the one planned addition; the corpus is frozen
@@ -146,7 +144,7 @@ the branch). Answers take about a minute on the M1, against about 36 seconds
 before (the before run's log, on the evidence page).
 [Evidence](evidence/chatbot-answers-2026-10-04.md).
 
-**Engineering.** 2436 tests (external APIs mocked with captured payloads),
+**Engineering.** 2462 tests (external APIs mocked with captured payloads),
 central logging with debug configuration, resumable overnight backfill script,
 start/stop/status scripts for the API and Ollama. A clean copy installs
 and runs from the README on Python 3.14

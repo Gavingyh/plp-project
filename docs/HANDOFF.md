@@ -1274,6 +1274,17 @@ README's checksum for `plp-2026-09-26-v2.db.gz`, corrupted by blanket
 test-count replacements in b9aaa0f and d119675, is restored (all five
 snapshots now match).
 
+Later on 7 Oct, at the owner's request: the dapt-v2 run is paused until the
+upstream items are cleared (no more retraining or evaluation before then);
+chatbot speed work is on hold until performance is an issue (measurements in
+`data/run/speed/`: writing 13 to 23 s, reading tool results 5 to 15 s,
+re-reading instructions 12 to 15 s; a larger window was slower). Drafted for
+the team (a6c7a07): the product-feature options, proposed local-context
+answers, a glossary of 79 local terms and a blind active-learning sheet of
+150 rows. The team to-do is consolidated and renamed
+`docs/briefs/team-todo-2026-10-07.html` (same published link), ordered by
+what blocks what, with decided items in one list.
+
 **Needs a human (7 Oct):** record who labelled the 100 broker research test
 rows (the `annotator` column), an agreement figure for that round (one
 annotator so far); both are on the team to-do. The 25 broker reports'

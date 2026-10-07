@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PLP To-Do, 7 October</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root {
+  --ground: #f5f7f6;
+  --surface: #ffffff;
+  --ink: #18211e;
+  --muted: #56625d;
+  --rule: #d9dfdc;
+  --accent: #1d6b61;
+  --accent-soft: #e2efec;
+  --decide: #8a5a0b;
+  --decide-bg: #f7ecd8;
+  --team: #2c4f86;
+  --team-bg: #e3eaf6;
+  --ai: #1d6b61;
+  --ai-bg: #dfeeea;
+  --crit: #a3322a;
+  --crit-bg: #f6e0dd;
+  --code-bg: #eaeeec;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #111614;
+    --surface: #181f1c;
+    --ink: #e4ebe7;
+    --muted: #9aa7a1;
+    --rule: #2b3431;
+    --accent: #63c3b4;
+    --accent-soft: #1d2f2b;
+    --decide: #e3b45c;
+    --decide-bg: #33291a;
+    --team: #8fb0e8;
+    --team-bg: #1d2638;
+    --ai: #63c3b4;
+    --ai-bg: #1a2e2a;
+    --crit: #f08a7f;
+    --crit-bg: #3a2120;
+    --code-bg: #212a27;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #111614;
+  --surface: #181f1c;
+  --ink: #e4ebe7;
+  --muted: #9aa7a1;
+  --rule: #2b3431;
+  --accent: #63c3b4;
+  --accent-soft: #1d2f2b;
+  --decide: #e3b45c;
+  --decide-bg: #33291a;
+  --team: #8fb0e8;
+  --team-bg: #1d2638;
+  --ai: #63c3b4;
+  --ai-bg: #1a2e2a;
+  --crit: #f08a7f;
+  --crit-bg: #3a2120;
+  --code-bg: #212a27;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 15.5px/1.6 var(--body);
+  padding-inline: 20px;
+  padding-block: 0 64px;
+}
+.wrap { max-width: 780px; margin: 0 auto; }
+
+header.mast { padding-block: 40px 26px; border-bottom: 1px solid var(--rule); display: grid; gap: 14px; }
+.eyebrow {
+  font: 500 12px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 18px;
+}
+h1 { font: 600 clamp(30px, 5vw, 40px)/1.1 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.005em; }
+.lede { font-size: 17px; margin: 0; max-width: 64ch; }
+.countdown { display: inline-flex; align-items: baseline; gap: 8px; font: 500 13px/1 var(--mono); color: var(--accent); }
+.countdown b { font: 600 22px/1 var(--display); }
+
+section { padding-block: 30px 4px; }
+h2 { font: 600 22px/1.2 var(--display); margin: 0 0 6px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 12px; font-size: 14.5px; max-width: 68ch; }
+p { margin: 0 0 12px; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code { font: 400 0.86em/1.4 var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+
+/* critical path */
+.path { list-style: none; padding: 0; margin: 10px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; counter-reset: step; }
+.path li { background: var(--surface); padding: 12px 14px; display: grid; gap: 3px; align-content: start; counter-increment: step; }
+.path li::before { content: counter(step); font: 500 11px/1 var(--mono); color: var(--muted); }
+.path .d { font: 500 12px/1.2 var(--mono); color: var(--accent); }
+.path .s { font-size: 14px; line-height: 1.35; font-weight: 600; }
+
+/* legend + filter */
+.filter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 18px 0 0; }
+.filter span { font: 500 12px/1 var(--mono); color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-right: 4px; }
+.filter button {
+  font: 500 12px/1 var(--mono); letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 7px 10px; border-radius: 3px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.filter button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.counts { font: 400 12.5px/1.4 var(--mono); color: var(--muted); margin-top: 8px; }
+
+/* items */
+.items { list-style: none; padding: 0; margin: 0; display: grid; }
+.items li { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding-block: 14px; border-top: 1px solid var(--rule); }
+.items li:last-child { border-bottom: 1px solid var(--rule); }
+.items .t { font-weight: 600; font-size: 15.5px; line-height: 1.4; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.items .why, .items .meta { grid-column: 1 / -1; font-size: 14.5px; line-height: 1.55; max-width: 72ch; }
+.items .why { margin: 0; }
+.items .why b { font-weight: 600; }
+.items .meta { color: var(--muted); font-size: 13.5px; }
+.when { font: 500 12px/1.3 var(--mono); color: var(--muted); white-space: nowrap; align-self: start; padding-top: 4px; }
+.when.overdue { color: var(--crit); }
+.chip { display: inline-block; font: 500 10.5px/1 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 7px; border-radius: 3px; white-space: nowrap; }
+.chip.decide { color: var(--decide); background: var(--decide-bg); }
+.chip.team { color: var(--team); background: var(--team-bg); }
+.chip.ai { color: var(--ai); background: var(--ai-bg); }
+.chip.crit { color: var(--crit); background: var(--crit-bg); }
+.empty { color: var(--muted); font-size: 14px; padding: 10px 0; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin: 14px 0 18px; }
+.tiles div { background: var(--surface); padding: 14px; display: grid; gap: 5px; align-content: start; }
+.tiles b { font: 600 30px/1 var(--display); color: var(--decide); }
+.tiles .k { font-weight: 600; font-size: 14px; line-height: 1.3; }
+.tiles span:last-child { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 28px; }
+.twocol h3 { font: 600 16px/1.3 var(--display); margin: 0 0 6px; }
+.twocol ul, ol.steps { margin: 0 0 12px; padding-left: 20px; font-size: 14.5px; }
+.twocol li, ol.steps li { margin-bottom: 5px; max-width: 72ch; }
+.note { border-left: 3px solid var(--decide); background: var(--surface); padding: 12px 16px; margin: 14px 0; font-size: 14.5px; }
+.note p { margin: 0; }
+.refs { columns: 2 260px; column-gap: 28px; padding-left: 18px; margin: 6px 0 0; font-size: 14px; }
+.refs li { margin-bottom: 6px; break-inside: avoid; }
+footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+@media (max-width: 560px) { .items li { grid-template-columns: 1fr; } .when { padding-top: 0; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Wed 7 Oct 2026</span></div>
+  <h1>What the team has to do before 1 November</h1>
+  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. Decisions come first: the labels, the retraining, the one re-score and every evaluation wait on them, and several were due on 5 Oct. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
+  <div class="countdown"><b>25</b> days to submission · Sun 1 Nov</div>
+</header>
+
+<section aria-labelledby="h-path">
+  <h2 id="h-path">The critical path</h2>
+  <p class="sub">Each step needs the one before it. Nothing is retrained or re-evaluated until step 1 is done (agreed 7 Oct).</p>
+  <ol class="path">
+    <li><span class="d">overdue</span><span class="s">Settle the upstream decisions</span></li>
+    <li><span class="d">by 11 Oct</span><span class="s">Labels: top-up, NER, broker research, active sheet</span></li>
+    <li><span class="d">by 12 Oct</span><span class="s">Decide scoring model, data repairs, index blend</span></li>
+    <li><span class="d">12–18 Oct</span><span class="s">Retrain, re-score once, re-run every evaluation</span></li>
+    <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
+    <li><span class="d">26 Oct – 1 Nov</span><span class="s">Report, video, submit</span></li>
+  </ol>
+
+  <div class="filter" role="group" aria-label="Show items for">
+    <span>Show</span>
+    <button type="button" id="f-all" data-f="all" aria-pressed="true">All</button>
+    <button type="button" id="f-decide" data-f="decide" aria-pressed="false">Team decisions</button>
+    <button type="button" id="f-team" data-f="team" aria-pressed="false">People's work</button>
+    <button type="button" id="f-ai" data-f="ai" aria-pressed="false">Claude can do</button>
+  </div>
+  <div class="counts" id="counts"></div>
+</section>
+
+<section aria-labelledby="h-decide">
+  <h2 id="h-decide">1. Decide first: the upstream items</h2>
+  <p class="sub">Every later label, model and score depends on these, so settling them later means repeating work. Claude has drafted material for the first three; each draft proposes, the team decides.</p>
+  <ul class="items">
+    <li data-o="decide">
+      <span class="t">The aspect method: the LLM&#8217;s aspects or the centroids, and the disagreement rule <span class="chip decide">Decision</span></span>
+      <span class="when overdue">overdue (5 Oct)</span>
+      <p class="why"><b>Why:</b> the database&#8217;s aspects come from seed centroids, which give a sentence about 6.4 aspects and match the human&#8217;s aspect 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. Under centroids every aspect of every bank is positive; with the LLM, retail banking turns slightly negative for all three banks and DBS asset quality falls from +0.27 to +0.07. Every per-aspect claim in the report depends on this. Choose with it the rule for the 24% of sentences where the two models disagree: keep llama&#8217;s answer, or mark them <code>other</code>. The corpus run is done (3 Oct); changing an aspect&#8217;s definition or examples means redoing it, about a day of the MacBook, so test a new wording first on the 1,277 labelled sentences (under an hour).</p>
+      <span class="meta">Source: llm-aspect-classifier, index-preview evidence. Decision 5 in the decision brief.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Does a product&#8217;s feature count as sentiment? <span class="chip decide">Decision</span></span>
+      <span class="when">before any labelling or retraining</span>
+      <p class="why"><b>Why:</b> the fine-tuned model&#8217;s commonest error is a neutral sentence called positive or negative, most of the retail ones describing a product&#8217;s feature (&#8220;I use OCBC Frank 6% for daily expense&#8221;, called positive), and every one of Opus&#8217;s 173 sentiment disagreements with the annotators is on where neutral ends. <b>Draft ready:</b> three candidate rules with train/dev examples and how many rows each would change. &#8220;Customer value&#8221; fits the current labels (about 4 rows change), though those labels may follow the suggestion model; &#8220;changes only&#8221; measures opinion more strictly (about 30 rows change).</p>
+      <span class="meta">Draft: <code>docs/briefs/proposal-product-features-2026-10-07.md</code>. Unblocks the top-up and active-learning labels.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Wealth or retail for priority-banking products, and the 22 open local-context questions <span class="chip decide">Decision</span></span>
+      <span class="when overdue">overdue (5 Oct)</span>
+      <p class="why"><b>Why:</b> DBS Treasures, OCBC Premier and bank-sold unit trusts are the boundary behind 63 of Opus&#8217;s aspect disagreements, and wealth is one of the classifier&#8217;s weakest aspects. The other questions (savings-rate cuts, bank economists, slang, questions as sentiment) each change labels or rules. <b>Draft ready:</b> a proposed answer to each, with evidence, confidence and what changes if the team answers otherwise; three terms need a local reader (&#8220;xmm&#8221;, &#8220;Lobang Sis&#8221;, &#8220;FHR&#8221;). Write the team&#8217;s answers into <code>docs/local-context-questions.md</code>.</p>
+      <span class="meta">Draft: <code>docs/briefs/local-context-proposals-2026-10-07.md</code>. Decision 5 in the decision brief. A &#8220;by customer&#8221; answer changes the aspect definitions, so the corpus run is redone (about a day).</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Relabel blind: the 299 test rows, and a sample of training rows? <span class="chip decide">Decision</span></span>
+      <span class="when overdue">overdue (5 Oct)</span>
+      <p class="why"><b>Why:</b> annotators saw a model&#8217;s suggestion while labelling. The test labels match the suggestion on 89% of rows, and the training rows kept its sentiment on 904 of 978 in the first round (92%) and 263 of 280 in the broker research round (94%). Every test score inherits that anchoring, the first threat to validity an examiner will raise. A blind relabel of the test rows, and of about 100 training rows to measure the effect, has to happen before the 12–18 Oct re-evaluation to count.</p>
+      <span class="meta">Source: annotation-agreement (27 Sep); <code>data/labeled/candidates.csv</code> label against llm_prelabel; broker research round files.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">One blended index, or each source&#8217;s index side by side <span class="chip decide">Decision</span></span>
+      <span class="when overdue">overdue (5 Oct)</span>
+      <p class="why"><b>Why:</b> UOB has the highest earnings-only score and the lowest blended one, only because it publishes less earnings text than DBS. The ranking the report and the dashboard show depends on this choice, and broker research adds another source to weigh.</p>
+      <span class="meta">Source: PLAN, blended-index decision.</span>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-label">
+  <h2 id="h-label">2. Labels: people&#8217;s work, by 11 October</h2>
+  <p class="sub">Label after the decisions above that touch the guideline (product features, wealth or retail), so the labels follow the final rules.</p>
+  <ul class="items">
+    <li data-o="team">
+      <span class="t">Label the top-up sheet: 268 rows, the first 40 by two people <span class="chip team">People</span></span>
+      <span class="when">by 11 Oct</span>
+      <p class="why"><b>Why:</b> five aspects have fewer than 80 labelled rows (macro 22, dividends 33, capital and liquidity 49, NIM 58, asset quality 78), too few to evaluate the models on them. The 40 shared rows give the first human&#8211;human aspect agreement figure. The sheet is blind on purpose.</p>
+      <span class="meta">File: <code>data/labeled/topup/topup_sheet.csv</code>; merge with <code>train.labels --topup</code>. Source: labelling-topup.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Label the active-learning sheet: 150 Reddit sentences <span class="chip team">People</span></span>
+      <span class="when">after the product-feature decision</span>
+      <p class="why"><b>Why:</b> the 150 sentences the current models are least sure about, mostly the neutral-or-positive call behind the product-feature question, so labelling them targets the rows the models find hardest. The sheet is blind (no model output, aspect left for the labeller); don&#8217;t open <code>selection.csv</code> while labelling.</p>
+      <span class="meta">File: <code>data/labeled/active/active_sheet.csv</code> (built 7 Oct).</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Label the bank-NER gold set (201 sentences) <span class="chip team">People</span></span>
+      <span class="when">by 11 Oct</span>
+      <p class="why"><b>Why:</b> NER is the project&#8217;s third text-mining task, and it has no human accuracy figure until these are labelled.</p>
+      <span class="meta">File: <code>data/labeled/ner/gold_sheet.csv</code>. Source: bank-ner.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Broker research labels: name the test-row annotator, and add a second annotator for agreement <span class="chip team">People</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> the 100 blind test rows are labelled but their <code>annotator</code> column is blank (they agree with the LLM&#8217;s own labels on 77 of 100, so not copied); naming the annotator lets the report say people labelled them. One annotator labelled the whole round, so a second person should label about 100 of the same rows blind for an agreement figure (<code>train.agreement</code>). <code>train.source_round merge</code> now refuses rows without an annotator.</p>
+      <span class="meta">Files: <code>data/labeled/sgx_research/test_blind.csv</code>, <code>candidates.csv</code>.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Send the broker research source&#8217;s database rows from the Windows PC <span class="chip team">People</span></span>
+      <span class="when">before the re-score</span>
+      <p class="why"><b>Why:</b> the labels point at sentence ids from that PC&#8217;s database; rebuilt from the PDFs on the Mac, 52 of the 380 labelled sentences came out with slightly different text and so different ids. On the PC: <code>git pull</code>, then <code>python scripts/source_rows.py export --source sgx_research --out data/run/sgx_rows.db</code>, and send the file (about 2 MB, not through git).</p>
+      <span class="meta">Source: HANDOFF, 7 October.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Fix only the boundary rows, once the economist and wealth-or-retail rules are decided <span class="chip team">People</span></span>
+      <span class="when">after those decisions</span>
+      <p class="why"><b>Why:</b> the human labels stay where Opus disagrees (decided 4 Oct, no full relabel); only the rows on those two boundaries are revisited.</p>
+      <span class="meta">File: <code>data/labeled/boundary-review-2026-10-04.csv</code> (branch <code>data/boundary-review</code> until merged). Decision 15 in the decision brief.</span>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-wk2">
+  <h2 id="h-wk2">3. Decide by Monday 12 October</h2>
+  <ul class="items">
+    <li data-o="decide">
+      <span class="t">The scoring model: base FinBERT, or one of three fine-tuned sets <span class="chip decide">Decision</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> the stored scores are base FinBERT&#8217;s, so the DNN the rubric requires doesn&#8217;t yet affect what the product shows. Three candidates: the 1 Oct models (0.604 &#177; 0.035 test macro-F1 against base 0.571, the figures the claim uses), the 4 Oct retrain (0.621 &#177; 0.027), and the adapted models (FinBERT further trained on the corpus&#8217;s own sentences first: on cross-validation 0.701 against 0.663, better in 13 of 15 paired folds; on test 0.628 &#177; 0.022, within the seed noise). <b>The adapted models must be pretrained again before adoption:</b> a 7 Oct validation found their pretraining text held 151 sentences related to test sentences (a filter gap, fixed that day). State the criterion first; whichever is chosen is retrained on the final labels in the 12–18 Oct week.</p>
+      <span class="meta">Source: retrain (4 Oct), dapt (6–7 Oct), sgx-research-evaluation evidence. Decision 7 in the decision brief.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Approve three data repairs, so they go into the one re-score <span class="chip decide">Decision</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> each changes the database or git. (1) <b>Earnings dates:</b> 6 UOB documents (114 sentences) are dated 10 Sep 2026, their extraction day, so they count in the recent windows; <code>scripts/fix_earnings_dates.py --apply</code> repairs them (rehearsed: UOB&#8217;s 30-day headline +0.315 on 211 sentences becomes +0.251 on 97). (2) <b>Reddit gaps:</b> Sep 2021, May 2024 and Mar 2025 lost most of their comments; refilling is a network pull. (3) <b>CNA text in git:</b> <code>ingest/cna_articles.json</code> holds 15 CNA articles, against the rule; removing it is one <code>git rm</code>, and it stays in history.</p>
+      <span class="meta">Source: HANDOFF, 3 Oct.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Read the chatbot&#8217;s fixed replies <span class="chip team">People</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> advice, other banks, small talk, help, service requests, prompt injection, complaints and off-topic questions get a fixed reply, which is what a user sees most often in a demo. They are in <code>config/intents.yaml</code> and change without code.</p>
+      <span class="meta">Source: chatbot-intent (4 Oct), DESIGN decision 24.</span>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-dash">
+  <h2 id="h-dash">4. Dashboard owner</h2>
+  <ul class="items">
+    <li data-o="team">
+      <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>
+      <span class="when">before the re-score (12 Oct)</span>
+      <p class="why"><b>Why:</b> the re-score adds new scores beside the base ones, and the dashboard&#8217;s queries don&#8217;t filter on <code>model_version</code>, so it would count every sentence twice and both &#8220;See the numbers&#8221; panels would crash. Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot do.</p>
+      <span class="meta"><code>dashboard/app.py</code> lines 72, 89 and 103.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Fix the analyst-consensus panel <span class="chip team">Dashboard owner</span></span>
+      <span class="when overdue">overdue (5 Oct)</span>
+      <p class="why"><b>Why:</b> the panel takes one &#8220;latest date&#8221; for all three banks, so UOB&#8217;s older consensus doesn&#8217;t show. One line: <code>ingest.yahoo_analyst.latest_per_bank(conn)</code>, as the API does.</p>
+      <span class="meta">Source: DESIGN 23 (amendment).</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Show the chatbot&#8217;s steps while it answers, and update the caption <span class="chip team">Dashboard owner</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> an answer takes about 47 seconds and the Ask page shows only a spinner. The chatbot now reports each step (<code>Conversation.ask(..., on_step=...)</code>, <code>chatbot/progress.py</code>); replace the <code>st.spinner</code> block around line 512 with an <code>st.status</code> box that writes each finished step (checked with Streamlit&#8217;s test runner). Also update the caption above the chat: &#8220;A local model may still cite evidence it never retrieved&#8221; is out of date since strip mode.</p>
+      <span class="meta">Source: HANDOFF, 6 October (evening); <code>tests/test_chatbot_progress.py</code>.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Check every dashboard tab, and choose how it reads data <span class="chip team">Dashboard owner</span></span>
+      <span class="when">by 19 Oct</span>
+      <p class="why"><b>Why:</b> the dashboard reads the database directly while everything else uses the API, and the two have disagreed once. A 4 Oct review found: &#8220;Last refreshed&#8221; shows when the page was opened; trend charts draw straight across thin months; 7- and 30-day figures show cells under 5 sentences that the API calls insufficient; the method note describes the old model and aspects; the Topics count table crashes when a bank lacks an aspect (line 383).</p>
+      <span class="meta">Source: <code>dashboard/app.py</code> review, 4 Oct.</span>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-wk3">
+  <h2 id="h-wk3">5. 12–18 October: apply the decisions once</h2>
+  <ul class="items">
+    <li data-o="ai">
+      <span class="t">Retrain the chosen model on the final labels (pretraining again first, if adapted) <span class="chip ai">Claude</span></span>
+      <span class="when">12–14 Oct</span>
+      <p class="why"><b>Why:</b> the final model must learn from the top-up, active-learning and broker research labels under the final rules. If the adapted model is chosen, its pretraining runs again with the fixed filter (about 2 hours; every labelling sheet and near-copies left out), on the corpus with the broker research rows. Compared on one machine only: the same training scored about 0.03 differently on the Windows PC and the Mac.</p>
+      <span class="meta">Commands: <code>train/dapt.py</code>, <code>train/finetune.py --base-model</code>; the paused run is <code>data/run/dapt-v2</code> (its pretraining must be redone).</span>
+    </li>
+    <li data-o="ai">
+      <span class="t">Rehearse the re-score on a copy, then re-assign aspects, re-score, re-aggregate, snapshot <span class="chip ai">Claude</span> <span class="chip decide">needs approval</span></span>
+      <span class="when">12–18 Oct</span>
+      <p class="why"><b>Why:</b> one combined re-run is cheaper and easier to explain than several. <code>scripts/rescore.py</code> applies the LLM aspects and fine-tuned scores (<code>--finetuned --models &lt;folders&gt;</code>); rehearsed on a copy on 3 Oct it reproduced the preview cell for cell. It changes the database, so the real run waits for the team&#8217;s go-ahead. Afterwards set <code>MODEL_VERSION</code> and <code>assignment_method: llm</code>.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Re-run every evaluation on the new snapshot, and re-export the ratings sheet <span class="chip ai">Claude</span></span>
+      <span class="when">12–18 Oct</span>
+      <p class="why"><b>Why:</b> the report&#8217;s tables must describe the system as submitted. The ratings sheet for the final chatbot is ordered by the checklist judge, which catches every known invention (25 of 25) though its reasons are often wrong.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Upload the new snapshot and the model weights to the team folder <span class="chip team">People</span></span>
+      <span class="when">by 18 Oct</span>
+      <p class="why"><b>Why:</b> neither is in git. The team and the marker need exactly the database and models the report describes; check the SHA-256 values after uploading.</p>
+    </li>
+    <li data-o="decide">
+      <span class="t">Verify the OpenAI-compatible backend (a free Groq key) or stop claiming it <span class="chip decide">Decision</span></span>
+      <span class="when">by 19 Oct</span>
+      <p class="why"><b>Why:</b> it is described as working but has never answered a real request. A free Groq key (a person signs up; switch on Zero Data Retention) verifies it and gives the demo a hosted option with larger models.</p>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-wk4">
+  <h2 id="h-wk4">6. 19–25 October: the evaluation only people can do</h2>
+  <ul class="items">
+    <li data-o="team">
+      <span class="t">Rate the chatbot&#8217;s answers for faithfulness <span class="chip team">People</span></span>
+      <span class="when">19–25 Oct</span>
+      <p class="why"><b>Why:</b> people&#8217;s ratings are the faithfulness measure, and they calibrate the checklist judge. Two raters on the same answers give an agreement figure too.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Run the SASSI questionnaire with 5–8 users, and read transcripts <span class="chip team">People</span></span>
+      <span class="when">19–25 Oct</span>
+      <p class="why"><b>Why:</b> the conversational-UI evaluation the plan promises; automated checks can&#8217;t say whether people find the answers useful.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Interpret the results and freeze the tables <span class="chip team">People</span></span>
+      <span class="when">by 25 Oct</span>
+      <p class="why"><b>Why:</b> the conclusions are the team&#8217;s to write; after the freeze, no number in the report changes.</p>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-wk5">
+  <h2 id="h-wk5">7. 26 October – 1 November: submit</h2>
+  <ul class="items">
+    <li data-o="team">
+      <span class="t">Write the conclusions, each person&#8217;s contribution, and the GenAI pros and cons <span class="chip team">People</span></span>
+      <span class="when">by 30 Oct</span>
+      <p class="why"><b>Why:</b> the module requires them, and only the authors can write them. Drafts to start from: <code>docs/report/approach.md</code>, <code>findings-limitations-solutions.md</code>, <code>report-draft.md</code>.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Record the demo video, about 20 minutes, everyone presents <span class="chip team">People</span></span>
+      <span class="when">by 31 Oct</span>
+      <p class="why"><b>Why:</b> a deliverable (5%); every member must present. Show the dashboard and the chatbot together, against the submitted snapshot.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Final snapshot, data report and a third clean-copy install test <span class="chip ai">Claude</span></span>
+      <span class="when">by 31 Oct</span>
+      <p class="why"><b>Why:</b> the marker installs from the README; the last two install tests each found something.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Peer review, final read-through, submit <span class="chip team">People</span></span>
+      <span class="when">Sun 1 Nov</span>
+      <p class="why"><b>Why:</b> peer review is 5%, and the submission itself is the team&#8217;s.</p>
+    </li>
+  </ul>
+  <div class="note"><p>For long runs on the MacBook, keep it plugged in with the lid open, and close memory-heavy apps (Docker): on 6 Oct memory pressure slowed a training run from about 1 to 100 seconds a step.</p></div>
+</section>
+
+<section aria-labelledby="h-hold">
+  <h2 id="h-hold">On hold</h2>
+  <ul class="items">
+    <li data-o="ai">
+      <span class="t">Chatbot speed <span class="chip ai">On hold</span></span>
+      <span class="when">until performance is an issue</span>
+      <p class="why"><b>Why on hold:</b> answers take a median of 47 seconds (gold set, 6 Oct). Measured on 7 Oct: writing the answer takes 13–23 s, reading tool results 5–15 s, re-reading the instructions 12–15 s from the second question on; a larger context window was slower on this Mac. Ready options if needed: answer simple lookups from a template, keep the prompt cached, trim tool results (needs a gold-set check), stream the answer, warm the model at start.</p>
+      <span class="meta">Measurements: <code>data/run/speed/</code> (on the Mac).</span>
+    </li>
+    <li data-o="ai">
+      <span class="t">Further model improvements (slang, glossary, active learning, LLM silver labels) <span class="chip ai">After the upstream items</span></span>
+      <span class="when">after section 1</span>
+      <p class="why"><b>Status:</b> a slang dictionary is not worth it (at most 27 of 1,280 labelled train/dev rows hold slang). A glossary of 79 local terms is drafted (<code>data/glossary/</code>; 18 definitions to check). Active learning&#8217;s sheet is built (section 2). LLM silver labels (an LLM labels unlabelled sentences as extra training data, never replacing human labels) need an agreement check first, and a paid model needs the owner&#8217;s approval.</p>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-done">
+  <h2 id="h-done">Decided</h2>
+  <ul class="refs">
+    <li><b>6 Oct, claim wording:</b> the Grounded chatbot claim states what the checks prove, within the Known limits on the chatbot evidence page.</li>
+    <li><b>7 Oct, broker reports in git:</b> they stay while the repository is private to the team; remove them, with their history, before any public release.</li>
+    <li><b>7 Oct, order of work:</b> no more retraining or evaluation until the upstream items are cleared.</li>
+    <li><b>4 Oct, DBS Vickers counts as DBS</b> (in bank recognition, the news filter and Opus&#8217;s NER reference).</li>
+    <li><b>4 Oct, chatbot settings:</b> strip invented evidence and rank evidence by the aspect&#8217;s name, both on by default.</li>
+    <li><b>4 Oct, windows anchored</b> to the newest sentence, labelled &#8220;as of&#8221;; merges in the re-score week.</li>
+    <li><b>4 Oct, hosted backends</b> withhold Reddit, CNA and unlisted-source text.</li>
+    <li><b>4 Oct, POSB counts as DBS</b> at collection.</li>
+    <li><b>4 Oct, passing mentions</b> stay; the report gives their share.</li>
+    <li><b>4 Oct, earnings-PDF links</b> become relative paths during the re-score.</li>
+    <li><b>4 Oct, demo chatbot model:</b> <code>llama3.1:8b</code> through Ollama.</li>
+    <li><b>4 Oct, human labels stay</b> where Opus disagrees; only boundary rows are revisited.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-refs">
+  <h2 id="h-refs">Read more</h2>
+  <ul class="refs">
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/briefs/proposal-product-features-2026-10-07.md" target="_blank" rel="noopener">Product features as sentiment: the options</a> <span class="muted">docs/briefs/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/briefs/local-context-proposals-2026-10-07.md" target="_blank" rel="noopener">Proposed local-context answers</a> <span class="muted">docs/briefs/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/dapt-2026-10-06.md" target="_blank" rel="noopener">Adapted pretraining results</a> <span class="muted">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/sgx-research-evaluation-2026-10-06.md" target="_blank" rel="noopener">Broker research evaluation</a> <span class="muted">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/report/findings-limitations-solutions.md" target="_blank" rel="noopener">Findings, limitations and solutions</a> <span class="muted">docs/report/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/local-context-questions.md" target="_blank" rel="noopener">Local-context questions</a> <span class="muted">docs/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/PLAN.md" target="_blank" rel="noopener">PLAN</a> <span class="muted">sequence and open decisions</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/submission-checklist.html" target="_blank" rel="noopener">Submission checklist</a> <span class="muted">tick items off there</span></li>
+  </ul>
+</section>
+
+<footer>Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+
+</div>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll(".filter button");
+  var items = document.querySelectorAll(".items li");
+  var counts = document.getElementById("counts");
+  var label = { decide: "team decisions", team: "people's tasks", ai: "for Claude" };
+  function tally() {
+    var n = { decide: 0, team: 0, ai: 0 };
+    items.forEach(function (li) { n[li.dataset.o] += 1; });
+    return n.decide + " team decisions · " + n.team + " people's tasks · " + n.ai + " for Claude";
+  }
+  function apply(f) {
+    buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.f === f)); });
+    var shown = 0;
+    items.forEach(function (li) { var on = f === "all" || li.dataset.o === f; li.hidden = !on; if (on) shown += 1; });
+    document.querySelectorAll("section").forEach(function (sec) {
+      var list = sec.querySelector(".items");
+      if (!list) return;
+      var any = Array.prototype.some.call(list.children, function (li) { return !li.hidden; });
+      sec.hidden = !any;
+    });
+    counts.textContent = f === "all" ? tally() : shown + " " + label[f];
+    try { localStorage.setItem("plp-todo-filter", f); } catch (e) {}
+  }
+  buttons.forEach(function (b) { b.addEventListener("click", function () { apply(b.dataset.f); }); });
+  var saved = "all";
+  try { saved = localStorage.getItem("plp-todo-filter") || "all"; } catch (e) {}
+  apply(["all", "decide", "team", "ai"].indexOf(saved) >= 0 ? saved : "all");
+})();
+</script>
+</body>
+</html>

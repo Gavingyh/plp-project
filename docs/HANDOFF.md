@@ -1226,7 +1226,37 @@ and 0.662 for the three averaged against 0.634
 of 1,280 labelled train/dev rows), so no slang dictionary was built. Docker
 Desktop was stopped on 6 Oct to free memory for the run.
 
-**Needs a human (7 Oct):** the team's scoring-model decision now has three
+Broker research, reviewed 7 Oct: the 5 to 6 Oct work on the team's Windows
+PC (merged in f2544fd) holds more than the source. The 280 train/dev rows are
+human-labelled (annotator "A", who kept the LLM's suggested sentiment on
+263 of 280 and its aspect on 266: the same anchoring as the first round's
+89%; the file's `was_corrected` compares with the pipeline's aspect, not the
+LLM's). The 100 blind test rows are filled in and agree with the LLM's own
+test labels far less (sentiment 77 of 100, aspect 65; the LLM flagged 4 rows
+as not about the bank, the sheet none), so they were not copied; no code
+path writes LLM labels into that sheet. Their `annotator` column is blank. A retrain with the 280 rows added was scored on the original 299,
+the 100 and both (`docs/evidence/sgx-research-evaluation-2026-10-06.md`).
+Only that PC's database holds the source's rows with the ids the labels
+use: rebuilt on the Mac from the PDFs, 52 of the 380 labelled sentences came
+out with different text (a stray bullet, a sidebar line) and so different
+ids. `scripts/source_rows.py` copies one source's rows between databases;
+the rebuild is kept apart in `data/run/sgx/` (gitignored) for pretraining
+text only.
+
+With the broker research labels: fine-tuned on all 1,258 train/dev rows on
+the Mac, the adapted models led those from FinBERT on every test scope (three
+averaged: 0.652 against 0.597 on the original 299, 0.751 against 0.698 on the
+100 broker research rows, 0.690 against 0.649 on all 399;
+`docs/evidence/dapt-2026-10-06.md`). The same training from FinBERT scored
+about 0.03 higher on the Windows PC on 6 Oct, so models are compared on one
+machine only.
+
+**Needs a human (7 Oct):** record who labelled the 100 broker research test
+rows (the `annotator` column), an agreement figure for that round (one
+annotator so far); both are on the team to-do. The 25 broker reports'
+full text stays in git: the repository is private to the team (decided
+7 Oct; remove them, with their history, before any public release).
+The team's scoring-model decision now has three
 candidates (the 1 Oct models, the 4 Oct retrain, the adapted models), for the
 re-score week of 12 to 18 Oct; if the adapted models are adopted, the
 Fine-tuning lead claim in `CLAUDE.md` should give their figures.

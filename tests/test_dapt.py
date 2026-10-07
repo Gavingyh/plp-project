@@ -42,3 +42,25 @@ def test_labelled_sentences_and_their_near_copies_are_left_out(tmp_path):
 def test_norm_ignores_figures_case_and_spacing():
     assert norm("Profit rose 12.5% to S$1,234m in 2Q25") == norm("profit  rose 9% to s$987m in 3q24")
     assert norm("DBS is up") != norm("DBS is down")
+
+
+def test_a_near_copy_with_a_word_changed_or_a_stray_mark_is_left_out(tmp_path):
+    db, labels = _setup(tmp_path)
+    conn = sqlite3.connect(db)
+    conn.executemany("INSERT INTO sentences VALUES (?, ?, ?)", [
+        ("f", "Higher NPLs and recessionary risks could unwind expectations for credit cost declines, posing risks to earnings.",
+         "sgx_research"),
+        ("g", "Higher NPLs and recession ary risks could unwind expectations for credit cost declines, posing risks to Fed cuts. •",
+         "sgx_research"),
+        ("h", "UOB Kay Hian reported a quarterly brokerage commission figure today.", "news"),
+    ])
+    conn.commit()
+    conn.close()
+    rows = pd.read_csv(labels)
+    pd.concat([rows, pd.DataFrame([{"sentence_id": "x", "split": "test", "text": "Higher NPLs and recession ary risks "
+                                    "could unwind expectations for credit cost declines, posing risks to Fed cuts."}])]
+              ).to_csv(labels, index=False)
+    texts, stats = build_corpus(db, labels)
+    assert not any(t.startswith("Higher NPLs") for t in texts)
+    assert "UOB Kay Hian reported a quarterly brokerage commission figure today." in texts
+    assert stats["dropped_near_copy_of_labelled_text"] >= 2

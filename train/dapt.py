@@ -52,17 +52,55 @@ def norm(text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"\d+(?:[.,]\d+)*", "0", (text or "").lower())).strip()
 
 
-def build_corpus(db_path: str = DB_PATH, labels_path: str = LABELS_PATH, limit: int | None = None):
+_WORD = re.compile(r"[a-z0]+")
+NEAR = 0.6          # word-set Jaccard: the broker research round's threshold against test rows
+
+
+class NearCopies:
+    """Finds labelled sentences sharing much of a sentence's words (Jaccard >= NEAR), so a
+    repeated sentence with a word or figure changed, or a PDF sentence extracted with a
+    stray bullet or sidebar line on another machine (7 Oct 2026), is left out too.
+    Words in more than 5% of the labelled sentences (and at least 50) are ignored: they can't make two
+    sentences near-copies on their own, and skipping them keeps the search fast."""
+
+    def __init__(self, labelled_texts):
+        self.sets = [set(_WORD.findall(norm(t))) for t in labelled_texts]
+        df = {}
+        for words in self.sets:
+            for w in words:
+                df[w] = df.get(w, 0) + 1
+        common = {w for w, n in df.items() if n > max(0.05 * len(self.sets), 50)}
+        self.sets = [ws - common for ws in self.sets]
+        self.common = common
+        self.index = {}
+        for i, ws in enumerate(self.sets):
+            for w in ws:
+                self.index.setdefault(w, []).append(i)
+
+    def near(self, text: str) -> bool:
+        words = set(_WORD.findall(norm(text))) - self.common
+        if len(words) < 3:
+            return False
+        hits = {}
+        for w in words:
+            for i in self.index.get(w, ()):
+                hits[i] = hits.get(i, 0) + 1
+        return any(n / (len(words) + len(self.sets[i]) - n) >= NEAR for i, n in hits.items())
+
+
+def build_corpus(db_path: str = DB_PATH, labels_path: str | list[str] = LABELS_PATH, limit: int | None = None):
     """(texts, stats): every corpus sentence except labelled ones and their near-copies."""
-    labelled = pd.read_csv(labels_path)
+    paths = [labels_path] if isinstance(labels_path, str) else list(labels_path)
+    labelled = pd.concat([pd.read_csv(p) for p in paths]).drop_duplicates("sentence_id")
     ids = set(labelled["sentence_id"])
     texts = {norm(t) for t in labelled["text"]}
+    near = NearCopies(labelled["text"].tolist())
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
         rows = conn.execute("SELECT sentence_id, text, source FROM sentences ORDER BY sentence_id").fetchall()
     finally:
         conn.close()
-    kept, by_id, by_text, by_source = [], 0, 0, {}
+    kept, by_id, by_text, by_contained, by_source = [], 0, 0, 0, {}
     for sid, text, source in rows:
         if sid in ids:
             by_id += 1
@@ -70,12 +108,16 @@ def build_corpus(db_path: str = DB_PATH, labels_path: str = LABELS_PATH, limit: 
         if norm(text) in texts:
             by_text += 1
             continue
+        if near.near(text):
+            by_contained += 1
+            continue
         kept.append(text)
         by_source[source] = by_source.get(source, 0) + 1
     if limit:
         kept = kept[:limit]
     stats = {"corpus_sentences": len(rows), "dropped_labelled_id": by_id,
-             "dropped_matching_labelled_text": by_text, "kept": len(kept), "kept_by_source": by_source,
+             "dropped_matching_labelled_text": by_text, "dropped_near_copy_of_labelled_text": by_contained,
+             "kept": len(kept), "kept_by_source": by_source, "labels_files": paths,
              "labelled_rows_excluded": len(labelled)}
     return kept, stats
 
@@ -131,10 +173,11 @@ def save_classifier(mlm: BertForMaskedLM, out_dir: str, tokenizer) -> str:
 
 
 def run(out_dir: str, epochs: float = 3, lr: float = 5e-5, batch_size: int = 32, max_length: int = 64,
-        seed: int = 42, limit: int | None = None) -> dict:
+        seed: int = 42, limit: int | None = None, db_path: str = DB_PATH,
+        labels: str | list[str] = LABELS_PATH) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     torch.manual_seed(seed)
-    texts, stats = build_corpus(limit=limit)
+    texts, stats = build_corpus(db_path, labels, limit=limit)
     print(json.dumps(stats, indent=1), flush=True)
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
     enc = tokenizer(texts, truncation=True, max_length=max_length, return_special_tokens_mask=True)
@@ -177,6 +220,9 @@ if __name__ == "__main__":
     p.add_argument("--max-length", type=int, default=64)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--limit", type=int, default=None, help="use only the first N sentences (smoke test)")
+    p.add_argument("--db", default=DB_PATH, help="the database whose sentences to read (read-only)")
+    p.add_argument("--labels", nargs="+", default=[LABELS_PATH],
+                   help="labelled files whose sentences are left out (all splits)")
     a = p.parse_args()
-    s = run(a.out, a.epochs, a.lr, a.batch_size, a.max_length, a.seed, a.limit)
+    s = run(a.out, a.epochs, a.lr, a.batch_size, a.max_length, a.seed, a.limit, a.db, a.labels)
     print({k: v for k, v in s.items() if k != "loss_log"})

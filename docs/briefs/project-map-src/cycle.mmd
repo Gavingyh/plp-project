@@ -1,0 +1,37 @@
+flowchart LR
+  classDef done fill:#e3f2e9,stroke:#1e7a4c,stroke-width:2px,color:#17201d
+  classDef built fill:#e4ecf8,stroke:#2c5b9c,stroke-width:2px,color:#17201d
+  classDef decide fill:#f8edd6,stroke:#93600c,stroke-width:2px,color:#17201d
+  classDef people fill:#efe7f8,stroke:#6b3fa0,stroke-width:2px,color:#17201d
+  classDef todo fill:#f7e3e0,stroke:#8a3a33,stroke-width:2px,color:#17201d
+  classDef actor fill:#ffffff,stroke:#59655f,stroke-width:1px,color:#17201d
+  classDef store fill:#ffffff,stroke:#17201d,stroke-width:2px,color:#17201d
+  subgraph M["Sentiment model loop"]
+    direction LR
+    guide["Labelling guideline<br/>and decisions"]:::decide
+    lab["Label sentences<br/>blind test set,<br/>suggestions on train"]:::people
+    ft["Fine-tune FinBERT<br/>adaptive pretraining<br/>with leak filter"]:::built
+    ev["Evaluate<br/>cross-validation;<br/>test split once"]:::done
+    err["Error analysis"]:::people
+    guide --> lab --> ft --> ev --> err
+    err -- "fix guideline or labels" --> guide
+  end
+  pick{"Team picks<br/>the scoring model"}:::decide
+  rescore["One re-score<br/>of the corpus"]:::todo
+  idx["Index rebuilt"]:::todo
+  ev --> pick --> rescore --> idx
+
+  subgraph C["Chatbot loop"]
+    direction LR
+    gold["Gold questions<br/>and conversations"]:::done
+    run["Run, record every<br/>tool call"]:::done
+    flag["Flags read<br/>by hand"]:::done
+    fix["Fix in code"]:::done
+    replay["Replay on saved<br/>answers, then live"]:::done
+    gold --> run --> flag --> fix --> replay
+    replay -- "repeat" --> gold
+  end
+  human["Human evaluation<br/>with users"]:::todo
+  replay --> human
+  style M fill:#f6f8f7,stroke:#c9d1cd
+  style C fill:#f6f8f7,stroke:#c9d1cd

@@ -1,0 +1,82 @@
+flowchart LR
+  classDef done fill:#e3f2e9,stroke:#1e7a4c,stroke-width:2px,color:#17201d
+  classDef built fill:#e4ecf8,stroke:#2c5b9c,stroke-width:2px,color:#17201d
+  classDef decide fill:#f8edd6,stroke:#93600c,stroke-width:2px,color:#17201d
+  classDef people fill:#efe7f8,stroke:#6b3fa0,stroke-width:2px,color:#17201d
+  classDef todo fill:#f7e3e0,stroke:#8a3a33,stroke-width:2px,color:#17201d
+  classDef actor fill:#ffffff,stroke:#59655f,stroke-width:1px,color:#17201d
+  classDef store fill:#ffffff,stroke:#17201d,stroke-width:2px,color:#17201d
+
+  subgraph SRC["Sources · collection stopped 25 Sep"]
+    direction TB
+    reddit["Reddit<br/>Arctic Shift archive"]:::done
+    news["News<br/>Google, Yahoo, NewsAPI"]:::done
+    cna["CNA articles<br/>team-only"]:::done
+    ir["Bank results reports<br/>IR sites, Wayback PDFs"]:::done
+    sgx["Broker research<br/>rows on the Windows PC"]:::people
+    yfin["Yahoo Finance<br/>analyst ratings"]:::done
+  end
+
+  subgraph PIPE["Batch pipeline · run by hand · each step reads and writes plp.db"]
+    direction LR
+    ingest["Ingest and<br/>news filter"]:::done
+    clean["Clean, split,<br/>tag the bank"]:::done
+    aspect["Aspect<br/>seed centroids"]:::decide
+    score["Sentiment<br/>base FinBERT"]:::done
+    agg["Index<br/>windows, weights,<br/>shrinkage"]:::done
+    ner["NER bank tagger<br/>built"]:::built
+    llmasp["LLM aspects<br/>built, corpus done"]:::built
+  end
+
+  db[("plp.db<br/>SQLite")]:::store
+  emb[("Sentence<br/>embeddings")]:::store
+  snap[("Snapshots<br/>30 Sep frozen")]:::store
+
+  subgraph SERVE["What users see"]
+    direction TB
+    api["REST API<br/>FastAPI, 16 endpoints"]:::done
+    dash["Dashboard<br/>Streamlit"]:::people
+    bot["Chatbot agent<br/>6 tools and checks"]:::done
+    llm["Model backends<br/>Ollama; Groq verified"]:::done
+  end
+
+  subgraph BUILD["Building the models · a loop"]
+    direction LR
+    labels["Labelled data<br/>1,657 rows"]:::people
+    train["Fine-tune,<br/>adaptive pretraining"]:::built
+    evalm["Evaluate<br/>test once, CV"]:::people
+  end
+
+  inv(["Retail investor"]):::actor
+  team(["Project team"]):::actor
+  report["Report, video,<br/>submission"]:::todo
+
+  reddit & news & cna & ir --> ingest
+  sgx -.-> ingest
+  ingest --> clean --> aspect --> score --> agg --> db
+  clean -. "if adopted" .- ner
+  aspect -. "if adopted" .- llmasp
+  aspect -- "embeds every sentence" --> emb
+  yfin -- "ratings skip the pipeline" --> db
+  db -. "by hand" .-> snap
+
+  db --> api
+  db -- "reads directly, not via the API" --> dash
+  inv --> dash
+  dash -- "asks" --> bot
+  api -- "POST /chat" --> bot
+  bot -- "tools read scores" --> db
+  bot -- "evidence search" --> emb
+  bot <-- "prompts, tool calls" --> llm
+
+  db -- "samples to label" --> labels
+  team --> labels
+  labels --> train --> evalm
+  evalm -- "error analysis, guideline" --> labels
+  train -. "chosen model: one re-score" .-> score
+  evalm --> report
+
+  style SRC fill:#f6f8f7,stroke:#c9d1cd
+  style PIPE fill:#f6f8f7,stroke:#c9d1cd
+  style SERVE fill:#f6f8f7,stroke:#c9d1cd
+  style BUILD fill:#f6f8f7,stroke:#c9d1cd

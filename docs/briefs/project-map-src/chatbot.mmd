@@ -1,0 +1,32 @@
+flowchart TB
+  classDef done fill:#e3f2e9,stroke:#1e7a4c,stroke-width:2px,color:#17201d
+  classDef built fill:#e4ecf8,stroke:#2c5b9c,stroke-width:2px,color:#17201d
+  classDef decide fill:#f8edd6,stroke:#93600c,stroke-width:2px,color:#17201d
+  classDef people fill:#efe7f8,stroke:#6b3fa0,stroke-width:2px,color:#17201d
+  classDef todo fill:#f7e3e0,stroke:#8a3a33,stroke-width:2px,color:#17201d
+  classDef actor fill:#ffffff,stroke:#59655f,stroke-width:1px,color:#17201d
+  classDef store fill:#ffffff,stroke:#17201d,stroke-width:2px,color:#17201d
+  q(["Question"]):::actor
+  state[("Conversation state<br/>bank, aspect, window,<br/>last three turns")]:::store
+  cls{"Intent check<br/>local model"}:::done
+  fixed["Fixed reply<br/>advice, other bank, small talk,<br/>injection, off-topic"]:::done
+  llm["Model writes text<br/>or asks for tools"]:::done
+  tools["Run the tools<br/>scores, trend, compare,<br/>evidence search, consensus"]:::done
+  cap{"8 calls<br/>used?"}:::done
+  checks["Checks on the answer<br/>empty? evidence no search returned?<br/>figure no tool returned?"]:::done
+  strip["Strip mode<br/>keep returned quotes,<br/>remove unverified ones"]:::done
+  refs["Number the citations,<br/>list the sources"]:::done
+  out(["Answer"]):::actor
+  steps["Progress steps shown<br/>while it works"]:::built
+
+  q --> cls
+  cls -- "out of scope" --> fixed --> out
+  cls -- "in scope" --> llm
+  state --> llm
+  llm -- "tool calls" --> tools --> cap
+  cap -- "no: loop" --> llm
+  cap -- "yes: stop" --> checks
+  llm -- "final text" --> checks --> strip --> refs --> out
+  out -- "remembered for the next question" --> state
+  tools -.-> steps
+  llm -.-> steps

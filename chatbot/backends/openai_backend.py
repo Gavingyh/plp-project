@@ -41,7 +41,7 @@ from chatbot.backends.base import (BackendUnavailable, DEFAULT_TEMPERATURE, Hist
 
 logger = get_logger(__name__)
 
-from chatbot import settings
+from chatbot import ratelimit, settings
 
 DEFAULT_MODEL = settings.get("models.openai")
 MAX_TOOL_ITERATIONS = settings.get("max_tool_iterations")
@@ -67,19 +67,26 @@ class OpenAIBackend(LLMBackend):
         self.base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
 
     def _chat(self, messages: list[dict], tools: list[dict]) -> dict:
+        payload = {"model": self.model, "messages": messages, "tools": tools, "temperature": self.temperature}
+        # Free tiers limit requests and tokens: every attempt, retries included, goes through the pacer.
+        pacer = ratelimit.get_pacer(ratelimit.provider_for("openai", self.base_url))
         for attempt in range(len(_RETRY_WAITS) + 1):
+            if pacer:
+                pacer.before_request(ratelimit.estimate_tokens(payload))
             try:
                 resp = requests.post(
                     f"{self.base_url}/chat/completions",
                     headers={"Authorization": f"Bearer {self._api_key}",
                              "Content-Type": "application/json"},
-                    json={"model": self.model, "messages": messages, "tools": tools,
-                          "temperature": self.temperature},
+                    json=payload,
                     timeout=_REQUEST_TIMEOUT,
                 )
             except requests.exceptions.ConnectionError as e:
                 raise BackendUnavailable(f"Could not reach {self.base_url}: {e}") from e
-            if resp.status_code not in (429, 503) or attempt == len(_RETRY_WAITS):
+            final = resp.status_code not in (429, 503) or attempt == len(_RETRY_WAITS)
+            if pacer:
+                pacer.after_response(resp.status_code, getattr(resp, "headers", None), final=final)
+            if final:
                 break
             wait = _retry_wait(resp, _RETRY_WAITS[attempt])
             logger.warning("%s returned %s; retrying in %ss", self.model, resp.status_code, wait)
@@ -94,7 +101,7 @@ class OpenAIBackend(LLMBackend):
     def ask(self, question: str, system: str, tool_schemas: list[dict],
             tool_executor: ToolExecutor, verbose: bool = True,
             history: History | None = None) -> str:
-        openai_tools = to_openai_function_tools(tool_schemas)
+        openai_tools = to_openai_function_tools(tool_schemas, nullable_optional=True)
         messages = ([{"role": "system", "content": system}] + history_for_hosted(history)
                     + [{"role": "user", "content": question}])
 

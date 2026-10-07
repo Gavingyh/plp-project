@@ -1,0 +1,14 @@
+{
+ "gemini": {
+  "state": "skipped",
+  "note": "the provider rejected the key (HTTP 401); create a new one (aistudio.google.com/apikey) and update .env"
+ },
+ "ollama": {
+  "state": "done",
+  "note": ""
+ },
+ "groq": {
+  "state": "done",
+  "note": ""
+ }
+}

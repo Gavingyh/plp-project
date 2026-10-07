@@ -31,6 +31,25 @@ retry_waits_seconds:                     # before each retry on 429 / 503
   openai: {value: [5, 15, 30, 60]}       # unless Retry-After says otherwise
 max_retry_after_seconds: {value: 60}
 
+# Requests the chatbot may send to a hosted provider (chatbot/ratelimit.py).
+# Set BELOW what the free tiers publish (awesome-free-llm-apis, read 6 Oct 2026:
+# Groq 30 requests a minute and 1,000 a day; Gemini 15 a minute and up to 1,500 a
+# day depending on the model), because a run that hits a limit loses more than
+# it saves and some tiers also limit tokens. The daily figure is a rolling 24 hours.
+# tpm is a tokens-per-minute cap, used where a provider has one. Groq's free tier
+# has one; its exact figure was not checked, so 6,000 is a cautious guess: the
+# pacer also believes Groq's own remaining-token headers over this number.
+# Raise a figure only after reading your key's limits in the provider's console.
+rate_limits:
+  groq:
+    rpm: {value: 20,   env: GROQ_RPM}
+    rpd: {value: 700,  env: GROQ_RPD}
+    tpm: {value: 6000, env: GROQ_TPM}
+  gemini:
+    rpm: {value: 8,    env: GEMINI_RPM}
+    rpd: {value: 200,  env: GEMINI_RPD}
+    tpm: {value: null, env: GEMINI_TPM}
+
 # Conversation and evidence.
 history:
   turns:        {value: 3}               # earlier question/answer pairs passed to the model

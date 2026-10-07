@@ -676,6 +676,8 @@ def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
     properties = schema.get("properties", {})
     coerced = {}
     for key, value in arguments.items():
+        if value is None:
+            continue        # a null for an optional argument means "not given"; the tool's default applies
         prop_type = properties.get(key, {}).get("type")
         if prop_type == "integer" and isinstance(value, str):
             try:

@@ -1224,3 +1224,87 @@ Ollama not installed on the Windows PC. Tests: `tests/test_chatbot_ratelimit.py`
 acceptable (speed options: share the cached prompt between the intent
 classifier and the chatbot, skip the classifier for plain questions, stream
 the answer).
+
+### 7 October
+
+Overnight, 6 to 7 Oct, at the owner's request: domain-adaptive pretraining
+(`train/dapt.py`; `train/finetune.py --base-model`). FinBERT's masked-word
+training continued on 43,036 corpus sentences, labelled sentences left out
+by id and exact text only (a 7 Oct validation found 151 of them related to
+test sentences; see below); then the 4 Oct fine-tuning configuration. On
+5-fold cross-validation, seeds 42, 1 and 7, paired on identical folds: dev
+macro-F1 0.663 from FinBERT, 0.701 adapted, better in 13 of 15 folds. Scored
+once on the test split: 0.628 ± 0.022 over the seeds against 0.621 ± 0.027,
+and 0.662 for the three averaged against 0.634
+(`docs/evidence/dapt-2026-10-06.md`). Slang was checked first and is rare (27
+of 1,280 labelled train/dev rows, an upper bound; `scripts/slang_share.py`),
+so no slang dictionary was built. Docker
+Desktop was stopped on 6 Oct to free memory for the run.
+
+Broker research, reviewed 7 Oct: the 5 to 6 Oct work on the team's Windows
+PC (merged in f2544fd) holds more than the source. The 280 train/dev rows are
+human-labelled (annotator "A", who kept the LLM's suggested sentiment on
+263 of 280 (94%) and its aspect on 266; the first round's training rows
+kept it on 904 of 978, 92%). `was_corrected` compared with the pipeline's aspect, not the LLM's
+suggestion; fixed on 7 Oct in `train.source_round merge` and in the
+committed label files (that column only): 29 of 280 rows changed the
+suggestion. `merge` now refuses labelled rows without an annotator. The 100 blind test rows are filled in and agree with the LLM's own
+test labels far less (sentiment 77 of 100, aspect 65; the LLM flagged 4 rows
+as not about the bank, the sheet none), so they were not copied; no code
+path writes LLM labels into that sheet. Their `annotator` column is blank. A retrain with the 280 rows added was scored on the original 299,
+the 100 and both (`docs/evidence/sgx-research-evaluation-2026-10-06.md`).
+Only that PC's database holds the source's rows with the ids the labels
+use: rebuilt on the Mac from the PDFs, 52 of the 380 labelled sentences came
+out with different text (a stray bullet, a sidebar line) and so different
+ids. `scripts/source_rows.py` copies one source's rows between databases;
+the rebuild is kept apart in `data/run/sgx/` (gitignored) for pretraining
+text only.
+
+With the broker research labels: fine-tuned on all 1,258 train/dev rows on
+the Mac, the adapted models led those from FinBERT on every test scope (three
+averaged: 0.652 against 0.597 on the original 299, 0.751 against 0.698 on the
+100 broker research rows, 0.690 against 0.649 on all 399;
+`docs/evidence/dapt-2026-10-06.md`). The same training from FinBERT scored
+about 0.03 higher on the Windows PC on 6 Oct, so models are compared on one
+machine only. One run of three seeds: the gains are about one seed sd, so
+they agree with the cross-validation rather than prove it again.
+
+Validation, 7 Oct (`docs/validation/2026-10-07-pretraining-and-chatbot-steps.md`,
+fix first): the pretraining filter let test text through (a test sentence
+split in two by the rebuild, sentences holding or held in test sentences,
+near-copies hidden by skipping common words, and broker test rows when only
+one labels file was given). Fixed the same day: `train.dapt.NearCopies`
+leaves out any sentence holding or held in a labelled one (letters only,
+from 30 letters) or sharing 60% of all its words with one, and by default
+every labelling sheet under `data/labeled/`. Both adapted models (6 and
+7 Oct) were pretrained before the fix and must be pretrained again before
+their figures can support the Fine-tuning lead claim; the 7 Oct run was
+paused at the owner's request, to clear upstream items first. Also fixed:
+`scripts/source_rows.py` refuses a source the target already holds;
+fine-tuned models record their base model and a base without a sentiment
+head is refused; the chatbot's step descriptions can no longer fail a turn;
+README's checksum for `plp-2026-09-26-v2.db.gz`, corrupted by blanket
+test-count replacements in b9aaa0f and d119675, is restored (all five
+snapshots now match).
+
+Later on 7 Oct, at the owner's request: the dapt-v2 run is paused until the
+upstream items are cleared (no more retraining or evaluation before then);
+chatbot speed work is on hold until performance is an issue (measurements in
+`data/run/speed/`: writing 13 to 23 s, reading tool results 5 to 15 s,
+re-reading instructions 12 to 15 s; a larger window was slower). Drafted for
+the team (a6c7a07): the product-feature options, proposed local-context
+answers, a glossary of 79 local terms and a blind active-learning sheet of
+150 rows. The team to-do is consolidated and renamed
+`docs/briefs/team-todo-2026-10-07.html` (same published link), ordered by
+what blocks what, with decided items in one list.
+
+**Needs a human (7 Oct):** record who labelled the 100 broker research test
+rows (the `annotator` column), an agreement figure for that round (one
+annotator so far); both are on the team to-do. The 25 broker reports'
+full text stays in git: the repository is private to the team (decided
+7 Oct; remove them, with their history, before any public release).
+The team's scoring-model decision now has three
+candidates (the 1 Oct models, the 4 Oct retrain, the adapted models), for the
+re-score week of 12 to 18 Oct; if the adapted models are adopted, the
+Fine-tuning lead claim in `CLAUDE.md` should give their figures.
+

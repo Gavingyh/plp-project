@@ -935,7 +935,7 @@ the checks prove, citing this list: in strip mode, every passage of three or
 more words shown in quote marks is text a search returned (or the tools' own
 wording, such as a reading or a topic name), a citation stays only where its
 sentence's quoted words were returned, and every figure is checked as above.
-The team to-do records the decision (`docs/briefs/team-todo-2026-10-02.html`).
+The team to-do records the decision (`docs/briefs/team-todo-2026-10-07.html`).
 
 ## The seven questions again, after
 

@@ -798,9 +798,15 @@ class _ToolCallTracker:
         if by != "model":
             call["by"] = by
         self._record(call)
-        progress.notify(self.on_step, progress.describe_call(name, tool_input, result))
-        if by == "model":
-            progress.notify(self.on_step, progress.Step("think", "Reading the results and writing the answer", done=False))
+        if self.on_step is not None:
+            try:
+                step = progress.describe_call(name, tool_input, result)
+            except Exception:       # a result in an unexpected shape: say what ran, never fail the turn
+                step = progress.Step("tool", f"Used {name.replace('_', ' ')}")
+            progress.notify(self.on_step, step)
+            if by == "model":
+                progress.notify(self.on_step, progress.Step("think", "Reading the results and writing the answer",
+                                                            done=False))
         return json.dumps(_for_model(result), default=str)
 
     def _record(self, call: dict) -> None:

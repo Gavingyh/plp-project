@@ -176,7 +176,7 @@ disagrees), [a blind top-up labelling sheet](evidence/labelling-topup-2026-10-01
 [cross-validation on two more seeds](evidence/noise-floor-cv-2026-10-02.md)
 (the readable label is no better than the key), a second
 [examiner's assessment](review/examiner-assessment-2026-10-02.md) and the
-[team to-do list with reasons](briefs/team-todo-2026-10-02.html).
+[team to-do list with reasons](briefs/team-todo-2026-10-07.html).
 2 Oct: [the chatbot fixes, live](evidence/chatbot-eval-build-2026-10-01.md#second-round-2-oct-the-fixes-live)
 (conversations 9/9; strip enforcement ends invented citations; the checklist
 judge catches them), Opus as an extra rater on the top-up and NER sheets,

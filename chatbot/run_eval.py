@@ -31,10 +31,13 @@ USAGE:
 import argparse
 import json
 import os
+import sys
+import time
 from datetime import datetime, timezone
 
-from chatbot import settings
+from chatbot import ratelimit, settings
 from chatbot.agent import Conversation, answer_turn
+from chatbot.ratelimit import DailyBudgetExhausted
 from chatbot.eval_gold_set import (GOLD_SET, GOLD_SET_V2, MULTI_TURN, looks_like_advice_decline,
                                    looks_like_no_data_response,
                                SCOPE_SET, MULTI_TURN_SCOPE, looks_like_declining_unrelated_part)
@@ -121,8 +124,32 @@ def _check_guard(item: dict, guard: str | None) -> dict:
             "reason": None if ok else f"guard {guard!r}, expected {item['expected_guard']!r}"}
 
 
+def _load_done(results_path: str) -> dict[str, dict]:
+    """Results already written by an earlier, stopped run: those that were not a failure."""
+    done = {}
+    if os.path.exists(results_path):
+        with open(results_path, encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    r = json.loads(line)
+                    if not r.get("error"):
+                        done[r["id"]] = r
+    return done
+
+
+def _write_results(results_path: str, results: list[dict]) -> None:
+    """Rewritten after every question, so a stop or a crash loses nothing already answered."""
+    with open(results_path, "w", encoding="utf-8") as f:
+        for r in results:
+            f.write(json.dumps(r, default=str) + "\n")
+
+
 def run(backend_name: str | None = None, limit: int | None = None,
-        tag: str | None = None, gold: str = "v1") -> dict:
+        tag: str | None = None, gold: str = "v1", resume: bool = False) -> dict:
+    """Run a gold set against a backend. Each answer is saved as it arrives. With `resume`, questions
+    already answered in this tag's results file are kept and not asked again. If a hosted provider's
+    budget runs out (chatbot/ratelimit.py) the run stops there, saves what it has, and says so in
+    the summary; rerun with resume once the budget is back."""
     gold_set = {"v1": GOLD_SET, "v2": GOLD_SET_V2, "scope": SCOPE_SET}[gold]
     items = gold_set[:limit] if limit else gold_set
     results_path, summary_path = _output_paths(tag)
@@ -130,13 +157,24 @@ def run(backend_name: str | None = None, limit: int | None = None,
     model_desc = _describe_model(backend_name)
     logger.info("evaluating with %s", model_desc)
 
-    results = []
+    done = _load_done(results_path) if resume else {}
+    if done:
+        logger.info("resuming: %d of %d questions already answered", len(done), len(items))
+    results, stopped = [], None
     for item in items:
+        if item["id"] in done:
+            results.append(done[item["id"]])
+            continue
         logger.info("[%s] %s", item["id"], item["question"])
+        started, requests_before = time.monotonic(), ratelimit.session_requests()
         try:
             turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)
             answer, calls, error = turn.answer, turn.calls, None
             guard, numbers, enforced = turn.guard, turn.unverified_numbers, turn.evidence_enforced
+        except DailyBudgetExhausted as e:
+            stopped = str(e)
+            logger.warning("[%s] stopping: %s", item["id"], e)
+            break
         except Exception as e:
             answer, calls, error, guard, numbers, enforced = "", [], str(e), None, [], None
             logger.warning("[%s] FAILED: %s", item["id"], e)
@@ -163,26 +201,28 @@ def run(backend_name: str | None = None, limit: int | None = None,
             "tool_selection_check": tool_check,
             "behavior_check": behavior_check,
             "guard_check": guard_check,
+            # What a run cost: wall-clock seconds, and requests sent to a hosted provider (0 for a local model).
+            "seconds": round(time.monotonic() - started, 1),
+            "model_requests": ratelimit.session_requests() - requests_before,
         })
+        _write_results(results_path, results)
 
-    with open(results_path, "w") as f:
-        for r in results:
-            f.write(json.dumps(r, default=str) + "\n")
-
-    summary = _summarize(results, model_desc)
-    with open(summary_path, "w") as f:
+    _write_results(results_path, results)
+    summary = _summarize(results, model_desc, stopped=stopped, planned=len(items))
+    with open(summary_path, "w", encoding="utf-8") as f:
         f.write(summary)
     logger.info("results: %s", results_path)
     logger.info("summary: %s", summary_path)
 
     n_fab = sum(1 for r in results if r["citation_fabricated"])
-    return {"n": len(results), "model": model_desc,
+    return {"n": len(results), "planned": len(items), "stopped": stopped, "model": model_desc,
             "results_path": results_path, "summary_path": summary_path,
             "n_fabricated": n_fab,
             "fabrication_rate": round(n_fab / len(results), 3) if results else 0.0}
 
 
-def _summarize(results: list[dict], model_desc: str | None) -> str:
+def _summarize(results: list[dict], model_desc: str | None, stopped: str | None = None,
+               planned: int | None = None) -> str:
     n = len(results)
     n_errors = sum(1 for r in results if r["error"])
     n_fabricated = sum(1 for r in results if r["citation_fabricated"])
@@ -202,8 +242,9 @@ def _summarize(results: list[dict], model_desc: str | None) -> str:
         f"Model: `{model_desc or 'the configured default'}`  ",
         f"Intent classifier: `{settings.get('models.intent')}`  ",
         f"Run at: {datetime.now(timezone.utc).isoformat()}  ",
-        f"Questions: {n}  ",
+        f"Questions: {n}" + (f" of {planned}" if planned and planned != n else "") + "  ",
         f"Errors (backend/network failures): {n_errors}",
+        *([f"", f"**Stopped early:** {stopped}"] if stopped else []),
         f"",
         f"## Automated checks",
         f"",
@@ -264,45 +305,87 @@ def check_turn(spec: dict, turn) -> dict:
             "correct": all(c["correct"] for c in checked) if checked else None}
 
 
+def _multi_turn_paths(tag: str | None) -> tuple[str, str]:
+    suffix = f"_{tag}" if tag else ""
+    return (os.path.join(EVAL_DIR, f"chatbot_multiturn_results{suffix}.jsonl"),
+            os.path.join(EVAL_DIR, f"chatbot_multiturn_summary{suffix}.md"))
+
+
 def run_multi_turn(backend_name: str | None = None, tag: str | None = None,
-                   scenarios: list[dict] = MULTI_TURN, conversation=Conversation) -> dict:
-    """Each scenario in one Conversation, so later turns rely on memory."""
-    results = []
+                   scenarios: list[dict] = MULTI_TURN, conversation=Conversation,
+                   resume: bool = False) -> dict:
+    """Each scenario in one Conversation, so later turns rely on memory. A scenario is the unit
+    that is kept or redone: with `resume`, scenarios whose every turn was answered without error
+    are kept; if the provider's budget runs out the scenario in progress is dropped and the run
+    stops (see `run`)."""
+    results_path, summary_path = _multi_turn_paths(tag)
+    os.makedirs(EVAL_DIR, exist_ok=True)
+    prior: dict[str, list[dict]] = {}
+    if resume and os.path.exists(results_path):
+        with open(results_path, encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    r = json.loads(line)
+                    prior.setdefault(r["scenario"], []).append(r)
+    results, stopped = [], None
     for sc in scenarios:
+        old = prior.get(sc["id"], [])
+        if len(old) == len(sc["turns"]) and not any(r.get("error") for r in old):
+            results.extend(old)
+            continue
         conv = conversation(backend_name=backend_name)
-        for i, spec in enumerate(sc["turns"], 1):
-            try:
-                turn = conv.ask(spec["question"])
-                check, error = check_turn(spec, turn), None
-                answer, calls = turn.answer, turn.calls
-            except Exception as e:
-                check, error, answer, calls = {"correct": False}, str(e), "", []
-            results.append({"scenario": sc["id"], "turn": i, "question": spec["question"], "answer": answer,
-                            "error": error, "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
-                                                             **({"by": c["by"]} if c.get("by") else {})}
-                                                            for c in calls],
-                            **check})
+        scenario_results = []
+        try:
+            for i, spec in enumerate(sc["turns"], 1):
+                started, before = time.monotonic(), ratelimit.session_requests()
+                try:
+                    turn = conv.ask(spec["question"])
+                    check, error = check_turn(spec, turn), None
+                    answer, calls = turn.answer, turn.calls
+                except DailyBudgetExhausted:
+                    raise
+                except Exception as e:
+                    check, error, answer, calls = {"correct": False}, str(e), "", []
+                scenario_results.append({
+                    "scenario": sc["id"], "turn": i, "question": spec["question"], "answer": answer,
+                    "error": error, "tool_calls": [{"name": c["name"], "arguments": c["arguments"],
+                                                    **({"by": c["by"]} if c.get("by") else {})}
+                                                   for c in calls],
+                    "seconds": round(time.monotonic() - started, 1),
+                    "model_requests": ratelimit.session_requests() - before, **check})
+        except DailyBudgetExhausted as e:
+            stopped = str(e)
+            logger.warning("[%s] stopping: %s", sc["id"], e)
+            break
+        results.extend(scenario_results)
+        with open(results_path, "w", encoding="utf-8") as f:
+            for r in results:
+                f.write(json.dumps(r, default=str) + "\n")
     turns_ok = sum(1 for r in results if r["correct"])
     by_scenario = {}
     for r in results:
         by_scenario.setdefault(r["scenario"], []).append(bool(r["correct"]))
     scen_ok = sum(1 for v in by_scenario.values() if all(v))
+    planned_scen = len(scenarios)
     lines = [f"# Multi-turn evaluation", "", f"Model: `{_describe_model(backend_name)}`  ",
              f"Turns correct: {turns_ok}/{len(results)}; conversations with every turn correct: "
-             f"{scen_ok}/{len(by_scenario)}", "", "| scenario | turn | question | correct | reason |", "|---|---|---|---|---|"]
+             f"{scen_ok}/{len(by_scenario)}" + (f" (of {planned_scen} planned)" if planned_scen != len(by_scenario) else ""),
+             *([f"", f"**Stopped early:** {stopped}"] if stopped else []),
+             "", "| scenario | turn | question | correct | reason |", "|---|---|---|---|---|"]
     for r in results:
         reason = (r.get("error") or (r.get("tool_selection_check") or {}).get("reason")
                   or (r.get("behavior_check") or {}).get("reason") or (r.get("guard_check") or {}).get("reason") or "")
         lines.append(f"| {r['scenario']} | {r['turn']} | {r['question']} | {r['correct']} | {reason} |")
-    os.makedirs(EVAL_DIR, exist_ok=True)
-    suffix = f"_{tag}" if tag else ""
-    with open(os.path.join(EVAL_DIR, f"chatbot_multiturn_results{suffix}.jsonl"), "w") as f:
+    with open(results_path, "w", encoding="utf-8") as f:
         for r in results:
             f.write(json.dumps(r, default=str) + "\n")
-    with open(os.path.join(EVAL_DIR, f"chatbot_multiturn_summary{suffix}.md"), "w") as f:
+    with open(summary_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
-    return {"turns": len(results), "turns_correct": turns_ok,
-            "scenarios": len(by_scenario), "scenarios_correct": scen_ok}
+    outcome = {"turns": len(results), "turns_correct": turns_ok, "scenarios": len(by_scenario),
+               "scenarios_correct": scen_ok}
+    if stopped:       # the shape callers and tests already rely on changes only when a run stopped early
+        outcome.update({"planned_scenarios": planned_scen, "stopped": stopped})
+    return outcome
 
 
 if __name__ == "__main__":
@@ -315,12 +398,18 @@ if __name__ == "__main__":
                              "(small talk, off-topic, service and controls, 4 Oct; with --multi-turn, "
                              "its conversations)")
     parser.add_argument("--multi-turn", action="store_true", help="run the multi-turn conversations instead")
+    parser.add_argument("--resume", action="store_true",
+                        help="keep the answers already saved for this tag and ask only the rest "
+                             "(after a stop for a provider's rate limit)")
     parser.add_argument("--tag", default=None,
                         help="suffix for the output files, so one run doesn't "
                              "overwrite another (e.g. the model name)")
     args = parser.parse_args()
     if args.multi_turn:
-        print(run_multi_turn(backend_name=args.backend, tag=args.tag,
-                             scenarios=MULTI_TURN_SCOPE if args.gold == "scope" else MULTI_TURN))
+        outcome = run_multi_turn(backend_name=args.backend, tag=args.tag, resume=args.resume,
+                                 scenarios=MULTI_TURN_SCOPE if args.gold == "scope" else MULTI_TURN)
     else:
-        print(run(backend_name=args.backend, limit=args.limit, tag=args.tag, gold=args.gold))
+        outcome = run(backend_name=args.backend, limit=args.limit, tag=args.tag, gold=args.gold,
+                      resume=args.resume)
+    print(outcome)
+    sys.exit(3 if outcome.get("stopped") else 0)      # 3: stopped for a rate limit; rerun with --resume

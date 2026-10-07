@@ -28,6 +28,14 @@ def no_real_chatbot_backend(monkeypatch):
     monkeypatch.setattr("chatbot.agent.get_backend", refuse)
 
 
+@pytest.fixture(autouse=True)
+def no_rate_limit_pacing(monkeypatch):
+    """The hosted backends pace their requests and count them in data/ratelimit_state.json
+    (chatbot/ratelimit.py). A test with a mocked HTTP call must neither sleep nor add to the
+    real budget, so pacing is off unless a test builds a Pacer itself."""
+    monkeypatch.setattr("chatbot.ratelimit.get_pacer", lambda provider: None)
+
+
 @pytest.fixture
 def temp_db(tmp_path, monkeypatch):
     import ingest.db as db_module

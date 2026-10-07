@@ -1207,6 +1207,19 @@ about 30 s and the writing about 25 s. Showing the steps on the Ask page is a
 dashboard change for its owner (team to-do, with the code). Tests:
 `tests/test_chatbot_progress.py`.
 
+**Provider comparison, rate limits (6 Oct, branch `chatbot-provider-eval`, not merged):**
+`chatbot/provider_eval.py` runs the evaluation through Ollama, Groq and Gemini and
+`chatbot/provider_report.py` writes the report from the saved results; neither
+sends a request without `chatbot/ratelimit.py` pacing it (budgets in
+`config/chatbot.yaml`, rolling 24-hour count in `data/ratelimit_state.json`, a stop
+after three final 429s, `--resume`). Nothing has been run end to end: a live check found
+Groq working (one question took 2 requests) once optional tool arguments were allowed to be
+null, which Groq's strict validation had refused (fix in `chatbot/backends/_openai_compat.py`
+and `coerce_tool_arguments`), Gemini rejecting the key in `.env` with a 401 (it is 53
+characters and does not start with `AIza`, so it is probably not an AI Studio key), and
+Ollama not installed on the Windows PC. Tests: `tests/test_chatbot_ratelimit.py`,
+`tests/test_chatbot_provider_eval.py`.
+
 **Needs a human (6 Oct):** whether answers of about 47 seconds are
 acceptable (speed options: share the cached prompt between the intent
 classifier and the chatbot, skip the classifier for plain questions, stream

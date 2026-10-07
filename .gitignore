@@ -40,3 +40,5 @@ CLAUDE.local.md
 .claude/settings.local.json
 .claude/worktrees/
 /VALIDATION.md
+# requests sent to hosted chatbot providers in the last 24 hours (chatbot/ratelimit.py)
+data/ratelimit_state.json

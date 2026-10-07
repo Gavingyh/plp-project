@@ -514,6 +514,32 @@ done
 The number check flags figures no tool returned; it doesn't prove the
 unflagged ones are used correctly. Read the transcript for that.
 
+### Comparing Ollama, Groq and Gemini without hitting a rate limit
+
+Free tiers limit requests per minute, requests per day and (Groq) tokens per
+minute. `chatbot/ratelimit.py` keeps every hosted request under a budget set in
+`rate_limits` in `config/chatbot.yaml` (below the providers' published limits),
+counts requests over a rolling 24 hours in `data/ratelimit_state.json`, waits
+for a provider's `Retry-After`, believes Groq's own remaining-quota headers, and
+stops the run if a provider still returns 429 three times in a row. A stopped run
+keeps its answers; `--resume` asks only what is left.
+
+```bash
+.venv-plp/bin/python3 -m chatbot.provider_eval --dry-run   # what is ready and the request budget; sends nothing
+.venv-plp/bin/python3 -m chatbot.provider_eval             # every ready arm, Ollama first
+.venv-plp/bin/python3 -m chatbot.provider_eval --resume    # after a stop
+.venv-plp/bin/python3 -m chatbot.provider_report           # rebuild docs/evidence/chatbot-provider-eval-<date>.md
+```
+
+Keys come from `.env` and are never printed: Groq's from `GROQ_API_KEY`, or from
+`OPENAI_API_KEY` when `OPENAI_BASE_URL` points at Groq; Gemini's from
+`GEMINI_API_KEY` (a key from aistudio.google.com/apikey, which starts with
+`AIza`). The local Ollama arm needs Ollama running with `llama3.1:8b` pulled,
+which the intent classifier uses in every arm; without it the hosted arms still
+run but no intent is found, so the input-guard checks are not comparable.
+The hosted models never receive Reddit, CNA or broker-research text, so they
+see less evidence than the local one.
+
 ---
 
 ## Logging and debugging
@@ -543,7 +569,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2398 tests in `tests/`; `pytest -q` from the repository root runs 2445,
+2436 tests in `tests/`; `pytest -q` from the repository root runs 2483,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for

@@ -41,7 +41,7 @@ from chatbot.backends.base import (EARLIER_ANSWER, WITHHELD, WITHHELD_TEAM_ONLY,
 
 logger = get_logger(__name__)
 
-from chatbot import settings
+from chatbot import ratelimit, settings
 
 DEFAULT_MODEL = settings.get("models.gemini")
 MAX_TOOL_ITERATIONS = settings.get("max_tool_iterations")
@@ -104,7 +104,12 @@ class GeminiBackend(LLMBackend):
         }
         # 503 ("high demand") and 429 (rate limit) are routine on the free tier
         # and usually clear within seconds; a single one shouldn't lose the answer.
+        # The free tier limits requests per minute and per day: every attempt, retries
+        # included, goes through the pacer (chatbot/ratelimit.py).
+        pacer = ratelimit.get_pacer("gemini")
         for attempt in range(len(_RETRY_WAITS) + 1):
+            if pacer:
+                pacer.before_request(ratelimit.estimate_tokens(payload))
             try:
                 # The key goes in a header, not the URL: requests puts the URL in
                 # its error messages, and errors are logged to data/logs/plp.log.
@@ -112,7 +117,10 @@ class GeminiBackend(LLMBackend):
                                      json=payload, timeout=_REQUEST_TIMEOUT)
             except requests.exceptions.ConnectionError as e:
                 raise BackendUnavailable(f"Could not reach the Gemini API: {e}") from e
-            if resp.status_code not in (429, 503) or attempt == len(_RETRY_WAITS):
+            final = resp.status_code not in (429, 503) or attempt == len(_RETRY_WAITS)
+            if pacer:
+                pacer.after_response(resp.status_code, getattr(resp, "headers", None), final=final)
+            if final:
                 break
             logger.warning("Gemini %s returned %s; retrying in %ss", self.model,
                            resp.status_code, _RETRY_WAITS[attempt])

@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PLP Project Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a left-to-right data-flow board (sources -> processing -> scoring -> store -> serving),
+   then a second lane for building the models and the deliverables; each component is a tinted
+   card whose colour is its status, with its open to-do items inside. Stacks to one column on phones. */
+:root {
+  --ground: #f4f6f5;
+  --surface: #ffffff;
+  --ink: #17201d;
+  --muted: #59655f;
+  --rule: #d6dcd9;
+  --accent: #1d6b61;
+  --done: #1e7a4c;      --done-bg: #e3f2e9;
+  --built: #2c5b9c;     --built-bg: #e4ecf8;
+  --decide: #93600c;    --decide-bg: #f8edd6;
+  --people: #6b3fa0;    --people-bg: #efe7f8;
+  --todo: #8a3a33;      --todo-bg: #f7e3e0;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #111614; --surface: #181f1c; --ink: #e3eae6; --muted: #9ba8a2; --rule: #2c3532; --accent: #63c3b4;
+    --done: #6fd39b;   --done-bg: #17291f;
+    --built: #8db4ee;  --built-bg: #18243a;
+    --decide: #e7b65c; --decide-bg: #33291a;
+    --people: #c2a3ec; --people-bg: #281d36;
+    --todo: #f09088;   --todo-bg: #36201e;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #111614; --surface: #181f1c; --ink: #e3eae6; --muted: #9ba8a2; --rule: #2c3532; --accent: #63c3b4;
+  --done: #6fd39b;   --done-bg: #17291f;
+  --built: #8db4ee;  --built-bg: #18243a;
+  --decide: #e7b65c; --decide-bg: #33291a;
+  --people: #c2a3ec; --people-bg: #281d36;
+  --todo: #f09088;   --todo-bg: #36201e;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 400 14.5px/1.5 var(--body); padding-inline: 16px; padding-block: 0 56px; }
+.wrap { max-width: 1320px; margin: 0 auto; }
+header { padding-block: 32px 18px; display: grid; gap: 10px; border-bottom: 1px solid var(--rule); }
+.eyebrow { font: 500 12px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 16px; }
+h1 { font: 600 clamp(28px, 4.5vw, 38px)/1.1 var(--display); margin: 0; text-wrap: balance; }
+.lede { margin: 0; max-width: 72ch; font-size: 16px; }
+h2 { font: 600 20px/1.2 var(--display); margin: 0 0 4px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 14px; max-width: 76ch; }
+code { font: 400 .86em/1.4 var(--mono); background: color-mix(in srgb, var(--ink) 7%, transparent); padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+
+/* legend and tally */
+.key { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-block: 16px 6px; align-items: center; }
+.key span { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; }
+.sw.done { background: var(--done-bg); border-color: var(--done); }
+.sw.built { background: var(--built-bg); border-color: var(--built); }
+.sw.decide { background: var(--decide-bg); border-color: var(--decide); }
+.sw.people { background: var(--people-bg); border-color: var(--people); }
+.sw.todo { background: var(--todo-bg); border-color: var(--todo); }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin-block: 14px 8px; }
+.tally div { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; }
+.tally b { font: 600 26px/1 var(--display); font-variant-numeric: tabular-nums; }
+.tally .done b { color: var(--done); } .tally .built b { color: var(--built); } .tally .decide b { color: var(--decide); }
+.tally .people b { color: var(--people); } .tally .todo b { color: var(--todo); }
+.tally span { color: var(--muted); font-size: 13px; }
+.blocker { background: var(--decide-bg); border: 1px solid var(--decide); border-radius: 6px; padding: 10px 14px; margin-block: 12px 0; max-width: 100%; }
+.blocker p { margin: 0; }
+
+/* the flow board */
+section.lane { padding-block: 26px 4px; }
+.board { overflow-x: auto; padding-bottom: 6px; }
+.flow { display: grid; grid-template-columns: repeat(var(--cols), minmax(210px, 1fr)); gap: 0 26px; min-width: calc(var(--cols) * 226px); }
+.col { display: grid; gap: 12px; align-content: start; position: relative; min-width: 0; }
+.col h3 { font: 500 11.5px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.col:not(:last-child)::after { content: "\2192"; position: absolute; right: -21px; top: 46px; font: 600 18px/1 var(--body); color: var(--accent); }
+.card { border: 1.5px solid; border-radius: 6px; padding: 10px 11px; display: grid; gap: 6px; min-width: 0; }
+.card.done { background: var(--done-bg); border-color: var(--done); }
+.card.built { background: var(--built-bg); border-color: var(--built); }
+.card.decide { background: var(--decide-bg); border-color: var(--decide); }
+.card.people { background: var(--people-bg); border-color: var(--people); }
+.card.todo { background: var(--todo-bg); border-color: var(--todo); }
+.card h4 { margin: 0; font: 600 15px/1.25 var(--display); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.st { font: 500 10px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; white-space: nowrap; color: var(--surface); }
+.done .st { background: var(--done); } .built .st { background: var(--built); } .decide .st { background: var(--decide); }
+.people .st { background: var(--people); } .todo .st { background: var(--todo); }
+.card p { margin: 0; font-size: 13px; color: var(--ink); }
+.card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; border-top: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent); padding-top: 6px; }
+.card li { font-size: 12.5px; line-height: 1.4; display: grid; gap: 1px; }
+.card li .who { font: 500 10.5px/1.3 var(--mono); color: var(--muted); }
+.card li .who b { font-weight: 500; }
+.card li.late .who b { color: var(--todo); }
+.none { font-size: 12.5px; color: var(--muted); font-style: italic; }
+footer { margin-top: 34px; padding-top: 14px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13px; max-width: 90ch; }
+@media (max-width: 760px) {
+  .flow { grid-template-columns: 1fr; min-width: 0; gap: 22px; }
+  .col:not(:last-child)::after { content: "\2193"; right: auto; left: 50%; top: auto; bottom: -21px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Wed 7 Oct 2026</span><span>25 days to submission</span></div>
+  <h1>Where each part of the project stands</h1>
+  <p class="lede">The system as data flows through it, from the sources to what users see, then the work that builds the models and the deliverables. Each part&#8217;s colour is its status, and its open to-do items are listed inside, with who does them and by when.</p>
+</header>
+
+<div class="key" aria-label="Status colours">
+  <span><i class="sw done"></i>Done and in use</span>
+  <span><i class="sw built"></i>Built and measured, not switched on</span>
+  <span><i class="sw decide"></i>Waiting on a team decision</span>
+  <span><i class="sw people"></i>In progress, people&#8217;s work</span>
+  <span><i class="sw todo"></i>Not started</span>
+</div>
+
+<div class="tally" aria-label="Components by status">
+  <div class="done"><b>10</b><span>done and in use</span></div>
+  <div class="built"><b>3</b><span>built, not switched on</span></div>
+  <div class="decide"><b>1</b><span>waiting on a decision</span></div>
+  <div class="people"><b>4</b><span>in progress</span></div>
+  <div class="todo"><b>1</b><span>not started</span></div>
+</div>
+<div class="blocker"><p><b>What holds things up:</b> four team decisions were due on 5 Oct (aspect method, wealth or retail, blind relabelling, the blended index), and the product-feature rule is new. The labels, the retraining, the one re-score (12&#8211;18 Oct) and every evaluation wait on them. Drafts to decide from are on the team to-do.</p></div>
+
+<section class="lane" aria-labelledby="h-flow">
+  <h2 id="h-flow">The data flow</h2>
+  <p class="sub">Sentences are collected from six sources, cleaned and attributed to a bank, given an aspect and a sentiment, rolled up into the index, stored, and served by the API to the dashboard and the chatbot. Counts are from the database on this date; collection stopped on 25 Sep.</p>
+  <div class="board">
+  <div class="flow" style="--cols: 5">
+    <div class="col">
+      <h3>Sources</h3>
+      <div class="card done">
+        <h4>Reddit <span class="st">Done</span></h4>
+        <p>24,675 sentences of posts and comments.</p>
+        <ul><li>Approve refilling three thin months (Sep 2021, May 2024, Mar 2025)<span class="who"><b>Team decision</b> · by 12 Oct</span></li></ul>
+      </div>
+      <div class="card done">
+        <h4>News <span class="st">Done</span></h4>
+        <p>5,817 sentences: Google News, Yahoo, NewsAPI.</p>
+        <p class="none">Nothing open.</p>
+      </div>
+      <div class="card done">
+        <h4>CNA <span class="st">Done</span></h4>
+        <p>1,599 sentences; team-only text.</p>
+        <ul><li>Approve removing 15 CNA articles from git (<code>ingest/cna_articles.json</code>)<span class="who"><b>Team decision</b> · by 12 Oct</span></li></ul>
+      </div>
+      <div class="card done">
+        <h4>Bank results reports <span class="st">Done</span></h4>
+        <p>12,254 sentences from the banks&#8217; own reports.</p>
+        <ul>
+          <li>Approve fixing 6 UOB reports dated by their extraction day<span class="who"><b>Team decision</b> · by 12 Oct</span></li>
+          <li>Store PDF links as relative paths (decided)<span class="who"><b>Claude</b> · at the re-score</span></li>
+        </ul>
+      </div>
+      <div class="card people">
+        <h4>Broker research <span class="st">In progress</span></h4>
+        <p>25 analyst reports, 641 sentences on the Windows PC; not yet in this Mac&#8217;s database. Labels done.</p>
+        <ul>
+          <li>Send the source&#8217;s database rows from the PC<span class="who"><b>Teammate</b> · before the re-score</span></li>
+          <li>Name who labelled the 100 test rows; a second annotator for agreement<span class="who"><b>People</b> · by 12 Oct</span></li>
+        </ul>
+      </div>
+      <div class="card done">
+        <h4>Analyst consensus <span class="st">Done</span></h4>
+        <p>Ratings and price targets from Yahoo Finance.</p>
+        <ul><li class="late">Fix the dashboard panel so UOB shows<span class="who"><b>Dashboard owner · overdue</b> (5 Oct)</span></li></ul>
+      </div>
+    </div>
+
+    <div class="col">
+      <h3>Processing</h3>
+      <div class="card done">
+        <h4>Cleaning and sentences <span class="st">Done</span></h4>
+        <p>28,002 documents split into 44,345 sentences; filters for noise and duplicates.</p>
+        <p class="none">Nothing open.</p>
+      </div>
+      <div class="card built">
+        <h4>Bank attribution (NER) <span class="st">Built</span></h4>
+        <p>F1 0.997 against Opus&#8217;s reference, against 0.772 for name matching; not applied.</p>
+        <ul>
+          <li>Label the 201-sentence gold set<span class="who"><b>People</b> · by 11 Oct</span></li>
+          <li>Apply in the one re-score, if adopted<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li>
+        </ul>
+      </div>
+      <div class="card decide">
+        <h4>Aspects <span class="st">Decide</span></h4>
+        <p>Live: seed centroids, 41% match with people. Built: an LLM classifier, 73%; the whole corpus is classified.</p>
+        <ul>
+          <li class="late">Choose the aspect method and the disagreement rule<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
+          <li class="late">Wealth or retail for priority products; 22 local-context answers (draft ready)<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col">
+      <h3>Scoring and index</h3>
+      <div class="card built">
+        <h4>Sentiment model <span class="st">Built</span></h4>
+        <p>Live: base FinBERT (0.571 test macro-F1). Built: fine-tuned 0.604 (1 Oct) and 0.621 (4 Oct); adapted, 0.701 against 0.663 on cross-validation.</p>
+        <ul>
+          <li>Decide whether a product&#8217;s feature counts as sentiment (draft ready)<span class="who"><b>Team decision</b> · before labelling</span></li>
+          <li>Choose the scoring model<span class="who"><b>Team decision</b> · by 12 Oct</span></li>
+          <li>Pretrain the adapted model again (filter fixed 7 Oct), retrain on final labels<span class="who"><b>Claude</b> · 12&#8211;14 Oct</span></li>
+        </ul>
+      </div>
+      <div class="card done">
+        <h4>Sentiment index <span class="st">Done</span></h4>
+        <p>Per bank and aspect over 7 days, 30 days and all time, by source and blended.</p>
+        <ul>
+          <li class="late">One blended index, or each source side by side<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
+          <li>Re-score and re-aggregate once (windows anchored to the newest data, decided)<span class="who"><b>Claude, with approval</b> · 12&#8211;18 Oct</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col">
+      <h3>Store</h3>
+      <div class="card done">
+        <h4>Database and snapshots <span class="st">Done</span></h4>
+        <p>SQLite; the frozen corpus snapshot of 30 Sep, with checksums in the README.</p>
+        <ul>
+          <li>New snapshot after the re-score<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li>
+          <li>Upload the snapshot and model weights to the team folder<span class="who"><b>People</b> · by 18 Oct</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col">
+      <h3>What users see</h3>
+      <div class="card done">
+        <h4>API <span class="st">Done</span></h4>
+        <p>16 FastAPI endpoints; the API integrity claim is proven (every number fetchable, bad input rejected).</p>
+        <ul><li>Re-check after the re-score, with every evaluation<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li></ul>
+      </div>
+      <div class="card people">
+        <h4>Dashboard <span class="st">In progress</span></h4>
+        <p>Streamlit, owned by a teammate; reads the database directly.</p>
+        <ul>
+          <li>Read one model version, before the re-score adds scores<span class="who"><b>Dashboard owner</b> · by 12 Oct</span></li>
+          <li>Show the chatbot&#8217;s steps; update the caption<span class="who"><b>Dashboard owner</b> · by 12 Oct</span></li>
+          <li>Check every tab (five issues found on 4 Oct)<span class="who"><b>Dashboard owner</b> · by 19 Oct</span></li>
+        </ul>
+      </div>
+      <div class="card done">
+        <h4>Chatbot <span class="st">Done</span></h4>
+        <p>Local model with six tools; the Grounded chatbot claim holds within its known limits. Gold set: tools 23/24, behaviour 8/8; about 47 s an answer (speed on hold).</p>
+        <ul>
+          <li>Read the fixed replies<span class="who"><b>People</b> · by 12 Oct</span></li>
+          <li>Verify the hosted backend with a free Groq key, or stop claiming it<span class="who"><b>Team decision</b> · by 19 Oct</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section class="lane" aria-labelledby="h-build">
+  <h2 id="h-build">Building the models, then the deliverables</h2>
+  <p class="sub">Labels train and test the models; the evaluations and the report rest on the final ones.</p>
+  <div class="board">
+  <div class="flow" style="--cols: 4">
+    <div class="col">
+      <h3>Labels</h3>
+      <div class="card people">
+        <h4>Labelled data <span class="st">In progress</span></h4>
+        <p>1,277 sentences in the first round and 380 broker research rows; an Opus rater as a check.</p>
+        <ul>
+          <li class="late">Relabel blind: the 299 test rows, and a sample of training rows?<span class="who"><b>Team decision · overdue</b> (5 Oct)</span></li>
+          <li>Top-up sheet, 268 rows<span class="who"><b>People</b> · by 11 Oct</span></li>
+          <li>Active-learning sheet, 150 rows, after the product-feature rule<span class="who"><b>People</b> · after that decision</span></li>
+          <li>Boundary rows, after the economist and wealth rules<span class="who"><b>People</b> · after those decisions</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Training</h3>
+      <div class="card built">
+        <h4>Fine-tuning pipeline <span class="st">Built</span></h4>
+        <p>Fine-tuning, cross-validation and adaptive pretraining work and are tested; the final model waits for the final labels.</p>
+        <ul><li>Train the chosen model on the final labels, one machine only<span class="who"><b>Claude</b> · 12&#8211;14 Oct</span></li></ul>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Evaluation</h3>
+      <div class="card people">
+        <h4>Evaluation <span class="st">In progress</span></h4>
+        <p>Automated: test split, cross-validation, the chatbot gold set and its checks. People: still to come.</p>
+        <ul>
+          <li>Re-run every evaluation on the new snapshot<span class="who"><b>Claude</b> · 12&#8211;18 Oct</span></li>
+          <li>Rate the chatbot&#8217;s answers; SASSI with 5&#8211;8 users<span class="who"><b>People</b> · 19&#8211;25 Oct</span></li>
+          <li>Interpret the results and freeze the tables<span class="who"><b>People</b> · by 25 Oct</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <h3>Deliverables</h3>
+      <div class="card todo">
+        <h4>Report, video, submission <span class="st">Not started</span></h4>
+        <p>Drafts exist for the approach and the findings; the final parts are the authors&#8217;.</p>
+        <ul>
+          <li>Conclusions, each person&#8217;s contribution, GenAI pros and cons<span class="who"><b>People</b> · by 30 Oct</span></li>
+          <li>Demo video, about 20 minutes, everyone presents<span class="who"><b>People</b> · by 31 Oct</span></li>
+          <li>Final snapshot, data report, clean install test<span class="who"><b>Claude</b> · by 31 Oct</span></li>
+          <li>Peer review and submit<span class="who"><b>People</b> · Sun 1 Nov</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<footer>As of 7 Oct 2026, from the database, the evidence files and the team to-do (<code>docs/briefs/team-todo-2026-10-07.html</code>), where each item&#8217;s reasons and sources are. &#8220;Built&#8221; means made and measured but not yet used for what the dashboard and chatbot show; switching anything on happens once, in the 12&#8211;18 Oct re-score.</footer>
+</div>
+</body>
+</html>

@@ -92,8 +92,8 @@ sentences and gave an aspect, a `not_about_bank` flag and a sentiment, applying
 `docs/annotation-guideline.md`. It saw only the sentence text and the bank name: not base
 FinBERT, not the pipeline's aspect, not the source file. One rater, one pass, aspect and
 sentiment together (the Opus round used two blind passes). Raw answers and the row order
-are in `data/labeled/sgx_research/claude_prelabels/`; the merged table is
-`claude_prelabels.csv`. The 280 rows kept after the near-copy filter carry them in the
+are in `data/labeled/sgx_research/llm_prelabels/`; the merged table is
+`llm_prelabels.csv`. The 280 rows kept after the near-copy filter carry them in the
 sheet: aspect (asset quality 59, management guidance 41, income and profit 38, NIM 35,
 dividends 30, investor/stock 27, other 16, macro 14, wealth 12, capital 7, retail 1),
 sentiment (111 positive, 110 neutral, 59 negative), 9 flagged `not_about_bank` (disclaimer
@@ -116,8 +116,8 @@ rows carry model output. Nothing in the code turns a suggestion into a label:
 
 Asked to label the whole dataset, Claude Sonnet 5.5 also labelled the 100 blind test
 sentences, the same way as the train rows (text and bank only; aspect, flag, sentiment in
-one pass). The answers are in `data/labeled/sgx_research/claude_test_labels.csv` (raw
-answers in `claude_test_labels/`): asset quality 26, income and profit 15, NIM 12, dividends
+one pass). The answers are in `data/labeled/sgx_research/llm_test_labels.csv` (raw
+answers in `llm_test_labels/`): asset quality 26, income and profit 15, NIM 12, dividends
 11, management guidance 10, investor/stock 10, wealth 7, other 6, macro 3; 41 positive, 31
 neutral, 28 negative; 4 flagged `not_about_bank`.
 
@@ -215,7 +215,7 @@ replacing the CPU build, `rapidocr-onnxruntime`, `wordninja`, the spaCy model
 `train/source_round.py`, `--sources` on `preprocess.pipeline` and `sentiment.score`,
 `--labels` on `train.finetune` and `train.evaluate`, `tests/test_sgx_research_extract.py`,
 `tests/test_source_round.py`, and `data/labeled/sgx_research/` (`candidates.csv`,
-`test_blind.csv`, `claude_prelabels.csv`, `claude_prelabels/`).
+`test_blind.csv`, `llm_prelabels.csv`, `llm_prelabels/`).
 
 ## Retrain with the human-reviewed SGX sheet (5 Oct)
 
@@ -228,7 +228,7 @@ train/dev rows) came back. Three things were repaired first:
   `candidates.edited-2026-10-04.bak.csv` (not in git).
 - The annotator had typed the sentiment into the `llm_prelabel` column as well as `label`.
   `llm_prelabel` was restored to the model's original suggestion
-  (`claude_prelabels.csv`). Against those suggestions, the annotator's sentiment differs on
+  (`llm_prelabels.csv`). Against those suggestions, the annotator's sentiment differs on
   17 of 280 rows (93.9% agreement) and the aspect on 14 (95.0%).
 - `not_about_bank` was set to false on all 280 rows, as the annotator confirmed every sentence
   is about a bank. The 9 rows the model had flagged (disclaimer text, a rating legend, a table

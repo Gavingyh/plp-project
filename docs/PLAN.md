@@ -66,7 +66,7 @@ By the team. Recorded from the meeting note; the follow-on work and the points l
 | **Wealth means the priority and private tiers** (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves | The `wealth_business` row and a rule in the guideline. `config/aspects.yaml` still has the old definition: changing it means redoing the corpus aspect run (about a day) |
 | **The test rows are not relabelled** | The 299 test labels stay; the report should say annotators saw a model's suggestion |
 | **Aspects: both methods run and are reported**, the centroids and the LLM | Which one the index, dashboard and chatbot serve is still open (below) |
-| **Opus 5.5 labels every sentiment sheet** | Done 10 Oct, 2,075 rows ([evidence](evidence/opus-labels-new-rules-2026-10-10.md)). The labels are reported as LLM labels, not human labels (the owner's change to the meeting note, for the GenAI declaration). This replaces the 4 Oct decision above that the human labels stay where Opus disagrees; `CLAUDE.md` and DESIGN decision 22 still state the old rule until the owner changes them |
+| **Opus 5.5 labels every sentiment sheet** | Done 10 Oct, 2,075 rows ([evidence](evidence/llm-rater-new-rules-2026-10-10.md)). The labels are reported as LLM labels, not human labels (the owner's change to the meeting note, for the GenAI declaration). This replaces the 4 Oct decision above that the human labels stay where Opus disagrees; `CLAUDE.md` and DESIGN decision 22 still state the old rule until the owner changes them |
 | **Evaluation reports precision and recall for positive, negative and neutral** beside macro-F1 and accuracy; every model is re-run and the team links the superior one to the chatbot and dashboard | `train/evaluation_report.py` already writes them; the re-run is in the 12 to 18 Oct week |
 
 ### Still open
@@ -172,7 +172,7 @@ Overnight run, night 1 (1 Oct):
 [the LLM aspect classifier against the human aspects](evidence/llm-aspect-classifier-2026-10-01.md),
 [a preprocessing dry run](evidence/preprocessing-dry-run-2026-10-01.md) and
 [a clean-copy install test](evidence/install-test-2026-10-01.md).
-Also 1 Oct: [Opus 5.5 as an additional labeller](evidence/opus-labeller-2026-10-01.md)
+Also 1 Oct: [Opus 5.5 as an additional labeller](evidence/llm-rater-2026-10-01.md)
 (DESIGN 22), which gives the first aspect agreement figure (human–LLM κ 0.80).
 1 Oct evening: [the fine-tuned model's errors and a neutral margin](evidence/error-analysis-2026-10-01.md),
 [bank entity recognition](evidence/bank-ner-2026-10-01.md) (built; its gold

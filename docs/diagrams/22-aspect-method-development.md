@@ -1,6 +1,6 @@
 # How the aspect method was chosen
 
-From discovering the aspects to classifying sentences into them: what was tried, how each was measured against the human aspect labels, and what waits for the team. For the report's solution-approach section. Evidence: `aspect-taxonomy-2026-09-25`, `aspect-discovery-sweep-2026-09-30`, `aspect-assignment-calibration-2026-09-30`, `llm-aspect-classifier-2026-10-01`, `opus-labeller-2026-10-01`, `labelling-topup-2026-10-01`.
+From discovering the aspects to classifying sentences into them: what was tried, how each was measured against the human aspect labels, and what waits for the team. For the report's solution-approach section. Evidence: `aspect-taxonomy-2026-09-25`, `aspect-discovery-sweep-2026-09-30`, `aspect-assignment-calibration-2026-09-30`, `llm-aspect-classifier-2026-10-01`, `llm-rater-2026-10-01`, `labelling-topup-2026-10-01`.
 
 **Legend.** Solid shapes and arrows are built and running. Dashed shapes and arrows labelled *planned* are decided but not yet built, with the DESIGN.md decision that records them. Shapes marked *not installed* exist in the repository but aren't running anywhere.
 
@@ -52,5 +52,5 @@ Each row names the file and line an element comes from, and the text that line m
 | one aspect from a fixed list | `aspects/llm_classify.py:97` | `"format": {"type": "object", "properties": {"aspect": {"type": "string", "enum": keys}},` |
 | temperature 0 | `aspects/llm_classify.py:99` | `"options": {"temperature": 0},` |
 | corpus cache | `aspects/llm_classify.py:160` | `def corpus_rows(conn, seed: int = 2026, limit: int | None = None) -> pd.DataFrame:` |
-| Opus rounds | `train/opus_labels.py:273` | `def extra_batches(name: str) -> list[str]:` |
+| Opus rounds | `train/rater_labels.py:273` | `def extra_batches(name: str) -> list[str]:` |
 | top-up sheet | `preprocess/export_topup.py:97` | `def select(pool: pd.DataFrame, llm_aspect: pd.Series, targets: dict[str, int]) -> pd.DataFrame:` |

@@ -569,8 +569,8 @@ Running `.project-context/prompt/overnight-night1.md` from HEAD `57a8230`.
   audited, no rater opened another file. Against the human labels: aspect
   κ 0.80 (0.842; llama3.1:8b 0.729), sentiment κ 0.79, every sentiment
   disagreement on the neutral boundary. Review queues: 202 aspect, 173
-  sentiment rows in `data/labeled/claude/`; nothing applied to
-  `candidates.csv` ([evidence](evidence/opus-labeller-2026-10-01.md)).
+  sentiment rows in `data/labeled/llm_rater/`; nothing applied to
+  `candidates.csv` ([evidence](evidence/llm-rater-2026-10-01.md)).
 - Verification: 479 tests pass (`pytest -q` from the root, slow tests
   included); `docs/diagrams/check_sources.py` clean (moved line numbers
   updated); PLAN section 5 points to the night 1 evidence.
@@ -729,8 +729,8 @@ Asked for after the night's results; nothing written to the database.
   [the approach](report/approach.md) with diagrams 21–23,
   [findings, limitations and solutions](report/findings-limitations-solutions.md),
   the AI usage declaration up to date.
-- **Code clean-up:** superseded scripts removed and `opus_extra` folded into
-  `opus_labels` (`553a742`); comments and messages made plain across the
+- **Code clean-up:** superseded scripts removed and `rater_extra` folded into
+  `rater_labels` (`553a742`); comments and messages made plain across the
   code (no behaviour change); the teammate's dashboard left as written.
 
 **Needs a human (2 Oct):** whether to switch strip enforcement on for the
@@ -1353,8 +1353,8 @@ not done: with the owner's agreement they are recorded and reported as LLM
 labels, since the report declares its GenAI use.
 
 **Opus labels under the new rules**
-(`docs/evidence/opus-labels-new-rules-2026-10-10.md`,
-`data/labeled/claude/rules-2026-10-10/`). The two rules are written into
+(`docs/evidence/llm-rater-new-rules-2026-10-10.md`,
+`data/labeled/llm_rater/rules-2026-10-10/`). The two rules are written into
 `docs/annotation-guideline.md`. 2,075 sentences (first round 1,277, top-up
 268, active-learning 150, broker research 380), aspect blind and then
 sentiment given Opus's own aspect, by 36 Opus subagents that read only

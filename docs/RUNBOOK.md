@@ -826,18 +826,18 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --ma
 
 Opus 5.5 labelled the 1,277 sentences as an additional rater through Claude
 Code subagents, each given one instructions file and one batch from
-`data/labeled/claude/` (DESIGN decision 22). The answers are kept; to rebuild
+`data/labeled/llm_rater/` (DESIGN decision 22). The answers are kept; to rebuild
 the merged file and the review queues:
 
 ```bash
-.venv-plp/bin/python3 -m train.opus_labels merge
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.opus_labels score --centroid
+.venv-plp/bin/python3 -m train.rater_labels merge
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.rater_labels score --centroid
 ```
 
-People settle the disagreements in `data/labeled/claude/review_aspect.csv`
+People settle the disagreements in `data/labeled/llm_rater/review_aspect.csv`
 and `review_sentiment.csv` (the `decision` column); nothing changes
 `candidates.csv` automatically
-([evidence](evidence/opus-labeller-2026-10-01.md)).
+([evidence](evidence/llm-rater-2026-10-01.md)).
 
 ### Running on a Colab GPU
 

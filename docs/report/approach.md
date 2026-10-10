@@ -382,7 +382,7 @@ finetune-experiments-2026-09-30, finetune-fixes-2026-10-01,
 error-analysis-2026-10-01, noise-floor-cv-2026-10-02,
 aspect-taxonomy-2026-09-25, aspect-discovery-sweep-2026-09-30,
 aspect-assignment-calibration-2026-09-30, llm-aspect-classifier-2026-10-01,
-opus-labeller-2026-10-01, bank-ner-2026-10-01, index-preview-2026-10-01,
+llm-rater-2026-10-01, bank-ner-2026-10-01, index-preview-2026-10-01,
 chatbot-eval-build-2026-10-01, labelling-topup-2026-10-01. Design decisions:
 [DESIGN.md](../DESIGN.md). The learning folder ([learning/](../../learning/README.md))
 has a longer note on each technique, with exercises.

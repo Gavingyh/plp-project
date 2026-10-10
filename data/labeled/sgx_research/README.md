@@ -21,7 +21,7 @@ Method, numbers and the next commands: `docs/evidence/sgx-research-round-2026-10
 
 ## LLM labels (silver), kept apart from yours
 
-`claude_test_labels.csv` holds Claude's labels for the 100 test sentences. They are not in
+`llm_test_labels.csv` holds Claude's labels for the 100 test sentences. They are not in
 `test_blind.csv` and must not guide how you label it. `silver_candidates.csv` and
 `silver_test_blind.csv` are the LLM's labels in the resolved format, for training while the
 human labels are pending; their `annotator` column is `claude-sonnet-5-5`.

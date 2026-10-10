@@ -1,4 +1,4 @@
-sentence_id,split,source,bank,text,human_aspect,opus_aspect,llama3.1_8b_aspect,opus_not_about_bank,decision
+sentence_id,split,source,bank,text,human_aspect,rater_aspect,llama3.1_8b_aspect,rater_not_about_bank,decision
 a71673528acf3f7f2f8a87e8,test,earnings,DBS,The important thing is that the buyback reflects our continued commitment to capital management.,capital_liquidity,dividend_policy,capital_liquidity,False,
 b29ef072fbbebab9b2369194,test,earnings,DBS,But our base case is we still need to return a lot of capital as it is unlikely we are going to use a lot of it for M&A. Goola Warden,capital_liquidity,dividend_policy,dividend_policy,False,
 d1585eabb4d0adaed550e069,test,earnings,DBS,Shan We do not see a need to change our capital management plan.,capital_liquidity,dividend_policy,capital_liquidity,False,

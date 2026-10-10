@@ -1,4 +1,4 @@
-sentence_id,rater,opus_aspect,opus_not_about_bank,opus_label
+sentence_id,rater,rater_aspect,rater_not_about_bank,rater_label
 7a0bd8ba8779f2225c1dad26,claude-opus-5-5,net_interest_margin,False,negative
 ea1fe4ef4ad3844615ba4a9b,claude-opus-5-5,retail_banking_sentiment,True,neutral
 cb5b699ca2818ef811aa5063,claude-opus-5-5,retail_banking_sentiment,False,negative

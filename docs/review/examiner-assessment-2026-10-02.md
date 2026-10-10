@@ -341,6 +341,6 @@ time.
 `docs/evidence/`: `finetune-fixes-2026-10-01.md`, `error-analysis-2026-10-01.md`,
 `index-preview-2026-10-01.md`, `llm-aspect-classifier-2026-10-01.md`,
 `bank-ner-2026-10-01.md`, `chatbot-eval-build-2026-10-01.md` (Live runs),
-`labelling-topup-2026-10-01.md`, `opus-labeller-2026-10-01.md`,
+`labelling-topup-2026-10-01.md`, `llm-rater-2026-10-01.md`,
 `noise-floor-cv-2026-10-02.md`; `docs/DESIGN.md` decision 23 and its
 amendment; `docs/api-integration.md`; `chatbot/prompts.py` rules 6 and 8.

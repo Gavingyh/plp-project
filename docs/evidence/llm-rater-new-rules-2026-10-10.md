@@ -5,7 +5,7 @@ sentiment sheets, to save people's labelling time, and changed two labelling
 rules. This note records the run. The labels are **LLM labels**: they are
 recorded and reported as Opus's, not as people's (the owner changed that part
 of the meeting note the same day), and the report's GenAI declaration lists
-the run. They sit in `data/labeled/claude/rules-2026-10-10/` and have
+the run. They sit in `data/labeled/llm_rater/rules-2026-10-10/` and have
 replaced nothing: `data/labeled/candidates.csv` and the other sheets are
 unchanged, and which labels the models train and test on is still the
 team's to decide (team to-do, section 1).
@@ -29,7 +29,7 @@ Written into `docs/annotation-guideline.md` ("Two rules decided on
 
 ## How it was run
 
-As on 1 Oct ([opus-labeller-2026-10-01.md](opus-labeller-2026-10-01.md)),
+As on 1 Oct ([llm-rater-2026-10-01.md](llm-rater-2026-10-01.md)),
 with one difference in the second pass.
 
 - **Rows:** 2,075 sentences, every sentence of four sheets once: the first
@@ -49,7 +49,7 @@ with one difference in the second pass.
   another labelling file. The 6 edits correct a mistyped sentence id in the
   rater's own output.
 - Inputs, raw answers, the two scripts and the merged
-  `opus_labels.csv` are in the round's folder
+  `rater_labels.csv` are in the round's folder
   (`build_batches.py`, `merge_and_score.py`).
 
 ## Results

@@ -82,7 +82,7 @@ product features**, which the model reads as praise or complaint:
   haven't." (negative)
 
 These are the same boundary cases where the Opus labeller and the
-annotators disagreed ([opus-labeller-2026-10-01.md](opus-labeller-2026-10-01.md):
+annotators disagreed ([llm-rater-2026-10-01.md](llm-rater-2026-10-01.md):
 every sentiment disagreement was on the neutral boundary, many on product
 mentions). The guideline's rule that "factual statements with clear valence
 are not neutral" doesn't say whether a product's feature is valence toward

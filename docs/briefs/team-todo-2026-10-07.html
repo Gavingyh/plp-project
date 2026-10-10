@@ -193,7 +193,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Which labels the models train and test on, now that the retail rule has changed <span class="chip decide">Decision</span></span>
       <span class="when">before retraining (12 Oct)</span>
       <p class="why"><b>Why:</b> two of the 10 Oct decisions pull apart. Retail products now carry sentiment directed at the bank, so rows labelled neutral under the old rule change. The test rows are not relabelled, so the 299 test labels stay on the old rule. If the train/dev rows follow the new rule and the test rows the old one, test scores fall for a reason that has nothing to do with the model. Choose one: apply the new rule to the retail test rows too (Opus&#8217;s labels, reported as LLM labels), or keep them and say so in the report. Decide with it, for the 1,277 rows people already labelled, whether the training label is the person&#8217;s or Opus&#8217;s new one. What the 10 Oct run shows: on the 299 test rows Opus differs from people on 47 aspects and 42 sentiments, and on the 978 train/dev rows on 155 and 127; the retail rule itself moved 34 of 280 neutral retail rows to positive or negative, about as many as change between two Opus runs.</p>
-      <span class="meta">Decisions of 10 Oct on retail products, the test rows and Opus labelling. Until this is settled, Opus&#8217;s new labels sit beside the human ones in <code>data/labeled/claude/</code> and change nothing.</span>
+      <span class="meta">Decisions of 10 Oct on retail products, the test rows and Opus labelling. Until this is settled, Opus&#8217;s new labels sit beside the human ones in <code>data/labeled/llm_rater/</code> and change nothing.</span>
     </li>
     <li data-o="decide">
       <span class="t">Which aspect method the product serves, and the disagreement rule <span class="chip decide">Decision</span></span>
@@ -230,7 +230,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Opus 5.5 labelled every sheet under the new rules: 2,075 rows <span class="chip ai">Done 10 Oct</span></span>
       <span class="when">done</span>
       <p class="why"><b>Result:</b> the first round&#8217;s 1,277 rows, the top-up sheet&#8217;s 268, the active-learning sheet&#8217;s 150 and the broker research round&#8217;s 380, each labelled for aspect and then sentiment by Opus raters that saw no other label (36 runs, audited). 757 positive, 879 neutral, 439 negative; 134 flagged as not about the bank. Against people on the 1,277 rows: aspect &#954; 0.802, sentiment &#954; 0.793, the same as the 1 Oct run under the old rules. The labels are in their own folder and have replaced nothing; the first item in section 1 decides how they are used.</p>
-      <span class="meta">Files: <code>data/labeled/claude/rules-2026-10-10/</code>. Evidence: <code>docs/evidence/opus-labels-new-rules-2026-10-10.md</code>.</span>
+      <span class="meta">Files: <code>data/labeled/llm_rater/rules-2026-10-10/</code>. Evidence: <code>docs/evidence/llm-rater-new-rules-2026-10-10.md</code>.</span>
     </li>
     <li data-o="decide">
       <span class="t">Confirm the wording of the two new rules, and whether to redo the corpus aspect run <span class="chip decide">Decision</span></span>

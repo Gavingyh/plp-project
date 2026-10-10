@@ -19,7 +19,7 @@ errors on the test split, averaged over three seeds); 31 of those 57 are
 retail banking sentences, and read, they are mostly product-feature
 descriptions (`docs/evidence/error-analysis-2026-10-01.md`). And all 173 sentiment
 disagreements between Opus and the human labels sit on the neutral boundary,
-many on product and offer mentions (`docs/evidence/opus-labeller-2026-10-01.md`).
+many on product and offer mentions (`docs/evidence/llm-rater-2026-10-01.md`).
 The error analysis quotes test sentences, so this paper uses none of them.
 Every sentence and count below comes from train/dev rows only.
 

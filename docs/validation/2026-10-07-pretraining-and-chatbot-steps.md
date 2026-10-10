@@ -19,7 +19,7 @@ Scope: `main` since b9aaa0f (a00899d) plus local commits d748e1f and 222f753, co
 - Snapshot checksum corrupted [high] README.md:140: f6aac79a2123**98**747…, file is …2123**68**747… (my blanket count replacements, b9aaa0f and d119675)
 - Docs overstate the 6 Oct exclusion [high/med] to-do:341, HANDOFF:1219, evidence:34 and 150: "near-copies left out", "No test text informs training"
 - Wording and figures [med/low]: the slang count (27 of 1,280) has no committed script; "clear lead" and broker research "lead" sit inside seed noise; HANDOFF compares a training-row rate with the 89% test-row figure (92% is like for like); +0.041 should be +0.042
-- Smaller [low]: `describe_call` runs unguarded when there is no callback (an odd tool result would raise; the real tools return numbers); `--base-model` isn't recorded and an MLM checkpoint is accepted; a row missing from claude_prelabels.csv counts as corrected
+- Smaller [low]: `describe_call` runs unguarded when there is no callback (an odd tool result would raise; the real tools return numbers); `--base-model` isn't recorded and an MLM checkpoint is accepted; a row missing from llm_prelabels.csv counts as corrected
 
 ## Open questions
 - None for the owner beyond the upstream items on the to-do; the working tree shows my own uncommitted to-do edit (the new upstream section), made while the agents ran

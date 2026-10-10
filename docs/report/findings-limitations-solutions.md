@@ -74,7 +74,7 @@ says which models it belongs to.*
   ([annotation-agreement](../evidence/annotation-agreement-2026-09-27.md)).
   Opus 5.5, labelling blind, agrees with them at κ 0.80 on aspect and 0.79
   on sentiment, every sentiment disagreement on the neutral boundary
-  ([opus-labeller](../evidence/opus-labeller-2026-10-01.md)).
+  ([llm-rater](../evidence/llm-rater-2026-10-01.md)).
 - Where Opus and the people disagree (202 aspects and 173 sentiments, 80
   of them on the test split), the human labels are kept: a team decision of
   4 Oct 2026, after a spot check found the human labels sound. The

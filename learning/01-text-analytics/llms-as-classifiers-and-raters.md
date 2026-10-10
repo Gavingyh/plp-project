@@ -54,7 +54,7 @@ out the easier sentences.
 |---|---|---|
 | suggester | `train/llm_prelabel.py` (`llm_prelabel` column, never `label`) | `annotation-agreement-2026-09-27.md` |
 | classifier | `aspects/llm_classify.py` (`--eval`, `--no-think`) | `llm-aspect-classifier-2026-10-01.md` |
-| rater | `data/labeled/claude/`, `train/opus_labels.py` (merge, score, audit) | `opus-labeller-2026-10-01.md` |
+| rater | `data/labeled/llm_rater/`, `train/rater_labels.py` (merge, score, audit) | `llm-rater-2026-10-01.md` |
 
 ---
 
@@ -159,9 +159,9 @@ which you would publish and why.
 
 **Repository**
 
-- `aspects/llm_classify.py`, `train/llm_prelabel.py`, `train/opus_labels.py`
+- `aspects/llm_classify.py`, `train/llm_prelabel.py`, `train/rater_labels.py`
 - `docs/evidence/llm-aspect-classifier-2026-10-01.md`,
-  `opus-labeller-2026-10-01.md`, `annotation-agreement-2026-09-27.md`
+  `llm-rater-2026-10-01.md`, `annotation-agreement-2026-09-27.md`
 - DESIGN decisions 16 and 22
 
 **Measured in this repository (2026-10-01)**

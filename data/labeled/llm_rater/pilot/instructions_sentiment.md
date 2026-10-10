@@ -48,7 +48,7 @@ Decided edge cases:
 
 ## Output
 
-Write `opus_sentiment.jsonl` in the same folder: one line per input row, in
+Write `rater_sentiment.jsonl` in the same folder: one line per input row, in
 input order, exactly
 
 {"sentence_id": "<id>", "label": "negative"|"neutral"|"positive"}

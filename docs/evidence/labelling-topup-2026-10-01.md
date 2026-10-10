@@ -132,7 +132,7 @@ about the bank. That makes it a question for the team before labelling:
 does a bank economist's view of the economy count as macro sentiment about
 the bank? If not, macro needs a lower floor or a different source.
 
-Opus's answers are in `data/labeled/claude/topup/opus_topup.csv`; like
+Opus's answers are in `data/labeled/llm_rater/topup/rater_topup.csv`; like
 `llm_aspects.csv`, don't open it before labelling.
 
 ## For the people labelling

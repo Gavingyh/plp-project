@@ -41,7 +41,7 @@ Each row is one sentence. For each one:
 
 ## Output
 
-Write `opus_aspect.jsonl` in the same folder: one line per input row, in
+Write `rater_aspect.jsonl` in the same folder: one line per input row, in
 input order, exactly
 
 {"sentence_id": "<id>", "aspect": "<one key from the table>", "not_about_bank": true|false}

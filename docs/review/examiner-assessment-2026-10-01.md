@@ -44,7 +44,7 @@ scores; it biases towards whatever the `llama3.2:3b` suggestion favoured
 (the Opus labeller found the human side of 118 of 173 disagreements equals
 the suggestion); it does not affect the aspect results, which were not
 suggested by that model. Evidence: `annotation-agreement-2026-09-27.md`,
-`opus-labeller-2026-10-01.md`.
+`llm-rater-2026-10-01.md`.
 
 **Q2 (Evaluate).** Opus 5.5 agrees with your aspect labels at κ 0.80.
 Is that evidence that your aspect labels are good? Argue both sides, then

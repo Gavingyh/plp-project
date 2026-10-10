@@ -285,4 +285,4 @@ was given the same rules NER encodes, so it can't test the rules (the DBS Vicker
 `sentences.text`. Examples are quoted from the corpus. Sources for model
 behaviour: `data/aspect_llm/llama3.1_8b.96efe244.jsonl` (llama's cached answers),
 `data/labeled/candidates.csv` (people, base FinBERT),
-`data/labeled/claude/` (Opus).*
+`data/labeled/llm_rater/` (Opus).*

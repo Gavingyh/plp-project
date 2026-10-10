@@ -63,7 +63,7 @@ criticise an app in consecutive sentences.
 | `sentiment/` | Aspect-conditioned sentiment classification | `score` (base FinBERT; also scores new pairs with a served fine-tuned version through `finetuned`) |
 | `aggregate/` | The sentiment index, continuous time series, and the read-only preview of pending changes | `index`, `preview` |
 | `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation, a terminal chat for testing | `chat`, `agent`, `run_eval` |
-| `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `opus_labels` |
+| `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `rater_labels` |
 | `api/` | FastAPI REST API: the documented interface for any frontend (DESIGN decision 23) | `uvicorn api.main:app` |
 | `dashboard/` | Streamlit dashboard, maintained by a teammate; reads the database directly | `streamlit run dashboard/app.py` |
 | `config/` | Aspect taxonomy and assignment method, the served model version and the fine-tuned models behind it, logging configuration | — |

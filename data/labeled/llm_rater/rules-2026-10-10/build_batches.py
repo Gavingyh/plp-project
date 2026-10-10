@@ -6,8 +6,8 @@ the broker research round. Columns given to the rater: sentence_id, bank,
 source, text. No human or model label is copied. A 50-row pilot (seed 2026),
 the rest shuffled (seed 2026) into batches of about 122.
 
-  .venv-plp/bin/python3 data/labeled/claude/rules-2026-10-10/build_batches.py            # aspect inputs
-  .venv-plp/bin/python3 data/labeled/claude/rules-2026-10-10/build_batches.py sentiment  # after the aspect answers are in
+  .venv-plp/bin/python3 data/labeled/llm_rater/rules-2026-10-10/build_batches.py            # aspect inputs
+  .venv-plp/bin/python3 data/labeled/llm_rater/rules-2026-10-10/build_batches.py sentiment  # after the aspect answers are in
 """
 import glob, json, os, sys
 import pandas as pd
@@ -45,7 +45,7 @@ def main():
     task = sys.argv[1] if len(sys.argv) > 1 else "aspect"
     answers = {}
     if task == "sentiment":
-        for path in glob.glob(os.path.join(HERE, "pilot", "opus_aspect.jsonl")) + glob.glob(os.path.join(HERE, "batches", "opus_aspect_*.jsonl")):
+        for path in glob.glob(os.path.join(HERE, "pilot", "rater_aspect.jsonl")) + glob.glob(os.path.join(HERE, "batches", "rater_aspect_*.jsonl")):
             for line in open(path):
                 if line.strip():
                     r = json.loads(line)

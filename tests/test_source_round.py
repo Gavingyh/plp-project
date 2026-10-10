@@ -26,21 +26,21 @@ def _sheet(tmp_path, n_train=4, n_test=2):
         rows.append({"sentence_id": f"x{i}", "text": f"test sentence {i}", "bank": "UOB", "source": "sgx_research",
                      "url": "u", "published_at": "2026-01-01", "split": "test", "sampling_method": "random"})
     df = pd.DataFrame(rows, columns=CANDIDATE_COLUMNS)
-    (tmp_path / "claude_prelabels").mkdir()
+    (tmp_path / "llm_prelabels").mkdir()
     df.to_csv(tmp_path / "candidates.csv", index=False)
     pd.DataFrame({"sentence_id": [f"t{i}" for i in range(n_train)]}).to_csv(
-        tmp_path / "claude_prelabels" / "order.csv", index=False)
+        tmp_path / "llm_prelabels" / "order.csv", index=False)
     return tmp_path
 
 
 def _suggest(tmp_path, lines):
-    (tmp_path / "claude_prelabels" / "labels_1_4.txt").write_text("\n".join(lines), encoding="utf-8")
+    (tmp_path / "llm_prelabels" / "labels_1_4.txt").write_text("\n".join(lines), encoding="utf-8")
 
 
 def test_parse_suggestions_maps_compact_keys_and_the_flag(tmp_path):
     _sheet(tmp_path)
     _suggest(tmp_path, ["1 AQ -", "2 NIM 0", "3 DP + x", "4 ISS +"])
-    s = parse_suggestions(str(tmp_path / "claude_prelabels")).set_index("sentence_id")
+    s = parse_suggestions(str(tmp_path / "llm_prelabels")).set_index("sentence_id")
     assert s.loc["t0", "claude_aspect"] == "asset_quality" and s.loc["t0", "claude_label"] == "negative"
     assert s.loc["t2", "claude_not_about_bank"] and not s.loc["t1", "claude_not_about_bank"]
 
@@ -52,7 +52,7 @@ def test_parse_suggestions_rejects_incomplete_or_unreadable_files(tmp_path, line
     _sheet(tmp_path)
     _suggest(tmp_path, lines)
     with pytest.raises(ValueError):
-        parse_suggestions(str(tmp_path / "claude_prelabels"))
+        parse_suggestions(str(tmp_path / "llm_prelabels"))
 
 
 def test_prelabel_fills_train_rows_and_leaves_test_rows_blind(tmp_path):
@@ -153,9 +153,9 @@ def _llm_labelled_round(tmp_path):
     _suggest(tmp_path, ["1 AQ -", "2 NIM 0", "3 DP + x", "4 ISS +"])
     prelabel(str(tmp_path), "claude-sonnet-5-5", "2026-10-04")
     pd.DataFrame({"sentence_id": ["x0", "x1"], "text": ["a", "b"]}).to_csv(tmp_path / "test_blind.csv", index=False)
-    (tmp_path / "claude_test_labels").mkdir()
-    pd.DataFrame({"sentence_id": ["x0", "x1"]}).to_csv(tmp_path / "claude_test_labels" / "order.csv", index=False)
-    (tmp_path / "claude_test_labels" / "labels_test.txt").write_text("1 AQ -\n2 MG + x\n", encoding="utf-8")
+    (tmp_path / "llm_test_labels").mkdir()
+    pd.DataFrame({"sentence_id": ["x0", "x1"]}).to_csv(tmp_path / "llm_test_labels" / "order.csv", index=False)
+    (tmp_path / "llm_test_labels" / "labels_test.txt").write_text("1 AQ -\n2 MG + x\n", encoding="utf-8")
     return str(tmp_path)
 
 
@@ -165,7 +165,7 @@ def test_label_test_writes_a_separate_file_and_leaves_the_blind_sheet_alone(tmp_
     before = (tmp_path / "test_blind.csv").read_bytes()
     report = label_test(round_dir, "claude-sonnet-5-5", "2026-10-04")
     assert report["test_rows_labelled"] == 2 and report["flagged_not_about_bank"] == 1
-    assert (tmp_path / "claude_test_labels.csv").exists()
+    assert (tmp_path / "llm_test_labels.csv").exists()
     assert (tmp_path / "test_blind.csv").read_bytes() == before, "the blind sheet must stay blind"
 
 

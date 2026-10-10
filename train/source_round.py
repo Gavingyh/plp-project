@@ -10,7 +10,7 @@ side of the people:
              The test rows are never touched: they stay blind (DESIGN decision
              22, guideline "The test split is frozen").
   label-test Put an LLM's labels for the BLIND test rows in a separate file
-             (claude_test_labels.csv). The blind sheet itself is never written to.
+             (llm_test_labels.csv). The blind sheet itself is never written to.
   silver     Build resolved files from the LLM's labels instead of the annotators'
              (prefix `silver_`), for training and scoring while people have not
              labelled yet. Every such row carries the LLM as its `annotator`.
@@ -102,7 +102,7 @@ def parse_suggestions(raw_dir: str) -> pd.DataFrame:
 def prelabel(round_dir: str, rater: str, labelled_on: str) -> dict:
     cand_path = os.path.join(round_dir, "candidates.csv")
     cand = pd.read_csv(cand_path, dtype=str)
-    sugg = parse_suggestions(os.path.join(round_dir, "claude_prelabels"))
+    sugg = parse_suggestions(os.path.join(round_dir, "llm_prelabels"))
 
     train = cand["split"] == "train_dev"
     ids = set(cand.loc[train, "sentence_id"])
@@ -110,7 +110,7 @@ def prelabel(round_dir: str, rater: str, labelled_on: str) -> dict:
         raise ValueError(f"{len(ids - set(sugg['sentence_id']))} train_dev rows have no suggestion")
     sugg = sugg[sugg["sentence_id"].isin(ids)]      # rows the export later dropped need none
     sugg.assign(rater=rater, labelled_on=labelled_on).to_csv(
-        os.path.join(round_dir, "claude_prelabels.csv"), index=False)
+        os.path.join(round_dir, "llm_prelabels.csv"), index=False)
     if cand.loc[~train, ["aspect", "llm_prelabel"]].notna().any().any():
         raise ValueError("test rows already carry model output; they must stay blind")
 
@@ -129,14 +129,14 @@ def prelabel(round_dir: str, rater: str, labelled_on: str) -> dict:
 # ----- LLM labels for the blind test rows, and the silver files -----------------
 
 def label_test(round_dir: str, rater: str, labelled_on: str) -> dict:
-    """Parse the LLM's answers for the blind test rows into claude_test_labels.csv.
+    """Parse the LLM's answers for the blind test rows into llm_test_labels.csv.
     The sheets the annotators use are not touched."""
     test_ids = pd.read_csv(os.path.join(round_dir, "test_blind.csv"), dtype=str)["sentence_id"]
-    sugg = parse_suggestions(os.path.join(round_dir, "claude_test_labels"))
+    sugg = parse_suggestions(os.path.join(round_dir, "llm_test_labels"))
     if set(sugg["sentence_id"]) != set(test_ids):
         raise ValueError("the labels do not cover exactly the blind test rows")
     sugg.assign(rater=rater, labelled_on=labelled_on).to_csv(
-        os.path.join(round_dir, "claude_test_labels.csv"), index=False)
+        os.path.join(round_dir, "llm_test_labels.csv"), index=False)
     return {"test_rows_labelled": len(sugg), "aspects": sugg["claude_aspect"].value_counts().to_dict(),
             "labels": sugg["claude_label"].value_counts().to_dict(),
             "flagged_not_about_bank": int(sugg["claude_not_about_bank"].sum())}
@@ -148,7 +148,7 @@ def silver(round_dir: str, rater: str) -> dict:
     cand = pd.read_csv(os.path.join(round_dir, "candidates.csv"), dtype=str)
     train = cand[cand["split"] == "train_dev"].assign(
         label=lambda d: d["llm_prelabel"], not_about_bank=lambda d: d["llm_not_about_bank"], annotator=rater)
-    tests = pd.read_csv(os.path.join(round_dir, "claude_test_labels.csv"), dtype=str)
+    tests = pd.read_csv(os.path.join(round_dir, "llm_test_labels.csv"), dtype=str)
     blind = pd.read_csv(os.path.join(round_dir, "test_blind.csv"), dtype=str)[["sentence_id"]].merge(
         tests.rename(columns={"claude_aspect": "aspect", "claude_label": "label",
                               "claude_not_about_bank": "not_about_bank"}), on="sentence_id").assign(annotator=rater)
@@ -183,12 +183,12 @@ def _filled(df: pd.DataFrame, what: str) -> pd.DataFrame:
 
 def _was_corrected(round_dir: str, train: pd.DataFrame) -> pd.Series:
     """Whether the annotator changed the LLM's suggestion: its sentiment, or its aspect
-    (from claude_prelabels.csv). Until 7 Oct 2026 this compared the aspect with the
+    (from llm_prelabels.csv). Until 7 Oct 2026 this compared the aspect with the
     pipeline's nearest-centroid guess, which says nothing about the suggestion. Empty
     where the row had no suggestion."""
     suggested = train["llm_prelabel"].fillna("").astype(str).str.strip().str.lower()
     changed = train["label"] != suggested
-    path = os.path.join(round_dir, "claude_prelabels.csv")
+    path = os.path.join(round_dir, "llm_prelabels.csv")
     if os.path.exists(path):
         aspects = pd.read_csv(path, dtype=str).drop_duplicates("sentence_id").set_index("sentence_id")["claude_aspect"]
         suggested_aspect = train["sentence_id"].map(aspects)

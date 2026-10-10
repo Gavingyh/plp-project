@@ -55,7 +55,7 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
 - **CNA articles (`data/cna/`) stay within the team.** Never commit or share
   them.
 - **Opus labels never replace the human labels.** They are an additional
-  rater, kept in `data/labeled/claude/`.
+  rater, kept in `data/labeled/llm_rater/`.
 - **`dashboard/` belongs to a teammate.** Don't edit it; report problems in
   the to-do instead.
 - **Push only completed, tested features** to `main`.

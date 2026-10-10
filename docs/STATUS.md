@@ -285,10 +285,10 @@ trustworthy than the check itself.
 > 0.80, sentiment κ 0.79, every sentiment disagreement on the neutral
 > boundary. That is a human–LLM figure; human–human aspect agreement is still
 > unmeasured. The disagreements (202 aspect, 173 sentiment) wait in
-> `data/labeled/claude/review_*.csv` for people to settle, and the largest
+> `data/labeled/llm_rater/review_*.csv` for people to settle, and the largest
 > group, 63 rows, is a guideline gap: whether a retail customer's investment
 > products are wealth or retail banking
-> ([evidence](evidence/opus-labeller-2026-10-01.md)).
+> ([evidence](evidence/llm-rater-2026-10-01.md)).
 >
 > **Updated 2026-09-30.** The first round is done: 1,300 rows labelled by two
 > people on 2026-09-27 under the 10-aspect taxonomy, 1,277 after removing

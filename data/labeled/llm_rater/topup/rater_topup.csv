@@ -1,4 +1,4 @@
-sentence_id,opus_aspect,opus_not_about_bank
+sentence_id,rater_aspect,rater_not_about_bank
 1a84dec4fbb3ddb545270c36,net_interest_margin,False
 47a5c17b8d74ca62e8aa8e47,management_guidance,False
 a2a75535fe0877299c5bd3ea,asset_quality,False

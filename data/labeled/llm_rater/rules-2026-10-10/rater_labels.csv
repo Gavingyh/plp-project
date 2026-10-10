@@ -1,4 +1,4 @@
-sentence_id,rater,opus_aspect,opus_not_about_bank,opus_label,sheet
+sentence_id,rater,rater_aspect,rater_not_about_bank,rater_label,sheet
 e06182a7815b0715204d6bce,claude-opus-5-5,capital_liquidity,False,positive,topup
 69337fd8ae254678d70d554d,claude-opus-5-5,other,True,neutral,first_round
 546894f505931ac5925ab249,claude-opus-5-5,management_guidance,False,neutral,first_round

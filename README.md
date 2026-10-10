@@ -291,7 +291,7 @@ learning/     Study material on the concepts and techniques used
 docs/spec/    Functional and technical specifications
 docs/evidence/  Dated outputs backing claims in the docs
 docs/diagrams/  Twenty-three diagrams, each traced to the code
-data/labeled/ Human labels; data/labeled/claude/ holds the Opus labeller's answers
+data/labeled/ Human labels; data/labeled/llm_rater/ holds the Opus labeller's answers
 data/plp.db   SQLite store (gitignored; see Getting the database)
 ```
 

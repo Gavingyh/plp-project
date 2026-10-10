@@ -168,7 +168,7 @@ below).
   CDP, 9 a unit trust, fund, ETF or robo-adviser, 4 SRS or CPF, 2 regular
   savings plans and 2 gold; 5 mention a priority or private tier.
 - Opus disagreed with people on wealth against retail in 37 train_dev rows
-  of `data/labeled/claude/review_aspect.csv`, all Reddit; in 36 people said
+  of `data/labeled/llm_rater/review_aspect.csv`, all Reddit; in 36 people said
   wealth and Opus said retail. So people lean "investment products are
   wealth" and Opus leans "anything a retail customer does is retail".
 - But people are split, not consistent: 21 of the 303 Reddit train_dev rows

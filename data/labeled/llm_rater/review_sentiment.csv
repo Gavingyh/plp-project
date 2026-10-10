@@ -1,4 +1,4 @@
-sentence_id,split,source,bank,text,aspect,human_label,opus_label,llm_prelabel,decision
+sentence_id,split,source,bank,text,aspect,human_label,rater_label,llm_prelabel,decision
 f695fc81ff5e8bb24a417959,test,earnings,DBS,"But at this point in time, 2025 and 2026 are probably okay, assuming flat earnings between Harsh Modi On the fully phased-in CET1 ratio, would you be comfortable if it starts hitting Chng Sok Hui Yes, 14% is still above our management operating range guidance of Harsh Modi The second question is on the private banking flows.",capital_liquidity,neutral,positive,positive,
 31bce94c1606f8585233badf,test,earnings,OCBC,"Group CET1 CAR as at 31 December 2024 was 17.1%, and was 15.3% on a fully phased-in basis.",capital_liquidity,positive,neutral,positive,
 3d0bbf800eb0f36702cd6f66,test,earnings,UOB,This is in line with the Monetary Authority of Singapore’s call for banks to cap the total dividends per share (DPS) at 60% of the prior year’s DPS and to make available the option to receive dividends in scrip.,dividend_policy,neutral,negative,negative,

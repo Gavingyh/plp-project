@@ -17,7 +17,7 @@ Stay inside the scope you are given. Note anything outside it in one closing lin
 Check the three success claims (defined in CLAUDE.md, "Success claims") first, wherever the scope touches them. Code: Fine-tuning lead `train/labels.py`, `train/finetune.py`, `train/evaluate.py`; API integrity `api/`, `aggregate/index.py`, `chatbot/tools.py`; Grounded chatbot `chatbot/agent.py`, `chatbot/guards.py`. A counterexample to a claim is high severity.
 
 ## 2. Risk areas (by path)
-- Train/test separation: `split == "test"` rows of `data/labeled/candidates.csv` reaching training, dev, top-up merges (`topup_rows`) or a margin/threshold choice; the same text in two splits; Opus labels (`data/labeled/claude/`) used as gold.
+- Train/test separation: `split == "test"` rows of `data/labeled/candidates.csv` reaching training, dev, top-up merges (`topup_rows`) or a margin/threshold choice; the same text in two splits; Opus labels (`data/labeled/llm_rater/`) used as gold.
 - Metrics: macro-F1 as stated; class imbalance (39 negative of 299 test rows); a number in the docs that the code cannot produce.
 - Index: `aggregate/index.py` (volume floor, n/(n+5) shrinkage, one pair per sentence in the headline, source weights); derived values (deltas, directions) that contradict the stored scores; readers that ignore `model_version`.
 - Chatbot guards: `enforce_evidence`, `strip_unsearched_evidence`, `unverified_numbers`, `chatbot/backends/_text_tool_call.py`; the intent classifier (`chatbot/intent.py`, `config/intents.yaml`): a real question it blocks, a reply that names the wrong bank, a question blocked or lost when Ollama is down (it must fail open).

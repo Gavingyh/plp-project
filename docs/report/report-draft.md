@@ -77,7 +77,7 @@ model's suggested sentiment, which the final labels match on 91.6% of rows.
 An independent rater, Claude Opus 5.5, labelled the same sentences blind
 (DESIGN decision 22): against the human labels, aspect κ 0.80 and sentiment
 κ 0.79, every sentiment disagreement on the neutral boundary
-([opus-labeller-2026-10-01.md](../evidence/opus-labeller-2026-10-01.md)).
+([llm-rater-2026-10-01.md](../evidence/llm-rater-2026-10-01.md)).
 These are human–LLM figures. A blind top-up sheet of 268 sentences for the
 five aspects with fewer than 80 labels is ready for people
 ([labelling-topup-2026-10-01.md](../evidence/labelling-topup-2026-10-01.md)).
@@ -197,7 +197,7 @@ Against the 1,277 human aspect labels:
 | Opus 5.5 (reference rater) | 0.842 | 0.789 |
 
 Sources: [llm-aspect-classifier-2026-10-01.md](../evidence/llm-aspect-classifier-2026-10-01.md),
-[opus-labeller-2026-10-01.md](../evidence/opus-labeller-2026-10-01.md).
+[llm-rater-2026-10-01.md](../evidence/llm-rater-2026-10-01.md).
 
 ### 4.3 Bank entity recognition
 

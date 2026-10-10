@@ -1394,3 +1394,30 @@ has reached this Mac.
 - Dashboard owner: restart the dashboard to pick up the chatbot fix, and
   reword the error line that tells the reader to check `ollama serve`.
 - Before a demo, close memory-heavy programs on the Mac.
+
+### 11 October
+
+At the owner's request, two naming and wording changes, neither of which
+changes behaviour or any label.
+
+- **Names** (`c640962`): `data/labeled/claude/` is now
+  `data/labeled/llm_rater/`; files and CSV columns named `opus_*` are
+  `rater_*`; `train/opus_labels.py` and its test are `rater_labels`; the
+  broker research round's `claude_prelabels` and `claude_test_labels` are
+  `llm_prelabels` and `llm_test_labels`; the two evidence notes are
+  `docs/evidence/llm-rater-2026-10-01.md` and
+  `llm-rater-new-rules-2026-10-10.md`. 163 files moved and 255 references
+  updated in code, tests, docs, diagram tables and the team to-do
+  (republished). The `rater` column still names the model, and the three
+  merges reproduce their files byte for byte.
+- **Comments and docstrings** (`a12606e`): the dates on which things were
+  decided, found or fixed are gone from 91 Python files. Dates that are data
+  stay (examples, formats, coverage, usage examples, file and folder names).
+  Checked per file: the same line count and the same code once docstrings
+  are removed. The code had no em dash in a comment or docstring already.
+
+2538 tests pass after both. Not pushed yet.
+
+**Needs a human (11 Oct):** anyone with local changes under
+`data/labeled/claude/` or `data/labeled/sgx_research/claude_*` should commit
+or stash them before pulling, since those paths have moved.

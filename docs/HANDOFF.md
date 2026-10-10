@@ -1308,3 +1308,89 @@ candidates (the 1 Oct models, the 4 Oct retrain, the adapted models), for the
 re-score week of 12 to 18 Oct; if the adapted models are adopted, the
 Fine-tuning lead claim in `CLAUDE.md` should give their figures.
 
+
+### 10 October
+
+At the owner's request: a chatbot time-out fixed, its speed measured, the
+team's six decisions of 10 Oct logged, Opus labels for every sentiment
+sheet, and a check of a database copy from the team folder.
+
+**The chatbot's time-out** (`docs/evidence/chatbot-timeout-and-speed-2026-10-10.md`).
+The Ask page answered "Read timed out. (read timeout=120)". Ollama had
+unloaded the model; the intent classifier gave up after 60 seconds of
+loading and the chatbot's request after 120. Checked directly: a request
+that gives up makes Ollama abandon the load, so the second request started
+from nothing, on a Mac with 5,984 MB of 7,168 MB of swap in use. Fixed:
+the model is loaded first by a request of its own with a 300-second limit
+(`chatbot/ollama_load.py`), every request keeps it loaded for 30 minutes
+(`OLLAMA_KEEP_ALIVE`), the answer is read as it is written so 120 seconds
+is the longest silence and not the longest answer, and a time-out now says
+the model is slow and memory is probably short. 29 tests added
+(`tests/test_ollama_load.py`): 2491 in `tests/`, 2538 from the root; all
+pass (2443 passed, 2 skipped, 46 expected failures).
+
+**Speed.** Five questions took 25 to 105 seconds. The model's writing speed
+fell from 11.4 to 5.2 tokens a second within three minutes while swap in
+use rose from 7,170 to 8,052 MB, with no thermal warning: memory pressure
+from other programs is the main cause, not the chatbot's code. The six
+tool descriptions are 967 tokens that the model reads again for every
+question (llama3.1's template writes them inside the newest question). An
+option that writes them at the start of the instructions, where Ollama
+caches them, is built and left off (`OLLAMA_TOOLS_IN_SYSTEM`): on gold set
+v2 it scored right tool 22 of 24 against 23, behaviour 8 of 8 both ways,
+no citation flagged either way, median 36.8 against 41.3 seconds and mean
+42.9 against 42.3, in a run that shared the Mac with the test suite. One
+run each, so neither difference is established.
+
+**The team's decisions of 10 Oct** are in `docs/PLAN.md` (section 2) and on
+the team to-do, republished to the same link: retail products carry
+sentiment directed at the bank; wealth means the priority and private
+tiers; the test rows are not relabelled; both aspect methods run and are
+reported; Opus 5.5 labels every sentiment sheet; evaluation adds precision
+and recall for each class, every model is re-run and the team picks one.
+The meeting note said to declare the Opus labels as human labels. That was
+not done: with the owner's agreement they are recorded and reported as LLM
+labels, since the report declares its GenAI use.
+
+**Opus labels under the new rules**
+(`docs/evidence/opus-labels-new-rules-2026-10-10.md`,
+`data/labeled/claude/rules-2026-10-10/`). The two rules are written into
+`docs/annotation-guideline.md`. 2,075 sentences (first round 1,277, top-up
+268, active-learning 150, broker research 380), aspect blind and then
+sentiment given Opus's own aspect, by 36 Opus subagents that read only
+their instructions and input (191 tool calls audited). 757 positive, 879
+neutral, 439 negative. Against people on the 1,277 rows: aspect κ 0.802,
+sentiment κ 0.793 (1 Oct run: 0.801 and 0.790). The retail rule moved 34 of
+280 neutral retail rows to positive or negative, and 28 rows went the other
+way; the two Opus runs give the same sentiment on 87.9% of rows, so the
+rule's effect is about the size of the difference between two runs. The
+labels replace nothing: no other labelling file changed.
+
+**The database.** `data/plp.db copy`, downloaded from the team folder at
+23:07 and again at 23:57, is byte-identical to `data/plp.db` and to the
+30 Sep snapshot unpacked (SHA-256 `7ea0da08…5734fb`; 28,002 documents,
+44,345 sentences, no broker research rows). The first copy was removed as a
+duplicate; the second is left where it is, untracked. No newer database
+has reached this Mac.
+
+**Needs a human (10 Oct):**
+- Which labels train and test the models: the retail rule changed and the
+  test rows keep their old labels, so train and test would follow different
+  rules; and whether the 1,277 rows keep people's labels or take Opus's.
+- Confirm the wording of the two rules (the retail rule is the "customer
+  value" option; the wealth rule was extended to brokerage, regular savings
+  plans, insurance and robo-advisers). `config/aspects.yaml` still has the
+  old wealth definition: changing it redoes the corpus aspect run (about a
+  day).
+- `CLAUDE.md` and DESIGN decision 22 still say Opus labels never replace
+  the human labels; the owner should change the rule to what the team now
+  means.
+- Which aspect method the product serves, now that both are reported.
+- The newer database a teammate reports: the database is in write-ahead
+  mode, so their new rows may be in `plp.db-wal` and missing from the
+  uploaded `plp.db`. Stop the API and dashboard there, run
+  `PRAGMA wal_checkpoint(TRUNCATE);`, then upload it under a dated name
+  with its SHA-256.
+- Dashboard owner: restart the dashboard to pick up the chatbot fix, and
+  reword the error line that tells the reader to check `ollama serve`.
+- Before a demo, close memory-heavy programs on the Mac.

@@ -56,16 +56,28 @@ By the project owner, from the decision brief (`docs/briefs/decisions-2026-10-02
 | **Labels: the human labels stay where Opus disagrees** (202 aspects, 173 sentiments); no full relabel | Opus is an additional rater, never the gold label (DESIGN decision 22) | Only the rows on the economist and wealth-or-retail boundaries are fixed, after the team decides those two rules |
 | **Passing mentions stay** (9) | The default; they are about 6% of sentences | No filtering; the report gives the 6% |
 
+### Made on 2026-10-10
+
+By the team. Recorded from the meeting note; the follow-on work and the points left open are on the team to-do (`docs/briefs/team-todo-2026-10-07.html`).
+
+| decision | consequence |
+|---|---|
+| **Retail products carry sentiment directed at the bank**; a product's feature is no longer kept neutral | A rule in `docs/annotation-guideline.md`, worded as the "customer value" option of the 7 Oct paper; the team should confirm the wording |
+| **Wealth means the priority and private tiers** (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves | The `wealth_business` row and a rule in the guideline. `config/aspects.yaml` still has the old definition: changing it means redoing the corpus aspect run (about a day) |
+| **The test rows are not relabelled** | The 299 test labels stay; the report should say annotators saw a model's suggestion |
+| **Aspects: both methods run and are reported**, the centroids and the LLM | Which one the index, dashboard and chatbot serve is still open (below) |
+| **Opus 5.5 labels every sentiment sheet** | Done 10 Oct, 2,075 rows ([evidence](evidence/opus-labels-new-rules-2026-10-10.md)). The labels are reported as LLM labels, not human labels (the owner's change to the meeting note, for the GenAI declaration). This replaces the 4 Oct decision above that the human labels stay where Opus disagrees; `CLAUDE.md` and DESIGN decision 22 still state the old rule until the owner changes them |
+| **Evaluation reports precision and recall for positive, negative and neutral** beside macro-F1 and accuracy; every model is re-run and the team links the superior one to the chatbot and dashboard | `train/evaluation_report.py` already writes them; the re-run is in the 12 to 18 Oct week |
+
 ### Still open
 
 | decision | who | by |
 |---|---|---|
-| **Aspect method:** the LLM's aspects replace the centroids, and the rule where two models disagree (brief, 1) | team | 5 Oct |
-| **Test split:** relabel the 299 test rows blind, or keep them and report the anchoring (brief, 2) | team | 5 Oct |
+| **Which labels train and test the models:** the retail rule changed on 10 Oct and the test rows keep their old labels; and for the 1,277 rows people labelled, the person's label or Opus's new one (to-do, section 1) | team | 12 Oct |
+| **Aspect method served:** both run and are reported (10 Oct), but the index, dashboard and chatbot read one; and the rule where two models disagree (brief, 1) | team | before the re-score |
 | **Blended index:** one blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text (brief, 3) | team | 5 Oct |
 | **Bank economists:** whether a bank economist's macro forecast is "about the bank" (brief, 4) | team | 5 Oct |
-| **Wealth or retail** for priority-banking and investment products (brief, 5) | team | 5 Oct |
-| **Scoring model:** base FinBERT or the retrained fine-tuned average, and the margin (brief, 7) | team | 12 Oct |
+| **Scoring model:** chosen from the re-run table of every model, with precision and recall for each class (10 Oct); say what "superior" means first (brief, 7) | team | 12 to 14 Oct |
 | **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
 
 ---

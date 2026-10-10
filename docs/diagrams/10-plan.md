@@ -50,10 +50,10 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| week 1 and its gate | `docs/PLAN.md:192` | `| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled |` |
-| week 2 and its gate | `docs/PLAN.md:193` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; blended index decided |` |
-| week 3 and its gate | `docs/PLAN.md:194` | `| 12 – 18 Oct | ~1,000 rows labelled; model trained |` |
-| week 4 and its gate | `docs/PLAN.md:195` | `| 19 – 25 Oct | Results frozen |` |
-| week 5 and its gate | `docs/PLAN.md:196` | `| 26 Oct – 1 Nov | Submitted |` |
+| week 1 and its gate | `docs/PLAN.md:204` | `| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled |` |
+| week 2 and its gate | `docs/PLAN.md:205` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; blended index decided |` |
+| week 3 and its gate | `docs/PLAN.md:206` | `| 12 – 18 Oct | ~1,000 rows labelled; model trained |` |
+| week 4 and its gate | `docs/PLAN.md:207` | `| 19 – 25 Oct | Results frozen |` |
+| week 5 and its gate | `docs/PLAN.md:208` | `| 26 Oct – 1 Nov | Submitted |` |
 | submission date | `docs/PLAN.md:16` | `All due **Sunday 1 November 2026**.` |
-| fallback if labelling slips | `docs/PLAN.md:198` | `If labelling slips, the fallback is to fine-tune` |
+| fallback if labelling slips | `docs/PLAN.md:210` | `If labelling slips, the fallback is to fine-tune` |

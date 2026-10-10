@@ -1,0 +1,120 @@
+sentence_id,bank,source,text,aspect
+6e14169dcd045c1532cd608e,DBS,earnings,"So, the defining questions to me are do we have enough momentum in the business, is our strategy sound, is our execution capability robust and is the culture in the company long lasting?",management_guidance
+9ea254f5226df48722cc473b,UOB,arctic_shift,Because end result is still that the person keeps 100k or 150k with UOB.,retail_banking_sentiment
+3fd86cc716e4c2a0ad05951a,DBS,arctic_shift,"On one hand, DBS says the STI will face a choppy third quarter, on the other hand JPM says the STI will hit 7000.",macro_market_environment
+01bb924edd6d4fbce5bb09f2,DBS,earnings,"Higher repayments, upgrades, and write-offs more than offset new NPA formation, which Specific allowances.",asset_quality
+49faa12af21a78adb10b2d25,OCBC,google_news,"OCBC Malaysia, CGC launch RM1.3bil guarantee facility to boost SME financing",other
+b1d49cdc24b6b0563e86336b,OCBC,arctic_shift,OCBC 360 gives you bonus interest for salary crediting without any minimum spend requirement.,retail_banking_sentiment
+bd05260a4c3d8460608710a6,UOB,arctic_shift,"Citing the need to revise interest rates to “align with long-term interest rate environment expectations”, UOB has announced a drop in rates for its UOB Stash account.",retail_banking_sentiment
+4bbd022883731c0199e25418,DBS,arctic_shift,"Also their exposure to Greater China is at least 12%, which is the same exposure percentage as DBS.",asset_quality
+7cb659c81c4ca4d2897d297c,OCBC,arctic_shift,My parents need some advice as they have been paying interest through the roof for their loan that they took up after buying a GE plan via their OCBC RM.,retail_banking_sentiment
+b7e5cc110cbc0aeebde14345,DBS,earnings,"The good news is that our direct exposure to China-US trade flows, particularly to the US, is limited, so we do not expect significant impact.",macro_market_environment
+8b026cf25c5afa5061e4b5b2,DBS,earnings,"We do not have any idea about the outcome of the case, so we chose to be conservative and provide fully for our exposure.",asset_quality
+c6cdadc6d0f8c5392debebf2,UOB,earnings,"Wee Ee Cheong, Deputy Chairman and Chief Executive Officer For the third quarter ended 30 September 2023 Robust portfolio delivering stable growth Higher core net profit1",income_profit_results
+540d7e0492f4216fa0a1a0d9,DBS,earnings,Trade loans and consumer Deposits rose 1% or SGD 7 billion in constant-currency terms to SGD 547 billion.,net_interest_margin
+cb39b769fa8fadfc25797db3,OCBC,sgx_research,NPL coverage ratio continues to be high at 151%.,asset_quality
+beec056f87edafce326a0d39,OCBC,arctic_shift,"I think it is better put max 100k to ocbc 360, then 20k to chocolate finance, and 10k can be in any money market fund.",retail_banking_sentiment
+685e0648693ce68ee7521573,UOB,sgx_research,Management believes there are not many exposures left for them to work through and deeper haircuts were taken for provisions set aside for vulnerable accounts.,asset_quality
+a239b959423b4de7d35ea777,UOB,arctic_shift,Can consider uob lady solitaire if your annual income is above 120k.,retail_banking_sentiment
+8dc018bf9d98aa4a73286695,UOB,google_news,UOB Live kicks off with 'An Evening with Ed Sheeran',other
+9dcb9f0609d9d9d48d696ff0,DBS,earnings,We have to see how much capital needs to be retained for RWA growth and Tan Su Shan,capital_liquidity
+d3570e841e55ccb238546bc3,DBS,earnings,"I had said high-single-digit growth previously on the assumption that, after taking into account a year-on-year decline in the first quarter, we would get double-digit growth for the remaining three quarters.",management_guidance
+4847d5413851113aabc8784b,DBS,earnings,"The net new money for these two segments was about $3 billion, which is lower than our usual run-rate as there was some transitory outflow of about $2 billion during the quarter, some of which came back in April.",wealth_business
+175a16b69a4cea33ca47a4c8,DBS,google_news,DBS Introduces Mobile Wallet Toggle to Help Prevent Phishing-Linked Fraud,retail_banking_sentiment
+79d3839a06d25a99c749bb90,OCBC,sgx_research,"Higher-than-expected NPLs, high inflationary pressure, and recession ary risks could unwind expectations for credit cost and NPL declines, thus posing risks to Fed cuts.",asset_quality
+33d8029b1ba5a9ce7f83bc03,DBS,arctic_shift,It appeared to work out okay because the transaction went through and I could see the number of units in my DBS SRS went down.,retail_banking_sentiment
+b45a80c58e7afb6a4a7d59d5,DBS,sgx_research,"FY26-28F PATMI tweaked up by 2% pa on higher non-II leading to revised DBS's unchanged 2% ESG premium) from S$63.50, 9% upside, ~6% yield.",investor_stock_sentiment
+3c90f5788898e88cced3a652,UOB,google_news,UOB reports $5.7 billion net profit after pre-emptive provisions as fee income reaches record,income_profit_results
+178ee0faa3ae114e3e8f4f48,DBS,google_news,"DBS Bank India launches relationship-led banking for 'India’s globally mobile, emerging affluent'",wealth_business
+4ac3622cba009f5ee2b2985b,OCBC,sgx_research,"OCBC launched a new strategy focusing on the next frontier of Analyst growth, which includes deepening core market franchise across its twin hubs Singapore and Hong stable to improving ROE, driven by a stronger focus on higher-returning businesses while maintaining cost discipline with CIR at low to mid-40%.",management_guidance
+1395bb60840a17e916133a23,DBS,sgx_research,DBS (SGX:D05) : info)' management guided 2025 net interest income to be slightly above 2024 levels.,management_guidance
+a59b5978a96ff1893913e073,OCBC,sgx_research,"Our top 8 STI component picks are OCBC, SingTel, UOL, CityDev, Yangzijiang, SG Next 50 ETF: Next catalyst for SMCs?",investor_stock_sentiment
+667053934ca379d6baac503f,DBS,earnings,"We can go straight to Q&A. Jayden Vantakaris (Macquarie) Piyush, congratulations on an excellent tenure as CEO, and looking forward to the transition.",other
+12e6b12b1b3acfcde172b46e,DBS,earnings,"These were accretive to Markets trading income but dilute NIM, so group NIM was flat.",net_interest_margin
+c7095942100a75f7e28f1e8d,OCBC,arctic_shift,Only 487% of Singaporeans have enough savings to cover six months' worth of expenses according to a 2023 survey conducted by OCBC.,other
+83596fdd1b834a9f5457f1bb,UOB,arctic_shift,Wonder if such issues is growing such that UOB feel the need to conduct courses for their employees.,other
+331e74561f660ae05cc43e40,UOB,arctic_shift,uob metal infinite visa but do check the income requirements!,retail_banking_sentiment
+09e6f77d3e2247a74d5da399,UOB,sgx_research,"Other non-interest income of SGD554mn (-5% y/y, +25% q/q) was driven by stronger customer treasury income and good performance from trading and liquidity management Higher credit costs of 35bps due to prudent general provisions; NPL ticked up to 1.6%.1Q25 credit cost rose q/q to 35bps (4Q24: 25bps) driven by an increase in general provisions (GP) amid macro uncertainties.",asset_quality
+73fa27ae7607c0b6cf2200b1,OCBC,yahoo_news,Market sentiment has been shifting as investors react to new regulatory developments and ongoing regional banking trends.,investor_stock_sentiment
+3bafc4bc8eb122af3c07de8e,DBS,earnings,"Markets trading income rose 77%, or 144 million.",income_profit_results
+a9dfdc3f1cb7c16b9cebaef8,OCBC,sgx_research,Maintain HOLD with higher TP of SGD17.60 for clarity on capital management plans.,investor_stock_sentiment
+b5cbacfcf81b0c132441fc9f,DBS,arctic_shift,Market recovery - I would expect DBS to recover faster than CSPX since diversification also means slower recovery.,investor_stock_sentiment
+c084d64c7d73d8c69eb95afa,UOB,google_news,"UOB extends 60,000 miles Visa Infinite Metal sign-up bonus",retail_banking_sentiment
+88ec6f16b01ecd2de2497b1d,UOB,earnings,"4. Refers to digital banking transactions via UOB Infinity/BIBPlus 5 Financial Highlights 1Q23 4Q22 QoQ 1Q22 YoY Net interest income 2,409 2,560 ( 6) 1,686 4 3 Other non-interest income 563 285 9 8 101 >100 Less: Total expenses 1,440 1,418 2 1,058 3 6 Operating profit 2,083 1,912 9 1,301 6 0",income_profit_results
+647737c646c418558da6f463,DBS,arctic_shift,can i know how u setup the transfer using DBS MCA?,retail_banking_sentiment
+e7b0d4eb043c5b5cb2c2e447,OCBC,earnings,Record 2Q26 and 1H26 profit lifted by Non-II growth Diversified franchise delivered strong performance Net Profit (S$m) Total Income (S$m),income_profit_results
+3345876070749735f8ae3ac7,OCBC,arctic_shift,He was asked by OCBC banker to take up loan to buy whole life plan.,retail_banking_sentiment
+67c90b9c9f939c6ab0845c43,DBS,arctic_shift,Yes but only because I had too much cash sitting in my DBS multiplier account that I hadn't invested.. not cause my takehome pay lets me put that much 😅,retail_banking_sentiment
+7d6e199709b36647a771272e,UOB,arctic_shift,"If you book flights SIA or Scoot, go with UOB KrisFlyer.",retail_banking_sentiment
+4be4137f7745f94291d31938,OCBC,arctic_shift,"The MBR is OCBC's Mortgage Board Rate (MBR), which is a bank-managed rate and currently stands at 0.80% p.a.",retail_banking_sentiment
+3252d1220fb37b07f3145650,DBS,earnings,This means our entire stack of GP and SP reserves is resilient to future problematic Tan Yong Hong (Citi) Will fourth-quarter NIM come in below 2% given the revised guidance that first-quarter NIM of 2.12% is the peak and there is further deposit repricing?,net_interest_margin
+b8c79ba2c22262b507324dde,OCBC,google_news,"OCBC builds largest $500 million office outside CBD to house up to 4,000 employees in Punggol Digital District",other
+09c14830128f5de599c57e7d,OCBC,arctic_shift,"I'm guessing it's OCBC PremierLife Generation, with financing.",retail_banking_sentiment
+b9f3c889683cfa84bc56cecb,OCBC,arctic_shift,"INVESTORS will have easier access to Hong Kong-listed technology stocks next month, as OCBC works towards the listing of Singapore's first tech-focused exchange-traded fund on the Singapore Exchange.",retail_banking_sentiment
+7dfc919bebf2a53c4b1031c6,DBS,earnings,"Piyush Gupta So far, we have not seen pricing pressure in the large corporate book, which forms the bulk of our lending.",net_interest_margin
+f13c800b65a4685e9c6eb3f1,UOB,arctic_shift,Uob stash 100k is at 2.04% but must maintain or increase monthly average balance.,retail_banking_sentiment
+bcfd37b0eca5925b5204a6fb,DBS,earnings,"But even when compared with first quarter of 2022, for example, we still grew 20% in wealth management fees.",wealth_business
+8610f97c012195747bbfafde,UOB,arctic_shift,Question: 1) Does it make sense for me to liquidate this ETF to park it into bank’s multiplier type of accounts to get a better rate of return (assume UOB 3.8% vs 2.98% 2022 Nikko annualised returns) ?,retail_banking_sentiment
+ca5676c0fb2debbb1106694d,UOB,earnings,"The Group’s liquidity and funding positions remained healthy with 4Q21’s average all-currency liquidity coverage ratio at 133% and net stable funding ratio at 116%, well above the minimum regulatory requirements.",capital_liquidity
+2ca31f8ef89c0ade9598b83a,UOB,sgx_research,"NIM, though, remains under pressure, and UOB decision to accelerate the build-up of its performing loan coverage dampened overall sector earnings.",asset_quality
+03e88c8698090b95e28e979c,DBS,earnings,The decline was more than offset by double-digit billion led by wealth management and loan-related fees.,income_profit_results
+7aa7109c655489eac2ad3180,OCBC,sgx_research,"Our TP represents ~1.3x FY25F, about 1SD above OCBC's historical 12-year average P/BV (one-year forward).",investor_stock_sentiment
+d6250c2d0570adabfb35dc73,UOB,arctic_shift,"Now that it has been nerfed beyond hope, I am thinking, should I move the majority of my UOB funds elsewhere?",retail_banking_sentiment
+8ee645807cf9a36488daa797,DBS,arctic_shift,I have a DBS Multicurrency Account and at the start DBS kept converting it to SGD automatically even though there’s a USD wallet.,retail_banking_sentiment
+7904a69195daf07a9071861b,DBS,arctic_shift,i use jumpstart for 1% cashback and 2% interest dbs multiplier for interest (i think base 1.8%) as i do use paylah as I'm a student.,retail_banking_sentiment
+dc44d82851e525e494f2a999,OCBC,earnings,"Global Markets’ 1H26 profit before income tax rose 16% to S$523 million led by growth in net interest income from The Group’s insurance business, including its fund management activities, is undertaken by GEH and its subsidiaries, which provide both life and general insurance products to its customers mainly in Singapore and Malaysia.",income_profit_results
+c023708dbe0c94773c3c45cd,UOB,arctic_shift,"By the time UOB One revises their interest rates downwards, I think TBills/SSBs will not be offering such high rates as well, which is why I am contemplating moving my cash into TBills/SSBs right now to lock in the relatively high rates.",retail_banking_sentiment
+d4a38a52809a0b02ededf4c5,DBS,earnings,"For example, we bought a new mainframe to supplement our capacity for just-in-case.",other
+58240c82316c1718f516e1c9,DBS,arctic_shift,"DBS Cashline is a loan, it doesn't make sense to use a loan to repay a bill unless the loan has lower interest rate than the bill.",retail_banking_sentiment
+7bccab15af41e98b272b42f6,OCBC,arctic_shift,"I just found out that OCBC was running an SRS promo, and got 50 bucks credited into my account for creating and depositing money into the account.",retail_banking_sentiment
+90df06389bde0a0c94d1c2f3,UOB,google_news,UOB to cut maximum interest rate for flagship savings account from May 1,retail_banking_sentiment
+9e11556bc95bb0879e4b7202,DBS,earnings,Net interest income fell 1% in nominal terms and rose 2% on a day-adjusted basis.,net_interest_margin
+cb73c6f5281d7c581247bfeb,DBS,arctic_shift,"If you feel like its too concentrated, you think when DBS is down, STI wont be down together?",investor_stock_sentiment
+913870587f2ebb045c33fbff,OCBC,yahoo_news,This focus underscores how expectations around interest rate trends and sector earnings are shaping sentiment toward OCBC and the wider Straits Times Index.,investor_stock_sentiment
+6d5d24e89750993cc66d1a87,DBS,sgx_research,DBS is the only bank with a fixed DPS of S$3.06.,dividend_policy
+67e3ad63eba76592cdee647c,DBS,earnings,"Compared to the previous year, expenses grew 10%, with Citi Taiwan accounting for three percentage points of the increase.",income_profit_results
+ff194e2b5845303d28a3672f,UOB,arctic_shift,(been looking at Uob One) thanks in advance,retail_banking_sentiment
+d6ea4daf2c889008ea950c8e,UOB,earnings,"With our strengthened market position and larger regional franchise, we will focus on enhancing our offerings and capabilities as we serve our expanded customer base.”",management_guidance
+1d96cf630d196fb89fd738b7,DBS,earnings,"We had a very strong first quarter, while the second quarter was a bit slower as customers redeployed deposits into investments.",net_interest_margin
+ab4dd725615ad88353c3138b,DBS,earnings,"Half 2024 vs 2nd Half 2023 Increase/(decrease) due to change in Volume Rate change Volume Rate change Customer non-trade loans 250 787 1,037 85 80 165 Interbank assets 319 74 393 331 (61) 270 Securities and others 250 493 743 237 294 531 Net impact on net interest income 372 (15) 357 338 (99) 239 DBS GROUP HOLDINGS LTD AND ITS SUBSIDIARIES ($m)",net_interest_margin
+7692ef48f6cf263f34652ce8,OCBC,arctic_shift,OCBC 365 is only 3% cashback for groceries and 5% cashback on dining.,retail_banking_sentiment
+39711751014d9d31d911d751,UOB,earnings,The non- performing assets coverage remained strong at 98% or 207% after taking collateral into account.,asset_quality
+85924ceedcef5f0ebfa3a85a,DBS,earnings,Net interest income grew 55% to $3.57 billion from an improved net interest margin and Income from treasury customer sales rose 11% from a higher average loan and deposit volumes.,net_interest_margin
+2ba925cb5fe8d27502701fd6,DBS,sgx_research,"On a year-to-date basis, DBS remained the strongest performer (+29%), due to DBS’s clearer dividend policy and guidance for further increases in FY26e, as well as its ability to attract more deposits, which, in turn, improves NII.",investor_stock_sentiment
+3528ddd1696047b6d19e18e6,DBS,earnings,"This has been high ROE structural growth In Institutional Banking, we saw structural growth in TMT, particularly around the tech ecosystem.",income_profit_results
+01bf3ba61f6dbb80636e1d6a,DBS,google_news,Singapore’s best FX bank 2025: DBS,other
+6e7a2f35afc572c25f14d772,DBS,earnings,Chng Sok Hui We guided for high single-digit growth for commercial book non-interest income.,management_guidance
+acd8f9a5dc604b384eb853b3,DBS,earnings,The reported CET1 ratio rose 0.4 percentage points from the previous quarter to 17.4% mainly due to the implementation of revised market risk rules effective 1 January 2025.,capital_liquidity
+0a7af22c64714df3c57280cf,DBS,sgx_research,"Lastly, while there was no commitment to continue with the S$0.24 step-up in absolute annual ordinary dividend beyond 2026, DBS possibility unless macroeconomic conditions turn out to be worse than expected.",dividend_policy
+1f4bd2951927c787896b921f,DBS,google_news,"India's economy is in a 'sweet spot,' but private consumption growth may continue to slow: DBS Bank",macro_market_environment
+3c1c1e8b01093fd7a0faafa2,DBS,earnings,"Piyush Gupta No, we have not had any material downgrades.",asset_quality
+7ceeb9f724496681841f4460,UOB,arctic_shift,"To put it nicely, uob products are not coherent.",retail_banking_sentiment
+0ecd9a11cf75476e334fa266,DBS,google_news,DBS/POSB rolls out $40m suite of measures to ease cost-of-living pressure for low-income households,other
+b05c71610c387d9f7951e703,UOB,yahoo_news,"More than 120 F&B and retail business owners, industry leaders and ecosystem partners gathered at a joint SkillsFuture Queen Bee Masterclass organised by UOB and Raffles Hotel Singapore, as part of the UOB SME Elevate Programme to explore how businesses can strengthen profitability, improve productivity and drive sustainable growth amid rising costs, manpower constraints and evolving customer expectations.",other
+1df1d8861d90965514309c4b,OCBC,google_news,"OCBC, AWC sign US$200 million sustainability-linked loan",other
+5536a23599b554f8ef5ac7ce,DBS,earnings,And our books in these Tan Su Shan,other
+8c5a133d12a189f068cc17e7,OCBC,cna,"""Looking ahead, the heightened uncertainties brought about by the shifts in trade policies and geopolitical risks are expected to have a dampening effect on overall economic growth in the region,"" OCBC's Group Chief Executive Helen Wong said in a statement.",macro_market_environment
+e9fb199fe53316569956f841,DBS,arctic_shift,And lastly DBS not to go down else fk my retirement plan.,investor_stock_sentiment
+6de48e67a88bda07e1fe546f,DBS,earnings,The NPL ratio was unchanged from the previous quarter at 1.1% as new non-performing asset formation remained low and was offset by repayments and write-offs.,asset_quality
+dc604a3a3f648523b3dc016b,DBS,arctic_shift,"I'm not sure what is the final transaction code DBS receives, but I was able to resolve the issue when I notified I need to raise this as a complaint with bank.",retail_banking_sentiment
+fbb5450908fad7edf5042033,DBS,arctic_shift,Not sure why you would want to use DBS and go through the hassle of AML/KYC and cross border onboarding hassle.,retail_banking_sentiment
+1a8e97cc9f13feb06c796310,UOB,sgx_research,"Faster-than-expected Fed cuts also pose downside risks Management reinstated FY25Fguidance,revisingall guidance downwards except for credit costs 2Q25 revenue and net profit missed consensus.",management_guidance
+528eeabb61ddbbeaf3376401,UOB,sgx_research,"As the current share buyback programme concludes, management will assess the suitability of initiating another tranche.",dividend_policy
+3aba801610685056e8319f5d,OCBC,arctic_shift,I used these funds to fully repay my company loan to OCBC as I was winding down the operations and $3700 a month is a tough act to keep up.,retail_banking_sentiment
+ac18b87c9455bc097d83c87d,DBS,earnings,Asset quality continued to be good.,asset_quality
+d091439ee68ae151728e6345,DBS,earnings,"Net profit rose 11% to a new high of $11.4 billion, with return on equity at 18.0%, sustained at the previous year’s record.",income_profit_results
+2b581a0f0157fe0ae3885f92,OCBC,earnings,"While some recent economic indicators are looking more favourable, near-term risks remain, such as heightening geopolitical volatility arising from ongoing wars and the outcome of a number of key elections this year.",macro_market_environment
+68b3c806b89cfa5666f8710e,DBS,sgx_research,"During the reporting quarter, the upward revisions to our DBS numbers, leaving our FY25-27F sector PATMI relatively unchanged.",investor_stock_sentiment
+a1e6b01d4a81d67dee721b0e,DBS,earnings,"The Board declared an ordinary dividend of SGD 66 cents per share and a Capital Return dividend of SGD 15 cents per share for the second quarter, bringing DBS/Second-quarter 2026 results Page 5 of 8 DBS Group Holdings Ltd",dividend_policy
+fd62306ff2067a981cd76fa6,OCBC,earnings,"First Quarter 2023 Results Press Release OCBC Group First Quarter 2023 Net Profit Up 39% from the Previous Year to a Record S$1.88 billion Singapore, 10 May 2023 – Oversea-Chinese Banking Corporation Limited (“OCBC”) reported record net profit of S$1.88 billion for the first quarter of 2023 (“1Q23”), 39% higher as compared to S$1.36 billion a year ago (“1Q22”), and 44% above S$1.31 billion in the previous quarter (“4Q22”).",income_profit_results
+1945810fb3a02bbb6de5e78a,UOB,arctic_shift,"I have multi currency accounts in Citibank, UOB and TransferWise with USD funds in them, and can also transfer SGD to Tiger then convert there.",retail_banking_sentiment
+f60d3ce6650808f4d3d68e11,OCBC,sgx_research,"Management projects FY25F loan growth to be in the mid-single digits, with the CIR in the low 40s and credit costs within the range of 20-25bps.",management_guidance
+f593bf0dba7d0fad7e8b4634,OCBC,earnings,"These ratios were well above the regulatory minima of 6.5%, 8% and 10%, respectively, for 2024.2/",capital_liquidity
+7946bfd7469ac6965def0c99,UOB,earnings,"0.2%pt YoY • Strong CET1 ratio franchise, capturing Specialisation Financials sector income and risk mitigation Non-real estate income transactions Digital banking transactions by 1.",capital_liquidity
+30e4026911160feb65b5a322,UOB,earnings,"As at 31 December 2021, the Group's Common Equity Tier 1 Capital Adequacy Ratio remained strong at 13.5%.",capital_liquidity
+87bef462fdc71fa26dddc070,DBS,arctic_shift,DBS is so despicable for doing this to broke graduates.. they should have some flexibility in place for all verified cases - and not have people beg their MPs before condescending to help,retail_banking_sentiment
+c97272c068d11bc02c261a88,UOB,arctic_shift,I applied at the same time with another UOB card which did have an offer so the timeline did matter to me for the other card.,retail_banking_sentiment
+2936c778c43e48a97af85cf4,OCBC,google_news,"OCBC, Bank of Ningbo partners Johor state govt, investment authorities to promote JS-SEZ in Beijing",other
+6260adf4b1edb065b73da213,DBS,arctic_shift,"Miles card wise, I only own the DBS Women’s card which is capped at $1500 for 4 mpd.",retail_banking_sentiment
+c284f6cb5bb011d9be98ef7c,UOB,sgx_research,UOB remains committed to its On suspension of guidance and outlook: UOB has suspended its 2025 guidance as management evaluates the impact from US Liberation Day.,management_guidance
+680d88b147aef39009960857,UOB,arctic_shift,Or can I just withdraw the USD and UOB will convert the funds on their end for me,retail_banking_sentiment

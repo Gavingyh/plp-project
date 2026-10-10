@@ -36,11 +36,41 @@ Derived from the clustered corpus; definitions and counts in
 | `net_interest_margin` | NIM and net interest income, loan and deposit growth as a driver of them, the effect of rate moves on the bank's earnings | rates offered to customers (`retail_banking_sentiment`) |
 | `management_guidance` | forward-looking statements by the bank: targets, outlook, guidance raised or cut, strategy, earnings-call answers | results already reported (`income_profit_results`) |
 | `income_profit_results` | reported income and profit: total income, net profit, fee and trading income | results that are specifically NIM, asset quality or wealth (those aspects) |
-| `wealth_business` | wealth management and private or premier banking: AUM, wealth fee income, wealth targets | retail savings products (`retail_banking_sentiment`) |
+| `wealth_business` | the banks' wealth segments: the priority and private banking tiers (DBS Treasures and Treasures Private Client, OCBC Premier Banking, UOB Privilege Banking, the private banks), AUM, wealth fee income, wealth targets | products ordinary customers also hold, such as loans, mortgages, unit trusts and savings accounts, unless the sentence is about a wealth tier (`retail_banking_sentiment`) |
 | `investor_stock_sentiment` | the stock itself: buy, sell or hold views, share price and valuation, target prices, returns against alternatives | the bank's own results (`income_profit_results`) |
 | `retail_banking_sentiment` | products and service as customers experience them: cards, cashback, savings accounts, fees, app outages, scams, rejected applications | — |
 | `macro_market_environment` | GDP, rate cuts and hikes, geopolitics and trade, the macro outlook as it affects the banks | — |
 | `other` | appointments and pay, awards, M&A and partnerships, CSR, careers, regulatory boilerplate, anything else | — |
+
+### Two rules decided on 2026-10-10
+
+The team decided these on 10 October 2026. Labels made before that date
+followed the older reading; see the note under each.
+
+- **Wealth means the wealth tiers.** `wealth_business` covers the priority
+  and private banking tiers (DBS Treasures, priority banking and the like)
+  and the wealth segment's own figures. Loans, mortgages and unit trusts are
+  not unique to wealth customers, so a sentence about one of them is
+  `retail_banking_sentiment` unless it is about a wealth tier or the wealth
+  segment. The same reasoning is applied to other products an ordinary
+  customer can hold (a brokerage account, a regular savings plan, insurance,
+  a robo-adviser); that extension is not in the team's note, so confirm it.
+  Before this, people labelled many investment products `wealth_business`
+  (29 of the 48 Reddit wealth rows in train/dev,
+  [local-context-proposals](briefs/local-context-proposals-2026-10-07.md)).
+- **A retail product's feature carries sentiment directed at the bank.** On
+  `retail_banking_sentiment`, what a product offers, costs or requires is no
+  longer kept `neutral`. Judge it from the customer's side: a feature clearly
+  good for the customer (a high rate, a bonus, no fee) is `positive`; one
+  clearly bad (a fee, a rate cut, a perk removed) is `negative`. A bare
+  mention of a product, a question about it, a how-to, or terms with both
+  good and bad sides stays `neutral`. A sentence where the writer judges the
+  product, compares it, recommends it or reports an experience keeps that
+  judgement's sentiment, as before. The wording is the "customer value"
+  option of
+  [proposal-product-features](briefs/proposal-product-features-2026-10-07.md),
+  the nearest to the team's note ("include sentiment directed at the bank as
+  opposed to keeping it neutral"); confirm it.
 
 ### What the sheet looks like
 
@@ -66,8 +96,8 @@ labels, aspect κ 0.80 and sentiment κ 0.79
 `data/labeled/claude/review_*.csv` for people to settle. The largest is a gap
 in the aspect table above: where a retail customer's investment products
 (brokerage trades, regular savings plans, gold, portfolio financing) belong,
-`wealth_business` or `retail_banking_sentiment` — 63 rows. Decide it before
-the next round.
+`wealth_business` or `retail_banking_sentiment` — 63 rows. Decided on
+2026-10-10: see "Two rules decided on 2026-10-10" above.
 
 ---
 

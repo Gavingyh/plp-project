@@ -157,19 +157,19 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Wed 7 Oct 2026</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Sat 10 Oct 2026</span></div>
   <h1>What the team has to do before 1 November</h1>
-  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. Decisions come first: the labels, the retraining, the one re-score and every evaluation wait on them, and several were due on 5 Oct. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
-  <div class="countdown"><b>25</b> days to submission · Sun 1 Nov</div>
+  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. On 10 Oct the team made six of the upstream decisions (listed under Decided); section 1 starts with the points they leave open, and Opus has since labelled every sheet (section 2). The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
+  <div class="countdown"><b>22</b> days to submission · Sun 1 Nov</div>
 </header>
 
 <section aria-labelledby="h-path">
   <h2 id="h-path">The critical path</h2>
-  <p class="sub">Each step needs the one before it. Nothing is retrained or re-evaluated until step 1 is done (agreed 7 Oct).</p>
+  <p class="sub">Each step needs the one before it. The 10 Oct decisions clear most of step 1; the open points in section 1 still decide which labels the models learn from.</p>
   <ol class="path">
-    <li><span class="d">overdue</span><span class="s">Settle the upstream decisions</span></li>
-    <li><span class="d">by 11 Oct</span><span class="s">Labels: top-up, NER, broker research, active sheet</span></li>
-    <li><span class="d">by 12 Oct</span><span class="s">Decide scoring model, data repairs, index blend</span></li>
+    <li><span class="d">10 Oct, part done</span><span class="s">Six upstream decisions made; follow-on points still open</span></li>
+    <li><span class="d">10 Oct, done</span><span class="s">New rules written; Opus labelled every sheet (2,075 rows)</span></li>
+    <li><span class="d">12–14 Oct</span><span class="s">Every model re-run; the team picks one</span></li>
     <li><span class="d">12–18 Oct</span><span class="s">Retrain, re-score once, re-run every evaluation</span></li>
     <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
     <li><span class="d">26 Oct – 1 Nov</span><span class="s">Report, video, submit</span></li>
@@ -186,32 +186,26 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 </section>
 
 <section aria-labelledby="h-decide">
-  <h2 id="h-decide">1. Decide first: the upstream items</h2>
-  <p class="sub">Every later label, model and score depends on these, so settling them later means repeating work. Claude has drafted material for the first three; each draft proposes, the team decides.</p>
+  <h2 id="h-decide">1. Still to decide: what the 10 October decisions leave open</h2>
+  <p class="sub">The first two come straight out of the 10 Oct decisions and block the retraining. The rest were open before.</p>
   <ul class="items">
     <li data-o="decide">
-      <span class="t">The aspect method: the LLM&#8217;s aspects or the centroids, and the disagreement rule <span class="chip decide">Decision</span></span>
-      <span class="when overdue">overdue (5 Oct)</span>
-      <p class="why"><b>Why:</b> the database&#8217;s aspects come from seed centroids, which give a sentence about 6.4 aspects and match the human&#8217;s aspect 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. Under centroids every aspect of every bank is positive; with the LLM, retail banking turns slightly negative for all three banks and DBS asset quality falls from +0.27 to +0.07. Every per-aspect claim in the report depends on this. Choose with it the rule for the 24% of sentences where the two models disagree: keep llama&#8217;s answer, or mark them <code>other</code>. The corpus run is done (3 Oct); changing an aspect&#8217;s definition or examples means redoing it, about a day of the MacBook, so test a new wording first on the 1,277 labelled sentences (under an hour).</p>
+      <span class="t">Which labels the models train and test on, now that the retail rule has changed <span class="chip decide">Decision</span></span>
+      <span class="when">before retraining (12 Oct)</span>
+      <p class="why"><b>Why:</b> two of the 10 Oct decisions pull apart. Retail products now carry sentiment directed at the bank, so rows labelled neutral under the old rule change. The test rows are not relabelled, so the 299 test labels stay on the old rule. If the train/dev rows follow the new rule and the test rows the old one, test scores fall for a reason that has nothing to do with the model. Choose one: apply the new rule to the retail test rows too (Opus&#8217;s labels, reported as LLM labels), or keep them and say so in the report. Decide with it, for the 1,277 rows people already labelled, whether the training label is the person&#8217;s or Opus&#8217;s new one. What the 10 Oct run shows: on the 299 test rows Opus differs from people on 47 aspects and 42 sentiments, and on the 978 train/dev rows on 155 and 127; the retail rule itself moved 34 of 280 neutral retail rows to positive or negative, about as many as change between two Opus runs.</p>
+      <span class="meta">Decisions of 10 Oct on retail products, the test rows and Opus labelling. Until this is settled, Opus&#8217;s new labels sit beside the human ones in <code>data/labeled/claude/</code> and change nothing.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Which aspect method the product serves, and the disagreement rule <span class="chip decide">Decision</span></span>
+      <span class="when">before the re-score</span>
+      <p class="why"><b>Why:</b> the team decided on 10 Oct to run both methods, the centroids and the LLM, and the report will give both. The index, the dashboard and the chatbot still read one set of aspects, so one has to be the served one. The centroids give a sentence about 6.4 aspects and match the human&#8217;s aspect 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. Under centroids every aspect of every bank is positive; with the LLM, retail banking turns slightly negative for all three banks and DBS asset quality falls from +0.27 to +0.07. Choose with it the rule for the 24% of sentences where the two models disagree: keep llama&#8217;s answer, or mark them <code>other</code>.</p>
       <span class="meta">Source: llm-aspect-classifier, index-preview evidence. Decision 5 in the decision brief.</span>
     </li>
     <li data-o="decide">
-      <span class="t">Does a product&#8217;s feature count as sentiment? <span class="chip decide">Decision</span></span>
-      <span class="when">before any labelling or retraining</span>
-      <p class="why"><b>Why:</b> the fine-tuned model&#8217;s commonest error is a neutral sentence called positive or negative, most of the retail ones describing a product&#8217;s feature (&#8220;I use OCBC Frank 6% for daily expense&#8221;, called positive), and every one of Opus&#8217;s 173 sentiment disagreements with the annotators is on where neutral ends. <b>Draft ready:</b> three candidate rules with train/dev examples and how many rows each would change. &#8220;Customer value&#8221; fits the current labels (about 4 rows change), though those labels may follow the suggestion model; &#8220;changes only&#8221; measures opinion more strictly (about 30 rows change).</p>
-      <span class="meta">Draft: <code>docs/briefs/proposal-product-features-2026-10-07.md</code>. Unblocks the top-up and active-learning labels.</span>
-    </li>
-    <li data-o="decide">
-      <span class="t">Wealth or retail for priority-banking products, and the 22 open local-context questions <span class="chip decide">Decision</span></span>
+      <span class="t">The 22 open local-context questions <span class="chip decide">Decision</span></span>
       <span class="when overdue">overdue (5 Oct)</span>
-      <p class="why"><b>Why:</b> DBS Treasures, OCBC Premier and bank-sold unit trusts are the boundary behind 63 of Opus&#8217;s aspect disagreements, and wealth is one of the classifier&#8217;s weakest aspects. The other questions (savings-rate cuts, bank economists, slang, questions as sentiment) each change labels or rules. <b>Draft ready:</b> a proposed answer to each, with evidence, confidence and what changes if the team answers otherwise; three terms need a local reader (&#8220;xmm&#8221;, &#8220;Lobang Sis&#8221;, &#8220;FHR&#8221;). Write the team&#8217;s answers into <code>docs/local-context-questions.md</code>.</p>
-      <span class="meta">Draft: <code>docs/briefs/local-context-proposals-2026-10-07.md</code>. Decision 5 in the decision brief. A &#8220;by customer&#8221; answer changes the aspect definitions, so the corpus run is redone (about a day).</span>
-    </li>
-    <li data-o="decide">
-      <span class="t">Relabel blind: the 299 test rows, and a sample of training rows? <span class="chip decide">Decision</span></span>
-      <span class="when overdue">overdue (5 Oct)</span>
-      <p class="why"><b>Why:</b> annotators saw a model&#8217;s suggestion while labelling. The test labels match the suggestion on 89% of rows, and the training rows kept its sentiment on 904 of 978 in the first round (92%) and 263 of 280 in the broker research round (94%). Every test score inherits that anchoring, the first threat to validity an examiner will raise. A blind relabel of the test rows, and of about 100 training rows to measure the effect, has to happen before the 12–18 Oct re-evaluation to count.</p>
-      <span class="meta">Source: annotation-agreement (27 Sep); <code>data/labeled/candidates.csv</code> label against llm_prelabel; broker research round files.</span>
+      <p class="why"><b>Why:</b> wealth or retail is settled (10 Oct). The others (savings-rate cuts, bank economists, slang, questions as sentiment) each change labels or rules, and Opus labels under whatever the guideline says on the day. <b>Draft ready:</b> a proposed answer to each, with evidence, confidence and what changes if the team answers otherwise; three terms need a local reader (&#8220;xmm&#8221;, &#8220;Lobang Sis&#8221;, &#8220;FHR&#8221;). Write the team&#8217;s answers into <code>docs/local-context-questions.md</code>.</p>
+      <span class="meta">Draft: <code>docs/briefs/local-context-proposals-2026-10-07.md</code>.</span>
     </li>
     <li data-o="decide">
       <span class="t">One blended index, or each source&#8217;s index side by side <span class="chip decide">Decision</span></span>
@@ -219,48 +213,54 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> UOB has the highest earnings-only score and the lowest blended one, only because it publishes less earnings text than DBS. The ranking the report and the dashboard show depends on this choice, and broker research adds another source to weigh.</p>
       <span class="meta">Source: PLAN, blended-index decision.</span>
     </li>
+    <li data-o="team">
+      <span class="t">Change the project rule that Opus labels never replace the human labels <span class="chip team">Owner</span></span>
+      <span class="when">before Opus&#8217;s labels train a model</span>
+      <p class="why"><b>Why:</b> <code>CLAUDE.md</code> and DESIGN decision 22 both say Opus is an additional rater whose labels never replace a person&#8217;s. The 10 Oct labelling decision reverses that for the sheets nobody has labelled, and possibly for the 1,277 rows (first item above). The rule and the decision log should say what the team now means, so later sessions follow it.</p>
+      <span class="meta"><code>CLAUDE.md</code>, Rules; <code>docs/DESIGN.md</code>, decision 22.</span>
+    </li>
   </ul>
 </section>
 
 <section aria-labelledby="h-label">
-  <h2 id="h-label">2. Labels: people&#8217;s work, by 11 October</h2>
-  <p class="sub">Label after the decisions above that touch the guideline (product features, wealth or retail), so the labels follow the final rules.</p>
+  <h2 id="h-label">2. Labels: Opus 5.5 labels every sheet (decided 10 October)</h2>
+  <p class="sub">Done on 10 Oct. People no longer label the sentiment sheets. The labels are recorded and reported as LLM labels, not human labels: the meeting note said to declare them as human, and the owner changed that on 10 Oct, because the report has to declare its GenAI use and the labels must be described as what they are.</p>
   <ul class="items">
-    <li data-o="team">
-      <span class="t">Label the top-up sheet: 268 rows, the first 40 by two people <span class="chip team">People</span></span>
-      <span class="when">by 11 Oct</span>
-      <p class="why"><b>Why:</b> five aspects have fewer than 80 labelled rows (macro 22, dividends 33, capital and liquidity 49, NIM 58, asset quality 78), too few to evaluate the models on them. The 40 shared rows give the first human&#8211;human aspect agreement figure. The sheet is blind on purpose.</p>
-      <span class="meta">File: <code>data/labeled/topup/topup_sheet.csv</code>; merge with <code>train.labels --topup</code>. Source: labelling-topup.</span>
+    <li data-o="ai">
+      <span class="t">Opus 5.5 labelled every sheet under the new rules: 2,075 rows <span class="chip ai">Done 10 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> the first round&#8217;s 1,277 rows, the top-up sheet&#8217;s 268, the active-learning sheet&#8217;s 150 and the broker research round&#8217;s 380, each labelled for aspect and then sentiment by Opus raters that saw no other label (36 runs, audited). 757 positive, 879 neutral, 439 negative; 134 flagged as not about the bank. Against people on the 1,277 rows: aspect &#954; 0.802, sentiment &#954; 0.793, the same as the 1 Oct run under the old rules. The labels are in their own folder and have replaced nothing; the first item in section 1 decides how they are used.</p>
+      <span class="meta">Files: <code>data/labeled/claude/rules-2026-10-10/</code>. Evidence: <code>docs/evidence/opus-labels-new-rules-2026-10-10.md</code>.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Confirm the wording of the two new rules, and whether to redo the corpus aspect run <span class="chip decide">Decision</span></span>
+      <span class="when">before retraining (12 Oct)</span>
+      <p class="why"><b>Why:</b> the rules are now in the guideline and were Opus&#8217;s instructions, worded from the one-line decisions. (1) <b>Retail products:</b> a feature clearly good for the customer is positive, one clearly bad is negative; a bare mention, a question, a how-to or mixed terms stays neutral (the &#8220;customer value&#8221; option of the 7 Oct paper). (2) <b>Wealth:</b> the priority and private tiers and the wealth segment&#8217;s figures; loans, mortgages and unit trusts are retail unless the sentence is about a wealth tier. The instructions also sent brokerage accounts, regular savings plans, insurance and robo-advisers to retail, which the team&#8217;s note did not say. If either wording is wrong, the affected rows need another pass. Separately, the local aspect classifier still uses the old wealth definition: changing it in <code>config/aspects.yaml</code> starts a new cache file, so the corpus aspect run is redone (about a day of the MacBook).</p>
+      <span class="meta">Files: <code>docs/annotation-guideline.md</code> (&#8220;Two rules decided on 2026-10-10&#8221;), <code>config/aspects.yaml</code>.</span>
     </li>
     <li data-o="team">
-      <span class="t">Label the active-learning sheet: 150 Reddit sentences <span class="chip team">People</span></span>
-      <span class="when">after the product-feature decision</span>
-      <p class="why"><b>Why:</b> the 150 sentences the current models are least sure about, mostly the neutral-or-positive call behind the product-feature question, so labelling them targets the rows the models find hardest. The sheet is blind (no model output, aspect left for the labeller); don&#8217;t open <code>selection.csv</code> while labelling.</p>
-      <span class="meta">File: <code>data/labeled/active/active_sheet.csv</code> (built 7 Oct).</span>
-    </li>
-    <li data-o="team">
-      <span class="t">Label the bank-NER gold set (201 sentences) <span class="chip team">People</span></span>
-      <span class="when">by 11 Oct</span>
-      <p class="why"><b>Why:</b> NER is the project&#8217;s third text-mining task, and it has no human accuracy figure until these are labelled.</p>
+      <span class="t">Label the bank-NER gold set (201 sentences), or say Opus does this too <span class="chip team">People</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> NER is the project&#8217;s third text-mining task, and it has no human accuracy figure until these are labelled. The 10 Oct decision named the sentiment sheets, not this one; Opus has already labelled it blind as a reference (2 Oct), so the team can also decide to use that and report it as an LLM reference.</p>
       <span class="meta">File: <code>data/labeled/ner/gold_sheet.csv</code>. Source: bank-ner.</span>
     </li>
     <li data-o="team">
-      <span class="t">Broker research labels: name the test-row annotator, and add a second annotator for agreement <span class="chip team">People</span></span>
+      <span class="t">Broker research labels: name the test-row annotator <span class="chip team">People</span></span>
       <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> the 100 blind test rows are labelled but their <code>annotator</code> column is blank (they agree with the LLM&#8217;s own labels on 77 of 100, so not copied); naming the annotator lets the report say people labelled them. One annotator labelled the whole round, so a second person should label about 100 of the same rows blind for an agreement figure (<code>train.agreement</code>). <code>train.source_round merge</code> now refuses rows without an annotator.</p>
+      <p class="why"><b>Why:</b> the 100 blind test rows are labelled but their <code>annotator</code> column is blank (they agree with the LLM&#8217;s own labels on 77 of 100, so not copied); naming the annotator lets the report say people labelled them. <code>train.source_round merge</code> refuses rows without an annotator.</p>
       <span class="meta">Files: <code>data/labeled/sgx_research/test_blind.csv</code>, <code>candidates.csv</code>.</span>
+    </li>
+    <li data-o="team">
+      <span class="t">Upload the newer database to the team folder <span class="chip team">People</span></span>
+      <span class="when">before the re-score</span>
+      <p class="why"><b>Why:</b> a teammate reports a database with newer data, but the <code>plp.db</code> in the team folder is still the 30 Sep one: downloaded twice on 10 Oct, both copies were byte-identical to the 30 Sep snapshot (SHA-256 <code>7ea0da08&#8230;5734fb</code>; 28,002 documents, 44,345 sentences, newest document 25 Sep, no broker research rows). The database runs in write-ahead mode, so new rows can sit in <code>plp.db-wal</code> and be missing from an uploaded <code>plp.db</code>: stop the API and dashboard, run <code>sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"</code>, then upload the file under a dated name with its SHA-256, so the two can be compared and one made final.</p>
+      <span class="meta">Compare with <code>shasum -a 256 data/plp.db</code>.</span>
     </li>
     <li data-o="team">
       <span class="t">Send the broker research source&#8217;s database rows from the Windows PC <span class="chip team">People</span></span>
       <span class="when">before the re-score</span>
       <p class="why"><b>Why:</b> the labels point at sentence ids from that PC&#8217;s database; rebuilt from the PDFs on the Mac, 52 of the 380 labelled sentences came out with slightly different text and so different ids. On the PC: <code>git pull</code>, then <code>python scripts/source_rows.py export --source sgx_research --out data/run/sgx_rows.db</code>, and send the file (about 2 MB, not through git).</p>
       <span class="meta">Source: HANDOFF, 7 October.</span>
-    </li>
-    <li data-o="team">
-      <span class="t">Fix only the boundary rows, once the economist and wealth-or-retail rules are decided <span class="chip team">People</span></span>
-      <span class="when">after those decisions</span>
-      <p class="why"><b>Why:</b> the human labels stay where Opus disagrees (decided 4 Oct, no full relabel); only the rows on those two boundaries are revisited.</p>
-      <span class="meta">File: <code>data/labeled/boundary-review-2026-10-04.csv</code> (branch <code>data/boundary-review</code> until merged). Decision 15 in the decision brief.</span>
     </li>
   </ul>
 </section>
@@ -269,9 +269,9 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <h2 id="h-wk2">3. Decide by Monday 12 October</h2>
   <ul class="items">
     <li data-o="decide">
-      <span class="t">The scoring model: base FinBERT, or one of three fine-tuned sets <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> the stored scores are base FinBERT&#8217;s, so the DNN the rubric requires doesn&#8217;t yet affect what the product shows. Three candidates: the 1 Oct models (0.604 &#177; 0.035 test macro-F1 against base 0.571, the figures the claim uses), the 4 Oct retrain (0.621 &#177; 0.027), and the adapted models (FinBERT further trained on the corpus&#8217;s own sentences first: on cross-validation 0.701 against 0.663, better in 13 of 15 paired folds; on test 0.628 &#177; 0.022, within the seed noise). <b>The adapted models must be pretrained again before adoption:</b> a 7 Oct validation found their pretraining text held 151 sentences related to test sentences (a filter gap, fixed that day). State the criterion first; whichever is chosen is retrained on the final labels in the 12–18 Oct week.</p>
+      <span class="t">Choose the scoring model from the re-run table <span class="chip decide">Decision</span></span>
+      <span class="when">after the re-run (12–14 Oct)</span>
+      <p class="why"><b>Why:</b> decided 10 Oct: Claude re-runs every model, the table gives precision and recall for positive, negative and neutral beside macro-F1 and accuracy, and the team links the superior model to the chatbot and the dashboard. Say what &#8220;superior&#8221; means before reading the table (macro-F1, or recall on one class), so the choice isn&#8217;t made to fit the result. The stored scores are still base FinBERT&#8217;s. Candidates so far: the 1 Oct models (0.604 &#177; 0.035 test macro-F1 against base 0.571, the figures the claim uses), the 4 Oct retrain (0.621 &#177; 0.027), and the adapted models (on cross-validation 0.701 against 0.663; on test 0.628 &#177; 0.022, within the seed noise), which must be pretrained again first: a 7 Oct validation found their pretraining text held 151 sentences related to test sentences (a filter gap, fixed that day).</p>
       <span class="meta">Source: retrain (4 Oct), dapt (6–7 Oct), sgx-research-evaluation evidence. Decision 7 in the decision brief.</span>
     </li>
     <li data-o="decide">
@@ -311,6 +311,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Source: HANDOFF, 6 October (evening); <code>tests/test_chatbot_progress.py</code>.</span>
     </li>
     <li data-o="team">
+      <span class="t">Restart the dashboard after pulling, and reword its chatbot error line <span class="chip team">Dashboard owner</span></span>
+      <span class="when">by 12 Oct</span>
+      <p class="why"><b>Why:</b> on 10 Oct the Ask page showed &#8220;The chatbot backend could not be reached &#8230; Read timed out&#8221;. The cause was the local model reloading on a Mac short of memory; it is fixed in the chatbot (the model is loaded first with a longer limit, kept loaded for 30 minutes, and its answer is read as it is written), and a running dashboard only picks that up when restarted. The page still adds &#8220;check that <code>ollama serve</code> is running&#8221; under every error, which is wrong when the model is only slow: show the error&#8217;s own text, which now says what to do.</p>
+      <span class="meta"><code>dashboard/app.py</code> around line 517. Evidence: <code>docs/evidence/chatbot-timeout-and-speed-2026-10-10.md</code>.</span>
+    </li>
+    <li data-o="team">
       <span class="t">Check every dashboard tab, and choose how it reads data <span class="chip team">Dashboard owner</span></span>
       <span class="when">by 19 Oct</span>
       <p class="why"><b>Why:</b> the dashboard reads the database directly while everything else uses the API, and the two have disagreed once. A 4 Oct review found: &#8220;Last refreshed&#8221; shows when the page was opened; trend charts draw straight across thin months; 7- and 30-day figures show cells under 5 sentences that the API calls insufficient; the method note describes the old model and aspects; the Topics count table crashes when a bank lacks an aspect (line 383).</p>
@@ -322,6 +328,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-wk3">
   <h2 id="h-wk3">5. 12–18 October: apply the decisions once</h2>
   <ul class="items">
+    <li data-o="ai">
+      <span class="t">Re-run every model and report precision and recall for each class <span class="chip ai">Claude</span></span>
+      <span class="when">12–14 Oct</span>
+      <p class="why"><b>Why:</b> decided 10 Oct. Base FinBERT, the 1 Oct models, the 4 Oct retrain and the adapted models (pretrained again with the fixed filter) are trained and scored on one machine, on the labels section 1 settles. The table gives accuracy, macro-F1 and, for positive, negative and neutral, precision and recall; <code>train/evaluation_report.py</code> already writes all of them, so this is a re-run, not new code.</p>
+      <span class="meta">Waits on: the labels decision in section 1.</span>
+    </li>
     <li data-o="ai">
       <span class="t">Retrain the chosen model on the final labels (pretraining again first, if adapted) <span class="chip ai">Claude</span></span>
       <span class="when">12–14 Oct</span>
@@ -401,13 +413,13 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 </section>
 
 <section aria-labelledby="h-hold">
-  <h2 id="h-hold">On hold</h2>
+  <h2 id="h-hold">On hold, or nearly done</h2>
   <ul class="items">
     <li data-o="ai">
-      <span class="t">Chatbot speed <span class="chip ai">On hold</span></span>
-      <span class="when">until performance is an issue</span>
-      <p class="why"><b>Why on hold:</b> answers take a median of 47 seconds (gold set, 6 Oct). Measured on 7 Oct: writing the answer takes 13–23 s, reading tool results 5–15 s, re-reading the instructions 12–15 s from the second question on; a larger context window was slower on this Mac. In the 6 Oct provider evaluation the same local model averaged 7.7 seconds a gold-set question (machine not recorded), so the demo machine matters. Ready options if needed: answer simple lookups from a template, keep the prompt cached, trim tool results (needs a gold-set check), stream the answer, warm the model at start.</p>
-      <span class="meta">Measurements: <code>data/run/speed/</code> (on the Mac).</span>
+      <span class="t">Chatbot speed: free the Mac&#8217;s memory before a demo; one option left to check <span class="chip ai">Mostly done 10 Oct</span></span>
+      <span class="when">before the demo</span>
+      <p class="why"><b>Status:</b> measured on 10 Oct, the local model&#8217;s speed halved within three minutes as the Mac ran short of memory (11.4 tokens a second down to 5.2, with other programs open), so five questions took 25 to 105 seconds. That is the main cause of slow answers, and closing heavy programs before a demo is the fix. One option is built and left off: writing the tool descriptions where Ollama caches them, instead of having the model read all 967 tokens again for every question (about 10 seconds). On the gold set it was no faster on average (median 36.8 against 41.3 seconds, mean 42.9 against 42.3) and no better on the checks (right tool 22 of 24 against 23), in a run disturbed by other work; rerun it on a quiet Mac before turning it on.</p>
+      <span class="meta">Evidence: <code>docs/evidence/chatbot-timeout-and-speed-2026-10-10.md</code>. Setting: <code>OLLAMA_TOOLS_IN_SYSTEM</code>.</span>
     </li>
     <li data-o="ai">
       <span class="t">Further model improvements (slang, glossary, active learning, LLM silver labels) <span class="chip ai">After the upstream items</span></span>
@@ -420,6 +432,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">Decided</h2>
   <ul class="refs">
+    <li><b>10 Oct, retail products</b> carry sentiment directed at the bank; a product&#8217;s feature is no longer kept neutral.</li>
+    <li><b>10 Oct, wealth</b> means the priority and private tiers (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves.</li>
+    <li><b>10 Oct, test rows</b> are not relabelled (the report should then say annotators saw a model&#8217;s suggestion).</li>
+    <li><b>10 Oct, aspects:</b> both methods run and are reported, the centroids and the LLM.</li>
+    <li><b>10 Oct, labelling:</b> Opus 5.5 labels every sentiment sheet, reported as LLM labels. This replaces the 4 Oct decision that human labels stay where Opus disagrees.</li>
+    <li><b>10 Oct, evaluation:</b> precision and recall for positive, negative and neutral beside macro-F1 and accuracy; every model re-run; the team picks the superior one for the chatbot and dashboard.</li>
     <li><b>6 Oct, claim wording:</b> the Grounded chatbot claim states what the checks prove, within the Known limits on the chatbot evidence page.</li>
     <li><b>7 Oct, broker reports in git:</b> they stay while the repository is private to the team; remove them, with their history, before any public release.</li>
     <li><b>6 Oct, hosted backend verified:</b> the chatbot ran the gold sets through Groq (<code>openai/gpt-oss-120b</code>, the OpenAI-compatible backend): right tool 24 of 24, no errors.</li>
@@ -432,7 +450,6 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li><b>4 Oct, passing mentions</b> stay; the report gives their share.</li>
     <li><b>4 Oct, earnings-PDF links</b> become relative paths during the re-score.</li>
     <li><b>4 Oct, demo chatbot model:</b> <code>llama3.1:8b</code> through Ollama.</li>
-    <li><b>4 Oct, human labels stay</b> where Opus disagrees; only boundary rows are revisited.</li>
   </ul>
 </section>
 
@@ -450,7 +467,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+<footer>Updated on 10 Oct 2026 with the team&#8217;s six decisions and the chatbot fixes. Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
 
 </div>
 

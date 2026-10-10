@@ -17,6 +17,7 @@ the evaluation (chatbot/eval_intent.py) measures how often it would matter.
 
 Settings in config/chatbot.yaml: models.intent (CHATBOT_INTENT_MODEL),
 intent_think (CHATBOT_INTENT_THINK), ollama_url, timeouts_seconds.intent.
+The model is loaded first if Ollama has unloaded it (chatbot/ollama_load.py).
 """
 
 import functools
@@ -26,7 +27,7 @@ import os
 import requests
 import yaml
 
-from chatbot import settings
+from chatbot import ollama_load, settings
 from config.logging_config import get_logger
 from ingest.base import detect_banks
 
@@ -90,7 +91,8 @@ def build_messages(question: str, context: str = "") -> list[dict]:
 
 def ollama_chat(model: str, messages: list[dict], names: list[str]) -> str:
     """One deterministic call, its answer constrained to the intent names."""
-    payload = {"model": model, "messages": messages, "stream": False,
+    ollama_load.ensure_loaded(model)
+    payload = {"model": model, "messages": messages, "stream": False, "keep_alive": ollama_load.keep_alive(),
                "format": {"type": "object", "properties": {"intent": {"type": "string", "enum": names}},
                           "required": ["intent"]},
                "options": {"temperature": 0}}

@@ -89,7 +89,7 @@ class _FakePost:
         self._responses = list(responses)
         self.calls = []
 
-    def __call__(self, url, json=None, timeout=None):
+    def __call__(self, url, json=None, timeout=None, stream=False):
         self.calls.append(json)
         payload = self._responses.pop(0)
 
@@ -98,6 +98,10 @@ class _FakePost:
 
             def json(_self):
                 return payload
+
+            def iter_lines(_self):          # the backend reads the answer as it is written
+                import json as _json
+                return [_json.dumps(payload).encode()]
 
             def raise_for_status(_self):
                 pass

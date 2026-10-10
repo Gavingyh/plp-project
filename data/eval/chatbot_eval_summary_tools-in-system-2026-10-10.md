@@ -1,0 +1,26 @@
+# Chatbot evaluation summary
+
+Model: `OllamaBackend / llama3.1:8b`  
+Intent classifier: `llama3.1:8b`  
+Run at: 2026-10-10T15:32:42.107679+00:00  
+Questions: 32  
+Errors (backend/network failures): 0
+
+## Automated checks
+
+- Tool selection: 22/24 correct (24 of 32 questions had an expected tool to check)
+- Behavior (advice decline / no-data acknowledgement): 8/8 correct
+- Citation fabrication flagged: 0/32 answers (0%)
+- Answered by an input guard without calling the model: 6/32
+- Answers carrying a figure no tool returned: 1/32
+- Evidence written without a search, removed by CHATBOT_ENFORCE_EVIDENCE: 5/32
+
+## Failures needing a look
+
+- **oos-1** (out_of_scope): unverified figures: +0.12, 55%, 30%, 10,000
+- **thin-1** (thin_data): tool selection: expected tool never called
+- **compare-4** (compare): tool selection: wrong aspect: got 'overall', expected 'investor_stock_sentiment'
+
+## Not automated: read the full transcript for these
+
+Whether stated numbers are correct, and whether cited evidence is actually relevant to the question. See the results `.jsonl` beside this file for the full transcript, including every tool call and its raw result alongside the model's final answer.

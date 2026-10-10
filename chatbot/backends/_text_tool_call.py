@@ -16,17 +16,18 @@ alone.
 import json
 
 
-def text_tool_call(content: str, tool_names: set[str]) -> tuple[str, dict] | None:
-    """(name, arguments) of the first tool call written in `content`, or None."""
+def _scan(content: str, tool_names: set[str]) -> tuple[list[tuple[str, dict]], int]:
+    """Every tool call written in `content`, and where the last one ends."""
     if not content or '"name"' not in content:
-        return None
+        return [], 0
     decoder = json.JSONDecoder()
+    calls, last_end = [], 0
     start = content.find("{")
     while start != -1:
         try:
-            obj, _ = decoder.raw_decode(content, start)
+            obj, end = decoder.raw_decode(content, start)
         except json.JSONDecodeError:
-            obj = None
+            obj, end = None, start + 1
         if isinstance(obj, dict) and obj.get("name") in tool_names:
             args = obj.get("parameters", obj.get("arguments", {}))
             if isinstance(args, str):
@@ -35,6 +36,29 @@ def text_tool_call(content: str, tool_names: set[str]) -> tuple[str, dict] | Non
                 except json.JSONDecodeError:
                     args = None
             if isinstance(args, dict):
-                return obj["name"], args
+                calls.append((obj["name"], args))
+                last_end = end
+                start = content.find("{", end)      # past this call: its own braces aren't another one
+                continue
         start = content.find("{", start + 1)
-    return None
+    return calls, last_end
+
+
+def text_tool_calls(content: str, tool_names: set[str]) -> list[tuple[str, dict]]:
+    """(name, arguments) of every tool call written in `content`, in order."""
+    return _scan(content, tool_names)[0]
+
+
+def writing_past_its_calls(content: str, tool_names: set[str]) -> bool:
+    """True once `content` holds a complete tool call followed by words that
+    aren't the start of another: the model has gone on to write an answer
+    before any result came back, and that answer can only be invented."""
+    calls, end = _scan(content, tool_names)
+    rest = content[end:].lstrip(" \n\t;,")
+    return bool(calls) and bool(rest) and not rest.startswith(("{", "[", "]", "`"))
+
+
+def text_tool_call(content: str, tool_names: set[str]) -> tuple[str, dict] | None:
+    """(name, arguments) of the first tool call written in `content`, or None."""
+    calls = text_tool_calls(content, tool_names)
+    return calls[0] if calls else None

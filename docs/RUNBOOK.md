@@ -467,6 +467,8 @@ changed:
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
 | `CHATBOT_ENFORCE_EVIDENCE` | `strip` (since 4 Oct) | `strip` removes evidence no search returned and takes the quote marks off any other words no search returned, so only text a search returned stands in quote marks (the Grounded chatbot claim relies on it; DESIGN decision 26); `search` also adds real quotes the harness finds; `off` only flags it |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
+| `OLLAMA_KEEP_ALIVE` | `30m` | how long Ollama keeps the local model loaded after a question; a shorter time frees its memory sooner, and the next question then waits for the model to load |
+| `OLLAMA_TOOLS_IN_SYSTEM` | `false` | `true` writes the tool descriptions at the start of the instructions, where Ollama caches them, instead of passing them with every question (see `chatbot/backends/ollama_backend.py`) |
 | `CHATBOT_ASPECT_QUERY` | on (since 4 Oct) | `0` turns it off. On, evidence search, when given an aspect, ranks by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
 
 The terminal chat remembers the last three turns, so follow-ups like
@@ -569,7 +571,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2462 tests in `tests/`; `pytest -q` from the repository root runs 2509,
+2491 tests in `tests/`; `pytest -q` from the repository root runs 2538,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for
@@ -867,6 +869,7 @@ text (`tests/test_notebooks.py` checks).
 | `TypeError: unsupported operand \|` | conda Python 3.9 | use `.venv-plp/bin/python3` |
 | Step hangs, near-zero CPU | HuggingFace metadata check | `HF_HUB_OFFLINE=1` |
 | `Could not reach Ollama` | Ollama not running | `ollama serve` |
+| Chatbot says the model `went silent for 120 seconds` | the computer is short of memory, so the local model is loading or writing very slowly | close other heavy programs and stop any other model job, then ask again; `ollama ps` shows whether the model is loaded |
 | API returns `insufficient_data` everywhere | pipeline not run, or no database restored | restore the snapshot (README), or run steps 1–5 above |
 | Chatbot answer has a verification warning | model fabricated citations | don't trust it; try a hosted backend |
 | `pip: bad interpreter` | venv was created under an older directory name | use `.venv-plp/bin/python3 -m pip` |

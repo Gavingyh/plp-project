@@ -195,8 +195,9 @@ def test_ollama_request_carries_temperature_and_history(monkeypatch):
         status_code = 200
         def raise_for_status(self): pass
         def json(self): return {"message": {"role": "assistant", "content": "ok"}}
+        def iter_lines(self): return [b'{"message": {"role": "assistant", "content": "ok"}, "done": true}']
 
-    def fake_post(url, json=None, timeout=None):
+    def fake_post(url, json=None, timeout=None, stream=False):
         sent.update(json, messages=list(json["messages"]))  # copy: the backend appends later
         return _Resp()
 

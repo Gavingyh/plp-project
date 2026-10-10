@@ -105,14 +105,14 @@ Each row names the file and line an element comes from, and the text that line m
 | answer_turn | `chatbot/agent.py:2153` | `def answer_turn(question: str` |
 | ToolCallTracker | `chatbot/agent.py:757` | `class _ToolCallTracker:` |
 | citation check | `chatbot/agent.py:919` | `def answer_has_unverified_citation(self, answer: str)` |
-| intent | `chatbot/intent.py:106` | `def classify_intent(question: str` |
-| reply_for | `chatbot/intent.py:125` | `def reply_for(intent` |
+| intent | `chatbot/intent.py:108` | `def classify_intent(question: str` |
+| reply_for | `chatbot/intent.py:127` | `def reply_for(intent` |
 | guards | `chatbot/guards.py:312` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
 | intent and model_answer kept | `chatbot/agent.py:2146` | `intent: str` |
 | tools | `chatbot/tools.py:646` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |
-| OllamaBackend | `chatbot/backends/ollama_backend.py:45` | `class OllamaBackend(LLMBackend):` |
+| OllamaBackend | `chatbot/backends/ollama_backend.py:87` | `class OllamaBackend(LLMBackend):` |
 | ClaudeBackend | `chatbot/backends/claude_backend.py:23` | `class ClaudeBackend(LLMBackend):` |
 | OpenAIBackend | `chatbot/backends/openai_backend.py:54` | `class OpenAIBackend(LLMBackend):` |
 | GeminiBackend | `chatbot/backends/gemini_backend.py:83` | `class GeminiBackend(LLMBackend):` |

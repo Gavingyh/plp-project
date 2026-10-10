@@ -72,8 +72,8 @@ Each row names the file and line an element comes from, and the text that line m
 | intent classifier first | `chatbot/agent.py:2161` | `intent = intents.classify_intent(question, state, previous)` |
 | fixed reply | `chatbot/agent.py:2162` | `reply = intents.reply_for(intent, question, state)` |
 | backend chosen | `chatbot/agent.py:2172` | `backend = backend or get_backend(backend_name)` |
-| model call | `chatbot/backends/ollama_backend.py:85` | `data = self._chat(messages, ollama_tools)` |
-| temperature sent | `chatbot/backends/ollama_backend.py:57` | `"options": {"temperature": self.temperature}` |
+| model call | `chatbot/backends/ollama_backend.py:170` | `self._chat(messages, ollama_tools)` |
+| temperature sent | `chatbot/backends/ollama_backend.py:114` | `"options": {"temperature": self.temperature}` |
 | tool executed and recorded | `chatbot/agent.py:793` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
 | tools read the database | `chatbot/tools.py:76` | `def get_sentiment(bank: str` |
 | evidence search uses embeddings | `chatbot/retrieval.py:149` | `query_vec = embed_sentences([rank_text])[0]` |

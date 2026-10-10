@@ -7,6 +7,8 @@ temperature:      {value: 0.2, env: CHATBOT_TEMPERATURE}    # low, for grounded 
 ollama_url:       {value: "http://localhost:11434", env: OLLAMA_BASE_URL}
 openai_base_url:  {value: "https://api.openai.com/v1", env: OPENAI_BASE_URL}   # any OpenAI-compatible provider
 ollama_think:     {value: null, env: OLLAMA_THINK}          # false turns a reasoning model's thinking off (qwen3)
+ollama_tools_in_system: {value: false, env: OLLAMA_TOOLS_IN_SYSTEM}   # the tool descriptions go at the start of the instructions, read once and cached (chatbot/backends/ollama_backend.py)
+ollama_keep_alive: {value: "30m", env: OLLAMA_KEEP_ALIVE}   # how long Ollama keeps the model loaded after a request (chatbot/ollama_load.py)
 
 models:
   ollama:  {value: "llama3.1:8b", env: OLLAMA_MODEL}     # the demo model (decided 4 Oct)
@@ -22,7 +24,8 @@ intent_think: {value: null, env: CHATBOT_INTENT_THINK}
 max_tool_iterations: {value: 8}          # a confused tool loop stops here
 max_output_tokens:   {value: 1024}       # the Claude API requires a cap
 timeouts_seconds:
-  ollama: {value: 120}                   # local generation can be slow on a CPU
+  ollama: {value: 120}                   # the longest silence allowed from the local model: before its first word, or between two
+  ollama_load: {value: 300}              # loading the model before the first request, slow when memory is short
   hosted: {value: 60}
   intent: {value: 60}
   judge:  {value: 300}

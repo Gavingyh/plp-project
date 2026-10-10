@@ -45,8 +45,8 @@ Each row names the file and line an element comes from, and the text that line m
 | random baseline for retrieval | `chatbot/retrieval_eval.py:53` | `def random_baseline(` |
 | citation flag | `chatbot/agent.py:919` | `def answer_has_unverified_citation(self, answer: str) -> bool:` |
 | strip evidence written without a search | `chatbot/agent.py:1986` | `def strip_unsearched_evidence(answer: str) -> str:` |
-| scope check reads the conversation | `chatbot/intent.py:59` | `def describe_context(state` |
-| tool call written as text | `chatbot/backends/_text_tool_call.py:19` | `def text_tool_call(content: str, tool_names: set[str])` |
+| scope check reads the conversation | `chatbot/intent.py:60` | `def describe_context(state` |
+| tool call written as text | `chatbot/backends/_text_tool_call.py:61` | `def text_tool_call(content: str, tool_names: set[str])` |
 | replay on recorded answers | `chatbot/replay.py:28` | `def replay(results: list[dict], mode: str) -> list[dict]:` |
 | judge checked against the flags | `chatbot/judge.py:203` | `def against_checks(results: list[dict], judged: pd.DataFrame) -> pd.DataFrame:` |
 | checklist judge | `chatbot/judge.py:134` | `def checklist_score(parsed: dict) -> tuple[int, str]:` |

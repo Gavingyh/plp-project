@@ -19,6 +19,17 @@ def intent_in_scope(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def no_model_loading(monkeypatch):
+    """The Ollama backend loads its model before the first request
+    (chatbot/ollama_load.py); in tests it doesn't, so none reaches a real
+    Ollama. Returns the real function for the tests of the step itself."""
+    from chatbot import ollama_load
+    real = ollama_load.ensure_loaded
+    monkeypatch.setattr(ollama_load, "ensure_loaded", lambda *a, **k: False)
+    return real
+
+
+@pytest.fixture(autouse=True)
 def no_real_chatbot_backend(monkeypatch):
     """A test that reaches the chatbot model must give it a fake backend: the
     configured one can be a real service (Gemini, when CHATBOT_BACKEND says so),

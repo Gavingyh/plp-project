@@ -183,7 +183,7 @@ def _filled(df: pd.DataFrame, what: str) -> pd.DataFrame:
 
 def _was_corrected(round_dir: str, train: pd.DataFrame) -> pd.Series:
     """Whether the annotator changed the LLM's suggestion: its sentiment, or its aspect
-    (from llm_prelabels.csv). Until 7 Oct 2026 this compared the aspect with the
+    (from llm_prelabels.csv). Earlier, this compared the aspect with the
     pipeline's nearest-centroid guess, which says nothing about the suggestion. Empty
     where the row had no suggestion."""
     suggested = train["llm_prelabel"].fillna("").astype(str).str.strip().str.lower()
@@ -205,8 +205,8 @@ def merge(round_dir: str, filled_candidates: str, filled_blind: str, prefix: str
     unnamed = [what for what, df in (("candidates sheet", train_done), ("blind sheet", blind_done))
                if "annotator" not in df or df["annotator"].fillna("").str.strip().eq("").any()]
     if unnamed:
-        # The report says people labelled these rows; the file must say who (7 Oct 2026: the
-        # broker research round's 100 test rows came through with a blank annotator).
+        # The report says people labelled these rows; the file must say who (the
+        # broker research round's 100 test rows once came through with a blank annotator).
         raise ValueError(f"labelled rows without an annotator in the {' and the '.join(unnamed)}: "
                          "fill in who labelled each row (a code such as A)")
 

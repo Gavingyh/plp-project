@@ -128,7 +128,7 @@ def test_classify_sentences_returns_results_in_input_order_despite_length_batchi
 
 
 def test_scorer_refuses_garbage_probabilities(monkeypatch):
-    # The 1 Oct GPU failure mode: an error-free batch whose numbers are garbage. Nothing may be written.
+    # The GPU failure mode seen once: an error-free batch whose numbers are garbage. Nothing may be written.
     import torch
 
     class Enc(dict):
@@ -145,7 +145,7 @@ def test_scorer_refuses_garbage_probabilities(monkeypatch):
         score.classify_sentences(["one", "two"])
 
 
-# --- top-up sheets (2026-10-02) ------------------------------------------------------
+# --- top-up sheets -------------------------------------------------------------------
 
 def _topup_db(temp_db, ids):
     from ingest.db import now_iso

@@ -1,6 +1,6 @@
 """
 How many labelled train/dev sentences hold Singlish, internet slang, a chat
-abbreviation or an emoji. Behind the 6 Oct 2026 decision not to build a slang
+abbreviation or an emoji. Behind the decision not to build a slang
 dictionary before domain-adaptive pretraining (docs/evidence/dapt-2026-10-06.md).
 The word list is deliberately generous (it counts "u" and "DCA"), so the share
 it gives is an upper bound. Reads only train/dev rows, never test text.

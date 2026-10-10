@@ -10,7 +10,7 @@ the guardrails of the Conversational UIs module (DESIGN decision 19).
 They compare the answer with what the tools returned, so they are rules by
 design. The input side, deciding what a question asks for (advice, small
 talk, off-topic, a banking-service request), moved to a model-based intent
-classifier on 4 Oct 2026 (chatbot/intent.py, config/intents.yaml); the
+classifier (chatbot/intent.py, config/intents.yaml); the
 regex lists that did it before were brittle with paraphrases and other
 languages.
 """
@@ -25,7 +25,7 @@ from itertools import permutations
 _NUMBER = re.compile(r"(?<![\w.])(?<![A-Za-z]-)[-+−]?\d{1,3}(?:,\d{3})+(?:\.\d+)?%?"
                      r"|(?<![\w.])(?<![A-Za-z]-)[-+−]?\d+(?:\.\d+)?%?")
 # Month names and their abbreviations only: "[a-z]*" also took "market 1234" and
-# "declined 4321" for dates and hid the figures (4 Oct 2026).
+# "declined 4321" for dates and hid the figures.
 _MONTH = (r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?"
           r"|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?")
 _STRIP_FIRST = [
@@ -43,13 +43,13 @@ _STRIP_FIRST = [
 # A date written without its year ("runs to September 25th", "to 24 Sep") is
 # skipped only when a tool returned that month and day: its data_runs_to, a
 # sentence's date. Guessing dates by their shape hid real figures in three
-# validations on 4 Oct 2026 ("0.45 may", "July 18\nAugust 24", "21 Oct tweets"):
+# validations ("0.45 may", "July 18\nAugust 24", "21 Oct tweets"):
 # a count and a day look alike, but only a day matches a date the tools gave.
 _MONTH_NUMBER = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
                  "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
 # A day is never followed by a decimal, a thousands group or a per cent sign:
 # "September 25.7%" and "Sept 25,000" are figures, whatever date the tools
-# returned (validation, 4 Oct 2026). A range of returned days ("Sept 25-26",
+# returned (found in validation). A range of returned days ("Sept 25-26",
 # "September 20 to 25") is a date too.
 _YEARLESS_DATE = re.compile(
     rf"\b(?P<month1>{_MONTH})[ \t]+(?P<day1>\d{{1,2}})(?P<ord1>st|nd|rd|th)?\b"
@@ -57,13 +57,13 @@ _YEARLESS_DATE = re.compile(
     rf"|(?<![\w.])(?P<day2>\d{{1,2}})(?:st|nd|rd|th)?[ \t]+(?:of[ \t]+)?(?P<month2>{_MONTH})",
     re.IGNORECASE)
 # After a month, a returned day, ordinal or not, is a date only where it
-# clearly reads as one; anywhere else it is a figure to check (validation, 5 Oct
-# 2026: with data to 25 September, "In September 25 customers complained" hid
+# clearly reads as one; anywhere else it is a figure to check (validation:
+# with data to 25 September, "In September 25 customers complained" hid
 # the 25, under a rule that took the day for a date unless a count word from a
 # fixed list followed it). After "in" ("in early", "in mid", "in late") it is
 # always checked: "in September" names the month, so a number after it is a
 # count ("In September 25 (DBS), 45 (OCBC) posts were negative"; the tenth
-# round, 5 Oct 2026). Otherwise it reads as a date after "on", "as of", "as at",
+# round). Otherwise it reads as a date after "on", "as of", "as at",
 # "the", "dated" or "runs to" (or "ran", "run", "running" to): "On September 25
 # DBS scored 0.31", "the September 25 data"; a range also after "from" or
 # "between". Or before a line end, punctuation other than "%", "," or an
@@ -74,7 +74,7 @@ _YEARLESS_DATE = re.compile(
 # after the comma ("September 25, 45 posts"); and after "by", "up to",
 # "through", "until", "till", "to", "since", "ends", "ended", "covers" or
 # "covering" when no number follows the comma ("By September 25, DBS scored
-# 0.31": the ninth validation, 5 Oct 2026, found these flagged). Before an
+# 0.31": the ninth validation found these flagged). Before an
 # opening bracket, ( or [, it reads as a date only when the bracket holds no
 # digit and no word of approximation, and its clause ends right after the
 # closing bracket, or, after one of those words, a comma follows it with no
@@ -218,7 +218,7 @@ def _without_tool_dates(text: str, tool_results) -> str:
     return _YEARLESS_DATE.sub(blank, text) if days else text
 
 
-# What in a tool result may vouch for an answer (an allow-list, 4 Oct 2026):
+# What in a tool result may vouch for an answer (an allow-list):
 # numeric data fields anywhere, and the text of retrieved evidence for a figure
 # written with its words around it (unverified_numbers). Everything else a tool
 # returns is the system's own wording or the model's arguments echoed back (a
@@ -253,9 +253,9 @@ def _percent_fields(obj, out: list[float]) -> None:
 def _count_ratios(obj, out: list[float]) -> None:
     """100·a/b for the whole-number counts within one result object (positive_n
     over n, say), the percentages an answer can honestly derive. Pairing every
-    number with every other accepted almost any percentage (3 Oct 2026). An
+    number with every other accepted almost any percentage. An
     object made only of counts is a breakdown (analysts per rating): each
-    count's share of their total is derivable too (4 Oct 2026)."""
+    count's share of their total is derivable too."""
     if isinstance(obj, dict):
         counts = [float(v) for v in obj.values() if isinstance(v, int) and not isinstance(v, bool)]
         out.extend(100 * a / b for a, b in permutations(counts, 2) if b and 0 <= a <= b)
@@ -274,7 +274,7 @@ def _collect_numbers(obj, out: list[float], as_written: list[float], key=None) -
     for nothing here: a figure written inside a retrieved sentence ("$0.54 per
     share") vouches only for itself, written with that sentence's words around
     it (unverified_numbers, chatbot.agent.evidence_figures; until the tenth
-    validation, 6 Oct 2026, it vouched for the same number anywhere in the
+    validation it vouched for the same number anywhere in the
     answer, a count of posts too)."""
     if isinstance(obj, bool):
         return
@@ -321,7 +321,7 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
     sentence, or inside a quote of that sentence ('"DBS pays $0.54 per
     share"'), is that sentence's own and not checked
     (chatbot.agent.evidence_figures); a figure in retrieved text vouches for
-    nothing else (the tenth and eleventh validations, 6 Oct 2026).
+    nothing else (the tenth and eleventh validations).
     Years, dates with their year (ISO or written out), a date without its
     year that matches one a tool returned, list markers, window lengths,
     numbers under 10 and numbers the user typed are not checked.
@@ -346,7 +346,7 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
     # A percentage is a fraction times 100, a field named as a percentage or a
     # ratio of two counts (below): 0.12 written as "0.12%" is a hundred times too
     # small, and a count of 23 written as "23%" is not a share (accepting any
-    # value above 1 let counts pass, 4 Oct).
+    # value above 1 let counts pass).
     percent_fields: list[float] = []
     _percent_fields(tool_results, percent_fields)
     percent_candidates = [v * 100 for v in values] + percent_fields + as_written

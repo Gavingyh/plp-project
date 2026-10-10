@@ -46,7 +46,7 @@ def _flagged(path):
     ("UOB Kay Hian raises ComfortDelGro target price", [], ["UOB Kay Hian"]),
     ("UOB-Kay Hian names top picks", [], ["UOB Kay Hian"]),
     ("UOB Kay Hian upgrades DBS to buy", ["DBS"], ["UOB Kay Hian"]),
-    ("DBS Vickers launches new trading app", ["DBS"], []),            # DBS's brokerage counts as DBS (4 Oct)
+    ("DBS Vickers launches new trading app", ["DBS"], []),            # DBS's brokerage counts as DBS
     ("OCBC Cycle 2024 returns in May", [], ["OCBC Cycle"]),
     # the bank's research desk talking about something else
     ("DBS maintains 'buy' on IHH Healthcare", [], ["rating call"]),

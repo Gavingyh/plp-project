@@ -116,7 +116,7 @@ def test_merge_refuses_wrong_order_or_unknown_banks(sheets):
 
 
 def test_ner_merge_applies_the_dbs_vickers_rule_change(sheets):
-    # Opus answered under the 2 Oct rule (DBS Vickers is not DBS); the 4 Oct rule
+    # Opus answered under the earlier rule (DBS Vickers is not DBS); the later rule
     # adds DBS at merge, so a re-merge keeps it. The raw answers are untouched.
     sheet = pd.read_csv(ol.SHEETS["ner"]["sheet"], keep_default_na=False)
     sheet.loc[0, "text"] = "I use dbs vickers for SGX stocks."

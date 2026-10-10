@@ -214,7 +214,7 @@ def test_every_written_call_is_found_and_other_json_left_alone():
 
 
 def test_reading_stops_when_the_model_writes_on_past_its_call(monkeypatch):
-    """Seen on 10 Oct: a call, then an answer with invented figures before any result came back."""
+    """Seen once: a call, then an answer with invented figures before any result came back."""
     read = []
 
     class _Runs(_Resp):

@@ -1,6 +1,6 @@
 """
-Validation of the grounded chatbot claim against the reader-facing changes of
-4 Oct 2026 (numbered sources, the quote exemption for tool wording, fields
+Validation of the grounded chatbot claim against the reader-facing changes
+(numbered sources, the quote exemption for tool wording, fields
 hidden from the model, year-less dates in the number check). Each test runs
 the real tracker, checks and answer_turn with a fake model and fake tools; no
 database, no Ollama.
@@ -96,11 +96,11 @@ def test_a_quote_echoing_the_models_own_argument_is_still_unverified(strip):
 @pytest.mark.parametrize("dates", [{}, {"data_runs_to": "2026-09-25"}, {"data_runs_to": "2026-05-12"}],
                          ids=["no tool dates", "data_runs_to 25 Sep", "data_runs_to 12 May"])
 def test_an_invented_figure_next_to_a_month_word_is_flagged(answer, figure, dates):
-    # Real answers always carry data_runs_to (fourth validation, 4 Oct 2026).
+    # Real answers always carry data_runs_to (fourth validation).
     assert figure in unverified_numbers(answer, [{"bank": "DBS", "score": 0.12, "n": 300, **dates}], "How is DBS?")
 
 
 def test_a_real_year_less_date_is_still_not_a_figure():
-    # A date without its year counts only when a tool returned it (4 Oct 2026), as data_runs_to does.
+    # A date without its year counts only when a tool returned it, as data_runs_to does.
     tools = [{"n": 1, "data_runs_to": "2026-09-25"}, {"data_runs_to": "2026-09-24"}]
     assert unverified_numbers("The data runs to September 25th; UOB's to 24 Sep.", tools) == []

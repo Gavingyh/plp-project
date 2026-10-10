@@ -86,7 +86,7 @@ def valid_aspect(aspect: str | None = Query(
         None, description="An aspect key such as dividend_policy (\"dividend policy\" also works), "
                           "or ALL / empty for every aspect")) -> str | None:
     """The aspect as a key, or None for all aspects. An unknown aspect is a 422,
-    not an empty result that reads as "no data" (4 Oct 2026)."""
+    not an empty result that reads as "no data"."""
     if aspect is None or aspect.strip().upper() in ("", "ALL"):
         return None
     key = normalize_aspect(aspect)
@@ -98,7 +98,7 @@ def valid_aspect(aspect: str | None = Query(
 def valid_source(source: str = Query(
         "ALL", description="ALL (blended), * (every source) or one source in the index, e.g. arctic_shift")) -> str:
     """A source the index holds, ALL or *. An unknown one is a 422, not an empty
-    result that reads as "no data" (4 Oct 2026)."""
+    result that reads as "no data"."""
     if source in ("ALL", "*"):
         return source
     conn = get_connection()

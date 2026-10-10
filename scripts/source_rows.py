@@ -3,7 +3,7 @@ Move one source's rows from one machine's database to another's.
 
 Sentence ids are hashes of the text, so a source rebuilt on another machine
 can come out with different ids when its PDF or OCR libraries differ by a
-version: on 7 Oct 2026, the broker research PDFs rebuilt on the Mac gave 646
+version: the broker research PDFs rebuilt on the Mac gave 646
 sentences against the Windows PC's 641, and 52 of the 380 labelled sentences
 no longer matched (a stray bullet, a sidebar line). The labels point at the
 ids of the machine that made them, so its rows are copied, not rebuilt.
@@ -64,7 +64,7 @@ def import_rows(rows_path: str, db: str) -> dict:
         held = {s: dst.execute("SELECT COUNT(*) FROM sentences WHERE source = ?", (s,)).fetchone()[0] for s in sources}
         if any(held.values()):
             # Another machine's rebuild of the same source has other sentence ids, so adding
-            # these would count its sentences twice (validation, 7 Oct 2026).
+            # these would count its sentences twice (found in validation).
             sys.exit(f"{db} already holds {held}; import into a copy that doesn't (a fresh copy of data/plp.db)")
         for table in TABLES:
             cols = [r[1] for r in dst.execute(f"PRAGMA table_info({table})")]

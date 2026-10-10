@@ -33,7 +33,7 @@ def test_evaluate_ranks_each_banks_pool_and_skips_thin_aspects():
 def test_aspect_query_is_on_by_default_and_names_the_aspect(monkeypatch):
     from chatbot.retrieval import aspect_query_enabled, ranking_query
     monkeypatch.delenv("CHATBOT_ASPECT_QUERY", raising=False)
-    assert aspect_query_enabled() is True                             # decided 4 Oct
+    assert aspect_query_enabled() is True                             # on by default, as decided
     monkeypatch.setenv("CHATBOT_ASPECT_QUERY", "0")
     assert aspect_query_enabled() is False
     q = ranking_query("What do people say about DBS's dividend policy?", "dividend_policy")

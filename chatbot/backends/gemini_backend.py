@@ -1,7 +1,7 @@
 """
 Gemini backend - a third frontier-model option alongside Claude and GPT.
 
-Verified against the live API on 2026-09-30 with gemini-3.6-flash
+Verified against the live API with gemini-3.6-flash
 (docs/evidence/gemini-backend-2026-09-30.md): tool calling and the
 functionResponse continuation both work. It was written before any key was
 available, and these were the risky parts:

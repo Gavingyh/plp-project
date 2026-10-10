@@ -3,7 +3,7 @@ Flags sentences that are extraction debris rather than prose: earnings-PDF
 table rows (mostly figures) and letter-spaced text ("N e t p ro fit"). Dry
 run only: it reports what it would flag and changes no data.
 
-Deliberately narrow. On 2026-10-01 broader rules were tried and rejected:
+Deliberately narrow. Broader rules were tried and rejected:
 "fewer than 6 words" would drop "Cards were strong at 17%." and "bought DBS
 at $37.3 this morning" (18 of the 34 short labelled sentences carry
 sentiment), and a low share of letters catches real opinions with numbers in

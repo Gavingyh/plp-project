@@ -1,4 +1,4 @@
-"""Inputs for the Opus labelling round under the rules of 10 Oct 2026.
+"""Inputs for the Opus labelling round under this folder's rules (rules-2026-10-10).
 
 Every sentence of the four sentiment sheets, once: the first round
 (data/labeled/candidates.csv), the top-up sheet, the active-learning sheet and

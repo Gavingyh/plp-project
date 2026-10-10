@@ -17,7 +17,7 @@ _MIN_SENTENCE_LEN = 15  # chars - drops fragments a naive split can still produc
 # prevents a false sentence break right after the period.
 # Not "Q1." to "Q4." or "FY.": those end sentences ("Profit rose in Q3."), and as
 # special cases they kept the full stop inside the token, so the sentence never
-# ended there (4 Oct 2026).
+# ended there.
 _FINANCIAL_ABBREVIATIONS = [
     "p.a.", "e.g.", "i.e.", "vs.", "approx.", "est.", "no.", "Jan.", "Feb.", "Mar.", "Apr.", "Jun.", "Jul.",
     "Aug.", "Sep.", "Sept.", "Oct.", "Nov.", "Dec.", "Mr.", "Mrs.", "Ms.", "Dr.",

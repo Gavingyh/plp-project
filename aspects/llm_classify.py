@@ -22,7 +22,7 @@ USAGE:
   python -m aspects.llm_classify --eval --model qwen3:4b --no-think --limit 50
 
 `--no-think` turns off a reasoning model's hidden thinking (Ollama's `think`
-option): on 1 Oct qwen3:4b took 92-216 s a sentence thinking, against about
+option): qwen3:4b took 92-216 s a sentence thinking, against about
 2 s for llama3.1:8b, which doesn't think.
 """
 

@@ -1,6 +1,6 @@
 """
 Tests for ingest/yahoo_news.py, ingest/google_news.py and run_news_pull.py.
-Payload shapes are pinned from real responses captured on 2026-09-24, so a
+Payload shapes are pinned from real responses, so a
 change in either feed shows up as a mapping failure here, not as silently
 empty rows. No network calls.
 """

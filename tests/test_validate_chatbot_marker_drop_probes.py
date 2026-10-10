@@ -180,7 +180,7 @@ def test_api_follow_up_with_a_marker_and_dash_is_caught(harness, monkeypatch):
 
 # --- year-less dates in the number check ----------------------------------------------------------
 
-# A date written without its year is skipped only when a tool returned it (4 Oct 2026),
+# A date written without its year is skipped only when a tool returned it,
 # as a real answer's date always is (data_runs_to): these tests give the tools that date.
 TOOL = [{"bank": "DBS", "score": 0.31, "n": 120}]
 TOOL_DATES = TOOL + [{"data_runs_to": d} for d in ("2026-09-03", "2026-09-23", "2026-05-02", "2026-05-22",

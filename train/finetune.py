@@ -17,7 +17,7 @@ run's F1 can be seed noise at this data size). Each batch is padded to its own
 longest sentence.
 
 Loss weighting (--class-weights): `none` (the default) is plain cross-entropy.
-Every model trained before 2026-10-01 was trained this way: class weights were
+The earlier models were all trained this way: class weights were
 computed and printed but never reached the loss, although this docstring said
 "class-weighted loss". `balanced` applies sklearn's balanced weights; `prior`
 reweights classes from the training mix towards the corpus mix (base FinBERT's
@@ -63,7 +63,7 @@ def head_label2id(model_name: str = None) -> dict[str, int]:
     negative 1, neutral 2), else LABEL2ID for a head with no class meaning.
 
     Fine-tuning keeps the pretrained head, whose shape matches. Training with
-    a different order, as every model up to 3 Oct 2026 did, starts each
+    a different order, as the earlier models did, starts each
     output answering for the wrong class, which the model must then unlearn."""
     from transformers import AutoConfig
     cfg = AutoConfig.from_pretrained(model_name or BASE_MODEL)
@@ -190,7 +190,7 @@ DEV_IDS_FILE = "dev_ids.json"
 def write_input_format(model_dir: str, with_aspect: bool, aspect_text: str = "key",
                        base_model: str | None = None) -> None:
     """Record how the model was fed, so evaluation tokenizes the same way, and which
-    model it was fine-tuned from (7 Oct 2026: a model from an adapted FinBERT looked the
+    model it was fine-tuned from (a model from an adapted FinBERT once looked the
     same on disk as one from FinBERT)."""
     with open(os.path.join(model_dir, INPUT_FORMAT_FILE), "w") as f:
         json.dump({"with_aspect": with_aspect, "aspect_text": aspect_text,

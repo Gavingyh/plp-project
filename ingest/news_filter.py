@@ -14,7 +14,7 @@ source an article came from:
    bank's own business. These phrases are masked before the bank-mention
    check, so "UOB Kay Hian upgrades DBS" counts as a DBS article and "UOB Kay
    Hian names top picks" counts as no bank at all. DBS Vickers, DBS's own
-   brokerage, is not masked: it counts as DBS (decided 4 Oct 2026), as it
+   brokerage, is not masked: it counts as DBS, as it
    does in ingest/base.py's detect_banks and in bank recognition.
 
 3. Cross-source dedup. The same story arrives via Yahoo and Google News, and

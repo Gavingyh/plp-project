@@ -1,5 +1,5 @@
 """
-Reviewer findings on fix/chatbot-answers after the fixes of 4 Oct 2026
+Reviewer findings on fix/chatbot-answers after the fixes
 (commit 8082469). Each test fails if its finding is real; a confirmed finding
 carries xfail(strict=True). Synthetic data, plus one recorded gold-set row
 under data/eval/. No model, no network, no data/plp.db.

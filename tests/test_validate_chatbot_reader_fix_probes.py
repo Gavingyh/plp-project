@@ -1,5 +1,5 @@
 """
-Re-validation of the grounded chatbot claim after the fixes of 4 Oct 2026
+Re-validation of the grounded chatbot claim after the fixes
 (commit 8082469): probes of each fix beyond the tests that guard it.
 
 - the year-less date patterns in chatbot/guards.py (lower-case months,
@@ -27,7 +27,7 @@ from chatbot.guards import unverified_numbers
 from chatbot.judge import load_results
 from chatbot.replay import replay
 
-# A date written without its year is skipped only when a tool returned it (4 Oct 2026),
+# A date written without its year is skipped only when a tool returned it,
 # as a real answer's date always is (data_runs_to): these tests give the tools that date.
 TOOL = [{"bank": "DBS", "score": 0.31, "n": 120}]
 TOOL_DATES = TOOL + [{"data_runs_to": d} for d in ("2026-09-25", "2026-09-30", "2026-10-24")]
@@ -47,7 +47,7 @@ TOOL_DATES = TOOL + [{"data_runs_to": d} for d in ("2026-09-25", "2026-09-30", "
 @pytest.mark.parametrize("tools", [TOOL, TOOL_DATES], ids=["no tool dates", "with data_runs_to"])
 def test_an_invented_figure_near_a_month_is_flagged(answer, figure, tools):
     # Real answers always carry data_runs_to; without it here, a date rule that swallowed
-    # "25.7%" after a returned 25 September passed (fourth validation, 4 Oct 2026).
+    # "25.7%" after a returned 25 September passed (fourth validation).
     assert figure in unverified_numbers(answer, tools)
 
 

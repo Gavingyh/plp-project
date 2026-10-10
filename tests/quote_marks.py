@@ -1,6 +1,6 @@
 """
-What a reader sees quoted, for the tests of strip mode (DESIGN decision 26, 5 Oct
-2026). Since then a test of an invented quote passes when strip mode removed it,
+What a reader sees quoted, for the tests of strip mode (DESIGN decision
+26). Since then a test of an invented quote passes when strip mode removed it,
 flagged the answer, or left the invented words outside quote marks: the model's
 own words, no longer shown as evidence.
 
@@ -27,7 +27,7 @@ paragraph (markdown shows the lines of a paragraph as one):
   next year'", on one line or two). Such a mark after an s and before no letter or digit
   ("the banks' fees") opens nothing: read once as closing a passage open
   before it, once as a possessive inside it. A left-hand mark (‘) is neither
-  (the eleventh round, 6 Oct 2026).
+  (the eleventh round).
 - and, as a reader who pairs only marks that look alike, each family of marks
   on its own (" “ ” „ ‟ ＂ ″ ‶ ⹂ ❝ ❞ ❠; « »; 「 」 ｢ ｣; ' ‘ ’ ＇ ‚ ‛; ‹ ›; ❮ ❯; ...).
 - a blockquote line ("> ...", "- > ...", "1. - > ...") quotes what follows its

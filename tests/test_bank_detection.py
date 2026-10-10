@@ -61,7 +61,7 @@ def test_resolve_bank_no_match_no_fallback_returns_none():
     assert resolve_bank("the market was quiet today") is None
 
 
-# --- POSB counts as DBS at collection (decided 4 Oct 2026) -----------------------
+# --- POSB counts as DBS at collection --------------------------------------------
 
 def test_posb_alone_is_dbs():
     assert detect_banks("I opened a POSB account last year") == ["DBS"]

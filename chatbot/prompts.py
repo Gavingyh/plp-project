@@ -1,6 +1,6 @@
 """System prompt for the agentic chatbot - see docs/DESIGN.md (grounding rules).
 The tools whose figures may be quoted and the volume floor come from
-chatbot/tools.py, so the prompt can't drift from them (4 Oct 2026)."""
+chatbot/tools.py, so the prompt can't drift from them."""
 
 from chatbot.tools import MIN_VOLUME_FOR_SCORE, TOOL_SCHEMAS
 

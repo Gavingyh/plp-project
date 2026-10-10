@@ -102,7 +102,7 @@ def _check_behavior(item: dict, answer: str) -> dict:
         return {"applicable": True, "correct": ok,
                 "reason": None if ok else "no advice-decline language found"}
     if expected == "decline_or_no_data":
-        # "I can't help with that" declines too: the check missed it until 4 Oct 2026.
+        # "I can't help with that" declines too: the check once missed it.
         ok = (looks_like_advice_decline(answer) or looks_like_no_data_response(answer)
               or looks_like_declining_unrelated_part(answer))
         return {"applicable": True, "correct": ok,

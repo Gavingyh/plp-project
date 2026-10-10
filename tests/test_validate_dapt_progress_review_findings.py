@@ -2,7 +2,7 @@
 Tests for the reviewer's findings on the pretraining corpus (train/dapt.py),
 the fine-tuning base model (train/finetune.py --base-model), copying a
 source's rows between databases (scripts/source_rows.py) and the chatbot's
-progress steps (chatbot/progress.py), 7 Oct 2026. Synthetic data only: temp
+progress steps (chatbot/progress.py). Synthetic data only: temp
 databases, labels files and a tiny BERT built in tmp_path; no training, no
 network, no data/plp.db.
 

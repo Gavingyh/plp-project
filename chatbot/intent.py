@@ -1,6 +1,6 @@
 """
 What a chatbot question is asking for, decided by a model rather than by word
-lists (4 Oct 2026; replaces the regex input guards of 26 Sep).
+lists (replaces the earlier regex input guards).
 
 A local model reads the question, with the conversation's bank, aspect and
 previous question, and returns one intent from config/intents.yaml through

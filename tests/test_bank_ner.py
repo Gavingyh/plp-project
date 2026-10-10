@@ -24,7 +24,7 @@ def test_resolution_table(mention, expected):
     ("I opened a POSB account last year.", ["DBS"]),                    # POSB is DBS's retail brand
     ("my dbs card got declined again", ["DBS"]),                       # lowercase Reddit text
     ("UOB Kay Hian raised its target for OCBC.", ["OCBC"]),            # the broker isn't UOB
-    ("I bought shares on DBS Vickers and UOB.", ["DBS", "UOB"]),      # DBS Vickers counts as DBS (4 Oct)
+    ("I bought shares on DBS Vickers and UOB.", ["DBS", "UOB"]),      # DBS Vickers counts as DBS
     ("I only use DBS Vickers for SGX trades.", ["DBS"]),
     ("Great Eastern lifted group earnings.", ["OCBC"]),
     ("He drives an Aston Martin DBS.", []),
@@ -69,7 +69,7 @@ def test_evaluate_needs_labelled_rows_and_compares_both_methods():
     res = ner.evaluate(gold)
     overall = res[res["case"] == "ALL"].set_index("method")
     assert overall.loc["NER", "exact"] == 1.0
-    assert overall.loc["alias matching", "exact"] == 0.5                     # finds POSB (since 4 Oct), takes the broker as UOB
+    assert overall.loc["alias matching", "exact"] == 0.5                     # finds POSB, takes the broker as UOB
     with pytest.raises(ValueError, match="no labelled rows"):
         ner.evaluate(gold.assign(annotator=""))
 
@@ -87,6 +87,6 @@ def test_fallback_catches_names_glued_to_punctuation(text, expected):
 
 
 def test_a_bank_name_joined_to_a_number_is_found():
-    """'OCBC360' is the OCBC 360 account (Opus reference rater, 2026-10-02)."""
+    """'OCBC360' is the OCBC 360 account (Opus reference rater)."""
     assert ner.banks_in("Transferring money from DBS/POSB into OCBC360.") == ["DBS", "OCBC"]
     assert ner.banks_in("already maxing out on my ocbc360") == ["OCBC"]

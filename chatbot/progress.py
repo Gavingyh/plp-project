@@ -1,8 +1,8 @@
 """
 The steps of one chatbot turn, in words a reader can follow while waiting.
 
-A local model takes about a minute to answer (median 47 s on the gold set,
-6 Oct 2026), and a spinner says nothing about what it is doing. answer_turn
+A local model takes about a minute to answer (median 47 s on the gold set),
+and a spinner says nothing about what it is doing. answer_turn
 reports each step it takes to an optional callback (on_step): reading the
 question, each tool the model calls with what it asked for and what came
 back, writing the answer, and checking it. The dashboard can show these as

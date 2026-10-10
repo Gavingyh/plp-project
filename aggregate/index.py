@@ -25,7 +25,7 @@ redefining "recent" to hide that gap.
 Window cutoffs and series buckets use each timestamp's UTC instant, parsed
 (`_utc`): CNA's timestamps carry +08:00 and NewsAPI's "Z", so comparing the
 strings put CNA rows up to eight hours on the wrong side of a cutoff or a
-month edge (fixed 2026-10-03). Weeks are ISO weeks.
+month edge. Weeks are ISO weeks.
 
 USAGE:
   python -m aggregate.index
@@ -101,7 +101,7 @@ def _one_per_sentence(pairs: dict, sentence_id: str, key, item) -> None:
     aspect. Rows that aggregate across aspects must count the sentence once:
     counting every pair weights a sentence by how many aspects it matched,
     and sentences that match many aspects (earnings-style prose) are far more
-    positive than those that match few, so the 2026-09-30 re-run at 6.4
+    positive than those that match few, so an earlier re-run at 6.4
     aspects per sentence lifted DBS's headline from about +0.06 to +0.23.
     Base FinBERT gives every pair of a sentence the same label, so the choice
     of pair only matters for an aspect-conditioned model."""

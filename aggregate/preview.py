@@ -101,7 +101,7 @@ def averaged_probs(pairs: pd.DataFrame, model_dirs: list[str], cache_path: str |
 
     def score(df):
         probs = np.mean([train.evaluate.finetuned_probs(d, df) for d in model_dirs], axis=0)
-        # On 2026-10-01 the GPU, under memory pressure, returned all-zero rows
+        # The GPU once, under memory pressure, returned all-zero rows
         # without an error, which argmax turned into "negative" everywhere.
         if not np.allclose(probs.sum(axis=1), 1.0, atol=1e-3):
             raise RuntimeError("model probabilities don't sum to 1: the device returned garbage; "
@@ -277,7 +277,7 @@ def main():
                                           args.models, cache, args.margin)
     scenarios = {k: scenarios[k] for k in sorted(scenarios)}
     tag = f"_margin{args.margin:g}" if args.margin else ""
-    if args.models != DEFAULT_MODELS:            # don't overwrite the 1 Oct models' files
+    if args.models != DEFAULT_MODELS:            # don't overwrite the default models' files
         tag += "_" + _models_tag(args.models)
     for name, df in scenarios.items():
         df.to_csv(os.path.join(OUT_DIR, f"pairs_{name}{tag}.csv"), index=False)

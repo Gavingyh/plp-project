@@ -208,7 +208,7 @@ def test_ollama_request_carries_temperature_and_history(monkeypatch):
     assert [m["content"] for m in sent["messages"]] == ["sys", "earlier", "reply", "now"]
 
 
-# --- fixes from the first live evaluation (2026-09-26) -------------------------------
+# --- fixes from the first live evaluation --------------------------------------------
 
 def test_dates_written_in_prose_are_not_figures():
     tool = [{"n": 1218, "latest": "2026-09-24T07:49:30+00:00"}]
@@ -248,7 +248,7 @@ def test_names_with_numbers_are_not_figures():
     assert unverified_numbers("Unlike the COVID-19 period, 3Q24 was calm.", [{"n": 5}]) == []
 
 
-# --- fixes from the gold-set runs of 2026-10-01 ---------------------------------------
+# --- fixes from the gold-set runs -----------------------------------------------------
 
 def test_the_classifier_sees_the_conversation():
     from chatbot.intent import build_messages, describe_context
@@ -282,7 +282,7 @@ def test_strip_removes_the_evidence_section_and_keeps_the_rest():
 
 
 def test_enforcement_is_strip_by_default(fake_sentiment, monkeypatch):
-    # Decided 4 Oct 2026: invented evidence is removed unless the setting says otherwise.
+    # Decided: invented evidence is removed unless the setting says otherwise.
     monkeypatch.delenv("CHATBOT_ENFORCE_EVIDENCE", raising=False)
     r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
     assert r.evidence_enforced == "strip" and not r.citation_unverified and "12345" not in r.answer
@@ -334,7 +334,7 @@ def test_an_answer_that_searched_is_left_alone(monkeypatch):
 
 
 def test_invented_evidence_in_the_opening_paragraph_is_removed(fake_sentiment, monkeypatch):
-    # Until 3 Oct the opening paragraph was kept as written, so this quote stayed
+    # At first the opening paragraph was kept as written, so this quote stayed
     # (and was flagged) under a note saying the quotes were removed.
     monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
     answer = 'DBS is positive, as "one analyst called the payout safe for years" (Reuters).\n\nEvidence:\n* "made up"'
@@ -363,7 +363,7 @@ def test_tracker_rebuilt_from_recorded_calls():
 
 def test_shares_of_an_analyst_breakdown_are_derivable():
     # 1, 7, 8 and 1 of 17 analysts are 6%, 41%, 47% and 6%: flagged as unverified
-    # in the 4 Oct live run although they were right.
+    # in a live run although they were right.
     result = {"bank": "DBS", "n_analysts": 17, "target_mean": 78.14,
               "rating_breakdown": {"strong_buy": 1, "buy": 7, "hold": 8, "sell": 1, "strong_sell": 0}}
     answer = "Strong buy (6%), buy (41%), hold (47%), sell (6%)."
@@ -385,7 +385,7 @@ def test_a_plain_decline_counts_as_declining_an_uncovered_bank():
     assert not _check_behavior(item, "HSBC sentiment is broadly positive this month.")["correct"]
 
 
-# --- quote detection: two detectors together (validation, 4 Oct 2026) -------------------
+# --- quote detection: two detectors together (validation) -------------------------------
 # Five validations each found a quote shape the detector of the day missed: the pattern
 # knows a quote by what stands around its marks, the pairing of marks in order doesn't
 # care. Both now run, the pairing only between the pattern's quotes.
@@ -409,8 +409,8 @@ def _quote_tracker():
     (f'Consensus is "buy" but one user said "{QUOTED_INVENTED}"(Reddit) and others rate it "hold".',
      'Consensus is "buy" but one user said (Reddit) and others rate it "hold".'),
     # A closing mark whose opening was lost, then a quote the pattern can't see. From the seventh
-    # validation (5 Oct 2026) a mark the detectors couldn't place took its line with it; since
-    # DESIGN decision 26 (5 Oct 2026, after the ninth) strip takes off the mark and keeps the line.
+    # validation a mark the detectors couldn't place took its line with it; since
+    # DESIGN decision 26 (after the ninth) strip takes off the mark and keeps the line.
     (f'The app is fine.\nThe app is bad" and then one user said "{QUOTED_INVENTED}"(Reddit).',
      'The app is fine.\nThe app is bad and then one user said (Reddit).'),
 ])
@@ -455,7 +455,7 @@ def test_a_real_quote_with_a_quote_inside_it_passes_and_an_invented_ending_does_
 
 
 def test_a_marker_left_by_dropping_one_inside_it_goes_too_and_both_are_checked(monkeypatch):
-    # Validation, 4 Oct 2026: "[1[2]]" left "[1]" after the drop, and noting it crashed the turn.
+    # Validation: "[1[2]]" left "[1]" after the drop, and noting it crashed the turn.
     tracker = agent._ToolCallTracker()
     assert agent.enforce_evidence("See note [12[34]] here.", tracker, "q", "strip") == ("See note here.", False)
     assert sorted(tracker.dropped_marks) == ["[12]", "[34]"]
@@ -493,7 +493,7 @@ def test_mixed_quote_marks_close_where_the_quote_does(answer, quotes):
     assert agent._QUOTE_PATTERN.findall(answer) == quotes
 
 
-# --- quote detection after the sixth validation (5 Oct 2026) -----------------------------
+# --- quote detection after the sixth validation ------------------------------------------
 # A straight mark, or a closing mark used to open, now opens where no letter or digit stands
 # before it and closes where none follows; a straight quote may hold curly ones and a curly
 # quote straight ones, checked whole; a single-quoted passage counts from six words.
@@ -569,7 +569,7 @@ def test_a_real_sentence_with_a_quote_in_it_may_be_quoted_in_curly_marks():
 @pytest.mark.parametrize("answer, quotes", [
     ("DBS's 'customer first digital approach' is praised.", []),          # a scare quote, five words or fewer
     ("Analysts see it as 'a clear buy on value'.", []),                     # five words, no quoting word before
-    # Since the seventh validation (5 Oct 2026) "call" is a quoting word in every form, so
+    # Since the seventh validation "call" is a quoting word in every form, so
     # "Analysts call it 'a clear buy on value'." is a quote to check (until then, not one).
     ("Analysts call it 'a clear buy on value'.", ["'a clear buy on value'"]),
     ("One said 'the app logs me out daily now' today.", ["'the app logs me out daily now'"]),   # six words
@@ -601,10 +601,10 @@ def test_a_straight_mark_after_a_number_still_closes_or_opens_nothing(answer, qu
     assert agent._QUOTE_PATTERN.findall(answer) == quotes
 
 
-# --- after the seventh validation (5 Oct 2026) -------------------------------------------
+# --- after the seventh validation --------------------------------------------------------
 # A quote mark neither detector can place is evidence the checks can't verify: the answer is
 # flagged. Strip removed the line holding it, with its citation, until DESIGN decision 26
-# (5 Oct 2026, after the ninth validation); since then it takes the mark off and keeps the
+# (after the ninth validation); since then it takes the mark off and keeps the
 # words. Strip also removes the words between two removed quotes on one line, and runs again
 # until nothing changes. A low-9 mark („) opens a quote; a single-quoted passage counts from
 # three words after a quoting word or a colon, or before a citation; a quoted piece is
@@ -636,13 +636,13 @@ def test_a_loose_mark_flags_the_answer_and_strip_takes_it_off(searched, mode):
     out, flagged = agent.enforce_evidence(answer, tracker, "q", mode)
     if mode == "off":
         assert (out, flagged) == (answer, True)
-    else:       # until DESIGN decision 26 (5 Oct 2026) the line went
+    else:       # until DESIGN decision 26 the line went
         assert (out, flagged) == ('DBS reads slightly positive.\nOne user said the bank cheats everyone in a post.',
                                   False)
 
 
 def test_strip_after_a_search_takes_off_a_loose_mark_and_the_citation_after_it():
-    # Until DESIGN decision 26 (5 Oct 2026) the line holding the loose mark went; now the
+    # Until DESIGN decision 26 the line holding the loose mark went; now the
     # quote the detectors find goes, the marks around the invented words come off, and so
     # does the citation after them, which would vouch for them.
     kept = f"**DBS** reads slightly positive.\n- “{QUOTE_A}” {CITE_A}"
@@ -664,7 +664,7 @@ def test_strip_removes_the_words_between_two_removed_quotes_on_one_line(answer, 
 
 
 def test_strip_without_a_search_takes_off_loose_marks_the_first_paragraph_too():
-    # Until DESIGN decision 26 (5 Oct 2026) the lines holding the loose marks went.
+    # Until DESIGN decision 26 the lines holding the loose marks went.
     answer = ("DBS reads slightly positive.\n"
               f'One said “my rate went up to 5" in one post. Another wrote ”{QUOTED_INVENTED}”\n\n'
               'Its score is 0.31.\nUsers say the fees are a scam" in posts.\nMore to come.')
@@ -697,7 +697,7 @@ def test_a_quote_in_low_nine_marks_is_checked(marks):
 @pytest.mark.parametrize("answer, quotes", [
     ("One user wrote 'banks charge hidden fees' today.", ["'banks charge hidden fees'"]),   # a quoting word
     ("One user: 'banks charge hidden fees' today.", ["'banks charge hidden fees'"]),         # a speaker and a colon
-    # A colon after anything but a speaker is a label: since the eighth validation (5 Oct 2026)
+    # A colon after anything but a speaker is a label: since the eighth validation
     # it cues no quote ("Note: 'fees are high' is the theme"; until then, a quote).
     ("Their view: 'banks charge hidden fees' today.", []),
     (f"Fees are 'far too high here' {CITE_A}", ["'far too high here'"]),                   # a citation
@@ -729,7 +729,7 @@ def test_a_real_quote_is_the_same_quote_without_its_end_punctuation(answer):
     ('用户说“应用很慢”。', []),                   # in Chinese, a letter against both marks
     ('“DBS”的应用', []),
     # A word in quote marks whatever follows its closing mark, since the eighth validation
-    # (5 Oct 2026: '"DBS"and' took its line; until then both marks were left unplaced here) ...
+    # ('"DBS"and' took its line; until then both marks were left unplaced here) ...
     ('“x”OCBC will cut', []),
     # ... unless a mark that reads as a closing one follows ten or more characters on: then
     # the closing mark opens a quote, and the first is left unplaced.
@@ -756,7 +756,7 @@ def test_an_invented_quote_in_several_odd_shapes_at_once_is_removed_or_flagged(a
     tracker = _two_quote_tracker() if searched else agent._ToolCallTracker()
     assert tracker.answer_has_unverified_citation(answer)
     out, flagged = agent.enforce_evidence(answer, tracker, "q", "strip")
-    # Since DESIGN decision 26 (5 Oct 2026): or no longer in quote marks.
+    # Since DESIGN decision 26: or no longer in quote marks.
     assert removed_flagged_or_unquoted(out, flagged, "next year for sure")
 
 
@@ -790,7 +790,7 @@ def test_the_words_after_a_closing_mark_that_reads_as_an_opening_one_are_checked
 @pytest.mark.parametrize("answer, quotes", [
     ("Users say 'banks charge hidden fees' a lot.", ["'banks charge hidden fees'"]),           # any form of a cue
     ("As one user put it, 'banks charge hidden fees'.", ["'banks charge hidden fees'"]),
-    ("Their view: very much 'banks charge hidden fees'.", []),     # a label's colon: no cue since 5 Oct 2026
+    ("Their view: very much 'banks charge hidden fees'.", []),     # a label's colon: no longer a cue
     ("Another: 'banks charge hidden fees'.", ["'banks charge hidden fees'"]),                 # a speaker's
     ("Note: one two three four 'banks charge hidden fees'.", []),                              # four words back
     ("Fees are 'far too high here' (source: Reddit).", ["'far too high here'"]),
@@ -806,7 +806,7 @@ def test_single_quotes_after_any_form_of_a_cue_or_before_any_citation(answer, qu
 
 def test_a_mark_strip_could_place_only_after_removing_a_quote_still_takes_its_line():
     # Here removing the invented quote leaves '«„', which reads as no quote. Since DESIGN
-    # decision 26 (5 Oct 2026) the marks left come off and the emptied line goes. (The last
+    # decision 26 the marks left come off and the emptied line goes. (The last
     # „ was a stray mark from f511f83, which the ninth validation found hid an opening mark,
     # until that decision.)
     answer = f"DBS reads slightly positive.\n«„{QUOTED_INVENTED} «„"
@@ -825,12 +825,12 @@ def test_a_mark_strip_could_place_only_after_removing_a_quote_still_takes_its_li
 ])
 def test_the_words_after_a_real_quote_inside_another_are_checked(answer):
     out, flagged = agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip")
-    # Since DESIGN decision 26 (5 Oct 2026): or no longer in quote marks.
+    # Since DESIGN decision 26: or no longer in quote marks.
     assert removed_flagged_or_unquoted(out, flagged, "next year for sure")
     assert _two_quote_tracker().answer_has_unverified_citation(answer)
 
 
-# --- after the eighth validation (5 Oct 2026) --------------------------------------------
+# --- after the eighth validation ---------------------------------------------------------
 # Two marks around fewer than ten characters with no space just inside them are a word in
 # quote marks whatever follows ('"DBS"and'), unless a mark that reads as a closing one stands
 # ten or more characters on; the words glued to a quote's closing mark are checked only after
@@ -850,10 +850,10 @@ def test_the_words_after_a_real_quote_inside_another_are_checked(answer):
 def test_an_invented_quote_glued_to_a_word_in_quote_marks_is_removed_or_flagged(answer, searched):
     tracker = _two_quote_tracker() if searched else agent._ToolCallTracker()
     out, flagged = agent.enforce_evidence(answer, tracker, "q", "strip")
-    # Since DESIGN decision 26 (5 Oct 2026): or no longer in quote marks, as here: strip
+    # Since DESIGN decision 26: or no longer in quote marks, as here: strip
     # reads no glued words as a quote, and takes off the marks around them.
     assert removed_flagged_or_unquoted(out, flagged, "next year for sure")
-    # Since the twelfth round (6 Oct 2026) off mode flags exactly what strip changes: where an
+    # Since the twelfth round off mode flags exactly what strip changes: where an
     # inch mark ends the glued words ('... by 5"'), strip changes nothing, as a reader sees no
     # quote around them, and off mode no longer flags them (until then it read them as one).
     changed = out.split(agent.EVIDENCE_UNMATCHED_NOTE)[0].split(agent.EVIDENCE_REMOVED_NOTE)[0] != answer
@@ -886,17 +886,17 @@ def test_the_words_glued_to_a_real_quote_are_the_models_own():
 ])
 def test_the_words_glued_to_a_closing_mark_are_checked_where_they_may_be_a_quote(answer):
     out, flagged = agent.enforce_evidence(answer, _two_quote_tracker(), "q", "strip")
-    # Since DESIGN decision 26 (5 Oct 2026): or no longer in quote marks.
+    # Since DESIGN decision 26: or no longer in quote marks.
     assert removed_flagged_or_unquoted(out, flagged, "next year for sure")
     assert removed_flagged_or_unquoted(out, flagged, "cheats everyone")
-    # Off mode flags exactly what strip changes (the twelfth round, 6 Oct 2026): after a word
+    # Off mode flags exactly what strip changes (the twelfth round): after a word
     # or two in quote marks, or a quote a search returned, the glued words stand outside quote
     # marks as written, and strip leaves them (until then off mode read them as a quote).
     assert _two_quote_tracker().answer_has_unverified_citation(answer) == (out != answer)
 
 
 # A stray mark after a quote's closing mark or its citation was placed from f511f83 until
-# DESIGN decision 26 (5 Oct 2026): the ninth validation found that it hid an opening mark at
+# DESIGN decision 26: the ninth validation found that it hid an opening mark at
 # a line end, and the invented quote it opened on the next line. Such a mark is loose again;
 # strip mode takes it off and keeps the line and the real quote.
 @pytest.mark.parametrize("answer, shown", [
@@ -926,7 +926,7 @@ def test_single_quotes_are_cued_by_a_verb_of_saying_or_a_speakers_colon(answer, 
 
 
 # --- after the ninth validation: strip shows only quotes a search returned ------------------
-# DESIGN decision 26 (5 Oct 2026). Strip mode removes the quotes the detectors find and no
+# DESIGN decision 26. Strip mode removes the quotes the detectors find and no
 # search returned, as before, then takes the quote marks off everything else a search
 # doesn't vouch for, keeping the words; what is left in quote marks is text a search returned,
 # a word or two, or the tools' own wording. Off mode flags what strip would take off.
@@ -954,7 +954,7 @@ def test_strip_keeps_the_marks_a_search_or_a_reader_vouches_for(answer):
     (f"- > {QUOTED_INVENTED}", f"- {QUOTED_INVENTED}"),                          # ... in a list item
     ("One user wrote'OCBC might cut fees' today.", "One user wrote OCBC might cut fees today."),
     # the citation after a mark taken off goes too: it would vouch for the model's own words;
-    # since the eleventh round (6 Oct 2026) so do the marks of the word before them, as the
+    # since the eleventh round so do the marks of the word before them, as the
     # citation vouches for it too (until then: '"x"OCBC will cut ...')
     (f'"x"{QUOTED_INVENTED}" {CITE_A}', f'x {QUOTED_INVENTED}'),
     # but not after a stray mark right after a quote a search returned
@@ -1025,7 +1025,7 @@ def test_strip_mode_reads_no_glued_words_as_a_quote(answer, flagging, stripping)
     assert agent._STRIP_QUOTES.findall(answer) == stripping
 
 
-# --- the tenth round (5 Oct 2026): what else a reader sees quoted -------------------------
+# --- the tenth round: what else a reader sees quoted --------------------------------------
 # Strip mode's guarantee rests on reading the marks as a reader sees them, so it reads
 # every mark Unicode lists as a quotation mark (and the ornamental ones and double primes),
 # a character reference markdown shows as a mark ("&quot;"), a blockquote in a nested
@@ -1126,7 +1126,7 @@ def test_a_backslash_that_escaped_a_mark_goes_with_it(answer, shown):
     assert out.split(agent.EVIDENCE_UNMATCHED_NOTE)[0] == shown
 
 
-# --- whole words (the tenth round, 6 Oct 2026) ---------------------------------------------
+# --- whole words (the tenth round) ---------------------------------------------------------
 # A quoted piece keeps its marks only as the source's whole words. Until then a piece found
 # inside a longer word kept them, unflagged, and an ellipsis could turn a quote's sense with
 # it ("... impressive" from "unimpressive", "... 5%" from "15%").
@@ -1184,7 +1184,7 @@ def test_whole_words_at(text, piece, at):
     assert agent._whole_words_at(text, piece, 0) == at
 
 
-# --- after the tenth validation (6 Oct 2026) ---------------------------------------------
+# --- after the tenth validation ----------------------------------------------------------
 # Strip mode cuts a citation that would vouch for words that lost their quote marks, or for a
 # word or two in quote marks, that no search returned: a citation vouches for what stands
 # before it in its paragraph or list item, back to the citation before it or a quote a
@@ -1215,8 +1215,8 @@ def _d_tracker():
     (f"- > {INVENTED_D} {CITE_D}", f"- {INVENTED_D}"),                     # a blockquote that lost its ">"
     # a quote kept inside a passage left open: the words after it were quoted too
     (f'“As one investor put it, "{REAL_D}" {INVENTED_D} {CITE_D}', f'"{REAL_D}" {INVENTED_D}'),
-    # a quote a search returned, in the same sentence, excuses nothing (the twelfth round, 6 Oct
-    # 2026; until then the citation vouched only back to that quote, and stayed)
+    # a quote a search returned, in the same sentence, excuses nothing (the twelfth round;
+    # until then the citation vouched only back to that quote, and stayed)
     (f'One user: ‹{INVENTED_D}›, while another wrote "{REAL_D}" {CITE_D}.',
      f'One user: {INVENTED_D}, while another wrote "{REAL_D}".'),
 ])
@@ -1331,7 +1331,7 @@ EVIDENCE_37 = [{"query": "q", "results": [{"sentence_id": SID_D, "text": "I paid
     ('One user: "paid 37 dollars".', []),
     ('DBS had "37" negative posts.', ["37"]),                  # a number alone vouches for nothing
     ("DBS had 37 negative posts out of 45.", ["37"]),
-    # Since the twelfth round (6 Oct 2026) two of the three words nearest it on either side, common
+    # Since the twelfth round two of the three words nearest it on either side, common
     # words skipped, are enough: "paid" and "fees" are among those of 37 in the sentence too
     # (flagged until then).
     ("One user paid 37 in fees.", []),
@@ -1350,7 +1350,7 @@ def test_a_carriage_return_ends_a_date_as_a_line_feed_does():
     assert unverified_numbers("Coverage ends September 25\r\nDBS scored 0.31.", tools_) == []
 
 
-# --- after the eleventh validation (6 Oct 2026) -----------------------------------------
+# --- after the eleventh validation ------------------------------------------------------
 # A citation vouches for its own sentence (agent._reach), a link counting as a citation: for
 # words that stood in quote marks anywhere in it, three or more of them, and for a word or two
 # in quote marks before it, or after it where it introduces the words after it. A sentence ends

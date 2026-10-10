@@ -4,7 +4,7 @@ Loading the local model before it is asked anything.
 Ollama unloads a model a few minutes after its last request. The next
 request then waits for the model to load before it answers, and on a Mac
 short of memory that wait can pass the request's own time limit: on
-10 Oct 2026 the intent classifier gave up after 60 s and the chatbot model
+one occasion the intent classifier gave up after 60 s and the chatbot model
 after 120 s, both while the model was still loading. Giving up closes the
 connection, which makes Ollama abandon the load, so the next request starts
 it again.

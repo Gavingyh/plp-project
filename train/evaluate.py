@@ -98,7 +98,7 @@ def finetuned_probs(model_dir: str, df: pd.DataFrame) -> np.ndarray:
             probs = torch.softmax(model(**enc).logits, dim=-1).cpu().numpy()
             out.append(probs[:, order])
     probs = np.concatenate(out)
-    # On 2026-10-01 the GPU, under memory pressure, returned all-zero rows
+    # The GPU once, under memory pressure, returned all-zero rows
     # without an error, which argmax turned into "negative" everywhere.
     if not np.allclose(probs.sum(axis=1), 1.0, atol=1e-3):
         raise RuntimeError(f"{model_dir}: probabilities don't sum to 1: the device returned garbage; "

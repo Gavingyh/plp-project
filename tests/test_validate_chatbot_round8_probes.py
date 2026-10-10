@@ -62,7 +62,7 @@ def test_an_invented_quote_is_removed_or_flagged(answer, tracker):
     assert "next year for sure" not in out or flagged
 
 
-# Changed to the contract of DESIGN decision 26 (5 Oct 2026, after the ninth
+# Changed to the contract of DESIGN decision 26 (after the ninth
 # validation): strip mode takes the quote marks off what a search doesn't vouch for,
 # so the words after a real quote's closing mark now stand outside quote marks, as
 # the model's own, where until then they were removed.
@@ -91,7 +91,7 @@ def test_answer_turn_strips_an_invented_quote_after_a_closing_mark(monkeypatch):
         "search_evidence": lambda **kw: {"query": kw["query"], "results": [ITEM]}})
     monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
     r = agent.answer_turn("What do people say about the DBS app?", backend=Backend(), verbose=False)
-    # Since DESIGN decision 26 (5 Oct 2026): or no longer in quote marks.
+    # Since DESIGN decision 26: or no longer in quote marks.
     assert removed_flagged_or_unquoted(r.answer, r.citation_unverified, "next year for sure")
     assert in_quote_marks(r.answer, REAL)
 
@@ -132,7 +132,7 @@ def test_a_word_in_quote_marks_without_a_space_after_is_kept(answer):
 # Confirmed, and fixed after this validation: the cue words' noun forms (report,
 # note, post) and a label's colon ("Note:") made a three to five word term in single
 # marks a checked quote, so after a search a correct term was stripped. 7446c89 and
-# main keep them. Changed by DESIGN decision 26 (5 Oct 2026): the words stay, but a
+# main keep them. Changed by DESIGN decision 26: the words stay, but a
 # term of three or more words that no search returned loses its quote marks.
 @pytest.mark.parametrize("answer, shown", [
     ("Users report 'long queue times' at branches.", "Users report long queue times at branches."),

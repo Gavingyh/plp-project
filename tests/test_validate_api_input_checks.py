@@ -1,5 +1,5 @@
 """
-Validation of the 4 Oct 2026 input checks, against the routes read from the app
+Validation of the input checks, against the routes read from the app
 (not a hand-kept list):
 
 - every endpoint that takes `aspect` gives 422 for an unknown aspect;

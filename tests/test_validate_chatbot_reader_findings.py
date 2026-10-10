@@ -1,6 +1,6 @@
 """
-Validation of four reviewer findings on the chatbot's reader-facing changes
-(4 Oct 2026). Each test asserts the correct behaviour, so it fails while the
+Validation of four reviewer findings on the chatbot's reader-facing changes.
+Each test asserts the correct behaviour, so it fails while the
 finding is real; a confirmed finding carries xfail(strict=True). Synthetic
 data only: no database, no Ollama.
 """

@@ -1,5 +1,5 @@
 """
-Reviewer findings from the 4 Oct 2026 second review of chatbot/ and api/main.py.
+Reviewer findings from the second review of chatbot/ and api/main.py.
 Each test fails if its finding is real; a confirmed one is marked
 xfail(strict=True). Synthetic data only: no model, no network, no data/plp.db.
 """

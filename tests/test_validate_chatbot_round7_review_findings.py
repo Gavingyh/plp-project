@@ -45,7 +45,7 @@ def test_unlisted_count_noun_after_returned_day_is_checked(text):
 
 # Inch-holding quote swallows next opener: an inch mark in one quote makes the
 # detector run on to the next quote's opening mark, leaving the invented quote out.
-# Changed to the contract of DESIGN decision 26 (5 Oct 2026): the invented words now
+# Changed to the contract of DESIGN decision 26: the invented words now
 # stand outside quote marks, where until then strip mode removed them; the citation
 # after them goes, so nothing vouches for them.
 @pytest.mark.parametrize("answer", [

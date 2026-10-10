@@ -29,7 +29,7 @@ def test_every_setting_in_the_file_can_be_read():
 
 def test_the_default_is_used_unless_the_environment_sets_one(monkeypatch):
     monkeypatch.delenv("OLLAMA_MODEL", raising=False)
-    assert settings.get("models.ollama") == "llama3.1:8b"            # the demo model (decided 4 Oct)
+    assert settings.get("models.ollama") == "llama3.1:8b"            # the demo model
     monkeypatch.setenv("OLLAMA_MODEL", "qwen3:4b")
     assert settings.get("models.ollama") == "qwen3:4b"
 

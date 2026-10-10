@@ -19,7 +19,7 @@ Every result carries its source sentence_id, url, and date - the chatbot's
 citation requirement is enforced by what this
 function returns, not left to the model's discretion.
 
-Aspect query (CHATBOT_ASPECT_QUERY=1, off by default; 2026-10-01): when an
+Aspect query (CHATBOT_ASPECT_QUERY=1, off by default): when an
 aspect is given, the semantic score embeds the aspect's readable name plus
 the question's content words instead of the whole question. FinBERT's
 vectors carry a text's register strongly, so a question embeds like a

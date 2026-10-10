@@ -1,9 +1,9 @@
 """
-What the chatbot's model is given to answer a retail investor (4 Oct 2026):
+What the chatbot's model is given to answer a retail investor:
 the reading of a score in words, the shares of positive and negative
 sentences, a bank's strongest and weakest topics, a comparison's ranking, the
 latest months when the 7- and 30-day windows are too thin, evidence without
-repeats, and numbered citations. On 4 Oct a local model wrote "0.122 out of
+repeats, and numbered citations. Before this a local model wrote "0.122 out of
 1", called +0.124 "slightly negative", said a trend was "not available" with
 66 months of data stored, and cited the same report sentence once a quarter.
 The API's own results must stay as they were.
@@ -50,7 +50,7 @@ def _index(temp_db, cells):
 def test_reading_puts_a_score_in_words_on_the_right_side_of_zero():
     assert tools.reading(0.03) == "neutral"
     assert tools.reading(-0.049) == "neutral"
-    assert tools.reading(0.124) == "slightly positive"      # the 4 Oct answer called this "slightly negative"
+    assert tools.reading(0.124) == "slightly positive"      # an answer once called this "slightly negative"
     assert tools.reading(-0.05) == "slightly negative"
     assert tools.reading(0.2) == "moderately positive"
     assert tools.reading(-0.35) == "clearly negative"
@@ -79,7 +79,7 @@ def test_overall_score_comes_with_shares_topics_and_the_data_date(temp_db):
 
 def test_one_banks_score_carries_where_it_ranks_among_the_three(temp_db):
     # Asked about DBS alone, the model said DBS ranked above OCBC, and asked about OCBC,
-    # that OCBC ranked below both; OCBC was the highest (4 Oct). The ranking now comes with the score.
+    # that OCBC ranked below both; OCBC was the highest. The ranking now comes with the score.
     _index(temp_db, [("DBS", "dividend_policy", "2026-08", 3, 7, 0),
                      ("OCBC", "dividend_policy", "2026-08", 8, 2, 0),
                      ("UOB", "dividend_policy", "2026-08", 1, 9, 0)])
@@ -118,8 +118,8 @@ def test_the_api_functions_return_what_they_did(temp_db):
 # --- get_trend -----------------------------------------------------------------------
 
 def test_trend_gives_the_latest_months_when_the_rolling_windows_are_thin(temp_db):
-    # Everything is months old, so the 7- and 30-day windows are empty: before
-    # 4 Oct the model got the all-time score alone and answered "not available".
+    # Everything is months old, so the 7- and 30-day windows are empty: at first
+    # the model got the all-time score alone and answered "not available".
     _index(temp_db, [("UOB", "net_interest_margin", "2026-06", 3, 7, 0),
                      ("UOB", "net_interest_margin", "2026-07", 4, 6, 0),
                      ("UOB", "net_interest_margin", "2026-08", 8, 2, 0)])
@@ -131,7 +131,7 @@ def test_trend_gives_the_latest_months_when_the_rolling_windows_are_thin(temp_db
     expected = tools._unshrunk(r["latest_month"]) - tools._unshrunk(r["previous_month"])
     assert abs(r["change_from_previous_month"] - expected) < 1e-4
     assert r["month_on_month"] == "up"
-    # Written out for the model (it gave a month's +0.2185 as "-0.2185" on 4 Oct), and every figure in it checks out.
+    # Written out for the model (it once gave a month's +0.2185 as "-0.2185"), and every figure in it checks out.
     late, early = r["latest_month"], r["previous_month"]
     assert r["trend_in_words"] == (
         f"August 2026 ({late['score']:+.2f}, {late['n']} sentences) was up on "
@@ -140,7 +140,7 @@ def test_trend_gives_the_latest_months_when_the_rolling_windows_are_thin(temp_db
 
 
 def test_trend_with_enough_recent_data_states_the_week_against_the_month_only(temp_db):
-    # On 4 Oct the model blended a rising week with a falling month; it now gets one comparison.
+    # The model once blended a rising week with a falling month; it now gets one comparison.
     from datetime import datetime, timedelta, timezone
     import aggregate.index as agg
     now = datetime.now(timezone.utc)
@@ -204,7 +204,7 @@ def test_evidence_results_name_their_source_for_the_reader(temp_db, monkeypatch)
 
 
 def test_evidence_comes_with_the_banks_score_and_the_data_date(temp_db, monkeypatch):
-    # 4 Oct: asked what people say and how they feel, the model searched only, called the mood
+    # Seen once: asked what people say and how they feel, the model searched only, called the mood
     # "neutral" with no score fetched, and gave a quote's date as the date the data runs to.
     _index(temp_db, [("DBS", "dividend_policy", "2026-08", 6, 3, 1)])
     monkeypatch.setattr(tools, "_search_evidence", lambda *a, **kw: [])
@@ -221,7 +221,7 @@ def test_evidence_comes_with_the_banks_score_and_the_data_date(temp_db, monkeypa
 
 
 def test_evidence_context_gives_the_neutral_share_too(temp_db, monkeypatch):
-    # Validation, 4 Oct 2026: a model that worked out the neutral share from the other two was flagged.
+    # Validation: a model that worked out the neutral share from the other two was flagged.
     _index(temp_db, [("DBS", "dividend_policy", "2026-08", 6, 3, 1)])
     monkeypatch.setattr(tools, "_search_evidence", lambda *a, **kw: [])
     r = tools.chat_search_evidence("dividends", bank="DBS", aspect="dividend_policy")
@@ -271,7 +271,7 @@ def test_a_report_stored_on_this_machine_is_listed_by_name_not_path():
 
 
 def test_a_date_without_its_year_is_not_a_figure_but_a_figure_after_a_month_is():
-    # The prompt asks for the date the data runs to; "September 25th" was flagged on 4 Oct. It is
+    # The prompt asks for the date the data runs to; "September 25th" was once flagged. It is
     # skipped because a tool returned that date; a date no tool returned is checked as figures.
     tools = [{"n": 1, "data_runs_to": "2026-09-25"}, {"data_runs_to": "2026-09-24"}]
     assert unverified_numbers("The data runs to September 25th, and to 24 Sep for UOB.", tools) == []
@@ -285,7 +285,7 @@ DAYS_RETURNED = [{"n": 45, "data_runs_to": "2026-09-25"}, {"data_runs_to": "2026
 @pytest.mark.parametrize("answer", ["In September 25 sentences were negative.", "In Sept 25 posts were negative.",
                                     "September 25 of them were negative."])
 def test_a_returned_day_with_a_word_after_it_is_a_count(answer):
-    # Validation, 4 Oct 2026: with data to 25 September, "In September 25 sentences" hid the 25.
+    # Validation: with data to 25 September, "In September 25 sentences" hid the 25.
     assert unverified_numbers(answer, DAYS_RETURNED) == ["25"]
 
 
@@ -303,29 +303,29 @@ def test_a_range_running_past_the_returned_days_is_checked():
     assert unverified_numbers("In September 25-30% were negative.", DAYS_RETURNED) == ["25", "30%"]
 
 
-# Validation, 5 Oct 2026: a returned day with a word after it was flagged ("Data runs to
-# September 25 for DBS"). After the seventh validation (5 Oct 2026) a returned day after a
+# Validation: a returned day with a word after it was flagged ("Data runs to
+# September 25 for DBS"). After the seventh validation a returned day after a
 # month is a date only where it clearly reads as one: after "on", "as of", "the", "runs to"
 # (a range also after "from"), or before punctuation, a line end or a word such as "until".
 @pytest.mark.parametrize("answer", [
     "Data runs to September 25 for DBS.", "On September 25 DBS scored 0.31.", "As of September 25 the score was 0.31.",
     "The September 25 data show 0.31.", "Data runs to September 25 with 45 sentences.",
     "Data runs to Sep 25 in all three banks.",
-    "From Sept 25 to 26 posts were negative.",     # a range after "from": a date range (until 5 Oct, ["26"])
+    "From Sept 25 to 26 posts were negative.",     # a range after "from": a date range (at first, ["26"])
 ])
 def test_a_returned_day_before_another_word_is_a_date(answer):
     assert unverified_numbers(answer, DAYS_RETURNED + [{"score": 0.31}]) == []
 
 
 def test_a_returned_day_before_for_is_checked():
-    # After the eighth validation (5 Oct 2026) "for" no longer makes a returned day a date:
+    # After the eighth validation "for" no longer makes a returned day a date:
     # "September 25 for DBS against 40 for UOB" hid the 25. A real date before "for" with no
     # "on", "as of", "the" or "runs to" before it is flagged, an accepted false alarm.
     assert unverified_numbers("Data covers Sept 25-26 for DBS.", DAYS_RETURNED) == ["25", "26"]
     assert unverified_numbers("Data runs to Sept 25-26 for DBS.", DAYS_RETURNED) == []
 
 
-# After the eighth validation (5 Oct 2026): before a comma a returned day reads as a date
+# After the eighth validation: before a comma a returned day reads as a date
 # only when no number follows in the rest of its clause, or one right after the comma;
 # before an opening bracket, only when no number follows and no "of" stands inside it.
 @pytest.mark.parametrize("answer, figures", [
@@ -354,13 +354,13 @@ def test_a_returned_day_before_a_comma_or_a_bracket(answer, figures):
     ("In September 25 per cent were negative.", ["25"]),
     ("In September 25 to 30% of posts were negative.", ["25", "30%"]),
     ("In September 25 to 30 per cent were negative.", ["25", "30"]),
-    ("Sept 25 & 45 sentences", ["25"]),      # "&" before a number: no date (until 5 Oct, read as one)
+    ("Sept 25 & 45 sentences", ["25"]),      # "&" before a number: no date (at first read as one)
 ])
 def test_a_returned_day_before_a_count_or_a_share_is_checked(answer, figures):
     assert unverified_numbers(answer, DAYS_RETURNED) == figures
 
 
-# The rule after the seventh validation (5 Oct 2026), each way a returned day reads as a date,
+# The rule after the seventh validation, each way a returned day reads as a date,
 # and the false alarms it accepts (docs/evidence/chatbot-answers-2026-10-04.md, Known limits).
 @pytest.mark.parametrize("answer", [
     "As at September 25 the score was 0.31.", "Figures dated September 25 show 0.31.",
@@ -408,7 +408,7 @@ def test_the_model_reads_fewer_fields_than_the_turn_records(monkeypatch):
 
 
 def test_a_reading_in_quote_marks_is_not_taken_for_an_invented_quote():
-    # 4 Oct: 'a reading of "clearly positive"' was stripped as unsearched evidence, leaving "a reading of."
+    # Seen once: 'a reading of "clearly positive"' was stripped as unsearched evidence, leaving "a reading of."
     from chatbot.agent import enforce_evidence
     tracker = _ToolCallTracker.from_calls([{"name": "get_trend", "arguments": {"bank": "UOB"},
                                             "result": {"reading": "clearly positive", "topic_name": "Net Interest Margin"}}])
@@ -445,7 +445,7 @@ def test_the_prompt_no_longer_asks_for_labelled_sections():
         assert field in SYSTEM_PROMPT, field
 
 
-# After the ninth validation (5 Oct 2026): a clause ends at ".", ";", ":", "!" or "?"
+# After the ninth validation: a clause ends at ".", ";", ":", "!" or "?"
 # only before a line end or a space and a capital or a digit, never at the full stop of
 # an abbreviation ("In September 25, vs. 45 in August" hid the 25); after "by", "up to",
 # "through" and the like, a comma with no number right after it ends a date; a bracket
@@ -511,7 +511,7 @@ def test_a_returned_day_before_a_bracket(answer, figures):
 
 
 # After "in" a returned day is always checked: "in September" names the month, so the
-# number after it is a count, whatever follows (the tenth round, 5 Oct 2026: "In
+# number after it is a count, whatever follows (the tenth round: "In
 # September 25 (DBS), 45 (OCBC) posts were negative" hid the 25 behind a bracket and a
 # comma). Other words before the month keep the rules above.
 @pytest.mark.parametrize("answer, figures", [

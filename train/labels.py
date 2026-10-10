@@ -3,7 +3,7 @@ The labelled data, made safe to train and evaluate on.
 
 Annotators label aspect and sentiment together (DESIGN decision 17), and
 correcting an aspect can turn two candidate rows into the same (sentence,
-aspect) pair. The 2026-09-27 round did exactly that: 21 pairs appear two or
+aspect) pair. The first round did exactly that: 21 pairs appear two or
 three times, and in 5 of them one copy sits in train_dev and the other in the
 frozen test split. A sentence on both sides of the split leaks the answer into
 training, and a duplicated row counts twice in both training and scoring.
@@ -59,7 +59,7 @@ def near_test_copies(train_texts, test_texts, threshold: float = NEAR_DUPLICATE)
     """Positions in train_texts whose words overlap some test text by at least
     `threshold`. The same sentence can reach the corpus twice under different
     ids (a bank's PDF and a news article quoting it), which an id check misses:
-    a top-up row matched a frozen test sentence at 0.93 on 3 Oct 2026."""
+    a top-up row once matched a frozen test sentence at 0.93."""
     tests = [w for w in map(_words, test_texts) if len(w) >= 5]
     out = []
     for i, text in enumerate(train_texts):

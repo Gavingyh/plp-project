@@ -22,7 +22,7 @@ thinking off; it is sent as Ollama's `think` field only when set.
 A tool call the model writes out as text instead of making it is recognised
 and run (chatbot/backends/_text_tool_call.py).
 
-Speed and time limits (10 Oct 2026):
+Speed and time limits:
   - Before the first request of a question the model is loaded if Ollama has
     unloaded it (chatbot/ollama_load.py), so that a slow load doesn't use up
     the request's time limit.
@@ -39,7 +39,7 @@ Speed and time limits (10 Oct 2026):
     mistake. Ollama no longer stops the model after a call, and it was seen
     to carry on into an invented answer (113 and 160 tokens, 25 to 32
     seconds), so reading stops as soon as words follow a complete call.
-    Off by default: on the gold set of 10 Oct it was no faster on average
+    Off by default: on the gold set it was no faster on average
     and no better on the checks
     (docs/evidence/chatbot-timeout-and-speed-2026-10-10.md).
 """

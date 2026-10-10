@@ -152,7 +152,7 @@ def run(model: str = DEFAULT_MODEL, limit: int | None = None) -> dict:
     progress = _load_progress()
 
     # A row whose last attempt failed is tried again: a failure recorded as done
-    # would leave its llm_prelabel empty for good (4 Oct 2026).
+    # would leave its llm_prelabel empty for good.
     todo = df[~df.apply(lambda r: progress.get((r["sentence_id"], r["aspect"]), {}).get("status") == "ok",
                         axis=1)]
     if limit:

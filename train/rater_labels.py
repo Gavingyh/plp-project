@@ -206,7 +206,7 @@ def audit(transcripts: str):
         print("  ", b)
 
 
-# --- Later rounds on unlabelled sheets (2026-10-02) --------------------------------
+# --- Later rounds on unlabelled sheets ---------------------------------------------
 # The top-up sheet (aspect and not_about_bank, the same task and instructions as
 # the first round) and the bank-NER gold sheet (which banks a sentence is about).
 # The NER batches leave out the sheet's `case` column, the sampling stratum,
@@ -217,9 +217,9 @@ TOPUP_SHEET = os.path.join(BASE_DIR, "data", "labeled", "topup", "topup_sheet.cs
 TOPUP_LLM = os.path.join(BASE_DIR, "data", "labeled", "topup", "llm_aspects.csv")
 NER_SHEET = os.path.join(BASE_DIR, "data", "labeled", "ner", "gold_sheet.csv")
 BANKS = ("DBS", "OCBC", "UOB")
-# Rules the team changed after Opus answered the NER sheet (2 Oct), applied at
+# Rules the team changed after Opus answered the NER sheet, applied at
 # merge so a re-merge keeps them; the raw answers stay as Opus gave them.
-# 4 Oct 2026: DBS Vickers counts as DBS (PLAN section 2); Opus was told it didn't.
+# DBS Vickers counts as DBS (PLAN section 2); Opus was told it didn't.
 NER_RULE_CHANGES = [(re.compile(r"\bdbs\W{0,2}vickers", re.IGNORECASE), "DBS")]
 SEED = 2026
 SHEETS = {

@@ -114,8 +114,8 @@ def test_a_reworded_prompt_does_not_reuse_old_answers(tmp_path, monkeypatch):
 
 
 def test_the_prompt_is_the_one_the_corpus_was_classified_with():
-    # The definitions, examples and model moved to config/aspects.yaml (4 Oct
-    # 2026) unchanged: the corpus answers in data/aspect_llm/ (about a day of
+    # The definitions, examples and model moved to config/aspects.yaml
+    # unchanged: the corpus answers in data/aspect_llm/ (about a day of
     # compute) are cached under this fingerprint. A deliberate prompt change
     # updates this number and starts a new cache.
     import aspects.llm_classify as llm

@@ -297,7 +297,7 @@ def test_auto_detect_gemini_when_only_gemini_key_present(monkeypatch):
 
 
 def test_the_default_is_ollama_even_with_a_gemini_key(monkeypatch):
-    # Decided 4 Oct 2026: the demo model is local; a key in .env no longer
+    # Decided: the demo model is local; a key in .env no longer
     # switches the chatbot to a hosted model.
     from chatbot.backends.ollama_backend import OllamaBackend
     monkeypatch.delenv("CHATBOT_BACKEND", raising=False)

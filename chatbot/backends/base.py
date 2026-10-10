@@ -50,7 +50,7 @@ class LLMBackend(ABC):
         ...
 
 
-# What a hosted model may see (decided 4 Oct 2026 for every hosted backend:
+# What a hosted model may see (decided for every hosted backend:
 # Gemini, Claude, OpenAI or Groq). Reddit evidence text (other people's posts),
 # CNA text (which stays within the team) and text from a source the config
 # doesn't list never leave this machine; free tiers may have their inputs read
@@ -107,7 +107,7 @@ def history_for_hosted(history: list | None) -> list:
     """Earlier turns with each earlier answer replaced by a placeholder: an
     answer may quote or paraphrase Reddit posts that another model, or the
     harness, retrieved, and picking quotes out of it missed cut, wrapped and
-    nested ones (4 Oct 2026). The user's own questions stay, and the bank and
+    nested ones. The user's own questions stay, and the bank and
     aspect travel in the conversation state, so follow-ups still resolve."""
     return [{**h, "content": EARLIER_ANSWER} if h.get("role") == "assistant" else h for h in history or []]
 

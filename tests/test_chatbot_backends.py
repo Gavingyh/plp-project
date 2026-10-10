@@ -42,7 +42,7 @@ def test_auto_detect_prefers_claude_when_key_present(monkeypatch):
 
 def test_auto_detect_falls_back_to_ollama_with_no_key(monkeypatch):
     # Every provider's key, not just Claude's: .env is loaded on import, and a
-    # real key in it (GEMINI_API_KEY since 2026-09-30) would otherwise win.
+    # real key in it (GEMINI_API_KEY) would otherwise win.
     for var in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("CHATBOT_BACKEND", "auto")
@@ -273,7 +273,7 @@ def test_ask_no_warning_when_backend_is_honest(monkeypatch):
     assert "VERIFICATION WARNING" not in answer
 
 
-# --- a tool call written as text (gold-set runs, 30 Sep and 1 Oct) ---------------------
+# --- a tool call written as text (gold-set runs) ---------------------------------------
 
 from chatbot.backends._text_tool_call import text_tool_call
 
@@ -332,7 +332,7 @@ def test_ollama_think_setting(monkeypatch, env, expected):
 
 
 def test_gemini_never_receives_reddit_text_or_earlier_quotes(monkeypatch):
-    # CLAUDE.md: the free Gemini tier is never sent Reddit evidence text (4 Oct 2026: nothing enforced it).
+    # CLAUDE.md: the free Gemini tier is never sent Reddit evidence text (at first nothing enforced it).
     from chatbot.backends.gemini_backend import WITHHELD, GeminiBackend
     sent = []
     replies = iter([
@@ -380,7 +380,7 @@ def test_gemini_never_receives_cna_text():
     assert item["text"] == WITHHELD_TEAM_ONLY and item["url"] is None and item["cite_as"] is None
 
 
-# --- Every hosted backend withholds Reddit, CNA and unlisted text (decided 4 Oct 2026) ---
+# --- Every hosted backend withholds Reddit, CNA and unlisted text ------------------------
 
 _EVIDENCE = {"query": "q", "results": [
     {"sentence_id": "a" * 24, "source": "arctic_shift", "text": "my OCBC app keeps crashing lol",

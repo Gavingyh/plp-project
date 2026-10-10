@@ -64,7 +64,7 @@ def test_prose_after_a_closing_mark_is_kept(answer):
     assert out == answer and not flagged
 
 
-# Cue nouns turn terms into quotes. Changed by DESIGN decision 26 (5 Oct 2026): the
+# Cue nouns turn terms into quotes. Changed by DESIGN decision 26: the
 # words stay, but a term of three or more words that no search returned loses its
 # quote marks in strip mode.
 @pytest.mark.parametrize("answer, shown", [

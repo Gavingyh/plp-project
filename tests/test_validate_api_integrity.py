@@ -383,7 +383,7 @@ def _add_scored(temp_db, sid, bank, aspect, days_ago, label, version=None):
     conn.close()
 
 
-# Trend self-consistency (fixed 3 Oct): the delta and direction come from unshrunk
+# Trend self-consistency: the delta and direction come from unshrunk
 # scores, and the response now returns them, so the delta can be recomputed.
 
 def test_trend_delta_reproducible_from_returned_fields(temp_db):
@@ -410,7 +410,7 @@ def test_trend_delta_reproducible_from_returned_fields(temp_db):
     assert reproducible, ("delta not reproducible from returned scores", candidates_7d, candidates_30d)
 
 
-# Wrong model version (fixed 3 Oct): a MODEL_VERSION with no rows is reported and
+# Wrong model version: a MODEL_VERSION with no rows is reported and
 # logged, not shown as ordinary "no data".
 
 def test_wrong_model_version_is_distinguishable_from_no_data(temp_db, monkeypatch, caplog):
@@ -441,7 +441,7 @@ def test_wrong_model_version_is_distinguishable_from_no_data(temp_db, monkeypatc
     assert distinguishable
 
 
-# Evidence result count (fixed 3 Oct): k is bounded, and a negative k no longer
+# Evidence result count: k is bounded, and a negative k no longer
 # slices off the last result.
 
 @pytest.mark.parametrize("k", [-1, 0, 51])

@@ -4,7 +4,7 @@ A tool call written out as text instead of made.
 Local llama models sometimes answer with the call itself, e.g.
 `Let me check. {"name": "search_evidence", "parameters": {"bank": "DBS"}}`,
 rather than returning it in `tool_calls`. The user then sees JSON instead of
-an answer. Seen three times in the gold-set runs of 30 Sep and 1 Oct (8B
+an answer. Seen three times in gold-set runs (8B
 lookup-2 and mt-3 turn 2, 3B compare-3). The backend recognises such a call
 and runs it, as if the model had made it properly.
 

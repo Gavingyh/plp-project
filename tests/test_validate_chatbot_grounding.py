@@ -1,5 +1,5 @@
 """Validation tests for the grounded-chatbot claim: each was written for a
-confirmed weakness in the guards (3 Oct 2026) and passes since its fix.
+confirmed weakness in the guards and passes since its fix.
 Synthetic answers and trackers only: no model calls, no database.
 """
 
@@ -109,7 +109,7 @@ def test_the_retrieval_score_vouches_as_written_but_not_as_a_percentage():
     assert unverified_numbers("a relevance score of at least 0.58", [{"relevance": 0.5853}]) == []
 
 
-# --- second review, 4 Oct 2026 ------------------------------------------------------
+# --- second review ------------------------------------------------------------------
 
 def test_the_models_own_search_query_does_not_vouch_for_a_quote():
     tracker = _ToolCallTracker.from_calls([{

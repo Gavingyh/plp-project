@@ -33,7 +33,7 @@ def no_model_loading(monkeypatch):
 def no_real_chatbot_backend(monkeypatch):
     """A test that reaches the chatbot model must give it a fake backend: the
     configured one can be a real service (Gemini, when CHATBOT_BACKEND says so),
-    and on 4 Oct 2026 a test reached it. Tests that set agent.get_backend replace this."""
+    and a test once reached it. Tests that set agent.get_backend replace this."""
     def refuse(*a, **k):
         raise RuntimeError("tests must not reach a real chatbot backend: pass a fake one")
     monkeypatch.setattr("chatbot.agent.get_backend", refuse)

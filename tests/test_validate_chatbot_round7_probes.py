@@ -82,7 +82,7 @@ def test_a_correct_answer_is_kept_and_not_flagged(answer):
 
 
 def test_a_scare_quote_keeps_its_words_without_its_marks():
-    # Until DESIGN decision 26 (5 Oct 2026) a case of the test above: since then a
+    # Until DESIGN decision 26 a case of the test above: since then a
     # passage of three or more words that no search returned loses its quote marks.
     out, flagged = enforce_evidence("DBS's 'customer first digital approach' is praised.", _tracker(), "q", "strip")
     assert out == "DBS's customer first digital approach is praised." and not flagged

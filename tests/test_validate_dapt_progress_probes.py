@@ -1,7 +1,7 @@
 """
 Validation probes for the pretraining corpus (train/dapt.py), the chatbot's
 progress steps (chatbot/progress.py, answer_turn's on_step) and the labelling
-round merge (train/source_round.py), 7 Oct 2026. Synthetic data only: a
+round merge (train/source_round.py). Synthetic data only: a
 temporary database and labels files, fake backends with the intent stubbed;
 no model, no network, no data/plp.db.
 

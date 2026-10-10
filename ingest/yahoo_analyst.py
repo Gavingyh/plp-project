@@ -129,8 +129,8 @@ def pull() -> list[dict]:
 
 
 # Each bank's newest row. Banks are fetched separately and can land on
-# different dates, so "the newest date overall" would drop a bank: on
-# 2026-09-25 that hid UOB (last fetched 2026-09-24) from the dashboard.
+# different dates, so "the newest date overall" would drop a bank: that
+# once hid UOB (last fetched the day before) from the dashboard.
 LATEST_PER_BANK_SQL = """
     SELECT ac.* FROM analyst_consensus ac
     JOIN (SELECT bank, MAX(as_of_date) AS d FROM analyst_consensus GROUP BY bank) latest

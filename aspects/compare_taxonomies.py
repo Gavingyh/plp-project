@@ -13,12 +13,12 @@ overwrites config/aspects.yaml.
 Candidates:
   A - the live taxonomy: config/aspects.yaml's seed sentences, read at run
       time so this can't drift from what aspects/assign.py uses (ten aspects
-      plus other since 2026-09-30, DESIGN decision 21).
+      plus other, DESIGN decision 21).
   P - the proposal's four a-priori aspects (dividend_policy, asset_quality,
-      net_interest_margin, management_guidance), the taxonomy until
-      2026-09-30, kept for comparison. Known issue (measured): centroids
+      net_interest_margin, management_guidance), the earlier taxonomy,
+      kept for comparison. Known issue (measured): centroids
       barely separate, most sentences match ~4 of 5 aspects near-equally.
-      Until 2026-10-01 this was hard-coded as candidate A, so the tool kept
+      Earlier, this was hard-coded as candidate A, so the tool kept
       describing the old taxonomy after the config changed.
   B - data-derived coarse: the two real clusters that DID emerge cleanly
       (investment_discussion vs. consumer_banking_service), plus other.

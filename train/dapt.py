@@ -7,7 +7,7 @@ positive or negative, two thirds of them Reddit posts about retail banking
 products (docs/evidence/error-analysis-2026-10-01.md). That is a vocabulary
 and register gap (local product names, Reddit's style), which pretraining on
 the corpus's own text addresses without labels. Slang is too rare to be the
-cause (27 of 1,280 labelled train/dev rows, 6 Oct 2026).
+cause (27 of 1,280 labelled train/dev rows).
 
 Leakage: no labelled sentence's text enters the pretraining corpus, in any
 split or sheet (by default every labelling file under data/labeled), and nor
@@ -17,8 +17,8 @@ one (letters only, from 30 letters: a test sentence split in two by another
 machine's extraction), or one sharing 60% or more of its words with one. The
 Fine-tuning lead claim requires that no test text informs training; leaving
 out train and dev text too keeps the comparison clean whichever rows a seed
-holds out. (Until 7 Oct 2026 only the id and the exact text were checked; a
-validation found 151 test-related sentences in the 6 Oct run's text.)
+holds out. (At first only the id and the exact text were checked; a
+validation found 151 test-related sentences in an earlier run's text.)
 
 FinBERT (ProsusAI/finbert) is published without its masked-word head; the
 head starts from bert-base-uncased's, which shares FinBERT's vocabulary. The
@@ -70,7 +70,7 @@ def letters(text: str) -> str:
 def labelled_files(root: str = os.path.join(BASE_DIR, "data", "labeled")) -> list[str]:
     """Every CSV under data/labeled with sentence ids and text: every round, split and sheet,
     labelled or still to be labelled. The default for what pretraining leaves out, so a
-    labels file can't be forgotten (7 Oct 2026: --db with the default labels kept the
+    labels file can't be forgotten (--db with the default labels once kept the
     broker research test rows)."""
     out = []
     for dirpath, _, names in os.walk(root):
@@ -91,7 +91,7 @@ class NearCopies:
     more (Jaccard on all words, computed exactly with sparse matrices), or it holds a
     labelled sentence, or is held in one, letters only, from HELD letters. The second
     catches a test sentence split in two by another machine's extraction, and one quoted
-    inside a longer headline (validation, 7 Oct 2026: both reached pretraining)."""
+    inside a longer headline (a validation found that both reached pretraining)."""
 
     def __init__(self, labelled_texts):
         from sklearn.feature_extraction.text import CountVectorizer
@@ -171,7 +171,7 @@ def build_corpus(db_path: str = DB_PATH, labels_path: str | list[str] | None = N
 class ReleaseMemory(TrainerCallback):
     """Every 50 steps, give the Mac GPU's cached memory back and log how much is held.
 
-    On 6 Oct 2026 the first full run slowed from about 1 s a step to 100 s
+    The first full run slowed from about 1 s a step to 100 s
     after 200 steps, with swap nearly full: on MPS each new batch shape keeps
     its own cached buffers. Batches are padded to a multiple of 32 tokens (two
     shapes up to the 64-token cap) and the cache is emptied here."""
@@ -230,7 +230,7 @@ def run(out_dir: str, epochs: float = 3, lr: float = 5e-5, batch_size: int = 32,
     data = TextDataset(enc)
     model = mlm_model()
     # Two half-batches a step: on a 16 GB M1 a 32-sentence batch held 7 GB, mostly the scores
-    # for every vocabulary word at every position (6 Oct 2026); the step is the same.
+    # for every vocabulary word at every position; the step is the same.
     accumulate = 2 if batch_size >= 2 else 1
     steps = max(1, int(len(data) / batch_size * epochs))
     args = TrainingArguments(
@@ -239,7 +239,7 @@ def run(out_dir: str, epochs: float = 3, lr: float = 5e-5, batch_size: int = 32,
         weight_decay=0.01, warmup_steps=int(0.06 * steps),
         logging_steps=50, save_strategy="epoch", save_total_limit=1, seed=seed, report_to=[],
         dataloader_num_workers=0,
-        # Sentences are short (median 23 tokens, 6 Oct 2026); batching similar lengths
+        # Sentences are short (median 23 tokens); batching similar lengths
         # saves padding, which on this M1 is most of the cost.
         train_sampling_strategy="group_by_length")
     collator = DataCollatorForLanguageModeling(tokenizer, mlm_probability=0.15, pad_to_multiple_of=32)

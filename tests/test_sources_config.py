@@ -1,5 +1,5 @@
 """config/sources.yaml: source weights and which sources hold text written by
-the public (4 Oct 2026; the weights were a dict in aggregate/index.py and
+the public (before, the weights were a dict in aggregate/index.py and
 the Reddit check a literal in the Gemini backend)."""
 
 import re
@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_weights_are_the_ones_the_stored_index_was_built_with():
-    # sgx_research (broker reports, added 4 Oct) is not in the stored index; it counts like earnings
+    # sgx_research (broker reports, added later) is not in the stored index; it counts like earnings
     assert sources.weights() == {"earnings": 1.0, "newsapi": 1.5, "alphavantage": 1.5, "arctic_shift": 1.0,
                                  "yahoo_news": 1.5, "google_news": 1.5, "cna": 1.5, "sgx_research": 1.0}
     assert sources.default_weight() == 1.0

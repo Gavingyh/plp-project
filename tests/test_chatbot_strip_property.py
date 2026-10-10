@@ -1,5 +1,5 @@
 """
-Property test of strip mode (DESIGN decision 26, 5 Oct 2026): for thousands of
+Property test of strip mode (DESIGN decision 26): for thousands of
 made-up answers mixing quotes a search returned, invented ones, odd and nested
 quote marks of many styles (character references such as "&quot;" too), words
 glued to marks, hyphenated words, line breaks, blockquotes in lists and lines
@@ -7,12 +7,12 @@ markdown joins to a blockquote, citations and the harness's own heading, every
 passage of three or more words a reader sees quoted after strip is text a search
 returned, word for word. Nine validations each found a quote shape the detectors
 missed; this test asks for the guarantee whatever the shape. Since the eleventh
-round (6 Oct 2026) the answers also hold carriage returns and other line
+round the answers also hold carriage returns and other line
 separators, marks glued to the word before them ("wrote‘...", "wrote'..."),
 citations in brackets, with a label, after a full stop or comma or an
 attribution, and before what they cite; and no citation is left vouching for
 invented words whose quote marks came off, or for a word or two in quote marks
-that no search returned. Since the twelfth round (6 Oct 2026) a citation
+that no search returned. Since the twelfth round a citation
 vouches for its own sentence (_stretches), links cite too, and the answers also
 hold links, sentences ended by "!" or a semicolon, citations after an
 attribution ("according to"), a full clause, a short introduction ("In one
@@ -268,7 +268,7 @@ def _vouches_wrongly(body, answer):
     """The citations that vouch for invented words some reading of the answer
     showed in quote marks, or for a word or two in quote marks that no search
     returned. A citation vouches for its own sentence (_stretches; since the
-    twelfth round, 6 Oct 2026: before, for its paragraph or block back to the
+    twelfth round: before, for its paragraph or block back to the
     citation before it or a passage a search returned): for words that stood
     in quote marks before it, or after it where it introduces them, and after
     it otherwise for such words in a run of three or more. Invented words no

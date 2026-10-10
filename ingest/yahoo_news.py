@@ -3,15 +3,15 @@ Yahoo Finance news ingestion via yfinance.
 
 Yahoo's news endpoint (/xhr/ncp, which yfinance's Ticker.get_news wraps) has
 no date parameter and no paging. It returns the most recent stream for a
-ticker, up to `count` items (yfinance defaults to 10). Probed live on
-2026-09-24, count=100 or more returned at most 33-67 items per bank on the
+ticker, up to `count` items (yfinance defaults to 10). In a live probe,
+count=100 or more returned at most 33-67 items per bank on the
 "news"/"all" tabs, reaching back about 12 months. So one pull cannot backfill
 history. This adapter is meant to run daily (run_daily_batch.py does) and
 accumulate: doc_id is keyed on Yahoo's article uuid, so a re-run inserts
 only articles not seen before.
 
 Both listings are queried: SGX (D05.SI / O39.SI / U11.SI) and the US OTC ADRs
-(DBSDY / OVCHY / UOVEY). In the 2026-09-24 probe the ADR streams were near
+(DBSDY / OVCHY / UOVEY). In that probe the ADR streams were near
 copies of the SGX ones (DBS: 1 extra article out of 35), but it costs 9
 requests, so both are kept for coverage.
 

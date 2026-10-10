@@ -12,7 +12,7 @@ only the sheet.
    sentence; a sentence is kept for the target the LLM gives it, if that is
    a target aspect.
 4. Sheet: up to the quota per target, spread over sources and banks. The
-   sheet is blind (no model answer in it), because the 27 Sep labels
+   sheet is blind (no model answer in it), because the first round's labels
    followed the model's suggestion on 92% of rows; the LLM's aspect is kept
    in a separate file for comparing afterwards.
 
@@ -40,7 +40,7 @@ POOL_FACTOR = 3    # pooled sentences per quota row, before the LLM check
 def quotas(labels: pd.DataFrame, floor: int = FLOOR) -> dict[str, int]:
     """Rows to add per aspect below the floor: the shortfall plus a margin, at
     least MIN_QUOTA. Counted on train_dev rows only: the frozen test split's
-    labels must not decide what training gets (4 Oct 2026)."""
+    labels must not decide what training gets."""
     if "split" in labels.columns:
         labels = labels[labels["split"] == "train_dev"]
     counts = labels["aspect"].value_counts()

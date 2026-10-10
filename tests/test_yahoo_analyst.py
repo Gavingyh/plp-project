@@ -106,7 +106,7 @@ def test_get_analyst_consensus_no_data(temp_db):
 
 
 def test_latest_per_bank_keeps_a_bank_fetched_on_an_earlier_day(temp_db):
-    """UOB last fetched a day before DBS must still appear (the dashboard lost it on 2026-09-25)."""
+    """UOB last fetched a day before DBS must still appear (the dashboard once lost it)."""
     from ingest.db import get_connection
     from ingest.yahoo_analyst import latest_per_bank
     base = fetch_bank(_FakeSession(_FAKE_PAYLOAD), "crumb", "DBS", "D05.SI")

@@ -40,7 +40,7 @@ def _not_searched():
 
 # A returned date with no before-word, before a comma or bracket that a number
 # follows, or before "for": all read as dates at 31c7e98, all flagged at f511f83.
-# Fixed after this validation (5 Oct 2026): after "by", "up to", "through", "ends"
+# Fixed after this validation: after "by", "up to", "through", "ends"
 # and the like a comma with no number right after it ends a date. Three stay
 # flagged: "for" no longer ends a date (it hid "September 25 for DBS against 40 for
 # UOB" until the eighth validation), and a bracket ends one only when it holds no
@@ -98,7 +98,7 @@ def test_an_invented_quote_is_removed_or_flagged(answer, tracker):
     assert "next year for sure" not in out or flagged
 
 
-# Changed to the contract of DESIGN decision 26 (5 Oct 2026, after this validation):
+# Changed to the contract of DESIGN decision 26 (after this validation):
 # strip mode takes the quote marks off what a search doesn't vouch for, so in these
 # shapes the invented words now stand outside quote marks, as the model's own,
 # where until then they were removed. The real quote keeps its marks.
@@ -115,8 +115,8 @@ def test_an_invented_quote_is_removed_flagged_or_no_longer_in_quote_marks(answer
     assert removed_flagged_or_unquoted(out, flagged, "next year for sure")
 
 
-# Glued words kept: confirmed by this validation, fixed by DESIGN decision 26 (5 Oct
-# 2026). Words glued to a closing mark stay, as the model's own, outside quote marks.
+# Glued words kept: confirmed by this validation, fixed by DESIGN decision 26.
+# Words glued to a closing mark stay, as the model's own, outside quote marks.
 @pytest.mark.parametrize("answer", [
     f'“{REAL}”{INVENTED}.',
     f'“{REAL}”*{INVENTED}*',
@@ -129,7 +129,7 @@ def test_words_glued_to_a_closing_mark_are_removed_flagged_or_no_longer_in_quote
 
 
 # Stray mark opens the next line: confirmed by this validation, fixed by DESIGN
-# decision 26 (5 Oct 2026). The mark goes, and the words on the next line stand
+# decision 26. The mark goes, and the words on the next line stand
 # outside quote marks.
 def test_a_mark_after_a_citation_opening_the_next_line_is_checked():
     answer = f'"{REAL}" {CITE}."\n{INVENTED}'
@@ -138,8 +138,8 @@ def test_a_mark_after_a_citation_opening_the_next_line_is_checked():
     assert f'"{REAL}" {CITE}.' in out
 
 
-# Glued over-strip: confirmed by this validation, fixed by DESIGN decision 26 (5 Oct
-# 2026). Strip mode reads no words glued to a closing mark as a quote; a word in
+# Glued over-strip: confirmed by this validation, fixed by DESIGN decision 26.
+# Strip mode reads no words glued to a closing mark as a quote; a word in
 # quote marks and an inch mark keep their marks.
 @pytest.mark.parametrize("answer", [
     'Users call it "PayLah"and say a 6" phone screen is too small.',
@@ -200,7 +200,7 @@ def test_answer_turn_keeps_a_returned_date_unflagged(monkeypatch):
 
 
 def test_answer_turn_strips_an_invented_quote_in_a_nested_quote(monkeypatch):
-    # Since DESIGN decision 26 (5 Oct 2026) the outer marks come off: the invented
+    # Since DESIGN decision 26 the outer marks come off: the invented
     # words stand outside quote marks, and the real quote keeps its own.
     r = _turn(monkeypatch, f'Mixed.\n\n"OK "{REAL}" and {INVENTED}" {CITE}',
               [("search_evidence", {"query": "app"})])

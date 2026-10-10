@@ -13,9 +13,9 @@ evidence is relevant).
 
 Real aspect names, matching config/aspects.yaml.
 
-Two frozen sets. GOLD_SET (v1, 23 questions) is unchanged since 26 Sep so
+Two frozen sets. GOLD_SET (v1, 23 questions) is kept unchanged so
 runs stay comparable; it only covers the proposal's four aspects. GOLD_SET_V2
-(2026-10-01) adds nine questions on the aspects the ten-aspect taxonomy
+adds nine questions on the aspects the ten-aspect taxonomy
 introduced and one more uncovered bank, for 32 in all. MULTI_TURN holds
 conversations whose later turns depend on earlier ones ("and OCBC?").
 """
@@ -96,7 +96,7 @@ GOLD_SET = [
      "expected_tool": "get_analyst_consensus", "expected_bank": "OCBC"},
 ]
 
-# --- v2 additions (2026-10-01): the aspects added on 30 Sep, and one more uncovered bank ---
+# --- v2 additions: the aspects the ten-aspect taxonomy added, and one more uncovered bank ---
 V2_ADDITIONS = [
     {"id": "lookup-6", "category": "lookup", "question": "How do people feel about OCBC's wealth management business?",
      "expected_tool": "get_sentiment", "expected_bank": "OCBC", "expected_aspect": "wealth_business"},
@@ -161,7 +161,7 @@ _NO_DATA_MARKERS = (
     "no data", "not covered", "don't have data", "do not have data", "only cover",
     "only covers", "not available", "outside the scope", "out of scope", "not something i track",
     # the off-topic reply of chatbot/guards.py's scope guard, added when the checker
-    # was found not to recognise it (2026-09-26)
+    # was found not to recognise it
     "outside what i can help with",
     "don't track", "do not track", "cannot answer", "can't answer",
 )
@@ -177,7 +177,7 @@ def looks_like_no_data_response(answer: str) -> bool:
     return any(m in low for m in _NO_DATA_MARKERS)
 
 
-# --- Scope and small talk (4 Oct 2026) -------------------------------------------------
+# --- Scope and small talk -------------------------------------------------
 # Frozen with the intent classifier (chatbot/intent.py, config/intents.yaml).
 # `expected_guard` names the intent whose fixed reply should answer; None means
 # the question must reach the model (the controls: real questions with words
@@ -260,7 +260,7 @@ def looks_like_declining_unrelated_part(answer: str) -> bool:
 
 
 # Labelled questions for the intent classifier only (chatbot/eval_intent.py):
-# the advice and non-advice phrasings that tested the regex guard until 4 Oct
+# the advice and non-advice phrasings that once tested the regex guard
 # (written independently of the gold set), and questions in other languages
 # and Singlish, which the word lists couldn't read.
 INTENT_EXTRA = [

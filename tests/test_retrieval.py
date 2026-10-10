@@ -38,7 +38,7 @@ def _two_dividend_sentences(temp_db):
 
 
 def test_aspect_query_flag_ranks_by_the_aspect_not_the_question_words(temp_db, monkeypatch):
-    """Question words favour chatter by default; CHATBOT_ASPECT_QUERY ranks by the aspect (2026-10-01)."""
+    """Question words favour chatter by default; CHATBOT_ASPECT_QUERY ranks by the aspect."""
     import numpy as np
     monkeypatch.setattr(retrieval, "load_for_search", lambda: (["s1", "s2"], np.eye(2)))
     embedded = []
@@ -50,6 +50,6 @@ def test_aspect_query_flag_ranks_by_the_aspect_not_the_question_words(temp_db, m
     off = retrieval.search_evidence(q, bank="DBS", aspect="dividend_policy", k=2)
     assert off[0]["sentence_id"] == "s1" and embedded[-1] == q            # equal cosine; question words decide
 
-    monkeypatch.delenv("CHATBOT_ASPECT_QUERY", raising=False)             # on by default since 4 Oct
+    monkeypatch.delenv("CHATBOT_ASPECT_QUERY", raising=False)             # on by default
     flagged = retrieval.search_evidence(q, bank="DBS", aspect="dividend_policy", k=2)
     assert flagged[0]["sentence_id"] == "s2" and embedded[-1] == "Dividend Policy"

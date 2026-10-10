@@ -37,7 +37,7 @@ def _load_aspect_keys() -> list[str]:
     space, matching how the question was phrased) instead of the real key
     "dividend_policy", silently producing insufficient_data on a perfectly
     valid question. A missing or broken file is an error: falling back to a
-    built-in list (the proposal's four, until 4 Oct 2026) made the API reject
+    built-in list (the proposal's four) made the API reject
     real aspects without saying why."""
     return aspect_taxonomy.keys()
 
@@ -163,7 +163,7 @@ def get_trend(bank: str, aspect: str | None = None) -> dict:
 
     # The stored scores are shrunk towards 0 by n/(n+k) (aggregate/index.py).
     # The 7d window is far thinner than the 30d one, so comparing the shrunk
-    # scores reads a thin week as a fall: on 2 Oct, UOB showed "declining"
+    # scores reads a thin week as a fall: UOB once showed "declining"
     # (-0.045) when its unshrunk 7d score was 0.12 above the 30d one. Undo
     # the shrinkage on both before comparing; both windows are at or above
     # the volume floor here, so neither is a handful of items.
@@ -291,7 +291,7 @@ def _package_evidence(query: str, results: list[dict]) -> dict:
 #
 # The API returns the functions above as they are. The chatbot's model gets
 # the same results plus what a retail investor needs to read them, worked
-# out here rather than left to the model: on 4 Oct a local model gave a score
+# out here rather than left to the model: a local model gave a score
 # as "0.122 out of 1", called +0.124 "slightly negative", said a trend was
 # "not available" when 66 months of it existed, and cited earnings-report
 # boilerplate (docs/evidence/chatbot-answers-2026-10-04.md). So each score
@@ -369,7 +369,7 @@ def chat_get_sentiment(bank: str, aspect: str | None = None, window: str = "all_
     """One bank's score, with the other two banks' for the same topic and
     window: told to say how a bank compares, a local model asked about DBS
     alone said it ranked above OCBC, and asked about OCBC that it ranked below
-    both (4 Oct 2026). OCBC was the highest of the three."""
+    both. OCBC was the highest of the three."""
     out = _for_reader(get_sentiment(bank, aspect, window))
     if out.get("insufficient_data") is False:
         peers = chat_compare_banks(aspect, window)
@@ -427,8 +427,8 @@ def _settled(direction: str, printed_change: float) -> str:
     """The direction, or "unclear" when the scores the sentence prints point
     another way. The printed scores are the index's, which pull a thin period
     towards 0; the direction is worked out before that pull. Saying "up" beside
-    a lower printed score contradicts the figures (found in validation, 4 Oct
-    2026: "(+0.27, 6 sentences) was up on (+0.44, 200 sentences)")."""
+    a lower printed score contradicts the figures (found in validation:
+    "(+0.27, 6 sentences) was up on (+0.44, 200 sentences)")."""
     plain = {"improving": "up", "declining": "down", "stable": "about the same"}.get(direction, direction)
     return direction if _direction(printed_change) == plain else "unclear"
 
@@ -455,8 +455,8 @@ def _month_name(point: dict) -> str:
 def chat_get_trend(bank: str, aspect: str | None = None) -> dict:
     """The trend with one sentence that states it (trend_in_words): the last 7
     days against the last 30 when both have enough sentences, else the latest
-    month against the one before. One comparison, written out, because on
-    4 Oct a local model reading the series gave August's +0.2185 as
+    month against the one before. One comparison, written out, because
+    a local model reading the series gave August's +0.2185 as
     "-0.2185", gave a month's change as its score, and blended a rising week
     with a falling month."""
     out = _for_reader(get_trend(bank, aspect))
@@ -533,7 +533,7 @@ def chat_search_evidence(query: str, bank: str | None = None, aspect: str | None
 def _evidence_context(bank: str | None, aspect: str | None) -> dict:
     """What a search alone leaves the model to guess: the bank's score for
     the topic, read as get_sentiment reads it, and the date the data runs to.
-    On 4 Oct 2026, asked what people say and how they feel, a local model
+    Asked what people say and how they feel, a local model
     searched only, called the mood "neutral" with no score fetched, and gave
     a quote's date as the date the data runs to. A database without the
     tables (a fresh copy) leaves the context out."""
@@ -542,9 +542,9 @@ def _evidence_context(bank: str | None, aspect: str | None) -> dict:
         if bank:
             r = _for_reader(get_sentiment(bank, aspect))
             # Named for what it is: given the bank's overall score under a neutral name, the
-            # model reported it as the score for the topic it had asked about (4 Oct 2026).
+            # model reported it as the score for the topic it had asked about.
             # The neutral share too: a model that worked it out from the other two was flagged
-            # for a figure no tool returned (validation, 4 Oct 2026).
+            # for a figure no tool returned (found in validation).
             out["topic_score" if aspect else "bank_overall_score"] = {
                 k: r[k] for k in ("topic_name", "reading", "score", "n", "positive_pct", "neutral_pct",
                                   "negative_pct", "insufficient_data") if k in r}

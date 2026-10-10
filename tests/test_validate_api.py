@@ -130,7 +130,7 @@ def _add_scored(temp_db, sid, bank, aspect, days_ago, labels_by_version, source=
     conn.close()
 
 
-# Trend direction (fixed 3 Oct): /sentiment/trend compared shrunk scores, so a thin 7d window read as "declining".
+# Trend direction (fixed): /sentiment/trend compared shrunk scores, so a thin 7d window read as "declining".
 
 def test_trend_not_declining_when_raw_7d_is_higher(temp_db):
     import aggregate.index as agg
@@ -151,7 +151,7 @@ def test_trend_not_declining_when_raw_7d_is_higher(temp_db):
     assert trend["direction"] != "declining"
 
 
-# Model versions (fixed 3 Oct): the index keeps a row per model version (for before/after comparisons);
+# Model versions: the index keeps a row per model version (for before/after comparisons);
 # readers must return only the current version, config.model_version.MODEL_VERSION.
 
 OLD_V, NEW_V = "finbert-base-zeroshot-v1", "finbert-finetuned-v2"
@@ -196,7 +196,7 @@ def test_sentiment_returns_the_current_model_version(temp_db, monkeypatch, curre
     assert body["model_version"] == current
 
 
-# Bank names (fixed 3 Oct): /coverage and /evidence took any bank string; the spec says bank is validated.
+# Bank names (fixed): /coverage and /evidence took any bank string; the spec says bank is validated.
 
 @pytest.mark.parametrize("bank", ["dbs", "HSBC"])
 def test_coverage_bad_bank_returns_422(temp_db, bank):
@@ -223,7 +223,7 @@ def test_readers_skip_other_versions(temp_db):
     assert sum(p["n"] for p in series) == 10 and all(p["neg_n"] == 0 for p in series)
 
 
-# Thin index cells (fixed 3 Oct): /sentiment/index flags cells below the volume floor, as /sentiment does.
+# Thin index cells: /sentiment/index flags cells below the volume floor, as /sentiment does.
 
 def test_index_flags_thin_cells(temp_db):
     import aggregate.index as agg
@@ -235,7 +235,7 @@ def test_index_flags_thin_cells(temp_db):
     assert any(r["insufficient_data"] for r in rows)
 
 
-# Series errors (fixed 3 Oct): a database error in the trend's monthly series is reported, not shown as "no data".
+# Series errors: a database error in the trend's monthly series is reported, not shown as "no data".
 
 def test_series_error_is_not_reported_as_no_data(temp_db, monkeypatch):
     import sqlite3
@@ -255,7 +255,7 @@ def test_series_error_is_not_reported_as_no_data(temp_db, monkeypatch):
     assert trend["series_note"].startswith("monthly series unavailable: database is locked")
 
 
-# Scoring tag (fixed 3 Oct): the scorer tags rows with the model it runs, whatever
+# Scoring tag: the scorer tags rows with the model it runs, whatever
 # version the readers are set to serve.
 
 def test_scorer_tag_names_the_model_it_runs(monkeypatch):

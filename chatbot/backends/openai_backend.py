@@ -22,7 +22,7 @@ tool-calling capable as of when this was written; check for a newer/cheaper
 option before relying on the default long-term, model naming moves fast.
 
 Free tiers of compatible providers rate-limit hard (Groq's: 8,000 tokens a
-minute on 30 Sep 2026), so a 429 or 503 is retried, after the provider's
+minute when this was written), so a 429 or 503 is retried, after the provider's
 Retry-After when it sends one. Only the standard fields of each assistant
 message are sent back: reasoning models can return extra ones (a `reasoning`
 field) that a provider need not accept as input.

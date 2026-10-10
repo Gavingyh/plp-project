@@ -27,7 +27,7 @@ def _searched():
 
 
 # --- Stray rule hides opening mark --------------------------------------------
-# Confirmed by this validation, fixed by DESIGN decision 26 (5 Oct 2026): the rule
+# Confirmed by this validation, fixed by DESIGN decision 26: the rule
 # went; off mode flags the mark, and strip mode takes it off, so the invented words
 # on the next line stand outside quote marks (changed from "not in stripped" to the
 # decision's contract: removed, or no longer in quote marks).
@@ -48,7 +48,7 @@ def test_an_opening_mark_at_line_end_after_a_real_quote_is_caught(answer):
 
 # --- Abbreviation ends the date clause ----------------------------------------
 
-# Confirmed by this validation, fixed after it (5 Oct 2026): a clause no longer ends
+# Confirmed by this validation, fixed after it: a clause no longer ends
 # at the full stop of an abbreviation, and a bracket ends a date only where its
 # clause ends right after it.
 @pytest.mark.parametrize("answer", [
@@ -63,7 +63,7 @@ def test_an_invented_count_before_an_abbreviation_is_flagged(answer):
 
 # --- Bracket with 'of' flags real date ----------------------------------------
 
-# Confirmed by this validation, fixed after it (5 Oct 2026): only "of" before a
+# Confirmed by this validation, fixed after it: only "of" before a
 # number in the bracket ("(out of 40)") makes the day a count to check.
 @pytest.mark.parametrize("answer", [
     "The latest post is September 25 (the end of the data).",

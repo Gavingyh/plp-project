@@ -6,11 +6,11 @@ UOB or "not the bank".
 Alias matching (`ingest.base.detect_banks`) treats any "DBS", "OCBC" or "UOB"
 as the bank. That is wrong for the cases this module exists for:
 
-- POSB is DBS's retail brand (an alias since 4 Oct 2026, so alias matching
+- POSB is DBS's retail brand (now an alias, so alias matching
   finds it too);
 - Bank of Singapore and Great Eastern are OCBC subsidiaries;
 - UOB Kay Hian is a separate broker, not UOB's own business; DBS Vickers,
-  DBS's own brokerage, counts as DBS (decided 4 Oct 2026, PLAN section 2;
+  DBS's own brokerage, counts as DBS (PLAN section 2;
   see RESOLUTION for the line that decides each);
 - "Aston Martin DBS" and "deep brain stimulation (DBS)" are not banks.
 
@@ -47,7 +47,7 @@ RESOLUTION = [
     (r"aston\s+martin", NOT_BANK),
     (r"deep\s+brain|brain\s+stimulation", NOT_BANK),
     (r"kay\s*hian|\buobkh\b", NOT_BANK),          # UOB Kay Hian: a separate broker
-    (r"vickers", "DBS"),                            # DBS Vickers: a DBS subsidiary, counted as DBS (decided 4 Oct 2026)
+    (r"vickers", "DBS"),                            # DBS Vickers: a DBS subsidiary, counted as DBS
     (r"bank\s+of\s+singapore", "OCBC"),             # OCBC's private bank
     (r"great\s+eastern", "OCBC"),                   # OCBC's insurer
     (r"\bposb\b", "DBS"),                           # DBS's retail brand
@@ -108,7 +108,7 @@ def mentions(doc) -> list[tuple[str, str, str]]:
 # statistical model sees. Any such name outside an entity already resolved
 # still counts, unless it sits inside a not-the-bank entity ("UOB Kay Hian").
 # A digit may follow the name: products such as "OCBC360" are written as one
-# word (62 corpus sentences on 2 Oct; the Opus rater caught one in the gold sheet).
+# word (62 corpus sentences when counted; the Opus rater caught one in the gold sheet).
 _FALLBACK = re.compile(r"\b(?:posb|dbs|d05|ocbc|o39|uob|u11)(?=\d|\b)", re.IGNORECASE)
 # Not-the-bank names found in the raw text for the same reason: "UOB Kay Hian/"
 # tokenizes as "UOB", "Kay" and "Hian/", so the ruler may never see the broker.

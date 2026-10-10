@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 # consistent whether the mention came from a news headline, a Reddit comment,
 # or an earnings PDF.
 BANKS = {
-    # POSB last: DBS's retail brand since 1998 (decided 4 Oct 2026). Order matters:
+    # POSB last: DBS's retail brand since 1998. Order matters:
     # Alpha Vantage reads the ticker at position 2, and NewsAPI queries only
     # aliases with a space or a dot, so "POSB" never widens a news query.
     "DBS": ["DBS Bank", "DBS Group", "D05.SI", "DBS", "POSB"],

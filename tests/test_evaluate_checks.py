@@ -1,6 +1,6 @@
 """train/evaluate.py's finetuned_probs, with a fake model: outputs come back
 in the project's label order whatever the head's order, and probabilities
-that don't sum to 1 (the GPU fault of 1 Oct 2026) stop the run."""
+that don't sum to 1 (a GPU fault seen once) stop the run."""
 
 import numpy as np
 import pandas as pd

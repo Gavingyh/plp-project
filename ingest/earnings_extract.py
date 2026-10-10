@@ -72,8 +72,8 @@ def _quarter_to_announcement_date(filename: str) -> str | None:
         quarter, year = int(m.group(1)), int(m.group(2))
         month, year = {1: (5, year), 2: (8, year), 3: (11, year), 4: (2, year + 1)}[quarter]
         return f"{year:04d}-{month:02d}-01T00:00:00+00:00"
-    # The same with the q first: "ceo-slides-q1-2024.pdf". Missing until 3 Oct
-    # 2026, which left five UOB 2024 files stamped with their ingestion date.
+    # The same with the q first: "ceo-slides-q1-2024.pdf". Missing earlier,
+    # which left five UOB 2024 files stamped with their ingestion date.
     m = re.search(r"[qQ]([1-4])[-_ ]?(\d{4})", filename)
     if m:
         quarter, year = int(m.group(1)), int(m.group(2))

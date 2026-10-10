@@ -2,7 +2,7 @@
 Re-run the chatbot's grounding checks over the answers recorded under
 data/eval/, without calling a model: the citation check, the figure check and
 strip mode (chatbot/agent.py, chatbot/guards.py). For checking a change to
-them; a validation on 5 Oct 2026 found figures on the evidence page that came
+them; a validation found figures on the evidence page that came
 from re-runs nobody had saved.
 
 It prints two things:
@@ -25,7 +25,7 @@ It prints two things:
      some runs quote CNA text.
 
 --against makes a comparison anyone can re-run from the repository
-(validation, 5 Oct 2026: one on the evidence page rested on a snapshot kept
+(validation: one on the evidence page rested on a snapshot kept
 only in a session's scratch folder). It extracts the commit's tracked files
 into a temporary directory with `git archive <commit> | tar -x`, which changes
 no branch, worktree or index of the repository, runs this script there in a
@@ -33,7 +33,7 @@ subprocess (PYTHONPATH set to that directory, so it imports that commit's
 chatbot code) over the current data/eval/, compares that snapshot with the
 current code's, and removes the directory.
 
-It reads only the results files git tracks (validation, 5 Oct 2026: a
+It reads only the results files git tracks (validation: a
 comparison quoted on the evidence page counted runs kept out of git, so a
 checkout printed other lines). Runs that quote CNA text are kept out of git
 (the Caveats on the evidence page); --include-untracked reads them too where

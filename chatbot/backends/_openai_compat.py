@@ -12,7 +12,7 @@ def _nullable_optional(schema: dict) -> dict:
     """A copy of a tool's parameter schema in which every optional property also accepts null.
 
     A model that has nothing for an optional argument often sends null rather than leaving
-    it out, and a strict server (Groq's, 6 Oct 2026) rejects the whole call with a 400 unless
+    it out, and a strict server (Groq's) rejects the whole call with a 400 unless
     the schema allows null. chatbot/tools.py treats a null argument as not given."""
     out = json.loads(json.dumps(schema))
     required = set(out.get("required", []))

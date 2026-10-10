@@ -70,7 +70,7 @@ class PageFailed(Exception):
 def _get(endpoint: str, **params) -> list[dict]:
     """GET one page from Arctic Shift: the rows, [] only when the archive has no
     more. A failed request, a server error, the documented 422 "timeout" or
-    unreadable JSON is retried, then raised as PageFailed. Until 3 Oct 2026 a
+    unreadable JSON is retried, then raised as PageFailed. Earlier, a
     failure returned [], which the caller read as the end of the window: whole
     months of comments were lost that way (Sep 2021, May 2024, Mar 2025)."""
     url = f"{BASE_URL}/{endpoint}/search"

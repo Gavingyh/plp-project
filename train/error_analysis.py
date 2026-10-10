@@ -31,7 +31,7 @@ DEFAULT_MODELS = [os.path.join(BASE_DIR, d) for d in FINETUNED[DEFAULT_FINETUNED
 MARGINS = np.round(np.arange(0.0, 0.61, 0.05), 2)
 
 
-# The 1 Oct models predate dev_ids.json; they were trained on this many
+# The default models predate dev_ids.json; they were trained on this many
 # train_dev rows, and a reshuffle reproduces their dev rows only at that size.
 TRAIN_DEV_ROWS_AT_TRAINING = 978
 

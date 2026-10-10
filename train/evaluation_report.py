@@ -1,5 +1,5 @@
-"""Every metric train.evaluate computes, plus the error breakdown of the 1 Oct report, for the
-old (1 Oct, Hugging Face) and new (SGX retrain) models on the original, SGX and combined test scopes.
+"""Every metric train.evaluate computes, plus the error breakdown of the earlier report, for the
+old (Hugging Face) and new (SGX retrain) models on the original, SGX and combined test scopes.
 
 USAGE:
   python -m train.evaluation_report <output.md>

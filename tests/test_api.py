@@ -212,7 +212,7 @@ def test_committed_openapi_spec_matches_the_app():
         assert json.load(f) == json.loads(json.dumps(app.openapi(), sort_keys=True))
 
 
-# --- 4 Oct 2026: input that used to read as "no data" -------------------------------
+# --- input that used to read as "no data" -------------------------------------------
 
 @pytest.mark.parametrize("path", ["/coverage?bank=DBS&aspect=dividend%20polcy", "/evidence?query=x&aspect=nope",
                                   "/evidence/latest?bank=DBS&aspect=nope", "/sentiment?bank=DBS&aspect=nope"])

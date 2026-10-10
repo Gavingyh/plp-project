@@ -4,7 +4,7 @@ Backend selection for the chatbot.
 Settings, defaults and the environment variables that override them:
 config/chatbot.yaml (backend, models, Ollama and OpenAI addresses,
 temperature, thinking). The default backend is Ollama, the local demo
-model (decided 4 Oct 2026): a key in .env no longer switches the chatbot to
+model: a key in .env no longer switches the chatbot to
 a hosted model by itself. CHATBOT_BACKEND chooses another (claude, openai,
 gemini), or `auto` restores the old behaviour: the first of
 ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY that is set, else Ollama.

@@ -20,7 +20,7 @@ Two judge prompts: `full` asks for one score on the scale above; `checklist`
 asks the judge to list every quote, cited source or link, and figure that the
 tool data doesn't contain, and every other unsupported claim, and derives the
 score from those lists in code (1 if any quote, source or figure is invented,
-2 if only a claim is unsupported, else 3). On 1 Oct the `full` prompt scored
+2 if only a claim is unsupported, else 3). The `full` prompt once scored
 every answer 3, invented evidence included: it read the opening figures and
 not the evidence section. The checklist prompt catches every known invention
 (11 of 11 and 14 of 14 on two runs), but its lists are unreliable (it names
@@ -116,8 +116,8 @@ def tool_summary(result: dict, limit: int = MAX_RESULT_CHARS) -> str:
 
 def model_answer(result: dict) -> str:
     """The answer as the model wrote it, without the warnings the harness
-    appended: the recorded field, or, for runs recorded before it existed
-    (4 Oct 2026), the text before the first warning."""
+    appended: the recorded field, or, for runs recorded before it existed,
+    the text before the first warning."""
     if result.get("model_answer") is not None:
         return result["model_answer"]
     return (result.get("answer") or "").split("\n\n⚠️")[0]

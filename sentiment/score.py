@@ -22,8 +22,8 @@ assigned. That is a simplification: the real formulation feeds the
 (sentence, aspect) pair to the model so it can condition on the aspect, which
 only a fine-tuned model can do.
 
-Every batch's probabilities are checked before anything is written: on
-2026-10-01 the Mac's GPU, under memory pressure, returned garbage without an
+Every batch's probabilities are checked before anything is written: the
+Mac's GPU once, under memory pressure, returned garbage without an
 error. If the check fails, rerun with --cpu.
 
 USAGE:

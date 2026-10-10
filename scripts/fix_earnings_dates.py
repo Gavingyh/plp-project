@@ -2,7 +2,7 @@
 Re-date earnings documents stored with their ingestion time instead of their
 announcement date.
 
-Until 3 Oct 2026, ingest/earnings_extract.py could not read a period from
+Earlier, ingest/earnings_extract.py could not read a period from
 names like "cfo-slides-q1-2024.pdf" or "cfo-presentation-2023-results.pdf",
 so those documents fell back to the time they were extracted (10 Sep 2026)
 and their 2023-2024 sentences were counted in the 7d and 30d windows. The

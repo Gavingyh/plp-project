@@ -21,7 +21,7 @@ Three queries per bank:
   - a looser unquoted one (DBS bank Singapore); in a live probe for March
     2024 it returned 4-7x as many items as the quoted one
   - an intitle: query, which requires the bank in the headline. In a pilot on
-    three sample months (2026-09-24) it added 27-32 new articles a month on
+    three sample months it added 27-32 new articles a month on
     top of the first two queries, for 3 requests a month. Bare "DBS" in a
     headline also matches Aston Martin DBS, Dragon Ball Super, American
     football "DBs" and deep brain stimulation, so the DBS query needs a
@@ -56,7 +56,7 @@ RSS_URL = "https://news.google.com/rss/search"
 EDITION = {"hl": "en-SG", "gl": "SG", "ceid": "SG:en"}
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; plp-research/1.0; academic project)"}
 
-_EXCLUDE = '-"Kay Hian" -"OCBC Arena" -"OCBC Cycle"'   # DBS Vickers counts as DBS since 4 Oct 2026
+_EXCLUDE = '-"Kay Hian" -"OCBC Arena" -"OCBC Cycle"'   # DBS Vickers counts as DBS
 QUERIES = {
     "DBS": ['"DBS Group" Singapore', "DBS bank Singapore",
             f"intitle:DBS (bank OR Singapore OR SGX OR POSB OR PayLah) {_EXCLUDE}"],

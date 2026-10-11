@@ -349,6 +349,17 @@ subsidiaries, 31 Dec 2024), and POSB counts as DBS at collection too (DBS
 acquired POSBank in 1998). UOB Kay Hian stays a separate broker. PLAN
 section 2, made on 2026-10-04.
 
+*Amended 2026-10-11:* two faults found by the local-context research and
+approved for fixing by the owner. "Development Bank of Singapore", DBS's
+name until 2003, resolved to OCBC because it holds "Bank of Singapore", the
+name of OCBC's private bank; it now resolves to DBS, as does the joke on its
+initials. A sentence naming only PayLah or digibank (DBS's apps) or TMRW
+(UOB's digital bank) resolved to no bank; each now resolves to its bank.
+TMRW counts in capitals only, because "tmrw" in Reddit text means
+"tomorrow". In the corpus 17 sentences name one of these with no other bank
+name. Bank recognition is still not applied to the database; that happens in
+the re-score.
+
 ### 19. Chatbot changes drawn from the Conversational UIs module
 
 *Decided and implemented 2026-09-26* (`chatbot/guards.py`, `chatbot/agent.py`).

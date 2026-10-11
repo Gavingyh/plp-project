@@ -12,7 +12,12 @@ as the bank. That is wrong for the cases this module exists for:
 - UOB Kay Hian is a separate broker, not UOB's own business; DBS Vickers,
   DBS's own brokerage, counts as DBS (PLAN section 2;
   see RESOLUTION for the line that decides each);
-- "Aston Martin DBS" and "deep brain stimulation (DBS)" are not banks.
+- "Aston Martin DBS" and "deep brain stimulation (DBS)" are not banks;
+- "Development Bank of Singapore" is DBS's old name, not OCBC's private
+  bank, although it holds the words "Bank of Singapore";
+- PayLah and digibank are DBS's apps and TMRW is UOB's digital bank, so a
+  sentence naming only the app is still about that bank. "tmrw" in any other
+  casing is left alone: in Reddit text it means "tomorrow".
 
 Recognition is spaCy's pretrained English pipeline with an entity ruler in
 front of its statistical NER, plus a gazetteer fallback for names the
@@ -48,9 +53,12 @@ RESOLUTION = [
     (r"deep\s+brain|brain\s+stimulation", NOT_BANK),
     (r"kay\s*hian|\buobkh\b", NOT_BANK),          # UOB Kay Hian: a separate broker
     (r"vickers", "DBS"),                            # DBS Vickers: a DBS subsidiary, counted as DBS
+    (r"(?:development|dumbest)\s+bank\s+of\s+singapore", "DBS"),   # DBS's old name, and the joke on its initials
     (r"bank\s+of\s+singapore", "OCBC"),             # OCBC's private bank
     (r"great\s+eastern", "OCBC"),                   # OCBC's insurer
     (r"\bposb\b", "DBS"),                           # DBS's retail brand
+    (r"\bpaylah\b|\bdigibank\b", "DBS"),            # DBS's apps
+    (r"(?-i:\bTMRW\b)", "UOB"),                     # UOB's digital bank, in capitals only
     (r"\bdbs\b|\bd05\b", "DBS"),
     (r"\bocbc\b|oversea-chinese|\bo39\b", "OCBC"),
     (r"\buob\b|united\s+overseas\s+bank|\bu11\b", "UOB"),
@@ -62,6 +70,8 @@ _RESOLUTION = [(re.compile(p, re.IGNORECASE), target) for p, target in RESOLUTIO
 _RULER_PHRASES = [
     ("ORG", ["uob", "kay", "hian"]), ("ORG", ["kay", "hian"]), ("ORG", ["uobkh"]),
     ("ORG", ["dbs", "vickers"]), ("ORG", ["bank", "of", "singapore"]), ("ORG", ["great", "eastern"]),
+    ("ORG", ["development", "bank", "of", "singapore"]), ("ORG", ["dumbest", "bank", "of", "singapore"]),
+    ("PRODUCT", ["paylah"]), ("PRODUCT", ["digibank"]),
     ("ORG", ["posb"]), ("ORG", ["dbs"]), ("ORG", ["ocbc"]), ("ORG", ["uob"]),
     ("ORG", ["united", "overseas", "bank"]), ("ORG", ["oversea", "-", "chinese"]),
     ("PRODUCT", ["aston", "martin", "dbs"]),
@@ -80,7 +90,8 @@ def nlp():
         _nlp = spacy.load("en_core_web_sm", disable=["lemmatizer"])
         ruler = _nlp.add_pipe("entity_ruler", before="ner")
         ruler.add_patterns([{"label": label, "pattern": [{"LOWER": t} for t in toks]}
-                            for label, toks in _RULER_PHRASES])
+                            for label, toks in _RULER_PHRASES]
+                           + [{"label": "PRODUCT", "pattern": [{"TEXT": "TMRW"}]}])   # capitals only
     return _nlp
 
 
@@ -109,7 +120,7 @@ def mentions(doc) -> list[tuple[str, str, str]]:
 # still counts, unless it sits inside a not-the-bank entity ("UOB Kay Hian").
 # A digit may follow the name: products such as "OCBC360" are written as one
 # word (62 corpus sentences when counted; the Opus rater caught one in the gold sheet).
-_FALLBACK = re.compile(r"\b(?:posb|dbs|d05|ocbc|o39|uob|u11)(?=\d|\b)", re.IGNORECASE)
+_FALLBACK = re.compile(r"\b(?:posb|dbs|d05|ocbc|o39|uob|u11|paylah|digibank|(?-i:TMRW))(?=\d|\b)", re.IGNORECASE)
 # Not-the-bank names found in the raw text for the same reason: "UOB Kay Hian/"
 # tokenizes as "UOB", "Kay" and "Hian/", so the ruler may never see the broker.
 _NOT_BANK_TEXT = re.compile(r"\buob\W{0,2}kay\W{0,2}hian|\bkay\W{0,2}hian|\buobkh\b"

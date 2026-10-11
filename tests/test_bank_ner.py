@@ -15,6 +15,10 @@ import preprocess.bank_ner as ner
     ("UOB Kay Hian", ner.NOT_BANK), ("UOBKH", ner.NOT_BANK), ("DBS Vickers", "DBS"),
     ("Aston Martin DBS", ner.NOT_BANK), ("deep brain stimulation", ner.NOT_BANK),
     ("Citibank", None), ("Singapore", None),
+    ("Development Bank of Singapore", "DBS"), ("The Development Bank of Singapore", "DBS"),
+    ("Dumbest Bank of Singapore", "DBS"),
+    ("PayLah", "DBS"), ("paylah", "DBS"), ("digibank", "DBS"),
+    ("TMRW", "UOB"), ("tmrw", None), ("Tmrw", None),
 ])
 def test_resolution_table(mention, expected):
     assert ner.resolve(mention) == expected
@@ -29,6 +33,15 @@ def test_resolution_table(mention, expected):
     ("Great Eastern lifted group earnings.", ["OCBC"]),
     ("He drives an Aston Martin DBS.", []),
     ("DBS, OCBC and UOB all reported higher profit.", ["DBS", "OCBC", "UOB"]),
+    ("The Development Bank of Singapore was founded in 1968.", ["DBS"]),   # DBS's old name, not OCBC's private bank
+    ("Dumbest Bank of Singapore strikes again with another outage.", ["DBS"]),
+    ("Bank of Singapore hired a new head of wealth planning.", ["OCBC"]),   # the private bank is still OCBC's
+    ("PayLah is down again this morning.", ["DBS"]),                    # an app named alone
+    ("I can't log in to digibank since last night.", ["DBS"]),
+    ("TMRW keeps crashing when I open it.", ["UOB"]),
+    ("These include our mobile-only digital bank, TMRW, in Indonesia.", ["UOB"]),
+    ("I will transfer the money tmrw morning.", []),                    # "tomorrow", not the app
+    ("see you Tmrw at the branch", []),
 ])
 def test_recognition_on_the_hard_cases(text, expected):
     assert ner.banks_in(text) == expected

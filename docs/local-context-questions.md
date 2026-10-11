@@ -177,6 +177,8 @@ about the bank?**
 
   **What it changes.** If the team adopts it: a sentence in step 1 ("Is it about the bank?") and the `macro_market_environment` row of `docs/annotation-guideline.md`, and those two rows are relabelled. Macro then stays small, so the team must also decide whether it is evaluated at all. No code.
 
+  **Validated (2026-10-11).** Holds. Both sources say what is quoted. Opus already labels this way: of six such rows outside the test split it flagged the three pure forecasts as not about the bank and kept the three tied to the bank's own business. In the corpus 29 sentences match (0.06%), and the current model scores 25 of them positive or negative, so today they count as sentiment toward the bank. One gap: a row flagged as not about the bank still carries an aspect and a sentiment, and nothing leaves it out of training. Details: [local-context-validation](evidence/local-context-validation-2026-10-11.md).
+
 **Comparisons with brokers and robo-advisers (IBKR, moomoo, Tiger,
 Endowus, Syfe, StashAway): when is "IBKR is cheaper than DBS Vickers"
 sentiment about the bank?**
@@ -225,6 +227,8 @@ down again"). Both negative retail banking sentiment?**
   **Confidence.** High on outages. Medium on scams: the framework shows the regulator itself separates a scam the bank could have stopped from one it could not, but where a sentence falls is the labeller's call.
 
   **What it changes.** A sentence for step 1 of `docs/annotation-guideline.md` and its retail banking row, which now lists "scams" without that distinction. A sentence about the capital penalty itself belongs to capital and liquidity. No code.
+
+  **Validated (2026-10-11).** Holds, both halves. The MAS and framework facts were confirmed on the pages cited. People labelled all 7 outage rows negative. On scam rows where the bank's handling is blamed, people and Opus are both negative (5 of 5); on the three scams the bank did not cause, Opus is neutral on all three and people on one. So this is what Opus already does, on a point where people were not consistent. In the corpus 345 sentences mention a scam (153 scored negative) and only 19 use impersonation wording, so the split has to be judged per sentence, not by keyword. Details: [local-context-validation](evidence/local-context-validation-2026-10-11.md).
 
 **MAS rules and notices ("Is this part of some new MAS guideline or
 just UOB being extra cautious?"): which aspect?**
@@ -350,6 +354,8 @@ Agreed, and always about the product?**
 
   **What it changes.** Nothing in the labels.
 
+  **Validated (2026-10-11).** Holds. The description of "lol" was confirmed on the page cited. People and Opus gave the same sentiment on all 9 labelled rows with such a word. Those rows lean negative (5 of 9), and across the corpus the model calls 85% of the 300 such sentences neutral, so the model may under-read them; 9 rows are too few to say. Details: [local-context-validation](evidence/local-context-validation-2026-10-11.md).
+
 **Investing stance words: DCA (150), "diamond hands", "to the moon",
 "stonks", FOMO, YOLO. Is "Monthly DCA dbs stock." positive investor
 sentiment, or neutral description?**
@@ -357,13 +363,15 @@ sentiment, or neutral description?**
   guideline doesn't say.
 - Team answer:
 
-  **Answer (researched on the web, 2026-10-11).** The meanings are settled; the label is a recommendation, and it differs from the drafted proposal. Dollar-cost averaging is buying the same dollar amount at regular intervals "regardless of price", and the banks sell it as a product (OCBC's Blue Chip Investment Plan, from S$100 a month), so "Monthly DCA dbs stock." states a schedule, not a view. Recommended: neutral unless the sentence adds a reason or a judgment, which is also how people labelled the one such row in train and dev; the proposal had it as mildly positive. Of the rest, diamond hands (holding through swings) and "to the moon" (expecting a sharp rise) are positive about the stock; "stonks" is a mocking misspelling that often signals a bad decision; YOLO means going all in and was also a UOB credit card until it was renamed UOB EVOL in June 2021; FOMO said of other buyers is a warning.
+  **Answer (researched on the web, 2026-10-11).** The meanings are settled; the label is a recommendation, and it differs from the drafted proposal. Dollar-cost averaging is investing "the same number of dollars each month or each quarter" whatever the price, and the banks sell it as a product (OCBC's Blue Chip Investment Plan, from S$100 a month), so "Monthly DCA dbs stock." states a schedule, not a view. Recommended: neutral unless the sentence adds a reason or a judgment, which is also how people labelled the one such row in train and dev; the proposal had it as mildly positive. Of the rest, diamond hands (holding through swings) and "to the moon" (expecting a sharp rise) are positive about the stock; "stonks" is a mocking misspelling that often signals a bad decision; YOLO means going all in and was also a UOB credit card until it was renamed UOB EVOL in June 2021; FOMO said of other buyers is a warning.
 
   **Sources.** [Dollar-cost averaging (Wikipedia)](https://en.wikipedia.org/wiki/Dollar_cost_averaging); [OCBC Blue Chip Investment Plan (BCIP) | ETF's & Blue Chip Stocks](https://www.ocbc.com/personal-banking/investments/blue-chip-investment-plan); [Trading Lingo from Wall Street Bets Decoded (SingSaver)](https://www.singsaver.com.sg/page/blog/trading-lingo-from-wallstreetbets); [Stash's Guide to Reddit's WallStreetBets Can Help You Understand the Lingo](https://www.stash.com/learn/stashs-guide-to-reddits-wallstreetbets-can-help-you-understand-the-lingo); [Fear of missing out (Wikipedia)](https://en.wikipedia.org/wiki/Fear_of_missing_out); [UOB YOLO Is Now The UOB EVOL: What's Changed? (SingSaver)](https://www.singsaver.com.sg/page/blog/uob-yolo-relaunch-uob-evol).
 
   **Confidence.** High on the meanings. Low to medium on the label for a bare buying plan: the definition supports neutral, but a reader can fairly see a choice to keep buying as mild approval.
 
   **What it changes.** An example for the `investor_stock_sentiment` row of `docs/annotation-guideline.md`, which is silent on buying plans. Any keyword list must treat "YOLO" as a card name first.
+
+  **Validated (2026-10-11).** Holds, with one quote corrected: the phrase "regardless of price" is not in the article cited, so the definition above now quotes what the article does say. People labelled 3 of the 4 such rows neutral and Opus matched them on all 4; the current model calls 147 of the corpus's 154 such sentences neutral, and all 23 short ones. No label changes. Details: [local-context-validation](evidence/local-context-validation-2026-10-11.md).
 
 **"FIRE" means financial independence, retire early, except when it
 means fire insurance. Any other local acronym with two readings?**
@@ -418,6 +426,8 @@ sarcasm, so the models' errors on it can be counted?**
   **Confidence.** Medium. The case for measuring is sourced; whether an extra column is worth the annotators' time is the team's call.
 
   **What it changes.** If adopted: one optional column on the labelling sheet and a line in `docs/annotation-guideline.md`. If not, the report should say that errors on sarcasm were not measured.
+
+  **Validated (2026-10-11).** The sources hold; the flag is not worth adding as written. The corpus has 7 marked sentences in 45,844 and none of the 1,676 labelled rows outside the test split carries the mark, and people no longer label the sheets, so the column would stay empty. Cheaper and honest: the report says errors on sarcasm were not measured. If a figure is wanted later, the Opus rater can be asked to flag sarcasm in a pass of its own. Details: [local-context-validation](evidence/local-context-validation-2026-10-11.md).
 
 **A question is not evidence: "How is the fundamental/current state of
 DBS?" Neutral, and never quoted as a supporting quote?**
@@ -479,6 +489,8 @@ considered (`preprocessing-dry-run-2026-10-01.md`)?
 
 **What it changes.** A preprocessing step if the team wants one. Removing rows from `data/plp.db` needs the team's approval, so build and test it on a copy first.
 
+**Validated (2026-10-11).** Holds, with a narrower fix. The source describes United States law, as the answer says. In the corpus about 188 sentences are disclaimers (26) or footnotes that define a term (162), 0.41% of the total, and the model scores 50 of them positive or negative. That is too few to move the index; the harm is in the chatbot's evidence, where such a line can be quoted. Filter them at evidence search first, and read the 188 before filtering anything, because the word patterns used to count them are rough. Details: [local-context-validation](evidence/local-context-validation-2026-10-11.md).
+
 **Product descriptions.** A product description is neutral unless it judges: "UOB One gives
 4% on $100k" neutral, "UOB One is the best leh" positive. This is the
 neutral boundary where people, Opus and the fine-tuned model disagree most
@@ -497,13 +509,15 @@ descriptions of retail products called positive or negative).
 as given. Whether a local reader would call that a buy is not a question
 the system answers.
 
-**Answer (researched on the web, 2026-10-11).** A reader who knows broker ratings would not take it as a buy. Brokers that publish their scales tie "buy" to an expected total return over 12 months of more than about 10% to 15% and put anything from flat to that level under "hold", so a consensus "buy" beside an implied upside of 0.9% usually means the price has caught up with targets that have not been revised. Recommended: keep reporting both figures as given, and do not let the system describe the pair as a bullish view; this is a recommendation for the team.
+**Answer (researched on the web, 2026-10-11).** A reader who knows broker ratings would not take it as a buy. Brokers that publish their scales tie "buy" to an expected total return over 12 months of more than about 15% (20% at one broker) and put anything from about flat up to 10% or 15% under "hold", so a consensus "buy" beside an implied upside of 0.9% usually means the price has caught up with targets that have not been revised. Recommended: keep reporting both figures as given, and do not let the system describe the pair as a bullish view; this is a recommendation for the team.
 
 **Sources.** [Broker Recommendations Explained (FNArena)](https://fnarena.com/broker-recommendations-explained).
 
 **Confidence.** Medium. One source, and its examples are brokers covering Australian shares; the rating definitions of the Singapore brokers were searched for and not found on an open page.
 
 **What it changes.** Nothing in labels or code unless the team wants the wording changed where the consensus is shown.
+
+**Validated (2026-10-11).** Holds, with the thresholds corrected from the page cited (the first wording said 10% to 15%). The case is real in the stored data: DBS is rated "buy" with an implied upside of +0.9%, OCBC "buy" with -0.9% (its average target is below the price), UOB "hold" with +1.9%. The chatbot already reports both figures as given and called neither a bullish view in six recent answers, so nothing needs changing; one of those answers did misdescribe the analysts ("17 analysts who have rated the bank as 'buy' or 'strong buy'"). Details: [local-context-validation](evidence/local-context-validation-2026-10-11.md).
 
 **Opus as the NER reference.** The NER gold-sheet reference: Opus's reading was taken as a
 stand-in for a person's. It agrees with NER on 200 of 201 sentences, but it

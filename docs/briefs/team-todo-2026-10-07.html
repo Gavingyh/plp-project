@@ -196,10 +196,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Source: <code>docs/local-context-questions.md</code>, answers of 11 Oct.</span>
     </li>
     <li data-o="decide">
-      <span class="t">Adopt the researched answers that are recommendations, not facts <span class="chip decide">Decision</span></span>
+      <span class="t">Adopt six of the seven recommended answers; drop the sarcasm flag <span class="chip decide">Decision</span></span>
       <span class="when">before retraining (12 Oct)</span>
-      <p class="why"><b>Why:</b> all 23 local-context questions now have an answer researched on the web, with sources. Most are facts (what a product or a word means). Seven are judgment calls no web page settles, marked as recommendations: a bank economist&#8217;s forecast is not about the bank; an impersonation scam is not the bank&#8217;s outage; how to label sarcasm, a regular monthly purchase of a bank&#8217;s shares, &#8220;lol&#8221;, a small &#8220;buy&#8221; rating, and report boilerplate. Adopting them adds a few lines and examples to the guideline; the rows they touch get another pass.</p>
-      <span class="meta">File: <code>docs/local-context-questions.md</code>. Guideline lines to add are listed under each answer&#8217;s &#8220;What it changes&#8221;.</span>
+      <p class="why"><b>Why:</b> the seven judgment calls among the researched answers were checked on 11 Oct against the labelled rows (test rows left out), the whole corpus and their sources. Six hold: a bank economist&#8217;s forecast is not about the bank; a scam the bank did not cause is not its outage; a regular monthly share purchase is neutral; &#8220;lol&#8221; does not change the label; a &#8220;buy&#8221; beside a tiny upside is not a bullish view; report boilerplate stays out of the evidence. Opus&#8217;s labels already follow the first two, so adopting them changes no training label. The seventh, a sarcasm flag for annotators, is not worth adding: 7 marked sentences in 45,844 and none in the labelled rows. Two things to do with them: decide what happens to the 134 rows Opus flags as not about the bank, which are still trained on; and filter boilerplate at the chatbot&#8217;s evidence search.</p>
+      <span class="meta">Evidence: <code>docs/evidence/local-context-validation-2026-10-11.md</code>. Verdicts are also under each answer in <code>docs/local-context-questions.md</code>.</span>
     </li>
     <li data-o="decide">
       <span class="t">Which aspects the dashboard and chatbot show: the LLM&#8217;s, unless the team says otherwise <span class="chip decide">Default set</span></span>

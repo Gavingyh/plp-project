@@ -1506,3 +1506,14 @@ repairs go ahead.
 **Needs a human:** upload the v2 snapshot; adopt or not the seven
 recommended answers; approve the two bank-recognition fixes. The 1,499 new
 sentences have no LLM aspect yet.
+
+**The seven recommended answers checked (11 Oct, evening).** At the owner's
+request the seven judgment calls among the researched local-context answers
+were checked against the labelled rows outside the test splits (1,676, of
+which 978 labelled by people), the corpus (45,844 sentences) and their
+sources (`docs/evidence/local-context-validation-2026-10-11.md`). Six hold;
+the sarcasm flag is not worth adding (7 marked sentences, none labelled).
+Two answers were corrected: a quote the cited article does not contain, and
+broker rating thresholds (buy above about 15%, not 10% to 15%). Found along
+the way: Opus flags 134 rows as not about the bank and they are still
+trained on; one chatbot answer misdescribed the analysts behind a consensus.

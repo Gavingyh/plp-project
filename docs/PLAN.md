@@ -67,14 +67,14 @@ By the team. Recorded from the meeting note; the follow-on work and the points l
 | **The test rows are not relabelled** | The 299 test labels stay; the report should say annotators saw a model's suggestion |
 | **Aspects: both methods run and are reported**, the centroids and the LLM | Which one the index, dashboard and chatbot serve is still open (below) |
 | **Opus 5.5 labels every sentiment sheet** | Done 10 Oct, 2,075 rows ([evidence](evidence/llm-rater-new-rules-2026-10-10.md)). The labels are reported as LLM labels, not human labels (the owner's change to the meeting note, for the GenAI declaration). This replaces the 4 Oct decision above that the human labels stay where Opus disagrees; `CLAUDE.md` and DESIGN decision 22 still state the old rule until the owner changes them |
+| **The models train on Opus's labels; the test rows keep their labels** (from the two decisions on labelling and on the test rows) | Train and test follow different retail rules, which can lower test scores for a reason unrelated to the model; the report says so. On the 299 test rows Opus differs from the kept labels on 42 sentiments |
 | **Evaluation reports precision and recall for positive, negative and neutral** beside macro-F1 and accuracy; every model is re-run and the team links the superior one to the chatbot and dashboard | `train/evaluation_report.py` already writes them; the re-run is in the 12 to 18 Oct week |
 
 ### Still open
 
 | decision | who | by |
 |---|---|---|
-| **Which labels train and test the models:** the retail rule changed on 10 Oct and the test rows keep their old labels; and for the 1,277 rows people labelled, the person's label or Opus's new one (to-do, section 1) | team | 12 Oct |
-| **Aspect method served:** both run and are reported (10 Oct), but the index, dashboard and chatbot read one; and the rule where two models disagree (brief, 1) | team | before the re-score |
+| **Aspects shown by the product:** both methods are run and reported (10 Oct); the re-score applies the LLM's, with llama's answer where the two local models disagree, unless the team says otherwise (brief, 1) | team | before the re-score |
 | **Blended index:** one blended index, or per-source indices shown side by side. UOB has the highest earnings-only score and the lowest blended one, purely because it publishes less earnings text (brief, 3) | team | 5 Oct |
 | **Bank economists:** whether a bank economist's macro forecast is "about the bank" (brief, 4) | team | 5 Oct |
 | **Scoring model:** chosen from the re-run table of every model, with precision and recall for each class (10 Oct); say what "superior" means first (brief, 7) | team | 12 to 14 Oct |

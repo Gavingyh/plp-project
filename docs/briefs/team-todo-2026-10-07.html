@@ -159,15 +159,15 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <header class="mast">
   <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Sat 10 Oct 2026</span></div>
   <h1>What the team has to do before 1 November</h1>
-  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. On 10 Oct the team made six of the upstream decisions (listed under Decided); section 1 starts with the points they leave open, and Opus has since labelled every sheet (section 2). The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
+  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. On 10 Oct the team made six of the upstream decisions (listed under Decided); Opus has since labelled every sheet (section 2), so the model re-run is no longer blocked; section 1 holds what is still open. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
   <div class="countdown"><b>22</b> days to submission · Sun 1 Nov</div>
 </header>
 
 <section aria-labelledby="h-path">
   <h2 id="h-path">The critical path</h2>
-  <p class="sub">Each step needs the one before it. The 10 Oct decisions clear most of step 1; the open points in section 1 still decide which labels the models learn from.</p>
+  <p class="sub">Each step needs the one before it. The 10 Oct decisions clear most of step 1; the labels and rules are settled, so the model re-run can start.</p>
   <ol class="path">
-    <li><span class="d">10 Oct, part done</span><span class="s">Six upstream decisions made; follow-on points still open</span></li>
+    <li><span class="d">10 Oct, part done</span><span class="s">Six upstream decisions made; labels and rules settled</span></li>
     <li><span class="d">10 Oct, done</span><span class="s">New rules written; Opus labelled every sheet (2,075 rows)</span></li>
     <li><span class="d">12–14 Oct</span><span class="s">Every model re-run; the team picks one</span></li>
     <li><span class="d">12–18 Oct</span><span class="s">Retrain, re-score once, re-run every evaluation</span></li>
@@ -186,20 +186,14 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 </section>
 
 <section aria-labelledby="h-decide">
-  <h2 id="h-decide">1. Still to decide: what the 10 October decisions leave open</h2>
-  <p class="sub">The first two come straight out of the 10 Oct decisions and block the retraining. The rest were open before.</p>
+  <h2 id="h-decide">1. Still to decide</h2>
+  <p class="sub">The 10 Oct decisions settle the labels and the rules, so nothing here blocks the retraining. These three were open before, and the first is a default the team can overrule.</p>
   <ul class="items">
     <li data-o="decide">
-      <span class="t">Which labels the models train and test on, now that the retail rule has changed <span class="chip decide">Decision</span></span>
-      <span class="when">before retraining (12 Oct)</span>
-      <p class="why"><b>Why:</b> two of the 10 Oct decisions pull apart. Retail products now carry sentiment directed at the bank, so rows labelled neutral under the old rule change. The test rows are not relabelled, so the 299 test labels stay on the old rule. If the train/dev rows follow the new rule and the test rows the old one, test scores fall for a reason that has nothing to do with the model. Choose one: apply the new rule to the retail test rows too (Opus&#8217;s labels, reported as LLM labels), or keep them and say so in the report. Decide with it, for the 1,277 rows people already labelled, whether the training label is the person&#8217;s or Opus&#8217;s new one. What the 10 Oct run shows: on the 299 test rows Opus differs from people on 47 aspects and 42 sentiments, and on the 978 train/dev rows on 155 and 127; the retail rule itself moved 34 of 280 neutral retail rows to positive or negative, about as many as change between two Opus runs.</p>
-      <span class="meta">Decisions of 10 Oct on retail products, the test rows and Opus labelling. Until this is settled, Opus&#8217;s new labels sit beside the human ones in <code>data/labeled/llm_rater/</code> and change nothing.</span>
-    </li>
-    <li data-o="decide">
-      <span class="t">Which aspect method the product serves, and the disagreement rule <span class="chip decide">Decision</span></span>
-      <span class="when">before the re-score</span>
-      <p class="why"><b>Why:</b> the team decided on 10 Oct to run both methods, the centroids and the LLM, and the report will give both. The index, the dashboard and the chatbot still read one set of aspects, so one has to be the served one. The centroids give a sentence about 6.4 aspects and match the human&#8217;s aspect 41% of the time; <code>llama3.1:8b</code> matches 73%, and 84% where <code>qwen3:4b</code> agrees. Under centroids every aspect of every bank is positive; with the LLM, retail banking turns slightly negative for all three banks and DBS asset quality falls from +0.27 to +0.07. Choose with it the rule for the 24% of sentences where the two models disagree: keep llama&#8217;s answer, or mark them <code>other</code>.</p>
-      <span class="meta">Source: llm-aspect-classifier, index-preview evidence. Decision 5 in the decision brief.</span>
+      <span class="t">Which aspects the dashboard and chatbot show: the LLM&#8217;s, unless the team says otherwise <span class="chip decide">Default set</span></span>
+      <span class="when">applied in the re-score</span>
+      <p class="why"><b>Why:</b> the team decided on 10 Oct to run and report both methods. The index, the dashboard and the chatbot can read only one set of aspects, so the re-score will apply the LLM&#8217;s, which match people&#8217;s aspect 73% of the time against the centroids&#8217; 41% (84% where the two local models agree); the report gives both. Where the two local models disagree (24% of sentences), llama&#8217;s answer is kept. Say so before the re-score if the team wants the centroids shown instead.</p>
+      <span class="meta">Source: llm-aspect-classifier, index-preview evidence.</span>
     </li>
     <li data-o="decide">
       <span class="t">The 22 open local-context questions <span class="chip decide">Decision</span></span>
@@ -212,12 +206,6 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="when overdue">overdue (5 Oct)</span>
       <p class="why"><b>Why:</b> UOB has the highest earnings-only score and the lowest blended one, only because it publishes less earnings text than DBS. The ranking the report and the dashboard show depends on this choice, and broker research adds another source to weigh.</p>
       <span class="meta">Source: PLAN, blended-index decision.</span>
-    </li>
-    <li data-o="team">
-      <span class="t">Change the project rule that Opus labels never replace the human labels <span class="chip team">Owner</span></span>
-      <span class="when">before Opus&#8217;s labels train a model</span>
-      <p class="why"><b>Why:</b> <code>CLAUDE.md</code> and DESIGN decision 22 both say Opus is an additional rater whose labels never replace a person&#8217;s. The 10 Oct labelling decision reverses that for the sheets nobody has labelled, and possibly for the 1,277 rows (first item above). The rule and the decision log should say what the team now means, so later sessions follow it.</p>
-      <span class="meta"><code>CLAUDE.md</code>, Rules; <code>docs/DESIGN.md</code>, decision 22.</span>
     </li>
   </ul>
 </section>
@@ -232,11 +220,11 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Result:</b> the first round&#8217;s 1,277 rows, the top-up sheet&#8217;s 268, the active-learning sheet&#8217;s 150 and the broker research round&#8217;s 380, each labelled for aspect and then sentiment by Opus raters that saw no other label (36 runs, audited). 757 positive, 879 neutral, 439 negative; 134 flagged as not about the bank. Against people on the 1,277 rows: aspect &#954; 0.802, sentiment &#954; 0.793, the same as the 1 Oct run under the old rules. The labels are in their own folder and have replaced nothing; the first item in section 1 decides how they are used.</p>
       <span class="meta">Files: <code>data/labeled/llm_rater/rules-2026-10-10/</code>. Evidence: <code>docs/evidence/llm-rater-new-rules-2026-10-10.md</code>.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Confirm the wording of the two new rules, and whether to redo the corpus aspect run <span class="chip decide">Decision</span></span>
+    <li data-o="team">
+      <span class="t">Read the two new rules as written into the guideline <span class="chip team">People</span></span>
       <span class="when">before retraining (12 Oct)</span>
-      <p class="why"><b>Why:</b> the rules are now in the guideline and were Opus&#8217;s instructions, worded from the one-line decisions. (1) <b>Retail products:</b> a feature clearly good for the customer is positive, one clearly bad is negative; a bare mention, a question, a how-to or mixed terms stays neutral (the &#8220;customer value&#8221; option of the 7 Oct paper). (2) <b>Wealth:</b> the priority and private tiers and the wealth segment&#8217;s figures; loans, mortgages and unit trusts are retail unless the sentence is about a wealth tier. The instructions also sent brokerage accounts, regular savings plans, insurance and robo-advisers to retail, which the team&#8217;s note did not say. If either wording is wrong, the affected rows need another pass. Separately, the local aspect classifier still uses the old wealth definition: changing it in <code>config/aspects.yaml</code> starts a new cache file, so the corpus aspect run is redone (about a day of the MacBook).</p>
-      <span class="meta">Files: <code>docs/annotation-guideline.md</code> (&#8220;Two rules decided on 2026-10-10&#8221;), <code>config/aspects.yaml</code>.</span>
+      <p class="why"><b>Why:</b> the rules were decided on 10 Oct; this is only a check of how they were worded, since Opus labelled 2,075 rows from this wording. (1) <b>Retail products:</b> a feature clearly good for the customer is positive, one clearly bad is negative; a bare mention, a question, a how-to or mixed terms stays neutral. (2) <b>Wealth:</b> the priority and private tiers and the wealth segment&#8217;s figures; loans, mortgages and unit trusts are retail unless the sentence is about a wealth tier. The instructions also sent brokerage accounts, regular savings plans, insurance and robo-advisers to retail, which the team&#8217;s note did not say. If a wording is wrong, the affected rows get another pass.</p>
+      <span class="meta">File: <code>docs/annotation-guideline.md</code>, &#8220;Two rules decided on 2026-10-10&#8221;.</span>
     </li>
     <li data-o="team">
       <span class="t">Label the bank-NER gold set (201 sentences), or say Opus does this too <span class="chip team">People</span></span>
@@ -329,10 +317,21 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <h2 id="h-wk3">5. 12–18 October: apply the decisions once</h2>
   <ul class="items">
     <li data-o="ai">
+      <span class="t">Redo the corpus aspect run with the new wealth definition <span class="chip ai">Claude</span></span>
+      <span class="when">12–14 Oct</span>
+      <p class="why"><b>Why:</b> the 10 Oct wealth rule changes the definition the local aspect model is given, and a changed definition starts a new answer file. Tried first on the 1,277 labelled sentences (under an hour); the whole corpus, now 44,986 sentences with the broker research ones, takes about a day of the MacBook.</p>
+      <span class="meta">File: <code>config/aspects.yaml</code>; command in RUNBOOK.</span>
+    </li>
+    <li data-o="ai">
+      <span class="t">Bring the project rule on Opus labels in line with the 10 Oct decision <span class="chip ai">Claude</span></span>
+      <span class="when">with the retraining</span>
+      <p class="why"><b>Why:</b> <code>CLAUDE.md</code> and DESIGN decision 22 still say Opus labels never replace the human labels. Since 10 Oct they are the training labels, reported as LLM labels; the test rows stay human. The rule and the decision log should say that, on the owner&#8217;s word.</p>
+    </li>
+    <li data-o="ai">
       <span class="t">Re-run every model and report precision and recall for each class <span class="chip ai">Claude</span></span>
       <span class="when">12–14 Oct</span>
       <p class="why"><b>Why:</b> decided 10 Oct. Base FinBERT, the 1 Oct models, the 4 Oct retrain and the adapted models (pretrained again with the fixed filter) are trained and scored on one machine, on the labels section 1 settles. The table gives accuracy, macro-F1 and, for positive, negative and neutral, precision and recall; <code>train/evaluation_report.py</code> already writes all of them, so this is a re-run, not new code.</p>
-      <span class="meta">Waits on: the labels decision in section 1.</span>
+      <span class="meta">Labels: Opus&#8217;s for training, the kept labels for the test rows (decided 10 Oct).</span>
     </li>
     <li data-o="ai">
       <span class="t">Retrain the chosen model on the final labels (pretraining again first, if adapted) <span class="chip ai">Claude</span></span>
@@ -437,6 +436,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li><b>10 Oct, wealth</b> means the priority and private tiers (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves.</li>
     <li><b>10 Oct, test rows</b> are not relabelled (the report should then say annotators saw a model&#8217;s suggestion).</li>
     <li><b>10 Oct, aspects:</b> both methods run and are reported, the centroids and the LLM.</li>
+    <li><b>10 Oct, which labels the models use:</b> the models train on Opus&#8217;s labels for every sheet, and the test rows keep the labels they have. Train and test then follow different retail rules, which can lower test scores for a reason unrelated to the model; the report says so. On the 299 test rows Opus differs from the kept labels on 42 sentiments.</li>
     <li><b>10 Oct, labelling:</b> Opus 5.5 labels every sentiment sheet, reported as LLM labels. This replaces the 4 Oct decision that human labels stay where Opus disagrees.</li>
     <li><b>10 Oct, evaluation:</b> precision and recall for positive, negative and neutral beside macro-F1 and accuracy; every model re-run; the team picks the superior one for the chatbot and dashboard.</li>
     <li><b>6 Oct, claim wording:</b> the Grounded chatbot claim states what the checks prove, within the Known limits on the chatbot evidence page.</li>

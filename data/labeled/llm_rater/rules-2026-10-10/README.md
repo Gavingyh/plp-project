@@ -13,6 +13,7 @@ Results: `docs/evidence/llm-rater-new-rules-2026-10-10.md`.
 | `instructions_aspect.md`, `instructions_sentiment.md` | what each rater was given |
 | `pilot/`, `batches/` | each rater's input and raw answers |
 | `build_batches.py` | builds the inputs (aspect first; `sentiment` after the aspect answers are in) |
+| `training_set.csv`, `build_training_set.py` | the label file for the model re-run of 11 Oct: Opus's labels for the 1,563 training rows (rows flagged as not about the bank left out), the kept labels for the 299 test rows |
 | `merge_and_score.py` | rebuilds `rater_labels.csv` and prints the comparison with the earlier labels |
 
 The sentiment pass was given Opus's own aspect, not the human one.

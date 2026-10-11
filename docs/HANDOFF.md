@@ -1517,3 +1517,25 @@ Two answers were corrected: a quote the cited article does not contain, and
 broker rating thresholds (buy above about 15%, not 10% to 15%). Found along
 the way: Opus flags 134 rows as not about the bank and they are still
 trained on; one chatbot answer misdescribed the analysts behind a consensus.
+
+**The model re-run is running (started 11 Oct, 15:51).** At the owner's
+word, with two defaults they were told of: rows Opus flagged as not about
+the bank are left out of training, and models are ranked by test macro-F1
+over three seeds.
+
+- Label file: `data/labeled/llm_rater/rules-2026-10-10/training_set.csv`
+  (`build_training_set.py`): 1,563 training rows on Opus's labels (616
+  positive, 586 neutral, 361 negative; 112 flagged rows and 1 near-copy of a
+  test sentence left out) and the 299 first-round test rows on the labels
+  they have.
+- Script: `data/run/rerun-2026-10-11/run.sh`, under `caffeinate -i`, pid in
+  `pid` beside it. Steps: pretrain the adapted encoder with the fixed filter
+  (`models/dapt-2026-10-11`); 5-fold cross-validation, seeds 42, 1 and 7,
+  from FinBERT and from the adapted encoder; three final models from each
+  (`models/experiments-2026-10-11/`); `score.py` for the test table with
+  precision and recall per class. Each step skips what is done, so the
+  script can simply be started again. Progress: `progress.log`; results:
+  `results.md` and `test_results.json`. About eight hours.
+- Before it started, `score.py` on the models that exist reproduced the
+  known figures on the 299 test rows: base FinBERT macro-F1 0.571; the 1 Oct
+  models 0.604 (sd 0.035); the 4 Oct retrain 0.621 (sd 0.027).

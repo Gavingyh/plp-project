@@ -26,6 +26,11 @@ decision 21; the top-up and Opus evidence). The banking-products section and
 Claude's own assumptions (the last section) are where answers change the
 most labels.
 
+**Adopted on 2026-10-11.** The owner adopted six of the seven recommended
+answers below (economists' forecasts, scams, regular monthly purchases,
+"lol", the small "buy" rating, report boilerplate) and dropped the sarcasm
+flag. They are written into `docs/annotation-guideline.md`.
+
 ---
 
 ## Singapore banking products and names

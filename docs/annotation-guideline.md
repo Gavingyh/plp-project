@@ -77,6 +77,44 @@ followed the older reading; see the note under each.
   the nearest to the team's note ("include sentiment directed at the bank as
   opposed to keeping it neutral"); confirm it.
 
+### Six answers adopted on 2026-10-11
+
+Adopted by the owner after a check against the labelled rows, the corpus and
+their sources
+([evidence](evidence/local-context-validation-2026-10-11.md)). The first
+four are labelling rules; Opus's labels of 10 October already follow the
+first two. The last two are about the chatbot, kept here so the rules sit in
+one place.
+
+- **A bank economist's forecast is not about the bank.** When a bank's
+  economists or research desk speak about the economy ("UOB revises up
+  Vietnam's 2026 GDP growth forecast"), the bank is the source, not the
+  subject: set `not_about_bank`. It is `macro_market_environment` only when
+  the sentence ties the outlook to the bank's own business ("management
+  believes credit costs will remain benign as the GDP forecast improves").
+- **A scam the bank did not cause is not its outage.** The bank's own outage
+  or security lapse is `negative` on `retail_banking_sentiment`. An
+  impersonation scam ("scam call claiming to be from DBS") is `neutral`, or
+  not about the bank, unless the sentence blames or praises the bank's
+  safeguards or how it handled the case.
+- **A regular monthly purchase of a bank's shares is neutral.** "Monthly DCA
+  dbs stock." states a schedule, not a view. It takes a sentiment only when
+  the sentence adds a reason or a judgement.
+- **"lol", "lmao", "tbh", "haha" and the like do not change the label.**
+  Label what the sentence says. Such a word can be a sign of sarcasm, in
+  which case the sarcasm rule below applies.
+- **A "buy" rating beside a tiny implied upside is not a bullish view.** The
+  chatbot reports the consensus rating and the implied upside as stored and
+  does not describe the pair as bullish.
+- **Report boilerplate stays out of the chatbot's evidence.** Disclaimers,
+  forward-looking-statement notices and footnotes that define a term say
+  nothing about how the bank is doing; they are to be filtered at evidence
+  search.
+
+Not adopted: a column for annotators to flag sarcasm. The corpus has 7
+sentences marked "/s" and none is among the labelled rows, so errors on
+sarcasm are not measured, and the report says so.
+
 ### What the sheet looks like
 
 Columns you fill: `aspect`, `label`, `not_about_bank`, `annotator`. On

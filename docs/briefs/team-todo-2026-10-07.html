@@ -215,12 +215,6 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">File: <code>docs/annotation-guideline.md</code>, &#8220;Two rules decided on 2026-10-10&#8221;.</span>
     </li>
     <li data-o="team">
-      <span class="t">Broker research labels: name the test-row annotator <span class="chip team">People</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> the 100 blind test rows are labelled but their <code>annotator</code> column is blank (they agree with the LLM&#8217;s own labels on 77 of 100, so not copied); naming the annotator lets the report say people labelled them. <code>train.source_round merge</code> refuses rows without an annotator.</p>
-      <span class="meta">Files: <code>data/labeled/sgx_research/test_blind.csv</code>, <code>candidates.csv</code>.</span>
-    </li>
-    <li data-o="team">
       <span class="t">Upload the new snapshot to the team folder, and everyone restores it <span class="chip team">People</span></span>
       <span class="when">before the re-score</span>
       <p class="why"><b>Why:</b> <code>data/plp.db</code> on the MacBook is now the one complete database: our 30 Sep corpus, the broker research source from the Windows PC (25 reports, 641 sentences), and the three repairs approved on 11 Oct. 28,852 documents, 45,844 sentences, every one scored. Until the snapshot is in the team folder only the MacBook has it; the PC&#8217;s own database lacks the CNA articles and most scores, so replace it with this one. Restore with <code>gunzip -c plp-2026-10-11-v2.db.gz &gt; data/plp.db</code>.</p>
@@ -390,6 +384,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">Decided</h2>
   <ul class="refs">
+    <li><b>11 Oct, broker research test rows:</b> the owner confirmed the same annotator (A) labelled the 100 blind test rows as the 280 training rows; the round is merged, and the rows join the test set when the re-run finishes.</li>
     <li><b>11 Oct, six researched answers adopted</b> into the guideline: economists&#8217; forecasts, scams the bank did not cause, regular monthly share purchases, &#8220;lol&#8221;, the small &#8220;buy&#8221; rating, report boilerplate. The sarcasm flag is dropped; the report says errors on sarcasm were not measured.</li>
     <li><b>11 Oct, two bank-recognition fixes made:</b> &#8220;Development Bank of Singapore&#8221; is DBS, and PayLah, digibank or TMRW named alone resolve to their bank. They take effect when bank recognition is applied in the re-score.</li>
     <li><b>11 Oct, the wealth rule&#8217;s extension is confirmed:</b> brokerage accounts, regular savings plans, insurance and robo-advisers are retail when a customer is speaking; what a bank or analyst reports about them is filed by what is reported.</li>

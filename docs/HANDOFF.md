@@ -1552,3 +1552,11 @@ rule's extension to four more products was confirmed after a check of how
 the banks classify them. Bank recognition scored against Opus's reference on
 the 201-sentence sheet (accepted as an LLM reference) still matches it in
 every case shown by `train.rater_labels extra score ner`.
+
+**The broker research test rows have their annotator (11 Oct, evening).**
+On the owner's word that the same person labelled them, `annotator` is `A`
+on all 100 rows of `data/labeled/sgx_research/test_blind.csv` (no other
+cell changed). `train.source_round merge` then accepted the round: 280
+train/dev and 100 test rows, none dropped. They are not yet in the re-run's
+label file, which the running job reads; they are added, as a second test
+scope, once it finishes.

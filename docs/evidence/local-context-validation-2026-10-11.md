@@ -70,6 +70,52 @@ database, the labels or the guideline was changed.
   The page lists above 15% at three brokers and above 20% at a fourth, with
   "hold" from about flat up to 10% or 15%.
 
+## The wealth rule's extension to four more products
+
+The team's wealth rule names loans, mortgages and unit trusts as products
+that are not wealth by themselves. The raters' instructions applied the same
+to brokerage accounts, regular savings plans, insurance and robo-advisers.
+Checked on 11 Oct and confirmed by the owner the same day.
+
+- **How the banks define a wealth customer:** by tier. DBS's earnings text
+  says the wealth management segment "comprises Treasures, Treasures Private
+  Client, and Private Bank"; UOB's footnotes say "Privilege Banking,
+  Privilege Reserve and Private Bank". Comparison sites put entry at about
+  S$200,000 for OCBC Premier and S$350,000 for DBS Treasures and UOB
+  Privilege.
+- **Whether the four products are for those customers only:** no. OCBC's
+  Blue Chip Investment Plan starts "from just S$100/month" (its own page),
+  and DBS Invest-Saver is sold from S$100 a month to any adult.
+- **How the banks book the income:** as wealth income. OCBC's wealth
+  management income covers "private banking, premier private client, premier
+  banking, insurance, asset management and stockbroking"; DBS's first-quarter
+  2026 release reports wealth management fees "driven by higher investment
+  product sales and bancassurance".
+- **Who is speaking, in the corpus** (45,844 sentences, keyword counts):
+  brokerage 1,803 sentences, 1,754 of them Reddit; robo-advisers 539, 531
+  Reddit; regular savings plans 138, 136 Reddit; insurance 779, of which 322
+  Reddit and 307 the banks' reports. Sentences that also name a wealth tier:
+  25, 3, 0 and 54.
+- **How the rows were labelled** (74 rows outside the test split). Reddit:
+  Opus filed 53 of 54 under retail banking; people, on the 34 they labelled,
+  20 under retail and 13 under wealth. Bank and news rows: Opus filed 11 of
+  20 under income results and 2 under wealth, the same as its 1 Oct run and
+  as people on every row but one, a footnote that defines wealth management
+  income.
+
+So the extension follows the banks' own split: the customers are retail,
+the income line is wealth. The guideline now says both halves. No row needs
+relabelling beyond that one footnote.
+
+Sources: [DBS first-quarter 2026 results](https://www.dbs.com/newsroom/First_quarter_net_profit_rises_to_SGD_2_93_billion_as_total_income_reaches_a_new_high_led_by_record_wealth_management_performance_ROE_at_17_0pct);
+[OCBC Blue Chip Investment Plan](https://www.ocbc.com/personal-banking/investments/blue-chip-investment-plan);
+[OCBC wealth management income, first half 2026 (Pulse 2.0)](https://pulse2.com/ocbc-wealth-management-income-reaches-record-s3-29-billion-and-41-of-total-revenue/);
+[Regular savings plans in Singapore (MoneySmart)](https://blog.moneysmart.sg/invest/regular-savings-plans/);
+[Priority banking accounts compared (SingSaver)](https://www.singsaver.com.sg/banking/comparison/priority-banking).
+The DBS and UOB tier definitions are from the banks' earnings text in the
+corpus. Only the first two pages were opened; the others are as the search
+reported them.
+
 ## Limits
 
 - Six to ten labelled rows stand behind most rows of the table. They show

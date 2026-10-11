@@ -52,9 +52,14 @@ followed the older reading; see the note under each.
   and the wealth segment's own figures. Loans, mortgages and unit trusts are
   not unique to wealth customers, so a sentence about one of them is
   `retail_banking_sentiment` unless it is about a wealth tier or the wealth
-  segment. The same reasoning is applied to other products an ordinary
-  customer can hold (a brokerage account, a regular savings plan, insurance,
-  a robo-adviser); that extension is not in the team's note, so confirm it.
+  segment. The same goes for other products an ordinary customer can hold: a
+  brokerage account, a regular savings plan, insurance, a robo-adviser
+  (confirmed by the owner on 2026-10-11, after a check of how the banks
+  classify them:
+  [evidence](evidence/local-context-validation-2026-10-11.md)). When the
+  bank or an analyst reports income, fees or assets from these products,
+  file the sentence by what is reported: `wealth_business` if it is stated
+  as wealth management income, otherwise `income_profit_results`.
   Before this, people labelled many investment products `wealth_business`
   (29 of the 48 Reddit wealth rows in train/dev,
   [local-context-proposals](briefs/local-context-proposals-2026-10-07.md)).

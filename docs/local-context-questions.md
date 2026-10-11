@@ -192,7 +192,7 @@ sentiment about the bank?**
 
   **Sources.** [Best Online Brokerage & Trading Platform in Singapore (Beansprout, October 2026)](https://growbeansprout.com/best-online-brokerage-singapore); [Syfe vs StashAway vs Endowus: 5 Key Differences (2026) (Dollar Bureau)](https://dollarbureau.com/blog/syfe-vs-stashaway-vs-endowus/).
 
-  **Confidence.** High on what the firms are and on the fee gap (two comparison sites, no primary source opened). Medium on the rule: it applies step 1 of the guideline, and the retail aspect rests on an extension of the 10 October 2026 rule that the guideline itself asks the team to confirm.
+  **Confidence.** High on what the firms are and on the fee gap (two comparison sites, no primary source opened). Medium on the rule: it applies step 1 of the guideline, and the retail aspect rests on an extension of the 10 October 2026 rule, which the owner confirmed on 2026-10-11.
 
   **What it changes.** An example for `docs/annotation-guideline.md` ("IBKR is cheaper than DBS Vickers": negative, retail banking, DBS). No code.
 

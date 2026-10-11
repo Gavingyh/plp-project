@@ -1,0 +1,368 @@
+{
+ "first round 299 | base": {
+  "accuracy": 0.6989966555183946,
+  "macro_f1": 0.5712002428538251,
+  "negative_precision": 0.5333333333333333,
+  "negative_recall": 0.20512820512820512,
+  "neutral_precision": 0.6832579185520362,
+  "neutral_recall": 0.9096385542168675,
+  "positive_precision": 0.7936507936507936,
+  "positive_recall": 0.5319148936170213
+ },
+ "first round 299 | FinBERT fine-tuned on people's labels (4 Oct retrain)": {
+  "per_seed_macro_f1": [
+   0.6461890512233762,
+   0.5917346448542121,
+   0.6248224406081953
+  ],
+  "mean": {
+   "accuracy": 0.693422519509476,
+   "macro_f1": 0.6209153788952612,
+   "negative_precision": 0.511035511035511,
+   "negative_recall": 0.4102564102564103,
+   "neutral_precision": 0.7293885223732022,
+   "neutral_recall": 0.8052208835341365,
+   "positive_precision": 0.7033304055043187,
+   "positive_recall": 0.6134751773049646
+  },
+  "sd_macro_f1": 0.027436644140200916,
+  "three_averaged": {
+   "accuracy": 0.7023411371237458,
+   "macro_f1": 0.6338844944002537,
+   "negative_precision": 0.4857142857142857,
+   "negative_recall": 0.4358974358974359,
+   "neutral_precision": 0.73224043715847,
+   "neutral_recall": 0.8072289156626506,
+   "positive_precision": 0.7283950617283951,
+   "positive_recall": 0.6276595744680851
+  }
+ },
+ "first round 299 | FinBERT fine-tuned on people's labels, broker rows included (7 Oct)": {
+  "per_seed_macro_f1": [
+   0.6161200030546764,
+   0.6009171422221754,
+   0.6350434559389783
+  ],
+  "mean": {
+   "accuracy": 0.6889632107023411,
+   "macro_f1": 0.6173602004052766,
+   "negative_precision": 0.5180776014109347,
+   "negative_recall": 0.36752136752136755,
+   "neutral_precision": 0.7451260270157359,
+   "neutral_recall": 0.7570281124497992,
+   "positive_precision": 0.642930217930218,
+   "positive_recall": 0.702127659574468
+  },
+  "sd_macro_f1": 0.017096926304916295,
+  "three_averaged": {
+   "accuracy": 0.6755852842809364,
+   "macro_f1": 0.5970873728036555,
+   "negative_precision": 0.4642857142857143,
+   "negative_recall": 0.3333333333333333,
+   "neutral_precision": 0.7454545454545455,
+   "neutral_recall": 0.7409638554216867,
+   "positive_precision": 0.6226415094339622,
+   "positive_recall": 0.7021276595744681
+  }
+ },
+ "first round 299 | FinBERT fine-tuned on Opus's labels (11 Oct)": {
+  "per_seed_macro_f1": [
+   0.64923327656996,
+   0.632665035388218,
+   0.6100451434396389
+  ],
+  "mean": {
+   "accuracy": 0.6822742474916388,
+   "macro_f1": 0.6306478184659389,
+   "negative_precision": 0.4939153439153439,
+   "negative_recall": 0.48717948717948717,
+   "neutral_precision": 0.7722776721956377,
+   "neutral_recall": 0.7168674698795181,
+   "positive_precision": 0.6229565700153935,
+   "positive_recall": 0.7021276595744682
+  },
+  "sd_macro_f1": 0.019671789894251848,
+  "three_averaged": {
+   "accuracy": 0.7023411371237458,
+   "macro_f1": 0.6406221031594166,
+   "negative_precision": 0.5151515151515151,
+   "negative_recall": 0.4358974358974359,
+   "neutral_precision": 0.779874213836478,
+   "neutral_recall": 0.7469879518072289,
+   "positive_precision": 0.6448598130841121,
+   "positive_recall": 0.7340425531914894
+  }
+ },
+ "first round 299 | Adapted encoder fine-tuned on Opus's labels (11 Oct)": {
+  "per_seed_macro_f1": [
+   0.6279223545977379,
+   0.657256567226662,
+   0.6620423922862111
+  ],
+  "mean": {
+   "accuracy": 0.6889632107023411,
+   "macro_f1": 0.6490737713702037,
+   "negative_precision": 0.4801365225441832,
+   "negative_recall": 0.6068376068376069,
+   "neutral_precision": 0.7733181066747122,
+   "neutral_recall": 0.714859437751004,
+   "positive_precision": 0.6696828056559956,
+   "positive_recall": 0.6773049645390071
+  },
+  "sd_macro_f1": 0.01847330111233672,
+  "three_averaged": {
+   "accuracy": 0.7157190635451505,
+   "macro_f1": 0.669930642232517,
+   "negative_precision": 0.4791666666666667,
+   "negative_recall": 0.5897435897435898,
+   "neutral_precision": 0.8079470198675497,
+   "neutral_recall": 0.7349397590361446,
+   "positive_precision": 0.69,
+   "positive_recall": 0.7340425531914894
+  }
+ },
+ "broker research 100 | base": {
+  "accuracy": 0.69,
+  "macro_f1": 0.6866666666666666,
+  "negative_precision": 0.7037037037037037,
+  "negative_recall": 0.8260869565217391,
+  "neutral_precision": 0.68,
+  "neutral_recall": 0.4857142857142857,
+  "positive_precision": 0.6875,
+  "positive_recall": 0.7857142857142857
+ },
+ "broker research 100 | FinBERT fine-tuned on people's labels (4 Oct retrain)": {
+  "per_seed_macro_f1": [
+   0.6636034530771373,
+   0.7210547504025765,
+   0.5910192336816599
+  ],
+  "mean": {
+   "accuracy": 0.67,
+   "macro_f1": 0.6585591457204579,
+   "negative_precision": 0.7547966907234643,
+   "negative_recall": 0.6086956521739131,
+   "neutral_precision": 0.617451195037402,
+   "neutral_recall": 0.5428571428571428,
+   "positive_precision": 0.6719231717844371,
+   "positive_recall": 0.8095238095238094
+  },
+  "sd_macro_f1": 0.06516435129540103,
+  "three_averaged": {
+   "accuracy": 0.69,
+   "macro_f1": 0.6897062807368508,
+   "negative_precision": 0.8,
+   "negative_recall": 0.6956521739130435,
+   "neutral_precision": 0.6551724137931034,
+   "neutral_recall": 0.5428571428571428,
+   "positive_precision": 0.6666666666666666,
+   "positive_recall": 0.8095238095238095
+  }
+ },
+ "broker research 100 | FinBERT fine-tuned on people's labels, broker rows included (7 Oct)": {
+  "per_seed_macro_f1": [
+   0.6811535459076442,
+   0.6840340179717587,
+   0.710183227625088
+  ],
+  "mean": {
+   "accuracy": 0.6933333333333334,
+   "macro_f1": 0.6917902638348302,
+   "negative_precision": 0.7577777777777778,
+   "negative_recall": 0.7391304347826088,
+   "neutral_precision": 0.6634722341062719,
+   "neutral_recall": 0.5428571428571428,
+   "positive_precision": 0.686526411593797,
+   "positive_recall": 0.7936507936507936
+  },
+  "sd_macro_f1": 0.015993752454328363,
+  "three_averaged": {
+   "accuracy": 0.7,
+   "macro_f1": 0.698417272005783,
+   "negative_precision": 0.75,
+   "negative_recall": 0.782608695652174,
+   "neutral_precision": 0.6923076923076923,
+   "neutral_recall": 0.5142857142857142,
+   "positive_precision": 0.68,
+   "positive_recall": 0.8095238095238095
+  }
+ },
+ "broker research 100 | FinBERT fine-tuned on Opus's labels (11 Oct)": {
+  "per_seed_macro_f1": [
+   0.6963230279609002,
+   0.7127875632362173,
+   0.7052350199891183
+  ],
+  "mean": {
+   "accuracy": 0.71,
+   "macro_f1": 0.704781870395412,
+   "negative_precision": 0.6679563492063493,
+   "negative_recall": 0.8695652173913043,
+   "neutral_precision": 0.6967653993516064,
+   "neutral_recall": 0.5238095238095238,
+   "positive_precision": 0.7490563298490128,
+   "positive_recall": 0.7777777777777778
+  },
+  "sd_macro_f1": 0.008241616277997145,
+  "three_averaged": {
+   "accuracy": 0.69,
+   "macro_f1": 0.6833984305013079,
+   "negative_precision": 0.65625,
+   "negative_recall": 0.9130434782608695,
+   "neutral_precision": 0.6666666666666666,
+   "neutral_recall": 0.45714285714285713,
+   "positive_precision": 0.7272727272727273,
+   "positive_recall": 0.7619047619047619
+  }
+ },
+ "broker research 100 | Adapted encoder fine-tuned on Opus's labels (11 Oct)": {
+  "per_seed_macro_f1": [
+   0.7508835769705335,
+   0.7530542986425339,
+   0.7162933397311463
+  ],
+  "mean": {
+   "accuracy": 0.7399999999999999,
+   "macro_f1": 0.7400770717814046,
+   "negative_precision": 0.693376238148207,
+   "negative_recall": 0.8840579710144927,
+   "neutral_precision": 0.7145309302172048,
+   "neutral_recall": 0.6380952380952382,
+   "positive_precision": 0.8020885547201336,
+   "positive_recall": 0.746031746031746
+  },
+  "sd_macro_f1": 0.02062589248549468,
+  "three_averaged": {
+   "accuracy": 0.77,
+   "macro_f1": 0.7699496714171766,
+   "negative_precision": 0.7,
+   "negative_recall": 0.9130434782608695,
+   "neutral_precision": 0.7741935483870968,
+   "neutral_recall": 0.6857142857142857,
+   "positive_precision": 0.8205128205128205,
+   "positive_recall": 0.7619047619047619
+  }
+ },
+ "all 399 | base": {
+  "accuracy": 0.6967418546365914,
+  "macro_f1": 0.6476577996358993,
+  "negative_precision": 0.6428571428571429,
+  "negative_recall": 0.43548387096774194,
+  "neutral_precision": 0.6829268292682927,
+  "neutral_recall": 0.835820895522388,
+  "positive_precision": 0.7477477477477478,
+  "positive_recall": 0.6102941176470589
+ },
+ "all 399 | FinBERT fine-tuned on people's labels (4 Oct retrain)": {
+  "per_seed_macro_f1": [
+   0.6673888451824693,
+   0.6452893264828115,
+   0.6282725240171453
+  ],
+  "mean": {
+   "accuracy": 0.6875522138680035,
+   "macro_f1": 0.6469835652274752,
+   "negative_precision": 0.5982718894009217,
+   "negative_recall": 0.4838709677419355,
+   "neutral_precision": 0.7133409030189687,
+   "neutral_recall": 0.7595356550580431,
+   "positive_precision": 0.6886650386650387,
+   "positive_recall": 0.6740196078431372
+  },
+  "sd_macro_f1": 0.019613120074841093,
+  "three_averaged": {
+   "accuracy": 0.6992481203007519,
+   "macro_f1": 0.6663508372337109,
+   "negative_precision": 0.6,
+   "negative_recall": 0.532258064516129,
+   "neutral_precision": 0.7216981132075472,
+   "neutral_recall": 0.7611940298507462,
+   "positive_precision": 0.7045454545454546,
+   "positive_recall": 0.6838235294117647
+  }
+ },
+ "all 399 | FinBERT fine-tuned on people's labels, broker rows included (7 Oct)": {
+  "per_seed_macro_f1": [
+   0.6566834847782271,
+   0.6447853325962779,
+   0.6734390067841577
+  ],
+  "mean": {
+   "accuracy": 0.6900584795321638,
+   "macro_f1": 0.6583026080528875,
+   "negative_precision": 0.6218632338402642,
+   "negative_recall": 0.5053763440860215,
+   "neutral_precision": 0.7332331382288849,
+   "neutral_recall": 0.7197346600331676,
+   "positive_precision": 0.6565569328727223,
+   "positive_recall": 0.7303921568627452
+  },
+  "sd_macro_f1": 0.014395291982110068,
+  "three_averaged": {
+   "accuracy": 0.681704260651629,
+   "macro_f1": 0.6493929703580542,
+   "negative_precision": 0.5961538461538461,
+   "negative_recall": 0.5,
+   "neutral_precision": 0.7382198952879581,
+   "neutral_recall": 0.7014925373134329,
+   "positive_precision": 0.6410256410256411,
+   "positive_recall": 0.7352941176470589
+  }
+ },
+ "all 399 | FinBERT fine-tuned on Opus's labels (11 Oct)": {
+  "per_seed_macro_f1": [
+   0.6768766590824947,
+   0.672108045161349,
+   0.6581756731241267
+  ],
+  "mean": {
+   "accuracy": 0.6892230576441104,
+   "macro_f1": 0.6690534591226568,
+   "negative_precision": 0.5683609165478626,
+   "negative_recall": 0.6290322580645161,
+   "neutral_precision": 0.7612354083504398,
+   "neutral_recall": 0.6832504145936982,
+   "positive_precision": 0.6597712826551029,
+   "positive_recall": 0.7254901960784315
+  },
+  "sd_macro_f1": 0.009717488917132824,
+  "three_averaged": {
+   "accuracy": 0.6992481203007519,
+   "macro_f1": 0.6771415387101003,
+   "negative_precision": 0.5846153846153846,
+   "negative_recall": 0.6129032258064516,
+   "neutral_precision": 0.7650273224043715,
+   "neutral_recall": 0.6965174129353234,
+   "positive_precision": 0.6688741721854304,
+   "positive_recall": 0.7426470588235294
+  }
+ },
+ "all 399 | Adapted encoder fine-tuned on Opus's labels (11 Oct)": {
+  "per_seed_macro_f1": [
+   0.6714362681209128,
+   0.6964639706255705,
+   0.6873018718333223
+  ],
+  "mean": {
+   "accuracy": 0.7017543859649122,
+   "macro_f1": 0.6850673701932686,
+   "negative_precision": 0.5588110055682934,
+   "negative_recall": 0.7096774193548386,
+   "neutral_precision": 0.7634348533138661,
+   "neutral_recall": 0.7014925373134329,
+   "positive_precision": 0.7083055555555555,
+   "positive_recall": 0.698529411764706
+  },
+  "sd_macro_f1": 0.012662591415265843,
+  "three_averaged": {
+   "accuracy": 0.7293233082706767,
+   "macro_f1": 0.7085063239632431,
+   "negative_precision": 0.5641025641025641,
+   "negative_recall": 0.7096774193548387,
+   "neutral_precision": 0.8021978021978022,
+   "neutral_recall": 0.7263681592039801,
+   "positive_precision": 0.7266187050359713,
+   "positive_recall": 0.7426470588235294
+  }
+ }
+}

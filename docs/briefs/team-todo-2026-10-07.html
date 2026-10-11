@@ -169,7 +169,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <ol class="path">
     <li><span class="d">10 Oct, part done</span><span class="s">Six upstream decisions made; labels and rules settled</span></li>
     <li><span class="d">10 Oct, done</span><span class="s">New rules written; Opus labelled every sheet (2,075 rows)</span></li>
-    <li><span class="d">12–14 Oct</span><span class="s">Every model re-run; the team picks one</span></li>
+    <li><span class="d">12 Oct, done</span><span class="s">Every model re-run; the best one named</span></li>
     <li><span class="d">12–18 Oct</span><span class="s">Retrain, re-score once, re-run every evaluation</span></li>
     <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
     <li><span class="d">26 Oct – 1 Nov</span><span class="s">Report, video, submit</span></li>
@@ -287,16 +287,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">File: <code>config/aspects.yaml</code>; command in RUNBOOK.</span>
     </li>
     <li data-o="ai">
-      <span class="t">Re-run every model and report precision and recall for each class <span class="chip ai">Claude</span></span>
-      <span class="when">12–14 Oct</span>
-      <p class="why"><b>Why:</b> decided 10 Oct. Base FinBERT, the 1 Oct models, the 4 Oct retrain and the adapted models (pretrained again with the fixed filter) are trained and scored on one machine, on the labels section 1 settles. The table gives accuracy, macro-F1 and, for positive, negative and neutral, precision and recall; <code>train/evaluation_report.py</code> already writes all of them, so this is a re-run, not new code.</p>
-      <span class="meta">Labels: Opus&#8217;s for training, the kept labels for the test rows (decided 10 Oct).</span>
-    </li>
-    <li data-o="ai">
-      <span class="t">Retrain the chosen model on the final labels (pretraining again first, if adapted) <span class="chip ai">Claude</span></span>
-      <span class="when">12–14 Oct</span>
-      <p class="why"><b>Why:</b> the final model must learn from the top-up, active-learning and broker research labels under the final rules. If the adapted model is chosen, its pretraining runs again with the fixed filter (about 2 hours; every labelling sheet and near-copies left out), on the corpus with the broker research rows. Compared on one machine only: the same training scored about 0.03 differently on the Windows PC and the Mac.</p>
-      <span class="meta">Commands: <code>train/dapt.py</code>, <code>train/finetune.py --base-model</code>; the paused run is <code>data/run/dapt-v2</code> (its pretraining must be redone).</span>
+      <span class="t">Every model re-run: the adapted encoder fine-tuned on Opus&#8217;s labels is the best <span class="chip ai">Done 12 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> on the first round&#8217;s 299 test rows, macro-F1 over three seeds is 0.649 for the adapted encoder fine-tuned on Opus&#8217;s labels, 0.631 for FinBERT fine-tuned the same way, 0.621 for the 4 Oct retrain on people&#8217;s labels and 0.571 for base FinBERT. The three adapted models averaged reach 0.670 (accuracy 0.716). Negative recall rises from 0.21 (base) to 0.61. On the 100 broker research test rows the adapted set scores 0.740 against base FinBERT&#8217;s 0.687, and cross-validation agrees (+0.014, better in 11 of 15 folds). Its lead over FinBERT fine-tuned the same way is about one seed standard deviation; every measure points the same way. This is the model the re-score applies.</p>
+      <span class="meta">Evidence: <code>docs/evidence/model-rerun-2026-10-11.md</code>, with precision and recall for each class on three test scopes. Models: <code>models/experiments-2026-10-11/dapt/</code> (not in git).</span>
     </li>
     <li data-o="ai">
       <span class="t">Rehearse the re-score on a copy, then re-assign aspects, re-score, re-aggregate, snapshot <span class="chip ai">Claude</span> <span class="chip decide">needs approval</span></span>
@@ -384,6 +378,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">Decided</h2>
   <ul class="refs">
+    <li><b>12 Oct, scoring model chosen by the agreed rule:</b> the adapted encoder fine-tuned on Opus&#8217;s labels (three seeds averaged). No further retraining is needed unless the labels change.</li>
     <li><b>11 Oct, broker research test rows:</b> the owner confirmed the same annotator (A) labelled the 100 blind test rows as the 280 training rows; the round is merged, and the rows join the test set when the re-run finishes.</li>
     <li><b>11 Oct, six researched answers adopted</b> into the guideline: economists&#8217; forecasts, scams the bank did not cause, regular monthly share purchases, &#8220;lol&#8221;, the small &#8220;buy&#8221; rating, report boilerplate. The sarcasm flag is dropped; the report says errors on sarcasm were not measured.</li>
     <li><b>11 Oct, two bank-recognition fixes made:</b> &#8220;Development Bank of Singapore&#8221; is DBS, and PayLah, digibank or TMRW named alone resolve to their bank. They take effect when bank recognition is applied in the re-score.</li>

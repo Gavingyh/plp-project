@@ -1560,3 +1560,32 @@ cell changed). `train.source_round merge` then accepted the round: 280
 train/dev and 100 test rows, none dropped. They are not yet in the re-run's
 label file, which the running job reads; they are added, as a second test
 scope, once it finishes.
+
+### 12 October
+
+**The model re-run finished at 00:07** (`docs/evidence/model-rerun-2026-10-11.md`;
+scripts and results in `data/eval/model-rerun-2026-10-11/`). About eight
+hours, no step failed.
+
+- Cross-validation, 15 paired folds, dev macro-F1 against Opus's labels:
+  FinBERT 0.686, adapted encoder 0.700; +0.014 (sd 0.020), better in 11 of
+  15, paired t = 2.75, p = 0.016.
+- First round's 299 test rows, macro-F1 over three seeds: base FinBERT
+  0.571; the 1 Oct models 0.604; the 4 Oct retrain 0.621; FinBERT on Opus's
+  labels 0.631 (sd 0.020); adapted encoder on Opus's labels 0.649 (sd 0.018),
+  0.670 for the three averaged with accuracy 0.716. Negative recall 0.21 for
+  base and 0.61 for the adapted set.
+- Broker research's 100 test rows: base 0.687; adapted set 0.740 (sd 0.021),
+  0.770 averaged. Both scopes, 399 rows: 0.648 and 0.685.
+- By the rule fixed beforehand (test macro-F1 over three seeds,
+  cross-validation as the tie-breaker) the model for the dashboard and
+  chatbot is the adapted encoder fine-tuned on Opus's labels,
+  `models/experiments-2026-10-11/dapt/`. Its lead over FinBERT fine-tuned
+  the same way is about one seed standard deviation.
+- The full suite, held back while the GPU was busy, passes: 2508 passed, 2
+  skipped, 46 expected failures (2556 collected).
+
+**Needs a human:** the Fine-tuning lead claim in `CLAUDE.md` still gives the
+1 Oct models' figures; the owner should say whether it changes to this
+set's. Next: the re-score rehearsal on a copy, shown to the owner before
+`data/plp.db` is touched.

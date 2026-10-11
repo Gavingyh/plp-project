@@ -1539,3 +1539,16 @@ over three seeds.
 - Before it started, `score.py` on the models that exist reproduced the
   known figures on the 299 test rows: base FinBERT macro-F1 0.571; the 1 Oct
   models 0.604 (sd 0.035); the 4 Oct retrain 0.621 (sd 0.027).
+
+**Six items settled one by one (11 Oct, about 19:00).** The owner will fill
+in the annotator of the 100 broker research test rows themselves. Adopted:
+six of the seven recommended local-context answers, now in the guideline;
+the sarcasm flag is dropped. Approved and made: the two bank-recognition
+fixes (`8764d1a`; 18 tests added, 2509 in `tests/` and 2556 from the root;
+the tests that use the code pass, and the full suite waits for the training
+run to free the GPU). `CLAUDE.md`'s rule on Opus labels stays as written.
+The re-score is rehearsed on a copy and shown to the owner first. The wealth
+rule's extension to four more products was confirmed after a check of how
+the banks classify them. Bank recognition scored against Opus's reference on
+the 201-sentence sheet (accepted as an LLM reference) still matches it in
+every case shown by `train.rater_labels extra score ner`.

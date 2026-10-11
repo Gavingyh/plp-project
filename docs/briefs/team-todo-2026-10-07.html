@@ -227,12 +227,6 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">File: <code>docs/annotation-guideline.md</code>, &#8220;Two rules decided on 2026-10-10&#8221;.</span>
     </li>
     <li data-o="team">
-      <span class="t">Label the bank-NER gold set (201 sentences), or say Opus does this too <span class="chip team">People</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> NER is the project&#8217;s third text-mining task, and it has no human accuracy figure until these are labelled. The 10 Oct decision named the sentiment sheets, not this one; Opus has already labelled it blind as a reference (2 Oct), so the team can also decide to use that and report it as an LLM reference.</p>
-      <span class="meta">File: <code>data/labeled/ner/gold_sheet.csv</code>. Source: bank-ner.</span>
-    </li>
-    <li data-o="team">
       <span class="t">Broker research labels: name the test-row annotator <span class="chip team">People</span></span>
       <span class="when">by 12 Oct</span>
       <p class="why"><b>Why:</b> the 100 blind test rows are labelled but their <code>annotator</code> column is blank (they agree with the LLM&#8217;s own labels on 77 of 100, so not copied); naming the annotator lets the report say people labelled them. <code>train.source_round merge</code> refuses rows without an annotator.</p>
@@ -342,12 +336,6 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="when">by 18 Oct</span>
       <p class="why"><b>Why:</b> neither is in git. The team and the marker need exactly the database and models the report describes; check the SHA-256 values after uploading.</p>
     </li>
-    <li data-o="team">
-      <span class="t">Replace the Gemini key <span class="chip team">Owner</span></span>
-      <span class="when">before Gemini is used</span>
-      <p class="why"><b>Why:</b> in the 6 Oct provider evaluation the provider rejected the key (HTTP 401), so the Gemini arm didn&#8217;t run. A new key goes in <code>.env</code>, which only the owner edits. Gemini stays the chatbot&#8217;s backend only, never for labelling.</p>
-      <span class="meta">Source: <code>docs/evidence/chatbot-provider-eval-2026-10-06.md</code>.</span>
-    </li>
   </ul>
 </section>
 
@@ -419,6 +407,8 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">Decided</h2>
   <ul class="refs">
+    <li><b>11 Oct, bank recognition:</b> Opus&#8217;s answers on the 201-sentence sheet are accepted as the reference, reported as an LLM reference, not a human one; nobody labels the sheet.</li>
+    <li><b>11 Oct, Gemini:</b> not used; the rejected key is left as it is. Kept in view in case a hosted backend is wanted later.</li>
     <li><b>11 Oct, scoring model:</b> the dashboard and the chatbot use the fine-tuned FinBERT with the best results in the re-run table (test macro-F1 over three seeds, cross-validation as the tie-breaker). The re-run started on 11 Oct.</li>
     <li><b>11 Oct, aspects:</b> delivered as a comparison of the centroids and the LLM.</li>
     <li><b>11 Oct, collection:</b> the batch scripts exist and stay stopped; the corpus is complete as collected (to 25 Sep, with the repairs of 11 Oct).</li>

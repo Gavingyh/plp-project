@@ -202,9 +202,9 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Evidence: <code>docs/evidence/local-context-validation-2026-10-11.md</code>. Verdicts are also under each answer in <code>docs/local-context-questions.md</code>.</span>
     </li>
     <li data-o="decide">
-      <span class="t">Which aspects the dashboard and chatbot show: the LLM&#8217;s, unless the team says otherwise <span class="chip decide">Default set</span></span>
+      <span class="t">Which aspect set the product shows after the comparison <span class="chip decide">Default set</span></span>
       <span class="when">applied in the re-score</span>
-      <p class="why"><b>Why:</b> the team decided on 10 Oct to run and report both methods. The index, the dashboard and the chatbot can read only one set of aspects, so the re-score will apply the LLM&#8217;s, which match people&#8217;s aspect 73% of the time against the centroids&#8217; 41% (84% where the two local models agree); the report gives both. Where the two local models disagree (24% of sentences), llama&#8217;s answer is kept. Say so before the re-score if the team wants the centroids shown instead.</p>
+      <p class="why"><b>Why:</b> decided 11 Oct: the aspect breakdown is delivered as a comparison of the two methods, the centroids and the LLM, in the report and the evaluation. The index, the dashboard and the chatbot still read one set at a time, so the re-score applies the LLM&#8217;s (it matches people&#8217;s aspect 73% of the time against the centroids&#8217; 41%), with llama&#8217;s answer where the two local models disagree, unless the team says otherwise.</p>
       <span class="meta">Source: llm-aspect-classifier, index-preview evidence.</span>
     </li>
   </ul>
@@ -256,12 +256,6 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-wk2">
   <h2 id="h-wk2">3. By Monday 12 October</h2>
   <ul class="items">
-    <li data-o="decide">
-      <span class="t">Choose the scoring model from the re-run table <span class="chip decide">Decision</span></span>
-      <span class="when">after the re-run (12–14 Oct)</span>
-      <p class="why"><b>Why:</b> decided 10 Oct: Claude re-runs every model, the table gives precision and recall for positive, negative and neutral beside macro-F1 and accuracy, and the team links the superior model to the chatbot and the dashboard. Say what &#8220;superior&#8221; means before reading the table (macro-F1, or recall on one class), so the choice isn&#8217;t made to fit the result. The stored scores are still base FinBERT&#8217;s. Candidates so far: the 1 Oct models (0.604 &#177; 0.035 test macro-F1 against base 0.571, the figures the claim uses), the 4 Oct retrain (0.621 &#177; 0.027), and the adapted models (on cross-validation 0.701 against 0.663; on test 0.628 &#177; 0.022, within the seed noise), which must be pretrained again first: a 7 Oct validation found their pretraining text held 151 sentences related to test sentences (a filter gap, fixed that day).</p>
-      <span class="meta">Source: retrain (4 Oct), dapt (6–7 Oct), sgx-research-evaluation evidence. Decision 7 in the decision brief.</span>
-    </li>
     <li data-o="team">
       <span class="t">Read the chatbot&#8217;s fixed replies <span class="chip team">People</span></span>
       <span class="when">by 12 Oct</span>
@@ -425,6 +419,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">Decided</h2>
   <ul class="refs">
+    <li><b>11 Oct, scoring model:</b> the dashboard and the chatbot use the fine-tuned FinBERT with the best results in the re-run table (test macro-F1 over three seeds, cross-validation as the tie-breaker). The re-run started on 11 Oct.</li>
+    <li><b>11 Oct, aspects:</b> delivered as a comparison of the centroids and the LLM.</li>
+    <li><b>11 Oct, collection:</b> the batch scripts exist and stay stopped; the corpus is complete as collected (to 25 Sep, with the repairs of 11 Oct).</li>
+    <li><b>11 Oct, scope:</b> no new sources, methods or labelling rounds; the remaining work is the re-run, one re-score, the evaluations, the report and the video.</li>
     <li><b>11 Oct, index:</b> both stay, the blended index and each source&#8217;s index side by side (the index already holds both).</li>
     <li><b>11 Oct, local-context questions:</b> answered by web research, with sources, in <code>docs/local-context-questions.md</code>; &#8220;xmm&#8221; is a young woman (the sentence is a joke, neutral), &#8220;Lobang Sis&#8221; is a third-party deals site, and FHR is DBS&#8217;s Fixed Deposit Home Rate.</li>
     <li><b>11 Oct, data repairs done:</b> six UOB earnings documents re-dated; the Reddit comments for Sep 2021, May 2024 and Mar 2025 refilled (825 documents); the CNA articles file removed from git (it stays in the history).</li>

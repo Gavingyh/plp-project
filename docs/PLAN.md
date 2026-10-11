@@ -79,16 +79,17 @@ By the project owner.
 | **Both indices stay:** the blended index and each source's index side by side | No change to the index, which already holds both; the dashboard and the report show both, so UOB's low blended score is read beside its high earnings-only one |
 | **The local-context questions are answered by web research** | All 23 answered with sources in [local-context-questions.md](local-context-questions.md); the judgment calls among them are recommendations the team still adopts or not (below) |
 | **The three data repairs are applied** | Six UOB earnings documents (114 sentences) re-dated; Reddit comments for September 2021, May 2024 and March 2025 refilled (825 documents, 858 sentences); `ingest/cna_articles.json` no longer tracked. UOB's 30-day headline went from +0.289 on 230 sentences to +0.215 on 116 |
+| **The dashboard and chatbot use the fine-tuned FinBERT with the best results** in the re-run table | Ranked by test macro-F1 over three seeds, cross-validation as the tie-breaker; the re-score applies it once the table exists |
+| **The aspect breakdown is delivered as a comparison** of the centroids and the LLM | Both are evaluated and reported; the re-score applies the LLM's to the product unless the team says otherwise |
+| **Collection is complete:** the batch scripts exist and stay stopped | The corpus runs to 25 Sep; the report says the index is recomputed per batch by design and was frozen for the evaluation |
 | **One database:** `data/plp.db` is the 30 Sep corpus plus the broker research source from the Windows PC, with the repairs | 28,852 documents, 45,844 sentences, 291,508 scored pairs; snapshot `plp-2026-10-11-v2.db.gz` (README) |
 
 ### Still open
 
 | decision | who | by |
 |---|---|---|
-| **Aspects shown by the product:** both methods are run and reported (10 Oct); the re-score applies the LLM's, with llama's answer where the two local models disagree, unless the team says otherwise (brief, 1) | team | before the re-score |
 | **Researched answers that are recommendations:** a bank economist's forecast is not about the bank; an impersonation scam is not the bank's outage; sarcasm, regular monthly share purchases, "lol", a small "buy" rating, report boilerplate ([local-context-questions](local-context-questions.md)) | team | 12 Oct |
 | **Two bank-recognition fixes:** "Development Bank of Singapore" resolves to OCBC; PayLah, digibank or TMRW alone resolve to no bank (`preprocess/bank_ner.py`) | team | before the re-score |
-| **Scoring model:** chosen from the re-run table of every model, with precision and recall for each class (10 Oct); say what "superior" means first (brief, 7) | team | 12 to 14 Oct |
 | **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
 
 ---

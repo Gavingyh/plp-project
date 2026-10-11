@@ -250,17 +250,11 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> the 100 blind test rows are labelled but their <code>annotator</code> column is blank (they agree with the LLM&#8217;s own labels on 77 of 100, so not copied); naming the annotator lets the report say people labelled them. <code>train.source_round merge</code> refuses rows without an annotator.</p>
       <span class="meta">Files: <code>data/labeled/sgx_research/test_blind.csv</code>, <code>candidates.csv</code>.</span>
     </li>
-    <li data-o="team">
-      <span class="t">Upload the newer database to the team folder <span class="chip team">People</span></span>
-      <span class="when">before the re-score</span>
-      <p class="why"><b>Why:</b> a teammate reports a database with newer data, but the <code>plp.db</code> in the team folder is still the 30 Sep one: downloaded twice on 10 Oct, both copies were byte-identical to the 30 Sep snapshot (SHA-256 <code>7ea0da08&#8230;5734fb</code>; 28,002 documents, 44,345 sentences, newest document 25 Sep, no broker research rows). The database runs in write-ahead mode, so new rows can sit in <code>plp.db-wal</code> and be missing from an uploaded <code>plp.db</code>: stop the API and dashboard, run <code>sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"</code>, then upload the file under a dated name with its SHA-256, so the two can be compared and one made final.</p>
-      <span class="meta">Compare with <code>shasum -a 256 data/plp.db</code>.</span>
-    </li>
-    <li data-o="team">
-      <span class="t">Send the broker research source&#8217;s database rows from the Windows PC <span class="chip team">People</span></span>
-      <span class="when">before the re-score</span>
-      <p class="why"><b>Why:</b> the labels point at sentence ids from that PC&#8217;s database; rebuilt from the PDFs on the Mac, 52 of the 380 labelled sentences came out with slightly different text and so different ids. On the PC: <code>git pull</code>, then <code>python scripts/source_rows.py export --source sgx_research --out data/run/sgx_rows.db</code>, and send the file (about 2 MB, not through git).</p>
-      <span class="meta">Source: HANDOFF, 7 October.</span>
+    <li data-o="decide">
+      <span class="t">Approve making the merged database the project&#8217;s <code>plp.db</code> <span class="chip decide">needs approval</span></span>
+      <span class="when">in the re-score week (12–18 Oct)</span>
+      <p class="why"><b>Why:</b> the database uploaded on 11 Oct is the Windows PC&#8217;s: the 24 Sep corpus plus the broker research source (25 reports, 641 sentences). It is not a newer version of ours: it lacks the 207 CNA articles and 58 later Reddit and news documents, and only 11,082 of its 43,331 sentences are scored. Its broker research rows are the ones the labels point at (all 380 labelled and 100 test sentences found), so they were copied into a copy of our database: 28,027 documents, 44,986 sentences, every sentence scored, every existing row unchanged. That merged copy is ready. Swapping it in also means rebuilding the index, which today would empty the 7-day window because the windows still count back from now, so it belongs with the anchored-windows change in the one re-score. Adding the source moves the all-time headlines by about +0.002 to +0.003.</p>
+      <span class="meta">File on the Mac: <code>data/run/merge-2026-10-11/plp_merged.db</code> (not in git). Tool: <code>scripts/source_rows.py</code>. This replaces the two earlier items on uploading the database and sending the broker research rows.</span>
     </li>
   </ul>
 </section>

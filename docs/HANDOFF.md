@@ -1421,3 +1421,23 @@ changes behaviour or any label.
 **Needs a human (11 Oct):** anyone with local changes under
 `data/labeled/claude/` or `data/labeled/sgx_research/claude_*` should commit
 or stash them before pulling, since those paths have moved.
+
+**The database from the Windows PC (11 Oct, afternoon).** A third file,
+`data/plp.db copy 2` (119,750,656 bytes, SHA-256 `ba0590e0…29bb4031`), is
+the PC's database: the 24 Sep corpus plus the broker research source. It is
+not a newer version of `data/plp.db`. Against ours it has 25 more documents
+(all `sgx_research`, 641 sentences, 4,533 scored pairs) and 265 fewer (207
+CNA, 55 Google News, 3 Reddit); only 11,082 of its 43,331 sentences are
+scored. All 380 labelled and 100 test broker research sentences are in it
+under the ids the labels use. `scripts/source_rows.py` copied that source
+into a copy of our database, `data/run/merge-2026-10-11/plp_merged.db`:
+28,027 documents, 44,986 sentences, 286,277 scored pairs, integrity ok,
+every existing row identical to `data/plp.db`, the new rows identical to
+the PC's. `data/plp.db` itself is unchanged. Rebuilding the index on a
+throwaway copy moved the all-time headlines from +0.122, +0.136 and +0.074
+(DBS, OCBC, UOB) to +0.124, +0.139 and +0.077, and emptied the 7-day window
+because the windows still count back from today.
+
+**Needs a human:** approve swapping the merged copy in as `data/plp.db`,
+together with the anchored-windows change and the index rebuild, in the
+re-score week.

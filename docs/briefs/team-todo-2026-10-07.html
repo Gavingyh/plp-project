@@ -250,11 +250,17 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> the 100 blind test rows are labelled but their <code>annotator</code> column is blank (they agree with the LLM&#8217;s own labels on 77 of 100, so not copied); naming the annotator lets the report say people labelled them. <code>train.source_round merge</code> refuses rows without an annotator.</p>
       <span class="meta">Files: <code>data/labeled/sgx_research/test_blind.csv</code>, <code>candidates.csv</code>.</span>
     </li>
-    <li data-o="decide">
-      <span class="t">Approve making the merged database the project&#8217;s <code>plp.db</code> <span class="chip decide">needs approval</span></span>
-      <span class="when">in the re-score week (12–18 Oct)</span>
-      <p class="why"><b>Why:</b> the database uploaded on 11 Oct is the Windows PC&#8217;s: the 24 Sep corpus plus the broker research source (25 reports, 641 sentences). It is not a newer version of ours: it lacks the 207 CNA articles and 58 later Reddit and news documents, and only 11,082 of its 43,331 sentences are scored. Its broker research rows are the ones the labels point at (all 380 labelled and 100 test sentences found), so they were copied into a copy of our database: 28,027 documents, 44,986 sentences, every sentence scored, every existing row unchanged. That merged copy is ready. Swapping it in also means rebuilding the index, which today would empty the 7-day window because the windows still count back from now, so it belongs with the anchored-windows change in the one re-score. Adding the source moves the all-time headlines by about +0.002 to +0.003.</p>
-      <span class="meta">File on the Mac: <code>data/run/merge-2026-10-11/plp_merged.db</code> (not in git). Tool: <code>scripts/source_rows.py</code>. This replaces the two earlier items on uploading the database and sending the broker research rows.</span>
+    <li data-o="team">
+      <span class="t">Upload the new snapshot to the team folder, and everyone restores it <span class="chip team">People</span></span>
+      <span class="when">before the re-score</span>
+      <p class="why"><b>Why:</b> on 11 Oct the owner asked for one complete database. <code>data/plp.db</code> on the MacBook is now our 30 Sep corpus plus the broker research source from the Windows PC (25 reports, 641 sentences): 28,027 documents, 44,986 sentences, every one scored, every earlier row unchanged. The PC&#8217;s file held nothing else we lacked. Until the snapshot is in the team folder, only the MacBook has this database; the PC&#8217;s own lacks the 207 CNA articles and most scores, so it should be replaced by this one. Restore with <code>gunzip -c plp-2026-10-11.db.gz &gt; data/plp.db</code>.</p>
+      <span class="meta">File: <code>data/snapshots/plp-2026-10-11.db.gz</code> (42.4 MB, SHA-256 <code>9ca50c4d&#8230;9472b37</code>, in the README). For the team only: it holds CNA and broker research text.</span>
+    </li>
+    <li data-o="ai">
+      <span class="t">Follow-ups to the merged database <span class="chip ai">Claude</span></span>
+      <span class="when">12–18 Oct</span>
+      <p class="why"><b>Why:</b> three things the merge leaves. (1) The local aspect model has not classified the 641 new sentences (about an hour). (2) The index was rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so every earlier figure is unchanged; a plain rebuild counts back from today and empties the 7-day window. The anchored-windows change (decided 4 Oct) is the real fix, and its branch now conflicts with <code>main</code> in the chatbot&#8217;s prompt and tools and nine diagram pages, so it needs a careful merge and a gold-set check. (3) The chatbot&#8217;s evidence search can now return broker reports, including boilerplate lines such as &#8220;Please refer to Disclaimer Target Price &amp;&amp; Ratings History&#8221; (seen in one of five results for a target-price question); those lines need filtering.</p>
+      <span class="meta">The blended all-time headlines moved from +0.122, +0.136 and +0.074 (DBS, OCBC, UOB) to +0.124, +0.139 and +0.077; the thin 7-day ones moved more (DBS +0.106 to +0.204 on 40 sentences, OCBC &#8722;0.276 to &#8722;0.109 on 14).</span>
     </li>
   </ul>
 </section>
@@ -426,6 +432,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">Decided</h2>
   <ul class="refs">
+    <li><b>11 Oct, one database:</b> <code>data/plp.db</code> is the 30 Sep corpus plus the broker research source; snapshot <code>plp-2026-10-11.db.gz</code>.</li>
     <li><b>10 Oct, retail products</b> carry sentiment directed at the bank; a product&#8217;s feature is no longer kept neutral.</li>
     <li><b>10 Oct, wealth</b> means the priority and private tiers (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves.</li>
     <li><b>10 Oct, test rows</b> are not relabelled (the report should then say annotators saw a model&#8217;s suggestion).</li>

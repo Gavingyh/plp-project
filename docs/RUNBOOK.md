@@ -776,7 +776,7 @@ the team folder with the checksums in the evidence, not git. Results:
 ```bash
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval                              # llama3.1:8b
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval --model qwen3:4b --no-think
-caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # all 44,345 sentences
+caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # every sentence without an answer yet (44,345 were classified on 3 Oct; the 641 broker research ones added on 11 Oct are not)
 ```
 
 `--eval` classifies the 1,277 labelled sentences through local Ollama and

@@ -1441,3 +1441,33 @@ because the windows still count back from today.
 **Needs a human:** approve swapping the merged copy in as `data/plp.db`,
 together with the anchored-windows change and the index rebuild, in the
 re-score week.
+
+**One merged database (11 Oct, later).** The owner asked for a complete
+database merged from both copies and named `plp.db`. The PC's file held
+nothing our database lacked beyond the broker research source (no other
+document, sentence, aspect pair, score or analyst row, and no shared row
+differed), so the merged copy described above is the complete union. It is
+now `data/plp.db`: 28,027 documents, 44,986 sentences, 286,277 scored pairs.
+
+- The old file and both downloads are kept in `data/run/merge-2026-10-11/`
+  (`plp_before_merge_2026-10-11.db`, `plp_windows_pc_2026-10-11.db`,
+  `plp_team_folder_duplicate_of_30sep.db`).
+- With new rows and the old index, three API integrity tests failed (the
+  monthly series no longer added up to the stored all-time figures), so the
+  index was rebuilt. A plain rebuild counts the 7- and 30-day windows back
+  from today and empties the 7-day one, and the anchored-windows branch no
+  longer merges cleanly (`chatbot/prompts.py`, `chatbot/tools.py`, nine
+  diagram pages). The rebuild therefore held the windows at the moment the
+  30 Sep index was computed (`rebuild_index_as_of.py` in the merge folder):
+  all 407 earlier per-source cells are identical, 78 cells are new for the
+  broker research source, and 78 of the 107 blended cells changed. Index
+  rows: 514 to 592. All 2538 tests pass.
+- Embedding cache: 641 sentences added (44,986 in all).
+- Snapshot `data/snapshots/plp-2026-10-11.db.gz`: 42.4 MB, SHA-256
+  `9ca50c4d95ec7d28cda35e0607dc6c138fa3ab2bb863f8099fcd6824b9472b37`;
+  unpacked `27f0205f…f778eb62`. README, STATUS, RUNBOOK and the snapshot
+  diagram updated.
+
+**Needs a human:** upload the snapshot to the team folder. Still to do: the
+local aspect model on the 641 new sentences; merging the anchored-windows
+change; filtering broker-report boilerplate out of the chatbot's evidence.

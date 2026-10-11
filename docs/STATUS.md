@@ -53,9 +53,14 @@ to +0.23. The earlier published headlines were DBS +0.060, OCBC +0.071, UOB
 
 | | count |
 |---|---|
-| documents | 28,002 |
-| sentences | 44,345 |
-| (sentence, aspect) pairs scored | 281,744 (6.4 aspects per sentence under the ten-aspect taxonomy) |
+| documents | 28,027 |
+| sentences | 44,986 |
+| (sentence, aspect) pairs scored | 286,277 (6.4 aspects per sentence under the ten-aspect taxonomy) |
+
+Since 2026-10-11 these include the broker research source (25 reports, 641
+sentences), copied in from the Windows PC's database. Every evaluation dated
+up to 10 Oct ran on the corpus without it: 28,002 documents, 44,345 sentences,
+281,744 pairs. The local LLM has not classified the 641 new sentences.
 | date range | 6 Jan 2020 – 25 Sep 2026 |
 
 By source:

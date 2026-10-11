@@ -126,17 +126,18 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ## Getting the database
 
-`data/plp.db` (198.5 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
+`data/plp.db` (200.8 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
-gunzip -c plp-2026-09-30.db.gz > data/plp.db
-shasum -a 256 plp-2026-09-30.db.gz   # should match the checksum below
+gunzip -c plp-2026-10-11.db.gz > data/plp.db
+shasum -a 256 plp-2026-10-11.db.gz   # should match the checksum below
 ```
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-09-30.db.gz` (latest; the frozen corpus) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), section 2) |
+| `plp-2026-10-11.db.gz` (latest) | 42.4MB | `9ca50c4d95ec7d28cda35e0607dc6c138fa3ab2bb863f8099fcd6824b9472b37` | The 30 Sep snapshot below plus the broker research source (`sgx_research`: 25 reports, 641 sentences), copied from the Windows PC's database with `scripts/source_rows.py` so the sentence ids match the labels: 28,027 documents, 44,986 sentences, 286,277 sentence–aspect pairs, every one scored by base FinBERT. The index (592 rows) was rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so every earlier figure is unchanged and only the new source is added. Holds CNA and broker research text: for the team only. |
+| `plp-2026-09-30.db.gz` (superseded; the corpus the evaluations to 10 Oct used) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), section 2) |
 | `plp-2026-09-26-v2.db.gz` (superseded) | 28.9MB | `f6aac79a212368747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored under the four-aspect taxonomy; index recomputed |
 | `plp-2026-09-26.db.gz` (superseded) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed; before CNA |
 | `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
@@ -151,8 +152,8 @@ What a teammate needs, beyond `git clone` and the Quick start:
 
 | file | needed for | size |
 |---|---|---|
-| the latest snapshot (`plp-2026-09-30.db.gz`) | everything: unpack to `data/plp.db` | 41.5 MB |
-| `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 127 MB |
+| the latest snapshot (`plp-2026-10-11.db.gz`) | everything: unpack to `data/plp.db` | 42.4 MB |
+| `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 129 MB |
 | the three fine-tuned models | only to reproduce the sentiment results or re-score with them; the database holds base FinBERT's scores | 3 × 438 MB |
 
 `scripts/share_bundle.sh OUT_DIR [--with-models]` copies these into one

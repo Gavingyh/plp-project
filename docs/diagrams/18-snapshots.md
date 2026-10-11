@@ -39,9 +39,9 @@ Rendered for the report: [SVG](img/18-snapshots.svg) · [PNG](img/18-snapshots.p
 
 ## What this shows and doesn't show
 
-The database (198.5 MB restored) is too large for GitHub, so it lives outside git as dated,
-compressed snapshots (DESIGN decision 15); the latest, `plp-2026-09-30.db.gz`, is the
-frozen corpus (PLAN section 2), with CNA and the 10-aspect taxonomy. Checkpointing first matters: without it, recent writes can sit
+The database (200.8 MB restored) is too large for GitHub, so it lives outside git as dated,
+compressed snapshots (DESIGN decision 15); the latest, `plp-2026-10-11.db.gz`, is the
+30 Sep corpus (CNA, the 10-aspect taxonomy) plus the broker research source. Checkpointing first matters: without it, recent writes can sit
 in the `-wal` file and be missing from the copy. Nothing automates the upload or the
 download; the shared folder is outside the repository. The "no" branches are what a
 person should do on a failed check, not steps any script performs. The embeddings cache
@@ -60,10 +60,10 @@ Each row names the file and line an element comes from, and the text that line m
 | verify | `docs/RUNBOOK.md:225` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
 | record checksum in the README | `docs/RUNBOOK.md:226` | `# record name, size and checksum in the README` |
 | after a material change | `docs/RUNBOOK.md:220` | `### Snapshot the database after a material change` |
-| too large for git | `README.md:129` | `` `data/plp.db` (198.5 MB restored from the latest snapshot) is too large for GitHub `` |
+| too large for git | `README.md:129` | `` `data/plp.db` (200.8 MB restored from the latest snapshot) is too large for GitHub `` |
 | shared folder | `README.md:130` | `Download the latest snapshot from the team's shared folder` |
-| decompress | `README.md:133` | `gunzip -c plp-2026-09-30.db.gz > data/plp.db` |
+| decompress | `README.md:133` | `gunzip -c plp-2026-10-11.db.gz > data/plp.db` |
 | compare checksum | `README.md:134` | `# should match the checksum below` |
 | snapshot table | `README.md:137` | `| snapshot | size | sha256 | contents |` |
-| embeddings rebuilt, not shared | `README.md:146` | `` `python -m aspects.embed_store` rebuilds from the database `` |
+| embeddings rebuilt, not shared | `README.md:147` | `` `python -m aspects.embed_store` rebuilds from the database `` |
 | decision | `docs/DESIGN.md:286` | `### 15. The database lives outside git, as dated snapshots` |

@@ -159,7 +159,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <header class="mast">
   <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Sat 10 Oct 2026</span></div>
   <h1>What the team has to do before 1 November</h1>
-  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. On 10 Oct the team made six of the upstream decisions (listed under Decided); Opus has since labelled every sheet (section 2), so the model re-run is no longer blocked; section 1 holds what is still open. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
+  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. On 10 Oct the team made six of the upstream decisions (listed under Decided); Opus has since labelled every sheet, the owner settled the remaining open points on 11 Oct, and the database is merged and repaired, so the model re-run is no longer blocked. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
   <div class="countdown"><b>22</b> days to submission · Sun 1 Nov</div>
 </header>
 
@@ -187,25 +187,25 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-decide">
   <h2 id="h-decide">1. Still to decide</h2>
-  <p class="sub">The 10 Oct decisions settle the labels and the rules, so nothing here blocks the retraining. These three were open before, and the first is a default the team can overrule.</p>
+  <p class="sub">The owner settled the three open points on 11 Oct (blended index, local-context questions, data repairs). What is left here are follow-ups that need the team&#8217;s word before code or rules change.</p>
   <ul class="items">
+    <li data-o="decide">
+      <span class="t">Approve two fixes to bank recognition that the local-context research found <span class="chip decide">Decision</span></span>
+      <span class="when">before the re-score</span>
+      <p class="why"><b>Why:</b> bank recognition decides which bank a sentence counts for. Tried on made-up sentences: &#8220;Development Bank of Singapore&#8221;, DBS&#8217;s name until 2003, resolves to OCBC; and a sentence naming only PayLah, digibank or TMRW resolves to no bank, although each is one bank&#8217;s product. Both are small code changes in <code>preprocess/bank_ner.py</code> with tests, and they change which sentences each bank gets, so they belong in the one re-score.</p>
+      <span class="meta">Source: <code>docs/local-context-questions.md</code>, answers of 11 Oct.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">Adopt the researched answers that are recommendations, not facts <span class="chip decide">Decision</span></span>
+      <span class="when">before retraining (12 Oct)</span>
+      <p class="why"><b>Why:</b> all 23 local-context questions now have an answer researched on the web, with sources. Most are facts (what a product or a word means). Seven are judgment calls no web page settles, marked as recommendations: a bank economist&#8217;s forecast is not about the bank; an impersonation scam is not the bank&#8217;s outage; how to label sarcasm, a regular monthly purchase of a bank&#8217;s shares, &#8220;lol&#8221;, a small &#8220;buy&#8221; rating, and report boilerplate. Adopting them adds a few lines and examples to the guideline; the rows they touch get another pass.</p>
+      <span class="meta">File: <code>docs/local-context-questions.md</code>. Guideline lines to add are listed under each answer&#8217;s &#8220;What it changes&#8221;.</span>
+    </li>
     <li data-o="decide">
       <span class="t">Which aspects the dashboard and chatbot show: the LLM&#8217;s, unless the team says otherwise <span class="chip decide">Default set</span></span>
       <span class="when">applied in the re-score</span>
       <p class="why"><b>Why:</b> the team decided on 10 Oct to run and report both methods. The index, the dashboard and the chatbot can read only one set of aspects, so the re-score will apply the LLM&#8217;s, which match people&#8217;s aspect 73% of the time against the centroids&#8217; 41% (84% where the two local models agree); the report gives both. Where the two local models disagree (24% of sentences), llama&#8217;s answer is kept. Say so before the re-score if the team wants the centroids shown instead.</p>
       <span class="meta">Source: llm-aspect-classifier, index-preview evidence.</span>
-    </li>
-    <li data-o="decide">
-      <span class="t">The 22 open local-context questions <span class="chip decide">Decision</span></span>
-      <span class="when overdue">overdue (5 Oct)</span>
-      <p class="why"><b>Why:</b> wealth or retail is settled (10 Oct). The others (savings-rate cuts, bank economists, slang, questions as sentiment) each change labels or rules, and Opus labels under whatever the guideline says on the day. <b>Draft ready:</b> a proposed answer to each, with evidence, confidence and what changes if the team answers otherwise; three terms need a local reader (&#8220;xmm&#8221;, &#8220;Lobang Sis&#8221;, &#8220;FHR&#8221;). Write the team&#8217;s answers into <code>docs/local-context-questions.md</code>.</p>
-      <span class="meta">Draft: <code>docs/briefs/local-context-proposals-2026-10-07.md</code>.</span>
-    </li>
-    <li data-o="decide">
-      <span class="t">One blended index, or each source&#8217;s index side by side <span class="chip decide">Decision</span></span>
-      <span class="when overdue">overdue (5 Oct)</span>
-      <p class="why"><b>Why:</b> UOB has the highest earnings-only score and the lowest blended one, only because it publishes less earnings text than DBS. The ranking the report and the dashboard show depends on this choice, and broker research adds another source to weigh.</p>
-      <span class="meta">Source: PLAN, blended-index decision.</span>
     </li>
   </ul>
 </section>
@@ -241,32 +241,26 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="team">
       <span class="t">Upload the new snapshot to the team folder, and everyone restores it <span class="chip team">People</span></span>
       <span class="when">before the re-score</span>
-      <p class="why"><b>Why:</b> on 11 Oct the owner asked for one complete database. <code>data/plp.db</code> on the MacBook is now our 30 Sep corpus plus the broker research source from the Windows PC (25 reports, 641 sentences): 28,027 documents, 44,986 sentences, every one scored, every earlier row unchanged. The PC&#8217;s file held nothing else we lacked. Until the snapshot is in the team folder, only the MacBook has this database; the PC&#8217;s own lacks the 207 CNA articles and most scores, so it should be replaced by this one. Restore with <code>gunzip -c plp-2026-10-11.db.gz &gt; data/plp.db</code>.</p>
-      <span class="meta">File: <code>data/snapshots/plp-2026-10-11.db.gz</code> (42.4 MB, SHA-256 <code>9ca50c4d&#8230;9472b37</code>, in the README). For the team only: it holds CNA and broker research text.</span>
+      <p class="why"><b>Why:</b> <code>data/plp.db</code> on the MacBook is now the one complete database: our 30 Sep corpus, the broker research source from the Windows PC (25 reports, 641 sentences), and the three repairs approved on 11 Oct. 28,852 documents, 45,844 sentences, every one scored. Until the snapshot is in the team folder only the MacBook has it; the PC&#8217;s own database lacks the CNA articles and most scores, so replace it with this one. Restore with <code>gunzip -c plp-2026-10-11-v2.db.gz &gt; data/plp.db</code>.</p>
+      <span class="meta">File: <code>data/snapshots/plp-2026-10-11-v2.db.gz</code> (43.2 MB, SHA-256 <code>f703d2da&#8230;6a44b310</code>, in the README). For the team only: it holds CNA and broker research text.</span>
     </li>
     <li data-o="ai">
-      <span class="t">Follow-ups to the merged database <span class="chip ai">Claude</span></span>
+      <span class="t">Follow-ups to the merged and repaired database <span class="chip ai">Claude</span></span>
       <span class="when">12–18 Oct</span>
-      <p class="why"><b>Why:</b> three things the merge leaves. (1) The local aspect model has not classified the 641 new sentences (about an hour). (2) The index was rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so every earlier figure is unchanged; a plain rebuild counts back from today and empties the 7-day window. The anchored-windows change (decided 4 Oct) is the real fix, and its branch now conflicts with <code>main</code> in the chatbot&#8217;s prompt and tools and nine diagram pages, so it needs a careful merge and a gold-set check. (3) The chatbot&#8217;s evidence search can now return broker reports, including boilerplate lines such as &#8220;Please refer to Disclaimer Target Price &amp;&amp; Ratings History&#8221; (seen in one of five results for a target-price question); those lines need filtering.</p>
-      <span class="meta">The blended all-time headlines moved from +0.122, +0.136 and +0.074 (DBS, OCBC, UOB) to +0.124, +0.139 and +0.077; the thin 7-day ones moved more (DBS +0.106 to +0.204 on 40 sentences, OCBC &#8722;0.276 to &#8722;0.109 on 14).</span>
+      <p class="why"><b>Why:</b> three things are left. (1) The local aspect model has not classified the 1,499 new sentences (641 broker research, 858 refilled Reddit); the corpus aspect run with the new wealth definition covers them. (2) The index is rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so earlier figures stay comparable; a plain rebuild counts back from today and empties the 7-day window. The anchored-windows change (decided 4 Oct) is the real fix, and its branch now conflicts with <code>main</code> in the chatbot&#8217;s prompt and tools and nine diagram pages, so it needs a careful merge and a gold-set check. (3) The chatbot&#8217;s evidence search can now return broker reports, including boilerplate lines such as &#8220;Please refer to Disclaimer Target Price &amp;&amp; Ratings History&#8221;; those lines need filtering.</p>
+      <span class="meta">Blended all-time headlines after the merge and repairs: DBS +0.122, OCBC +0.136, UOB +0.074. UOB&#8217;s 30-day figure fell from +0.289 on 230 sentences to +0.215 on 116 when the misdated earnings left the window.</span>
     </li>
   </ul>
 </section>
 
 <section aria-labelledby="h-wk2">
-  <h2 id="h-wk2">3. Decide by Monday 12 October</h2>
+  <h2 id="h-wk2">3. By Monday 12 October</h2>
   <ul class="items">
     <li data-o="decide">
       <span class="t">Choose the scoring model from the re-run table <span class="chip decide">Decision</span></span>
       <span class="when">after the re-run (12–14 Oct)</span>
       <p class="why"><b>Why:</b> decided 10 Oct: Claude re-runs every model, the table gives precision and recall for positive, negative and neutral beside macro-F1 and accuracy, and the team links the superior model to the chatbot and the dashboard. Say what &#8220;superior&#8221; means before reading the table (macro-F1, or recall on one class), so the choice isn&#8217;t made to fit the result. The stored scores are still base FinBERT&#8217;s. Candidates so far: the 1 Oct models (0.604 &#177; 0.035 test macro-F1 against base 0.571, the figures the claim uses), the 4 Oct retrain (0.621 &#177; 0.027), and the adapted models (on cross-validation 0.701 against 0.663; on test 0.628 &#177; 0.022, within the seed noise), which must be pretrained again first: a 7 Oct validation found their pretraining text held 151 sentences related to test sentences (a filter gap, fixed that day).</p>
       <span class="meta">Source: retrain (4 Oct), dapt (6–7 Oct), sgx-research-evaluation evidence. Decision 7 in the decision brief.</span>
-    </li>
-    <li data-o="decide">
-      <span class="t">Approve three data repairs, so they go into the one re-score <span class="chip decide">Decision</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> each changes the database or git. (1) <b>Earnings dates:</b> 6 UOB documents (114 sentences) are dated 10 Sep 2026, their extraction day, so they count in the recent windows; <code>scripts/fix_earnings_dates.py --apply</code> repairs them (rehearsed: UOB&#8217;s 30-day headline +0.315 on 211 sentences becomes +0.251 on 97). (2) <b>Reddit gaps:</b> Sep 2021, May 2024 and Mar 2025 lost most of their comments; refilling is a network pull. (3) <b>CNA text in git:</b> <code>ingest/cna_articles.json</code> holds 15 CNA articles, against the rule; removing it is one <code>git rm</code>, and it stays in history.</p>
-      <span class="meta">Source: HANDOFF, 3 Oct.</span>
     </li>
     <li data-o="team">
       <span class="t">Read the chatbot&#8217;s fixed replies <span class="chip team">People</span></span>
@@ -319,7 +313,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="ai">
       <span class="t">Redo the corpus aspect run with the new wealth definition <span class="chip ai">Claude</span></span>
       <span class="when">12–14 Oct</span>
-      <p class="why"><b>Why:</b> the 10 Oct wealth rule changes the definition the local aspect model is given, and a changed definition starts a new answer file. Tried first on the 1,277 labelled sentences (under an hour); the whole corpus, now 44,986 sentences with the broker research ones, takes about a day of the MacBook.</p>
+      <p class="why"><b>Why:</b> the 10 Oct wealth rule changes the definition the local aspect model is given, and a changed definition starts a new answer file. Tried first on the 1,277 labelled sentences (under an hour); the whole corpus, now 45,844 sentences with the broker research and refilled Reddit ones, takes about a day of the MacBook.</p>
       <span class="meta">File: <code>config/aspects.yaml</code>; command in RUNBOOK.</span>
     </li>
     <li data-o="ai">
@@ -431,7 +425,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">Decided</h2>
   <ul class="refs">
-    <li><b>11 Oct, one database:</b> <code>data/plp.db</code> is the 30 Sep corpus plus the broker research source; snapshot <code>plp-2026-10-11.db.gz</code>.</li>
+    <li><b>11 Oct, index:</b> both stay, the blended index and each source&#8217;s index side by side (the index already holds both).</li>
+    <li><b>11 Oct, local-context questions:</b> answered by web research, with sources, in <code>docs/local-context-questions.md</code>; &#8220;xmm&#8221; is a young woman (the sentence is a joke, neutral), &#8220;Lobang Sis&#8221; is a third-party deals site, and FHR is DBS&#8217;s Fixed Deposit Home Rate.</li>
+    <li><b>11 Oct, data repairs done:</b> six UOB earnings documents re-dated; the Reddit comments for Sep 2021, May 2024 and Mar 2025 refilled (825 documents); the CNA articles file removed from git (it stays in the history).</li>
+    <li><b>11 Oct, one database:</b> <code>data/plp.db</code> is the 30 Sep corpus plus the broker research source; with the repairs; snapshot <code>plp-2026-10-11-v2.db.gz</code>.</li>
     <li><b>10 Oct, retail products</b> carry sentiment directed at the bank; a product&#8217;s feature is no longer kept neutral.</li>
     <li><b>10 Oct, wealth</b> means the priority and private tiers (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves.</li>
     <li><b>10 Oct, test rows</b> are not relabelled (the report should then say annotators saw a model&#8217;s suggestion).</li>

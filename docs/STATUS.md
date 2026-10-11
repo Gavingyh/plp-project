@@ -53,14 +53,17 @@ to +0.23. The earlier published headlines were DBS +0.060, OCBC +0.071, UOB
 
 | | count |
 |---|---|
-| documents | 28,027 |
-| sentences | 44,986 |
-| (sentence, aspect) pairs scored | 286,277 (6.4 aspects per sentence under the ten-aspect taxonomy) |
+| documents | 28,852 |
+| sentences | 45,844 |
+| (sentence, aspect) pairs scored | 291,508 (6.4 aspects per sentence under the ten-aspect taxonomy) |
 
 Since 2026-10-11 these include the broker research source (25 reports, 641
-sentences), copied in from the Windows PC's database. Every evaluation dated
-up to 10 Oct ran on the corpus without it: 28,002 documents, 44,345 sentences,
-281,744 pairs. The local LLM has not classified the 641 new sentences.
+sentences), copied in from the Windows PC's database, and the Reddit comments
+refilled for September 2021, May 2024 and March 2025 (825 documents, 858
+sentences). Six UOB earnings documents were re-dated the same day. Every
+evaluation dated up to 10 Oct ran on the corpus before these changes: 28,002
+documents, 44,345 sentences, 281,744 pairs. The local LLM has not classified
+the 1,499 new sentences.
 | date range | 6 Jan 2020 – 25 Sep 2026 |
 
 By source:

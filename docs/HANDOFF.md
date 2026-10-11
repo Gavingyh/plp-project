@@ -1471,3 +1471,38 @@ now `data/plp.db`: 28,027 documents, 44,986 sentences, 286,277 scored pairs.
 **Needs a human:** upload the snapshot to the team folder. Still to do: the
 local aspect model on the 641 new sentences; merging the anchored-windows
 change; filtering broker-report boilerplate out of the chatbot's evidence.
+
+**The three open points settled, and the repairs applied (11 Oct, later
+still).** The owner decided: both indices stay (blended and per source);
+the local-context questions are answered by web research; the three data
+repairs go ahead.
+
+- **Local-context questions.** A research pass answered all 23 questions in
+  `docs/local-context-questions.md` with sources (banks' own pages, MAS, SGX,
+  Singapore finance sites, Singlish dictionaries): 238 lines added, nothing
+  removed. "xmm" is a young woman (the sentence is a joke, neutral); "Lobang
+  Sis" is a third-party deals site; FHR is DBS's Fixed Deposit Home Rate.
+  Seven answers are judgment calls marked as recommendations for the team.
+  Two bank-recognition faults it reported were checked here on made-up
+  sentences: "Development Bank of Singapore" resolves to OCBC, and PayLah,
+  digibank or TMRW named alone resolve to no bank.
+- **Repairs**, built in a working copy and then swapped in.
+  `scripts/fix_earnings_dates.py --apply`: 6 documents, 114 sentences.
+  `ingest.arctic_shift` for the three months: 120, 200 and 505 new documents
+  (825), giving 858 sentences and 5,231 scored pairs through the usual
+  pipeline. September 2021 now has 130 comments (10 before), May 2024 364
+  (167) and March 2025 591 (89). No earlier row changed except the six
+  re-dated documents and their sentences. `ingest/cna_articles.json` is no
+  longer tracked (`708d798`); it stays in the history.
+- **The database now:** 28,852 documents, 45,844 sentences, 291,508 scored
+  pairs, index 580 rows (windows held as before). Blended all-time
+  headlines: DBS +0.122, OCBC +0.136, UOB +0.074. UOB's 30-day headline went
+  from +0.289 on 230 sentences to +0.215 on 116. All 2538 tests pass.
+  Snapshot `data/snapshots/plp-2026-10-11-v2.db.gz`: 43.2 MB, SHA-256
+  `f703d2da4c3ea7b45cfc20ff1dc1ec29425a4778e6473b4262d93dd66a44b310`;
+  unpacked `97370949…885914e3`. The database before the repairs is in
+  `data/run/repairs-2026-10-11/`.
+
+**Needs a human:** upload the v2 snapshot; adopt or not the seven
+recommended answers; approve the two bank-recognition fixes. The 1,499 new
+sentences have no LLM aspect yet.

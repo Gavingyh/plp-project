@@ -274,10 +274,11 @@ caffeinate -i .venv-plp/bin/python3 scripts/overnight_backfill.py
 Progress: `data/backfill_overnight.log` and `data/.backfill_progress.txt`.
 A month in which a page kept failing after its retries ends with exit code 3
 and an `INCOMPLETE` line naming the lost windows, and is not marked done, so
-the next run retries it. Before 3 Oct such months were marked done: Sep 2021,
-May 2024 and Mar 2025 are in the progress file with most of their comments
-missing (see the to-do). To refill them, once approved, delete those three
-lines from `data/.backfill_progress.txt` and run the script again.
+the next run retries it. Before 3 Oct such months were marked done, and Sep
+2021, May 2024 and Mar 2025 lost most of their comments that way. They were
+refilled on 11 Oct 2026 with `python -m ingest.arctic_shift --since <month
+start> --until <next month start>` for each, then the pipeline for the new
+rows (825 documents).
 
 ---
 
@@ -776,7 +777,7 @@ the team folder with the checksums in the evidence, not git. Results:
 ```bash
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval                              # llama3.1:8b
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval --model qwen3:4b --no-think
-caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # every sentence without an answer yet (44,345 were classified on 3 Oct; the 641 broker research ones added on 11 Oct are not)
+caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # every sentence without an answer yet (44,345 were classified on 3 Oct; the 1,499 added on 11 Oct, broker research and refilled Reddit comments, are not)
 ```
 
 `--eval` classifies the 1,277 labelled sentences through local Ollama and

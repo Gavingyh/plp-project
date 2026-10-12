@@ -10,6 +10,23 @@ import pytest
 
 os.environ.setdefault("HF_HUB_OFFLINE", "1")  # model is cached locally; avoids the HF rate-limit hang
 
+import config.model_version as _model_version  # noqa: E402
+
+# The tests build small databases scored by base FinBERT, so in every test the
+# readers serve base FinBERT, whatever config/model_version.py serves. A test
+# of another version sets it itself; a test that reads data/plp.db asks for
+# `served_version`. Set here, before any test module imports the constant.
+SERVED_VERSION = _model_version.MODEL_VERSION
+_model_version.MODEL_VERSION = _model_version.BASE_VERSION
+
+
+@pytest.fixture
+def served_version(monkeypatch):
+    """The version config/model_version.py really serves, put back for a test
+    that compares the API with data/plp.db."""
+    monkeypatch.setattr(_model_version, "MODEL_VERSION", SERVED_VERSION)
+    return SERVED_VERSION
+
 
 @pytest.fixture(autouse=True)
 def intent_in_scope(monkeypatch):

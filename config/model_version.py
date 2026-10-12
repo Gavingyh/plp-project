@@ -16,7 +16,7 @@ that the API and the chatbot can read it cheaply.
 
 # Base FinBERT's tag (sentiment/score.py writes it on every row it scores).
 BASE_VERSION = "finbert-base-zeroshot-v1"
-MODEL_VERSION = BASE_VERSION
+MODEL_VERSION = "finbert-adapted-finetuned-2026-10-11-3seed-m0"
 
 # The models and neutral margin behind each fine-tuned version, so that once
 # MODEL_VERSION names one, sentiment/score.py scores new sentences with it too
@@ -26,6 +26,12 @@ FINETUNED = {
     "finbert-finetuned-2026-10-01-3seed-m0.13": {
         "models": [f"models/experiments-2026-10-01/label/seed_{s}/final" for s in (42, 1, 7)],
         "margin": 0.13,
+    },
+    # The adapted encoder fine-tuned on the LLM's labels: the model the
+    # comparison of every candidate chose (docs/evidence/model-rerun-2026-10-11.md).
+    "finbert-adapted-finetuned-2026-10-11-3seed-m0": {
+        "models": [f"models/experiments-2026-10-11/dapt/seed_{s}/final" for s in (42, 1, 7)],
+        "margin": 0.0,
     },
 }
 

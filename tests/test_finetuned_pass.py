@@ -67,3 +67,8 @@ def test_no_fine_tuned_pass_while_base_is_served(db, monkeypatch):
     import sentiment.score as score
     monkeypatch.setattr(score, "classify_sentences", lambda texts: [("neutral", 0.6)] * len(texts))
     assert "finetuned_scored" not in score.run()
+
+
+def test_the_served_version_is_base_or_has_its_models_listed(served_version):
+    from config.model_version import BASE_VERSION, FINETUNED
+    assert served_version == BASE_VERSION or served_version in FINETUNED

@@ -224,12 +224,12 @@ aspects:
 similarity_floor: 0.65
 
 # How aspects/assign.py assigns aspects to sentences it hasn't seen:
-# `centroid`, every aspect above similarity_floor (what the database holds
-# today), or `llm`, one aspect per sentence from aspects/llm_classify.py
-# (DESIGN decision 16). Switch to `llm` in the same change that applies the
-# LLM's aspects to the database (scripts/rescore.py), so new sentences are
+# `centroid`, every aspect above similarity_floor, or `llm`, one aspect per
+# sentence from aspects/llm_classify.py (DESIGN decision 16; what the
+# database holds). It changes in the same change that applies a method's
+# aspects to the database (scripts/rescore.py), so new sentences are
 # assigned the way the corpus was.
-assignment_method: centroid
+assignment_method: llm
 
 # The LLM classifier (aspects/llm_classify.py): the model, and the examples
 # its prompt shows. Each aspect's llm_definition above is its line in the

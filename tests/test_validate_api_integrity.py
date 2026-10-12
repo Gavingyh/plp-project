@@ -48,7 +48,7 @@ def _aspects():
 
 
 @pytest.fixture
-def real_db_copy(tmp_path, monkeypatch):
+def real_db_copy(tmp_path, monkeypatch, served_version):
     if not os.path.exists(REAL_DB):
         pytest.skip("data/plp.db not present")
     import ingest.db as db_module

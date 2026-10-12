@@ -41,6 +41,13 @@ from aspects.embed_store import load_for_search
 from ingest.db import get_connection
 
 _WORD = re.compile(r"\w+")
+
+
+def _is_boilerplate(text: str) -> bool:
+    """A report's disclaimer line (evidence.boilerplate in config/chatbot.yaml).
+    Broker research PDFs leave a few in the store; they say nothing about a
+    bank, so the search never returns them."""
+    return any(re.search(p, text or "", re.IGNORECASE) for p in settings.get("evidence.boilerplate"))
 _LEXICAL_WEIGHT = 0.15  # small boost relative to cosine similarity, see module docstring
 
 
@@ -130,7 +137,7 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     for r in rows:
         # A sentiment filter without an aspect joins every (sentence, aspect)
         # row, so the same sentence can arrive once per aspect it matched.
-        if r[0] in seen:
+        if r[0] in seen or _is_boilerplate(r[1]):
             continue
         seen.add(r[0])
         d = {"sentence_id": r[0], "text": r[1], "bank": r[2], "url": r[3], "published_at": r[4], "source": r[5]}

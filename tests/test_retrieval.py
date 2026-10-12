@@ -53,3 +53,19 @@ def test_aspect_query_flag_ranks_by_the_aspect_not_the_question_words(temp_db, m
     monkeypatch.delenv("CHATBOT_ASPECT_QUERY", raising=False)             # on by default
     flagged = retrieval.search_evidence(q, bank="DBS", aspect="dividend_policy", k=2)
     assert flagged[0]["sentence_id"] == "s2" and embedded[-1] == "Dividend Policy"
+
+
+def test_a_report_disclaimer_is_never_returned_as_evidence(temp_db, monkeypatch):
+    monkeypatch.setattr(retrieval, "load_for_search", lambda: ([], None))
+    conn = temp_db.get_connection()
+    rows = [("s1", "Please refer to Disclaimer Target Price && Ratings History -- OCBC dividend"),
+            ("s2", "IF THIS REPORT IS DISTRIBUTED IN THE UNITED STATES IT IS DISTRIBUTED BY A BROKER, on OCBC dividend"),
+            ("s3", "OCBC is targeting a dividend payout ratio of 60%.")]
+    for sid, text in rows:
+        conn.execute("INSERT INTO sentences (sentence_id, doc_id, bank, text, published_at, source, url, "
+                     "norm_hash, processed_at) VALUES (?,'d','OCBC',?,'2026-01-01','sgx_research','u',?,?)",
+                     (sid, text, f"h-{sid}", now_iso()))
+    conn.commit()
+    conn.close()
+    hits = retrieval.search_evidence("OCBC dividend", bank="OCBC", k=5)
+    assert [h["sentence_id"] for h in hits] == ["s3"]

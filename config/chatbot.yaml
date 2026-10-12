@@ -84,3 +84,9 @@ evidence:
   max_per_source:   {value: 2}           # from one source, unless too few others match
   same_wording:     {value: 0.7}         # word overlap at which two sentences count as one wording
   polar_boost:      {value: 0.03}        # added to a positive or negative sentence's rank
+  # Stored sentences that are a report's disclaimer, not something said about
+  # a bank: never offered as evidence (regular expressions, case ignored).
+  boilerplate:
+    value:
+      - '^\s*Please refer to Disclaimer'
+      - 'REPORT IS DISTRIBUTED IN'

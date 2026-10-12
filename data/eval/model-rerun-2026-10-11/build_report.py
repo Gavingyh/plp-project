@@ -209,6 +209,7 @@ def net_table():
 
 
 T = json.load(open(S + "techniques.json"))
+MG = json.load(open(S + "margin_adapted.json"))
 
 
 def tech_plot(lo=-0.10, hi=0.05, step=0.025):
@@ -445,7 +446,8 @@ BODY = f"""
   <div class="readout">
     <p><b>On the first-round rows the adapted model is closer.</b> The labels balance at {sgn(nb_f['truth_net'])}; base FinBERT reads {sgn(nb_f['pred_net'])} and the adapted model {sgn(na_f['pred_net'])}. Base FinBERT also calls only {100 * nb_f['pred_nonneutral']:.0f}% of rows positive or negative when {100 * nb_f['truth_nonneutral']:.0f}% are, so its index moves less than the text does.</p>
     <p><b>On the broker research rows it is further away.</b> The labels balance at {sgn(nb_b['truth_net'])}; base FinBERT reads {sgn(nb_b['pred_net'])} and the adapted model {sgn(na_b['pred_net'])}, because it calls {na_b['called'][0]} sentences negative where {na_b['truth'][0]} are.</p>
-    <p><b>This is what the neutral threshold is for.</b> Before the earlier fine-tuned model was proposed for the product, a margin was chosen on held-out training rows: when the model's top two answers are close, the sentence is called neutral. The same step has not been done for this model yet, and it comes before the re-score.</p>
+    <p><b>A neutral threshold was tried and is not needed.</b> The usual remedy is a margin: call a sentence neutral unless positive or negative beats neutral by a set amount. It was chosen on {MG['dev_rows']} training rows each model had held out, before any test row was scored. The best margin there is {MG['chosen_margin']:.2f}, that is, no margin: macro-F1 is {f3(MG['dev_curve']['0.00'])} without one and between {f3(min(v for k, v in MG['dev_curve'].items() if k != '0.00'))} and {f3(max(v for k, v in MG['dev_curve'].items() if k != '0.00'))} with any margin from 0.05 to 0.60. So the model is used as it is.</p>
+    <p><b>The broker research gap stays as a known limit.</b> Those reports are 641 of the corpus's {pt['corpus_sentences']:,} sentences ({100 * 641 / pt['corpus_sentences']:.1f}%), so their effect on a bank's blended index is small; where the dashboard shows broker research alone, its balance will read lower than the labels would.</p>
   </div>
 </section>
 
@@ -467,7 +469,6 @@ BODY = f"""
     <p><b>The model for the dashboard and chatbot is the adapted encoder fine-tuned on LLM labels, three runs averaged.</b> It leads on both test sets and in cross-validation, by the rule fixed before the run.</p>
   </div>
   <ol class="steps">
-    <li><b>Choose the neutral threshold</b> for the averaged model on held-out training rows, and check the index it would produce against the labels.</li>
     <li><b>Rehearse the re-score on a copy of the database</b> with this model and the LLM's aspects, and show what each bank's figures become.</li>
     <li><b>Run the re-score once,</b> on the owner's go-ahead, after the dashboard filters on one model version.</li>
     <li><b>Re-run every evaluation</b> on the new database, including the comparison of the two aspect methods.</li>

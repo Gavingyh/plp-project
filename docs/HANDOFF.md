@@ -1619,3 +1619,22 @@ between two identical runs), and the page now says "LLM labels" throughout
 in place of the model's name. The repository's evidence notes and label
 files still name the model. Not yet run: a model with every technique
 switched on, on the adapted encoder with the LLM's labels.
+
+**Filling the two gaps the report names (12 Oct, from 08:30).**
+
+- **Neutral threshold: not needed.** `neutral_margin.py` in
+  `data/eval/model-rerun-2026-10-11/` chose it as on 4 Oct: each of the 601
+  dev rows the three seeds held out (504 by one seed, 90 by two, 7 by all
+  three) scored by the average of only the seeds that held it out. Macro-F1
+  against the LLM's labels is 0.710 with no margin and 0.680 to 0.704 with
+  any margin from 0.05 to 0.60, so the chosen margin is 0 and the averaged
+  model is used as it is (`margin_adapted.json`). Reported, not used for
+  choosing: on the 299 test rows the margins score 0.664 to 0.676.
+- **The weighting techniques on the adapted encoder with the LLM's labels:
+  running** (`data/run/rerun-gaps-2026-10-12/run.sh`, pid in `pid`). Balanced
+  class weights with source weights on 15 folds, then its three final
+  models, then each weighting alone on 15 folds; about eight hours. The rule
+  is fixed in the script: a weighted variant replaces the chosen model only
+  if its paired cross-validation gain is positive with p < 0.05 and its test
+  macro-F1 over three seeds is higher. The source weights give broker
+  research rows 0.08 and Reddit rows 1.52.

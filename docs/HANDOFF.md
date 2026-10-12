@@ -1668,3 +1668,31 @@ The full suite passes afterwards (2508 passed, 2 skipped, 46 expected
 failures). The evidence note has a section on both gaps and the model
 comparison page carries the results. Next: the re-score rehearsal on a
 copy, shown to the owner before `data/plp.db` is touched.
+
+**The re-score rehearsal ran on a copy (12 Oct, 19:58 to 21:45).**
+`data/plp.db` is unchanged (same SHA-256 before and after). On
+`data/run/rescore-2026-10-12/plp_rescored.db`: the local model gave an LLM
+aspect to the 1,499 sentences that had none, the chosen model scored all
+45,844 sentences, and `scripts/rescore.py` wrote one aspect a sentence and
+both models' scores side by side. The copy's index was rebuilt with the
+windows held at 30 Sep.
+
+- The aspect method alone leaves every headline unchanged. The model moves
+  them: all time DBS 0.122 to 0.155, OCBC 0.136 to 0.143, UOB 0.074 to
+  0.117, and DBS overtakes OCBC. Neutral falls from about two-thirds of
+  sentences to about half; 13,154 of 45,844 labels change.
+- By source: Reddit rises for every bank (neutral 88% to 57%), CNA turns
+  negative for every bank, earnings reports barely move, and UOB's broker
+  research falls from 0.236 to -0.026 on 239 sentences.
+- Per aspect the figures change most, because a sentence had 6.4 aspects on
+  average and now has one. Retail banking is 43% of sentences.
+- Not covered: bank tags (nothing re-tags stored sentences), and the LLM's
+  aspects still use the wealth definition from before the 10 Oct rule.
+- Evidence: `docs/evidence/rescore-rehearsal-2026-10-12.md`; scripts and
+  the full output in `data/eval/rescore-rehearsal-2026-10-12/`.
+
+**Needs the owner:** the go-ahead to apply the re-score to `data/plp.db`.
+Before that, the dashboard must filter on the model version. Also new and
+not yet committed: a project writing skill, `.claude/skills/report-writer/`,
+written after the owner said the prose is either too long or leaves out the
+reader's context, and that the report must reach Bloom level 4 (analyse).

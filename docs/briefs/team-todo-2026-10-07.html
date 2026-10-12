@@ -171,7 +171,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li><span class="d">10 Oct, done</span><span class="s">New rules written; Opus labelled every sheet (2,075 rows)</span></li>
     <li><span class="d">12 Oct, done</span><span class="s">Every model re-run; the best one named</span></li>
     <li><span class="d">12 Oct, done</span><span class="s">Re-scored once with the chosen model and the LLM&#8217;s aspects</span></li>
-    <li><span class="d">13–18 Oct</span><span class="s">Dashboard reads one model; every evaluation re-run</span></li>
+    <li><span class="d">13–18 Oct</span><span class="s">Dashboard reads one model; second re-score with the new wealth wording</span></li>
     <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
     <li><span class="d">26 Oct – 1 Nov</span><span class="s">Report, video, submit</span></li>
   </ol>
@@ -188,8 +188,14 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-decide">
   <h2 id="h-decide">1. Still to decide</h2>
-  <p class="sub">The owner settled the open points on 11 Oct and gave the go-ahead for the re-score on 12 Oct. One point is left, and it waits on a trial that is running.</p>
+  <p class="sub">The owner settled the open points on 11 Oct and gave the go-ahead for the re-score on 12 Oct. One decision is coming: a second re-score, once the corpus has been re-classified.</p>
   <ul class="items">
+    <li data-o="decide">
+      <span class="t">A second re-score, with the aspects made under the new wealth wording <span class="chip decide">Owner</span></span>
+      <span class="when">when the corpus run ends (about 14 Oct)</span>
+      <p class="why"><b>Why:</b> the aspects in the database were made before the 10 Oct wealth rule. A trial on the 2,075 labelled sentences shows the aspect model follows the rule when it is written into its prompt: agreement with the labels made under the new rule rises from 75.5% to 79.4%, and of the sentences it calls wealth, 70% are right where 36% were. The cost is that it finds 46% of the true wealth sentences where it found 76%. Applying it changes the wealth, retail and other rows of the index, not the headlines. It will be rehearsed on a copy first, and the chatbot evaluations run once more afterwards.</p>
+      <span class="meta">Evidence: <code>docs/evidence/wealth-definition-trial-2026-10-12.md</code>.</span>
+    </li>
     <li data-o="decide">
       <span class="t">Which aspect set the product shows after the comparison <span class="chip decide">Applied 12 Oct</span></span>
       <span class="when">done: the LLM&#8217;s</span>
@@ -284,8 +290,8 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <ul class="items">
     <li data-o="ai">
       <span class="t">Redo the corpus aspect run with the new wealth definition <span class="chip ai">Claude</span></span>
-      <span class="when">trial running (12 Oct night)</span>
-      <p class="why"><b>Why:</b> the 10 Oct wealth rule changes the definition the local aspect model is given, and a changed definition starts a new answer file. The re-score of 12 Oct used the aspects made under the old wording. A trial of the new wording on the 2,075 labelled sentences is running; the whole corpus (45,844 sentences, about a day of the MacBook) is only worth re-classifying if the trial shows the new wording agrees better with the labels, and it would then need a second re-score.</p>
+      <span class="when">running since 13 Oct, about a day</span>
+      <p class="why"><b>Why:</b> the 10 Oct wealth rule changes the definition the local aspect model is given, and a changed definition starts a new answer file. The re-score of 12 Oct used the aspects made under the old wording. The trial of the new wording on the 2,075 labelled sentences came out in its favour (first item in section 1), so the whole corpus, 45,844 sentences, is being re-classified. It writes only to a cache and can be stopped and resumed; keep the MacBook on power with the lid open, and expect the chatbot to be slow while it runs.</p>
       <span class="meta">File: <code>config/aspects.yaml</code>; command in RUNBOOK.</span>
     </li>
     <li data-o="ai">
@@ -302,8 +308,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>What it was:</b> one combined re-run is cheaper and easier to explain than several. <code>scripts/rescore.py</code> applies the LLM aspects and fine-tuned scores (<code>--finetuned --models &lt;folders&gt;</code>); rehearsed on a copy on 3 Oct it reproduced the preview cell for cell. It changes the database, so the real run waits for the team&#8217;s go-ahead. Afterwards set <code>MODEL_VERSION</code> and <code>assignment_method: llm</code>.</p>
     </li>
     <li data-o="ai">
-      <span class="t">Re-run every evaluation on the new snapshot, and re-export the ratings sheet <span class="chip ai">Claude</span></span>
-      <span class="when">13–18 Oct, after the wealth trial</span>
+      <span class="t">Re-run every evaluation on the new snapshot, and re-export the ratings sheet <span class="chip ai">Done 13 Oct</span></span>
+      <span class="when">done; once more after a second re-score</span>
+      <p class="why"><b>Result:</b> on the re-scored database the chatbot behaves as it did on 6 Oct: the right tool on 23 of 24 questions, 8 of 8 on declining advice and saying when there is no data, no invented citation in 32 answers, one figure no tool returned (caught and marked), and 9 of 9 conversation turns. Its evidence search is far more precise now that a sentence has one aspect: about four of the five sentences it is shown are ones people gave that aspect, where it was fewer than two. One wrong answer passes the checks: asked about &#8220;the last 7 days&#8221;, the model gave the all-time figure and the wrong year. The ratings sheet for the human evaluation is re-exported, with the answers the judge doubts first.</p>
+      <span class="meta">Evidence: <code>docs/evidence/chatbot-eval-rescored-2026-10-13.md</code>. Sheet: <code>data/eval/ratings_sheet.csv</code>.</span>
       <p class="why"><b>Why:</b> the report&#8217;s tables must describe the system as submitted. The ratings sheet for the final chatbot is ordered by the checklist judge, which catches every known invention (25 of 25) though its reasons are often wrong.</p>
     </li>
     <li data-o="team">
@@ -322,6 +330,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Rate the chatbot&#8217;s answers for faithfulness <span class="chip team">People</span></span>
       <span class="when">19–25 Oct</span>
       <p class="why"><b>Why:</b> people&#8217;s ratings are the faithfulness measure, and they calibrate the checklist judge. Two raters on the same answers give an agreement figure too.</p>
+      <span class="meta">Sheet: <code>data/eval/ratings_sheet.csv</code>, 32 answers with the tool data behind each, re-exported on 13 Oct. Score 1 if a quote, source or figure is invented, 2 if only a claim is unsupported, 3 if everything is supported.</span>
     </li>
     <li data-o="team">
       <span class="t">Run the SASSI questionnaire with 5–8 users, and read transcripts <span class="chip team">People</span></span>
@@ -350,9 +359,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Why:</b> a deliverable (5%); every member must present. Show the dashboard and the chatbot together, against the submitted snapshot.</p>
     </li>
     <li data-o="ai">
-      <span class="t">Final snapshot, data report and a third clean-copy install test <span class="chip ai">Claude</span></span>
+      <span class="t">Final snapshot and data report; the third clean-copy install test is done <span class="chip ai">Claude</span></span>
       <span class="when">by 31 Oct</span>
-      <p class="why"><b>Why:</b> the marker installs from the README; the last two install tests each found something.</p>
+      <p class="why"><b>Why:</b> the marker installs from the README; the last two install tests each found something, and so did the third, on 12 Oct. A fresh clone with the 12 Oct snapshot installed, passed its tests and served the re-scored index. It showed that the documented test counts were the MacBook&#8217;s, six too high (corrected), and that a training test failed now and then when the Mac&#8217;s GPU was busy (those tests now train on the CPU). The final snapshot and the data report wait for the second re-score.</p>
+      <span class="meta">Evidence: <code>docs/evidence/install-test-2026-10-12.md</code>.</span>
     </li>
     <li data-o="team">
       <span class="t">Peer review, final read-through, submit <span class="chip team">People</span></span>
@@ -436,7 +446,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Updated on 12 Oct 2026 after the re-score was applied; before that on 10 Oct 2026 with the team&#8217;s six decisions and the chatbot fixes. Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+<footer>Updated on 13 Oct 2026 with the wealth-wording trial, the chatbot evaluations and the install test; on 12 Oct 2026 after the re-score was applied; before that on 10 Oct 2026 with the team&#8217;s six decisions and the chatbot fixes. Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
 
 </div>
 

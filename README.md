@@ -310,6 +310,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2519 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2566: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2520 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2567: adds the diagram and notebook checks
 ```

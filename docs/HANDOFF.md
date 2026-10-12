@@ -1765,3 +1765,29 @@ retrieval, checklist judge), then the corpus under the new wording
 (`data/run/wealth-corpus-2026-10-13/run.sh`, about a day, cache only,
 resumable; stop it with `kill $(cat data/run/wealth-corpus-2026-10-13/run.pid)`).
 **Needs the owner:** the go-ahead for a second re-score once that run ends.
+
+**Chatbot evaluations on the re-scored database (13 Oct, 00:24 to 01:09).**
+The gold set, the conversations, the retrieval measure and the checklist
+judge, with `llama3.1:8b`.
+
+- The automated checks are within one answer of the 6 Oct live check: tool
+  selection 23/24, behaviour 8/8, no fabricated citation in 32 answers, one
+  figure no tool returned (a sum the model made up; marked in the answer),
+  conversations 9/9 turns. Median 59 seconds a question, against 47.
+- The evidence search is far more precise with one aspect a sentence:
+  precision at 5 is 0.779 with the stored-aspect filter, where it was 0.329
+  with the centroid aspects. Most of the gain is the filter itself.
+- One wrong answer passes the checks: asked for "the last 7 days", the model
+  gave the all-time figure and the wrong year (the same question that missed
+  tool selection on 6 Oct).
+- `data/eval/ratings_sheet.csv` is re-exported for the human evaluation,
+  ordered with the answers the judge doubts first; the earlier blank sheet
+  is `ratings_sheet_2026-10-02.csv`. The results hold no CNA text and are
+  committed, which adds one case to the per-file test: 2520 tests in a
+  fresh clone, 2567 from the root.
+- Evidence: `docs/evidence/chatbot-eval-rescored-2026-10-13.md`.
+
+**Still running:** the corpus under the new wealth wording, started 01:09 on
+13 Oct. When it ends: rehearse the second re-score on a copy, show the
+owner, and after the go-ahead apply it, snapshot, and run the gold set and
+the retrieval measure once more.

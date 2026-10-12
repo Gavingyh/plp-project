@@ -231,7 +231,7 @@ def wstats(variant):
             "better": sum(1 for v in d if v > 0), "p": float(_st.ttest_rel(x, b).pvalue)}
 
 
-WB = wstats("both")
+WB, WBAL, WSRC = wstats("both"), wstats("balanced"), wstats("source")
 for _name, _key in (("Balanced class weights and source weights, on the chosen setup", "both"),
                     ("Balanced class weights alone, on the chosen setup", "balanced"), ("Source weights alone, on the chosen setup", "source")):
     _r = wstats(_key)
@@ -474,7 +474,7 @@ BODY = f"""
     <p><b>The readable topic name is kept, and credited with nothing.</b> Its first result ({sgn(T['rows'][2]['gain'])}) shrank to {sgn(T['rows'][3]['gain'])} when repeated on three seeds. It stays because the models were built with it and nothing shows it does harm.</p>
     <p><b>Adapting the encoder is the only addition that held up twice:</b> {sgn(T['rows'][6]['gain'])} with 978 rows and {sgn(T['rows'][7]['gain'])} with {tr['rows']:,}, better in most folds both times.</p>
     <p><b>Why not add them anyway?</b> With about {round(tr['rows'], -2):,} labelled rows, gains this small cannot be told apart from luck. Adding techniques until the test score rises would be fitting the test rows, and the score would stop meaning anything.</p>
-    <p><b>The same holds on the chosen setup.</b> The weighting techniques had only been tested on plain FinBERT with people's labels, so on 12 Oct balanced class weights and source weights were switched on together for the adapted encoder with LLM labels. Over the same 15 folds it scored {f3(WB['variant_mean'])} against {f3(WB['base_mean'])} ({sgn(WB['diff'])}, better in {WB['better']} of {WB['n']}, p = {p(WB['p'])}). The rule fixed before the run asked for a cross-validation gain with p below 0.05 and a higher test score, so the chosen model stands.</p>
+    <p><b>The same holds on the chosen setup.</b> The weighting techniques had only been tested on plain FinBERT with people's labels, so on 12 Oct balanced class weights and source weights were switched on together for the adapted encoder with LLM labels. Over the same 15 folds it scored {f3(WB['variant_mean'])} against {f3(WB['base_mean'])} ({sgn(WB['diff'])}, better in {WB['better']} of {WB['n']}, p = {p(WB['p'])}). Each weighting alone did the same: balanced class weights {sgn(WBAL['diff'])} (better in {WBAL['better']} of {WBAL['n']}, p = {p(WBAL['p'])}) and source weights {sgn(WSRC['diff'])} (better in {WSRC['better']} of {WSRC['n']}, p = {p(WSRC['p'])}). The rule fixed before the run asked for a cross-validation gain with p below 0.05 and a higher test score, so the chosen model stands.</p>
   </div>
   <h3>The chosen model against the same model with both weightings</h3>
   {weighted_table()}

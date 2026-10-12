@@ -1658,3 +1658,13 @@ class weights with source weights, adapted encoder, the LLM's labels.
   (`margin_weighted.json`).
 
 Still running: each weighting alone, 15 folds each.
+
+**The weighting run finished at 19:16 (12 Oct): none of the three helps.**
+45 cross-validation runs, no failures. Against the chosen model on the same
+15 folds: both weightings together -0.003 (p = 0.52), balanced class
+weights -0.002 (p = 0.41), source weights -0.004 (p = 0.39). The chosen
+model stands, by the rule written into `run_weighting.sh` before the run.
+The full suite passes afterwards (2508 passed, 2 skipped, 46 expected
+failures). The evidence note has a section on both gaps and the model
+comparison page carries the results. Next: the re-score rehearsal on a
+copy, shown to the owner before `data/plp.db` is touched.

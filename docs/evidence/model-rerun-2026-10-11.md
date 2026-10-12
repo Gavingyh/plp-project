@@ -114,6 +114,62 @@ rows), broker research 0.77 (100), earnings 0.81 (79), Google News 0.68
 6. **Reddit is still the weak source**: 0.68 accuracy, the same as on
    6 Oct.
 
+## Two gaps closed on 12 Oct
+
+The comparison left two things untested. Both were run on 12 Oct; neither
+changes the choice.
+
+**A neutral threshold for the chosen model.** Chosen as on 4 Oct
+([ensemble-margin-2026-10-04.md](ensemble-margin-2026-10-04.md)): each of
+the 601 dev rows the three seeds held out (504 by one seed, 90 by two, 7 by
+all three) is scored by the average of only the seeds that held it out, and
+the margin with the highest macro-F1 there is taken before any test row is
+scored. Against the LLM's labels macro-F1 is 0.710 with no margin and 0.680
+to 0.704 with any margin from 0.05 to 0.60, so the chosen margin is 0: the
+averaged model is used as it is. Reported only: on the 299 test rows the
+same margins score 0.664 to 0.676.
+
+**The weighting techniques on the chosen setup.** On 1 Oct they were tested
+on plain FinBERT with people's labels. Here each runs on the adapted encoder
+with the LLM's labels, on the same seeds and folds as the chosen model, so
+the differences are paired. The rule was written into the run script before
+it started: a weighted variant replaces the chosen model only if its gain
+has p < 0.05 and its test macro-F1 over three seeds is higher.
+
+| variant | dev macro-F1 | chosen model | difference (sd) | folds better | paired t, p | 95% interval |
+|---|---|---|---|---|---|---|
+| balanced class weights and source weights | 0.697 | 0.700 | −0.003 (0.015) | 6 of 15 | −0.65, 0.52 | −0.011 to +0.006 |
+| balanced class weights | 0.697 | 0.700 | −0.002 (0.011) | 7 of 15 | −0.85, 0.41 | −0.009 to +0.004 |
+| source weights | 0.696 | 0.700 | −0.004 (0.017) | 6 of 15 | −0.89, 0.39 | −0.014 to +0.006 |
+
+None gains. Three final models were trained with both weightings, to give
+the comparison a test row:
+
+| test rows | chosen: mean (sd), averaged | both weightings: mean (sd), averaged |
+|---|---|---|
+| first round, 299 | 0.649 (0.018), 0.670 | 0.651 (0.020), 0.664 |
+| broker research, 100 | 0.740 (0.021), 0.770 | 0.739 (0.027), 0.746 |
+| both, 399 | 0.685 (0.013), 0.709 | 0.689 (0.008), 0.699 |
+
+Row by row the two averaged models disagree on 29 of the 399 test
+sentences (the chosen one right on 17, the other on 12; exact test
+p = 0.46). The chosen model stands.
+
+**The index balance, checked both ways.** On all 399 test rows the weighted
+model's net balance, (positive − negative) / all, is closer to the labels:
++0.188 against +0.185, where the chosen model reads +0.153. On the 601
+held-out training rows it is closer overall (+0.140 against +0.131; chosen
++0.108) but far off on broker research (+0.180 against +0.054; chosen
++0.009): the source weights give broker research rows 0.08 and Reddit rows
+1.52. Neither model is reliably closer, so the balance is not a reason to
+change the choice.
+
+Files: `neutral_margin.py`, `margin_adapted.json`, `margin_weighted.json`,
+`dev_balance.json`, `run_weighting.sh`, `cv_weighting.jsonl` and
+`progress_weighting.log` in `data/eval/model-rerun-2026-10-11/`. The
+weighted models are in `models/experiments-2026-10-11/dapt-weighted/` (not
+in git).
+
 ## Limits
 
 - One run of three seeds. The gaps between fine-tuned sets are of the size

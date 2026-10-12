@@ -1,0 +1,14 @@
+{
+ "noise_sd": 0.024,
+ "noise_source": "docs/evidence/finetune-fixes-2026-10-01.md: fold-by-fold differences between two runs of the same configuration",
+ "rows": [
+  {"name": "Balanced class weights", "sub": "1 Oct, 5 folds, 978 rows", "gain": 0.009, "better": "4 of 5 folds", "kept": false, "source": "docs/evidence/finetune-fixes-2026-10-01.md"},
+  {"name": "Weights by source", "sub": "1 Oct, 5 folds, 978 rows", "gain": 0.012, "better": "4 of 5 folds", "kept": false, "source": "docs/evidence/finetune-fixes-2026-10-01.md"},
+  {"name": "Topic given as a readable name", "sub": "1 Oct, 5 folds, 978 rows", "gain": 0.016, "better": "4 of 5 folds", "kept": true, "source": "docs/evidence/finetune-fixes-2026-10-01.md"},
+  {"name": "The same, repeated on three seeds", "sub": "2 Oct, 15 folds", "gain": 0.005, "better": "8 of 15 folds", "kept": true, "source": "docs/evidence/noise-floor-cv-2026-10-02.md"},
+  {"name": "Class weights matching the corpus's mix", "sub": "1 Oct, 5 folds, 978 rows", "gain": -0.096, "better": "1 of 5 folds", "kept": false, "source": "docs/evidence/finetune-fixes-2026-10-01.md"},
+  {"name": "Balanced weights, source weights and readable name together", "sub": "1 Oct, 5 folds, 978 rows", "gain": 0.014, "better": "4 of 5 folds", "kept": false, "source": "docs/evidence/finetune-fixes-2026-10-01.md"},
+  {"name": "Adapting the encoder", "sub": "6 Oct, 15 folds, 978 rows", "gain": 0.038, "better": "13 of 15 folds", "kept": true, "source": "data/run/dapt/cv_results.jsonl, docs/evidence/dapt-2026-10-06.md"},
+  {"name": "Adapting the encoder, this run", "sub": "11 Oct, 15 folds, 1,563 rows", "gain": 0.014, "better": "11 of 15 folds", "kept": true, "source": "data/eval/model-rerun-2026-10-11/cv_results.jsonl"}
+ ]
+}

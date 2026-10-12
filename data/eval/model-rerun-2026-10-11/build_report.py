@@ -15,11 +15,11 @@ NAME = {
     "people_1oct": ("Fine-tuned on people's labels", "1 Oct, 978 rows"),
     "people_4oct": ("Fine-tuned on people's labels, retrained", "4 Oct, 978 rows"),
     "people_7oct": ("Fine-tuned on people's labels, with broker rows", "7 Oct, 1,258 rows"),
-    "opus_finbert": ("Fine-tuned on Opus's labels", "11 Oct, 1,563 rows"),
-    "opus_adapted": ("Adapted encoder, fine-tuned on Opus's labels", "11 Oct, 1,563 rows"),
+    "opus_finbert": ("Fine-tuned on LLM labels", "11 Oct, 1,563 rows"),
+    "opus_adapted": ("Adapted encoder, fine-tuned on LLM labels", "11 Oct, 1,563 rows"),
 }
 FAM = {"base": "base", "people_1oct": "people", "people_4oct": "people", "people_7oct": "people",
-       "opus_finbert": "opus", "opus_adapted": "adapted"}
+       "opus_finbert": "llm", "opus_adapted": "adapted"}
 e = html.escape
 
 
@@ -79,7 +79,7 @@ def dot_table(scope, sids):
 
 # ---------- grouped bars: precision or recall by class ----------
 BAR_SETS = ["base", "people_4oct", "opus_finbert", "opus_adapted"]
-BAR_SHORT = {"base": "Base FinBERT", "people_4oct": "People's labels, 4 Oct", "opus_finbert": "Opus's labels", "opus_adapted": "Adapted, Opus's labels"}
+BAR_SHORT = {"base": "Base FinBERT", "people_4oct": "People's labels, 4 Oct", "opus_finbert": "LLM labels", "opus_adapted": "Adapted, LLM labels"}
 
 
 def bars(scope, which):
@@ -150,7 +150,7 @@ def cv_plot(lo=0.62, hi=0.76, step=0.02):
         d = b - a
         out.append(f'<div class="dp-row"><div class="dp-label"><b>Seed {r["seed"]}, fold {r["fold"]}</b></div><div class="dp-track">'
                    f'<i class="link" style="left:{left};width:{width}"></i>'
-                   f'<i class="dot mean fam-opus" style="left:{pct(a, lo, hi)}" data-tip="FinBERT: {f3(a)}"></i>'
+                   f'<i class="dot mean fam-llm" style="left:{pct(a, lo, hi)}" data-tip="FinBERT: {f3(a)}"></i>'
                    f'<i class="dot mean fam-adapted" style="left:{pct(b, lo, hi)}" data-tip="Adapted encoder: {f3(b)}"></i></div>'
                    f'<div class="dp-val"><b class="{"up" if d > 0 else "down"}">{sgn(d)}</b></div></div>')
     out.append("</div>")
@@ -208,6 +208,29 @@ def net_table():
             f"<tbody>{''.join(rows)}</tbody></table></div>")
 
 
+T = json.load(open(S + "techniques.json"))
+
+
+def tech_plot(lo=-0.10, hi=0.05, step=0.025):
+    n = round((hi - lo) / step)
+    ticks = "".join(f'<span style="left:{pct(lo + i * step, lo, hi)}">{(lo + i * step):+.3f}</span>'.replace("-", "&#8722;") if (lo + i * step) else f'<span style="left:{pct(0, lo, hi)}">0</span>' for i in range(0, n + 1, 2))
+    band = f'<i class="band" style="left:{pct(-T["noise_sd"], lo, hi)};width:{100 * 2 * T["noise_sd"] / (hi - lo):.2f}%"></i><i class="zero" style="left:{pct(0, lo, hi)}"></i>'
+    out = [f'<div class="dp tech" style="--cols:{n}">', f'<div class="dp-row dp-head"><div class="dp-label"></div><div class="dp-axis">{ticks}</div><div class="dp-val"></div></div>']
+    for r in T["rows"]:
+        fam = "adapted" if r["kept"] else "base"
+        out.append(f'<div class="dp-row fam-{fam}"><div class="dp-label"><b>{e(r["name"])}</b><span>{e(r["sub"])}</span></div>'
+                   f'<div class="dp-track">{band}<i class="dot mean" style="left:{pct(r["gain"], lo, hi)}" data-tip="{e(r["name"])}: {r["gain"]:+.3f}, better in {e(r["better"])}"></i></div>'
+                   f'<div class="dp-val"><b>{sgn(r["gain"])}</b><span>{e(r["better"])}</span></div></div>')
+    out.append("</div>")
+    return "\n".join(out)
+
+
+def tech_table():
+    rows = "".join(f"<tr><th>{e(r['name'])} <span class='muted'>({e(r['sub'])})</span></th><td>{sgn(r['gain'])}</td><td>{e(r['better'])}</td><td class='l'>{'kept' if r['kept'] else 'left out'}</td></tr>" for r in T["rows"])
+    return ("<details><summary>Show the numbers</summary><div class='scroll'><table class='num'><thead><tr><th>Technique</th><th>Gain in macro-F1</th><th>Folds better</th><th>In the chosen model</th></tr></thead>"
+            f"<tbody>{rows}</tbody></table></div></details>")
+
+
 cb, ca = D["confusion"]["first"]["base"], D["confusion"]["first"]["opus_adapted"]
 pf, pb, pa = D["paired"]["first"], D["paired"]["broker"], D["paired"]["all"]
 cv = D["cv"]
@@ -232,7 +255,7 @@ BODY = f"""
 <header class="mast">
   <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Mon 12 Oct 2026</span></div>
   <h1>Which FinBERT should the dashboard and chatbot use?</h1>
-  <p class="lede">Six versions of the sentiment model were scored on the same held-out sentences. The best is FinBERT first adapted to the project's own text, then fine-tuned on Opus's labels. Its overall accuracy is about the same as plain FinBERT's. What changes is the kind of mistake: it stops calling almost everything neutral, and finds three in five negative sentences where plain FinBERT found one in five.</p>
+  <p class="lede">Six versions of the sentiment model were scored on the same held-out sentences. The best is FinBERT first adapted to the project's own text, then fine-tuned on labels made by an LLM. Its overall accuracy is about the same as plain FinBERT's. What changes is the kind of mistake: it stops calling almost everything neutral, and finds three in five negative sentences where plain FinBERT found one in five.</p>
   <div class="tiles">
     <div><span class="k">Macro-F1, 299 test rows</span><b>{f3(fbase['macro_f1'])} <i>to</i> {f3(fa['mean']['macro_f1'])}</b><span>base FinBERT to the best set, mean of three seeds</span></div>
     <div><span class="k">Negative sentences found</span><b>{100 * fbase['negative']['recall']:.0f}% <i>to</i> {100 * fa['mean']['negative']['recall']:.0f}%</b><span>recall on the {F['label_counts']['negative']} negative test rows</span></div>
@@ -243,7 +266,7 @@ BODY = f"""
 
 <nav class="toc" aria-label="Sections">
   <a href="#compared">What was compared</a><a href="#tested">How it was tested</a><a href="#headline">The headline</a><a href="#errors">The kind of error</a>
-  <a href="#classes">By class</a><a href="#other">Other text</a><a href="#adapted">Adapted or plain</a><a href="#index">Effect on the index</a><a href="#limits">Limits</a><a href="#next">Decision</a><a href="#tables">Full tables</a>
+  <a href="#classes">By class</a><a href="#other">Other text</a><a href="#adapted">Adapted or plain</a><a href="#techniques">Other techniques</a><a href="#index">Effect on the index</a><a href="#limits">Limits</a><a href="#next">Decision</a><a href="#tables">Full tables</a>
 </nav>
 
 <section id="compared">
@@ -256,12 +279,12 @@ BODY = f"""
       <tr class="fam-people"><th><i class="key"></i>Fine-tuned on people's labels</th><td>FinBERT</td><td>978 sentences labelled by the team</td><td>1 Oct</td></tr>
       <tr class="fam-people"><th><i class="key"></i>The same, retrained</th><td>FinBERT</td><td>The same 978 sentences, after a fault in how training began was fixed</td><td>4 Oct</td></tr>
       <tr class="fam-people"><th><i class="key"></i>The same, with broker rows</th><td>FinBERT</td><td>1,258 sentences: the 978 plus 280 from broker research reports</td><td>7 Oct</td></tr>
-      <tr class="fam-opus"><th><i class="key"></i>Fine-tuned on Opus's labels</th><td>FinBERT</td><td>{tr['rows']:,} sentences labelled by Claude Opus 5.5 under the rules of 10 Oct</td><td>11 Oct</td></tr>
-      <tr class="fam-adapted"><th><i class="key"></i>Adapted encoder, fine-tuned on Opus's labels</th><td>FinBERT after reading {pt['kept']:,} of the corpus's own sentences</td><td>The same {tr['rows']:,} sentences</td><td>11 Oct</td></tr>
+      <tr class="fam-llm"><th><i class="key"></i>Fine-tuned on LLM labels</th><td>FinBERT</td><td>{tr['rows']:,} sentences labelled by an LLM under the rules of 10 Oct</td><td>11 Oct</td></tr>
+      <tr class="fam-adapted"><th><i class="key"></i>Adapted encoder, fine-tuned on LLM labels</th><td>FinBERT after reading {pt['kept']:,} of the corpus's own sentences</td><td>The same {tr['rows']:,} sentences</td><td>11 Oct</td></tr>
     </tbody>
   </table></div>
   <p class="note-line"><b>Two terms.</b> <em>Fine-tuning</em> shows the model sentences with known answers. <em>Adapting</em> comes before that and uses no answers at all: FinBERT keeps doing its original exercise, guessing hidden words, on the project's Reddit posts, news and reports, so it meets local product names and Reddit's style before it is asked to judge sentiment.</p>
-  <p>The {tr['rows']:,} training sentences are {tr['by_sheet']['first_round']} from the first labelling round, {tr['by_sheet']['broker_research']} from broker research, {tr['by_sheet']['topup']} added for thin topics and {tr['by_sheet']['active']} that earlier models were least sure about. Opus labelled {tr['labels']['positive']} positive, {tr['labels']['neutral']} neutral and {tr['labels']['negative']} negative. They are LLM labels and are reported as such.</p>
+  <p>The {tr['rows']:,} training sentences are {tr['by_sheet']['first_round']} from the first labelling round, {tr['by_sheet']['broker_research']} from broker research, {tr['by_sheet']['topup']} added for thin topics and {tr['by_sheet']['active']} that earlier models were least sure about. The LLM labelled {tr['labels']['positive']} positive, {tr['labels']['neutral']} neutral and {tr['labels']['negative']} negative. They are LLM labels and are reported as such.</p>
 </section>
 
 <section id="tested">
@@ -288,12 +311,12 @@ BODY = f"""
 
 <section id="headline">
   <h2>The headline: each step up is small, and they add up</h2>
-  <p>On the {F['n']} first-round test rows, base FinBERT scores {f3(fbase['macro_f1'])}. Fine-tuning on people's labels lifts that to {f3(fp1['mean']['macro_f1'])} and, once retrained, {f3(fp4['mean']['macro_f1'])}. Switching to Opus's labels, with more rows, gives {f3(fo['mean']['macro_f1'])}. Adapting the encoder first gives {f3(fa['mean']['macro_f1'])}.</p>
+  <p>On the {F['n']} first-round test rows, base FinBERT scores {f3(fbase['macro_f1'])}. Fine-tuning on people's labels lifts that to {f3(fp1['mean']['macro_f1'])} and, once retrained, {f3(fp4['mean']['macro_f1'])}. Switching to LLM labels, with more rows, gives {f3(fo['mean']['macro_f1'])}. Adapting the encoder first gives {f3(fa['mean']['macro_f1'])}.</p>
   <figure>
     <figcaption>Macro-F1 on the {F['n']} first-round test rows</figcaption>
     <div class="legend">
       <span><i class="dot mean lg"></i>mean of three seeds</span><span><i class="dot seed lg"></i>one seed</span><span><i class="dot avg lg"></i>the three models averaged</span>
-      <span class="fam-base"><i class="sw"></i>base</span><span class="fam-people"><i class="sw"></i>people's labels</span><span class="fam-opus"><i class="sw"></i>Opus's labels</span><span class="fam-adapted"><i class="sw"></i>adapted encoder</span>
+      <span class="fam-base"><i class="sw"></i>base</span><span class="fam-people"><i class="sw"></i>people's labels</span><span class="fam-llm"><i class="sw"></i>LLM labels</span><span class="fam-adapted"><i class="sw"></i>adapted encoder</span>
     </div>
     {dotplot(F, ['base', 'people_1oct', 'people_4oct', 'opus_finbert', 'opus_adapted'])}
     {dot_table(F, ['base', 'people_1oct', 'people_4oct', 'opus_finbert', 'opus_adapted'])}
@@ -325,7 +348,7 @@ BODY = f"""
   <p>Recall is the share of the truly negative (or neutral, or positive) sentences the model found. Precision is the share of its negative calls that were right. Figures are the mean of three seeds on the {F['n']} first-round rows.</p>
   <figure>
     <figcaption>Recall and precision for each class, four models</figcaption>
-    <div class="legend"><span class="fam-base"><i class="sw"></i>Base FinBERT</span><span class="fam-people"><i class="sw"></i>People's labels, 4 Oct</span><span class="fam-opus"><i class="sw"></i>Opus's labels</span><span class="fam-adapted"><i class="sw"></i>Adapted, Opus's labels</span></div>
+    <div class="legend"><span class="fam-base"><i class="sw"></i>Base FinBERT</span><span class="fam-people"><i class="sw"></i>People's labels, 4 Oct</span><span class="fam-llm"><i class="sw"></i>LLM labels</span><span class="fam-adapted"><i class="sw"></i>Adapted, LLM labels</span></div>
     <div class="pair">{bars(F, 'recall')}{bars(F, 'precision')}</div>
     {pr_table(F)}
   </figure>
@@ -338,7 +361,7 @@ BODY = f"""
 
 <section id="other">
   <h2>Does it hold on other text?</h2>
-  <p>The first-round rows are mostly Reddit and earnings reports. The broker research rows are analysts' prose, closer to what FinBERT was first trained on, and base FinBERT is strong there: fine-tuning on people's labels never beat it. The adapted model on Opus's labels does.</p>
+  <p>The first-round rows are mostly Reddit and earnings reports. The broker research rows are analysts' prose, closer to what FinBERT was first trained on, and base FinBERT is strong there: fine-tuning on people's labels never beat it. The adapted model on LLM labels does.</p>
   <figure>
     <figcaption>Macro-F1 on the {B['n']} broker research test rows</figcaption>
     {dotplot(B, ['base', 'people_4oct', 'people_7oct', 'opus_finbert', 'opus_adapted'], lo=0.55, hi=0.80)}
@@ -360,8 +383,8 @@ BODY = f"""
   <h2>Is adapting worth it, or is plain FinBERT enough?</h2>
   <p>This is the closest call on the page, so it was measured a second way. The training rows were split into five folds, and each fold was held out in turn while a model trained on the other four. That was done for three seeds, from plain FinBERT and from the adapted encoder on identical folds, so each pair differs only in the starting point.</p>
   <figure>
-    <figcaption>Cross-validation: macro-F1 on each held-out fold, scored against Opus's labels</figcaption>
-    <div class="legend"><span class="fam-opus"><i class="sw round"></i>from plain FinBERT</span><span class="fam-adapted"><i class="sw round"></i>from the adapted encoder</span><span class="muted">the figure on the right is adapted minus plain</span></div>
+    <figcaption>Cross-validation: macro-F1 on each held-out fold, scored against the LLM's labels</figcaption>
+    <div class="legend"><span class="fam-llm"><i class="sw round"></i>from plain FinBERT</span><span class="fam-adapted"><i class="sw round"></i>from the adapted encoder</span><span class="muted">the figure on the right is adapted minus plain</span></div>
     {cv_plot()}
     {cv_table()}
   </figure>
@@ -369,6 +392,49 @@ BODY = f"""
     <p><b>The adapted encoder wins {cv['better']} of {cv['n']} pairs</b>, by {sgn(cv['diff_mean'])} on average ({f3(cv['finbert_mean'])} to {f3(cv['adapted_mean'])}). A paired test puts the true gain between {sgn(cv['ci'][0])} and {sgn(cv['ci'][1])} (t = {cv['t']:.2f}, p = {p(cv['p'])}). Small, and not zero.</p>
     <p><b>The gain was larger on 6 Oct</b> (+0.038 on 978 rows). With {tr['rows']:,} labelled rows plain FinBERT has caught up part of the way, which is what adapting is expected to do: it helps most when labels are scarce.</p>
     <p><b>It costs little to keep.</b> Adapting took about 1 hour 40 minutes, once. The model the product runs is the same size and speed either way.</p>
+  </div>
+</section>
+
+<section id="techniques">
+  <h2>Why not switch on every tuning technique?</h2>
+  <p>The chosen model already stacks every technique that passed testing. The others were tried one at a time, then together, and left out because they did not beat the noise. Each was tested by cross-validation on the training rows, never on the test rows.</p>
+  <div class="twocol">
+    <div>
+      <h3>In the chosen model</h3>
+      <ul>
+        <li>Adapting the encoder on the project's own text</li>
+        <li>Fine-tuning on labelled sentences</li>
+        <li>The larger label set: {tr['rows']:,} rows, up from 978</li>
+        <li>{tr['by_sheet']['active']} rows the earlier models were least sure about</li>
+        <li>The topic given to the model as a readable name</li>
+        <li>Longer training that stops when the held-out score stops rising</li>
+        <li>Averaging three trained models</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Tried and left out</h3>
+      <ul>
+        <li><b>Balanced class weights:</b> make a mistake on a rare class cost more.</li>
+        <li><b>Weights by source:</b> make the training mix of Reddit, news and reports match the corpus.</li>
+        <li><b>Class weights matching the corpus's mix:</b> lean the model toward the share of neutral sentences in the whole corpus.</li>
+        <li><b>The helpful ones all together.</b></li>
+      </ul>
+    </div>
+  </div>
+  <figure>
+    <figcaption>Gain in cross-validation macro-F1 over the plain setup, for each technique</figcaption>
+    <div class="legend"><span><i class="sw band-key"></i>how far two runs of the identical setup differ (sd {T['noise_sd']:.3f})</span><span class="fam-adapted"><i class="sw round"></i>in the chosen model</span><span class="fam-base"><i class="sw round"></i>left out</span></div>
+    {tech_plot()}
+    {tech_table()}
+  </figure>
+  <div class="readout">
+    <p><b>The weighting techniques sit inside the noise.</b> Balanced class weights gained {sgn(T['rows'][0]['gain'])} and source weights {sgn(T['rows'][1]['gain'])}, when two runs of the very same setup differ by about {T['noise_sd']:.3f}.</p>
+    <p><b>Switching them all on did not add them up.</b> Together they gained {sgn(T['rows'][5]['gain'])}, no more than the best one alone ({sgn(T['rows'][2]['gain'])}). Several of them correct the same weakness, so the second has little left to correct.</p>
+    <p><b>One made it worse.</b> Weights matching the corpus's mix cost {sgn(T['rows'][4]['gain'])}: they pushed the model back toward calling everything neutral, the fault fine-tuning is there to cure.</p>
+    <p><b>The readable topic name is kept, and credited with nothing.</b> Its first result ({sgn(T['rows'][2]['gain'])}) shrank to {sgn(T['rows'][3]['gain'])} when repeated on three seeds. It stays because the models were built with it and nothing shows it does harm.</p>
+    <p><b>Adapting the encoder is the only addition that held up twice:</b> {sgn(T['rows'][6]['gain'])} with 978 rows and {sgn(T['rows'][7]['gain'])} with {tr['rows']:,}, better in most folds both times.</p>
+    <p><b>Why not add them anyway?</b> With about {round(tr['rows'], -2):,} labelled rows, gains this small cannot be told apart from luck. Adding techniques until the test score rises would be fitting the test rows, and the score would stop meaning anything.</p>
+    <p><b>One gap.</b> The weighting techniques were tested on plain FinBERT with people's labels, not on the adapted encoder with LLM labels. A run with everything switched on would close that gap; it is expected to land within noise of the chosen model.</p>
   </div>
 </section>
 
@@ -387,9 +453,9 @@ BODY = f"""
   <h2>How sure this is, and the limits</h2>
   <ul class="limits">
     <li><b>One run of three seeds.</b> The gaps between fine-tuned models are about the size of the spread between seeds. The order is trusted because the first-round rows, the broker research rows and cross-validation all agree, not because any one gap is large.</li>
-    <li><b>The test labels and the training labels follow different rules.</b> The first-round test rows were labelled by people under the older rule for retail products, with a model's suggestion in view. The training rows were labelled by Opus under the rules of 10 Oct. The models still score higher on the people's labels than those trained on people's labels did.</li>
+    <li><b>The test labels and the training labels follow different rules.</b> The first-round test rows were labelled by people under the older rule for retail products, with a model's suggestion in view. The training rows were labelled by an LLM under the rules of 10 Oct. The models still score higher on the people's labels than those trained on people's labels did.</li>
     <li><b>Few negative test rows.</b> {F['label_counts']['negative']} in the first round and {B['label_counts']['negative']} in broker research. Negative precision and recall move by two or three points when a single row changes.</li>
-    <li><b>Cross-validation is scored against Opus's labels,</b> the test rows against people's. They answer slightly different questions and happen to agree.</li>
+    <li><b>Cross-validation is scored against the LLM's labels,</b> the test rows against people's. They answer slightly different questions and happen to agree.</li>
     <li><b>An earlier adapted model is left out.</b> The one from 6 and 7 Oct scored 0.751 on the broker research rows, but its adapting step had read sentences related to test sentences. This run fixed that; its like-for-like figure is {f3(ba['averaged']['macro_f1'])} for the three averaged.</li>
     <li><b>Reddit is not solved.</b> Accuracy there is {f2(src['opus_adapted']['arctic_shift']['accuracy'])}, the same as before.</li>
   </ul>
@@ -398,7 +464,7 @@ BODY = f"""
 <section id="next">
   <h2>Decision and what happens next</h2>
   <div class="decision">
-    <p><b>The model for the dashboard and chatbot is the adapted encoder fine-tuned on Opus's labels, three runs averaged.</b> It leads on both test sets and in cross-validation, by the rule fixed before the run.</p>
+    <p><b>The model for the dashboard and chatbot is the adapted encoder fine-tuned on LLM labels, three runs averaged.</b> It leads on both test sets and in cross-validation, by the rule fixed before the run.</p>
   </div>
   <ol class="steps">
     <li><b>Choose the neutral threshold</b> for the averaged model on held-out training rows, and check the index it would produce against the labels.</li>
@@ -419,18 +485,19 @@ BODY = f"""
   {full_table(A)}
   <h3>Row by row: the averaged adapted model against each other model</h3>
   <div class="scroll"><table class="num"><thead><tr><th>Test rows</th><th>Against</th><th>Both right</th><th>Only the adapted model right</th><th>Only the other right</th><th>Both wrong</th><th>Exact test p</th></tr></thead><tbody>
-  {''.join(f"<tr><th>{lab}</th><td class='l'>{nm}</td><td>{r['both_right']}</td><td>{r['only_adapted']}</td><td>{r['only_other']}</td><td>{r['both_wrong']}</td><td>{p(r['mcnemar_exact_p'])}</td></tr>" for lab, pr in (("First round, 299", pf), ("Broker research, 100", pb), ("Both, 399", pa)) for key, nm in (("base", "Base FinBERT"), ("people_4oct", "People's labels, 4 Oct, averaged"), ("opus_finbert", "Opus's labels, averaged")) for r in [pr[key]])}
+  {''.join(f"<tr><th>{lab}</th><td class='l'>{nm}</td><td>{r['both_right']}</td><td>{r['only_adapted']}</td><td>{r['only_other']}</td><td>{r['both_wrong']}</td><td>{p(r['mcnemar_exact_p'])}</td></tr>" for lab, pr in (("First round, 299", pf), ("Broker research, 100", pb), ("Both, 399", pa)) for key, nm in (("base", "Base FinBERT"), ("people_4oct", "People's labels, 4 Oct, averaged"), ("opus_finbert", "LLM labels, averaged")) for r in [pr[key]])}
   </tbody></table></div>
   <h3>Where the figures come from</h3>
   <ul class="refs">
     <li>Scripts, the 30 cross-validation scores and the result tables: <code>data/eval/model-rerun-2026-10-11/</code></li>
     <li>Write-up: <code>docs/evidence/model-rerun-2026-10-11.md</code></li>
+    <li>Other techniques: <code>docs/evidence/finetune-fixes-2026-10-01.md</code>, <code>noise-floor-cv-2026-10-02.md</code>, <code>dapt-2026-10-06.md</code></li>
     <li>Training and test labels: <code>data/labeled/llm_rater/rules-2026-10-10/training_set.csv</code>, <code>data/labeled/sgx_research/resolved_test_blind.csv</code></li>
     <li>Run: 11 Oct 15:51 to 12 Oct 00:07 on a MacBook Air (M1), about eight hours; nothing was written to the database</li>
   </ul>
 </section>
 
-<footer>Every figure on this page is computed from the trained models and the label files named above. No sentence text is shown.</footer>
+<footer>Every figure on this page is computed from the trained models and the label files named above, except the section on other techniques, whose figures come from the evidence notes of 1, 2 and 6 Oct. No sentence text is shown.</footer>
 </div>
 <div id="tip" role="status" hidden></div>
 <script>

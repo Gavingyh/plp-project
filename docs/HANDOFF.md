@@ -1610,3 +1610,12 @@ Two things it adds to the evidence note:
   on the broker research rows (+0.090 against +0.190; base +0.210). A
   neutral threshold has not been chosen for this model yet; that comes
   before the re-score.
+
+**Report updated (12 Oct, later).** At the owner's request the model
+comparison page gained a section on why the other tuning techniques are not
+switched on (the 1 Oct one-change-at-a-time cross-validation, the 2 Oct
+repeat on three seeds, and adapting on 6 and 11 Oct, against the noise
+between two identical runs), and the page now says "LLM labels" throughout
+in place of the model's name. The repository's evidence notes and label
+files still name the model. Not yet run: a model with every technique
+switched on, on the adapted encoder with the LLM's labels.

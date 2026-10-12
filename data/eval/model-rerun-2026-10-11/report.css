@@ -11,7 +11,7 @@
   --code-bg: #eaeeec;
   --s-base: #7b8580;
   --s-people: #1baf7a;
-  --s-opus: #eb6834;
+  --s-llm: #eb6834;
   --s-adapted: #2a78d6;
   --seq: #2a78d6;
   --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
@@ -23,14 +23,14 @@
     color-scheme: dark;
     --ground: #111614; --surface: #181f1c; --ink: #e4ebe7; --muted: #9aa7a1; --rule: #2b3431; --grid: #242c29;
     --accent: #63c3b4; --accent-soft: #1d2f2b; --code-bg: #212a27;
-    --s-base: #8e9a95; --s-people: #199e70; --s-opus: #d95926; --s-adapted: #3987e5; --seq: #3987e5;
+    --s-base: #8e9a95; --s-people: #199e70; --s-llm: #d95926; --s-adapted: #3987e5; --seq: #3987e5;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
   --ground: #111614; --surface: #181f1c; --ink: #e4ebe7; --muted: #9aa7a1; --rule: #2b3431; --grid: #242c29;
   --accent: #63c3b4; --accent-soft: #1d2f2b; --code-bg: #212a27;
-  --s-base: #8e9a95; --s-people: #199e70; --s-opus: #d95926; --s-adapted: #3987e5; --seq: #3987e5;
+  --s-base: #8e9a95; --s-people: #199e70; --s-llm: #d95926; --s-adapted: #3987e5; --seq: #3987e5;
 }
 
 * { box-sizing: border-box; }
@@ -74,7 +74,7 @@ figcaption { font: 600 15px/1.35 var(--display); margin-bottom: 10px; }
 .legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; background: var(--c); }
 .sw.round { border-radius: 50%; }
-.fam-base { --c: var(--s-base); } .fam-people { --c: var(--s-people); } .fam-opus { --c: var(--s-opus); } .fam-adapted { --c: var(--s-adapted); }
+.fam-base { --c: var(--s-base); } .fam-people { --c: var(--s-people); } .fam-llm { --c: var(--s-llm); } .fam-adapted { --c: var(--s-adapted); }
 
 /* dot plot */
 .dp { --labelw: 16.5rem; --valw: 7.6rem; }
@@ -104,6 +104,10 @@ figcaption { font: 600 15px/1.35 var(--display); margin-bottom: 10px; }
 .dp-val span { font: 400 11px/1.2 var(--mono); color: var(--muted); }
 .dp-val .down { color: var(--muted); font-weight: 400; }
 .link { position: absolute; top: 50%; height: 2px; margin-top: -1px; background: var(--muted); opacity: 0.55; }
+.band { position: absolute; top: -7px; bottom: -7px; background: color-mix(in srgb, var(--muted) 18%, transparent); }
+.zero { position: absolute; top: -7px; bottom: -7px; width: 1.5px; margin-left: -0.75px; background: var(--muted); }
+.sw.band-key { width: 22px; background: color-mix(in srgb, var(--muted) 18%, transparent); border-inline: 0; }
+.dp.tech { --labelw: 17rem; --valw: 7rem; }
 .dp.cv { --labelw: 8.6rem; --valw: 4.4rem; }
 .dp.cv .dp-row { padding-block: 3px; }
 .dp.cv .dp-track { height: 22px; }

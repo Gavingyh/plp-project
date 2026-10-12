@@ -101,7 +101,7 @@ By the project owner, after the rehearsal on a copy.
 | decision | who | by |
 |---|---|---|
 | **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
-| **The wealth definition in the LLM aspect prompt** predates the 10 Oct rule (wealth means the priority tiers). Changing it starts a new answer cache and about a day of classification, then another re-score | team | 19 Oct |
+| **A second re-score with the corpus re-classified under the new wealth wording.** A trial on the 2,075 labelled sentences found the new wording agrees with the new-rule labels 79.4% of the time against 75.5% (p < 0.001): wealth precision 0.36 to 0.70, wealth recall 0.76 to 0.46 ([evidence](evidence/wealth-definition-trial-2026-10-12.md)). The corpus run started on 13 Oct (about a day, cache only); applying it changes the wealth, retail and other rows of the index, not the headlines | owner | when the run ends |
 
 ---
 

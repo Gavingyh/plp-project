@@ -1747,3 +1747,21 @@ too high: six cases of one test read results files kept out of git), now
 intermittently because the tests trained on the GPU while the local model
 was using it, so those tests now train on the CPU
 ([evidence](evidence/install-test-2026-10-12.md)).
+
+**Trial of the new wealth wording (finished 13 Oct, 00:23).** The aspect
+model's prompt was given the 10 Oct wealth rule and run on the 2,075
+labelled sentences, in its own process and cache. Against the LLM rater's
+new-rule aspects it agrees 79.4% of the time, where the wording the corpus
+was classified under agrees 75.5% (148 sentences newly right, 67 newly
+wrong, p < 0.001). Wealth precision rises from 0.36 to 0.70 and wealth
+recall falls from 0.76 to 0.46; retail recall rises from 0.79 to 0.87.
+Against people's first-round aspects, made under the older reading, nothing
+changes (72.9% to 73.9%, p = 0.32)
+([evidence](evidence/wealth-definition-trial-2026-10-12.md)).
+
+**Running unattended from 13 Oct, 00:24:** the chatbot evaluations on the
+re-scored database (`data/run/eval-2026-10-13/run.sh`: gold set, multi-turn,
+retrieval, checklist judge), then the corpus under the new wording
+(`data/run/wealth-corpus-2026-10-13/run.sh`, about a day, cache only,
+resumable; stop it with `kill $(cat data/run/wealth-corpus-2026-10-13/run.pid)`).
+**Needs the owner:** the go-ahead for a second re-score once that run ends.

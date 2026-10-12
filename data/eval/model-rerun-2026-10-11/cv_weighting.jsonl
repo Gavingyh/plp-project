@@ -1,0 +1,15 @@
+{"key": "42 0 both", "seed": 42, "fold": 0, "variant": "both", "dev_macro_f1": 0.6720026542912646}
+{"key": "42 1 both", "seed": 42, "fold": 1, "variant": "both", "dev_macro_f1": 0.7348230797045302}
+{"key": "42 2 both", "seed": 42, "fold": 2, "variant": "both", "dev_macro_f1": 0.6980301180301179}
+{"key": "42 3 both", "seed": 42, "fold": 3, "variant": "both", "dev_macro_f1": 0.6543341834672425}
+{"key": "42 4 both", "seed": 42, "fold": 4, "variant": "both", "dev_macro_f1": 0.6833152591289249}
+{"key": "1 0 both", "seed": 1, "fold": 0, "variant": "both", "dev_macro_f1": 0.6853845769562215}
+{"key": "1 1 both", "seed": 1, "fold": 1, "variant": "both", "dev_macro_f1": 0.6976531368733204}
+{"key": "1 2 both", "seed": 1, "fold": 2, "variant": "both", "dev_macro_f1": 0.7056638969055609}
+{"key": "1 3 both", "seed": 1, "fold": 3, "variant": "both", "dev_macro_f1": 0.7003267757599821}
+{"key": "1 4 both", "seed": 1, "fold": 4, "variant": "both", "dev_macro_f1": 0.7054229203575662}
+{"key": "7 0 both", "seed": 7, "fold": 0, "variant": "both", "dev_macro_f1": 0.662264190488167}
+{"key": "7 1 both", "seed": 7, "fold": 1, "variant": "both", "dev_macro_f1": 0.733770416379112}
+{"key": "7 2 both", "seed": 7, "fold": 2, "variant": "both", "dev_macro_f1": 0.7097378216011493}
+{"key": "7 3 both", "seed": 7, "fold": 3, "variant": "both", "dev_macro_f1": 0.7102583827322503}
+{"key": "7 4 both", "seed": 7, "fold": 4, "variant": "both", "dev_macro_f1": 0.700601070006777}

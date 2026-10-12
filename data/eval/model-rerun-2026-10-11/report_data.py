@@ -12,7 +12,9 @@ broker = pd.read_csv("data/labeled/sgx_research/resolved_test_blind.csv")[["sent
 test = pd.concat([first, broker], ignore_index=True)
 SETS = [("people_1oct", "models/experiments-2026-10-01/label"), ("people_4oct", "models/experiments-2026-10-03/label"),
         ("people_7oct", "models/experiments-2026-10-07/finbert-combined"),
-        ("opus_finbert", "models/experiments-2026-10-11/finbert"), ("opus_adapted", "models/experiments-2026-10-11/dapt")]
+        ("opus_finbert", "models/experiments-2026-10-11/finbert"), ("opus_adapted", "models/experiments-2026-10-11/dapt"),
+        ("adapted_weighted", "models/experiments-2026-10-11/dapt-weighted")]
+SETS = [(k, r) for k, r in SETS if all(os.path.isdir(f"{r}/seed_{s}/final") for s in (42, 1, 7))]
 SCOPES = {"first": (test.scope == "first").values, "broker": (test.scope == "broker").values, "all": np.ones(len(test), bool)}
 def metrics(y, pred):
     rep = classification_report(y, pred, labels=LABELS, output_dict=True, zero_division=0)
@@ -45,7 +47,7 @@ for sc, m in SCOPES.items():
     out["scopes"][sc] = o
     out["confusion"][sc] = {k: confusion_matrix(y, preds[k][m], labels=LABELS).tolist() for k in ("base", "people_4oct", "opus_finbert", "opus_adapted")}
     pr = {}
-    for other in ("base", "people_4oct", "opus_finbert"):
+    for other in [k for k in ("base", "people_4oct", "opus_finbert", "adapted_weighted") if k in preds]:
         a = preds["opus_adapted"][m] == y; b = preds[other][m] == y
         only_a, only_b = int((a & ~b).sum()), int((~a & b).sum())
         p = float(stats.binomtest(only_a, only_a + only_b, 0.5).pvalue) if only_a + only_b else 1.0

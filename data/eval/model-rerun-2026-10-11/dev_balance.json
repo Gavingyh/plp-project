@@ -1,0 +1,58 @@
+{
+ "chosen": {
+  "rows": 601,
+  "macro_f1": 0.71,
+  "net_called": 0.108,
+  "net_labels": 0.131,
+  "by_source": {
+   "arctic_shift": [
+    -0.045,
+    -0.027,
+    220
+   ],
+   "earnings": [
+    0.362,
+    0.367,
+    199
+   ],
+   "sgx_research": [
+    0.009,
+    0.054,
+    111
+   ],
+   "google_news": [
+    0.078,
+    0.137,
+    51
+   ]
+  }
+ },
+ "weighted": {
+  "rows": 601,
+  "macro_f1": 0.716,
+  "net_called": 0.14,
+  "net_labels": 0.131,
+  "by_source": {
+   "arctic_shift": [
+    -0.059,
+    -0.027,
+    220
+   ],
+   "earnings": [
+    0.377,
+    0.367,
+    199
+   ],
+   "sgx_research": [
+    0.18,
+    0.054,
+    111
+   ],
+   "google_news": [
+    0.098,
+    0.137,
+    51
+   ]
+  }
+ }
+}

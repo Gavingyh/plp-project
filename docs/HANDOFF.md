@@ -1638,3 +1638,23 @@ switched on, on the adapted encoder with the LLM's labels.
   if its paired cross-validation gain is positive with p < 0.05 and its test
   macro-F1 over three seeds is higher. The source weights give broker
   research rows 0.08 and Reddit rows 1.52.
+
+**Everything switched on, on the chosen setup (12 Oct, 12:35).** Balanced
+class weights with source weights, adapted encoder, the LLM's labels.
+
+- Cross-validation, the same 15 folds: 0.697 against the chosen model's
+  0.700, a difference of -0.003 (sd 0.015), better in 6 of 15, p = 0.52.
+- Test rows, mean of three seeds: 0.651 against 0.649 on the first round's
+  299; 0.739 against 0.740 on broker research; 0.689 against 0.685 on all
+  399. Averaged, the chosen model is ahead on each (0.670, 0.770, 0.709
+  against 0.664, 0.746, 0.699). Row by row the two disagree on 29 of 399.
+- By the rule fixed in `run.sh` before the run the chosen model stands.
+- Balance: on all 399 test rows the weighted model's net balance is closer
+  to the labels (+0.188 against +0.185; chosen +0.153). On the 601 held-out
+  training rows it is closer overall (+0.140 against +0.131; chosen +0.108)
+  but far off on broker research (+0.180 against +0.054; chosen +0.009),
+  whose rows it weights at 0.08 (`dev_balance.json`). Not a reason to change.
+- Its own dev-chosen neutral margin is 0.10, with no gain on the test rows
+  (`margin_weighted.json`).
+
+Still running: each weighting alone, 15 folds each.

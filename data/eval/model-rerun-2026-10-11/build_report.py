@@ -17,9 +17,10 @@ NAME = {
     "people_7oct": ("Fine-tuned on people's labels, with broker rows", "7 Oct, 1,258 rows"),
     "opus_finbert": ("Fine-tuned on LLM labels", "11 Oct, 1,563 rows"),
     "opus_adapted": ("Adapted encoder, fine-tuned on LLM labels", "11 Oct, 1,563 rows"),
+    "adapted_weighted": ("The same, with class and source weights", "12 Oct, 1,563 rows"),
 }
 FAM = {"base": "base", "people_1oct": "people", "people_4oct": "people", "people_7oct": "people",
-       "opus_finbert": "llm", "opus_adapted": "adapted"}
+       "opus_finbert": "llm", "opus_adapted": "adapted", "adapted_weighted": "adapted"}
 e = html.escape
 
 
@@ -164,7 +165,7 @@ def cv_table():
 
 
 # ---------- the full appendix table for one scope ----------
-ALL_SETS = ["base", "people_1oct", "people_4oct", "people_7oct", "opus_finbert", "opus_adapted"]
+ALL_SETS = ["base", "people_1oct", "people_4oct", "people_7oct", "opus_finbert", "opus_adapted", "adapted_weighted"]
 
 
 def full_table(scope):
@@ -210,6 +211,44 @@ def net_table():
 
 T = json.load(open(S + "techniques.json"))
 MG = json.load(open(S + "margin_adapted.json"))
+MGW = json.load(open(S + "margin_weighted.json"))
+DVB = json.load(open(S + "dev_balance.json"))
+import pandas as _pd
+from scipy import stats as _st
+_base = {(r["seed"], r["fold"]): r["adapted"] for r in D["cv"]["folds"]}
+_w = _pd.DataFrame([json.loads(l) for l in open(S + "cv_weighting.jsonl") if l.strip()])
+
+
+def wstats(variant):
+    """Paired cross-validation of one weighting variant against the adapted baseline on the same folds."""
+    g = _w[(_w.variant == variant) & _w.dev_macro_f1.notna()]
+    if len(g) < 15:
+        return None
+    x = [r.dev_macro_f1 for r in g.itertuples()]
+    b = [_base[(r.seed, r.fold)] for r in g.itertuples()]
+    d = [a - c for a, c in zip(x, b)]
+    return {"n": len(d), "variant_mean": sum(x) / len(x), "base_mean": sum(b) / len(b), "diff": sum(d) / len(d),
+            "better": sum(1 for v in d if v > 0), "p": float(_st.ttest_rel(x, b).pvalue)}
+
+
+WB = wstats("both")
+for _name, _key in (("Balanced class weights and source weights, on the chosen setup", "both"),
+                    ("Balanced class weights alone, on the chosen setup", "balanced"), ("Source weights alone, on the chosen setup", "source")):
+    _r = wstats(_key)
+    if _r:
+        T["rows"].append({"name": _name, "sub": "12 Oct, 15 folds, 1,563 rows", "gain": round(_r["diff"], 3), "better": f"{_r['better']} of {_r['n']} folds", "kept": False})
+
+
+def weighted_table():
+    rows = []
+    for key, label in (("first", "First round, 299 rows"), ("broker", "Broker research, 100 rows"), ("all", "Both, 399 rows")):
+        sc = D["scopes"][key]["sets"]
+        for sid, mg, nm in (("opus_adapted", MG, "Chosen model"), ("adapted_weighted", MGW, "With class and source weights")):
+            v, t = sc[sid], mg["test"][key]["argmax"]
+            rows.append(f"<tr><th>{label if sid == 'opus_adapted' else ''}</th><td class='l'>{nm}</td><td>{f3(v['mean']['macro_f1'])}</td><td>{f3(v['sd_macro_f1'])}</td><td>{f3(v['averaged']['macro_f1'])}</td>"
+                        f"<td>{f3(v['averaged']['accuracy'])}</td><td>{sgn(t['net_called'])}</td><td>{sgn(t['net_labels'])}</td></tr>")
+    return ("<div class='scroll'><table class='num'><thead><tr><th>Test rows</th><th>Model</th><th>Macro-F1, mean of seeds</th><th>Seed sd</th><th>Three averaged</th><th>Accuracy, averaged</th><th>Net balance called</th><th>Net balance in the labels</th></tr></thead>"
+            f"<tbody>{''.join(rows)}</tbody></table></div>")
 
 
 def tech_plot(lo=-0.10, hi=0.05, step=0.025):
@@ -435,7 +474,13 @@ BODY = f"""
     <p><b>The readable topic name is kept, and credited with nothing.</b> Its first result ({sgn(T['rows'][2]['gain'])}) shrank to {sgn(T['rows'][3]['gain'])} when repeated on three seeds. It stays because the models were built with it and nothing shows it does harm.</p>
     <p><b>Adapting the encoder is the only addition that held up twice:</b> {sgn(T['rows'][6]['gain'])} with 978 rows and {sgn(T['rows'][7]['gain'])} with {tr['rows']:,}, better in most folds both times.</p>
     <p><b>Why not add them anyway?</b> With about {round(tr['rows'], -2):,} labelled rows, gains this small cannot be told apart from luck. Adding techniques until the test score rises would be fitting the test rows, and the score would stop meaning anything.</p>
-    <p><b>One gap.</b> The weighting techniques were tested on plain FinBERT with people's labels, not on the adapted encoder with LLM labels. A run with everything switched on would close that gap; it is expected to land within noise of the chosen model.</p>
+    <p><b>The same holds on the chosen setup.</b> The weighting techniques had only been tested on plain FinBERT with people's labels, so on 12 Oct balanced class weights and source weights were switched on together for the adapted encoder with LLM labels. Over the same 15 folds it scored {f3(WB['variant_mean'])} against {f3(WB['base_mean'])} ({sgn(WB['diff'])}, better in {WB['better']} of {WB['n']}, p = {p(WB['p'])}). The rule fixed before the run asked for a cross-validation gain with p below 0.05 and a higher test score, so the chosen model stands.</p>
+  </div>
+  <h3>The chosen model against the same model with both weightings</h3>
+  {weighted_table()}
+  <div class="readout">
+    <p><b>On macro-F1 the two cannot be told apart.</b> On the first-round rows the seeds average {f3(F['sets']['adapted_weighted']['mean']['macro_f1'])} with the weights and {f3(fa['mean']['macro_f1'])} without, a difference far inside the spread between seeds. Averaged, the chosen model is ahead on every test set. Row by row they disagree on {D['paired']['all']['adapted_weighted']['only_adapted'] + D['paired']['all']['adapted_weighted']['only_other']} of the {A['n']} test sentences.</p>
+    <p><b>The index balance does not settle it either.</b> On all {A['n']} test rows the weighted model's balance is closer to the labels ({sgn(MGW['test']['all']['argmax']['net_called'])} against a true {sgn(MGW['test']['all']['argmax']['net_labels'])}, where the chosen model reads {sgn(MG['test']['all']['argmax']['net_called'])}). To check that without leaning on test rows, the same sum was done on the {DVB['chosen']['rows']} training rows the models had held out. There the weighted model is closer overall ({sgn(DVB['weighted']['net_called'])} against {sgn(DVB['weighted']['net_labels'])}; chosen {sgn(DVB['chosen']['net_called'])}) but far off on broker research ({sgn(DVB['weighted']['by_source']['sgx_research'][0])} against {sgn(DVB['weighted']['by_source']['sgx_research'][1])}; chosen {sgn(DVB['chosen']['by_source']['sgx_research'][0])}), which is what giving those rows a weight of 0.08 would do. Neither model is reliably better on balance, so the choice rests on the rule.</p>
   </div>
 </section>
 

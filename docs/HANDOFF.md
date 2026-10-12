@@ -1737,3 +1737,13 @@ to the team's stores; the dashboard owner adds the model-version filter
 (the dashboard mixes both models' rows until then); decide whether to
 re-classify the corpus with the new wealth definition. `CLAUDE.md` still
 quotes the 1 Oct figures in its "Fine-tuning lead" claim.
+
+**Clean-copy install test, third run (12 Oct, 23:23).** A fresh clone of
+`main`, the README's steps and the 12 Oct snapshot: install, tests, API and
+dashboard all came up, and `/sentiment?bank=DBS` returned the stored 0.1552.
+Two findings, both fixed: the documented test counts were this Mac's (six
+too high: six cases of one test read results files kept out of git), now
+2519 in `tests/` and 2566 from the root; and a training test failed
+intermittently because the tests trained on the GPU while the local model
+was using it, so those tests now train on the CPU
+([evidence](evidence/install-test-2026-10-12.md)).

@@ -17,7 +17,7 @@ import random
 import pandas as pd
 import pytest
 
-pytestmark = pytest.mark.slow
+pytestmark = [pytest.mark.slow, pytest.mark.usefixtures("train_on_the_cpu")]
 
 _ASPECTS = ["dividend_policy", "asset_quality", "net_interest_margin", "management_guidance"]
 _TEMPLATES = {

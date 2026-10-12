@@ -10,6 +10,8 @@ import pytest
 import train.finetune as ft
 from tests.test_finetune_smoke import _make_synthetic_candidates
 
+pytestmark = pytest.mark.usefixtures("train_on_the_cpu")
+
 
 def _train_dev(n=50):
     labels = ["negative", "neutral", "positive"]

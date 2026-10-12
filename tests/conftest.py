@@ -28,6 +28,20 @@ def served_version(monkeypatch):
     return SERVED_VERSION
 
 
+@pytest.fixture
+def train_on_the_cpu(monkeypatch):
+    """The tests that train a tiny model do it, and evaluate it, on the CPU. A
+    Mac's GPU short of memory leaves the weights as garbage, and evaluation
+    then refuses the probabilities ("don't sum to 1"): the tests failed now
+    and then while another job used the GPU."""
+    import functools
+    import train.evaluate
+    import train.finetune
+    monkeypatch.setattr(train.finetune, "TrainingArguments",
+                        functools.partial(train.finetune.TrainingArguments, use_cpu=True))
+    monkeypatch.setattr(train.evaluate, "best_device", lambda: "cpu")
+
+
 @pytest.fixture(autouse=True)
 def intent_in_scope(monkeypatch):
     """The chatbot's intent classifier calls Ollama; in tests it answers

@@ -55,11 +55,11 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| checkpoint | `docs/RUNBOOK.md:223` | `sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"` |
-| compress | `docs/RUNBOOK.md:224` | `gzip -9 -c data/plp.db > data/snapshots/plp-<date>-vN.db.gz` |
-| verify | `docs/RUNBOOK.md:225` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
-| record checksum in the README | `docs/RUNBOOK.md:226` | `# record name, size and checksum in the README` |
-| after a material change | `docs/RUNBOOK.md:220` | `### Snapshot the database after a material change` |
+| checkpoint | `docs/RUNBOOK.md:235` | `sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"` |
+| compress | `docs/RUNBOOK.md:236` | `gzip -9 -c data/plp.db > data/snapshots/plp-<date>-vN.db.gz` |
+| verify | `docs/RUNBOOK.md:237` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
+| record checksum in the README | `docs/RUNBOOK.md:238` | `# record name, size and checksum in the README` |
+| after a material change | `docs/RUNBOOK.md:232` | `### Snapshot the database after a material change` |
 | too large for git | `README.md:129` | `` `data/plp.db` (204.3 MB restored from the latest snapshot) is too large for GitHub `` |
 | shared folder | `README.md:130` | `Download the latest snapshot from the team's shared folder` |
 | decompress | `README.md:133` | `gunzip -c plp-2026-10-11-v2.db.gz > data/plp.db` |

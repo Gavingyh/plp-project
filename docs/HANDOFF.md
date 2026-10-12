@@ -1589,3 +1589,24 @@ hours, no step failed.
 1 Oct models' figures; the owner should say whether it changes to this
 set's. Next: the re-score rehearsal on a copy, shown to the owner before
 `data/plp.db` is touched.
+
+**Model comparison report (12 Oct).** At the owner's request, a page that
+walks through the comparison: what was compared, how it was tested, the
+headline, the kind of error each model makes, precision and recall by
+class, the broker research rows, adapted against plain FinBERT, the effect
+on the index, limits and the decision. Standalone copy:
+`docs/briefs/model-comparison-2026-10-12.html`; built by
+`data/eval/model-rerun-2026-10-11/build_report.py` from `report_data.json`
+(written by `report_data.py`), so every figure on it is computed.
+Published privately at https://claude.ai/artifact/Q2GtRSPTiiX6WXnh8QDepR.
+Two things it adds to the evidence note:
+
+- Accuracy barely moves (209 against 214 of 299 right; row by row the
+  adapted model fixes 41 and breaks 36, exact test p = 0.65). The gain is
+  in which errors: base FinBERT calls 221 of 299 rows neutral and finds 8
+  of 39 negatives; the averaged adapted model finds 23.
+- Added up as an index, the adapted model is closer to the labels on the
+  first-round rows (+0.174 against a true +0.184; base +0.161) and further
+  on the broker research rows (+0.090 against +0.190; base +0.210). A
+  neutral threshold has not been chosen for this model yet; that comes
+  before the re-score.

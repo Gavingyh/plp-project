@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FinBERT Model Comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column, the team pages' own type and greens; charts are plain HTML marks on a shared scale, so they reflow at any width. */
+:root {
+  --ground: #f5f7f6;
+  --surface: #ffffff;
+  --ink: #18211e;
+  --muted: #56625d;
+  --rule: #d9dfdc;
+  --grid: #e6ebe8;
+  --accent: #1d6b61;
+  --accent-soft: #e2efec;
+  --code-bg: #eaeeec;
+  --s-base: #7b8580;
+  --s-people: #1baf7a;
+  --s-opus: #eb6834;
+  --s-adapted: #2a78d6;
+  --seq: #2a78d6;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #111614; --surface: #181f1c; --ink: #e4ebe7; --muted: #9aa7a1; --rule: #2b3431; --grid: #242c29;
+    --accent: #63c3b4; --accent-soft: #1d2f2b; --code-bg: #212a27;
+    --s-base: #8e9a95; --s-people: #199e70; --s-opus: #d95926; --s-adapted: #3987e5; --seq: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #111614; --surface: #181f1c; --ink: #e4ebe7; --muted: #9aa7a1; --rule: #2b3431; --grid: #242c29;
+  --accent: #63c3b4; --accent-soft: #1d2f2b; --code-bg: #212a27;
+  --s-base: #8e9a95; --s-people: #199e70; --s-opus: #d95926; --s-adapted: #3987e5; --seq: #3987e5;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 400 15.5px/1.6 var(--body); padding-inline: 20px; padding-block: 0 64px; }
+.wrap { max-width: 880px; margin: 0 auto; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code { font: 400 0.86em/1.4 var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+p { margin: 0 0 12px; max-width: 70ch; }
+ul, ol { max-width: 72ch; }
+
+header.mast { padding-block: 40px 22px; display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+h1 { font: 600 clamp(30px, 5vw, 42px)/1.08 var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.005em; }
+.lede { font-size: 17px; margin: 0; max-width: 66ch; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin-top: 6px; }
+.tiles > div { background: var(--surface); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.tiles .k { font: 500 11px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tiles b { font: 600 27px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.tiles b i { font: 500 14px/1 var(--body); color: var(--muted); margin-inline: 2px; }
+.tiles span:last-child { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-block: 12px; border-block: 1px solid var(--rule); font: 500 12px/1.4 var(--mono); }
+nav.toc a { text-decoration: none; color: var(--muted); }
+nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+
+section { padding-block: 34px 6px; scroll-margin-top: 12px; }
+h2 { font: 600 24px/1.2 var(--display); margin: 0 0 10px; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--display); margin: 22px 0 8px; }
+.twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 4px 32px; }
+.twocol h3 { margin-top: 6px; }
+.twocol ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
+.twocol li { margin-bottom: 7px; }
+.note-line { font-size: 14.5px; color: var(--muted); }
+.note-line b, .note-line em { color: var(--ink); }
+
+figure { margin: 18px 0 8px; padding: 16px 18px 12px; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; min-width: 0; }
+figcaption { font: 600 15px/1.35 var(--display); margin-bottom: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-bottom: 10px; align-items: center; }
+.legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; background: var(--c); }
+.sw.round { border-radius: 50%; }
+.fam-base { --c: var(--s-base); } .fam-people { --c: var(--s-people); } .fam-opus { --c: var(--s-opus); } .fam-adapted { --c: var(--s-adapted); }
+
+/* dot plot */
+.dp { --labelw: 16.5rem; --valw: 7.6rem; }
+.dp-row { display: grid; grid-template-columns: minmax(0, var(--labelw)) minmax(0, 1fr) var(--valw); gap: 0 14px; align-items: center; padding-block: 7px; border-top: 1px solid var(--rule); }
+.dp-row.dp-head { border-top: 0; padding-block: 0 2px; }
+.dp-row.win { background: var(--accent-soft); margin-inline: -10px; padding-inline: 10px; border-radius: 4px; border-top-color: transparent; }
+.dp-row.win + .dp-row { border-top-color: transparent; }
+.dp-label { display: grid; gap: 1px; min-width: 0; font-size: 14px; line-height: 1.3; }
+.dp-label b { font-weight: 500; }
+.dp-row.win .dp-label b { font-weight: 600; }
+.dp-label span { font: 400 11.5px/1.3 var(--mono); color: var(--muted); }
+.dp-axis, .dp-track { position: relative; margin-inline: 9px; }
+.dp-axis { height: 16px; }
+.dp-axis span { position: absolute; transform: translateX(-50%); font: 400 11px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.dp-track { height: 26px; background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px); background-size: calc(100% / var(--cols)) 100%; border-right: 1px solid var(--grid); }
+.dp-row.win .dp-track { background-image: linear-gradient(to right, var(--rule) 1px, transparent 1px); border-right-color: var(--rule); }
+.dot { position: absolute; top: 50%; width: 9px; height: 9px; border-radius: 50%; background: var(--c); transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--surface); }
+.dot.seed { background: color-mix(in srgb, var(--c) 55%, var(--surface)); }
+.dot.mean { width: 15px; height: 15px; }
+.dot.avg { width: 12px; height: 12px; border-radius: 2px; background: var(--surface); box-shadow: inset 0 0 0 3px var(--c), 0 0 0 2px var(--surface); transform: translate(-50%, -50%) rotate(45deg); }
+.dp-row.win .dot { box-shadow: 0 0 0 2px var(--accent-soft); }
+.dp-row.win .dot.avg { background: var(--accent-soft); box-shadow: inset 0 0 0 3px var(--c), 0 0 0 2px var(--accent-soft); }
+.legend .dot.lg { position: static; transform: none; --c: var(--muted); flex: none; box-shadow: none; }
+.legend .dot.avg.lg { transform: rotate(45deg); box-shadow: inset 0 0 0 3px var(--c); margin-inline: 2px; }
+.dp-val { text-align: right; display: grid; gap: 1px; font-variant-numeric: tabular-nums; }
+.dp-val b { font: 500 14px/1.2 var(--mono); }
+.dp-val span { font: 400 11px/1.2 var(--mono); color: var(--muted); }
+.dp-val .down { color: var(--muted); font-weight: 400; }
+.link { position: absolute; top: 50%; height: 2px; margin-top: -1px; background: var(--muted); opacity: 0.55; }
+.dp.cv { --labelw: 8.6rem; --valw: 4.4rem; }
+.dp.cv .dp-row { padding-block: 3px; }
+.dp.cv .dp-track { height: 22px; }
+.dp.cv .dot.mean { width: 12px; height: 12px; }
+
+/* bars */
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 18px 34px; }
+.bars { min-width: 0; }
+.bars-title { font: 600 14px/1.3 var(--display); margin-bottom: 6px; }
+.bars-axis, .bar-track { position: relative; margin-right: 3.1rem; }
+.bars-axis { height: 16px; }
+.bars-axis span { position: absolute; transform: translateX(-50%); font: 400 11px/1 var(--mono); color: var(--muted); }
+.bars-group { padding-block: 7px 8px; border-top: 1px solid var(--rule); }
+.bars-class { font-weight: 600; font-size: 13.5px; margin-bottom: 4px; }
+.bars-class span { font: 400 11.5px/1 var(--mono); color: var(--muted); margin-left: 6px; }
+.bar-row { padding-block: 2px; }
+.bar-track { height: 13px; background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px); background-size: 25% 100%; border-right: 1px solid var(--grid); }
+.bar { display: block; height: 13px; border-radius: 0 4px 4px 0; background: var(--c); min-width: 2px; }
+.bar-val { position: absolute; top: 50%; transform: translateY(-50%); margin-left: 6px; font: 400 11.5px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.bars.src { max-width: 560px; }
+
+/* confusion tables */
+.cms { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-block: 14px 6px; }
+figure.cm { margin: 0; }
+.cm table { width: 100%; border-collapse: separate; border-spacing: 2px; font-size: 13.5px; }
+.cm thead th { font: 500 11.5px/1.3 var(--mono); color: var(--muted); padding: 2px 4px 6px; text-align: center; }
+.cm thead th:first-child, .cm tbody th { text-align: left; }
+.cm tbody th { font-weight: 500; padding-right: 8px; white-space: nowrap; }
+.cm tbody th span { font: 400 11.5px/1 var(--mono); color: var(--muted); margin-left: 4px; }
+.cm td { text-align: center; padding: 11px 6px; font: 500 15px/1 var(--mono); font-variant-numeric: tabular-nums; background: color-mix(in srgb, var(--seq) var(--s, 0%), var(--surface)); border-radius: 3px; }
+.cm td.hit { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.cm tr.foot th, .cm tr.foot td { background: none; font: 400 12px/1 var(--mono); color: var(--muted); padding-top: 6px; }
+
+.readout { display: grid; gap: 9px; margin-block: 14px 4px; }
+.readout p { margin: 0; }
+ul.limits { padding-left: 18px; }
+ul.limits li { margin-bottom: 9px; }
+.decision { border: 1px solid var(--accent); background: var(--accent-soft); padding: 14px 18px; border-radius: 6px; }
+.decision p { margin: 0; max-width: none; }
+ol.steps { padding-left: 20px; }
+ol.steps li { margin-bottom: 7px; }
+ul.refs { padding-left: 18px; font-size: 14px; }
+ul.refs li { margin-bottom: 5px; }
+
+.scroll { overflow-x: auto; margin-block: 10px 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+table.num, table.plain { background: var(--surface); border: 1px solid var(--rule); }
+.num th, .num td, .plain th, .plain td { padding: 7px 10px; border-top: 1px solid var(--rule); vertical-align: top; }
+.num thead th, .plain thead th { font: 500 11.5px/1.35 var(--mono); color: var(--muted); border-top: 0; text-align: right; white-space: nowrap; }
+.num thead th:first-child, .plain thead th { text-align: left; }
+.num tbody th { text-align: left; font-weight: 500; }
+.num tbody th.sub { font-weight: 400; color: var(--muted); padding-left: 22px; }
+.num td { text-align: right; font: 400 12.5px/1.5 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.num td.l { text-align: left; font: 400 13.5px/1.5 var(--body); white-space: normal; }
+.num tr.winrow th, .num tr.winrow td { background: var(--accent-soft); }
+table.wide { min-width: 900px; }
+.plain tbody th { text-align: left; font-weight: 600; white-space: nowrap; }
+.plain .key { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-right: 8px; }
+.plain td:last-child { white-space: nowrap; font: 400 12.5px/1.6 var(--mono); color: var(--muted); }
+details { margin-top: 10px; }
+summary { cursor: pointer; font: 500 12px/1.4 var(--mono); color: var(--muted); letter-spacing: 0.03em; }
+details .scroll { margin-block: 8px 2px; }
+
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--ink); color: var(--ground); font: 400 12.5px/1.4 var(--body); padding: 6px 9px; border-radius: 4px; max-width: 270px; }
+footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+
+@media (max-width: 640px) {
+  .dp { --valw: 6.6rem; }
+  .dp:not(.cv) .dp-row { grid-template-columns: minmax(0, 1fr) var(--valw); }
+  .dp:not(.cv) .dp-label { grid-column: 1 / -1; margin-bottom: 3px; }
+  .dp:not(.cv) .dp-head .dp-label { display: none; }
+  .dp.cv { --labelw: 6.4rem; --valw: 3.7rem; }
+  .dp.cv .dp-label { font-size: 12.5px; }
+  figure { padding-inline: 12px; }
+  .dp-row.win { margin-inline: -6px; padding-inline: 6px; }
+  .plain tbody th { white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Mon 12 Oct 2026</span></div>
+  <h1>Which FinBERT should the dashboard and chatbot use?</h1>
+  <p class="lede">Six versions of the sentiment model were scored on the same held-out sentences. The best is FinBERT first adapted to the project's own text, then fine-tuned on Opus's labels. Its overall accuracy is about the same as plain FinBERT's. What changes is the kind of mistake: it stops calling almost everything neutral, and finds three in five negative sentences where plain FinBERT found one in five.</p>
+  <div class="tiles">
+    <div><span class="k">Macro-F1, 299 test rows</span><b>0.571 <i>to</i> 0.649</b><span>base FinBERT to the best set, mean of three seeds</span></div>
+    <div><span class="k">Negative sentences found</span><b>21% <i>to</i> 61%</b><span>recall on the 39 negative test rows</span></div>
+    <div><span class="k">Broker research, 100 test rows</span><b>0.687 <i>to</i> 0.740</b><span>macro-F1 on text no earlier model beat base FinBERT on</span></div>
+    <div><span class="k">Cross-validation</span><b>11 of 15 folds</b><span>where the adapted encoder beat plain FinBERT, by +0.014 on average</span></div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <a href="#compared">What was compared</a><a href="#tested">How it was tested</a><a href="#headline">The headline</a><a href="#errors">The kind of error</a>
+  <a href="#classes">By class</a><a href="#other">Other text</a><a href="#adapted">Adapted or plain</a><a href="#index">Effect on the index</a><a href="#limits">Limits</a><a href="#next">Decision</a><a href="#tables">Full tables</a>
+</nav>
+
+<section id="compared">
+  <h2>What was compared</h2>
+  <p>Every version starts from the same published model, FinBERT, which was trained on financial news. They differ in two ways: which labelled sentences they were fine-tuned on, and whether FinBERT first read the project's own sentences without labels.</p>
+  <div class="scroll"><table class="plain">
+    <thead><tr><th>Model</th><th>Starts from</th><th>Fine-tuned on</th><th>Date</th></tr></thead>
+    <tbody>
+      <tr class="fam-base"><th><i class="key"></i>Base FinBERT</th><td>FinBERT as published</td><td>Nothing. This is what every stored score in the database comes from today.</td><td></td></tr>
+      <tr class="fam-people"><th><i class="key"></i>Fine-tuned on people's labels</th><td>FinBERT</td><td>978 sentences labelled by the team</td><td>1 Oct</td></tr>
+      <tr class="fam-people"><th><i class="key"></i>The same, retrained</th><td>FinBERT</td><td>The same 978 sentences, after a fault in how training began was fixed</td><td>4 Oct</td></tr>
+      <tr class="fam-people"><th><i class="key"></i>The same, with broker rows</th><td>FinBERT</td><td>1,258 sentences: the 978 plus 280 from broker research reports</td><td>7 Oct</td></tr>
+      <tr class="fam-opus"><th><i class="key"></i>Fine-tuned on Opus's labels</th><td>FinBERT</td><td>1,563 sentences labelled by Claude Opus 5.5 under the rules of 10 Oct</td><td>11 Oct</td></tr>
+      <tr class="fam-adapted"><th><i class="key"></i>Adapted encoder, fine-tuned on Opus's labels</th><td>FinBERT after reading 42,822 of the corpus's own sentences</td><td>The same 1,563 sentences</td><td>11 Oct</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note-line"><b>Two terms.</b> <em>Fine-tuning</em> shows the model sentences with known answers. <em>Adapting</em> comes before that and uses no answers at all: FinBERT keeps doing its original exercise, guessing hidden words, on the project's Reddit posts, news and reports, so it meets local product names and Reddit's style before it is asked to judge sentiment.</p>
+  <p>The 1,563 training sentences are 917 from the first labelling round, 275 from broker research, 240 added for thin topics and 131 that earlier models were least sure about. Opus labelled 616 positive, 586 neutral and 361 negative. They are LLM labels and are reported as such.</p>
+</section>
+
+<section id="tested">
+  <h2>How it was tested</h2>
+  <div class="twocol">
+    <div>
+      <h3>The test sentences</h3>
+      <ul>
+        <li><b>299 rows from the first round</b>, set aside before any training and labelled by people: 166 neutral, 94 positive, 39 negative.</li>
+        <li><b>100 rows from broker research</b>, labelled blind by a person: 42 positive, 35 neutral, 23 negative.</li>
+        <li>No test sentence, and no near-copy of one, is among the training rows. The adapting step left out 2,270 labelled sentences and 752 more that resembled one.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>The rules</h3>
+      <ul>
+        <li><b>Three runs each.</b> Every fine-tuned model was trained three times from different random starts (seeds 42, 1 and 7), because one run's score can be luck at this size.</li>
+        <li><b>The measure is macro-F1.</b> It averages the score for negative, neutral and positive, so the rare negative class counts as much as the common neutral one. Accuracy alone rewards a model for calling everything neutral: 56% of the test rows are neutral.</li>
+        <li><b>The rule for choosing was fixed first:</b> highest test macro-F1 over the three seeds, with cross-validation as the tie-breaker. Nothing was tuned on the test rows.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="headline">
+  <h2>The headline: each step up is small, and they add up</h2>
+  <p>On the 299 first-round test rows, base FinBERT scores 0.571. Fine-tuning on people's labels lifts that to 0.604 and, once retrained, 0.621. Switching to Opus's labels, with more rows, gives 0.631. Adapting the encoder first gives 0.649.</p>
+  <figure>
+    <figcaption>Macro-F1 on the 299 first-round test rows</figcaption>
+    <div class="legend">
+      <span><i class="dot mean lg"></i>mean of three seeds</span><span><i class="dot seed lg"></i>one seed</span><span><i class="dot avg lg"></i>the three models averaged</span>
+      <span class="fam-base"><i class="sw"></i>base</span><span class="fam-people"><i class="sw"></i>people's labels</span><span class="fam-opus"><i class="sw"></i>Opus's labels</span><span class="fam-adapted"><i class="sw"></i>adapted encoder</span>
+    </div>
+    <div class="dp" style="--cols:6">
+<div class="dp-row dp-head"><div class="dp-label"></div><div class="dp-axis"><span style="left:0.00%">0.50</span><span style="left:16.67%">0.55</span><span style="left:33.33%">0.60</span><span style="left:50.00%">0.65</span><span style="left:66.67%">0.70</span><span style="left:83.33%">0.75</span><span style="left:100.00%">0.80</span></div><div class="dp-val"></div></div>
+<div class="dp-row fam-base"><div class="dp-label"><b>Base FinBERT</b><span>no fine-tuning</span></div><div class="dp-track"><i class="dot mean" style="left:23.73%" data-tip="Base FinBERT: 0.571"></i></div><div class="dp-val"><b>0.571</b></div></div>
+<div class="dp-row fam-people"><div class="dp-label"><b>Fine-tuned on people&#x27;s labels</b><span>1 Oct, 978 rows</span></div><div class="dp-track"><i class="dot seed" style="left:43.20%" data-tip="Seed 42: 0.630"></i><i class="dot seed" style="left:38.95%" data-tip="Seed 1: 0.617"></i><i class="dot seed" style="left:21.49%" data-tip="Seed 7: 0.564"></i><i class="dot avg" style="left:38.15%" data-tip="The three averaged: 0.614"></i><i class="dot mean" style="left:34.55%" data-tip="Mean of three seeds: 0.604"></i></div><div class="dp-val"><b>0.604</b><span>0.614 averaged</span></div></div>
+<div class="dp-row fam-people"><div class="dp-label"><b>Fine-tuned on people&#x27;s labels, retrained</b><span>4 Oct, 978 rows</span></div><div class="dp-track"><i class="dot seed" style="left:48.73%" data-tip="Seed 42: 0.646"></i><i class="dot seed" style="left:30.58%" data-tip="Seed 1: 0.592"></i><i class="dot seed" style="left:41.61%" data-tip="Seed 7: 0.625"></i><i class="dot avg" style="left:44.63%" data-tip="The three averaged: 0.634"></i><i class="dot mean" style="left:40.31%" data-tip="Mean of three seeds: 0.621"></i></div><div class="dp-val"><b>0.621</b><span>0.634 averaged</span></div></div>
+<div class="dp-row fam-opus"><div class="dp-label"><b>Fine-tuned on Opus&#x27;s labels</b><span>11 Oct, 1,563 rows</span></div><div class="dp-track"><i class="dot seed" style="left:49.74%" data-tip="Seed 42: 0.649"></i><i class="dot seed" style="left:44.22%" data-tip="Seed 1: 0.633"></i><i class="dot seed" style="left:36.68%" data-tip="Seed 7: 0.610"></i><i class="dot avg" style="left:46.87%" data-tip="The three averaged: 0.641"></i><i class="dot mean" style="left:43.55%" data-tip="Mean of three seeds: 0.631"></i></div><div class="dp-val"><b>0.631</b><span>0.641 averaged</span></div></div>
+<div class="dp-row fam-adapted win"><div class="dp-label"><b>Adapted encoder, fine-tuned on Opus&#x27;s labels</b><span>11 Oct, 1,563 rows</span></div><div class="dp-track"><i class="dot seed" style="left:42.64%" data-tip="Seed 42: 0.628"></i><i class="dot seed" style="left:52.42%" data-tip="Seed 1: 0.657"></i><i class="dot seed" style="left:54.01%" data-tip="Seed 7: 0.662"></i><i class="dot avg" style="left:56.64%" data-tip="The three averaged: 0.670"></i><i class="dot mean" style="left:49.69%" data-tip="Mean of three seeds: 0.649"></i></div><div class="dp-val"><b>0.649</b><span>0.670 averaged</span></div></div>
+</div>
+    <details><summary>Show the numbers</summary><div class='scroll'><table class='num'><thead><tr><th>Model</th><th>Mean</th><th>Seed sd</th><th>Seed 42</th><th>Seed 1</th><th>Seed 7</th><th>Three averaged</th></tr></thead><tbody><tr><th>Base FinBERT</th><td>0.571</td><td></td><td></td><td></td><td></td><td></td></tr><tr><th>Fine-tuned on people&#x27;s labels <span class='muted'>(1 Oct, 978 rows)</span></th><td>0.604</td><td>0.035</td><td>0.630</td><td>0.617</td><td>0.564</td><td>0.614</td></tr><tr><th>Fine-tuned on people&#x27;s labels, retrained <span class='muted'>(4 Oct, 978 rows)</span></th><td>0.621</td><td>0.027</td><td>0.646</td><td>0.592</td><td>0.625</td><td>0.634</td></tr><tr><th>Fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span></th><td>0.631</td><td>0.020</td><td>0.649</td><td>0.633</td><td>0.610</td><td>0.641</td></tr><tr><th>Adapted encoder, fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span></th><td>0.649</td><td>0.018</td><td>0.628</td><td>0.657</td><td>0.662</td><td>0.670</td></tr></tbody></table></div></details>
+  </figure>
+  <div class="readout">
+    <p><b>Against base FinBERT the gain is clear.</b> 0.649 against 0.571 is a gap of 4 times the spread between seeds (0.018). Every one of the three adapted runs is above every earlier model's mean.</p>
+    <p><b>Between neighbours the gaps are small.</b> The best set leads the one below it by 0.018, about one seed's spread. No single step is a sure thing by itself; the order holds because other measures agree, as the later sections show.</p>
+    <p><b>Averaging three models helps.</b> Letting the three adapted runs vote gives 0.670, and that averaged model is what the product would use.</p>
+  </div>
+</section>
+
+<section id="errors">
+  <h2>Accuracy barely moves. The kind of error does.</h2>
+  <p>Base FinBERT gets 209 of the 299 rows right; the averaged adapted model gets 214. Row by row, the adapted model fixes 41 sentences that base FinBERT got wrong and breaks 36 it had right. A difference that small could be chance (exact test, p = 0.65). So this is not a story about more correct answers.</p>
+  <p>It is a story about which answers. The two tables count every test sentence by what it truly is and what the model called it.</p>
+  <div class="cms">
+    <figure class="cm"><figcaption>Base FinBERT</figcaption><table><thead><tr><th>Truly</th><th>called negative</th><th>called neutral</th><th>called positive</th></tr></thead><tbody><tr><th>Negative <span>39</span></th><td class="hit" style="--s:12%" data-tip="8 of the 39 truly negative rows were called negative">8</td><td class="" style="--s:43%" data-tip="28 of the 39 truly negative rows were called neutral">28</td><td class="" style="--s:5%" data-tip="3 of the 39 truly negative rows were called positive">3</td></tr><tr><th>Neutral <span>166</span></th><td class="" style="--s:2%" data-tip="5 of the 166 truly neutral rows were called negative">5</td><td class="hit" style="--s:55%" data-tip="151 of the 166 truly neutral rows were called neutral">151</td><td class="" style="--s:4%" data-tip="10 of the 166 truly neutral rows were called positive">10</td></tr><tr><th>Positive <span>94</span></th><td class="" style="--s:1%" data-tip="2 of the 94 truly positive rows were called negative">2</td><td class="" style="--s:27%" data-tip="42 of the 94 truly positive rows were called neutral">42</td><td class="hit" style="--s:32%" data-tip="50 of the 94 truly positive rows were called positive">50</td></tr><tr class='foot'><th>Called</th><td>15</td><td>221</td><td>63</td></tr></tbody></table></figure>
+    <figure class="cm"><figcaption>Adapted encoder, three averaged</figcaption><table><thead><tr><th>Truly</th><th>called negative</th><th>called neutral</th><th>called positive</th></tr></thead><tbody><tr><th>Negative <span>39</span></th><td class="hit" style="--s:35%" data-tip="23 of the 39 truly negative rows were called negative">23</td><td class="" style="--s:17%" data-tip="11 of the 39 truly negative rows were called neutral">11</td><td class="" style="--s:8%" data-tip="5 of the 39 truly negative rows were called positive">5</td></tr><tr><th>Neutral <span>166</span></th><td class="" style="--s:7%" data-tip="18 of the 166 truly neutral rows were called negative">18</td><td class="hit" style="--s:44%" data-tip="122 of the 166 truly neutral rows were called neutral">122</td><td class="" style="--s:9%" data-tip="26 of the 166 truly neutral rows were called positive">26</td></tr><tr><th>Positive <span>94</span></th><td class="" style="--s:4%" data-tip="7 of the 94 truly positive rows were called negative">7</td><td class="" style="--s:11%" data-tip="18 of the 94 truly positive rows were called neutral">18</td><td class="hit" style="--s:44%" data-tip="69 of the 94 truly positive rows were called positive">69</td></tr><tr class='foot'><th>Called</th><td>48</td><td>151</td><td>100</td></tr></tbody></table></figure>
+  </div>
+  <div class="readout">
+    <p><b>Base FinBERT answers neutral 221 times out of 299.</b> That is safe when most rows are neutral, but it finds only 8 of the 39 negative sentences and 50 of the 94 positive ones.</p>
+    <p><b>The adapted model finds 23 of the 39 negatives and 69 of the 94 positives.</b> The price is 44 neutral sentences now called positive or negative, up from 15.</p>
+    <p><b>For a sentiment index this is the better trade.</b> A model that hides four in five negative sentences cannot show a bank's sentiment falling. One that is sometimes too quick to call a sentence positive or negative can be reined in with a threshold, which is the last step before the scores are stored.</p>
+  </div>
+</section>
+
+<section id="classes">
+  <h2>Precision and recall by class</h2>
+  <p>Recall is the share of the truly negative (or neutral, or positive) sentences the model found. Precision is the share of its negative calls that were right. Figures are the mean of three seeds on the 299 first-round rows.</p>
+  <figure>
+    <figcaption>Recall and precision for each class, four models</figcaption>
+    <div class="legend"><span class="fam-base"><i class="sw"></i>Base FinBERT</span><span class="fam-people"><i class="sw"></i>People's labels, 4 Oct</span><span class="fam-opus"><i class="sw"></i>Opus's labels</span><span class="fam-adapted"><i class="sw"></i>Adapted, Opus's labels</span></div>
+    <div class="pair"><div class="bars"><div class="bars-title">Recall</div>
+<div class="bars-axis"><span style="left:0%">0</span><span style="left:25%">0.25</span><span style="left:50%">0.50</span><span style="left:75%">0.75</span><span style="left:100%">1</span></div>
+<div class="bars-group"><div class="bars-class">Negative <span>39 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:20.5%" data-tip="Base FinBERT, negative recall: 0.21"></i><span class="bar-val" style="left:20.5%">0.21</span></div></div>
+<div class="bar-row fam-people"><div class="bar-track"><i class="bar" style="width:41.0%" data-tip="People&#x27;s labels, 4 Oct, negative recall: 0.41"></i><span class="bar-val" style="left:41.0%">0.41</span></div></div>
+<div class="bar-row fam-opus"><div class="bar-track"><i class="bar" style="width:48.7%" data-tip="Opus&#x27;s labels, negative recall: 0.49"></i><span class="bar-val" style="left:48.7%">0.49</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:60.7%" data-tip="Adapted, Opus&#x27;s labels, negative recall: 0.61"></i><span class="bar-val" style="left:60.7%">0.61</span></div></div>
+</div>
+<div class="bars-group"><div class="bars-class">Neutral <span>166 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:91.0%" data-tip="Base FinBERT, neutral recall: 0.91"></i><span class="bar-val" style="left:91.0%">0.91</span></div></div>
+<div class="bar-row fam-people"><div class="bar-track"><i class="bar" style="width:80.5%" data-tip="People&#x27;s labels, 4 Oct, neutral recall: 0.81"></i><span class="bar-val" style="left:80.5%">0.81</span></div></div>
+<div class="bar-row fam-opus"><div class="bar-track"><i class="bar" style="width:71.7%" data-tip="Opus&#x27;s labels, neutral recall: 0.72"></i><span class="bar-val" style="left:71.7%">0.72</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:71.5%" data-tip="Adapted, Opus&#x27;s labels, neutral recall: 0.71"></i><span class="bar-val" style="left:71.5%">0.71</span></div></div>
+</div>
+<div class="bars-group"><div class="bars-class">Positive <span>94 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:53.2%" data-tip="Base FinBERT, positive recall: 0.53"></i><span class="bar-val" style="left:53.2%">0.53</span></div></div>
+<div class="bar-row fam-people"><div class="bar-track"><i class="bar" style="width:61.3%" data-tip="People&#x27;s labels, 4 Oct, positive recall: 0.61"></i><span class="bar-val" style="left:61.3%">0.61</span></div></div>
+<div class="bar-row fam-opus"><div class="bar-track"><i class="bar" style="width:70.2%" data-tip="Opus&#x27;s labels, positive recall: 0.70"></i><span class="bar-val" style="left:70.2%">0.70</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:67.7%" data-tip="Adapted, Opus&#x27;s labels, positive recall: 0.68"></i><span class="bar-val" style="left:67.7%">0.68</span></div></div>
+</div>
+</div><div class="bars"><div class="bars-title">Precision</div>
+<div class="bars-axis"><span style="left:0%">0</span><span style="left:25%">0.25</span><span style="left:50%">0.50</span><span style="left:75%">0.75</span><span style="left:100%">1</span></div>
+<div class="bars-group"><div class="bars-class">Negative <span>39 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:53.3%" data-tip="Base FinBERT, negative precision: 0.53"></i><span class="bar-val" style="left:53.3%">0.53</span></div></div>
+<div class="bar-row fam-people"><div class="bar-track"><i class="bar" style="width:51.1%" data-tip="People&#x27;s labels, 4 Oct, negative precision: 0.51"></i><span class="bar-val" style="left:51.1%">0.51</span></div></div>
+<div class="bar-row fam-opus"><div class="bar-track"><i class="bar" style="width:49.4%" data-tip="Opus&#x27;s labels, negative precision: 0.49"></i><span class="bar-val" style="left:49.4%">0.49</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:48.0%" data-tip="Adapted, Opus&#x27;s labels, negative precision: 0.48"></i><span class="bar-val" style="left:48.0%">0.48</span></div></div>
+</div>
+<div class="bars-group"><div class="bars-class">Neutral <span>166 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:68.3%" data-tip="Base FinBERT, neutral precision: 0.68"></i><span class="bar-val" style="left:68.3%">0.68</span></div></div>
+<div class="bar-row fam-people"><div class="bar-track"><i class="bar" style="width:72.9%" data-tip="People&#x27;s labels, 4 Oct, neutral precision: 0.73"></i><span class="bar-val" style="left:72.9%">0.73</span></div></div>
+<div class="bar-row fam-opus"><div class="bar-track"><i class="bar" style="width:77.2%" data-tip="Opus&#x27;s labels, neutral precision: 0.77"></i><span class="bar-val" style="left:77.2%">0.77</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:77.3%" data-tip="Adapted, Opus&#x27;s labels, neutral precision: 0.77"></i><span class="bar-val" style="left:77.3%">0.77</span></div></div>
+</div>
+<div class="bars-group"><div class="bars-class">Positive <span>94 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:79.4%" data-tip="Base FinBERT, positive precision: 0.79"></i><span class="bar-val" style="left:79.4%">0.79</span></div></div>
+<div class="bar-row fam-people"><div class="bar-track"><i class="bar" style="width:70.3%" data-tip="People&#x27;s labels, 4 Oct, positive precision: 0.70"></i><span class="bar-val" style="left:70.3%">0.70</span></div></div>
+<div class="bar-row fam-opus"><div class="bar-track"><i class="bar" style="width:62.3%" data-tip="Opus&#x27;s labels, positive precision: 0.62"></i><span class="bar-val" style="left:62.3%">0.62</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:67.0%" data-tip="Adapted, Opus&#x27;s labels, positive precision: 0.67"></i><span class="bar-val" style="left:67.0%">0.67</span></div></div>
+</div>
+</div></div>
+    <details><summary>Show the numbers</summary><div class='scroll'><table class='num'><thead><tr><th>Model</th><th>Negative P</th><th>Negative R</th><th>Negative F1</th><th>Neutral P</th><th>Neutral R</th><th>Neutral F1</th><th>Positive P</th><th>Positive R</th><th>Positive F1</th></tr></thead><tbody><tr><th>Base FinBERT</th><td>0.53</td><td>0.21</td><td>0.30</td><td>0.68</td><td>0.91</td><td>0.78</td><td>0.79</td><td>0.53</td><td>0.64</td></tr><tr><th>People&#x27;s labels, 4 Oct</th><td>0.51</td><td>0.41</td><td>0.45</td><td>0.73</td><td>0.81</td><td>0.76</td><td>0.70</td><td>0.61</td><td>0.65</td></tr><tr><th>Opus&#x27;s labels</th><td>0.49</td><td>0.49</td><td>0.49</td><td>0.77</td><td>0.72</td><td>0.74</td><td>0.62</td><td>0.70</td><td>0.66</td></tr><tr><th>Adapted, Opus&#x27;s labels</th><td>0.48</td><td>0.61</td><td>0.53</td><td>0.77</td><td>0.71</td><td>0.74</td><td>0.67</td><td>0.68</td><td>0.67</td></tr></tbody></table></div></details>
+  </figure>
+  <div class="readout">
+    <p><b>Negative recall is where the models separate:</b> 0.21, 0.41, 0.49 and 0.61, in the order they were built.</p>
+    <p><b>Negative precision stays near a half</b> for all of them (0.48 to 0.53): about one negative call in two is wrong. With only 39 negative test rows this figure is the least stable on the page.</p>
+    <p><b>Base FinBERT's neutral recall of 0.91 is the other side of its caution.</b> The fine-tuned models give up some of it (0.71 for the adapted set) to find more of the other two classes.</p>
+  </div>
+</section>
+
+<section id="other">
+  <h2>Does it hold on other text?</h2>
+  <p>The first-round rows are mostly Reddit and earnings reports. The broker research rows are analysts' prose, closer to what FinBERT was first trained on, and base FinBERT is strong there: fine-tuning on people's labels never beat it. The adapted model on Opus's labels does.</p>
+  <figure>
+    <figcaption>Macro-F1 on the 100 broker research test rows</figcaption>
+    <div class="dp" style="--cols:5">
+<div class="dp-row dp-head"><div class="dp-label"></div><div class="dp-axis"><span style="left:0.00%">0.55</span><span style="left:20.00%">0.60</span><span style="left:40.00%">0.65</span><span style="left:60.00%">0.70</span><span style="left:80.00%">0.75</span><span style="left:100.00%">0.80</span></div><div class="dp-val"></div></div>
+<div class="dp-row fam-base"><div class="dp-label"><b>Base FinBERT</b><span>no fine-tuning</span></div><div class="dp-track"><i class="dot mean" style="left:54.67%" data-tip="Base FinBERT: 0.687"></i></div><div class="dp-val"><b>0.687</b></div></div>
+<div class="dp-row fam-people"><div class="dp-label"><b>Fine-tuned on people&#x27;s labels, retrained</b><span>4 Oct, 978 rows</span></div><div class="dp-track"><i class="dot seed" style="left:45.44%" data-tip="Seed 42: 0.664"></i><i class="dot seed" style="left:68.42%" data-tip="Seed 1: 0.721"></i><i class="dot seed" style="left:16.41%" data-tip="Seed 7: 0.591"></i><i class="dot avg" style="left:55.88%" data-tip="The three averaged: 0.690"></i><i class="dot mean" style="left:43.42%" data-tip="Mean of three seeds: 0.659"></i></div><div class="dp-val"><b>0.659</b><span>0.690 averaged</span></div></div>
+<div class="dp-row fam-people"><div class="dp-label"><b>Fine-tuned on people&#x27;s labels, with broker rows</b><span>7 Oct, 1,258 rows</span></div><div class="dp-track"><i class="dot seed" style="left:52.46%" data-tip="Seed 42: 0.681"></i><i class="dot seed" style="left:53.61%" data-tip="Seed 1: 0.684"></i><i class="dot seed" style="left:64.07%" data-tip="Seed 7: 0.710"></i><i class="dot avg" style="left:59.37%" data-tip="The three averaged: 0.698"></i><i class="dot mean" style="left:56.72%" data-tip="Mean of three seeds: 0.692"></i></div><div class="dp-val"><b>0.692</b><span>0.698 averaged</span></div></div>
+<div class="dp-row fam-opus"><div class="dp-label"><b>Fine-tuned on Opus&#x27;s labels</b><span>11 Oct, 1,563 rows</span></div><div class="dp-track"><i class="dot seed" style="left:58.53%" data-tip="Seed 42: 0.696"></i><i class="dot seed" style="left:65.12%" data-tip="Seed 1: 0.713"></i><i class="dot seed" style="left:62.09%" data-tip="Seed 7: 0.705"></i><i class="dot avg" style="left:53.36%" data-tip="The three averaged: 0.683"></i><i class="dot mean" style="left:61.91%" data-tip="Mean of three seeds: 0.705"></i></div><div class="dp-val"><b>0.705</b><span>0.683 averaged</span></div></div>
+<div class="dp-row fam-adapted win"><div class="dp-label"><b>Adapted encoder, fine-tuned on Opus&#x27;s labels</b><span>11 Oct, 1,563 rows</span></div><div class="dp-track"><i class="dot seed" style="left:80.35%" data-tip="Seed 42: 0.751"></i><i class="dot seed" style="left:81.22%" data-tip="Seed 1: 0.753"></i><i class="dot seed" style="left:66.52%" data-tip="Seed 7: 0.716"></i><i class="dot avg" style="left:87.98%" data-tip="The three averaged: 0.770"></i><i class="dot mean" style="left:76.03%" data-tip="Mean of three seeds: 0.740"></i></div><div class="dp-val"><b>0.740</b><span>0.770 averaged</span></div></div>
+</div>
+    <details><summary>Show the numbers</summary><div class='scroll'><table class='num'><thead><tr><th>Model</th><th>Mean</th><th>Seed sd</th><th>Seed 42</th><th>Seed 1</th><th>Seed 7</th><th>Three averaged</th></tr></thead><tbody><tr><th>Base FinBERT</th><td>0.687</td><td></td><td></td><td></td><td></td><td></td></tr><tr><th>Fine-tuned on people&#x27;s labels, retrained <span class='muted'>(4 Oct, 978 rows)</span></th><td>0.659</td><td>0.065</td><td>0.664</td><td>0.721</td><td>0.591</td><td>0.690</td></tr><tr><th>Fine-tuned on people&#x27;s labels, with broker rows <span class='muted'>(7 Oct, 1,258 rows)</span></th><td>0.692</td><td>0.016</td><td>0.681</td><td>0.684</td><td>0.710</td><td>0.698</td></tr><tr><th>Fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span></th><td>0.705</td><td>0.008</td><td>0.696</td><td>0.713</td><td>0.705</td><td>0.683</td></tr><tr><th>Adapted encoder, fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span></th><td>0.740</td><td>0.021</td><td>0.751</td><td>0.753</td><td>0.716</td><td>0.770</td></tr></tbody></table></div></details>
+  </figure>
+  <p>On these rows the averaged adapted model is right on 14 sentences base FinBERT misses and wrong on 6 it gets (p = 0.12); against plain FinBERT fine-tuned on the same labels it is 10 against 2 (p = 0.039). On all 399 test rows together, macro-F1 is 0.685 against base FinBERT's 0.648.</p>
+  <figure>
+    <figcaption>Accuracy by source, all 399 test rows: base FinBERT against the averaged adapted model</figcaption>
+    <div class="legend"><span class="fam-base"><i class="sw"></i>Base FinBERT</span><span class="fam-adapted"><i class="sw"></i>Adapted, three averaged</span></div>
+    <div class="bars src"><div class="bars-axis"><span style="left:0%">0</span><span style="left:25%">0.25</span><span style="left:50%">0.50</span><span style="left:75%">0.75</span><span style="left:100%">1</span></div>
+<div class="bars-group"><div class="bars-class">Reddit <span>184 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:69.6%" data-tip="Base FinBERT on Reddit: 0.70 of 184 rows right"></i><span class="bar-val" style="left:69.6%">0.70</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:68.5%" data-tip="Adapted, Opus&#x27;s labels on Reddit: 0.68 of 184 rows right"></i><span class="bar-val" style="left:68.5%">0.68</span></div></div>
+</div>
+<div class="bars-group"><div class="bars-class">Broker research <span>100 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:69.0%" data-tip="Base FinBERT on Broker research: 0.69 of 100 rows right"></i><span class="bar-val" style="left:69.0%">0.69</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:77.0%" data-tip="Adapted, Opus&#x27;s labels on Broker research: 0.77 of 100 rows right"></i><span class="bar-val" style="left:77.0%">0.77</span></div></div>
+</div>
+<div class="bars-group"><div class="bars-class">Earnings reports <span>79 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:73.4%" data-tip="Base FinBERT on Earnings reports: 0.73 of 79 rows right"></i><span class="bar-val" style="left:73.4%">0.73</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:81.0%" data-tip="Adapted, Opus&#x27;s labels on Earnings reports: 0.81 of 79 rows right"></i><span class="bar-val" style="left:81.0%">0.81</span></div></div>
+</div>
+<div class="bars-group"><div class="bars-class">Google News <span>34 rows</span></div>
+<div class="bar-row fam-base"><div class="bar-track"><i class="bar" style="width:64.7%" data-tip="Base FinBERT on Google News: 0.65 of 34 rows right"></i><span class="bar-val" style="left:64.7%">0.65</span></div></div>
+<div class="bar-row fam-adapted"><div class="bar-track"><i class="bar" style="width:67.6%" data-tip="Adapted, Opus&#x27;s labels on Google News: 0.68 of 34 rows right"></i><span class="bar-val" style="left:67.6%">0.68</span></div></div>
+</div>
+</div>
+  </figure>
+  <div class="readout">
+    <p><b>The gain is on formal text:</b> earnings reports (0.73 to 0.81) and broker research (0.69 to 0.77).</p>
+    <p><b>Reddit does not improve on accuracy</b> (0.70 to 0.68). Most Reddit rows are neutral, so base FinBERT's habit of answering neutral scores well there. Reddit is 184 of the 399 test rows and remains the weak source.</p>
+  </div>
+</section>
+
+<section id="adapted">
+  <h2>Is adapting worth it, or is plain FinBERT enough?</h2>
+  <p>This is the closest call on the page, so it was measured a second way. The training rows were split into five folds, and each fold was held out in turn while a model trained on the other four. That was done for three seeds, from plain FinBERT and from the adapted encoder on identical folds, so each pair differs only in the starting point.</p>
+  <figure>
+    <figcaption>Cross-validation: macro-F1 on each held-out fold, scored against Opus's labels</figcaption>
+    <div class="legend"><span class="fam-opus"><i class="sw round"></i>from plain FinBERT</span><span class="fam-adapted"><i class="sw round"></i>from the adapted encoder</span><span class="muted">the figure on the right is adapted minus plain</span></div>
+    <div class="dp cv" style="--cols:7">
+<div class="dp-row dp-head"><div class="dp-label"></div><div class="dp-axis"><span style="left:0.00%">0.62</span><span style="left:14.29%">0.64</span><span style="left:28.57%">0.66</span><span style="left:42.86%">0.68</span><span style="left:57.14%">0.70</span><span style="left:71.43%">0.72</span><span style="left:85.71%">0.74</span><span style="left:100.00%">0.76</span></div><div class="dp-val"></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 1, fold 0</b></div><div class="dp-track"><i class="link" style="left:44.35%;width:21.98%"></i><i class="dot mean fam-opus" style="left:44.35%" data-tip="FinBERT: 0.682"></i><i class="dot mean fam-adapted" style="left:66.34%" data-tip="Adapted encoder: 0.713"></i></div><div class="dp-val"><b class="up">+0.031</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 1, fold 1</b></div><div class="dp-track"><i class="link" style="left:32.85%;width:10.69%"></i><i class="dot mean fam-opus" style="left:32.85%" data-tip="FinBERT: 0.666"></i><i class="dot mean fam-adapted" style="left:43.55%" data-tip="Adapted encoder: 0.681"></i></div><div class="dp-val"><b class="up">+0.015</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 1, fold 2</b></div><div class="dp-track"><i class="link" style="left:59.50%;width:11.48%"></i><i class="dot mean fam-opus" style="left:70.97%" data-tip="FinBERT: 0.719"></i><i class="dot mean fam-adapted" style="left:59.50%" data-tip="Adapted encoder: 0.703"></i></div><div class="dp-val"><b class="down">&#8722;0.016</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 1, fold 3</b></div><div class="dp-track"><i class="link" style="left:37.69%;width:30.11%"></i><i class="dot mean fam-opus" style="left:37.69%" data-tip="FinBERT: 0.673"></i><i class="dot mean fam-adapted" style="left:67.80%" data-tip="Adapted encoder: 0.715"></i></div><div class="dp-val"><b class="up">+0.042</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 1, fold 4</b></div><div class="dp-track"><i class="link" style="left:44.89%;width:10.63%"></i><i class="dot mean fam-opus" style="left:44.89%" data-tip="FinBERT: 0.683"></i><i class="dot mean fam-adapted" style="left:55.52%" data-tip="Adapted encoder: 0.698"></i></div><div class="dp-val"><b class="up">+0.015</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 7, fold 0</b></div><div class="dp-track"><i class="link" style="left:11.62%;width:21.71%"></i><i class="dot mean fam-opus" style="left:11.62%" data-tip="FinBERT: 0.636"></i><i class="dot mean fam-adapted" style="left:33.32%" data-tip="Adapted encoder: 0.667"></i></div><div class="dp-val"><b class="up">+0.030</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 7, fold 1</b></div><div class="dp-track"><i class="link" style="left:66.09%;width:6.86%"></i><i class="dot mean fam-opus" style="left:66.09%" data-tip="FinBERT: 0.713"></i><i class="dot mean fam-adapted" style="left:72.95%" data-tip="Adapted encoder: 0.722"></i></div><div class="dp-val"><b class="up">+0.010</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 7, fold 2</b></div><div class="dp-track"><i class="link" style="left:50.49%;width:10.32%"></i><i class="dot mean fam-opus" style="left:60.81%" data-tip="FinBERT: 0.705"></i><i class="dot mean fam-adapted" style="left:50.49%" data-tip="Adapted encoder: 0.691"></i></div><div class="dp-val"><b class="down">&#8722;0.014</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 7, fold 3</b></div><div class="dp-track"><i class="link" style="left:60.19%;width:14.15%"></i><i class="dot mean fam-opus" style="left:60.19%" data-tip="FinBERT: 0.704"></i><i class="dot mean fam-adapted" style="left:74.34%" data-tip="Adapted encoder: 0.724"></i></div><div class="dp-val"><b class="up">+0.020</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 7, fold 4</b></div><div class="dp-track"><i class="link" style="left:28.27%;width:34.42%"></i><i class="dot mean fam-opus" style="left:28.27%" data-tip="FinBERT: 0.660"></i><i class="dot mean fam-adapted" style="left:62.68%" data-tip="Adapted encoder: 0.708"></i></div><div class="dp-val"><b class="up">+0.048</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 42, fold 0</b></div><div class="dp-track"><i class="link" style="left:21.91%;width:15.82%"></i><i class="dot mean fam-opus" style="left:21.91%" data-tip="FinBERT: 0.651"></i><i class="dot mean fam-adapted" style="left:37.72%" data-tip="Adapted encoder: 0.673"></i></div><div class="dp-val"><b class="up">+0.022</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 42, fold 1</b></div><div class="dp-track"><i class="link" style="left:79.36%;width:12.00%"></i><i class="dot mean fam-opus" style="left:79.36%" data-tip="FinBERT: 0.731"></i><i class="dot mean fam-adapted" style="left:91.36%" data-tip="Adapted encoder: 0.748"></i></div><div class="dp-val"><b class="up">+0.017</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 42, fold 2</b></div><div class="dp-track"><i class="link" style="left:41.06%;width:3.91%"></i><i class="dot mean fam-opus" style="left:44.97%" data-tip="FinBERT: 0.683"></i><i class="dot mean fam-adapted" style="left:41.06%" data-tip="Adapted encoder: 0.677"></i></div><div class="dp-val"><b class="down">&#8722;0.005</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 42, fold 3</b></div><div class="dp-track"><i class="link" style="left:43.01%;width:5.02%"></i><i class="dot mean fam-opus" style="left:48.02%" data-tip="FinBERT: 0.687"></i><i class="dot mean fam-adapted" style="left:43.01%" data-tip="Adapted encoder: 0.680"></i></div><div class="dp-val"><b class="down">&#8722;0.007</b></div></div>
+<div class="dp-row"><div class="dp-label"><b>Seed 42, fold 4</b></div><div class="dp-track"><i class="link" style="left:51.55%;width:0.71%"></i><i class="dot mean fam-opus" style="left:51.55%" data-tip="FinBERT: 0.692"></i><i class="dot mean fam-adapted" style="left:52.26%" data-tip="Adapted encoder: 0.693"></i></div><div class="dp-val"><b class="up">+0.001</b></div></div>
+</div>
+    <details><summary>Show the numbers</summary><div class='scroll'><table class='num'><thead><tr><th>Fold</th><th>FinBERT</th><th>Adapted encoder</th><th>Difference</th></tr></thead><tbody><tr><th>Seed 1, fold 0</th><td>0.682</td><td>0.713</td><td>+0.031</td></tr><tr><th>Seed 1, fold 1</th><td>0.666</td><td>0.681</td><td>+0.015</td></tr><tr><th>Seed 1, fold 2</th><td>0.719</td><td>0.703</td><td>&#8722;0.016</td></tr><tr><th>Seed 1, fold 3</th><td>0.673</td><td>0.715</td><td>+0.042</td></tr><tr><th>Seed 1, fold 4</th><td>0.683</td><td>0.698</td><td>+0.015</td></tr><tr><th>Seed 7, fold 0</th><td>0.636</td><td>0.667</td><td>+0.030</td></tr><tr><th>Seed 7, fold 1</th><td>0.713</td><td>0.722</td><td>+0.010</td></tr><tr><th>Seed 7, fold 2</th><td>0.705</td><td>0.691</td><td>&#8722;0.014</td></tr><tr><th>Seed 7, fold 3</th><td>0.704</td><td>0.724</td><td>+0.020</td></tr><tr><th>Seed 7, fold 4</th><td>0.660</td><td>0.708</td><td>+0.048</td></tr><tr><th>Seed 42, fold 0</th><td>0.651</td><td>0.673</td><td>+0.022</td></tr><tr><th>Seed 42, fold 1</th><td>0.731</td><td>0.748</td><td>+0.017</td></tr><tr><th>Seed 42, fold 2</th><td>0.683</td><td>0.677</td><td>&#8722;0.005</td></tr><tr><th>Seed 42, fold 3</th><td>0.687</td><td>0.680</td><td>&#8722;0.007</td></tr><tr><th>Seed 42, fold 4</th><td>0.692</td><td>0.693</td><td>+0.001</td></tr></tbody></table></div></details>
+  </figure>
+  <div class="readout">
+    <p><b>The adapted encoder wins 11 of 15 pairs</b>, by +0.014 on average (0.686 to 0.700). A paired test puts the true gain between +0.003 and +0.025 (t = 2.75, p = 0.016). Small, and not zero.</p>
+    <p><b>The gain was larger on 6 Oct</b> (+0.038 on 978 rows). With 1,563 labelled rows plain FinBERT has caught up part of the way, which is what adapting is expected to do: it helps most when labels are scarce.</p>
+    <p><b>It costs little to keep.</b> Adapting took about 1 hour 40 minutes, once. The model the product runs is the same size and speed either way.</p>
+  </div>
+</section>
+
+<section id="index">
+  <h2>What it would do to the index</h2>
+  <p>The dashboard does not show sentences; it shows a balance of positive against negative. So a second question matters: when the labels on the test rows are added up, how close does each model's total come to the truth?</p>
+  <div class='scroll'><table class='num'><thead><tr><th rowspan='2'>Test rows</th><th colspan='3'>Net balance: (positive &#8722; negative) / all</th><th colspan='3'>Share called positive or negative</th></tr><tr><th>Labels</th><th>Base FinBERT</th><th>Adapted, averaged</th><th>Labels</th><th>Base FinBERT</th><th>Adapted, averaged</th></tr></thead><tbody><tr><th>First round, 299 rows</th><td>+0.184</td><td>+0.161</td><td>+0.174</td><td>44%</td><td>26%</td><td>49%</td></tr><tr><th>Broker research, 100 rows</th><td>+0.190</td><td>+0.210</td><td>+0.090</td><td>65%</td><td>75%</td><td>69%</td></tr><tr><th>Both, 399 rows</th><td>+0.185</td><td>+0.173</td><td>+0.153</td><td>50%</td><td>38%</td><td>54%</td></tr></tbody></table></div>
+  <div class="readout">
+    <p><b>On the first-round rows the adapted model is closer.</b> The labels balance at +0.184; base FinBERT reads +0.161 and the adapted model +0.174. Base FinBERT also calls only 26% of rows positive or negative when 44% are, so its index moves less than the text does.</p>
+    <p><b>On the broker research rows it is further away.</b> The labels balance at +0.190; base FinBERT reads +0.210 and the adapted model +0.090, because it calls 30 sentences negative where 23 are.</p>
+    <p><b>This is what the neutral threshold is for.</b> Before the earlier fine-tuned model was proposed for the product, a margin was chosen on held-out training rows: when the model's top two answers are close, the sentence is called neutral. The same step has not been done for this model yet, and it comes before the re-score.</p>
+  </div>
+</section>
+
+<section id="limits">
+  <h2>How sure this is, and the limits</h2>
+  <ul class="limits">
+    <li><b>One run of three seeds.</b> The gaps between fine-tuned models are about the size of the spread between seeds. The order is trusted because the first-round rows, the broker research rows and cross-validation all agree, not because any one gap is large.</li>
+    <li><b>The test labels and the training labels follow different rules.</b> The first-round test rows were labelled by people under the older rule for retail products, with a model's suggestion in view. The training rows were labelled by Opus under the rules of 10 Oct. The models still score higher on the people's labels than those trained on people's labels did.</li>
+    <li><b>Few negative test rows.</b> 39 in the first round and 23 in broker research. Negative precision and recall move by two or three points when a single row changes.</li>
+    <li><b>Cross-validation is scored against Opus's labels,</b> the test rows against people's. They answer slightly different questions and happen to agree.</li>
+    <li><b>An earlier adapted model is left out.</b> The one from 6 and 7 Oct scored 0.751 on the broker research rows, but its adapting step had read sentences related to test sentences. This run fixed that; its like-for-like figure is 0.770 for the three averaged.</li>
+    <li><b>Reddit is not solved.</b> Accuracy there is 0.68, the same as before.</li>
+  </ul>
+</section>
+
+<section id="next">
+  <h2>Decision and what happens next</h2>
+  <div class="decision">
+    <p><b>The model for the dashboard and chatbot is the adapted encoder fine-tuned on Opus's labels, three runs averaged.</b> It leads on both test sets and in cross-validation, by the rule fixed before the run.</p>
+  </div>
+  <ol class="steps">
+    <li><b>Choose the neutral threshold</b> for the averaged model on held-out training rows, and check the index it would produce against the labels.</li>
+    <li><b>Rehearse the re-score on a copy of the database</b> with this model and the LLM's aspects, and show what each bank's figures become.</li>
+    <li><b>Run the re-score once,</b> on the owner's go-ahead, after the dashboard filters on one model version.</li>
+    <li><b>Re-run every evaluation</b> on the new database, including the comparison of the two aspect methods.</li>
+  </ol>
+</section>
+
+<section id="tables">
+  <h2>Full tables</h2>
+  <p>P is precision, R is recall. Each fine-tuned model has two lines: the mean of its three seeds, and the three models averaged.</p>
+  <h3>First round, 299 test rows</h3>
+  <div class='scroll'><table class='num wide'><thead><tr><th>Model</th><th>Accuracy</th><th>Macro-F1</th><th>Seed sd</th><th>Negative P / R / F1</th><th>Neutral P / R / F1</th><th>Positive P / R / F1</th></tr></thead><tbody><tr><th>Base FinBERT</th><td>0.699</td><td>0.571</td><td></td><td>0.53 / 0.21 / 0.30</td><td>0.68 / 0.91 / 0.78</td><td>0.79 / 0.53 / 0.64</td></tr><tr><th>Fine-tuned on people&#x27;s labels <span class='muted'>(1 Oct, 978 rows)</span>, mean of three seeds</th><td>0.651</td><td>0.604</td><td>0.035</td><td>0.44 / 0.48 / 0.45</td><td>0.76 / 0.64 / 0.70</td><td>0.60 / 0.73 / 0.66</td></tr><tr><th class='sub'>the three averaged</th><td>0.662</td><td>0.614</td><td></td><td>0.44 / 0.49 / 0.46</td><td>0.77 / 0.66 / 0.71</td><td>0.61 / 0.74 / 0.67</td></tr><tr><th>Fine-tuned on people&#x27;s labels, retrained <span class='muted'>(4 Oct, 978 rows)</span>, mean of three seeds</th><td>0.693</td><td>0.621</td><td>0.027</td><td>0.51 / 0.41 / 0.45</td><td>0.73 / 0.81 / 0.76</td><td>0.70 / 0.61 / 0.65</td></tr><tr><th class='sub'>the three averaged</th><td>0.702</td><td>0.634</td><td></td><td>0.49 / 0.44 / 0.46</td><td>0.73 / 0.81 / 0.77</td><td>0.73 / 0.63 / 0.67</td></tr><tr><th>Fine-tuned on people&#x27;s labels, with broker rows <span class='muted'>(7 Oct, 1,258 rows)</span>, mean of three seeds</th><td>0.689</td><td>0.617</td><td>0.017</td><td>0.52 / 0.37 / 0.43</td><td>0.75 / 0.76 / 0.75</td><td>0.64 / 0.70 / 0.67</td></tr><tr><th class='sub'>the three averaged</th><td>0.676</td><td>0.597</td><td></td><td>0.46 / 0.33 / 0.39</td><td>0.75 / 0.74 / 0.74</td><td>0.62 / 0.70 / 0.66</td></tr><tr><th>Fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span>, mean of three seeds</th><td>0.682</td><td>0.631</td><td>0.020</td><td>0.49 / 0.49 / 0.49</td><td>0.77 / 0.72 / 0.74</td><td>0.62 / 0.70 / 0.66</td></tr><tr><th class='sub'>the three averaged</th><td>0.702</td><td>0.641</td><td></td><td>0.52 / 0.44 / 0.47</td><td>0.78 / 0.75 / 0.76</td><td>0.64 / 0.73 / 0.69</td></tr><tr class='winrow'><th>Adapted encoder, fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span>, mean of three seeds</th><td>0.689</td><td>0.649</td><td>0.018</td><td>0.48 / 0.61 / 0.53</td><td>0.77 / 0.71 / 0.74</td><td>0.67 / 0.68 / 0.67</td></tr><tr class='winrow'><th class='sub'>the three averaged</th><td>0.716</td><td>0.670</td><td></td><td>0.48 / 0.59 / 0.53</td><td>0.81 / 0.73 / 0.77</td><td>0.69 / 0.73 / 0.71</td></tr></tbody></table></div>
+  <h3>Broker research, 100 test rows</h3>
+  <div class='scroll'><table class='num wide'><thead><tr><th>Model</th><th>Accuracy</th><th>Macro-F1</th><th>Seed sd</th><th>Negative P / R / F1</th><th>Neutral P / R / F1</th><th>Positive P / R / F1</th></tr></thead><tbody><tr><th>Base FinBERT</th><td>0.690</td><td>0.687</td><td></td><td>0.70 / 0.83 / 0.76</td><td>0.68 / 0.49 / 0.57</td><td>0.69 / 0.79 / 0.73</td></tr><tr><th>Fine-tuned on people&#x27;s labels <span class='muted'>(1 Oct, 978 rows)</span>, mean of three seeds</th><td>0.617</td><td>0.587</td><td>0.053</td><td>0.59 / 0.55 / 0.56</td><td>0.61 / 0.41 / 0.48</td><td>0.64 / 0.83 / 0.72</td></tr><tr><th class='sub'>the three averaged</th><td>0.630</td><td>0.596</td><td></td><td>0.65 / 0.48 / 0.55</td><td>0.56 / 0.43 / 0.48</td><td>0.66 / 0.88 / 0.76</td></tr><tr><th>Fine-tuned on people&#x27;s labels, retrained <span class='muted'>(4 Oct, 978 rows)</span>, mean of three seeds</th><td>0.670</td><td>0.659</td><td>0.065</td><td>0.75 / 0.61 / 0.67</td><td>0.62 / 0.54 / 0.58</td><td>0.67 / 0.81 / 0.73</td></tr><tr><th class='sub'>the three averaged</th><td>0.690</td><td>0.690</td><td></td><td>0.80 / 0.70 / 0.74</td><td>0.66 / 0.54 / 0.59</td><td>0.67 / 0.81 / 0.73</td></tr><tr><th>Fine-tuned on people&#x27;s labels, with broker rows <span class='muted'>(7 Oct, 1,258 rows)</span>, mean of three seeds</th><td>0.693</td><td>0.692</td><td>0.016</td><td>0.76 / 0.74 / 0.74</td><td>0.66 / 0.54 / 0.60</td><td>0.69 / 0.79 / 0.74</td></tr><tr><th class='sub'>the three averaged</th><td>0.700</td><td>0.698</td><td></td><td>0.75 / 0.78 / 0.77</td><td>0.69 / 0.51 / 0.59</td><td>0.68 / 0.81 / 0.74</td></tr><tr><th>Fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span>, mean of three seeds</th><td>0.710</td><td>0.705</td><td>0.008</td><td>0.67 / 0.87 / 0.75</td><td>0.70 / 0.52 / 0.60</td><td>0.75 / 0.78 / 0.76</td></tr><tr><th class='sub'>the three averaged</th><td>0.690</td><td>0.683</td><td></td><td>0.66 / 0.91 / 0.76</td><td>0.67 / 0.46 / 0.54</td><td>0.73 / 0.76 / 0.74</td></tr><tr class='winrow'><th>Adapted encoder, fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span>, mean of three seeds</th><td>0.740</td><td>0.740</td><td>0.021</td><td>0.69 / 0.88 / 0.78</td><td>0.71 / 0.64 / 0.67</td><td>0.80 / 0.75 / 0.77</td></tr><tr class='winrow'><th class='sub'>the three averaged</th><td>0.770</td><td>0.770</td><td></td><td>0.70 / 0.91 / 0.79</td><td>0.77 / 0.69 / 0.73</td><td>0.82 / 0.76 / 0.79</td></tr></tbody></table></div>
+  <h3>Both, 399 test rows</h3>
+  <div class='scroll'><table class='num wide'><thead><tr><th>Model</th><th>Accuracy</th><th>Macro-F1</th><th>Seed sd</th><th>Negative P / R / F1</th><th>Neutral P / R / F1</th><th>Positive P / R / F1</th></tr></thead><tbody><tr><th>Base FinBERT</th><td>0.697</td><td>0.648</td><td></td><td>0.64 / 0.44 / 0.52</td><td>0.68 / 0.84 / 0.75</td><td>0.75 / 0.61 / 0.67</td></tr><tr><th>Fine-tuned on people&#x27;s labels <span class='muted'>(1 Oct, 978 rows)</span>, mean of three seeds</th><td>0.642</td><td>0.611</td><td>0.029</td><td>0.49 / 0.51 / 0.49</td><td>0.74 / 0.60 / 0.66</td><td>0.62 / 0.76 / 0.68</td></tr><tr><th class='sub'>the three averaged</th><td>0.654</td><td>0.620</td><td></td><td>0.50 / 0.48 / 0.49</td><td>0.74 / 0.62 / 0.67</td><td>0.63 / 0.79 / 0.70</td></tr><tr><th>Fine-tuned on people&#x27;s labels, retrained <span class='muted'>(4 Oct, 978 rows)</span>, mean of three seeds</th><td>0.688</td><td>0.647</td><td>0.020</td><td>0.60 / 0.48 / 0.53</td><td>0.71 / 0.76 / 0.73</td><td>0.69 / 0.67 / 0.68</td></tr><tr><th class='sub'>the three averaged</th><td>0.699</td><td>0.666</td><td></td><td>0.60 / 0.53 / 0.56</td><td>0.72 / 0.76 / 0.74</td><td>0.70 / 0.68 / 0.69</td></tr><tr><th>Fine-tuned on people&#x27;s labels, with broker rows <span class='muted'>(7 Oct, 1,258 rows)</span>, mean of three seeds</th><td>0.690</td><td>0.658</td><td>0.014</td><td>0.62 / 0.51 / 0.56</td><td>0.73 / 0.72 / 0.73</td><td>0.66 / 0.73 / 0.69</td></tr><tr><th class='sub'>the three averaged</th><td>0.682</td><td>0.649</td><td></td><td>0.60 / 0.50 / 0.54</td><td>0.74 / 0.70 / 0.72</td><td>0.64 / 0.74 / 0.68</td></tr><tr><th>Fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span>, mean of three seeds</th><td>0.689</td><td>0.669</td><td>0.010</td><td>0.57 / 0.63 / 0.60</td><td>0.76 / 0.68 / 0.72</td><td>0.66 / 0.73 / 0.69</td></tr><tr><th class='sub'>the three averaged</th><td>0.699</td><td>0.677</td><td></td><td>0.58 / 0.61 / 0.60</td><td>0.77 / 0.70 / 0.73</td><td>0.67 / 0.74 / 0.70</td></tr><tr class='winrow'><th>Adapted encoder, fine-tuned on Opus&#x27;s labels <span class='muted'>(11 Oct, 1,563 rows)</span>, mean of three seeds</th><td>0.702</td><td>0.685</td><td>0.013</td><td>0.56 / 0.71 / 0.62</td><td>0.76 / 0.70 / 0.73</td><td>0.71 / 0.70 / 0.70</td></tr><tr class='winrow'><th class='sub'>the three averaged</th><td>0.729</td><td>0.709</td><td></td><td>0.56 / 0.71 / 0.63</td><td>0.80 / 0.73 / 0.76</td><td>0.73 / 0.74 / 0.73</td></tr></tbody></table></div>
+  <h3>Row by row: the averaged adapted model against each other model</h3>
+  <div class="scroll"><table class="num"><thead><tr><th>Test rows</th><th>Against</th><th>Both right</th><th>Only the adapted model right</th><th>Only the other right</th><th>Both wrong</th><th>Exact test p</th></tr></thead><tbody>
+  <tr><th>First round, 299</th><td class='l'>Base FinBERT</td><td>173</td><td>41</td><td>36</td><td>49</td><td>0.65</td></tr><tr><th>First round, 299</th><td class='l'>People's labels, 4 Oct, averaged</td><td>188</td><td>26</td><td>22</td><td>63</td><td>0.67</td></tr><tr><th>First round, 299</th><td class='l'>Opus's labels, averaged</td><td>194</td><td>20</td><td>16</td><td>69</td><td>0.62</td></tr><tr><th>Broker research, 100</th><td class='l'>Base FinBERT</td><td>63</td><td>14</td><td>6</td><td>17</td><td>0.12</td></tr><tr><th>Broker research, 100</th><td class='l'>People's labels, 4 Oct, averaged</td><td>63</td><td>14</td><td>6</td><td>17</td><td>0.12</td></tr><tr><th>Broker research, 100</th><td class='l'>Opus's labels, averaged</td><td>67</td><td>10</td><td>2</td><td>21</td><td>0.039</td></tr><tr><th>Both, 399</th><td class='l'>Base FinBERT</td><td>236</td><td>55</td><td>42</td><td>66</td><td>0.22</td></tr><tr><th>Both, 399</th><td class='l'>People's labels, 4 Oct, averaged</td><td>251</td><td>40</td><td>28</td><td>80</td><td>0.18</td></tr><tr><th>Both, 399</th><td class='l'>Opus's labels, averaged</td><td>261</td><td>30</td><td>18</td><td>90</td><td>0.11</td></tr>
+  </tbody></table></div>
+  <h3>Where the figures come from</h3>
+  <ul class="refs">
+    <li>Scripts, the 30 cross-validation scores and the result tables: <code>data/eval/model-rerun-2026-10-11/</code></li>
+    <li>Write-up: <code>docs/evidence/model-rerun-2026-10-11.md</code></li>
+    <li>Training and test labels: <code>data/labeled/llm_rater/rules-2026-10-10/training_set.csv</code>, <code>data/labeled/sgx_research/resolved_test_blind.csv</code></li>
+    <li>Run: 11 Oct 15:51 to 12 Oct 00:07 on a MacBook Air (M1), about eight hours; nothing was written to the database</li>
+  </ul>
+</section>
+
+<footer>Every figure on this page is computed from the trained models and the label files named above. No sentence text is shown.</footer>
+</div>
+<div id="tip" role="status" hidden></div>
+<script>
+(function () {
+  var tip = document.getElementById("tip");
+  function show(ev) {
+    var t = ev.target.closest ? ev.target.closest("[data-tip]") : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute("data-tip");
+    tip.hidden = false;
+    var x = ev.clientX + 14, y = ev.clientY + 16, w = tip.offsetWidth, h = tip.offsetHeight;
+    if (x + w > window.innerWidth - 8) x = Math.max(8, ev.clientX - w - 14);
+    if (y + h > window.innerHeight - 8) y = Math.max(8, ev.clientY - h - 12);
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  document.addEventListener("pointermove", show);
+  document.addEventListener("pointerdown", show);
+  document.addEventListener("scroll", function () { tip.hidden = true; }, true);
+  document.addEventListener("pointerleave", function () { tip.hidden = true; });
+})();
+</script>
+
+</body>
+</html>

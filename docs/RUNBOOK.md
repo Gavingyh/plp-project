@@ -132,15 +132,16 @@ copy first.
 ```bash
 # a fresh copy, a dry run, then the copy changed
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.db --fresh-copy \
-    --aspects llm --finetuned --margin 0.13 --cpu
+    --aspects llm --finetuned --cpu
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.db --fresh-copy \
-    --aspects llm --finetuned --margin 0.13 --cpu --apply
+    --aspects llm --finetuned --cpu --apply
 ```
 
 Which models and margin: `--version` with a version listed in `FINETUNED`
 (`config/model_version.py`) uses that entry's models and margin, and refuses
 others, because new sentences are scored with exactly those. Without it, the
-1 Oct seeds are used with the margin their entry lists; other models
+chosen model's three seeds are used (`DEFAULT_FINETUNED`) with the margin
+their entry lists; other models
 (`--models`, such as the retrained seeds in
 `models/experiments-2026-10-03/label/`) need `--margin` and get a version of
 their own. Base FinBERT's tag is refused.
@@ -155,12 +156,26 @@ llm`, take a snapshot (below), and run the evaluations again. On another
 device (a CUDA PC, or the Mac's GPU without `--cpu`) the fine-tuned pairs
 are scored again, since the cache is kept per device.
 
-In the same week, earnings-PDF links become relative paths (decided 4 Oct):
-`scripts/rewrite_pdf_paths.py` counts by default and writes only with
-`--apply`, and refuses `data/plp.db` without `--real-db` (it backs it up
-first). On 4 Oct the dry run found 178 documents and 12,254 sentences in the
-database and in each of the five snapshots, and 2,234 links in 21 committed
-files under `data/`.
+**The real run was on 2026-10-12**, after a rehearsal on a copy that the
+database then matched row for row
+([evidence](evidence/rescore-rehearsal-2026-10-12.md)). `data/plp.db` now
+holds one LLM aspect a sentence and two models' scores: the served one,
+`finbert-adapted-finetuned-2026-10-11-3seed-m0`, and base FinBERT's. The
+copy before it is `data/snapshots/plp-before-rescore-20261012-141607.db`.
+Anyone on an older database must restore the 12 Oct snapshot (README): with
+the old one the API finds no rows for the served model, and
+`sentiment.score` would start scoring every old pair with the fine-tuned
+models.
+
+Links to locally read PDFs are relative paths (decided 4 Oct, applied
+12 Oct): `scripts/rewrite_pdf_paths.py` counts by default and writes only
+with `--apply`, and refuses `data/plp.db` without `--real-db` (it backs it up
+first). It covers earnings reports and broker research, whose links carried
+a home folder. On 12 Oct it rewrote 203 documents and 12,895 sentences in
+the database (178 and 12,254 earnings, 25 and 641 broker research) and
+10,443 links in 46 committed files under `data/`, changing nothing but the
+link. The snapshots from before 12 Oct were left as they are and still hold
+the old links.
 
 ```bash
 .venv-plp/bin/python3 scripts/rewrite_pdf_paths.py --db data/plp.db --snapshots --files            # counts only
@@ -584,7 +599,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2509 tests in `tests/`; `pytest -q` from the repository root runs 2556,
+2524 tests in `tests/`; `pytest -q` from the repository root runs 2571,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for

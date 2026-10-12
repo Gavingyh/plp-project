@@ -84,13 +84,24 @@ By the project owner.
 | **Collection is complete:** the batch scripts exist and stay stopped | The corpus runs to 25 Sep; the report says the index is recomputed per batch by design and was frozen for the evaluation |
 | **One database:** `data/plp.db` is the 30 Sep corpus plus the broker research source from the Windows PC, with the repairs | 28,852 documents, 45,844 sentences, 291,508 scored pairs; snapshot `plp-2026-10-11-v2.db.gz` (README) |
 
+### Made on 2026-10-12
+
+By the project owner, after the rehearsal on a copy.
+
+| decision | consequence |
+|---|---|
+| **The re-score is applied to `data/plp.db`** | Every sentence has one aspect from the LLM classifier, and the chosen model's scores sit beside base FinBERT's. The API and the chatbot serve the chosen model (`config/model_version.py`). All-time headlines: DBS 0.122 to 0.155, OCBC 0.136 to 0.143, UOB 0.074 to 0.117 ([evidence](evidence/rescore-rehearsal-2026-10-12.md)). The dashboard mixes both models' rows until its owner adds the model-version filter |
+| **Recent windows end at the newest sentence** (decided 4 Oct, applied with the re-score) | The 7- and 30-day windows count back from 25 Sep 2026; the API returns that date as `data_as_of`. The chatbot's wording is unchanged: it already says when the data runs to. The `decision/anchor-windows` branch predates the chatbot rewrite, so the index and API parts were ported and the branch closed |
+| **PDF links are relative paths** (decided 4 Oct, applied with the re-score) | Extended to broker research, whose links carried a Windows home folder: 203 documents and 12,895 sentences in the database, 10,443 links in 46 committed files. Snapshots from before 12 Oct still hold the old links |
+| **The researched answers that were recommendations are adopted** (11 Oct) | All six are in the [annotation guideline](annotation-guideline.md) |
+| **The two bank-recognition fixes are approved** (11 Oct) | In `preprocess/bank_ner.py` with tests. Nothing re-tags stored sentences, so stored bank tags are unchanged |
+
 ### Still open
 
 | decision | who | by |
 |---|---|---|
-| **Researched answers that are recommendations:** a bank economist's forecast is not about the bank; an impersonation scam is not the bank's outage; sarcasm, regular monthly share purchases, "lol", a small "buy" rating, report boilerplate ([local-context-questions](local-context-questions.md)) | team | 12 Oct |
-| **Two bank-recognition fixes:** "Development Bank of Singapore" resolves to OCBC; PayLah, digibank or TMRW alone resolve to no bank (`preprocess/bank_ner.py`) | team | before the re-score |
 | **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
+| **The wealth definition in the LLM aspect prompt** predates the 10 Oct rule (wealth means the priority tiers). Changing it starts a new answer cache and about a day of classification, then another re-score | team | 19 Oct |
 
 ---
 

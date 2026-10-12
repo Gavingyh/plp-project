@@ -1696,3 +1696,44 @@ Before that, the dashboard must filter on the model version. Also new and
 not yet committed: a project writing skill, `.claude/skills/report-writer/`,
 written after the owner said the prose is either too long or leaves out the
 reader's context, and that the report must reach Bloom level 4 (analyse).
+
+**The re-score was applied to `data/plp.db` (12 Oct, 22:16), on the owner's
+go-ahead.** What changed, in the order it was done:
+
+- **Served model and aspects.** `MODEL_VERSION` is
+  `finbert-adapted-finetuned-2026-10-11-3seed-m0` and `assignment_method` is
+  `llm`. The database matched the rehearsed copy row for row. The API and
+  the chatbot serve the new rows; base FinBERT's stay beside them.
+- **Tests no longer depend on which model is served.** `tests/conftest.py`
+  pins base FinBERT for every test, because the tests build base-FinBERT
+  databases; the tests that compare the API with `data/plp.db` ask for the
+  real one (`served_version`).
+- **PDF links are relative paths** (`decision/relative-pdf-paths`, merged).
+  The rewrite was extended to broker research, whose links carried a
+  Windows home folder, and no longer changes line endings: 203 documents and
+  12,895 sentences in the database, 10,443 links in 46 committed files.
+- **Recent windows end at the newest sentence, 25 Sep.** The
+  `decision/anchor-windows` branch no longer merged (its chatbot half was
+  written before the chatbot rewrite, which already reports
+  `data_runs_to`), so the index anchor and an API field, `data_as_of`, were
+  ported and the chatbot left alone. The 7-day window now holds 90, 42 and
+  60 sentences for DBS, OCBC and UOB, where it held 40, 14 and 7.
+- **A reviewer checked the switch.** No reader in the API or the chatbot
+  mixes the two models. Fixed from its findings: `aggregate.preview` read
+  the served model's scores as base FinBERT's; `DEFAULT_FINETUNED` named the
+  1 Oct model; two docstrings and the API guide described the old state.
+  Recorded, not fixed: on an old database `/sentiment/index` and
+  `/sentiment/series` return empty lists with no reason, and
+  `sentiment.score` would fine-tune-score every old pair; `--sources` limits
+  only the base pass; an LLM answer that fails twice is cached as `other`.
+- **Snapshot** `plp-2026-10-12.db.gz` (26.3 MB; checksum in the README).
+  Three copies from before each step are in `data/snapshots/`
+  (`plp-before-*.db`, about 200 MB each) and can be deleted once the team
+  has the new snapshot.
+- Tests: 2524 in `tests/`, 2571 from the root; all pass.
+
+**Needs a person:** upload the 12 Oct snapshot and the three chosen models
+to the team's stores; the dashboard owner adds the model-version filter
+(the dashboard mixes both models' rows until then); decide whether to
+re-classify the corpus with the new wealth definition. `CLAUDE.md` still
+quotes the 1 Oct figures in its "Fine-tuning lead" claim.

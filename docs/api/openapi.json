@@ -511,11 +511,13 @@
             }
           },
           {
+            "description": "all_time, 7d or 30d. The 7d and 30d windows end at the newest stored sentence, not today; the response's data_as_of gives that date.",
             "in": "query",
             "name": "window",
             "required": false,
             "schema": {
               "default": "all_time",
+              "description": "all_time, 7d or 30d. The 7d and 30d windows end at the newest stored sentence, not today; the response's data_as_of gives that date.",
               "pattern": "^(7d|30d|all_time)$",
               "title": "Window",
               "type": "string"
@@ -568,11 +570,13 @@
         "operationId": "sentiment_compare_sentiment_compare_get",
         "parameters": [
           {
+            "description": "all_time, 7d or 30d. The 7d and 30d windows end at the newest stored sentence, not today; the response's data_as_of gives that date.",
             "in": "query",
             "name": "window",
             "required": false,
             "schema": {
               "default": "all_time",
+              "description": "all_time, 7d or 30d. The 7d and 30d windows end at the newest stored sentence, not today; the response's data_as_of gives that date.",
               "pattern": "^(7d|30d|all_time)$",
               "title": "Window",
               "type": "string"
@@ -622,15 +626,17 @@
     },
     "/sentiment/index": {
       "get": {
-        "description": "Raw rows from sentiment_index for the given window - one call to build\na full bank x aspect grid client-side, instead of one call per cell.\n\n`source` defaults to \"ALL\" (the blended headline number). Pass one source\nthe index holds (an unknown one is a 422; /sources lists them) to get that\ncomponent alone, or \"*\" for every row including all per-source\nbreakdowns - useful for showing what the blend is made of, which matters\nbecause the source mix differs between banks (see /sources).",
+        "description": "Raw rows from sentiment_index for the given window - one call to build\na full bank x aspect grid client-side, instead of one call per cell.\n\nThe 7d and 30d windows end at the newest stored sentence, not today:\n`data_as_of` gives that date, and a screen should show it (\"as of ...\").\n\n`source` defaults to \"ALL\" (the blended headline number). Pass one source\nthe index holds (an unknown one is a 422; /sources lists them) to get that\ncomponent alone, or \"*\" for every row including all per-source\nbreakdowns - useful for showing what the blend is made of, which matters\nbecause the source mix differs between banks (see /sources).",
         "operationId": "sentiment_index_dump_sentiment_index_get",
         "parameters": [
           {
+            "description": "all_time, 7d or 30d. The 7d and 30d windows end at the newest stored sentence, not today; the response's data_as_of gives that date.",
             "in": "query",
             "name": "window",
             "required": false,
             "schema": {
               "default": "all_time",
+              "description": "all_time, 7d or 30d. The 7d and 30d windows end at the newest stored sentence, not today; the response's data_as_of gives that date.",
               "pattern": "^(7d|30d|all_time)$",
               "title": "Window",
               "type": "string"

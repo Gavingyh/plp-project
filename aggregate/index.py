@@ -222,10 +222,52 @@ def compute_time_series(bank: str, aspect: str | None = None, bucket: str = "mon
     return series
 
 
-def _compute_rows_for_window(all_rows, window_name: str, days: int | None):
+def newest_sentence_time(conn) -> datetime | None:
+    """When the newest stored sentence was published, in UTC: where the 7- and
+    30-day windows end, so a corpus that stopped being
+    collected still has recent figures, labelled "as of" this date. Read with
+    SQL each time it's needed, so nothing new is stored. SQLite's julianday
+    reads the "+08:00" and "Z" offsets the sources write, so this is the
+    latest instant, not the latest string."""
+    row = conn.execute("SELECT strftime('%Y-%m-%dT%H:%M:%f', MAX(julianday(published_at))) "
+                       "FROM sentences").fetchone()
+    return datetime.fromisoformat(row[0]).replace(tzinfo=timezone.utc) if row and row[0] else None
+
+
+def data_as_of(conn=None) -> str | None:
+    """The date the 7- and 30-day windows end on ("2026-09-25"), for the
+    "as of" label the tools, the API and the starter questions show. None
+    before any sentence is stored."""
+    own = conn is None
+    conn = conn or get_connection()
+    try:
+        newest = newest_sentence_time(conn)
+    finally:
+        if own:
+            conn.close()
+    return newest.date().isoformat() if newest else None
+
+
+def as_of_fields(window: str) -> dict:
+    """What a windowed figure says about when it ends: data_as_of, the date of
+    the newest stored sentence, and for the 7- and 30-day windows a note that
+    they count back from that date, not from today. Empty before any sentence
+    is stored."""
+    day = data_as_of()
+    if not day:
+        return {}
+    out = {"data_as_of": day}
+    if WINDOWS.get(window):
+        out["window_note"] = f"the {WINDOWS[window]} days to {day}, the newest stored data, not to today"
+    return out
+
+
+def _compute_rows_for_window(all_rows, window_name: str, days: int | None, anchor: datetime | None = None):
+    """One window's rows. A window of `days` ends at `anchor`, the newest
+    sentence's time (now, when there is none)."""
     cutoff = None
     if days is not None:
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff = (anchor or datetime.now(timezone.utc)) - timedelta(days=days)
 
     # Keyed by (bank, aspect, source, model_version); 'ALL' is used for the
     # blended-across-sources and blended-across-aspects rows respectively, so a
@@ -271,10 +313,11 @@ def rebuild(conn) -> int:
     caller (scripts/rescore.py) can make it part of its own transaction. The
     table must exist (_ensure_schema, which commits, so call it first)."""
     all_rows = _fetch_all_rows(conn)
+    anchor = newest_sentence_time(conn)
 
     out = []
     for window_name, days in WINDOWS.items():
-        out.extend(_compute_rows_for_window(all_rows, window_name, days))
+        out.extend(_compute_rows_for_window(all_rows, window_name, days, anchor))
 
     if out:
         conn.execute("DELETE FROM sentiment_index")  # full recompute each run - cheap at this scale

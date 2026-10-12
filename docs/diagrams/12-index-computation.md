@@ -8,7 +8,7 @@ flowchart TB
   accDescr: Every scored pair is read with its bank, source and date, filtered to a window, weighted by source and confidence, grouped four ways (counting each sentence once in the rows that span aspects), summarised with shrinkage toward neutral, and written. A volume floor applies later, when the chatbot reads a score.
 
   rows[("aspect_sentiment<br/>joined to sentences")]
-  win["Repeat for each window:<br/>last 7 days, 30 days, all time"]
+  win["Repeat for each window: the 7 and 30 days<br/>to the newest sentence, and all time"]
   item["Each pair becomes<br/>label score x confidence x source weight"]
   grp["Group four ways per bank:<br/>aspect and source, aspect blended,<br/>source across aspects, headline ALL/ALL<br/>across aspects: each sentence once"]
   sum["Weighted mean,<br/>then shrink toward 0: score x n / (n + 5)"]
@@ -49,20 +49,21 @@ Each row names the file and line an element comes from, and the text that line m
 | read every scored pair | `aggregate/index.py:91` | `FROM aspect_sentiment ase` |
 | joined to sentences | `aggregate/index.py:92` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
 | windows | `aggregate/index.py:54` | `WINDOWS = {"7d": 7, "30d": 30, "all_time": None}` |
-| window cutoff | `aggregate/index.py:238` | `if t is None or t < cutoff:` |
+| window cutoff | `aggregate/index.py:280` | `if t is None or t < cutoff:` |
+| windows end at the newest sentence | `aggregate/index.py:270` | `cutoff = (anchor or datetime.now(timezone.utc)) - timedelta(days=days)` |
 | label scores | `aggregate/index.py:47` | `_LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}` |
 | source weights | `config/sources.yaml:25` | `earnings:     {weight: 1.0` |
 | weights read by the index | `aggregate/index.py:51` | `_SOURCE_WEIGHT = sources.weights()` |
-| each item weighted | `aggregate/index.py:240` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))` |
-| group: aspect and source | `aggregate/index.py:241` | `groups[(bank, aspect, source, model_version)].append(item)` |
-| group: headline, once per sentence | `aggregate/index.py:244` | `_one_per_sentence(across_aspects, sentence_id, (bank, "ALL", SOURCE_ALL, model_version), item)` |
+| each item weighted | `aggregate/index.py:282` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))` |
+| group: aspect and source | `aggregate/index.py:283` | `groups[(bank, aspect, source, model_version)].append(item)` |
+| group: headline, once per sentence | `aggregate/index.py:286` | `_one_per_sentence(across_aspects, sentence_id, (bank, "ALL", SOURCE_ALL, model_version), item)` |
 | keep the most confident pair | `aggregate/index.py:109` | `if current is None or item[1] > current[1]:` |
 | weighted mean | `aggregate/index.py:120` | `raw_score = weighted_sum / weight_total` |
 | shrinkage | `aggregate/index.py:121` | `shrunk = raw_score * (n / (n + SHRINKAGE_K))` |
 | shrinkage constant | `aggregate/index.py:45` | `SHRINKAGE_K = 5` |
-| deleted and rewritten | `aggregate/index.py:280` | `conn.execute("DELETE FROM sentiment_index")` |
+| deleted and rewritten | `aggregate/index.py:323` | `conn.execute("DELETE FROM sentiment_index")` |
 | volume floor | `aggregate/index.py:46` | `MIN_N = 5` |
 | volume floor, applied when read | `chatbot/tools.py:29` | `MIN_VOLUME_FOR_SCORE = MIN_N` |
 | time-series floor | `aggregate/index.py:156` | `min_n: int = MIN_N` |
-| thin buckets left off the chart | `docs/api-integration.md:85` | `gap, not a line through them, and not a zero.` |
+| thin buckets left off the chart | `docs/api-integration.md:87` | `gap, not a line through them, and not a zero.` |
 | insufficient data reported | `chatbot/tools.py:108` | `if n < MIN_VOLUME_FOR_SCORE:` |

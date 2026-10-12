@@ -31,12 +31,12 @@ scripts/stop.sh
 
 | dashboard view | endpoint | notes |
 |---|---|---|
-| headline score per bank | `GET /sentiment?bank=DBS` | `window` = `all_time` (default), `30d`, `7d`; `insufficient_data` is true when too few sentences |
+| headline score per bank | `GET /sentiment?bank=DBS` | `window` = `all_time` (default), `30d`, `7d`; `insufficient_data` is true when too few sentences; `data_as_of` is the date the 7d and 30d windows end on |
 | bank × aspect grid | `GET /sentiment/index?window=all_time` | one call, 36 rows (3 banks × 11 aspects + `ALL`); `aspect = "ALL"` is the bank's headline; each row's `insufficient_data` is true below 5 sentences |
 | what the blend is made of | `GET /sentiment/index?window=all_time&source=*` and `GET /sources` | every per-source row (249), and sentence counts by bank and source |
 | comparing the banks | `GET /sentiment/compare?aspect=dividend_policy` | all three banks for one aspect, or overall without `aspect` |
 | sentiment over time | `GET /sentiment/series?bank=UOB&bucket=month` | `bucket` = `week`, `month`, `quarter`; optional `aspect`, `source`, `min_n` (default 5) |
-| up or down lately | `GET /sentiment/trend?bank=DBS` | the last 7 days against the last 30, compared before the small-sample shrinkage: `delta_7d_vs_30d` is `recent_7d_unshrunk_score` minus `baseline_30d_unshrunk_score`, both returned; no direction when either window has fewer than 5 sentences |
+| up or down lately | `GET /sentiment/trend?bank=DBS` | the 7 days against the 30 days to the newest stored data (`data_as_of`), compared before the small-sample shrinkage: `delta_7d_vs_30d` is `recent_7d_unshrunk_score` minus `baseline_30d_unshrunk_score`, both returned; no direction when either window has fewer than 5 sentences |
 | analyst consensus | `GET /analyst-consensus/latest` (all banks) or `GET /analyst-consensus?bank=DBS` | Yahoo Finance aggregates: rating, number of analysts, mean target, price |
 | evidence drill-down | `GET /evidence/latest?bank=OCBC&aspect=dividend_policy&limit=30` | newest sentences with their stored label |
 | evidence search | `GET /evidence?query=dividend+cut&bank=DBS&k=5` | semantic search, as the chatbot uses; `k` from 1 to 50 |
@@ -48,15 +48,16 @@ scripts/stop.sh
 
 ## What the responses look like
 
-Real responses from the 30 Sep database, shortened.
+Real responses from the 12 Oct database, shortened.
 
 `GET /sentiment?bank=DBS`
 
 ```json
-{"bank": "DBS", "aspect": "ALL", "window": "all_time", "score": 0.122, "n": 24431,
- "positive_n": 5468, "neutral_n": 16441, "negative_n": 2522, "confidence_mean": 0.856,
- "model_version": "finbert-base-zeroshot-v1", "computed_at": "2026-09-30T07:34:45.193278+00:00",
- "insufficient_data": false}
+{"bank": "DBS", "aspect": "ALL", "window": "all_time", "score": 0.1552, "n": 24978,
+ "positive_n": 8157, "neutral_n": 12771, "negative_n": 4050, "confidence_mean": 0.8338,
+ "model_version": "finbert-adapted-finetuned-2026-10-11-3seed-m0",
+ "computed_at": "2026-10-12T14:31:45.806484+00:00", "insufficient_data": false,
+ "data_as_of": "2026-09-25"}
 ```
 
 `score` runs from −1 (all negative) to +1 (all positive), weighted by the
@@ -66,19 +67,20 @@ sentences.
 `GET /sentiment/index?window=all_time` (one row of 36)
 
 ```json
-{"bank": "OCBC", "aspect": "asset_quality", "source": "ALL", "score": 0.2764, "n": 5232,
- "pos_n": 1476, "neu_n": 3628, "neg_n": 128, "confidence_mean": 0.864,
- "model_version": "finbert-base-zeroshot-v1", "computed_at": "2026-09-30T07:34:45.193278+00:00"}
+{"bank": "OCBC", "aspect": "asset_quality", "source": "ALL", "score": 0.0012, "n": 307,
+ "pos_n": 77, "neu_n": 157, "neg_n": 73, "confidence_mean": 0.7883,
+ "model_version": "finbert-adapted-finetuned-2026-10-11-3seed-m0",
+ "computed_at": "2026-10-12T14:31:45.806484+00:00", "insufficient_data": false}
 ```
 
 `GET /sentiment/series?bank=UOB&bucket=quarter` (two points)
 
 ```json
 {"bank": "UOB", "aspect": "ALL", "bucket": "quarter", "source": "ALL",
- "series": [{"period": "2020-Q2", "score": 0.1404, "n": 63, "pos_n": 22, "neu_n": 30, "neg_n": 11,
-             "confidence_mean": 0.837, "sufficient": true},
-            {"period": "2020-Q3", "score": 0.0027, "n": 108, "pos_n": 34, "neu_n": 42, "neg_n": 32,
-             "confidence_mean": 0.8902, "sufficient": true}]}
+ "series": [{"period": "2026-Q2", "score": 0.0653, "n": 507, "pos_n": 132, "neu_n": 277, "neg_n": 98,
+             "confidence_mean": 0.8439, "sufficient": true},
+            {"period": "2026-Q3", "score": 0.1561, "n": 592, "pos_n": 188, "neu_n": 299, "neg_n": 105,
+             "confidence_mean": 0.8418, "sufficient": true}]}
 ```
 
 Points with `"sufficient": false` have fewer than `min_n` sentences: draw a
@@ -160,17 +162,27 @@ near the numbers they qualify.
   banks, scores far more positive than Reddit; DBS has about six times the
   earnings text of the others. Show the per-source rows next to any
   cross-bank comparison.
-- **Per-aspect scores aren't reliable yet.** Aspects are matched by
-  embedding similarity, which gives a sentence 6.4 of the ten aspects on
-  average and picks the aspect a person would choose first only 41% of the
-  time. An LLM classifier that picks it 73% of the time is built but not yet
-  applied; when it is, the same endpoints return the new rows.
-- **Scores come from base FinBERT, zero-shot.** `model_version` says which
-  model produced a row. Every endpoint returns only the current model's rows,
-  so when the team switches to the fine-tuned model the old rows stay in the
-  database for comparison but stop appearing. If the configured model has no
-  rows yet, `/sentiment` says so in its `reason` (and the server logs a
-  warning) rather than reporting ordinary missing data.
+- **Recent figures are "as of" the newest data, not today.** Collection has
+  stopped, so the `7d` and `30d` windows, and the trend, count back from the
+  newest stored sentence. `/sentiment`, `/sentiment/compare`,
+  `/sentiment/trend` and `/sentiment/index` return that date as
+  `data_as_of` ("2026-09-25"), and `window_note` spells the window out. Show
+  "as of <date>" next to any recent figure, and never label it "this week".
+- **Each sentence has one aspect, chosen by a local LLM** (since the re-score
+  of 12 Oct 2026). On the labelled sentences it picks the aspect a person
+  would choose first 73% of the time; the embedding-similarity method it
+  replaced managed 41% and gave a sentence 6.4 aspects on average. A
+  per-aspect figure therefore rests on far fewer sentences than before: show
+  `n` beside it, and grey out a cell whose `insufficient_data` is true.
+- **Scores come from the fine-tuned model** (the adapted encoder trained on
+  LLM labels, three seeds averaged). `model_version` says which model
+  produced a row. Every endpoint returns only the served model's rows; base
+  FinBERT's stay in the database for comparison but don't appear. A client
+  that reads the database directly must filter on `model_version` itself, or
+  it counts every sentence twice. If the database has no rows for the served
+  model (an old snapshot), `/sentiment` says so in its `reason` and the
+  server logs a warning, but `/sentiment/index` and `/sentiment/series`
+  return empty lists: restore the latest snapshot.
 - **`bank` must be exactly `DBS`, `OCBC` or `UOB`** on every endpoint that
   takes it; anything else (including `dbs`) gets HTTP 422.
 - **`aspect` must be a known aspect** (`GET /aspects` lists them; a readable

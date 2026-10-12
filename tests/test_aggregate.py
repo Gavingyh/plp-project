@@ -137,6 +137,9 @@ def test_old_data_excluded_from_7d_window_but_kept_in_all_time(temp_db):
     old_ts = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
     _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "positive", 1.0,
                              published_at=old_ts)
+    # The windows end at the newest sentence: one from today puts the end at today.
+    _insert_scored_sentence(temp_db, "s0", "UOB", "asset_quality", "neutral", 1.0,
+                             published_at=datetime.now(timezone.utc).isoformat())
     run_aggregate()
     conn = temp_db.get_connection()
     n_7d = conn.execute(
@@ -210,6 +213,8 @@ def test_7d_cutoff_compares_instants_not_strings(temp_db):
                             source="cna", published_at=outside)
     _insert_scored_sentence(temp_db, "s2", "DBS", "dividend_policy", "positive", 1.0,
                             source="newsapi", published_at=inside)
+    _insert_scored_sentence(temp_db, "s0", "UOB", "asset_quality", "neutral", 1.0,   # the windows end today
+                            published_at=datetime.now(timezone.utc).isoformat())
     run_aggregate()
     conn = temp_db.get_connection()
     n_7d = conn.execute(
@@ -239,3 +244,37 @@ def test_pairs_no_longer_assigned_are_not_counted(temp_db):
     conn.close()
     assert rows == {"dividend_policy": 1, "ALL": 1}
     assert head == (1, 0)                    # the stale, more confident negative pair is ignored
+
+
+def test_windows_end_at_the_newest_sentence_not_today(temp_db):
+    # A corpus that stopped being collected keeps its recent
+    # figures. Newest sentence 60 days ago; one 3 days before it is in its 7-day
+    # window, one 10 days before it isn't.
+    from datetime import datetime, timedelta, timezone
+    from aggregate.index import data_as_of
+    newest = datetime.now(timezone.utc) - timedelta(days=60)
+    for sid, days in (("s1", 0), ("s2", 3), ("s3", 10)):
+        _insert_scored_sentence(temp_db, sid, "DBS", "dividend_policy", "positive", 1.0,
+                                published_at=(newest - timedelta(days=days)).isoformat())
+    run_aggregate()
+    conn = temp_db.get_connection()
+    n = dict(conn.execute("SELECT window, n FROM sentiment_index WHERE bank='DBS' AND aspect='dividend_policy' "
+                          "AND source='ALL'").fetchall())
+    as_of = data_as_of(conn)
+    conn.close()
+    assert n == {"7d": 2, "30d": 3, "all_time": 3}
+    assert as_of == newest.date().isoformat()
+
+
+def test_the_newest_sentence_is_the_latest_instant_not_the_latest_string(temp_db):
+    # "2026-01-21T02:00:00+08:00" sorts after "2026-01-20T19:00:00+00:00" as text,
+    # but is 18:00 UTC on the 20th: an hour earlier.
+    from aggregate.index import newest_sentence_time
+    _insert_scored_sentence(temp_db, "s1", "DBS", "dividend_policy", "positive", 1.0,
+                            source="cna", published_at="2026-01-21T02:00:00+08:00")
+    _insert_scored_sentence(temp_db, "s2", "DBS", "dividend_policy", "positive", 1.0,
+                            published_at="2026-01-20T19:00:00+00:00")
+    conn = temp_db.get_connection()
+    newest = newest_sentence_time(conn)
+    conn.close()
+    assert newest.isoformat() == "2026-01-20T19:00:00+00:00"

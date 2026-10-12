@@ -209,6 +209,47 @@ dashboard should show the count beside each per-aspect figure.
   commit as the re-score. The dashboard must filter on the model version
   first, or it will count both models' rows.
 
+## Applied to `data/plp.db` the same day
+
+The owner gave the go-ahead after reading the figures above, and the same
+step ran on `data/plp.db` at 22:16 on 12 Oct 2026. The copy before it is
+`data/snapshots/plp-before-rescore-20261012-141607.db`.
+
+- **The database matched the rehearsed copy row for row**: 45,844
+  assignments, 91,688 scores and 838 index rows compared equal, and SQLite's
+  integrity check passed.
+- **The served model changed in the same commit.** `MODEL_VERSION` names the
+  chosen model and `assignment_method` is `llm` (`config/`), so the API and
+  the chatbot serve the new rows and new sentences would be handled the same
+  way. `/sentiment?bank=DBS` returns 0.1552 on 24,978 sentences.
+- **Two changes decided on 4 Oct were applied with it.** Links to locally
+  read PDFs became relative paths (203 documents, 12,895 sentences). The
+  index was then rebuilt with the 7- and 30-day windows ending at the newest
+  sentence, 25 Sep 2026, where the rehearsal had held them at 30 Sep. The
+  all-time rows did not change; the recent ones rest on more sentences:
+
+| Window | Bank | Windows to 30 Sep (rehearsal) | Windows to 25 Sep (stored) |
+|---|---|---|---|
+| 30 days | DBS | 0.053 on 312 | 0.054 on 371 |
+| 30 days | OCBC | 0.269 on 105 | 0.281 on 115 |
+| 30 days | UOB | 0.202 on 116 | 0.196 on 136 |
+| 7 days | DBS | 0.180 on 40 | 0.171 on 90 |
+| 7 days | OCBC | -0.058 on 14 | 0.151 on 42 |
+| 7 days | UOB | 0.052 on 7 | 0.309 on 60 |
+
+  The 7-day figures move most because the old window, ending five days after
+  the last sentence, held only two days of data. The index now has 898 rows,
+  449 a model.
+- **Snapshot:** `plp-2026-10-12.db.gz`, 26.3 MB, SHA-256
+  `b604bba0d27a9f44934a7af984abc784034824868eadc77a6a3d54f5a7296908`.
+- **A review of the switch** found no reader in the API or the chatbot that
+  mixes the two models. It found that `aggregate.preview` read the served
+  model's scores under its "base FinBERT" columns (fixed), and that a
+  teammate on an old database gets empty results from two endpoints without
+  a reason (recorded in the API guide and the to-do).
+- **Not done here:** the dashboard has no model-version filter, so it shows
+  both models' rows until its owner adds one.
+
 ## To reproduce
 
 ```bash

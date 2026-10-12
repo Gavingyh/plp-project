@@ -45,13 +45,22 @@ The API is the documented interface for any frontend:
   three banks have earnings coverage now, but DBS carries roughly six times
   the earnings volume of the other two, and earnings text scores far more
   positive than retail chatter.
-- **The fine-tuned model leads base FinBERT on macro-F1, not on accuracy.**
-  With the readable aspect label as input it scores test macro-F1 0.604 ±
-  0.035 over three seeds (0.615 for the three averaged) against base
-  FinBERT zero-shot's 0.571; base FinBERT still has the higher accuracy
-  (0.70 against 0.66) and calls far fewer neutral sentences polar
-  ([evidence](docs/evidence/finetune-fixes-2026-10-01.md)). All scores in
-  the database still come from base FinBERT; switching is a team decision.
+- **The index is scored by a fine-tuned model that leads base FinBERT, by a
+  modest margin.** Since 12 Oct 2026 the API and the chatbot serve the
+  adapted encoder fine-tuned on LLM labels, three seeds averaged. On the 299
+  hand-labelled test rows it scores macro-F1 0.670 and accuracy 0.716
+  against base FinBERT zero-shot's 0.571 and 0.699. The gain is in negative
+  sentences (it finds 59% of them against 21%), paid for with neutral recall
+  (0.73 against 0.91), and its precision on negative is 0.48
+  ([evidence](docs/evidence/model-rerun-2026-10-11.md)). Base FinBERT's
+  scores stay in the database beside it, for comparison.
+- **Each sentence has one aspect, chosen by a local LLM.** Until 12 Oct a
+  sentence carried every aspect it resembled, 6.4 on average, so per-aspect
+  figures from before and after are not comparable
+  ([evidence](docs/evidence/rescore-rehearsal-2026-10-12.md)).
+- **Recent figures are "as of" the newest stored sentence, 25 Sep 2026.**
+  Collection has stopped, so the 7- and 30-day windows count back from that
+  date, not from today.
 - **Local chatbot models fabricate citations.** Answers carrying a
   `⚠️ VERIFICATION WARNING` cited evidence that was never retrieved.
 - **Per-aspect scores aren't meaningful yet.** Aspects are matched by
@@ -126,17 +135,18 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ## Getting the database
 
-`data/plp.db` (204.3 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
+`data/plp.db` (101.6 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
-gunzip -c plp-2026-10-11-v2.db.gz > data/plp.db
-shasum -a 256 plp-2026-10-11-v2.db.gz   # should match the checksum below
+gunzip -c plp-2026-10-12.db.gz > data/plp.db
+shasum -a 256 plp-2026-10-12.db.gz   # should match the checksum below
 ```
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-10-11-v2.db.gz` (latest) | 43.2MB | `f703d2da4c3ea7b45cfc20ff1dc1ec29425a4778e6473b4262d93dd66a44b310` | The snapshot below with the three approved data repairs: six UOB earnings documents (114 sentences) re-dated from their extraction day to their announcement dates; the Reddit comments lost for September 2021, May 2024 and March 2025 refilled (825 documents, 858 sentences, assigned and scored like the rest); the index rebuilt the same way (580 rows). 28,852 documents, 45,844 sentences, 291,508 sentence–aspect pairs. For the team only. |
+| `plp-2026-10-12.db.gz` (latest) | 26.3MB | `b604bba0d27a9f44934a7af984abc784034824868eadc77a6a3d54f5a7296908` | The snapshot below, re-scored on 12 Oct: one aspect a sentence from the LLM classifier (45,844 sentence–aspect pairs, where there were 291,508); the chosen fine-tuned model's scores beside base FinBERT's (45,844 each); earnings and broker research links made relative to the repository, so no home folder is left in a link; and the index rebuilt with the 7- and 30-day windows ending at the newest sentence, 25 Sep (898 rows, 449 a model). 28,852 documents and 45,844 sentences, as before. It needs the code from 12 Oct on, which serves the fine-tuned model's rows ([evidence](docs/evidence/rescore-rehearsal-2026-10-12.md)) |
+| `plp-2026-10-11-v2.db.gz` (superseded; base FinBERT's scores and centroid aspects only) | 43.2MB | `f703d2da4c3ea7b45cfc20ff1dc1ec29425a4778e6473b4262d93dd66a44b310` | The snapshot below with the three approved data repairs: six UOB earnings documents (114 sentences) re-dated from their extraction day to their announcement dates; the Reddit comments lost for September 2021, May 2024 and March 2025 refilled (825 documents, 858 sentences, assigned and scored like the rest); the index rebuilt the same way (580 rows). 28,852 documents, 45,844 sentences, 291,508 sentence–aspect pairs. For the team only. |
 | `plp-2026-10-11.db.gz` (superseded the same day) | 42.4MB | `9ca50c4d95ec7d28cda35e0607dc6c138fa3ab2bb863f8099fcd6824b9472b37` | The 30 Sep snapshot below plus the broker research source (`sgx_research`: 25 reports, 641 sentences), copied from the Windows PC's database with `scripts/source_rows.py` so the sentence ids match the labels: 28,027 documents, 44,986 sentences, 286,277 sentence–aspect pairs, every one scored by base FinBERT. The index (592 rows) was rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so every earlier figure is unchanged and only the new source is added. Holds CNA and broker research text: for the team only. |
 | `plp-2026-09-30.db.gz` (superseded; the corpus the evaluations to 10 Oct used) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), section 2) |
 | `plp-2026-09-26-v2.db.gz` (superseded) | 28.9MB | `f6aac79a212368747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored under the four-aspect taxonomy; index recomputed |
@@ -153,9 +163,9 @@ What a teammate needs, beyond `git clone` and the Quick start:
 
 | file | needed for | size |
 |---|---|---|
-| the latest snapshot (`plp-2026-10-11-v2.db.gz`) | everything: unpack to `data/plp.db` | 43.2 MB |
+| the latest snapshot (`plp-2026-10-12.db.gz`) | everything: unpack to `data/plp.db` | 26.3 MB |
 | `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 132 MB |
-| the three fine-tuned models | only to reproduce the sentiment results or re-score with them; the database holds base FinBERT's scores | 3 × 438 MB |
+| the three fine-tuned models (`models/experiments-2026-10-11/dapt/seed_{42,1,7}/final`) | only to score new sentences, reproduce the sentiment results or re-score; the database already holds their scores for every stored sentence | 3 × 438 MB |
 
 `scripts/share_bundle.sh OUT_DIR [--with-models]` copies these into one
 folder with a `SHA256SUMS` file (check with `shasum -a 256 -c SHA256SUMS`);
@@ -300,6 +310,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2509 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2556: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2524 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2571: adds the diagram and notebook checks
 ```

@@ -30,7 +30,7 @@ from pydantic import BaseModel, field_validator
 
 from chatbot.agent import Conversation
 from chatbot.backends.base import BackendUnavailable
-from aggregate.index import MIN_N, compute_time_series
+from aggregate.index import MIN_N, as_of_fields, compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
 from chatbot.tools import (ASPECT_KEYS, MIN_VOLUME_FOR_SCORE, compare_banks, get_analyst_consensus,
@@ -44,6 +44,8 @@ logger = get_logger(__name__)
 
 BANKS = list(BANK_NAMES)
 BANK_PATTERN = "^(" + "|".join(BANK_NAMES) + ")$"     # exactly one bank name: anything else is a 422
+WINDOW_HELP = ("all_time, 7d or 30d. The 7d and 30d windows end at the newest stored sentence, "
+               "not today; the response's data_as_of gives that date.")
 
 
 @asynccontextmanager
@@ -117,26 +119,29 @@ def valid_source(source: str = Query(
 @app.get("/sentiment")
 def sentiment(bank: str = Query(..., pattern=BANK_PATTERN),
               aspect: str | None = Depends(valid_aspect),
-              window: str = Query("all_time", pattern="^(7d|30d|all_time)$")):
-    return get_sentiment(bank, aspect, window)
+              window: str = Query("all_time", pattern="^(7d|30d|all_time)$", description=WINDOW_HELP)):
+    return {**get_sentiment(bank, aspect, window), **as_of_fields(window)}
 
 
 @app.get("/sentiment/compare")
 def sentiment_compare(aspect: str | None = Depends(valid_aspect),
-                       window: str = Query("all_time", pattern="^(7d|30d|all_time)$")):
-    return compare_banks(aspect, window)
+                       window: str = Query("all_time", pattern="^(7d|30d|all_time)$", description=WINDOW_HELP)):
+    return {**compare_banks(aspect, window), **as_of_fields(window)}
 
 
 @app.get("/sentiment/trend")
 def sentiment_trend(bank: str = Query(..., pattern=BANK_PATTERN), aspect: str | None = Depends(valid_aspect)):
-    return get_trend(bank, aspect)
+    return {**get_trend(bank, aspect), **as_of_fields("7d")}
 
 
 @app.get("/sentiment/index")
-def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_time)$"),
+def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_time)$", description=WINDOW_HELP),
                           source: str = Depends(valid_source)):
     """Raw rows from sentiment_index for the given window - one call to build
     a full bank x aspect grid client-side, instead of one call per cell.
+
+    The 7d and 30d windows end at the newest stored sentence, not today:
+    `data_as_of` gives that date, and a screen should show it ("as of ...").
 
     `source` defaults to "ALL" (the blended headline number). Pass one source
     the index holds (an unknown one is a 422; /sources lists them) to get that
@@ -164,7 +169,7 @@ def sentiment_index_dump(window: str = Query("all_time", pattern="^(7d|30d|all_t
     # Cells below the volume floor keep their score but say they're thin, as
     # /sentiment does, so a grid built from this call can grey them out.
     out = [{**dict(zip(cols, r)), "insufficient_data": r[4] < MIN_VOLUME_FOR_SCORE} for r in rows]
-    return {"window": window, "source": source, "rows": out}
+    return {"window": window, "source": source, **as_of_fields(window), "rows": out}
 
 
 @app.get("/sources")

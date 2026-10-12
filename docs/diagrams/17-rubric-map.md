@@ -69,20 +69,20 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| data: corpus | `docs/PLAN.md:104` | `| Corpus: Reddit, earnings PDFs, news, analyst consensus | data |` |
-| preprocessing | `docs/PLAN.md:105` | `| Sentence segmentation, bank attribution | preprocessing |` |
-| task 3: bank NER | `docs/PLAN.md:106` | `| **Bank entity recognition and resolution** | text-mining task 3 |` |
-| task 1: aspect discovery | `docs/PLAN.md:107` | `| **Aspect discovery** (FinBERT embeddings → UMAP → HDBSCAN) | text-mining task 1 |` |
-| task 2: aspect categorisation | `docs/PLAN.md:108` | `| **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 |` |
-| DNN, task 4: sentiment | `docs/PLAN.md:109` | `| **Sentiment classification** (fine-tuned FinBERT) | the DNN; text-mining task 4 |` |
-| labels: annotation | `docs/PLAN.md:110` | `| Annotation | labels |` |
-| sentiment mining: index, served by the API | `docs/PLAN.md:111` | `| Sentiment index, served by the API | sentiment mining |` |
-| conversational UI: chatbot | `docs/PLAN.md:112` | `| **Chatbot** (tool calling over the index and evidence) | conversational UI |` |
-| module abbreviations | `docs/PLAN.md:114` | `Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,` |
+| data: corpus | `docs/PLAN.md:115` | `| Corpus: Reddit, earnings PDFs, news, analyst consensus | data |` |
+| preprocessing | `docs/PLAN.md:116` | `| Sentence segmentation, bank attribution | preprocessing |` |
+| task 3: bank NER | `docs/PLAN.md:117` | `| **Bank entity recognition and resolution** | text-mining task 3 |` |
+| task 1: aspect discovery | `docs/PLAN.md:118` | `| **Aspect discovery** (FinBERT embeddings → UMAP → HDBSCAN) | text-mining task 1 |` |
+| task 2: aspect categorisation | `docs/PLAN.md:119` | `| **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 |` |
+| DNN, task 4: sentiment | `docs/PLAN.md:120` | `| **Sentiment classification** (fine-tuned FinBERT) | the DNN; text-mining task 4 |` |
+| labels: annotation | `docs/PLAN.md:121` | `| Annotation | labels |` |
+| sentiment mining: index, served by the API | `docs/PLAN.md:122` | `| Sentiment index, served by the API | sentiment mining |` |
+| conversational UI: chatbot | `docs/PLAN.md:123` | `| **Chatbot** (tool calling over the index and evidence) | conversational UI |` |
+| module abbreviations | `docs/PLAN.md:125` | `Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,` |
 | aspect discovery is built | `aspects/discover.py:49` | `def run(min_cluster_size: int = 10)` |
 | segmentation is built | `preprocess/segment.py:62` | `def segment(text: str)` |
 | fine-tuning is built | `train/finetune.py:267` | `def run(seed: int = 42` |
-| base FinBERT scores today | `docs/api-integration.md:168` | `**Scores come from base FinBERT, zero-shot.**` |
+| the fine-tuned model scores today | `docs/api-integration.md:177` | `**Scores come from the fine-tuned model**` |
 | annotation done | `docs/evidence/annotation-agreement-2026-09-27.md:34` | `| candidates, both splits | 1,277 | 0.952 | **0.926** |` |
 | fine-tuned, below base | `docs/evidence/finetune-2026-09-30.md:28` | `| fine-tuned FinBERT, 3 seeds |` |
 

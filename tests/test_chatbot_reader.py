@@ -118,8 +118,10 @@ def test_the_api_functions_return_what_they_did(temp_db):
 # --- get_trend -----------------------------------------------------------------------
 
 def test_trend_gives_the_latest_months_when_the_rolling_windows_are_thin(temp_db):
-    # Everything is months old, so the 7- and 30-day windows are empty: at first
-    # the model got the all-time score alone and answered "not available".
+    # UOB has nothing in the weeks before the newest stored sentence (another
+    # bank's), so its 7- and 30-day windows are empty: at first the model got
+    # the all-time score alone and answered "not available".
+    _add(temp_db, "newest", "DBS", "dividend_policy", "2026-12-01T00:00:00+00:00", "neutral")
     _index(temp_db, [("UOB", "net_interest_margin", "2026-06", 3, 7, 0),
                      ("UOB", "net_interest_margin", "2026-07", 4, 6, 0),
                      ("UOB", "net_interest_margin", "2026-08", 8, 2, 0)])
@@ -160,6 +162,7 @@ def test_trend_with_enough_recent_data_states_the_week_against_the_month_only(te
 
 
 def test_trend_with_one_month_says_there_is_nothing_to_compare(temp_db):
+    _add(temp_db, "newest", "DBS", "dividend_policy", "2026-12-01T00:00:00+00:00", "neutral")
     _index(temp_db, [("UOB", "net_interest_margin", "2026-08", 8, 2, 0)])
     r = tools.chat_get_trend("UOB", "net_interest_margin")
     assert r["month_on_month_available"] is False and "latest_month" not in r

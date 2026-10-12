@@ -334,7 +334,9 @@ def build_document(path: str) -> dict | None:
         "title": meta.get("title") or fname,
         "body": body,
         "published_at": publication_date(fname, _creation_date(path), meta.get("date")),
-        "url": f"file://{path}",
+        # Relative to the repository: an absolute path carried a home folder
+        # into the database and git.
+        "url": os.path.relpath(path, BASE_DIR).replace(os.sep, "/"),
         "ingested_at": now_iso(),
         "raw": {"filename": fname, "read_by": method, "n_chars": len(body), **meta},
     }

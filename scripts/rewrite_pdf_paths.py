@@ -1,10 +1,12 @@
 """
-Rewrite earnings-PDF links from absolute local paths to repository-relative
-ones: "file:///<any folder>/data/earnings_pdfs/DBS/x.pdf"
-becomes "data/earnings_pdfs/DBS/x.pdf". The absolute form carried the
-developer's home folder, and so a username, into the database, every snapshot
-and committed files. ingest/earnings_extract.py now writes the relative form;
-this script fixes what is already stored.
+Rewrite the links of locally read PDFs (earnings reports and broker research)
+from absolute local paths to repository-relative ones:
+"file:///<any folder>/data/earnings_pdfs/DBS/x.pdf" becomes
+"data/earnings_pdfs/DBS/x.pdf", and "file://C:\\<any folder>\\data\\sgx_research\\x.pdf"
+becomes "data/sgx_research/x.pdf". The absolute form carried a home folder,
+and so a username, into the database, every snapshot and committed files.
+ingest/earnings_extract.py and ingest/sgx_research_extract.py now write the
+relative form; this script fixes what is already stored.
 
 Three targets, each counted by the dry run (the default) and changed only
 with --apply:
@@ -44,21 +46,30 @@ sys.path.insert(0, ROOT)
 
 import ingest.db  # noqa: E402
 
-# Any absolute file:// prefix ending in /data/earnings_pdfs/: machine-independent.
-PDF_LINK = re.compile(r"file://[^\s\"',)\]]*?/(data/earnings_pdfs/)")
-SQL_MATCH = "file://%/data/earnings_pdfs/%"
+# Any absolute file:// prefix ending in the data folder of one of the two
+# sources, on any machine: forward slashes, or a Windows path's backslashes
+# (doubled where a JSON file escapes them).
+PDF_LINK = re.compile(r"file://[^\n\"',]*?[/\\]+data[/\\]+(earnings_pdfs|sgx_research)[/\\]+")
+RELATIVE = r"data/\1/"
+SQL_MATCH = "file://%"
 TABLES = ("documents", "sentences")
 SNAPSHOT_DIR = os.path.join(ROOT, "data", "snapshots")
 NEVER_STAGED = {"data/logs/plp.log"}
 
 
 def relative(url: str) -> str:
-    return PDF_LINK.sub(r"\1", url)
+    return PDF_LINK.sub(RELATIVE, url)
+
+
+def _matching(conn, table: str) -> list[tuple[str, str]]:
+    """(key, url) of the rows whose link the rewrite would change."""
+    key = "doc_id" if table == "documents" else "sentence_id"
+    rows = conn.execute(f"SELECT {key}, url FROM {table} WHERE url LIKE ?", (SQL_MATCH,)).fetchall()
+    return [(k, u) for k, u in rows if relative(u) != u]
 
 
 def count_db(conn) -> dict[str, int]:
-    return {t: conn.execute(f"SELECT COUNT(*) FROM {t} WHERE url LIKE ?", (SQL_MATCH,)).fetchone()[0]
-            for t in TABLES}
+    return {t: len(_matching(conn, t)) for t in TABLES}
 
 
 def rewrite_db(conn) -> dict[str, int]:
@@ -68,7 +79,7 @@ def rewrite_db(conn) -> dict[str, int]:
     with conn:
         for t in TABLES:
             key = "doc_id" if t == "documents" else "sentence_id"
-            rows = conn.execute(f"SELECT {key}, url FROM {t} WHERE url LIKE ?", (SQL_MATCH,)).fetchall()
+            rows = _matching(conn, t)
             conn.executemany(f"UPDATE {t} SET url = ? WHERE {key} = ?", [(relative(u), k) for k, u in rows])
             changed[t] = len(rows)
         left = count_db(conn)
@@ -86,7 +97,7 @@ def count_files() -> dict[str, int]:
     found = {}
     for f in tracked_files():
         try:
-            text = open(os.path.join(ROOT, f), encoding="utf-8").read()
+            text = open(os.path.join(ROOT, f), encoding="utf-8", newline="").read()
         except (UnicodeDecodeError, FileNotFoundError):
             continue
         n = len(PDF_LINK.findall(text))
@@ -98,9 +109,9 @@ def count_files() -> dict[str, int]:
 def rewrite_files(files: dict[str, int]) -> None:
     for f in files:
         path = os.path.join(ROOT, f)
-        text = open(path, encoding="utf-8").read()
-        with open(path, "w", encoding="utf-8") as out:
-            out.write(PDF_LINK.sub(r"\1", text))
+        text = open(path, encoding="utf-8", newline="").read()   # newline="": line endings stay as they are
+        with open(path, "w", encoding="utf-8", newline="") as out:
+            out.write(PDF_LINK.sub(RELATIVE, text))
 
 
 def snapshots() -> list[str]:

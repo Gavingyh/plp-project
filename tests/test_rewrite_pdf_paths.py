@@ -41,7 +41,23 @@ def test_any_home_folder_becomes_a_repository_path():
     assert rw.relative("file:///home/other/plp/data/earnings_pdfs/UOB/a b.pdf") == "data/earnings_pdfs/UOB/a b.pdf"
     assert rw.relative("https://www.dbs.com/data/earnings_pdfs/x") == "https://www.dbs.com/data/earnings_pdfs/x"
     line = f'"{OLD}",earnings,DBS'
-    assert rw.PDF_LINK.sub(r"\1", line) == f'"{NEW}",earnings,DBS'
+    assert rw.PDF_LINK.sub(rw.RELATIVE, line) == f'"{NEW}",earnings,DBS'
+
+
+def test_a_windows_path_to_broker_research_becomes_a_repository_path():
+    old = "file://C:\\Users\\some one\\plp\\data\\sgx_research\\0408 DBS - OCBC Update.pdf"
+    assert rw.relative(old) == "data/sgx_research/0408 DBS - OCBC Update.pdf"
+    escaped = old.replace("\\", "\\\\")                       # as a JSON file writes it
+    assert rw.relative(escaped) == "data/sgx_research/0408 DBS - OCBC Update.pdf"
+    assert rw.relative("file:///srv/other/data/reports/x.pdf") == "file:///srv/other/data/reports/x.pdf"
+
+
+def test_rewriting_files_keeps_their_line_endings(tmp_path, monkeypatch):
+    f = tmp_path / "rows.csv"
+    f.write_bytes(f"id,url\r\n1,{OLD}\r\n2,x\r\n".encode())
+    monkeypatch.setattr(rw, "ROOT", str(tmp_path))
+    rw.rewrite_files({"rows.csv": 1})
+    assert f.read_bytes() == f"id,url\r\n1,{NEW}\r\n2,x\r\n".encode()
 
 
 def test_the_dry_run_counts_and_writes_nothing(db, capsys):

@@ -165,12 +165,13 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-path">
   <h2 id="h-path">The critical path</h2>
-  <p class="sub">Each step needs the one before it. The 10 Oct decisions clear most of step 1; the labels and rules are settled, so the model re-run can start.</p>
+  <p class="sub">Each step needs the one before it. The re-score was applied on 12 Oct: the API and the chatbot now serve the chosen model on the LLM&#8217;s aspects. Before the human evaluation, the dashboard needs its model filter and every evaluation is run again.</p>
   <ol class="path">
     <li><span class="d">10 Oct, part done</span><span class="s">Six upstream decisions made; labels and rules settled</span></li>
     <li><span class="d">10 Oct, done</span><span class="s">New rules written; Opus labelled every sheet (2,075 rows)</span></li>
     <li><span class="d">12 Oct, done</span><span class="s">Every model re-run; the best one named</span></li>
-    <li><span class="d">12–18 Oct</span><span class="s">Retrain, re-score once, re-run every evaluation</span></li>
+    <li><span class="d">12 Oct, done</span><span class="s">Re-scored once with the chosen model and the LLM&#8217;s aspects</span></li>
+    <li><span class="d">13–18 Oct</span><span class="s">Dashboard reads one model; every evaluation re-run</span></li>
     <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
     <li><span class="d">26 Oct – 1 Nov</span><span class="s">Report, video, submit</span></li>
   </ol>
@@ -187,11 +188,11 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-decide">
   <h2 id="h-decide">1. Still to decide</h2>
-  <p class="sub">The owner settled the open points on 11 Oct. One default is left, which the team can overrule before the re-score.</p>
+  <p class="sub">The owner settled the open points on 11 Oct and gave the go-ahead for the re-score on 12 Oct. One point is left, and it waits on a trial that is running.</p>
   <ul class="items">
     <li data-o="decide">
-      <span class="t">Which aspect set the product shows after the comparison <span class="chip decide">Default set</span></span>
-      <span class="when">applied in the re-score</span>
+      <span class="t">Which aspect set the product shows after the comparison <span class="chip decide">Applied 12 Oct</span></span>
+      <span class="when">done: the LLM&#8217;s</span>
       <p class="why"><b>Why:</b> decided 11 Oct: the aspect breakdown is delivered as a comparison of the two methods, the centroids and the LLM, in the report and the evaluation. The index, the dashboard and the chatbot still read one set at a time, so the re-score applies the LLM&#8217;s (it matches people&#8217;s aspect 73% of the time against the centroids&#8217; 41%), with llama&#8217;s answer where the two local models disagree, unless the team says otherwise.</p>
       <span class="meta">Source: llm-aspect-classifier, index-preview evidence.</span>
     </li>
@@ -215,15 +216,16 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">File: <code>docs/annotation-guideline.md</code>, &#8220;Two rules decided on 2026-10-10&#8221;.</span>
     </li>
     <li data-o="team">
-      <span class="t">Upload the new snapshot to the team folder, and everyone restores it <span class="chip team">People</span></span>
-      <span class="when">before the re-score</span>
-      <p class="why"><b>Why:</b> <code>data/plp.db</code> on the MacBook is now the one complete database: our 30 Sep corpus, the broker research source from the Windows PC (25 reports, 641 sentences), and the three repairs approved on 11 Oct. 28,852 documents, 45,844 sentences, every one scored. Until the snapshot is in the team folder only the MacBook has it; the PC&#8217;s own database lacks the CNA articles and most scores, so replace it with this one. Restore with <code>gunzip -c plp-2026-10-11-v2.db.gz &gt; data/plp.db</code>.</p>
-      <span class="meta">File: <code>data/snapshots/plp-2026-10-11-v2.db.gz</code> (43.2 MB, SHA-256 <code>f703d2da&#8230;6a44b310</code>, in the README). For the team only: it holds CNA and broker research text.</span>
+      <span class="t">Upload the 12 Oct snapshot to the team folder, and everyone restores it with the new code <span class="chip team">People</span></span>
+      <span class="when">now</span>
+      <p class="why"><b>Why:</b> the code on <code>main</code> now serves the re-scored database, and only the MacBook has it. With an older database the API finds no rows for the served model and returns empty tables. The snapshot holds the same 28,852 documents and 45,844 sentences as the 11 Oct one, with one aspect a sentence from the LLM classifier, the chosen model&#8217;s scores beside base FinBERT&#8217;s, links that no longer carry anyone&#8217;s home folder, and recent windows that end at the newest sentence (25 Sep). Pull <code>main</code>, then restore with <code>gunzip -c plp-2026-10-12.db.gz &gt; data/plp.db</code>. The 11 Oct snapshot is superseded: don&#8217;t upload it.</p>
+      <span class="meta">File: <code>data/snapshots/plp-2026-10-12.db.gz</code> (26.3 MB, SHA-256 <code>b604bba0&#8230;a7296908</code>, in the README). For the team only: it holds CNA and broker research text.</span>
     </li>
     <li data-o="ai">
-      <span class="t">Follow-ups to the merged and repaired database <span class="chip ai">Claude</span></span>
-      <span class="when">12–18 Oct</span>
-      <p class="why"><b>Why:</b> three things are left. (1) The local aspect model has not classified the 1,499 new sentences (641 broker research, 858 refilled Reddit); the corpus aspect run with the new wealth definition covers them. (2) The index is rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so earlier figures stay comparable; a plain rebuild counts back from today and empties the 7-day window. The anchored-windows change (decided 4 Oct) is the real fix, and its branch now conflicts with <code>main</code> in the chatbot&#8217;s prompt and tools and nine diagram pages, so it needs a careful merge and a gold-set check. (3) The chatbot&#8217;s evidence search can now return broker reports, including boilerplate lines such as &#8220;Please refer to Disclaimer Target Price &amp;&amp; Ratings History&#8221;; those lines need filtering.</p>
+      <span class="t">Follow-ups to the merged and repaired database <span class="chip ai">Done 12 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> all three are done. (1) The local aspect model classified the 1,499 new sentences, under the wording the rest of the corpus was classified with. (2) The recent windows now end at the newest stored sentence, 25 Sep, and the API returns that date as <code>data_as_of</code>; the old branch no longer merged, because the chatbot was rewritten after it and already says when the data runs to, so only the index and API parts were carried over. The 7-day window now holds 90, 42 and 60 sentences for DBS, OCBC and UOB, where it held 40, 14 and 7. (3) The chatbot&#8217;s evidence search skips the six stored disclaimer lines. Links to earnings reports and broker research are also relative paths now (decided 4 Oct), so no home folder is left in the database.</p>
+      <p class="why"><b>What it was:</b> three things were left. (1) The local aspect model has not classified the 1,499 new sentences (641 broker research, 858 refilled Reddit); the corpus aspect run with the new wealth definition covers them. (2) The index is rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so earlier figures stay comparable; a plain rebuild counts back from today and empties the 7-day window. The anchored-windows change (decided 4 Oct) is the real fix, and its branch now conflicts with <code>main</code> in the chatbot&#8217;s prompt and tools and nine diagram pages, so it needs a careful merge and a gold-set check. (3) The chatbot&#8217;s evidence search can now return broker reports, including boilerplate lines such as &#8220;Please refer to Disclaimer Target Price &amp;&amp; Ratings History&#8221;; those lines need filtering.</p>
       <span class="meta">Blended all-time headlines after the merge and repairs: DBS +0.122, OCBC +0.136, UOB +0.074. UOB&#8217;s 30-day figure fell from +0.289 on 230 sentences to +0.215 on 116 when the misdated earnings left the window.</span>
     </li>
   </ul>
@@ -246,8 +248,8 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <ul class="items">
     <li data-o="team">
       <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>
-      <span class="when">before the re-score (12 Oct)</span>
-      <p class="why"><b>Why:</b> the re-score adds new scores beside the base ones, and the dashboard&#8217;s queries don&#8217;t filter on <code>model_version</code>, so it would count every sentence twice and both &#8220;See the numbers&#8221; panels would crash. Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot do.</p>
+      <span class="when">now: the re-score is applied</span>
+      <p class="why"><b>Why:</b> since 12 Oct the database holds two models&#8217; scores for every sentence, the served model&#8217;s and base FinBERT&#8217;s, and the dashboard&#8217;s queries don&#8217;t filter on <code>model_version</code>. Until they do, the dashboard reads both models&#8217; index rows, lists evidence twice, and its figures can differ from the API&#8217;s and the chatbot&#8217;s. Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot do.</p>
       <span class="meta"><code>dashboard/app.py</code> lines 72, 89 and 103.</span>
     </li>
     <li data-o="team">
@@ -282,8 +284,8 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <ul class="items">
     <li data-o="ai">
       <span class="t">Redo the corpus aspect run with the new wealth definition <span class="chip ai">Claude</span></span>
-      <span class="when">12–14 Oct</span>
-      <p class="why"><b>Why:</b> the 10 Oct wealth rule changes the definition the local aspect model is given, and a changed definition starts a new answer file. Tried first on the 1,277 labelled sentences (under an hour); the whole corpus, now 45,844 sentences with the broker research and refilled Reddit ones, takes about a day of the MacBook.</p>
+      <span class="when">trial running (12 Oct night)</span>
+      <p class="why"><b>Why:</b> the 10 Oct wealth rule changes the definition the local aspect model is given, and a changed definition starts a new answer file. The re-score of 12 Oct used the aspects made under the old wording. A trial of the new wording on the 2,075 labelled sentences is running; the whole corpus (45,844 sentences, about a day of the MacBook) is only worth re-classifying if the trial shows the new wording agrees better with the labels, and it would then need a second re-score.</p>
       <span class="meta">File: <code>config/aspects.yaml</code>; command in RUNBOOK.</span>
     </li>
     <li data-o="ai">
@@ -293,19 +295,22 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="meta">Evidence: <code>docs/evidence/model-rerun-2026-10-11.md</code>, with precision and recall for each class on three test scopes; the walk-through is <code>docs/briefs/model-comparison-2026-10-12.html</code>. Models: <code>models/experiments-2026-10-11/dapt/</code> (not in git).</span>
     </li>
     <li data-o="ai">
-      <span class="t">Rehearse the re-score on a copy, then re-assign aspects, re-score, re-aggregate, snapshot <span class="chip ai">Claude</span> <span class="chip decide">needs approval</span></span>
-      <span class="when">12–18 Oct</span>
-      <p class="why"><b>Why:</b> one combined re-run is cheaper and easier to explain than several. <code>scripts/rescore.py</code> applies the LLM aspects and fine-tuned scores (<code>--finetuned --models &lt;folders&gt;</code>); rehearsed on a copy on 3 Oct it reproduced the preview cell for cell. It changes the database, so the real run waits for the team&#8217;s go-ahead. Afterwards set <code>MODEL_VERSION</code> and <code>assignment_method: llm</code>.</p>
+      <span class="t">The re-score: rehearsed on a copy, approved, applied, snapshot made <span class="chip ai">Done 12 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> the database matched the rehearsed copy row for row. The aspect method alone leaves every headline as it was; the model moves them: all time, DBS 0.122 to 0.155, OCBC 0.136 to 0.143, UOB 0.074 to 0.117, and DBS overtakes OCBC. Neutral falls from about two-thirds of sentences to about half, and 29% of labels change. Reddit rises for every bank, CNA turns negative for every bank, and UOB&#8217;s broker research falls from 0.236 to &#8722;0.026 on 239 sentences, which is worth a person reading. Per-aspect figures change most, because a sentence had 6.4 aspects on average and now has one; some cells rest on under 100 sentences. Base FinBERT&#8217;s scores stay in the database for comparison.</p>
+      <span class="meta">Evidence: <code>docs/evidence/rescore-rehearsal-2026-10-12.md</code>. To undo: <code>data/snapshots/plp-before-rescore-20261012-141607.db</code>.</span>
+      <p class="why"><b>What it was:</b> one combined re-run is cheaper and easier to explain than several. <code>scripts/rescore.py</code> applies the LLM aspects and fine-tuned scores (<code>--finetuned --models &lt;folders&gt;</code>); rehearsed on a copy on 3 Oct it reproduced the preview cell for cell. It changes the database, so the real run waits for the team&#8217;s go-ahead. Afterwards set <code>MODEL_VERSION</code> and <code>assignment_method: llm</code>.</p>
     </li>
     <li data-o="ai">
       <span class="t">Re-run every evaluation on the new snapshot, and re-export the ratings sheet <span class="chip ai">Claude</span></span>
-      <span class="when">12–18 Oct</span>
+      <span class="when">13–18 Oct, after the wealth trial</span>
       <p class="why"><b>Why:</b> the report&#8217;s tables must describe the system as submitted. The ratings sheet for the final chatbot is ordered by the checklist judge, which catches every known invention (25 of 25) though its reasons are often wrong.</p>
     </li>
     <li data-o="team">
-      <span class="t">Upload the new snapshot and the model weights to the team folder <span class="chip team">People</span></span>
+      <span class="t">Upload the chosen model&#8217;s weights to the team&#8217;s model store <span class="chip team">People</span></span>
       <span class="when">by 18 Oct</span>
-      <p class="why"><b>Why:</b> neither is in git. The team and the marker need exactly the database and models the report describes; check the SHA-256 values after uploading.</p>
+      <p class="why"><b>Why:</b> they are not in git. The database already holds the model&#8217;s scores for every stored sentence, so the API, the dashboard and the chatbot run without the weights; they are needed to score a new sentence and to reproduce the results. Three folders, 438 MB each. Check the SHA-256 values after uploading (<code>data/eval/model-rerun-2026-10-11/model_checksums.txt</code>). The snapshot is the item in section 2.</p>
+      <span class="meta">Folders: <code>models/experiments-2026-10-11/dapt/seed_42/final</code>, <code>seed_1/final</code>, <code>seed_7/final</code>.</span>
     </li>
   </ul>
 </section>
@@ -431,7 +436,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Updated on 10 Oct 2026 with the team&#8217;s six decisions and the chatbot fixes. Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+<footer>Updated on 12 Oct 2026 after the re-score was applied; before that on 10 Oct 2026 with the team&#8217;s six decisions and the chatbot fixes. Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
 
 </div>
 

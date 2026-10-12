@@ -89,8 +89,8 @@ Each row names the file and line an element comes from, and the text that line m
 | discovery: UMAP | `aspects/discover.py:90` | `reducer = umap.UMAP(` |
 | discovery: HDBSCAN | `aspects/discover.py:95` | `clusterer = hdbscan.HDBSCAN(` |
 | assignment from seed centroids | `aspects/assign.py:67` | `vecs = embed_sentences(cfg["seed_terms"])` |
-| sentiment scoring | `sentiment/score.py:111` | `def run(sources: set[str]` |
-| zero-shot base FinBERT | `sentiment/score.py:44` | `MODEL_NAME = "ProsusAI/finbert"` |
+| sentiment scoring | `sentiment/score.py:108` | `def run(sources: set[str]` |
+| zero-shot base FinBERT | `sentiment/score.py:41` | `MODEL_NAME = "ProsusAI/finbert"` |
 | index aggregation | `aggregate/index.py:291` | `def run() -> int:` |
 | fine-tuning code | `train/finetune.py:267` | `def run(seed: int = 42` |
 | first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:36` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |

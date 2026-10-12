@@ -1,13 +1,15 @@
 """
-What the index would look like under the two pending changes, measured on a
-random sample of sentences without touching the database: aspects from the
-LLM classifier instead of seed-centroid matching (DESIGN decision 16), and
-sentiment from the fine-tuned models instead of base FinBERT.
+What the index looks like under two changes, measured on a random sample of
+sentences without touching the database: aspects from the LLM classifier
+instead of seed-centroid matching (DESIGN decision 16), and sentiment from
+fine-tuned models instead of base FinBERT. Built to preview the re-score
+(scripts/rescore.py). A and C read the stored aspects, so on a re-scored
+database, where each sentence holds the LLM's aspect, A equals B and C equals D.
 
 Four scenarios, each scored with the index's own `_summarize`:
-  A  centroid aspects + base FinBERT        (what the database holds today)
+  A  stored aspects  + base FinBERT        (the centroid aspects, before the re-score)
   B  LLM aspect      + base FinBERT
-  C  centroid aspects + fine-tuned average
+  C  stored aspects  + fine-tuned average
   D  LLM aspect      + fine-tuned average
 
 Reads only. LLM answers go to the classifier's cache (data/aspect_llm/). The
@@ -62,7 +64,8 @@ def sample_sentences(conn, n: int, seed: int) -> pd.DataFrame:
 
 
 def stored_pairs(conn, ids: list[str]) -> pd.DataFrame:
-    """Today's (sentence, aspect) pairs with base FinBERT's label and confidence.
+    """The stored (sentence, aspect) pairs with base FinBERT's label and confidence,
+    whichever version is served.
     Queried in batches: SQLite caps the parameters of one statement."""
     parts = []
     for i in range(0, len(ids), 10000):
@@ -73,7 +76,7 @@ def stored_pairs(conn, ids: list[str]) -> pd.DataFrame:
             FROM sentence_aspects sa
             JOIN aspect_sentiment ase ON ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect
             WHERE sa.sentence_id IN ({q}) AND ase.model_version = ?""",
-            conn, params=batch + [current_model.MODEL_VERSION]))
+            conn, params=batch + [current_model.BASE_VERSION]))
     return pd.concat(parts, ignore_index=True)
 
 

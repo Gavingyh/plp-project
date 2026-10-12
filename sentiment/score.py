@@ -2,20 +2,17 @@
 Sentiment scoring. See docs/DESIGN.md for the reasoning behind the index this
 feeds.
 
-STATUS: this uses BASE FinBERT's own classification head (ProsusAI/finbert,
-whole-sentence 3-class positive/neutral/negative), NOT the fine-tuned
-aspect-conditioned classifier the proposal calls for. That model does not
-exist yet: it needs ~1,000 human-labelled examples, and nobody has labelled
-any (docs/STATUS.md).
+This module scores with BASE FinBERT's own classification head
+(ProsusAI/finbert, whole-sentence 3-class positive/neutral/negative) and
+always tags its rows with base FinBERT's version. Base FinBERT zero-shot is
+the first baseline train/evaluate.py compares a fine-tuned model against, so
+its scores are kept beside the served model's.
 
-Base FinBERT zero-shot is also the first of the three baselines
-train/evaluate.py compares a fine-tuned model against, so running it here is
-not a stopgap that gets thrown away. It means the full pipeline (ingestion ->
-sentences -> aspects -> SCORING -> index -> dashboard -> chatbot) runs
-end-to-end today, and when a fine-tuned model arrives you swap it in behind
-the same output contract (sentence_id, aspect, label, confidence,
-model_version). Both sets of scores then sit in the same table distinguished
-by model_version, and the before/after comparison falls out for free.
+While config/model_version.py serves a fine-tuned version, run() then gives
+the same pairs that version's scores too (sentiment/finetuned.py), behind the
+same output contract (sentence_id, aspect, label, confidence, model_version).
+Both sets of scores sit in the same table distinguished by model_version, so
+the before/after comparison stays possible.
 
 Whole-sentence sentiment is attributed to whichever aspect(s) the sentence was
 assigned. That is a simplification: the real formulation feeds the

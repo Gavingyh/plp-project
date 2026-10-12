@@ -37,4 +37,4 @@ FINETUNED = {
 
 # The fine-tuned version experiments use unless told otherwise (aggregate.preview,
 # train.error_analysis, scripts/rescore.py).
-DEFAULT_FINETUNED = "finbert-finetuned-2026-10-01-3seed-m0.13"
+DEFAULT_FINETUNED = "finbert-adapted-finetuned-2026-10-11-3seed-m0"

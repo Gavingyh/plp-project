@@ -1791,3 +1791,25 @@ judge, with `llama3.1:8b`.
 13 Oct. When it ends: rehearse the second re-score on a copy, show the
 owner, and after the go-ahead apply it, snapshot, and run the gold set and
 the retrieval measure once more.
+
+**Full report draft (13 Oct, morning).** `docs/report/report.html`, also
+published as a private page (link in the owner's notes): all eight parts the
+module asks for, drafted from the evidence files, with an amber box wherever
+a figure will change or needs checking and a violet box wherever only the
+team can write or decide. It supersedes `report-draft.md` as the working
+draft. The auditor checked about 290 claims; its corrections are in:
+bank recognition figures now follow the 4 Oct rule (DBS Vickers counts as
+DBS; 200 against 154 of 201; 258 corpus sentences differ, counted on
+13 Oct), the aspect taxonomy is described as AI-drafted cluster labels
+merged with the proposal's aspects, and several causes are no longer stated
+more firmly than their sources.
+
+Two things the audit raised that are not report wording:
+- The project's log (course-context, section 8) says that training a model
+  on the LLM's labels needed a check of the provider's terms of use first.
+  The chosen model is trained on those labels and no check is recorded.
+  **Needs a person.**
+- `docs/model-card.md`, `docs/spec/functional-spec.md` (the fine-tuned
+  classifier row) and the "Fine-tuning lead" claim in `CLAUDE.md` still
+  describe the 1 Oct model. They should change together when the chosen
+  model's weights are uploaded.

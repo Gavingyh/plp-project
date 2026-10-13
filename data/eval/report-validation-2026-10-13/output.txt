@@ -1,0 +1,39 @@
+model sets in report_data.json: {'first': ['base', 'people_1oct', 'people_4oct', 'people_7oct', 'opus_finbert', 'opus_adapted', 'adapted_weighted'], 'broker': ['base', 'people_1oct', 'people_4oct', 'people_7oct', 'opus_finbert', 'opus_adapted', 'adapted_weighted'], 'all': ['base', 'people_1oct', 'people_4oct', 'people_7oct', 'opus_finbert', 'opus_adapted', 'adapted_weighted']}
+one entry: {"single": {"accuracy": 0.6989966555183946, "macro_f1": 0.5712002428538251, "negative": {"precision": 0.5333333333333333, "recall": 0.20512820512820512, "f1": 0.2962962962962963, "support": 39}, "neutral": {"precision": 0.6832579185520362, "recall": 0.9096385542168675, "f1": 0.7803617571059431, "support": 166}, "positive": {"precision": 0.7936507936507936, "recall": 0.5319148936170213, "f1": 0.6369426751592356, "support": 94}}}
+37 checks so far; 37 ok
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 24102.44it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 3721.59it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 4315.41it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 4111.26it/s]
+multi-turn record keys: ['scenario', 'turn', 'question', 'answer', 'error', 'tool_calls', 'seconds', 'model_requests', 'tool_selection_check', 'behavior_check', 'guard_check', 'correct']
+
+=== vader_lexicon ===
+Macro-F1: 0.4270
+              precision    recall  f1-score   support
+
+    negative       0.30      0.21      0.24        39
+     neutral       0.64      0.41      0.50       166
+    positive       0.42      0.74      0.54        94
+
+    accuracy                           0.49       299
+   macro avg       0.45      0.45      0.43       299
+weighted avg       0.53      0.49      0.48       299
+
+Accuracy by source: arctic_shift 0.44 (n=184), earnings 0.62 (n=79), google_news 0.47 (n=34), yahoo_news 0.00 (n=2)
+
+=== tfidf_logreg ===
+Macro-F1: 0.5154
+              precision    recall  f1-score   support
+
+    negative       0.28      0.49      0.35        39
+     neutral       0.68      0.62      0.65       166
+    positive       0.60      0.50      0.55        94
+
+    accuracy                           0.57       299
+   macro avg       0.52      0.54      0.52       299
+weighted avg       0.60      0.57      0.58       299
+
+Accuracy by source: arctic_shift 0.55 (n=184), earnings 0.62 (n=79), google_news 0.53 (n=34), yahoo_news 0.50 (n=2)
+
+DIFFERENCES:
+100 checks; 100 ok

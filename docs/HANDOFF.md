@@ -1813,3 +1813,16 @@ Two things the audit raised that are not report wording:
   classifier row) and the "Fine-tuning lead" claim in `CLAUDE.md` still
   describe the 1 Oct model. They should change together when the chosen
   model's weights are uploaded.
+
+**The report draft's figures validated against primary data (13 Oct).** 100
+figures recomputed from the database, the label files, the models scored
+again on the 399 test sentences and the chatbot transcripts; all 100 match
+the report as it now stands
+([evidence](evidence/report-figures-validation-2026-10-13.md), script in
+`data/eval/report-validation-2026-10-13/`). Three corrections came out of
+it: bank recognition is now quoted from today's code (201 and 161 of 201,
+with the caution that the last rules were written from this sheet's
+errors); the LLM rater's aspect macro-F1 names its run; and the report says
+the first-round test labels were not made blind to the suggestion. The
+evidence note lists the figures that could not be recomputed and rest on
+their evidence notes alone.

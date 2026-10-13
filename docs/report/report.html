@@ -81,7 +81,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 <header class="top">
   <p class="kicker">Practice module report · draft for the team</p>
   <h1>A sentiment index for DBS, OCBC and UOB, by bank and by topic</h1>
-  <p class="status">Draft of 13 October 2026, written from the evidence files in the repository. The submission is due 1 November 2026 and must be under 20 pages.</p>
+  <p class="status">Draft, written from the evidence files in the repository. The submission must be under 20 pages.</p>
 </header>
 
 <aside class="box warn" id="w-read">
@@ -142,7 +142,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <h3 id="s21"><span class="n">2.1</span>The corpus</h3>
 
-<p>The corpus is public text about the three banks: 28,852 documents split into 45,844 sentences, dated 6 January 2020 to 25 September 2026. Routine collection stopped on 26 September 2026. Two additions followed: 25 broker research reports on 4 October, and 825 Reddit posts and comments on 11 October, refilling three months an earlier collection had lost. Evaluations run before 11 October used the corpus as it then stood, 44,345 sentences. The sentence is the unit of analysis throughout, because one post often praises one thing and complains about another.</p>
+<p>The corpus is public text about the three banks: 28,852 documents split into 45,844 sentences, dated 6 January 2020 to 25 September 2026. It was collected in batches and then frozen, with two late additions: 25 broker research reports, and 825 Reddit posts and comments that an earlier collection had lost. A few of the earlier evaluations cited below were run before those additions, on 44,345 sentences. The sentence is the unit of analysis throughout, because one post often praises one thing and complains about another.</p>
 
 <div class="tablewrap"><table>
 <caption>Table 1. The corpus by source</caption>
@@ -156,7 +156,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 <tr><td>Yahoo Finance news</td><td>Headlines and summaries</td><td class="num">114</td><td class="num">344</td></tr>
 <tr><td>NewsAPI</td><td>Titles and descriptions</td><td class="num">13</td><td class="num">26</td></tr>
 </tbody></table></div>
-<p class="src">Source: counts read from the database of 12 October 2026 (<code>data/plp.db</code>). Yahoo Finance also supplies analyst consensus figures, which are structured data, not text.</p>
+<p class="src">Source: counts read from the submitted database (<code>data/plp.db</code>). Yahoo Finance also supplies analyst consensus figures, which are structured data, not text.</p>
 
 <p>Three properties of this corpus shape how every result must be read.</p>
 <ul>
@@ -189,19 +189,19 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p><b>The test labels are people's.</b> The 299 first-round test sentences (166 neutral, 94 positive, 39 negative) and the 100 broker research test sentences (42 positive, 35 neutral, 23 negative) carry the labels people gave them, and no test sentence, or near-copy of one, is in any training set. On the first round the two annotators agreed on sentiment at Cohen's kappa 0.93. That figure is flattering: both saw a local model's suggested sentiment, which the final labels match on 91.6% of rows, so some of the agreement is agreement with the suggestion. The same holds for the broker research training rows, where the one annotator kept an LLM's suggested sentiment on 94% of rows; the 100 broker research test rows were labelled with no suggestion in view.</p>
 
-<p><b>The training labels are an LLM's.</b> On 10 October 2026 the team changed two labelling rules: a retail product's feature now carries sentiment toward the bank (a fee is negative, a bonus rate positive) where it had been neutral, and the wealth aspect was narrowed to the priority and private banking tiers. Relabelling by hand was not affordable, so a large language model labelled all 2,075 sentences under the new rules, blind to every other label: 757 positive, 879 neutral, 439 negative, with 134 flagged as not about the bank. After removing the test rows, the flagged rows and one near-copy of a test sentence, 1,563 remain for training (616 positive, 586 neutral, 361 negative).</p>
+<p><b>The training labels are an LLM's.</b> Part-way through the project the team changed two labelling rules: a retail product's feature now carries sentiment toward the bank (a fee is negative, a bonus rate positive) where it had been neutral, and the wealth aspect was narrowed to the priority and private banking tiers. Relabelling by hand was not affordable, so a large language model labelled all 2,075 sentences under the new rules, blind to every other label: 757 positive, 879 neutral, 439 negative, with 134 flagged as not about the bank. After removing the test rows, the flagged rows and one near-copy of a test sentence, 1,563 remain for training (616 positive, 586 neutral, 361 negative).</p>
 
 <p>How far can those labels be trusted? On the 1,277 first-round sentences the LLM rater agrees with people on the aspect at kappa 0.80 and on sentiment at kappa 0.79, and every sentiment disagreement found in the first comparison sat on the neutral boundary. That is close to, but below, what the two human annotators reached with each other. Section 4.1 tests the consequence directly: models trained on these labels are scored against people's labels.</p>
 
 <aside class="box warn" id="w-labels">
   <span class="tag">Keep as written</span>
   <p>The labels used for training are LLM labels and are reported as such here and in section 8. Do not describe them as human labels anywhere in the report or the video: the module requires a GenAI declaration, and the test results in section 4.1 are only meaningful because the two kinds of label are kept apart.</p>
-  <p>Two things to settle first. The project's own log records that using an LLM's labels to train a model needed a check of the provider's terms of use, and no check is recorded: do it and record the outcome before submission. And the model card (<code>docs/model-card.md</code>) still describes the 1 October model trained on people's labels: bring it into line with this section.</p>
+  <p>Two things to settle first. The project's own log records that using an LLM's labels to train a model needed a check of the provider's terms of use, and no check is recorded: do it and record the outcome before submission. And the model card (<code>docs/model-card.md</code>) still describes an earlier model trained on people's labels: bring it into line with this section.</p>
 </aside>
 
 <h3 id="s23"><span class="n">2.3</span>Reproducibility</h3>
 
-<p>The database is distributed as a dated snapshot with a SHA-256 checksum, and the three fine-tuned models as checksummed folders. Every figure in this report comes from a file under <code>docs/evidence/</code> that names the command that produced it. A fresh clone of the repository, installed from the README with the snapshot of 12 October 2026, came up and served the stored index. That test also found two faults, a documented test count that was six too high and a training test that failed when the laptop's GPU was busy; both are fixed (<code>docs/evidence/install-test-2026-10-12.md</code>).</p>
+<p>The database is distributed as a dated snapshot with a SHA-256 checksum, and the three fine-tuned models as checksummed folders. Every figure in this report comes from a file under <code>docs/evidence/</code> that names the command that produced it. A fresh clone of the repository, installed from the README with the database snapshot, came up and served the stored index. That test also found two faults, a documented test count that was six too high and a training test that failed when the laptop's GPU was busy; both are fixed (<code>docs/evidence/install-test-2026-10-12.md</code>).</p>
 
 <!-- ================= 3 ================= -->
 <h2 id="s3"><span class="n">3</span>Solution approach</h2>
@@ -216,7 +216,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <h3 id="s32"><span class="n">3.2</span>Task 1: discovering the aspects</h3>
 
-<p>The ten aspects come partly from the proposal and partly from the data. Sentence embeddings from FinBERT were reduced with UMAP and clustered with HDBSCAN; a run on 25 September 2026 gave 338 clusters, with 65% of sentences left unclustered. Each cluster was given a label from its most distinctive terms and sample sentences, and the labels were merged into ten aspects plus "other": asset quality, capital and liquidity, dividend policy, net interest margin, management guidance, income and results, the wealth business, investor and stock sentiment, retail banking, and the macro environment. Five are the proposal's aspects, broadened; the others, including the two largest, retail banking and investor and stock sentiment, were not in the proposal and came from the clusters. The cluster labels were drafted by an AI chat assistant under a teammate's direction and were not checked by a second person (declared in section 8).</p>
+<p>The ten aspects come partly from the proposal and partly from the data. Sentence embeddings from FinBERT were reduced with UMAP and clustered with HDBSCAN, which gave 338 clusters, with 65% of sentences left unclustered. Each cluster was given a label from its most distinctive terms and sample sentences, and the labels were merged into ten aspects plus "other": asset quality, capital and liquidity, dividend policy, net interest margin, management guidance, income and results, the wealth business, investor and stock sentiment, retail banking, and the macro environment. Five are the proposal's aspects, broadened; the others, including the two largest, retail banking and investor and stock sentiment, were not in the proposal and came from the clusters. The cluster labels were drafted by an AI chat assistant under a teammate's direction and were not checked by a second person (declared in section 8).</p>
 
 <p>How far does the data support that taxonomy? A later sweep of the minimum cluster size gives two answers. At a size of 10 the corpus breaks into 358 clusters, too small to name one by one, and at 25 and 50 it collapses into one cluster holding nearly every sentence, so the method does not hand over a taxonomy by itself. At 100 it gives 25 readable clusters whose structure resembles the ten aspects, which is independent support for them, with 52% of sentences left unclustered. The taxonomy is therefore a judgement informed by the clusters and later corroborated by them, not an output of the algorithm.</p>
 <p class="src">Sources: <code>docs/evidence/aspect-taxonomy-2026-09-25.md</code>, <code>docs/evidence/aspect-discovery-sweep-2026-09-30.md</code>.</p>
@@ -225,7 +225,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p>Two methods were built and compared, and the comparison is itself a result (section 4.2). The first assigns a sentence to every aspect whose seed sentences it resembles, by cosine similarity of FinBERT embeddings above 0.65. The second asks a local language model, <code>llama3.1:8b</code>, to choose exactly one aspect from a fixed prompt: a role, the task, the eleven definitions, the constraint to answer in a set format, and one invented example per aspect.</p>
 
-<p>The design choice between them is about what an aspect score means. Similarity matching gave each sentence 6.4 aspects on average, so every aspect's score was close to a copy of the whole corpus and the breakdown told the reader little. One aspect per sentence makes the aspects separate, at the price of small samples in the rarer ones. The stored corpus has used the language model's aspects since 12 October 2026.</p>
+<p>The design choice between them is about what an aspect score means. Similarity matching gave each sentence 6.4 aspects on average, so every aspect's score was close to a copy of the whole corpus and the breakdown told the reader little. One aspect per sentence makes the aspects separate, at the price of small samples in the rarer ones. The stored corpus uses the language model's aspects.</p>
 
 <h3 id="s34"><span class="n">3.4</span>Task 3: recognising which bank a sentence is about</h3>
 
@@ -303,7 +303,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <aside class="box warn" id="w-rules">
   <span class="tag">A limit to state, not to fix</span>
-  <p>The training labels follow the retail rule of 10 October 2026 (a fee or a perk carries sentiment); the 299 test labels were made before it, when such sentences were neutral. Some of the model's "errors" on negative and positive are therefore the rule, not the model. How many is not measured, because the test rows were deliberately not relabelled. Say this wherever negative precision is quoted. A human-labelled test set under the new rule would be needed to separate the two.</p>
+  <p>The training labels follow the later retail rule (a fee or a perk carries sentiment); the 299 test labels were made before it, when such sentences were neutral. Some of the model's "errors" on negative and positive are therefore the rule, not the model. How many is not measured, because the test rows were deliberately not relabelled. Say this wherever negative precision is quoted. A human-labelled test set under the new rule would be needed to separate the two.</p>
 </aside>
 
 <h3 id="s42"><span class="n">4.2</span>Aspect assignment</h3>
@@ -324,12 +324,12 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p><b>Why similarity fails.</b> It is barely better than always answering "retail banking" (41.3% against 37.4%). FinBERT's averaged embeddings were never trained to place sentences on the same topic near each other; they carry a sentence's register strongly, so a casual question resembles other casual questions more than it resembles a formal sentence on the same subject. The same weakness appears in the chatbot's evidence search (section 4.5). A model that reads the sentence and the definitions does not have this problem, and the two local models, of different families, land within a point of each other, which suggests the ceiling is the task and the prompt, not the model.</p>
 
-<p><b>What remains hard.</b> The local model is right 73% of the time, against 84% for a much larger model. Counted in sentences, most of that gap is retail banking, where the larger model is right on 62 more, and "other", 49 more; on wealth the larger model is behind, by 19. The wealth aspect is a separate problem, one of definition. Under the wording the corpus was classified with, the local model called 176 of the 2,075 labelled sentences "wealth", and only 63 of those are wealth by the rule the team fixed on 10 October, judged against the LLM rater's labels (precision 0.36).</p>
+<p><b>What remains hard.</b> The local model is right 73% of the time, against 84% for a much larger model. Counted in sentences, most of that gap is retail banking, where the larger model is right on 62 more, and "other", 49 more; on wealth the larger model is behind, by 19. The wealth aspect is a separate problem, one of definition. Under the wording the corpus was classified with, the local model called 176 of the 2,075 labelled sentences "wealth", and only 63 of those are wealth by the rule the team later fixed, judged against the LLM rater's labels (precision 0.36).</p>
 
 <aside class="box warn" id="w-aspect">
   <span class="tag">Figures will change</span>
-  <p>A trial on 12 October 2026 wrote the new wealth rule into the model's prompt. Against the labels made under that rule, agreement rose from 75.5% to 79.4% (148 sentences newly right, 67 newly wrong, exact McNemar p &lt; 0.001); wealth precision rose from 0.36 to 0.70 while wealth recall fell from 0.76 to 0.46 (<code>docs/evidence/wealth-definition-trial-2026-10-12.md</code>). The whole corpus is being re-classified under the new wording. If the owner approves a second re-score, add the trial to this section as the third method and replace every per-aspect figure in Table 7.</p>
-  <p>Per-aspect figures from before 12 October, from 12 October, and from after a second re-score are three different assignments. Quote only the final set, and never compare across them.</p>
+  <p>A trial wrote the new wealth rule into the model's prompt. Against the labels made under that rule, agreement rose from 75.5% to 79.4% (148 sentences newly right, 67 newly wrong, exact McNemar p &lt; 0.001); wealth precision rose from 0.36 to 0.70 while wealth recall fell from 0.76 to 0.46 (<code>docs/evidence/wealth-definition-trial-2026-10-12.md</code>). The whole corpus is being re-classified under the new wording. If the owner approves a second re-score, add the trial to this section as the third method and replace every per-aspect figure in Table 7.</p>
+  <p>Per-aspect figures made with similarity matching, with the current aspects, and after a second re-score are three different assignments. Quote only the final set, and never compare across them.</p>
 </aside>
 
 <h3 id="s43"><span class="n">4.3</span>Bank recognition</h3>
@@ -337,11 +337,11 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 <p>On the hard cases the recogniser is nearly always right where alias matching is right about three times in four. On a sheet of 201 sentences weighted towards misleading names, it names exactly the right banks for 200 (F1 0.997), against 154 for alias matching (F1 0.868). Alias matching fails mainly in one way: it counts every mention of UOB Kay Hian, a separate brokerage, as UOB, and it misses names it has no alias for.</p>
 
 <p>On the whole corpus the two methods disagree on 258 of the 45,844 sentences, under 1%. In 145 of them alias matching says UOB and the recogniser says no bank, nearly all UOB Kay Hian. So the choice matters little for the headline and a good deal for a reader who searches for evidence about UOB and is shown a brokerage's stock note.</p>
-<p class="src">Sources: <code>docs/evidence/bank-ner-2026-10-01.md</code> (scored on 4 October 2026, after the team ruled that DBS Vickers counts as DBS; it predates two fixes made on 11 October); the corpus count from <code>python -m preprocess.bank_ner corpus-diff</code> run on 13 October 2026. The reference answers on the 201-sentence sheet are the LLM rater's, accepted by the team in place of hand labels.</p>
+<p class="src">Sources: <code>docs/evidence/bank-ner-2026-10-01.md</code> (scored under the rule that DBS Vickers counts as DBS; it predates two later fixes to the recogniser); the corpus count from <code>python -m preprocess.bank_ner corpus-diff</code> on the submitted database. The reference answers on the 201-sentence sheet are the LLM rater's, accepted by the team in place of hand labels.</p>
 
 <h3 id="s44"><span class="n">4.4</span>The index</h3>
 
-<p>Replacing FinBERT with the fine-tuned model raised every bank's all-time score and changed their order, and the change traces to one source. On 12 October 2026 the stored corpus was re-scored: one aspect per sentence, and the chosen model's score beside FinBERT's. The step was rehearsed on a copy first, and the database then matched the copy row for row.</p>
+<p>Replacing FinBERT with the fine-tuned model raised every bank's all-time score and changed their order, and the change traces to one source. The stored corpus was re-scored for this: one aspect per sentence, and the chosen model's score beside FinBERT's. The step was rehearsed on a copy first, and the database then matched the copy row for row.</p>
 
 <div class="tablewrap"><table>
 <caption>Table 6. All-time headline score per bank (share of sentences positive / neutral / negative)</caption>
@@ -379,7 +379,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <div class="tablewrap"><table>
 <caption>Table 8. The chatbot on a 32-question gold set and four conversations, <code>llama3.1:8b</code></caption>
-<thead><tr><th>Check</th><th class="num">Before the code checks (1 Oct)</th><th class="num">6 Oct</th><th class="num">13 Oct, re-scored database</th></tr></thead>
+<thead><tr><th>Check</th><th class="num">Before the code checks</th><th class="num">After them, earlier database</th><th class="num">After them, re-scored database</th></tr></thead>
 <tbody>
 <tr><td>Right tool chosen</td><td class="num">20 / 24</td><td class="num">23 / 24</td><td class="num">23 / 24</td></tr>
 <tr><td>Advice declined, missing data admitted</td><td class="num">8 / 8</td><td class="num">8 / 8</td><td class="num">8 / 8</td></tr>
@@ -392,7 +392,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p><b>Why a check in code.</b> Before the checks, a third of answers (11 of 32) cited evidence that no search had returned: invented sentence numbers, links to news sites, quotes attributed to publications. None of those 11 answers had searched at all; each looked up a score and then wrote a "supporting evidence" section anyway. The prompt held two rules in conflict: one asked for that section in every answer, another forbade it without a search, and the model followed the first. Rewording the prompt might have helped, and was not tested by itself. The team chose a fix that does not depend on the model's obedience: any quote that no search returned is removed in code. That ended the problem without changing which tools the model chose. The same reasoning lies behind the intent classifier: advice and off-topic handling are reliable because those questions never reach the model.</p>
 
-<p><b>What the checks cannot see.</b> They verify quotes and numbers, not the model's own descriptions. In the 13 October run one answer was wrong in ways the quote and figure checks do not read (it is also the one miss on tool choice): asked for a bank's sentiment "in the last 7 days" on a topic with too few recent sentences, the model reported the all-time figure as if it were the week's, and gave the wrong year for the data. Both numbers were ones a tool had returned. With one aspect per sentence, thin recent cells are more common, so this failure will occur more often than it did. It is the main reason the automated results are a floor for trust, not a measure of faithfulness.</p>
+<p><b>What the checks cannot see.</b> They verify quotes and numbers, not the model's own descriptions. In the latest run one answer was wrong in ways the quote and figure checks do not read (it is also the one miss on tool choice): asked for a bank's sentiment "in the last 7 days" on a topic with too few recent sentences, the model reported the all-time figure as if it were the week's, and gave the wrong year for the data. Both numbers were ones a tool had returned. With one aspect per sentence, thin recent cells are more common, so this failure will occur more often than it did. It is the main reason the automated results are a floor for trust, not a measure of faithfulness.</p>
 
 <p><b>Evidence search.</b> One aspect per sentence made the search for evidence far more precise. Asked what people say about a bank's topic, about four of the five sentences returned are ones people labelled with that topic (precision 0.78), where it was fewer than two (0.33) when a sentence carried six aspects. Most of that gain is the stored aspect acting as a filter: a random five from the filtered pool are already right 72% of the time. Ranking the pool by the aspect's name adds six points to that; ranking it by the question's own words adds none (0.69), which fits the weakness described in section 4.2, where the embeddings match a sentence's register more than its topic. The measure rests on 28 queries.</p>
 
@@ -412,7 +412,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <aside class="box warn" id="w-dashboard">
   <span class="tag">Do not use yet</span>
-  <p>Since 12 October 2026 the database holds two models' scores for every sentence. The API and the chatbot read only the model in use; the dashboard's queries do not yet filter on the model, so it reads both. Take no screenshot and quote no figure from the dashboard, and do not record the video, until that filter is in and its figures match the API's.</p>
+  <p>The database now holds two models' scores for every sentence. The API and the chatbot read only the model in use; the dashboard's queries do not yet filter on the model, so it reads both. Take no screenshot and quote no figure from the dashboard, and do not record the video, until that filter is in and its figures match the API's.</p>
 </aside>
 
 <!-- ================= 5 ================= -->
@@ -476,7 +476,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 <thead><tr><th>Role</th><th>Tool</th><th>What it did</th><th>How it was checked</th></tr></thead>
 <tbody>
 <tr><td>Component of the system</td><td>Local models through Ollama: <code>llama3.1:8b</code>, <code>qwen3:4b</code></td><td>Assigns each sentence's aspect; runs the chatbot and its intent classifier; orders answers for human rating</td><td>Evaluated against people's labels (section 4.2) and a gold set (section 4.5); its output is checked in code before a user sees it</td></tr>
-<tr><td>Labelling</td><td>A large hosted language model, run as independent raters</td><td>Labelled all 2,075 sentences for aspect and sentiment under the rules of 10 October 2026; these are the training labels. The sentences, Reddit text included, were sent to the provider under the project's subscription</td><td>Agreement with people measured (kappa 0.80 and 0.79); raters' transcripts audited; test labels remain people's; reported as LLM labels throughout</td></tr>
+<tr><td>Labelling</td><td>A large hosted language model, run as independent raters</td><td>Labelled all 2,075 sentences for aspect and sentiment under the revised rules; these are the training labels. The sentences, Reddit text included, were sent to the provider under the project's subscription</td><td>Agreement with people measured (kappa 0.80 and 0.79); raters' transcripts audited; test labels remain people's; reported as LLM labels throughout</td></tr>
 <tr><td>Suggestions shown to annotators</td><td>A local model (<code>llama3.2:3b</code>) on the first round; a hosted model on the broker research training rows</td><td>Offered a suggested label, which annotators kept on 91.6% of first-round rows and 94% of broker research training rows</td><td>Test rows of the broker research round were labelled with no suggestion; the anchoring is stated in section 2.2</td></tr>
 <tr><td>Aspect discovery</td><td>An AI chat assistant</td><td>Drafted the labels of the 338 clusters from which the ten aspects were merged, under a teammate's direction</td><td>Not checked by a second person; later corroborated by a clustering run at a coarser setting (section 3.2)</td></tr>
 <tr><td>Proposal</td><td>The same chat assistant</td><td>Helped compare project themes, draft the proposal and check data sources' access</td><td>Edited and submitted by the team</td></tr>
@@ -488,14 +488,14 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p><b>What went wrong, and how it was caught.</b> Its text is plausible whether or not it is true. During the project it drew a confident conclusion from a comparison it had misread, let 63 unwanted items into the database through a filter that silently failed, and wrote a sentence attributing one bank's lead to the wrong source. Each was caught by a rule the team imposed, that a number counts only if a command run in the same session produced it, and by audits before data was relied on. The verification, not the fluency, is what makes the documentation trustworthy.</p>
 
-<p><b>Where people stayed in control.</b> The team chose the theme, the sources and the labelling rules, and decided the aspects, the scope of bank recognition and which model the product serves from options put to it. Deletions of data, a rewrite of the repository's history and the re-score of 12 October 2026 each waited for a team member's approval, the last after a rehearsal on a copy. A free-tier hosted model was limited to the live chatbot once the team learned its inputs could be reviewed by people.</p>
+<p><b>Where people stayed in control.</b> The team chose the theme, the sources and the labelling rules, and decided the aspects, the scope of bank recognition and which model the product serves from options put to it. Deletions of data, a rewrite of the repository's history and the re-score of the corpus each waited for a team member's approval, the last after a rehearsal on a copy. A free-tier hosted model was limited to the live chatbot once the team learned its inputs could be reviewed by people.</p>
 
 <aside class="box team" id="w-genai">
   <span class="tag">For the team to complete</span>
   <p>Confirm each statement above against your own experience, name the exact model versions used for labelling and development (the running log is section 8 of <code>.project-context/course-content/course-context.md</code>), and add the pros and cons as each member experienced them: the module asks for both. If any member used another tool, such as a chat assistant for the proposal, add it to Table 9.</p>
 </aside>
 
-<footer>Drafted on 13 October 2026 from the evidence files of the repository at that date. Figures in sections 4.2, 4.4 and 4.5 are provisional until 25 October 2026. Page limit: under 20.</footer>
+<footer>Draft, written from the evidence files of the repository. Figures in sections 4.2, 4.4 and 4.5 are provisional until the team freezes them. Page limit: under 20.</footer>
 </div>
 </body>
 </html>

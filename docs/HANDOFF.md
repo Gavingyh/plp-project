@@ -1878,3 +1878,16 @@ tables from the new database and re-run its figure validation.
   `data/eval/report-validation/`).
 - One more results file is committed, so a fresh clone collects 2521 tests
   in `tests/` and 2568 from the root.
+
+**Model card and functional spec brought up to date (14 Oct).**
+`docs/model-card.md` now describes the three models the product serves (the
+adapted encoder fine-tuned on LLM labels): training in two stages, every
+test table with precision and recall, the confusion matrix, the limits
+(LLM labels, the two retail rules, negative precision 0.48, the score's
+dependence on the aspect) and what to check before publishing the weights.
+`docs/spec/functional-spec.md`: the classifier, the aspect and bank
+recognition rows, the course-requirement paragraph, the first four limits,
+the source table (now with broker research) and the "Frozen centroid" entry
+describe the database of 14 Oct. Still describing the 1 Oct model: the
+"Fine-tuning lead" claim in `CLAUDE.md`, which is the owner's to change.
+The model card is also beside the models in `data/run/share/`.

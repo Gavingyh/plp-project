@@ -109,7 +109,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
   <ul class="openlist">
     <li><a href="#w-survey">Survey and market figures</a>: check against the original reports (section 1).</li>
     <li><a href="#w-dataset">Which dataset is submitted</a>: the snapshot holds text that must stay within the team (section 2.1).</li>
-    <li><a href="#w-labels">The training labels are an LLM's</a>: keep them described that way, check the provider's terms of use, and update the model card (section 2.2).</li>
+    <li><a href="#w-labels">The training labels are an LLM's</a>: keep them described that way, and check the provider's terms of use (section 2.2).</li>
     <li><a href="#w-ner">Bank recognition is evaluated but not applied</a> to the stored corpus (sections 3.4 and 4.3).</li>
     <li><a href="#w-rules">Training and test labels follow different rules</a> for retail products (section 4.1).</li>
     <li><a href="#w-human">The human evaluation is not done</a>: faithfulness ratings and the user study, 19 to 25 October (section 4.5).</li>
@@ -193,8 +193,8 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <aside class="box warn" id="w-labels">
   <span class="tag">Keep as written</span>
-  <p>The labels used for training are LLM labels and are reported as such here and in section 8. Do not describe them as human labels anywhere in the report or the video: the module requires a GenAI declaration, and the test results in section 4.1 are only meaningful because the two kinds of label are kept apart.</p>
-  <p>Two things to settle first. The project's own log records that using an LLM's labels to train a model needed a check of the provider's terms of use, and no check is recorded: do it and record the outcome before submission. And the model card (<code>docs/model-card.md</code>) still describes an earlier model trained on people's labels: bring it into line with this section.</p>
+  <p>The labels used for training are LLM labels and are reported as such here, in the model card and in section 8. Do not describe them as human labels anywhere in the report or the video: the module requires a GenAI declaration, and the test results in section 4.1 are only meaningful because the two kinds of label are kept apart.</p>
+  <p>One thing to settle first. The project's own log records that using an LLM's labels to train a model needed a check of the provider's terms of use, and no check is recorded: do it and record the outcome before submission.</p>
 </aside>
 
 <h3 id="s23"><span class="n">2.3</span>Reproducibility</h3>

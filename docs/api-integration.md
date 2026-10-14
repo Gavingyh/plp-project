@@ -48,15 +48,15 @@ scripts/stop.sh
 
 ## What the responses look like
 
-Real responses from the 12 Oct database, shortened.
+Real responses from the 14 Oct database, shortened.
 
 `GET /sentiment?bank=DBS`
 
 ```json
-{"bank": "DBS", "aspect": "ALL", "window": "all_time", "score": 0.1552, "n": 24978,
- "positive_n": 8157, "neutral_n": 12771, "negative_n": 4050, "confidence_mean": 0.8338,
+{"bank": "DBS", "aspect": "ALL", "window": "all_time", "score": 0.143, "n": 24978,
+ "positive_n": 7844, "neutral_n": 13115, "negative_n": 4019, "confidence_mean": 0.8372,
  "model_version": "finbert-adapted-finetuned-2026-10-11-3seed-m0",
- "computed_at": "2026-10-12T14:31:45.806484+00:00", "insufficient_data": false,
+ "computed_at": "2026-10-14T00:07:03.514167+00:00", "insufficient_data": false,
  "data_as_of": "2026-09-25"}
 ```
 
@@ -67,20 +67,20 @@ sentences.
 `GET /sentiment/index?window=all_time` (one row of 36)
 
 ```json
-{"bank": "OCBC", "aspect": "asset_quality", "source": "ALL", "score": 0.0012, "n": 307,
- "pos_n": 77, "neu_n": 157, "neg_n": 73, "confidence_mean": 0.7883,
+{"bank": "OCBC", "aspect": "asset_quality", "source": "ALL", "score": 0.0625, "n": 337,
+ "pos_n": 98, "neu_n": 160, "neg_n": 79, "confidence_mean": 0.7928,
  "model_version": "finbert-adapted-finetuned-2026-10-11-3seed-m0",
- "computed_at": "2026-10-12T14:31:45.806484+00:00", "insufficient_data": false}
+ "computed_at": "2026-10-14T00:07:03.514167+00:00", "insufficient_data": false}
 ```
 
 `GET /sentiment/series?bank=UOB&bucket=quarter` (two points)
 
 ```json
 {"bank": "UOB", "aspect": "ALL", "bucket": "quarter", "source": "ALL",
- "series": [{"period": "2026-Q2", "score": 0.0653, "n": 507, "pos_n": 132, "neu_n": 277, "neg_n": 98,
-             "confidence_mean": 0.8439, "sufficient": true},
-            {"period": "2026-Q3", "score": 0.1561, "n": 592, "pos_n": 188, "neu_n": 299, "neg_n": 105,
-             "confidence_mean": 0.8418, "sufficient": true}]}
+ "series": [{"period": "2026-Q2", "score": 0.0542, "n": 507, "pos_n": 124, "neu_n": 286, "neg_n": 97,
+             "confidence_mean": 0.848, "sufficient": true},
+            {"period": "2026-Q3", "score": 0.1414, "n": 592, "pos_n": 179, "neu_n": 311, "neg_n": 102,
+             "confidence_mean": 0.8442, "sufficient": true}]}
 ```
 
 Points with `"sufficient": false` have fewer than `min_n` sentences: draw a

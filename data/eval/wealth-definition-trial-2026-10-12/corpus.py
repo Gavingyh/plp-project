@@ -16,7 +16,7 @@ import aspects.llm_classify as llm
 import trial
 
 llm.DEFINITIONS = {**llm.DEFINITIONS, **trial.NEW_DEFINITIONS}
-llm.EXAMPLES = llm.EXAMPLES + trial.NEW_EXAMPLES
+llm.EXAMPLES = llm.EXAMPLES + [e for e in trial.NEW_EXAMPLES if e not in llm.EXAMPLES]
 cache = llm.answer_cache_path(trial.MODEL)
 conn = sqlite3.connect("file:data/plp.db?mode=ro", uri=True)
 rows = llm.corpus_rows(conn)

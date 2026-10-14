@@ -87,7 +87,7 @@ def test_cache_file_is_named_by_the_prompt(monkeypatch):
     assert lc.answer_cache_path("llama3.1:8b", keys=KEYS).endswith(f"llama3.1_8b.{fp}.jsonl")
     assert lc.answer_cache_path("qwen3:4b", no_think=True, keys=KEYS).endswith(f"qwen3_4b-nothink.{fp}.jsonl")
     assert lc.prompt_fingerprint(KEYS + ["wealth_business"]) != fp           # an aspect added
-    monkeypatch.setattr(lc, "EXAMPLES", lc.EXAMPLES[:-1])
+    monkeypatch.setattr(lc, "EXAMPLES", lc.EXAMPLES[1:])
     assert lc.prompt_fingerprint(KEYS) != fp                                 # an example dropped
     monkeypatch.undo()
     monkeypatch.setitem(lc.DEFINITIONS, "asset_quality", "loan quality only")
@@ -119,5 +119,5 @@ def test_the_prompt_is_the_one_the_corpus_was_classified_with():
     # compute) are cached under this fingerprint. A deliberate prompt change
     # updates this number and starts a new cache.
     import aspects.llm_classify as llm
-    assert llm.prompt_fingerprint() == "96efe244"
+    assert llm.prompt_fingerprint() == "eef9b342"
     assert llm.DEFAULT_MODEL == "llama3.1:8b"

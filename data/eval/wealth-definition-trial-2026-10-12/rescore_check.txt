@@ -1,0 +1,62 @@
+Headline under the served model (all sources):
+  all_time DBS   +0.1552 -> +0.1430  change -0.0122  (24978 -> 24978 sentences)
+  all_time OCBC  +0.1432 -> +0.1285  change -0.0147  (7774 -> 7774 sentences)
+  all_time UOB   +0.1169 -> +0.1069  change -0.0100  (13092 -> 13092 sentences)
+  30d      DBS   +0.0537 -> +0.0438  change -0.0099  (371 -> 371 sentences)
+  30d      OCBC  +0.2807 -> +0.2710  change -0.0097  (115 -> 115 sentences)
+  30d      UOB   +0.1963 -> +0.1851  change -0.0112  (136 -> 136 sentences)
+  7d       DBS   +0.1708 -> +0.1677  change -0.0031  (90 -> 90 sentences)
+  7d       OCBC  +0.1513 -> +0.1485  change -0.0028  (42 -> 42 sentences)
+  7d       UOB   +0.3093 -> +0.2750  change -0.0343  (60 -> 60 sentences)
+
+Per aspect, all time, all sources, served model: score (sentences) before -> after
+  asset_quality              DBS   +0.152 (  947) -> +0.157 (  976)
+  asset_quality              OCBC  +0.001 (  307) -> +0.062 (  337)
+  asset_quality              UOB   -0.051 (  378) -> -0.048 (  386)
+  capital_liquidity          DBS   +0.308 (  758) -> +0.319 (  742)
+  capital_liquidity          OCBC  +0.302 (  253) -> +0.317 (  262)
+  capital_liquidity          UOB   +0.385 (  241) -> +0.396 (  258)
+  dividend_policy            DBS   +0.452 (  456) -> +0.455 (  414)
+  dividend_policy            OCBC  +0.446 (  136) -> +0.453 (  138)
+  dividend_policy            UOB   +0.350 (   71) -> +0.340 (   62)
+  income_profit_results      DBS   +0.390 ( 2257) -> +0.429 ( 2360)
+  income_profit_results      OCBC  +0.447 (  744) -> +0.481 (  776)
+  income_profit_results      UOB   +0.255 (  671) -> +0.282 (  698)
+  investor_stock_sentiment   DBS   +0.287 ( 3711) -> +0.315 ( 3037)
+  investor_stock_sentiment   OCBC  +0.272 (  836) -> +0.276 (  640)
+  investor_stock_sentiment   UOB   +0.221 ( 1234) -> +0.195 (  888)
+  macro_market_environment   DBS   +0.023 (  687) -> +0.063 (  853)
+  macro_market_environment   OCBC  -0.296 (  107) -> -0.162 (  134)
+  macro_market_environment   UOB   +0.123 (  148) -> +0.142 (  188)
+  management_guidance        DBS   +0.241 ( 1682) -> +0.272 ( 1713)
+  management_guidance        OCBC  +0.359 (  231) -> +0.392 (  229)
+  management_guidance        UOB   +0.337 (  241) -> +0.413 (  242)
+  net_interest_margin        DBS   +0.150 ( 1047) -> +0.163 ( 1068)
+  net_interest_margin        OCBC  -0.034 (  170) -> -0.035 (  169)
+  net_interest_margin        UOB   -0.033 (  190) -> -0.071 (  188)
+  other                      DBS   +0.043 ( 2532) -> +0.054 ( 3877)
+  other                      OCBC  +0.084 (  789) -> +0.098 ( 1220)
+  other                      UOB   +0.062 (  977) -> +0.073 ( 1689)
+  retail_banking_sentiment   DBS   -0.046 ( 8747) -> -0.028 ( 9099)
+  retail_banking_sentiment   OCBC  -0.060 ( 3288) -> -0.029 ( 3598)
+  retail_banking_sentiment   UOB   +0.040 ( 7649) -> +0.064 ( 8180)
+  wealth_business            DBS   +0.489 ( 2154) -> +0.459 (  839)
+  wealth_business            OCBC  +0.476 (  913) -> +0.542 (  271)
+  wealth_business            UOB   +0.368 ( 1292) -> +0.400 (  313)
+
+Sentences per aspect before -> after:
+  asset_quality                1632 ->   1699
+  capital_liquidity            1252 ->   1262
+  dividend_policy               663 ->    614
+  income_profit_results        3672 ->   3834
+  investor_stock_sentiment     5781 ->   4565
+  macro_market_environment      942 ->   1175
+  management_guidance          2154 ->   2184
+  net_interest_margin          1407 ->   1425
+  other                        4298 ->   6786
+  retail_banking_sentiment    19684 ->  20877
+  wealth_business              4359 ->   1423
+
+Sentences whose aspect changed: 6914 of 45844
+
+GATE: PASS

@@ -96,12 +96,19 @@ By the project owner, after the rehearsal on a copy.
 | **The researched answers that were recommendations are adopted** (11 Oct) | All six are in the [annotation guideline](annotation-guideline.md) |
 | **The two bank-recognition fixes are approved** (11 Oct) | In `preprocess/bank_ner.py` with tests. Nothing re-tags stored sentences, so stored bank tags are unchanged |
 
+### Made on 2026-10-14
+
+By the project owner, who agreed the condition beforehand.
+
+| decision | consequence |
+|---|---|
+| **The second re-score is applied:** the corpus's aspects follow the wealth rule of 10 Oct | The owner agreed it could be applied without a further review if the script's checks passed, base FinBERT's headlines were identical and each bank's headline moved by no more than 0.02; all held. 6,914 sentences changed aspect; wealth went from 4,359 sentences to 1,423; headlines fell by 0.010 to 0.015 ([evidence](evidence/rescore-wealth-wording-2026-10-14.md)). Snapshot `plp-2026-10-14.db.gz` supersedes the 12 Oct one |
+
 ### Still open
 
 | decision | who | by |
 |---|---|---|
 | **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
-| **A second re-score with the corpus re-classified under the new wealth wording.** A trial on the 2,075 labelled sentences found the new wording agrees with the new-rule labels 79.4% of the time against 75.5% (p < 0.001): wealth precision 0.36 to 0.70, wealth recall 0.76 to 0.46 ([evidence](evidence/wealth-definition-trial-2026-10-12.md)). The corpus run started on 13 Oct (about a day, cache only); applying it changes the wealth, retail and other rows of the index, not the headlines | owner | when the run ends |
 
 ---
 

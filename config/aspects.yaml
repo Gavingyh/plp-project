@@ -139,7 +139,7 @@ aspects:
 
   wealth_business:
     label: "Wealth Management / Private Banking"
-    llm_definition: "wealth management and private or premier banking: assets under management, wealth fee income, wealth targets"
+    llm_definition: "the bank's wealth business: its priority and private banking tiers (such as DBS Treasures, OCBC Premier, UOB Privilege) and what they offer, assets under management, wealth management fee income, wealth targets. Not an investment product any customer can hold"
     seed_terms:
       - "The increase was led by wealth management fees, which reached a record SGD 907 million driven by higher investment activity."
       - "It was broad-based — we had 22% growth in wealth management and 21% growth in cards."
@@ -168,7 +168,7 @@ aspects:
 
   retail_banking_sentiment:
     label: "Retail Banking Products & Customer Experience"
-    llm_definition: "products and service as customers experience them: cards, cashback, savings accounts, fees, app or service outages, scams, applications"
+    llm_definition: "products and service as ordinary customers experience them: cards, cashback, savings accounts, loans and mortgages, unit trusts, brokerage accounts, regular savings plans, insurance, robo-advisers, fees, app or service outages, scams, applications"
     seed_terms:
       - "I received a call today from a guy claiming to be from DBS."
       - "I have a UOB account with a foreign residential and mailing address."
@@ -250,3 +250,5 @@ llm_examples:
   - {sentence: "The app has been down all morning and I can't transfer money.", aspect: retail_banking_sentiment}
   - {sentence: "Rate cuts by the Fed will squeeze all three Singapore banks.", aspect: macro_market_environment}
   - {sentence: "The bank named a new chief technology officer.", aspect: other}
+  - {sentence: "The sales charge on the unit trust I bought through the bank's app was 2%.", aspect: retail_banking_sentiment}
+  - {sentence: "Their priority banking tier gives you a relationship manager and lounge access.", aspect: wealth_business}

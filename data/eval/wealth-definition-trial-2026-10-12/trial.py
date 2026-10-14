@@ -52,7 +52,7 @@ def main():
 
     old = answers(OLD_CACHE)
     llm.DEFINITIONS = {**llm.DEFINITIONS, **NEW_DEFINITIONS}
-    llm.EXAMPLES = llm.EXAMPLES + NEW_EXAMPLES
+    llm.EXAMPLES = llm.EXAMPLES + [e for e in NEW_EXAMPLES if e not in llm.EXAMPLES]
     new_cache = llm.answer_cache_path(MODEL)
     assert new_cache != OLD_CACHE
     print(f"old wording: {OLD_CACHE}\nnew wording: {new_cache}", flush=True)

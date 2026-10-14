@@ -162,10 +162,19 @@ database then matched row for row
 holds one LLM aspect a sentence and two models' scores: the served one,
 `finbert-adapted-finetuned-2026-10-11-3seed-m0`, and base FinBERT's. The
 copy before it is `data/snapshots/plp-before-rescore-20261012-141607.db`.
-Anyone on an older database must restore the 12 Oct snapshot (README): with
+Anyone on an older database must restore the latest snapshot (README): with
 the old one the API finds no rows for the served model, and
 `sentiment.score` would start scoring every old pair with the fine-tuned
 models.
+
+**A second run followed on 2026-10-14**, after the corpus was classified
+again under the wealth rule of 10 Oct (about a day of the MacBook). It
+changed the aspect of 6,914 sentences and lowered each bank's headline by
+0.010 to 0.015, because the served model reads the aspect's name with the
+sentence ([evidence](evidence/rescore-wealth-wording-2026-10-14.md)). The
+copy before it is `data/snapshots/plp-before-rescore-20261014-000702.db`.
+The files teammates need are gathered by
+`data/run/rescore-2-2026-10-14/build_share.sh` into `data/run/share/`.
 
 Links to locally read PDFs are relative paths (decided 4 Oct, applied
 12 Oct): `scripts/rewrite_pdf_paths.py` counts by default and writes only

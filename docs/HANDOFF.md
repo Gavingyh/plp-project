@@ -1826,3 +1826,31 @@ errors); the LLM rater's aspect macro-F1 names its run; and the report says
 the first-round test labels were not made blind to the suggestion. The
 evidence note lists the figures that could not be recomputed and rest on
 their evidence notes alone.
+
+**Second re-score applied (14 Oct, 08:07): the aspects follow the wealth
+rule of 10 Oct.** The corpus run under the new wording finished at 08:04
+(45,844 sentences, a little over a day). The owner had agreed on 13 Oct
+that it could be applied without a further review if the script's checks
+passed, base FinBERT's headlines were identical and each bank's headline
+moved by no more than 0.02; a rehearsal on a copy met all three, and the
+database then matched the copy row for row.
+
+- 6,914 sentences changed aspect; wealth went from 4,359 to 1,423.
+- Headlines under the served model fell: DBS 0.155 to 0.143, OCBC 0.143 to
+  0.129, UOB 0.117 to 0.107. The served model reads the aspect's name with
+  the sentence, so an aspect change is not neutral for the headline; an
+  earlier statement in this log and to the owner that it would be was wrong
+  (true of base FinBERT only) and was corrected before the owner chose the
+  condition.
+- `config/aspects.yaml` carries the new wording; two tests that pin the
+  prompt were updated. Tests pass (2520 in a fresh clone, 2567 from the
+  root).
+- Snapshot `plp-2026-10-14.db.gz` (checksum in the README). The files to
+  share are in `data/run/share/` (1.4 GB, hard links), with
+  `README-teams.md`, rewritten for teammates building a new feature.
+- Evidence: `docs/evidence/rescore-wealth-wording-2026-10-14.md`.
+
+**Running:** the chatbot evaluations on the 14 Oct database
+(`data/run/eval-2026-10-14/run.sh`). **Then:** update the report draft's
+tables from the new database and re-run its figure validation.
+**Needs a person:** upload `data/run/share/`; teammates pull and restore.

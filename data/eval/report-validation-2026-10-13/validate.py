@@ -184,7 +184,7 @@ check("4.2", "wealth, old wording: called, right, precision, recall", (176, 63, 
 check("4.2 box", "wealth, new wording: precision, recall", (0.70, 0.46), pr("new")[2:], source="wealth trial answers.csv")
 import aspects.llm_classify as llm
 cache = {}
-for line in open(llm.answer_cache_path("llama3.1:8b")):
+for line in open("data/aspect_llm/llama3.1_8b.96efe244.jsonl"):   # the wording Table 5 measured
     x = json.loads(line); cache[x["sentence_id"]] = x["aspect"]
 pred = cand.sentence_id.map(cache)
 e = llm.evaluate(pred.tolist(), cand.aspect.tolist())

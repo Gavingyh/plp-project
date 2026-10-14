@@ -135,17 +135,18 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ## Getting the database
 
-`data/plp.db` (101.6 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
+`data/plp.db` (101.4 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
 Download the latest snapshot from the team's shared folder, then:
 
 ```bash
-gunzip -c plp-2026-10-12.db.gz > data/plp.db
-shasum -a 256 plp-2026-10-12.db.gz   # should match the checksum below
+gunzip -c plp-2026-10-14.db.gz > data/plp.db
+shasum -a 256 plp-2026-10-14.db.gz   # should match the checksum below
 ```
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
-| `plp-2026-10-12.db.gz` (latest) | 26.3MB | `b604bba0d27a9f44934a7af984abc784034824868eadc77a6a3d54f5a7296908` | The snapshot below, re-scored on 12 Oct: one aspect a sentence from the LLM classifier (45,844 sentence–aspect pairs, where there were 291,508); the chosen fine-tuned model's scores beside base FinBERT's (45,844 each); earnings and broker research links made relative to the repository, so no home folder is left in a link; and the index rebuilt with the 7- and 30-day windows ending at the newest sentence, 25 Sep (898 rows, 449 a model). 28,852 documents and 45,844 sentences, as before. It needs the code from 12 Oct on, which serves the fine-tuned model's rows ([evidence](docs/evidence/rescore-rehearsal-2026-10-12.md)) |
+| `plp-2026-10-14.db.gz` (latest) | 26.2MB | `2e42aafeaa9d1e219b00359e8b31e7219b0fe1824f0aaaf9b3d2598607a857f0` | The snapshot below with the aspects made again under the wealth rule of 10 Oct (wealth means the priority and private banking tiers): 6,914 of the 45,844 sentences changed aspect, the wealth aspect went from 4,359 sentences to 1,423, and each bank's headline fell by 0.010 to 0.015. Same documents, sentences and models. It needs the code from 14 Oct on, whose aspect prompt it matches ([evidence](docs/evidence/rescore-wealth-wording-2026-10-14.md)) |
+| `plp-2026-10-12.db.gz` (superseded; aspects from before the wealth rule) | 26.3MB | `b604bba0d27a9f44934a7af984abc784034824868eadc77a6a3d54f5a7296908` | The snapshot below, re-scored on 12 Oct: one aspect a sentence from the LLM classifier (45,844 sentence–aspect pairs, where there were 291,508); the chosen fine-tuned model's scores beside base FinBERT's (45,844 each); earnings and broker research links made relative to the repository, so no home folder is left in a link; and the index rebuilt with the 7- and 30-day windows ending at the newest sentence, 25 Sep (898 rows, 449 a model). 28,852 documents and 45,844 sentences, as before. It needs the code from 12 Oct on, which serves the fine-tuned model's rows ([evidence](docs/evidence/rescore-rehearsal-2026-10-12.md)) |
 | `plp-2026-10-11-v2.db.gz` (superseded; base FinBERT's scores and centroid aspects only) | 43.2MB | `f703d2da4c3ea7b45cfc20ff1dc1ec29425a4778e6473b4262d93dd66a44b310` | The snapshot below with the three approved data repairs: six UOB earnings documents (114 sentences) re-dated from their extraction day to their announcement dates; the Reddit comments lost for September 2021, May 2024 and March 2025 refilled (825 documents, 858 sentences, assigned and scored like the rest); the index rebuilt the same way (580 rows). 28,852 documents, 45,844 sentences, 291,508 sentence–aspect pairs. For the team only. |
 | `plp-2026-10-11.db.gz` (superseded the same day) | 42.4MB | `9ca50c4d95ec7d28cda35e0607dc6c138fa3ab2bb863f8099fcd6824b9472b37` | The 30 Sep snapshot below plus the broker research source (`sgx_research`: 25 reports, 641 sentences), copied from the Windows PC's database with `scripts/source_rows.py` so the sentence ids match the labels: 28,027 documents, 44,986 sentences, 286,277 sentence–aspect pairs, every one scored by base FinBERT. The index (592 rows) was rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so every earlier figure is unchanged and only the new source is added. Holds CNA and broker research text: for the team only. |
 | `plp-2026-09-30.db.gz` (superseded; the corpus the evaluations to 10 Oct used) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), section 2) |
@@ -163,7 +164,7 @@ What a teammate needs, beyond `git clone` and the Quick start:
 
 | file | needed for | size |
 |---|---|---|
-| the latest snapshot (`plp-2026-10-12.db.gz`) | everything: unpack to `data/plp.db` | 26.3 MB |
+| the latest snapshot (`plp-2026-10-14.db.gz`) | everything: unpack to `data/plp.db` | 26.2 MB |
 | `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 132 MB |
 | the three fine-tuned models (`models/experiments-2026-10-11/dapt/seed_{42,1,7}/final`) | only to score new sentences, reproduce the sentiment results or re-score; the database already holds their scores for every stored sentence | 3 × 438 MB |
 

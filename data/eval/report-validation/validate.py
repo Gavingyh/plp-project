@@ -2,7 +2,7 @@
 database, the label files, the models' stored test results, the chatbot
 transcripts) and compare each with the value the report gives. Reads only.
 
-  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 data/eval/report-validation-2026-10-13/validate.py
+  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 data/eval/report-validation/validate.py
 """
 import json, os, re, sqlite3, statistics, sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
@@ -142,34 +142,34 @@ def head(v, w="all_time"):
     return {b: (round(s, 3), n, round(100 * p / n), round(100 * u / n), round(100 * g / n)) for b, s, n, p, u, g in q(
         "SELECT bank, score, n, pos_n, neu_n, neg_n FROM sentiment_index WHERE aspect='ALL' AND source='ALL' AND window=? AND model_version=?", w, v)}
 hb, hv = head(B), head(V)
-for b, rb, rv in (("DBS", (0.122, 24978, 22, 67, 10), (0.155, 24978, 33, 51, 16)), ("OCBC", (0.136, 7774, 23, 67, 11), (0.143, 7774, 32, 50, 18)), ("UOB", (0.074, 13092, 15, 76, 9), (0.117, 13092, 30, 53, 17))):
+for b, rb, rv in (("DBS", (0.122, 24978, 22, 67, 10), (0.143, 24978, 31, 53, 16)), ("OCBC", (0.136, 7774, 23, 67, 11), (0.129, 7774, 31, 51, 18)), ("UOB", (0.074, 13092, 15, 76, 9), (0.107, 13092, 29, 54, 17))):
     check("Table 6", f"{b} FinBERT: score, sentences, % pos/neu/neg", rb, hb[b], source=src); check("Table 6", f"{b} model in use: the same", rv, hv[b], source=src)
-for w, rep in (("30d", {"DBS": (0.054, 371), "OCBC": (0.281, 115), "UOB": (0.196, 136)}), ("7d", {"DBS": (0.171, 90), "OCBC": (0.151, 42), "UOB": (0.309, 60)})):
+for w, rep in (("30d", {"DBS": (0.044, 371), "OCBC": (0.271, 115), "UOB": (0.185, 136)}), ("7d", {"DBS": (0.168, 90), "OCBC": (0.148, 42), "UOB": (0.275, 60)})):
     h = head(V, w); check("Table 6 note", f"{w} DBS, OCBC, UOB: score, sentences", tuple(rep[b] for b in ("DBS", "OCBC", "UOB")), tuple(h[b][:2] for b in ("DBS", "OCBC", "UOB")), source=src)
 lab = q("""SELECT b.label, n.label, COUNT(*) FROM aspect_sentiment b JOIN aspect_sentiment n USING (sentence_id, aspect)
            WHERE b.model_version=? AND n.model_version=? GROUP BY 1,2""", B, V)
 changed = sum(k for a, b_, k in lab if a != b_); from_neu = sum(k for a, b_, k in lab if a == "neutral" and b_ != "neutral")
-check("4.4", "labels changed; of them from neutral; % changed", (13154, 10219, 29), (changed, from_neu, round(100 * changed / n_sent)), source=src)
+check("4.4", "labels the two models disagree on; of them neutral under FinBERT; % of sentences", (12850, 9787, 28), (changed, from_neu, round(100 * changed / n_sent)), source=src)
 def bysrc(v, s):
     return {b: (round(sc_, 3), round(100 * u / n)) for b, sc_, n, u in q("SELECT bank, score, n, neu_n FROM sentiment_index WHERE aspect='ALL' AND window='all_time' AND source=? AND model_version=?", s, v)}
 rb, rv = bysrc(B, "arctic_shift"), bysrc(V, "arctic_shift")
 check("4.4", "Reddit neutral %, FinBERT (lowest, highest)", (88, 89), (min(x[1] for x in rb.values()), max(x[1] for x in rb.values())), source=src)
-check("4.4", "Reddit neutral %, model in use (lowest, highest)", (57, 58), (min(x[1] for x in rv.values()), max(x[1] for x in rv.values())), source=src)
-check("4.4", "Reddit score, model in use (lowest, highest)", (0.00, 0.07), (round(min(x[0] for x in rv.values()), 2), round(max(x[0] for x in rv.values()), 2)), tol=0.005, source=src)
+check("4.4", "Reddit neutral %, model in use (lowest, highest)", (58, 59), (min(x[1] for x in rv.values()), max(x[1] for x in rv.values())), source=src)
+check("4.4", "Reddit score, model in use (lowest, highest)", (-0.01, 0.06), (round(min(x[0] for x in rv.values()), 2), round(max(x[0] for x in rv.values()), 2)), tol=0.005, source=src)
 eb, evv = bysrc(B, "earnings"), bysrc(V, "earnings")
-check("4.4", "earnings DBS, OCBC, UOB: FinBERT to model in use", ((0.286, 0.287), (0.375, 0.344), (0.406, 0.335)), tuple((eb[b][0], evv[b][0]) for b in ("DBS", "OCBC", "UOB")), source=src)
-check("4.4", "earnings score, model in use (lowest, highest)", (0.29, 0.34), (round(min(x[0] for x in evv.values()), 2), round(max(x[0] for x in evv.values()), 2)), tol=0.005, source=src)
+check("4.4", "earnings DBS, OCBC, UOB: FinBERT to model in use", ((0.286, 0.276), (0.375, 0.343), (0.406, 0.332)), tuple((eb[b][0], evv[b][0]) for b in ("DBS", "OCBC", "UOB")), source=src)
+check("4.4", "earnings score, model in use (lowest, highest)", (0.28, 0.34), (round(min(x[0] for x in evv.values()), 2), round(max(x[0] for x in evv.values()), 2)), tol=0.005, source=src)
 cb, cv_ = bysrc(B, "cna"), bysrc(V, "cna")
 falls = [round(cb[b][0] - cv_[b][0], 2) for b in ("DBS", "OCBC", "UOB")]
-check("4.4", "CNA fall (smallest, largest); all below zero after", (0.14, 0.18, True), (min(falls), max(falls), all(cv_[b][0] < 0 for b in cv_)), source=src)
+check("4.4", "CNA fall (smallest, largest); all below zero after", (0.15, 0.17, True), (min(falls), max(falls), all(cv_[b][0] < 0 for b in cv_)), source=src)
 asp = {(b, a): (round(s, 3), n) for b, a, s, n in q("SELECT bank, aspect, score, n FROM sentiment_index WHERE window='all_time' AND source='ALL' AND model_version=?", V)}
-T7 = {"retail_banking_sentiment": ((-0.046, 8747), (-0.060, 3288), (0.040, 7649)), "wealth_business": ((0.489, 2154), (0.476, 913), (0.368, 1292)),
-      "dividend_policy": ((0.452, 456), (0.446, 136), (0.350, 71)), "income_profit_results": ((0.390, 2257), (0.447, 744), (0.255, 671)),
-      "net_interest_margin": ((0.150, 1047), (-0.034, 170), (-0.033, 190))}
+T7 = {"retail_banking_sentiment": ((-0.028, 9099), (-0.029, 3598), (0.064, 8180)), "wealth_business": ((0.459, 839), (0.542, 271), (0.400, 313)),
+      "dividend_policy": ((0.455, 414), (0.453, 138), (0.340, 62)), "income_profit_results": ((0.429, 2360), (0.481, 776), (0.282, 698)),
+      "net_interest_margin": ((0.163, 1068), (-0.035, 169), (-0.071, 188))}
 for a, rep in T7.items():
     check("Table 7", f"{a}: DBS, OCBC, UOB score and sentences", rep, tuple(asp[(b, a)] for b in ("DBS", "OCBC", "UOB")), source=src)
 n_retail = q("SELECT COUNT(*) FROM sentence_aspects WHERE aspect='retail_banking_sentiment'")[0][0]
-check("4.4", "retail banking share of sentences, %", 43, round(100 * n_retail / n_sent), source=src)
+check("4.4", "retail banking share of sentences, %", 46, round(100 * n_retail / n_sent), source=src)
 check("3.3", "aspects per sentence under similarity matching", 6.4, round(291508 / 45844, 1), tol=0.05, source="README snapshot table (291,508 pairs)")
 
 # ---- 4.2 aspects
@@ -188,7 +188,32 @@ for line in open("data/aspect_llm/llama3.1_8b.96efe244.jsonl"):   # the wording 
     x = json.loads(line); cache[x["sentence_id"]] = x["aspect"]
 pred = cand.sentence_id.map(cache)
 e = llm.evaluate(pred.tolist(), cand.aspect.tolist())
-check("Table 5", "llama3.1:8b: right aspect %, macro-F1", (72.9, 0.679), (round(100 * e["top1_accuracy"], 1), round(e["macro_f1"], 3)), source="answer cache x candidates.csv")
+check("Table 5", "llama3.1:8b, first wording: right aspect %, macro-F1", (72.9, 0.679), (round(100 * e["top1_accuracy"], 1), round(e["macro_f1"], 3)), source="answer cache x candidates.csv")
+cache2 = {}
+for line in open("data/aspect_llm/llama3.1_8b.eef9b342.jsonl"):
+    x = json.loads(line); cache2[x["sentence_id"]] = x["aspect"]
+e2 = llm.evaluate(cand.sentence_id.map(cache2).tolist(), cand.aspect.tolist())
+check("Table 5", "the same model with the wealth ruling (in use): right aspect %, macro-F1", (73.9, 0.676), (round(100 * e2["top1_accuracy"], 1), round(e2["macro_f1"], 3)), source="answer cache x candidates.csv")
+stored = dict(q("SELECT sentence_id, aspect FROM sentence_aspects"))
+check("4.2", "stored aspects are the in-use answers; wealth sentences now", (True, 1423), (stored == {k: cache2[k] for k in stored}, sum(v == "wealth_business" for v in stored.values())), source="data/plp.db x answer cache")
+old_cache = {}
+for line in open("data/aspect_llm/llama3.1_8b.96efe244.jsonl"):
+    x = json.loads(line); old_cache[x["sentence_id"]] = x["aspect"]
+check("4.2", "sentences moved by the ruling; wealth sentences before", (6914, 4359), (sum(old_cache[k] != v for k, v in stored.items()), sum(old_cache[k] == "wealth_business" for k in stored)), source="the two answer caches")
+bk = "data/snapshots/plp-before-rescore-20261014-000702.db"
+if os.path.exists(bk):
+    o = sqlite3.connect(f"file:{bk}?mode=ro", uri=True)
+    ol = {(a, b_): c_ for a, b_, c_ in o.execute("SELECT sentence_id, aspect, label FROM aspect_sentiment WHERE model_version=?", (V,))}
+    nl = {a: (b_, c_) for a, b_, c_ in q("SELECT sentence_id, aspect, label FROM aspect_sentiment WHERE model_version=?", V)}
+    oa = {a: (b_, c_) for (a, b_), c_ in ol.items()}
+    mv = [(oa[k][1], nl[k][1]) for k in nl if oa[k][0] != nl[k][0]]
+    kept_changed = sum(1 for k in nl if oa[k][0] == nl[k][0] and oa[k][1] != nl[k][1])
+    check("4.4", "moved sentences whose label changed; positive to neutral; neutral to positive; unmoved with a changed label", (896, 614, 88, 0),
+          (sum(a != b_ for a, b_ in mv), sum(a == "positive" and b_ == "neutral" for a, b_ in mv), sum(a == "neutral" and b_ == "positive" for a, b_ in mv), kept_changed), source="database before and after the second re-score")
+    oh = {b_: s_ for b_, s_ in o.execute("SELECT bank, score FROM sentiment_index WHERE aspect='ALL' AND source='ALL' AND window='all_time' AND model_version=?", (V,))}
+    nh = dict(q("SELECT bank, score FROM sentiment_index WHERE aspect='ALL' AND source='ALL' AND window='all_time' AND model_version=?", V))
+    falls = [round(oh[b_] - nh[b_], 3) for b_ in ("DBS", "OCBC", "UOB")]
+    check("4.4", "headline fall from the ruling (smallest, largest)", (0.010, 0.015), (min(falls), max(falls)), tol=0.0015, source="database before and after the second re-score")
 common = cand.aspect.value_counts()
 check("Table 5", "always the commonest aspect, %", 37.4, round(100 * common.iloc[0] / len(cand), 1), tol=0.05, source="data/labeled/candidates.csv")
 from sklearn.metrics import f1_score
@@ -209,19 +234,17 @@ check("4.3", "corpus sentences where the two methods differ", 258, len(diffc), s
 check("4.3", "of them: alias matching UOB, recogniser no bank", 145, int(((diffc.alias == "UOB") & (diffc.ner == "")).sum()), source="preprocess.bank_ner corpus-diff")
 
 # ---- 4.5 chatbot
-res = [json.loads(l) for l in open("data/eval/chatbot_eval_results_rescored_v2.jsonl")]
+res = [json.loads(l) for l in open("data/eval/chatbot_eval_results_rescored2_v2.jsonl")]
 ts_ = [x["tool_selection_check"] for x in res if x.get("tool_selection_check") and x["tool_selection_check"].get("applicable")]
 bh = [x["behavior_check"] for x in res if x.get("behavior_check") and x["behavior_check"].get("applicable")]
-check("Table 8", "right tool chosen", (23, 24), (sum(1 for t in ts_ if t["correct"]), len(ts_)), source="chatbot_eval_results_rescored_v2.jsonl")
-check("Table 8", "advice declined, missing data admitted", (8, 8), (sum(1 for t in bh if t["correct"]), len(bh)), source="chatbot_eval_results_rescored_v2.jsonl")
-check("Table 8", "answers; citing unreturned evidence; with an unreturned figure", (32, 0, 1), (len(res), sum(bool(x.get("citation_fabricated")) for x in res), sum(bool(x.get("unverified_numbers")) for x in res)), source="chatbot_eval_results_rescored_v2.jsonl")
-tm = [json.loads(l)["seconds"] for l in open("data/run/eval-2026-10-13/times_rescored_v2.jsonl") if l.strip()]
-check("Table 8", "median seconds per answer", 59, round(statistics.median(tm)), source="times_rescored_v2.jsonl")
-mt = [json.loads(l) for l in open("data/eval/chatbot_multiturn_results_rescored_mt.jsonl")]
-print("multi-turn record keys:", list(mt[0].keys())[:12])
-rl = open("data/run/eval-2026-10-13/retrieval_eval.log").read()
+check("Table 8", "right tool chosen", (23, 24), (sum(1 for t in ts_ if t["correct"]), len(ts_)), source="chatbot_eval_results_rescored2_v2.jsonl")
+check("Table 8", "advice declined, missing data admitted", (8, 8), (sum(1 for t in bh if t["correct"]), len(bh)), source="chatbot_eval_results_rescored2_v2.jsonl")
+check("Table 8", "answers; citing unreturned evidence; with an unreturned figure", (32, 0, 0), (len(res), sum(bool(x.get("citation_fabricated")) for x in res), sum(bool(x.get("unverified_numbers")) for x in res)), source="chatbot_eval_results_rescored2_v2.jsonl")
+tm = [json.loads(l)["seconds"] for l in open("data/run/eval-2026-10-14/times_rescored2_v2.jsonl") if l.strip()]
+check("Table 8", "median seconds per answer", 40, round(statistics.median(tm)), source="times_rescored2_v2.jsonl")
+rl = open("data/run/eval-2026-10-14/retrieval_eval.log").read()
 g = lambda name: [float(x) for x in re.search(r"^" + re.escape(name) + r"\s+([\d. ]+)$", rl, flags=re.M).group(1).split()]
-check("4.5", "evidence precision at 5: by aspect name, random, by the question (all with the filter)", (0.78, 0.72, 0.69),
+check("4.5", "evidence precision at 5: by aspect name, random, by the question (all with the filter)", (0.66, 0.74, 0.62),
       (round(g("label + stored-aspect filter")[3], 2), round(g("label + stored-aspect filter (random)")[3], 2), round(g("question + stored-aspect filter")[3], 2)), tol=0.005, source="retrieval_eval.log")
 check("4.5", "retrieval queries", 28, int(re.search(r"(\d+) \(bank, aspect\) queries", rl).group(1)), source="retrieval_eval.log")
 
@@ -243,8 +266,8 @@ def summ(tag):
     return g1(r"Tool selection: (\d+)/(\d+)"), g1(r"Behavior[^:]*: (\d+)/(\d+)"), g1(r"Citation fabrication flagged: (\d+)/(\d+)"), g1(r"figure no tool returned: (\d+)/(\d+)")
 check("Table 8", "before the code checks: tool, behaviour, citing unreturned evidence", ((20, 24), (8, 8), (11, 32)), summ("llama8b_v2_idle")[:3], source="chatbot_eval_summary_llama8b_v2_idle.md")
 check("Table 8", "after them, earlier database: tool, behaviour, citations, figures", ((23, 24), (8, 8), (0, 32), (0, 32)), summ("final3_v2"), source="chatbot_eval_summary_final3_v2.md")
-check("Table 8", "re-scored database, from its summary: the same", ((23, 24), (8, 8), (0, 32), (1, 32)), summ("rescored_v2"), source="chatbot_eval_summary_rescored_v2.md")
-for tag, rep in (("final3_mt", (9, 9, 4, 4)), ("rescored_mt", (9, 9, 4, 4))):
+check("Table 8", "submitted database, from its summary: the same", ((23, 24), (8, 8), (0, 32), (0, 32)), summ("rescored2_v2"), source="chatbot_eval_summary_rescored2_v2.md")
+for tag, rep in (("final3_mt", (9, 9, 4, 4)), ("rescored2_mt", (9, 9, 4, 4))):
     t = open(f"data/eval/chatbot_multiturn_summary_{tag}.md").read()
     check("Table 8", f"conversation turns and conversations correct ({tag})", rep, tuple(int(x) for x in re.search(r"Turns correct: (\d+)/(\d+); conversations with every turn correct: (\d+)/(\d+)", t).groups()), source=f"chatbot_multiturn_summary_{tag}.md")
 t0 = [json.loads(l)["seconds"] for l in open("data/run/overnight/times_final3_v2.jsonl") if l.strip()]

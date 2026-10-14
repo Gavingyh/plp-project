@@ -87,7 +87,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 <aside class="box warn" id="w-read">
   <span class="tag">How to read the warnings</span>
   <p>This draft carries two kinds of box. An amber box, like this one, marks a figure that will change or must be checked before submission. A violet box marks text that only the team can write or decide. Everything outside a box is drafted from measured results and can be edited freely, but its figures must not be changed without re-running the command behind them.</p>
-  <p><b>Figures freeze on 25 October 2026</b>, after the human evaluation. Until then, treat every number in sections 4.2, 4.4 and 4.5 as provisional.</p>
+  <p><b>Figures freeze on 25 October 2026</b>, after the human evaluation. The figures here describe the database and code as they now stand; only the human evaluation's results are still to come.</p>
 </aside>
 
 <nav class="toc" aria-label="Contents">
@@ -105,15 +105,13 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 </nav>
 
 <aside class="box warn" id="w-open">
-  <span class="tag">Open before submission: 13 items</span>
+  <span class="tag">Open before submission: 11 items</span>
   <ul class="openlist">
     <li><a href="#w-survey">Survey and market figures</a>: check against the original reports (section 1).</li>
     <li><a href="#w-dataset">Which dataset is submitted</a>: the snapshot holds text that must stay within the team (section 2.1).</li>
     <li><a href="#w-labels">The training labels are an LLM's</a>: keep them described that way, check the provider's terms of use, and update the model card (section 2.2).</li>
     <li><a href="#w-ner">Bank recognition is evaluated but not applied</a> to the stored corpus (sections 3.4 and 4.3).</li>
-    <li><a href="#w-aspect">Per-topic figures will change</a> with a second re-score (sections 4.2 and 4.4).</li>
     <li><a href="#w-rules">Training and test labels follow different rules</a> for retail products (section 4.1).</li>
-    <li><a href="#w-chatbot">Chatbot figures need one more run</a> after the second re-score (section 4.5).</li>
     <li><a href="#w-human">The human evaluation is not done</a>: faithfulness ratings and the user study, 19 to 25 October (section 4.5).</li>
     <li><a href="#w-dashboard">The dashboard reads two models' rows</a>: take no screenshot or figure from it yet (section 4.6).</li>
     <li><a href="#w-conclusions">Conclusions</a>: a draft the team must rewrite and own (section 5).</li>
@@ -225,7 +223,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p>Two methods were built and compared, and the comparison is itself a result (section 4.2). The first assigns a sentence to every aspect whose seed sentences it resembles, by cosine similarity of FinBERT embeddings above 0.65. The second asks a local language model, <code>llama3.1:8b</code>, to choose exactly one aspect from a fixed prompt: a role, the task, the eleven definitions, the constraint to answer in a set format, and one invented example per aspect.</p>
 
-<p>The design choice between them is about what an aspect score means. Similarity matching gave each sentence 6.4 aspects on average, so every aspect's score was close to a copy of the whole corpus and the breakdown told the reader little. One aspect per sentence makes the aspects separate, at the price of small samples in the rarer ones. The stored corpus uses the language model's aspects.</p>
+<p>The design choice between them is about what an aspect score means. Similarity matching gave each sentence 6.4 aspects on average, so every aspect's score was close to a copy of the whole corpus and the breakdown told the reader little. One aspect per sentence makes the aspects separate, at the price of small samples in the rarer ones. The stored corpus uses the language model's aspects, made with a prompt that carries the team's later ruling on what counts as the wealth business (section 4.2).</p>
 
 <h3 id="s34"><span class="n">3.4</span>Task 3: recognising which bank a sentence is about</h3>
 
@@ -317,7 +315,8 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 <tr><td>Always the commonest aspect</td><td class="num">37.4%</td><td class="num">0.049</td></tr>
 <tr><td>Similarity to seed sentences (the first method; its closest aspect)</td><td class="num">41.3%</td><td class="num">0.296</td></tr>
 <tr><td>Local model <code>qwen3:4b</code></td><td class="num">71.9%</td><td class="num">0.671</td></tr>
-<tr class="pick"><td>Local model <code>llama3.1:8b</code> (in use)</td><td class="num">72.9%</td><td class="num">0.679</td></tr>
+<tr><td>Local model <code>llama3.1:8b</code>, first wording</td><td class="num">72.9%</td><td class="num">0.679</td></tr>
+<tr class="pick"><td>The same model with the wealth ruling in its prompt (in use)</td><td class="num">73.9%</td><td class="num">0.676</td></tr>
 <tr><td>The LLM rater, for reference</td><td class="num">84.2%</td><td class="num">0.789</td></tr>
 </tbody></table></div>
 <p class="src">Sources: <code>docs/evidence/llm-aspect-classifier-2026-10-01.md</code>, <code>docs/evidence/llm-rater-2026-10-01.md</code>. The LLM rater's row is its first run, made under the same guideline people used.</p>
@@ -326,11 +325,9 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p><b>What remains hard.</b> The local model is right 73% of the time, against 84% for a much larger model. Counted in sentences, most of that gap is retail banking, where the larger model is right on 62 more, and "other", 49 more; on wealth the larger model is behind, by 19. The wealth aspect is a separate problem, one of definition. Under the wording the corpus was classified with, the local model called 176 of the 2,075 labelled sentences "wealth", and only 63 of those are wealth by the rule the team later fixed, judged against the LLM rater's labels (precision 0.36).</p>
 
-<aside class="box warn" id="w-aspect">
-  <span class="tag">Figures will change</span>
-  <p>A trial wrote the new wealth rule into the model's prompt. Against the labels made under that rule, agreement rose from 75.5% to 79.4% (148 sentences newly right, 67 newly wrong, exact McNemar p &lt; 0.001); wealth precision rose from 0.36 to 0.70 while wealth recall fell from 0.76 to 0.46 (<code>docs/evidence/wealth-definition-trial-2026-10-12.md</code>). The whole corpus is being re-classified under the new wording. If the owner approves a second re-score, add the trial to this section as the third method and replace every per-aspect figure in Table 7.</p>
-  <p>Per-aspect figures made with similarity matching, with the current aspects, and after a second re-score are three different assignments. Quote only the final set, and never compare across them.</p>
-</aside>
+<p><b>Fixing the definition, and what it cost.</b> The team wrote its ruling into the prompt and classified the corpus again. Against people's labels, made under the older reading, nothing changes (72.9% to 73.9%, not distinguishable from chance), which is what a change of rule should produce there. Against the LLM rater's labels, made under the ruling, agreement rises from 75.5% to 79.4% on the 2,075 labelled sentences: 148 sentences became right and 67 became wrong (exact McNemar test, p &lt; 0.001). Wealth precision doubles, from 0.36 to 0.70. The cost is recall: the model now finds 46% of the true wealth sentences where it found 76%, filing some sentences in which a bank reports or plans its wealth business under results or guidance. In the corpus the change moved 6,914 of the 45,844 sentences (15%), and the wealth aspect shrank from 4,359 sentences to 1,423.</p>
+<p>Two limits apply. The reference for the gain is an LLM's labels, not people's, so it measures agreement between two models given the same rule. And one wording was tried, with no search for one that keeps the precision and returns some recall, so that the labelled sentences stayed a fair test.</p>
+<p class="src">Sources: <code>docs/evidence/wealth-definition-trial-2026-10-12.md</code>, <code>docs/evidence/rescore-wealth-wording-2026-10-14.md</code>.</p>
 
 <h3 id="s43"><span class="n">4.3</span>Bank recognition</h3>
 
@@ -342,65 +339,62 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <h3 id="s44"><span class="n">4.4</span>The index</h3>
 
-<p>Replacing FinBERT with the fine-tuned model raised every bank's all-time score and changed their order, and the change traces to one source. The stored corpus was re-scored for this: one aspect per sentence, and the chosen model's score beside FinBERT's. The step was rehearsed on a copy first, and the database then matched the copy row for row.</p>
+<p>Replacing FinBERT with the fine-tuned model raised every bank's all-time score and changed their order, and the change traces to one source. Every stored sentence carries both models' scores on the same aspect, so the two can be compared directly.</p>
 
 <div class="tablewrap"><table>
 <caption>Table 6. All-time headline score per bank (share of sentences positive / neutral / negative)</caption>
 <thead><tr><th>Bank</th><th class="num">Sentences</th><th class="num">FinBERT, no fine-tuning</th><th class="num">Model in use</th></tr></thead>
 <tbody>
-<tr><td>DBS</td><td class="num">24,978</td><td class="num">0.122 (22 / 67 / 10)</td><td class="num">0.155 (33 / 51 / 16)</td></tr>
-<tr><td>OCBC</td><td class="num">7,774</td><td class="num">0.136 (23 / 67 / 11)</td><td class="num">0.143 (32 / 50 / 18)</td></tr>
-<tr><td>UOB</td><td class="num">13,092</td><td class="num">0.074 (15 / 76 / 9)</td><td class="num">0.117 (30 / 53 / 17)</td></tr>
+<tr><td>DBS</td><td class="num">24,978</td><td class="num">0.122 (22 / 67 / 10)</td><td class="num">0.143 (31 / 53 / 16)</td></tr>
+<tr><td>OCBC</td><td class="num">7,774</td><td class="num">0.136 (23 / 67 / 11)</td><td class="num">0.129 (31 / 51 / 18)</td></tr>
+<tr><td>UOB</td><td class="num">13,092</td><td class="num">0.074 (15 / 76 / 9)</td><td class="num">0.107 (29 / 54 / 17)</td></tr>
 </tbody></table></div>
-<p class="src">Source: <code>docs/evidence/rescore-rehearsal-2026-10-12.md</code>. Recent windows, as of 25 September 2026, with the model in use: over 30 days DBS 0.054 (371 sentences), OCBC 0.281 (115), UOB 0.196 (136); over 7 days DBS 0.171 (90), OCBC 0.151 (42), UOB 0.309 (60).</p>
+<p class="src">Source: the index in the submitted database (<code>docs/evidence/rescore-wealth-wording-2026-10-14.md</code>). Recent windows, as of 25 September 2026, with the model in use: over 30 days DBS 0.044 (371 sentences), OCBC 0.271 (115), UOB 0.185 (136); over 7 days DBS 0.168 (90), OCBC 0.148 (42), UOB 0.275 (60).</p>
 
-<p><b>The aspect method does not move the headline; the model does.</b> With the new aspects and FinBERT's scores, every headline is identical to the old one, because a headline counts each sentence once and FinBERT scores a sentence the same whatever its aspect. This separates the two changes cleanly: everything in Table 6 is the model's effect. It changed the label of 13,154 of the 45,844 sentences (29%), and 10,219 of those were sentences FinBERT had called neutral.</p>
+<p><b>Where the model changes the picture.</b> It gives a different label from FinBERT on 12,850 of the 45,844 sentences (28%), and 9,787 of those are sentences FinBERT called neutral: 6,472 become positive and 3,315 negative. The neutral share falls from about two-thirds to about half.</p>
 
-<p><b>Reddit drives the rise.</b> FinBERT called 88% of Reddit sentences neutral; the chosen model calls 57% neutral, about a quarter positive and a sixth negative. Reddit is 56% of the corpus, so this one source moves the blend, and it explains why UOB gains most: 72% of UOB's sentences are from Reddit, against 49% of DBS's. Earnings text, the formal language FinBERT was built for, moves least: DBS is unchanged (0.286 to 0.287) and OCBC and UOB fall a little (0.375 to 0.344 and 0.406 to 0.335). CNA news falls for all three banks by 0.14 to 0.18, to below zero.</p>
+<p><b>Reddit drives the rise.</b> FinBERT called 88% of Reddit sentences neutral; the chosen model calls 58% neutral, about a quarter positive and a sixth negative. Reddit is 56% of the corpus, so this one source moves the blend, and it explains why UOB gains most: 72% of UOB's sentences are from Reddit, against 49% of DBS's. Earnings text, the formal language FinBERT was built for, moves least, and downward: DBS from 0.286 to 0.276, OCBC from 0.375 to 0.343, UOB from 0.406 to 0.332. CNA news falls for all three banks by 0.15 to 0.17, to below zero. OCBC is the one bank whose headline falls: its Reddit sentences end near zero (-0.009) where the other two banks' rise to 0.058, and its earnings and news scores fall with the others'.</p>
 
-<p><b>What a reader can and cannot conclude.</b> The order of the banks changed: OCBC led DBS by 0.014, and DBS now leads by 0.012. A change of model reversed it, so the order of those two is not a finding. No confidence interval has been computed for any index score, and the only measured uncertainty is the model's error on about three sentences in ten; how that carries into a score over thousands of sentences is not known. The index supports "all three are mildly positive, with UOB lowest under both models" and does not support a ranking of DBS against OCBC. The per-source figures are more informative than the blend: each bank scores between 0.29 and 0.34 on its own earnings text and near zero on Reddit (0.00 to 0.07), a gap between what banks say and what customers say that the blend hides.</p>
+<p><b>The aspect a sentence is filed under changes its score a little.</b> FinBERT scores a sentence the same whatever its aspect. The fine-tuned model reads the aspect's name with the sentence, so it does not. When the corpus was re-classified under the wealth ruling (section 4.2), no label changed for a sentence that kept its aspect, but 896 of the 6,914 that moved did, and one-sidedly: 614 went from positive to neutral and 88 the other way. The model is less ready to call a sentence positive once it is filed under retail banking or "other" than under wealth. Each bank's headline fell by 0.010 to 0.015 as a result. The aspect model's errors therefore leak into the headline, which is a cost of conditioning the classifier on the aspect and a reason to read the headline to two decimal places at most.</p>
+
+<p><b>What a reader can and cannot conclude.</b> Under FinBERT, OCBC led DBS by 0.014; under the model in use DBS leads by 0.014. A change of model reversed the order, and a change of aspect definition moved each score by about as much as the gap, so the order of those two is not a finding. No confidence interval has been computed for any index score, and the only measured uncertainty is the model's error on about three sentences in ten; how that carries into a score over thousands of sentences is not known. The index supports "all three are mildly positive, with UOB lowest under both models" and does not support a ranking of DBS against OCBC. The per-source figures are more informative than the blend: each bank scores between 0.28 and 0.34 on its own earnings text and near zero on Reddit (-0.01 to 0.06), a gap between what banks say and what customers say that the blend hides.</p>
 
 <div class="tablewrap"><table>
 <caption>Table 7. Selected per-aspect scores, all time, with the model in use (sentences in brackets)</caption>
 <thead><tr><th>Aspect</th><th class="num">DBS</th><th class="num">OCBC</th><th class="num">UOB</th></tr></thead>
 <tbody>
-<tr><td>Retail banking</td><td class="num">-0.046 (8,747)</td><td class="num">-0.060 (3,288)</td><td class="num">0.040 (7,649)</td></tr>
-<tr><td>Wealth business</td><td class="num">0.489 (2,154)</td><td class="num">0.476 (913)</td><td class="num">0.368 (1,292)</td></tr>
-<tr><td>Dividend policy</td><td class="num">0.452 (456)</td><td class="num">0.446 (136)</td><td class="num">0.350 (71)</td></tr>
-<tr><td>Income and results</td><td class="num">0.390 (2,257)</td><td class="num">0.447 (744)</td><td class="num">0.255 (671)</td></tr>
-<tr><td>Net interest margin</td><td class="num">0.150 (1,047)</td><td class="num">-0.034 (170)</td><td class="num">-0.033 (190)</td></tr>
+<tr><td>Retail banking</td><td class="num">-0.028 (9,099)</td><td class="num">-0.029 (3,598)</td><td class="num">0.064 (8,180)</td></tr>
+<tr><td>Wealth business</td><td class="num">0.459 (839)</td><td class="num">0.542 (271)</td><td class="num">0.400 (313)</td></tr>
+<tr><td>Dividend policy</td><td class="num">0.455 (414)</td><td class="num">0.453 (138)</td><td class="num">0.340 (62)</td></tr>
+<tr><td>Income and results</td><td class="num">0.429 (2,360)</td><td class="num">0.481 (776)</td><td class="num">0.282 (698)</td></tr>
+<tr><td>Net interest margin</td><td class="num">0.163 (1,068)</td><td class="num">-0.035 (169)</td><td class="num">-0.071 (188)</td></tr>
 </tbody></table></div>
-<p class="src">Source: <code>data/eval/rescore-rehearsal-2026-10-12/rehearsal.txt</code>. <b>Provisional:</b> see the warning in section 4.2. The wealth and retail rows will change most.</p>
+<p class="src">Source: the index in the submitted database; every aspect is listed in <code>data/eval/wealth-definition-trial-2026-10-12/rescore_check.txt</code>.</p>
 
-<p>Retail banking is 43% of all sentences and the only large aspect near or below zero for every bank: where customers talk about the banks, sentiment is balanced; where the banks and investors talk about results, dividends and wealth, it is clearly positive. The cost of one aspect per sentence is visible in the counts. UOB's dividend score rests on 71 sentences all time, and far fewer in a 30-day window, so the interfaces show the count beside every figure and report a cell under five sentences as insufficient.</p>
+<p>Retail banking is 46% of all sentences and the only large aspect near zero for every bank: where customers talk about the banks, sentiment is balanced; where the banks and investors talk about results, dividends and wealth, it is clearly positive. The cost of one aspect per sentence is visible in the counts. UOB's dividend score rests on 62 sentences all time, and far fewer in a 30-day window, so the interfaces show the count beside every figure and report a cell under five sentences as insufficient.</p>
 
 <h3 id="s45"><span class="n">4.5</span>The chatbot</h3>
 
-<p>On the re-scored database the chatbot chooses the right tool on 23 of 24 questions, declines advice and admits missing data on 8 of 8, and gave no invented citation in 32 answers. The last of these was reached by a check in code, not by the prompt.</p>
+<p>On the submitted database the chatbot chooses the right tool on 23 of 24 questions, declines advice and admits missing data on 8 of 8, and gave no invented citation or figure in 32 answers. The citation result was reached by a check in code, not by the prompt.</p>
 
 <div class="tablewrap"><table>
 <caption>Table 8. The chatbot on a 32-question gold set and four conversations, <code>llama3.1:8b</code></caption>
-<thead><tr><th>Check</th><th class="num">Before the code checks</th><th class="num">After them, earlier database</th><th class="num">After them, re-scored database</th></tr></thead>
+<thead><tr><th>Check</th><th class="num">Before the code checks</th><th class="num">After them, earlier database</th><th class="num">After them, submitted database</th></tr></thead>
 <tbody>
 <tr><td>Right tool chosen</td><td class="num">20 / 24</td><td class="num">23 / 24</td><td class="num">23 / 24</td></tr>
 <tr><td>Advice declined, missing data admitted</td><td class="num">8 / 8</td><td class="num">8 / 8</td><td class="num">8 / 8</td></tr>
 <tr><td>Answers citing evidence no tool returned</td><td class="num">11 / 32</td><td class="num">0 / 32</td><td class="num">0 / 32</td></tr>
-<tr><td>Answers with a figure no tool returned</td><td class="num"></td><td class="num">0 / 32</td><td class="num">1 / 32, marked</td></tr>
+<tr><td>Answers with a figure no tool returned</td><td class="num"></td><td class="num">0 / 32</td><td class="num">0 / 32</td></tr>
 <tr><td>Conversation turns correct</td><td class="num"></td><td class="num">9 / 9</td><td class="num">9 / 9</td></tr>
-<tr><td>Median seconds per answer</td><td class="num"></td><td class="num">47</td><td class="num">59</td></tr>
+<tr><td>Median seconds per answer</td><td class="num"></td><td class="num">47</td><td class="num">40</td></tr>
 </tbody></table></div>
-<p class="src">Sources: <code>docs/evidence/chatbot-eval-build-2026-10-01.md</code>, <code>docs/evidence/chatbot-answers-2026-10-04.md</code>, <code>docs/evidence/chatbot-eval-rescored-2026-10-13.md</code>.</p>
+<p class="src">Sources: <code>docs/evidence/chatbot-eval-build-2026-10-01.md</code>, <code>docs/evidence/chatbot-answers-2026-10-04.md</code>, <code>docs/evidence/chatbot-eval-rescored-2026-10-14.md</code>. All three on the same laptop; the answer time depends heavily on what else it is running.</p>
 
 <p><b>Why a check in code.</b> Before the checks, a third of answers (11 of 32) cited evidence that no search had returned: invented sentence numbers, links to news sites, quotes attributed to publications. None of those 11 answers had searched at all; each looked up a score and then wrote a "supporting evidence" section anyway. The prompt held two rules in conflict: one asked for that section in every answer, another forbade it without a search, and the model followed the first. Rewording the prompt might have helped, and was not tested by itself. The team chose a fix that does not depend on the model's obedience: any quote that no search returned is removed in code. That ended the problem without changing which tools the model chose. The same reasoning lies behind the intent classifier: advice and off-topic handling are reliable because those questions never reach the model.</p>
 
-<p><b>What the checks cannot see.</b> They verify quotes and numbers, not the model's own descriptions. In the latest run one answer was wrong in ways the quote and figure checks do not read (it is also the one miss on tool choice): asked for a bank's sentiment "in the last 7 days" on a topic with too few recent sentences, the model reported the all-time figure as if it were the week's, and gave the wrong year for the data. Both numbers were ones a tool had returned. With one aspect per sentence, thin recent cells are more common, so this failure will occur more often than it did. It is the main reason the automated results are a floor for trust, not a measure of faithfulness.</p>
+<p><b>What the checks cannot see.</b> They verify quotes and numbers, not the model's own descriptions. One question was answered wrongly in each of the last two runs, in a way the quote and figure checks do not read (it is also the one miss on tool choice). Asked for a bank's sentiment "in the last 7 days" on a topic with too few recent sentences, the model receives the all-time figure with a note saying so, and reports it as the week's. Every number in the answer is one a tool returned. With one aspect per sentence, thin recent cells are common, so this failure will be met in use. It is the main reason the automated results are a floor for trust, not a measure of faithfulness.</p>
 
-<p><b>Evidence search.</b> One aspect per sentence made the search for evidence far more precise. Asked what people say about a bank's topic, about four of the five sentences returned are ones people labelled with that topic (precision 0.78), where it was fewer than two (0.33) when a sentence carried six aspects. Most of that gain is the stored aspect acting as a filter: a random five from the filtered pool are already right 72% of the time. Ranking the pool by the aspect's name adds six points to that; ranking it by the question's own words adds none (0.69), which fits the weakness described in section 4.2, where the embeddings match a sentence's register more than its topic. The measure rests on 28 queries.</p>
-
-<aside class="box warn" id="w-chatbot">
-  <span class="tag">Figures will change</span>
-  <p>If the second re-score goes ahead, run the gold set and the evidence-search measure once more and replace the last column of Table 8 and the precision figure. The behaviour checks are unlikely to move; the precision figure may. The slower answers (59 seconds against 47) were measured straight after a two-hour job on the same laptop and may reflect its memory, not the new data: re-measure on a quiet machine before quoting a speed.</p>
-</aside>
+<p><b>Evidence search.</b> One aspect per sentence made the search for evidence far more precise, and the gain is the aspect itself, not the ranking. Asked what people say about a bank's topic, 3.3 of the 5 sentences returned are ones people labelled with that topic (precision 0.66), where it was 1.6 (0.33) when a sentence carried six aspects. The stored aspect acts as a filter: 74% of the sentences that pass it are relevant. Ranking within that pool does not add to it; the top five by the aspect's name are right slightly less often than five drawn at random (0.66 against 0.74), and by the question's own words less often still (0.62). That fits the weakness described in section 4.2: the embeddings match a sentence's register more than its topic. Two cautions: the measure rests on 28 queries, and relevance is judged by people's labels, made under the older reading of wealth, so a sentence the ruling moved counts as a miss.</p>
 
 <aside class="box team" id="w-human">
   <span class="tag">For the team to do, 19 to 25 October</span>
@@ -409,7 +403,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <h3 id="s46"><span class="n">4.6</span>Engineering checks</h3>
 
-<p>The system is tested as software as well as evaluated as a model. A fresh clone runs 2,520 automated tests with no network access. Forty-six of them are expected failures kept on purpose: each records a known limit of the chatbot's quote and figure checks, found in thirteen rounds of adversarial review, so that a limit cannot be forgotten or silently change. The API's index endpoints are tested to return the stored index unchanged and to reject an invalid bank, window or period with an error.</p>
+<p>The system is tested as software as well as evaluated as a model. A fresh clone runs 2,521 automated tests with no network access. Forty-six of them are expected failures kept on purpose: each records a known limit of the chatbot's quote and figure checks, found in thirteen rounds of adversarial review, so that a limit cannot be forgotten or silently change. The API's index endpoints are tested to return the stored index unchanged and to reject an invalid bank, window or period with an error.</p>
 
 <aside class="box warn" id="w-dashboard">
   <span class="tag">Do not use yet</span>
@@ -426,9 +420,9 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
 
 <p><b>The index is usable as a mild, comparative signal, not as a ranking.</b> The fine-tuned model is right on about seven sentences in ten, the three banks' headline scores sit within 0.04 of each other, and no interval has been computed for any of them. The system can show that all three are viewed mildly positively, that customers are far cooler than the banks' own reports, and which topics lift or drag each bank. It cannot say which of DBS and OCBC is viewed better.</p>
 
-<p><b>The hardest problem was the neutral boundary, and it is a problem of definition before it is one of modelling.</b> People, the LLM rater and every model disagree most on whether a sentence carries sentiment at all. The team had to rule on it twice. The wealth ruling had a large measured effect: only 36% of what the aspect model had called wealth fits it. The retail ruling changed few labels in practice, about 60 of 1,277, no more than two runs of the same rater differ by, which says more about how unstable the boundary is than about the rule. Neither question could have been settled by a larger model.</p>
+<p><b>The hardest problem was the neutral boundary, and it is a problem of definition before it is one of modelling.</b> People, the LLM rater and every model disagree most on whether a sentence carries sentiment at all. The team had to rule on it twice. The wealth ruling had a large measured effect: only 36% of what the aspect model had called wealth fitted it, and applying it moved 15% of the corpus to another aspect and every headline by about 0.01. The retail ruling changed few labels in practice, about 60 of 1,277, no more than two runs of the same rater differ by, which says more about how unstable the boundary is than about the rule. Neither question could have been settled by a larger model.</p>
 
-<p><b>General-purpose embeddings failed twice, and a small language model fixed both.</b> Similarity between FinBERT embeddings was barely better than a constant guess at assigning aspects (41% against 37%) and, before sentences had one stored aspect to filter on, no better than random at ranking evidence for a question. The embeddings encode how a sentence is written more than what it is about. Replacing similarity with a local model's reading of the sentence raised aspect agreement to 73% and, through the stored aspect, evidence precision from 0.33 to 0.78.</p>
+<p><b>General-purpose embeddings failed twice, and a small language model fixed both.</b> Similarity between FinBERT embeddings was barely better than a constant guess at assigning aspects (41% against 37%) and, before sentences had one stored aspect to filter on, no better than random at ranking evidence for a question. The embeddings encode how a sentence is written more than what it is about. Replacing similarity with a local model's reading of the sentence raised aspect agreement to 73% and, through the stored aspect, evidence precision from 0.33 to 0.66.</p>
 
 <p><b>A language model in a product needs checks that do not depend on its obedience.</b> With instructions alone, a third of answers cited evidence that was never retrieved; removing unsearched quotes in code ended that. The remaining errors are in the model's own wording, which no text check verifies, so the human ratings of section 4.5 are needed before any claim about faithfulness.</p>
 
@@ -496,7 +490,7 @@ footer { font-family: var(--sans); font-size: 0.82rem; color: var(--ink-soft); b
   <p>Confirm each statement above against your own experience, name the exact model versions used for labelling and development (the running log is section 8 of <code>.project-context/course-content/course-context.md</code>), and add the pros and cons as each member experienced them: the module asks for both. If any member used another tool, such as a chat assistant for the proposal, add it to Table 9.</p>
 </aside>
 
-<footer>Draft, written from the evidence files of the repository. Figures in sections 4.2, 4.4 and 4.5 are provisional until the team freezes them. Page limit: under 20.</footer>
+<footer>Draft, written from the evidence files of the repository. The human evaluation's results are still to be added. Page limit: under 20.</footer>
 </div>
 </body>
 </html>

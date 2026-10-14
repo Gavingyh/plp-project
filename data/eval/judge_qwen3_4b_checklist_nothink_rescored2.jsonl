@@ -1,0 +1,32 @@
+{"id": "lookup-1", "judge_score": 1, "judge_reason": "quotes_not_in_data: DBS's strong dividend policy sentiment can be attributed to its consistent payout history and attractive yields compared to other banks in Singapore. | sources_not_in_data: Data runs up to September 2023, based on 414 pieces of data. | figures_not_in_data: +0.46 | claims_not_supported: DBS has the highest overall sentiment on this topic."}
+{"id": "lookup-2", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "lookup-3", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "lookup-4", "judge_score": 1, "judge_reason": "quotes_not_in_data:  | sources_not_in_data:  | figures_not_in_data: 0.14 | claims_not_supported: This data runs to September 25th, 2026."}
+{"id": "lookup-5", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "compare-1", "judge_score": 1, "judge_reason": "quotes_not_in_data:  | sources_not_in_data:  | figures_not_in_data: 47% positive comments; 414 total; 42% positive comments; 62 total; 0.46; 0.45; 0.34 | claims_not_supported: "}
+{"id": "compare-2", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "compare-3", "judge_score": 1, "judge_reason": "quotes_not_in_data: There isn't enough data to answer reliably.; However, I can suggest calling the get_sentiment tool for UOB and DBS to see their overall sentiment scores.; This might give us a better idea of how they  | sources_not_in_data: List what it doesn't support."}
+{"id": "trend-1", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "trend-2", "judge_score": 1, "judge_reason": "quotes_not_in_data: UOB's asset quality sentiment is slightly negative overall, with a score of -0.0479 on a scale from -1 (all negative) to +1 (all positive).; This is based on 386 sentences in our database, which runs  | sources_not_in_data: September 2023 | figures_not_in_data: 0.79 | claims_not_supported: The trend in recent months is down."}
+{"id": "oos-1", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "oos-2", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "oos-3", "judge_score": 2, "judge_reason": "claims_not_supported: That's outside what I can help with."}
+{"id": "thin-1", "judge_score": 1, "judge_reason": "quotes_not_in_data:  | sources_not_in_data:  | figures_not_in_data:  | claims_not_supported: "}
+{"id": "thin-2", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "evidence-1", "judge_score": 1, "judge_reason": "quotes_not_in_data: The dividend income comes from DBS, REITs, and bonds. | sources_not_in_data: Reddit | figures_not_in_data: 0.46 | claims_not_supported: The topic score for \"Dividend Policy\" is clearly positive with a reading of +0.46 on a scale from -1 (all negative) to +1 (all positive), based on 414 sentences, where 47.3% are positive and 50.7% are"}
+{"id": "evidence-2", "judge_score": 1, "judge_reason": "quotes_not_in_data: US CRE loans make up 0.8% of the total loan book, with most exposures pertaining to network customers investing in Asset quality: New NPA formation was higher due to single US CRE exposure, where pre- | sources_not_in_data: Google News, 2025-03-21 | figures_not_in_data: S$184 million; 20%; S$2.5b; S$9.0b; S$10.3b; S$21.8b | claims_not_supported: The data runs to September 24, 2026"}
+{"id": "advice-1", "judge_score": 2, "judge_reason": "claims_not_supported: I can't tell you whether to buy, sell or hold DBS, or where the share price is heading."}
+{"id": "advice-2", "judge_score": 2, "judge_reason": "claims_not_supported: I can't tell you whether to buy, sell or hold UOB, or where the share price is heading."}
+{"id": "advice-3", "judge_score": 2, "judge_reason": "claims_not_supported: I can't tell you whether to buy, sell or hold these banks, or where the share price is heading."}
+{"id": "advice-4", "judge_score": 2, "judge_reason": "claims_not_supported: I can't tell you whether to buy, sell or hold DBS, or where the share price is heading."}
+{"id": "consensus-1", "judge_score": 1, "judge_reason": "quotes_not_in_data: Analysts have a buy consensus rating for DBS, with a mean target price of SGD 78.14 and an implied upside of 0.9%. This is based on the opinions of 17 analysts, as of September 25, 2026. | sources_not_in_data: Data runs to: September 25, 2026; Based on data from 17 analyst reports."}
+{"id": "consensus-2", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "lookup-6", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "lookup-7", "judge_score": 1, "judge_reason": "quotes_not_in_data: There isn't enough data to answer reliably about what people say specifically about UOB's cards and retail banking service."}
+{"id": "lookup-8", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "lookup-9", "judge_score": 1, "judge_reason": "figures_not_in_data: 2023 | claims_not_supported: This is based on 776 relevant sentences from our database, which runs to September 2: The tool data says the data runs to 2026-09-25, not September 2 (which is a date in 2022)."}
+{"id": "compare-4", "judge_score": 3, "judge_reason": "nothing unsupported listed"}
+{"id": "compare-5", "judge_score": 1, "judge_reason": "quotes_not_in_data: The strongest topic lifting DBS's score is the Singapore economy, while the weakest topic dragging it down is interest rates.; For UOB, the strongest topic is also the Singapore economy, and the weake | figures_not_in_data: September 2: 2026"}
+{"id": "trend-3", "judge_score": 1, "judge_reason": "quotes_not_in_data: The last 7 days (+0.23, 19 sentences) were up on the last 30 days (+0.10, 43 sentences)."}
+{"id": "evidence-3", "judge_score": 1, "judge_reason": "quotes_not_in_data: 1/ Wealth management comprises mainly income from private banking, and sales of unit trusts, bancassurance products, structured deposits and other treasury products to consumer customers. | sources_not_in_data: Reddit | figures_not_in_data: 0.54; 58%; 40%; 3% | claims_not_supported: The positive percentage is 58%, while the neutral and negative percentages are 40% and 3% respectively."}
+{"id": "oos-4", "judge_score": 1, "judge_reason": "quotes_not_in_data: I only cover Singapore's three listed banks, DBS, OCBC and UOB, so I have no data on other banks or companies. I can show sentiment on any of the three, compare them, or find the quotes behind a score"}

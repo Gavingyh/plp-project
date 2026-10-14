@@ -738,17 +738,17 @@
    "Table 6",
    "DBS model in use: the same",
    [
-    0.155,
+    0.143,
     24978,
-    33,
-    51,
+    31,
+    53,
     16
    ],
    [
-    0.155,
+    0.143,
     24978,
-    33,
-    51,
+    31,
+    53,
     16
    ],
    "ok",
@@ -778,17 +778,17 @@
    "Table 6",
    "OCBC model in use: the same",
    [
-    0.143,
+    0.129,
     7774,
-    32,
-    50,
+    31,
+    51,
     18
    ],
    [
-    0.143,
+    0.129,
     7774,
-    32,
-    50,
+    31,
+    51,
     18
    ],
    "ok",
@@ -818,17 +818,17 @@
    "Table 6",
    "UOB model in use: the same",
    [
-    0.117,
+    0.107,
     13092,
-    30,
-    53,
+    29,
+    54,
     17
    ],
    [
-    0.117,
+    0.107,
     13092,
-    30,
-    53,
+    29,
+    54,
     17
    ],
    "ok",
@@ -839,29 +839,29 @@
    "30d DBS, OCBC, UOB: score, sentences",
    [
     [
-     0.054,
+     0.044,
      371
     ],
     [
-     0.281,
+     0.271,
      115
     ],
     [
-     0.196,
+     0.185,
      136
     ]
    ],
    [
     [
-     0.054,
+     0.044,
      371
     ],
     [
-     0.281,
+     0.271,
      115
     ],
     [
-     0.196,
+     0.185,
      136
     ]
    ],
@@ -873,29 +873,29 @@
    "7d DBS, OCBC, UOB: score, sentences",
    [
     [
-     0.171,
+     0.168,
      90
     ],
     [
-     0.151,
+     0.148,
      42
     ],
     [
-     0.309,
+     0.275,
      60
     ]
    ],
    [
     [
-     0.171,
+     0.168,
      90
     ],
     [
-     0.151,
+     0.148,
      42
     ],
     [
-     0.309,
+     0.275,
      60
     ]
    ],
@@ -904,16 +904,16 @@
   ],
   [
    "4.4",
-   "labels changed; of them from neutral; % changed",
+   "labels the two models disagree on; of them neutral under FinBERT; % of sentences",
    [
-    13154,
-    10219,
-    29
+    12850,
+    9787,
+    28
    ],
    [
-    13154,
-    10219,
-    29
+    12850,
+    9787,
+    28
    ],
    "ok",
    "data/plp.db"
@@ -936,12 +936,12 @@
    "4.4",
    "Reddit neutral %, model in use (lowest, highest)",
    [
-    57,
-    58
+    58,
+    59
    ],
    [
-    57,
-    58
+    58,
+    59
    ],
    "ok",
    "data/plp.db"
@@ -950,12 +950,12 @@
    "4.4",
    "Reddit score, model in use (lowest, highest)",
    [
-    0.0,
-    0.07
+    -0.01,
+    0.06
    ],
    [
-    0.0,
-    0.07
+    -0.01,
+    0.06
    ],
    "ok",
    "data/plp.db"
@@ -966,29 +966,29 @@
    [
     [
      0.286,
-     0.287
+     0.276
     ],
     [
      0.375,
-     0.344
+     0.343
     ],
     [
      0.406,
-     0.335
+     0.332
     ]
    ],
    [
     [
      0.286,
-     0.287
+     0.276
     ],
     [
      0.375,
-     0.344
+     0.343
     ],
     [
      0.406,
-     0.335
+     0.332
     ]
    ],
    "ok",
@@ -998,11 +998,11 @@
    "4.4",
    "earnings score, model in use (lowest, highest)",
    [
-    0.29,
+    0.28,
     0.34
    ],
    [
-    0.29,
+    0.28,
     0.34
    ],
    "ok",
@@ -1012,13 +1012,13 @@
    "4.4",
    "CNA fall (smallest, largest); all below zero after",
    [
-    0.14,
-    0.18,
+    0.15,
+    0.17,
     true
    ],
    [
-    0.14,
-    0.18,
+    0.15,
+    0.17,
     true
    ],
    "ok",
@@ -1029,30 +1029,30 @@
    "retail_banking_sentiment: DBS, OCBC, UOB score and sentences",
    [
     [
-     -0.046,
-     8747
+     -0.028,
+     9099
     ],
     [
-     -0.06,
-     3288
+     -0.029,
+     3598
     ],
     [
-     0.04,
-     7649
+     0.064,
+     8180
     ]
    ],
    [
     [
-     -0.046,
-     8747
+     -0.028,
+     9099
     ],
     [
-     -0.06,
-     3288
+     -0.029,
+     3598
     ],
     [
-     0.04,
-     7649
+     0.064,
+     8180
     ]
    ],
    "ok",
@@ -1063,30 +1063,30 @@
    "wealth_business: DBS, OCBC, UOB score and sentences",
    [
     [
-     0.489,
-     2154
+     0.459,
+     839
     ],
     [
-     0.476,
-     913
+     0.542,
+     271
     ],
     [
-     0.368,
-     1292
+     0.4,
+     313
     ]
    ],
    [
     [
-     0.489,
-     2154
+     0.459,
+     839
     ],
     [
-     0.476,
-     913
+     0.542,
+     271
     ],
     [
-     0.368,
-     1292
+     0.4,
+     313
     ]
    ],
    "ok",
@@ -1097,30 +1097,30 @@
    "dividend_policy: DBS, OCBC, UOB score and sentences",
    [
     [
-     0.452,
-     456
+     0.455,
+     414
     ],
     [
-     0.446,
-     136
+     0.453,
+     138
     ],
     [
-     0.35,
-     71
+     0.34,
+     62
     ]
    ],
    [
     [
-     0.452,
-     456
+     0.455,
+     414
     ],
     [
-     0.446,
-     136
+     0.453,
+     138
     ],
     [
-     0.35,
-     71
+     0.34,
+     62
     ]
    ],
    "ok",
@@ -1131,30 +1131,30 @@
    "income_profit_results: DBS, OCBC, UOB score and sentences",
    [
     [
-     0.39,
-     2257
+     0.429,
+     2360
     ],
     [
-     0.447,
-     744
+     0.481,
+     776
     ],
     [
-     0.255,
-     671
+     0.282,
+     698
     ]
    ],
    [
     [
-     0.39,
-     2257
+     0.429,
+     2360
     ],
     [
-     0.447,
-     744
+     0.481,
+     776
     ],
     [
-     0.255,
-     671
+     0.282,
+     698
     ]
    ],
    "ok",
@@ -1165,30 +1165,30 @@
    "net_interest_margin: DBS, OCBC, UOB score and sentences",
    [
     [
-     0.15,
-     1047
+     0.163,
+     1068
     ],
     [
-     -0.034,
-     170
+     -0.035,
+     169
     ],
     [
-     -0.033,
-     190
+     -0.071,
+     188
     ]
    ],
    [
     [
-     0.15,
-     1047
+     0.163,
+     1068
     ],
     [
-     -0.034,
-     170
+     -0.035,
+     169
     ],
     [
-     -0.033,
-     190
+     -0.071,
+     188
     ]
    ],
    "ok",
@@ -1197,8 +1197,8 @@
   [
    "4.4",
    "retail banking share of sentences, %",
-   43,
-   43,
+   46,
+   46,
    "ok",
    "data/plp.db"
   ],
@@ -1272,7 +1272,7 @@
   ],
   [
    "Table 5",
-   "llama3.1:8b: right aspect %, macro-F1",
+   "llama3.1:8b, first wording: right aspect %, macro-F1",
    [
     72.9,
     0.679
@@ -1283,6 +1283,80 @@
    ],
    "ok",
    "answer cache x candidates.csv"
+  ],
+  [
+   "Table 5",
+   "the same model with the wealth ruling (in use): right aspect %, macro-F1",
+   [
+    73.9,
+    0.676
+   ],
+   [
+    73.9,
+    0.676
+   ],
+   "ok",
+   "answer cache x candidates.csv"
+  ],
+  [
+   "4.2",
+   "stored aspects are the in-use answers; wealth sentences now",
+   [
+    true,
+    1423
+   ],
+   [
+    true,
+    1423
+   ],
+   "ok",
+   "data/plp.db x answer cache"
+  ],
+  [
+   "4.2",
+   "sentences moved by the ruling; wealth sentences before",
+   [
+    6914,
+    4359
+   ],
+   [
+    6914,
+    4359
+   ],
+   "ok",
+   "the two answer caches"
+  ],
+  [
+   "4.4",
+   "moved sentences whose label changed; positive to neutral; neutral to positive; unmoved with a changed label",
+   [
+    896,
+    614,
+    88,
+    0
+   ],
+   [
+    896,
+    614,
+    88,
+    0
+   ],
+   "ok",
+   "database before and after the second re-score"
+  ],
+  [
+   "4.4",
+   "headline fall from the ruling (smallest, largest)",
+   [
+    0.01,
+    0.015
+   ],
+   [
+    0.01,
+    0.015
+   ],
+   "ok",
+   "database before and after the second re-score"
   ],
   [
    "Table 5",
@@ -1348,7 +1422,7 @@
     24
    ],
    "ok",
-   "chatbot_eval_results_rescored_v2.jsonl"
+   "chatbot_eval_results_rescored2_v2.jsonl"
   ],
   [
    "Table 8",
@@ -1362,7 +1436,7 @@
     8
    ],
    "ok",
-   "chatbot_eval_results_rescored_v2.jsonl"
+   "chatbot_eval_results_rescored2_v2.jsonl"
   ],
   [
    "Table 8",
@@ -1370,36 +1444,36 @@
    [
     32,
     0,
-    1
+    0
    ],
    [
     32,
     0,
-    1
+    0
    ],
    "ok",
-   "chatbot_eval_results_rescored_v2.jsonl"
+   "chatbot_eval_results_rescored2_v2.jsonl"
   ],
   [
    "Table 8",
    "median seconds per answer",
-   59,
-   59,
+   40,
+   40,
    "ok",
-   "times_rescored_v2.jsonl"
+   "times_rescored2_v2.jsonl"
   ],
   [
    "4.5",
    "evidence precision at 5: by aspect name, random, by the question (all with the filter)",
    [
-    0.78,
-    0.72,
-    0.69
+    0.66,
+    0.74,
+    0.62
    ],
    [
-    0.78,
-    0.72,
-    0.69
+    0.66,
+    0.74,
+    0.62
    ],
    "ok",
    "retrieval_eval.log"
@@ -1550,7 +1624,7 @@
   ],
   [
    "Table 8",
-   "re-scored database, from its summary: the same",
+   "submitted database, from its summary: the same",
    [
     [
      23,
@@ -1565,7 +1639,7 @@
      32
     ],
     [
-     1,
+     0,
      32
     ]
    ],
@@ -1583,12 +1657,12 @@
      32
     ],
     [
-     1,
+     0,
      32
     ]
    ],
    "ok",
-   "chatbot_eval_summary_rescored_v2.md"
+   "chatbot_eval_summary_rescored2_v2.md"
   ],
   [
    "Table 8",
@@ -1610,7 +1684,7 @@
   ],
   [
    "Table 8",
-   "conversation turns and conversations correct (rescored_mt)",
+   "conversation turns and conversations correct (rescored2_mt)",
    [
     9,
     9,
@@ -1624,7 +1698,7 @@
     4
    ],
    "ok",
-   "chatbot_multiturn_summary_rescored_mt.md"
+   "chatbot_multiturn_summary_rescored2_mt.md"
   ],
   [
    "Table 8",

@@ -1,38 +1,57 @@
-# Validation of the report draft's figures (13 Oct 2026)
+# Validation of the report draft's figures (14 Oct 2026)
 
 **What this is.** `docs/report/report.html` is the draft of the practice module
-report. An audit earlier the same day compared its text with the evidence
-notes. This validation goes one step further back: it recomputes the report's
-figures from primary data (the database, the label files, the trained models
-scored again on the test sentences, the chatbot transcripts) and compares each
-with the value the report prints.
+report. An audit on 13 Oct compared its text with the evidence notes. This
+validation goes one step further back: it recomputes the report's figures
+from primary data (the database, the label files, the trained models scored
+again on the test sentences, the chatbot transcripts) and compares each with
+the value the report prints. It was first run on 13 Oct and run again on
+14 Oct, after the second re-score changed the database and the report's
+index, aspect and chatbot figures were rewritten from it.
 
-**Result.** 100 of 100 recomputed figures match the report. The checks
-found three things, all corrected in the report before this note was written:
+**Result.** 105 of 105 recomputed figures match the report as it
+stands on 14 Oct.
+
+## What the first run found
+
+Three things, corrected in the report on 13 Oct:
 
 - **Bank recognition scores had moved.** The report quoted 200 and 154 of
-  201, scored on 4 Oct. With the code as it stands, after the rules added on
-  11 Oct, the recogniser is right on all 201 and alias matching on 161 (F1
-  0.89). The report now gives these, and says the perfect score is not a
-  held-out result: the last rules were written after reading this sheet's
-  errors.
+  201, scored on 4 Oct. With the code as it stands the recogniser is right
+  on all 201 and alias matching on 161 (F1 0.89). The report gives these and
+  says the perfect score is not a held-out result: the last rules were
+  written after reading this sheet's errors.
 - **One agreement figure needed its source named.** The LLM rater's macro-F1
-  of 0.789 on aspects is its first run's, made under the guideline people
-  used; the second run, under the rules of 10 Oct, gives 0.791. The report
-  keeps 0.789 and says which run it is.
-- **The first-round test labels are not blind.** The agreement note records
-  that each annotator's test labels equal the labels they gave with a
-  model's suggestion in view. The report now says so beside the kappa of
-  0.93.
+  of 0.789 on aspects is its first run's, under the guideline people used;
+  the second run, under the rules of 10 Oct, gives 0.791.
+- **The first-round test labels are not blind.** Each annotator's test
+  labels equal the labels they gave with a model's suggestion in view. The
+  report says so beside the kappa of 0.93.
+
+## What changed for the second run
+
+- **A statement in the report was wrong and is replaced.** The draft said a
+  change of aspects cannot move the headline. That holds for base FinBERT
+  only. The served model reads the aspect's name with the sentence, and the
+  second re-score lowered each bank's headline by 0.010 to 0.015. Section
+  4.4 now says this and counts the labels that changed (896 of the 6,914
+  moved sentences; none among those that kept their aspect).
+- **Evidence-search precision is 0.66, not 0.78**, on the submitted
+  database, and ranking within the filtered pool no longer beats a random
+  draw from it (0.74). Section 4.5 is rewritten around that.
+- Tables 5 to 8 and the figures in sections 4.2, 4.4 and 4.5 were replaced
+  from the 14 Oct database and runs, and two warnings in the draft that said
+  those figures would change were removed.
 
 ## What was recomputed, and from what
 
-`data/eval/report-validation-2026-10-13/validate.py` (output in
-`output.txt`, every check in `checks.json`). Nothing was written to the
-database or the label files.
+`data/eval/report-validation/validate.py` (output in `output.txt`, every
+check in `checks.json`). Nothing was written to the database or the label
+files.
 
 - **Corpus and index** (sections 2.1 and 4.4, Tables 1, 6 and 7): read from
-  `data/plp.db`.
+  `data/plp.db`; the effect of the ruling from the copy made before the
+  second re-score.
 - **Labels** (section 2.2, Table 2): counted from the label files; the LLM
   rater's and the two annotators' agreement recomputed from them.
 - **Sentiment models** (Tables 3 and 4): base FinBERT and the three seeds of
@@ -40,9 +59,9 @@ database or the label files.
   The other fine-tuned rows were read from the stored results
   (`report_data.json`). Cross-validation was recomputed from the 30 fold
   results, and the two classical baselines were run again.
-- **Aspects** (Table 5 and the wealth trial): the two local models' cached
-  answers and the LLM rater's labels against people's aspects; the trial
-  from its `answers.csv`.
+- **Aspects** (Table 5 and section 4.2): the local models' cached answers
+  under both wordings and the LLM rater's labels against people's aspects;
+  the trial from its `answers.csv`.
 - **Bank recognition** (section 4.3): the scorer and the corpus comparison
   run again.
 - **Chatbot** (Table 8, section 4.5): the three runs' transcripts, summaries
@@ -57,7 +76,7 @@ outside the repository:
 - the similarity method's row of Table 5 (41.3%, macro-F1 0.296);
 - aspect discovery: 338 and 358 clusters, 65% and 52% unclustered, 25
   clusters at the coarser setting;
-- evidence-search precision under the earlier aspects (0.33);
+- evidence-search precision under the centroid aspects (0.33);
 - the counts of invented citations by kind in the run before the code
   checks, beyond the 11 of 32 answers;
 - the survey figures and the index share in section 1, which come from the
@@ -119,42 +138,47 @@ outside the repository:
 | Table 3 | fine-tuned on LLM labels, mean of 3: the same | [0.682, 0.631, 0.02, 0.49, 0.49, 0.77, 0.72, 0.62, 0.7] | [0.682, 0.631, 0.02, 0.49, 0.49, 0.77, 0.72, 0.62, 0.7] | data/eval/model-rerun-2026-10-11/report_data.json |
 | 4.1 | steps: fine-tuning, LLM labels, pretraining, averaging | [0.05, 0.01, 0.018, 0.021] | [0.05, 0.01, 0.018, 0.021] | Table 3 |
 | Table 6 | DBS FinBERT: score, sentences, % pos/neu/neg | [0.122, 24978, 22, 67, 10] | [0.122, 24978, 22, 67, 10] | data/plp.db |
-| Table 6 | DBS model in use: the same | [0.155, 24978, 33, 51, 16] | [0.155, 24978, 33, 51, 16] | data/plp.db |
+| Table 6 | DBS model in use: the same | [0.143, 24978, 31, 53, 16] | [0.143, 24978, 31, 53, 16] | data/plp.db |
 | Table 6 | OCBC FinBERT: score, sentences, % pos/neu/neg | [0.136, 7774, 23, 67, 11] | [0.136, 7774, 23, 67, 11] | data/plp.db |
-| Table 6 | OCBC model in use: the same | [0.143, 7774, 32, 50, 18] | [0.143, 7774, 32, 50, 18] | data/plp.db |
+| Table 6 | OCBC model in use: the same | [0.129, 7774, 31, 51, 18] | [0.129, 7774, 31, 51, 18] | data/plp.db |
 | Table 6 | UOB FinBERT: score, sentences, % pos/neu/neg | [0.074, 13092, 15, 76, 9] | [0.074, 13092, 15, 76, 9] | data/plp.db |
-| Table 6 | UOB model in use: the same | [0.117, 13092, 30, 53, 17] | [0.117, 13092, 30, 53, 17] | data/plp.db |
-| Table 6 note | 30d DBS, OCBC, UOB: score, sentences | [[0.054, 371], [0.281, 115], [0.196, 136]] | [[0.054, 371], [0.281, 115], [0.196, 136]] | data/plp.db |
-| Table 6 note | 7d DBS, OCBC, UOB: score, sentences | [[0.171, 90], [0.151, 42], [0.309, 60]] | [[0.171, 90], [0.151, 42], [0.309, 60]] | data/plp.db |
-| 4.4 | labels changed; of them from neutral; % changed | [13154, 10219, 29] | [13154, 10219, 29] | data/plp.db |
+| Table 6 | UOB model in use: the same | [0.107, 13092, 29, 54, 17] | [0.107, 13092, 29, 54, 17] | data/plp.db |
+| Table 6 note | 30d DBS, OCBC, UOB: score, sentences | [[0.044, 371], [0.271, 115], [0.185, 136]] | [[0.044, 371], [0.271, 115], [0.185, 136]] | data/plp.db |
+| Table 6 note | 7d DBS, OCBC, UOB: score, sentences | [[0.168, 90], [0.148, 42], [0.275, 60]] | [[0.168, 90], [0.148, 42], [0.275, 60]] | data/plp.db |
+| 4.4 | labels the two models disagree on; of them neutral under FinBERT; % of sentences | [12850, 9787, 28] | [12850, 9787, 28] | data/plp.db |
 | 4.4 | Reddit neutral %, FinBERT (lowest, highest) | [88, 89] | [88, 89] | data/plp.db |
-| 4.4 | Reddit neutral %, model in use (lowest, highest) | [57, 58] | [57, 58] | data/plp.db |
-| 4.4 | Reddit score, model in use (lowest, highest) | [0.0, 0.07] | [0.0, 0.07] | data/plp.db |
-| 4.4 | earnings DBS, OCBC, UOB: FinBERT to model in use | [[0.286, 0.287], [0.375, 0.344], [0.406, 0.335]] | [[0.286, 0.287], [0.375, 0.344], [0.406, 0.335]] | data/plp.db |
-| 4.4 | earnings score, model in use (lowest, highest) | [0.29, 0.34] | [0.29, 0.34] | data/plp.db |
-| 4.4 | CNA fall (smallest, largest); all below zero after | [0.14, 0.18, True] | [0.14, 0.18, True] | data/plp.db |
-| Table 7 | retail_banking_sentiment: DBS, OCBC, UOB score and sentences | [[-0.046, 8747], [-0.06, 3288], [0.04, 7649]] | [[-0.046, 8747], [-0.06, 3288], [0.04, 7649]] | data/plp.db |
-| Table 7 | wealth_business: DBS, OCBC, UOB score and sentences | [[0.489, 2154], [0.476, 913], [0.368, 1292]] | [[0.489, 2154], [0.476, 913], [0.368, 1292]] | data/plp.db |
-| Table 7 | dividend_policy: DBS, OCBC, UOB score and sentences | [[0.452, 456], [0.446, 136], [0.35, 71]] | [[0.452, 456], [0.446, 136], [0.35, 71]] | data/plp.db |
-| Table 7 | income_profit_results: DBS, OCBC, UOB score and sentences | [[0.39, 2257], [0.447, 744], [0.255, 671]] | [[0.39, 2257], [0.447, 744], [0.255, 671]] | data/plp.db |
-| Table 7 | net_interest_margin: DBS, OCBC, UOB score and sentences | [[0.15, 1047], [-0.034, 170], [-0.033, 190]] | [[0.15, 1047], [-0.034, 170], [-0.033, 190]] | data/plp.db |
-| 4.4 | retail banking share of sentences, % | 43 | 43 | data/plp.db |
+| 4.4 | Reddit neutral %, model in use (lowest, highest) | [58, 59] | [58, 59] | data/plp.db |
+| 4.4 | Reddit score, model in use (lowest, highest) | [-0.01, 0.06] | [-0.01, 0.06] | data/plp.db |
+| 4.4 | earnings DBS, OCBC, UOB: FinBERT to model in use | [[0.286, 0.276], [0.375, 0.343], [0.406, 0.332]] | [[0.286, 0.276], [0.375, 0.343], [0.406, 0.332]] | data/plp.db |
+| 4.4 | earnings score, model in use (lowest, highest) | [0.28, 0.34] | [0.28, 0.34] | data/plp.db |
+| 4.4 | CNA fall (smallest, largest); all below zero after | [0.15, 0.17, True] | [0.15, 0.17, True] | data/plp.db |
+| Table 7 | retail_banking_sentiment: DBS, OCBC, UOB score and sentences | [[-0.028, 9099], [-0.029, 3598], [0.064, 8180]] | [[-0.028, 9099], [-0.029, 3598], [0.064, 8180]] | data/plp.db |
+| Table 7 | wealth_business: DBS, OCBC, UOB score and sentences | [[0.459, 839], [0.542, 271], [0.4, 313]] | [[0.459, 839], [0.542, 271], [0.4, 313]] | data/plp.db |
+| Table 7 | dividend_policy: DBS, OCBC, UOB score and sentences | [[0.455, 414], [0.453, 138], [0.34, 62]] | [[0.455, 414], [0.453, 138], [0.34, 62]] | data/plp.db |
+| Table 7 | income_profit_results: DBS, OCBC, UOB score and sentences | [[0.429, 2360], [0.481, 776], [0.282, 698]] | [[0.429, 2360], [0.481, 776], [0.282, 698]] | data/plp.db |
+| Table 7 | net_interest_margin: DBS, OCBC, UOB score and sentences | [[0.163, 1068], [-0.035, 169], [-0.071, 188]] | [[0.163, 1068], [-0.035, 169], [-0.071, 188]] | data/plp.db |
+| 4.4 | retail banking share of sentences, % | 46 | 46 | data/plp.db |
 | 3.3 | aspects per sentence under similarity matching | 6.4 | 6.4 | README snapshot table (291,508 pairs) |
 | 4.2 box | agreement old, new wording, % | [75.5, 79.4] | [75.5, 79.4] | wealth trial answers.csv |
 | 4.2 box | newly right, newly wrong | [148, 67] | [148, 67] | wealth trial answers.csv |
 | 4.2 | wealth, old wording: called, right, precision, recall | [176, 63, 0.36, 0.76] | [176, 63, 0.36, 0.76] | wealth trial answers.csv |
 | 4.2 box | wealth, new wording: precision, recall | [0.7, 0.46] | [0.7, 0.46] | wealth trial answers.csv |
-| Table 5 | llama3.1:8b: right aspect %, macro-F1 | [72.9, 0.679] | [72.9, 0.679] | answer cache x candidates.csv |
+| Table 5 | llama3.1:8b, first wording: right aspect %, macro-F1 | [72.9, 0.679] | [72.9, 0.679] | answer cache x candidates.csv |
+| Table 5 | the same model with the wealth ruling (in use): right aspect %, macro-F1 | [73.9, 0.676] | [73.9, 0.676] | answer cache x candidates.csv |
+| 4.2 | stored aspects are the in-use answers; wealth sentences now | [True, 1423] | [True, 1423] | data/plp.db x answer cache |
+| 4.2 | sentences moved by the ruling; wealth sentences before | [6914, 4359] | [6914, 4359] | the two answer caches |
+| 4.4 | moved sentences whose label changed; positive to neutral; neutral to positive; unmoved with a changed label | [896, 614, 88, 0] | [896, 614, 88, 0] | database before and after the second re-score |
+| 4.4 | headline fall from the ruling (smallest, largest) | [0.01, 0.015] | [0.01, 0.015] | database before and after the second re-score |
 | Table 5 | always the commonest aspect, % | 37.4 | 37.4 | data/labeled/candidates.csv |
 | Table 5 | LLM rater, first run: right aspect %, macro-F1 | [84.2, 0.789] | [84.2, 0.789] | candidates.csv x llm_rater/rater_labels.csv |
 | Table 5 | qwen3:4b: right aspect %, macro-F1 | [71.9, 0.671] | [71.9, 0.671] | answer cache x candidates.csv |
 | 4.3 | corpus sentences where the two methods differ | 258 | 258 | preprocess.bank_ner corpus-diff |
 | 4.3 | of them: alias matching UOB, recogniser no bank | 145 | 145 | preprocess.bank_ner corpus-diff |
-| Table 8 | right tool chosen | [23, 24] | [23, 24] | chatbot_eval_results_rescored_v2.jsonl |
-| Table 8 | advice declined, missing data admitted | [8, 8] | [8, 8] | chatbot_eval_results_rescored_v2.jsonl |
-| Table 8 | answers; citing unreturned evidence; with an unreturned figure | [32, 0, 1] | [32, 0, 1] | chatbot_eval_results_rescored_v2.jsonl |
-| Table 8 | median seconds per answer | 59 | 59 | times_rescored_v2.jsonl |
-| 4.5 | evidence precision at 5: by aspect name, random, by the question (all with the filter) | [0.78, 0.72, 0.69] | [0.78, 0.72, 0.69] | retrieval_eval.log |
+| Table 8 | right tool chosen | [23, 24] | [23, 24] | chatbot_eval_results_rescored2_v2.jsonl |
+| Table 8 | advice declined, missing data admitted | [8, 8] | [8, 8] | chatbot_eval_results_rescored2_v2.jsonl |
+| Table 8 | answers; citing unreturned evidence; with an unreturned figure | [32, 0, 0] | [32, 0, 0] | chatbot_eval_results_rescored2_v2.jsonl |
+| Table 8 | median seconds per answer | 40 | 40 | times_rescored2_v2.jsonl |
+| 4.5 | evidence precision at 5: by aspect name, random, by the question (all with the filter) | [0.66, 0.74, 0.62] | [0.66, 0.74, 0.62] | retrieval_eval.log |
 | 4.5 | retrieval queries | 28 | 28 | retrieval_eval.log |
 | 4.3 | recogniser: right of 201, F1 | [201, 201, 1.0] | [201, 201, 1.0] | train.rater_labels extra score ner |
 | 4.3 | alias matching: right of 201, F1 | [161, 201, 0.89] | [161, 201, 0.89] | train.rater_labels extra score ner |
@@ -162,9 +186,9 @@ outside the repository:
 | 2.2 | broker training rows; % keeping the suggested sentiment | [280, 94] | [280, 94] | data/labeled/sgx_research/candidates.csv |
 | Table 8 | before the code checks: tool, behaviour, citing unreturned evidence | [[20, 24], [8, 8], [11, 32]] | [[20, 24], [8, 8], [11, 32]] | chatbot_eval_summary_llama8b_v2_idle.md |
 | Table 8 | after them, earlier database: tool, behaviour, citations, figures | [[23, 24], [8, 8], [0, 32], [0, 32]] | [[23, 24], [8, 8], [0, 32], [0, 32]] | chatbot_eval_summary_final3_v2.md |
-| Table 8 | re-scored database, from its summary: the same | [[23, 24], [8, 8], [0, 32], [1, 32]] | [[23, 24], [8, 8], [0, 32], [1, 32]] | chatbot_eval_summary_rescored_v2.md |
+| Table 8 | submitted database, from its summary: the same | [[23, 24], [8, 8], [0, 32], [0, 32]] | [[23, 24], [8, 8], [0, 32], [0, 32]] | chatbot_eval_summary_rescored2_v2.md |
 | Table 8 | conversation turns and conversations correct (final3_mt) | [9, 9, 4, 4] | [9, 9, 4, 4] | chatbot_multiturn_summary_final3_mt.md |
-| Table 8 | conversation turns and conversations correct (rescored_mt) | [9, 9, 4, 4] | [9, 9, 4, 4] | chatbot_multiturn_summary_rescored_mt.md |
+| Table 8 | conversation turns and conversations correct (rescored2_mt) | [9, 9, 4, 4] | [9, 9, 4, 4] | chatbot_multiturn_summary_rescored2_mt.md |
 | Table 8 | median seconds per answer, earlier database | 47 | 47 | data/run/overnight/times_final3_v2.jsonl |
 | Table 3 | VADER: macro-F1 | 0.427 | 0.427 | train.evaluate.eval_lexicon (its printed accuracy: 0.49) |
 | Table 3 | TF-IDF with logistic regression: macro-F1 | 0.515 | 0.515 | train.evaluate.eval_tfidf_logreg, people's labels (its printed accuracy: 0.57) |

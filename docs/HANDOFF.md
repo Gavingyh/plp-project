@@ -1818,8 +1818,8 @@ Two things the audit raised that are not report wording:
 figures recomputed from the database, the label files, the models scored
 again on the 399 test sentences and the chatbot transcripts; all 100 match
 the report as it now stands
-([evidence](evidence/report-figures-validation-2026-10-13.md), script in
-`data/eval/report-validation-2026-10-13/`). Three corrections came out of
+([evidence](evidence/report-figures-validation-2026-10-14.md), script in
+`data/eval/report-validation/`). Three corrections came out of
 it: bank recognition is now quoted from today's code (201 and 161 of 201,
 with the caution that the last rules were written from this sheet's
 errors); the LLM rater's aspect macro-F1 names its run; and the report says
@@ -1854,3 +1854,27 @@ database then matched the copy row for row.
 (`data/run/eval-2026-10-14/run.sh`). **Then:** update the report draft's
 tables from the new database and re-run its figure validation.
 **Needs a person:** upload `data/run/share/`; teammates pull and restore.
+
+**Chatbot evaluations and the report draft on the 14 Oct database
+(14 Oct, 08:11 to 09:30).**
+
+- Gold set 23/24 tool choices, 8/8 behaviour, no invented citation or
+  figure in 32 answers, conversations 9/9, median 40 seconds on a quiet Mac.
+  The one miss is the same question answered wrongly in the same way: an
+  all-time figure reported as "the last 7 days"
+  ([evidence](evidence/chatbot-eval-rescored-2026-10-14.md)).
+- Evidence-search precision at 5 is 0.664, down from 0.779 on the first
+  re-score, while the share of relevant sentences in the filtered pool rose
+  from 0.722 to 0.738: ranking by the aspect's name no longer beats a random
+  draw from the pool. Part is the reference (people's labels follow the
+  older reading of wealth), part is 28 queries' noise.
+- `data/eval/ratings_sheet.csv` exported again from this run's answers.
+- The report draft's Tables 5 to 8 and sections 4.2, 4.4 and 4.5 are
+  rewritten from the 14 Oct database, including a new paragraph on the
+  served model's dependence on the aspect, and the two warnings about
+  figures that would change are removed (11 remain). Its figure validation
+  was run again: 105 of 105 match
+  ([evidence](evidence/report-figures-validation-2026-10-14.md), script in
+  `data/eval/report-validation/`).
+- One more results file is committed, so a fresh clone collects 2521 tests
+  in `tests/` and 2568 from the root.

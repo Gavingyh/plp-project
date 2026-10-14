@@ -1891,3 +1891,42 @@ the source table (now with broker research) and the "Frozen centroid" entry
 describe the database of 14 Oct. Still describing the 1 Oct model: the
 "Fine-tuning lead" claim in `CLAUDE.md`, which is the owner's to change.
 The model card is also beside the models in `data/run/share/`.
+
+**Three improvements before submission (14 Oct, afternoon).**
+
+1. **Chatbot: an answer that reported the wrong period.** When the 7- and
+   30-day windows are too thin, `chat_get_trend` now opens its result with a
+   plain statement that there is no figure for those periods and names the
+   months its monthly comparison covers, and keeps the all-time figure under
+   `all_time_not_recent`. The gold-set question that reported the all-time
+   figure as "the last 7 days" in every run is now answered correctly (3 of 3
+   tries); the full gold set is unchanged on every automated check. A first
+   version that only moved the all-time figure made the model report the
+   latest month as the week instead. Two related faults remain and are in
+   the report: "this week" trend questions get a two-month comparison, and
+   "past month" questions get the all-time figure because the sentiment
+   tool offers no window (the gap recorded in September; **a decision for
+   the owner**) ([evidence](evidence/chatbot-trend-fix-2026-10-14.md)).
+2. **Confidence intervals for the index.** All-time headlines are within
+   about 0.01 by sampling; UOB is lowest beyond sampling error; DBS's lead
+   over OCBC is not established; 7-day figures support no comparison. The
+   model shows no significant bias against people's labels on the 399 test
+   sentences, but that check is only good to about 0.06. Changing the
+   index's constants moves no all-time headline by more than 0.011
+   ([evidence](evidence/index-uncertainty-2026-10-14.md)).
+3. **The examiner graded the report draft:** high credit as drafted, held
+   down by the sections only the team can write. Its corrections are in the
+   report: model selection did use the test rows (stated, with the two
+   defences), OCBC's score fell rather than rose, the cross-validation
+   p-value treats shared folds as independent, the Gemini and Groq backends
+   and the LLM judge are declared, Table 8 separates what the model writes
+   from what the reader sees and says the gold set was used for tuning, and
+   section 3.1 has an architecture figure drawn for the current system.
+   The report is now about 7,400 words outside the warning boxes; the
+   examiner expects it to run over 20 pages once the team's sections are
+   in, and suggests cuts in sections 4.2, 4.4 and 2.2.
+
+The report's figure validation was run a third time: 115 of 115 match.
+Two more results files are committed, so a fresh clone collects 2523 tests
+in `tests/` and 2570 from the root. The conversation results of the final
+run quote a CNA article and are kept out of git, as with earlier runs.

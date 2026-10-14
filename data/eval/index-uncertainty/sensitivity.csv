@@ -1,0 +1,6 @@
+variant,DBS all time,DBS 30d,OCBC all time,OCBC 30d,UOB all time,UOB 30d
+"as stored: news 1.5, shrinkage 5, confidence-weighted",0.143,0.044,0.129,0.271,0.107,0.185
+every source weighted 1.0,0.147,0.072,0.121,0.257,0.104,0.173
+no shrinkage,0.143,0.044,0.129,0.283,0.107,0.192
+shrinkage 20,0.143,0.042,0.128,0.241,0.107,0.167
+no confidence weighting,0.15,0.057,0.135,0.287,0.118,0.196

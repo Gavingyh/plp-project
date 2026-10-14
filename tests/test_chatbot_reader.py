@@ -139,6 +139,12 @@ def test_trend_gives_the_latest_months_when_the_rolling_windows_are_thin(temp_db
         f"August 2026 ({late['score']:+.2f}, {late['n']} sentences) was up on "
         f"July 2026 ({early['score']:+.2f}, {early['n']} sentences).")
     assert unverified_numbers(r["trend_in_words"], [r]) == []
+    # The all-time figure the trend falls back to is kept apart, so it can't be read as the week's.
+    assert "score" not in r and "n" not in r and "reading" not in r
+    assert r["all_time_not_recent"]["window"] == "all_time" and r["all_time_not_recent"]["n"] == 30
+    assert r["recent_windows"].startswith("There is no figure for the last 7 days (0 sentences) or the last 30 days (0 sentences)")
+    assert "for August 2026 and July 2026, not for the last 7 or 30 days" in r["recent_windows"]
+    assert list(r)[0] == "recent_windows"
 
 
 def test_trend_with_enough_recent_data_states_the_week_against_the_month_only(temp_db):

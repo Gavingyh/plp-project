@@ -9,8 +9,8 @@ the value the report prints. It was first run on 13 Oct and run again on
 14 Oct, after the second re-score changed the database and the report's
 index, aspect and chatbot figures were rewritten from it.
 
-**Result.** 105 of 105 recomputed figures match the report as it
-stands on 14 Oct.
+**Result.** 115 of 115 recomputed figures match the report as it
+stands on 14 Oct, after the afternoon's changes.
 
 ## What the first run found
 
@@ -42,6 +42,13 @@ Three things, corrected in the report on 13 Oct:
 - Tables 5 to 8 and the figures in sections 4.2, 4.4 and 4.5 were replaced
   from the 14 Oct database and runs, and two warnings in the draft that said
   those figures would change were removed.
+
+- **In the afternoon** the report gained confidence intervals for the index
+  ([index-uncertainty-2026-10-14.md](index-uncertainty-2026-10-14.md)), a
+  test of the index's constants, and a rewritten chatbot section after a fix
+  for answers that report the wrong period
+  ([chatbot-trend-fix-2026-10-14.md](chatbot-trend-fix-2026-10-14.md)).
+  The validation was run a third time with checks for all of these.
 
 ## What was recomputed, and from what
 
@@ -174,10 +181,10 @@ outside the repository:
 | Table 5 | qwen3:4b: right aspect %, macro-F1 | [71.9, 0.671] | [71.9, 0.671] | answer cache x candidates.csv |
 | 4.3 | corpus sentences where the two methods differ | 258 | 258 | preprocess.bank_ner corpus-diff |
 | 4.3 | of them: alias matching UOB, recogniser no bank | 145 | 145 | preprocess.bank_ner corpus-diff |
-| Table 8 | right tool chosen | [23, 24] | [23, 24] | chatbot_eval_results_rescored2_v2.jsonl |
-| Table 8 | advice declined, missing data admitted | [8, 8] | [8, 8] | chatbot_eval_results_rescored2_v2.jsonl |
-| Table 8 | answers; citing unreturned evidence; with an unreturned figure | [32, 0, 0] | [32, 0, 0] | chatbot_eval_results_rescored2_v2.jsonl |
-| Table 8 | median seconds per answer | 40 | 40 | times_rescored2_v2.jsonl |
+| Table 8 | right tool chosen | [23, 24] | [23, 24] | chatbot_eval_results_trendfix2_v2.jsonl |
+| Table 8 | advice declined, missing data admitted | [8, 8] | [8, 8] | chatbot_eval_results_trendfix2_v2.jsonl |
+| Table 8 | answers; citing unreturned evidence; with an unreturned figure | [32, 0, 0] | [32, 0, 0] | chatbot_eval_results_trendfix2_v2.jsonl |
+| Table 8 | median seconds per answer | 61 | 61 | times_trendfix2_v2.jsonl |
 | 4.5 | evidence precision at 5: by aspect name, random, by the question (all with the filter) | [0.66, 0.74, 0.62] | [0.66, 0.74, 0.62] | retrieval_eval.log |
 | 4.5 | retrieval queries | 28 | 28 | retrieval_eval.log |
 | 4.3 | recogniser: right of 201, F1 | [201, 201, 1.0] | [201, 201, 1.0] | train.rater_labels extra score ner |
@@ -186,9 +193,19 @@ outside the repository:
 | 2.2 | broker training rows; % keeping the suggested sentiment | [280, 94] | [280, 94] | data/labeled/sgx_research/candidates.csv |
 | Table 8 | before the code checks: tool, behaviour, citing unreturned evidence | [[20, 24], [8, 8], [11, 32]] | [[20, 24], [8, 8], [11, 32]] | chatbot_eval_summary_llama8b_v2_idle.md |
 | Table 8 | after them, earlier database: tool, behaviour, citations, figures | [[23, 24], [8, 8], [0, 32], [0, 32]] | [[23, 24], [8, 8], [0, 32], [0, 32]] | chatbot_eval_summary_final3_v2.md |
-| Table 8 | submitted database, from its summary: the same | [[23, 24], [8, 8], [0, 32], [0, 32]] | [[23, 24], [8, 8], [0, 32], [0, 32]] | chatbot_eval_summary_rescored2_v2.md |
+| Table 8 | submitted database, from its summary: the same | [[23, 24], [8, 8], [0, 32], [0, 32]] | [[23, 24], [8, 8], [0, 32], [0, 32]] | chatbot_eval_summary_trendfix2_v2.md |
 | Table 8 | conversation turns and conversations correct (final3_mt) | [9, 9, 4, 4] | [9, 9, 4, 4] | chatbot_multiturn_summary_final3_mt.md |
-| Table 8 | conversation turns and conversations correct (rescored2_mt) | [9, 9, 4, 4] | [9, 9, 4, 4] | chatbot_multiturn_summary_rescored2_mt.md |
+| Table 8 | conversation turns and conversations correct (trendfix2_mt) | [9, 9, 4, 4] | [9, 9, 4, 4] | chatbot_multiturn_summary_trendfix2_mt.md |
 | Table 8 | median seconds per answer, earlier database | 47 | 47 | data/run/overnight/times_final3_v2.jsonl |
 | Table 3 | VADER: macro-F1 | 0.427 | 0.427 | train.evaluate.eval_lexicon (its printed accuracy: 0.49) |
 | Table 3 | TF-IDF with logistic regression: macro-F1 | 0.515 | 0.515 | train.evaluate.eval_tfidf_logreg, people's labels (its printed accuracy: 0.57) |
+| Table 8 | model wrote unsearched evidence: before the check, earlier database, submitted database | [[11, 32], [3, 32], [3, 32]] | [[11, 32], [3, 32], [3, 32]] | the three summaries |
+| Table 8 note | questions answered by a guard, without the model | 6 | 6 | chatbot_eval_results_trendfix2_v2.jsonl |
+| 4.5 | the 7-day question now says there is no 7-day figure | True | True | chatbot_eval_results_trendfix2_v2.jsonl |
+| 4.5 | repeated tries of the 7-day question that say there is no figure | [3, 3] | [3, 3] | chatbot_thin_probe_trendfix2.jsonl |
+| Table 6 | 95% intervals DBS, OCBC, UOB all time | [[0.134, 0.152], [0.113, 0.145], [0.095, 0.118]] | [[0.134, 0.152], [0.113, 0.145], [0.095, 0.118]] | index-uncertainty/results.json |
+| 4.4 | gaps all time: DBS-UOB, OCBC-UOB, DBS-OCBC (point, low, high) | [[0.036, 0.021, 0.05], [0.022, 0.003, 0.041], [0.015, -0.004, 0.032]] | [[0.036, 0.021, 0.05], [0.022, 0.003, 0.041], [0.015, -0.004, 0.032]] | index-uncertainty/results.json |
+| 4.4 | 7-day interval widths (narrowest, widest) | [0.27, 0.39] | [0.27, 0.39] | index-uncertainty/results.json |
+| 4.4 | net balance on the 399 test sentences: model, people; Reddit difference | [0.153, 0.185, 0.0] | [0.153, 0.185, 0.0] | index-uncertainty/results.json |
+| 3.6 | largest move of an all-time headline across the variants | 0.011 | 0.011 | index-uncertainty/sensitivity.csv |
+| 3.6 | the order DBS, OCBC, UOB holds in every variant | True | True | index-uncertainty/sensitivity.csv |

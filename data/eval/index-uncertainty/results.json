@@ -1,0 +1,580 @@
+{
+ "bootstrap_resamples": 2000,
+ "seed": 2026,
+ "cells": [
+  {
+   "bank": "DBS",
+   "aspect": "ALL",
+   "window": "all_time",
+   "n": 24978,
+   "score": 0.143,
+   "stored_score": 0.143,
+   "low": 0.1343,
+   "high": 0.1516,
+   "half_width": 0.0086
+  },
+  {
+   "bank": "DBS",
+   "aspect": "ALL",
+   "window": "30d",
+   "n": 371,
+   "score": 0.0438,
+   "stored_score": 0.0438,
+   "low": -0.0297,
+   "high": 0.1191,
+   "half_width": 0.0744
+  },
+  {
+   "bank": "DBS",
+   "aspect": "ALL",
+   "window": "7d",
+   "n": 90,
+   "score": 0.1677,
+   "stored_score": 0.1677,
+   "low": 0.0255,
+   "high": 0.323,
+   "half_width": 0.1487
+  },
+  {
+   "bank": "DBS",
+   "aspect": "asset_quality",
+   "window": "all_time",
+   "n": 976,
+   "score": 0.1566,
+   "stored_score": 0.1566,
+   "low": 0.1086,
+   "high": 0.2023,
+   "half_width": 0.0468
+  },
+  {
+   "bank": "DBS",
+   "aspect": "capital_liquidity",
+   "window": "all_time",
+   "n": 742,
+   "score": 0.3191,
+   "stored_score": 0.3191,
+   "low": 0.271,
+   "high": 0.3678,
+   "half_width": 0.0484
+  },
+  {
+   "bank": "DBS",
+   "aspect": "dividend_policy",
+   "window": "all_time",
+   "n": 414,
+   "score": 0.4553,
+   "stored_score": 0.4553,
+   "low": 0.4,
+   "high": 0.5107,
+   "half_width": 0.0553
+  },
+  {
+   "bank": "DBS",
+   "aspect": "income_profit_results",
+   "window": "all_time",
+   "n": 2360,
+   "score": 0.4291,
+   "stored_score": 0.4291,
+   "low": 0.3969,
+   "high": 0.4601,
+   "half_width": 0.0316
+  },
+  {
+   "bank": "DBS",
+   "aspect": "investor_stock_sentiment",
+   "window": "all_time",
+   "n": 3037,
+   "score": 0.3151,
+   "stored_score": 0.3151,
+   "low": 0.2903,
+   "high": 0.3407,
+   "half_width": 0.0252
+  },
+  {
+   "bank": "DBS",
+   "aspect": "macro_market_environment",
+   "window": "all_time",
+   "n": 853,
+   "score": 0.0632,
+   "stored_score": 0.0632,
+   "low": 0.0109,
+   "high": 0.1138,
+   "half_width": 0.0515
+  },
+  {
+   "bank": "DBS",
+   "aspect": "management_guidance",
+   "window": "all_time",
+   "n": 1713,
+   "score": 0.2719,
+   "stored_score": 0.2719,
+   "low": 0.2466,
+   "high": 0.2985,
+   "half_width": 0.0259
+  },
+  {
+   "bank": "DBS",
+   "aspect": "net_interest_margin",
+   "window": "all_time",
+   "n": 1068,
+   "score": 0.1627,
+   "stored_score": 0.1627,
+   "low": 0.1129,
+   "high": 0.2131,
+   "half_width": 0.0501
+  },
+  {
+   "bank": "DBS",
+   "aspect": "other",
+   "window": "all_time",
+   "n": 3877,
+   "score": 0.0538,
+   "stored_score": 0.0538,
+   "low": 0.0395,
+   "high": 0.0683,
+   "half_width": 0.0144
+  },
+  {
+   "bank": "DBS",
+   "aspect": "retail_banking_sentiment",
+   "window": "all_time",
+   "n": 9099,
+   "score": -0.0284,
+   "stored_score": -0.0284,
+   "low": -0.0426,
+   "high": -0.0136,
+   "half_width": 0.0145
+  },
+  {
+   "bank": "DBS",
+   "aspect": "wealth_business",
+   "window": "all_time",
+   "n": 839,
+   "score": 0.4594,
+   "stored_score": 0.4594,
+   "low": 0.4172,
+   "high": 0.4984,
+   "half_width": 0.0406
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "ALL",
+   "window": "all_time",
+   "n": 7774,
+   "score": 0.1285,
+   "stored_score": 0.1285,
+   "low": 0.1129,
+   "high": 0.1447,
+   "half_width": 0.0159
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "ALL",
+   "window": "30d",
+   "n": 115,
+   "score": 0.271,
+   "stored_score": 0.271,
+   "low": 0.1485,
+   "high": 0.3906,
+   "half_width": 0.121
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "ALL",
+   "window": "7d",
+   "n": 42,
+   "score": 0.1485,
+   "stored_score": 0.1485,
+   "low": -0.0509,
+   "high": 0.3419,
+   "half_width": 0.1964
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "asset_quality",
+   "window": "all_time",
+   "n": 337,
+   "score": 0.0625,
+   "stored_score": 0.0625,
+   "low": -0.0189,
+   "high": 0.1403,
+   "half_width": 0.0796
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "capital_liquidity",
+   "window": "all_time",
+   "n": 262,
+   "score": 0.3168,
+   "stored_score": 0.3168,
+   "low": 0.2461,
+   "high": 0.3892,
+   "half_width": 0.0716
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "dividend_policy",
+   "window": "all_time",
+   "n": 138,
+   "score": 0.4525,
+   "stored_score": 0.4525,
+   "low": 0.3501,
+   "high": 0.5487,
+   "half_width": 0.0993
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "income_profit_results",
+   "window": "all_time",
+   "n": 776,
+   "score": 0.4808,
+   "stored_score": 0.4808,
+   "low": 0.4258,
+   "high": 0.5325,
+   "half_width": 0.0534
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "investor_stock_sentiment",
+   "window": "all_time",
+   "n": 640,
+   "score": 0.2758,
+   "stored_score": 0.2758,
+   "low": 0.2192,
+   "high": 0.3334,
+   "half_width": 0.0571
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "macro_market_environment",
+   "window": "all_time",
+   "n": 134,
+   "score": -0.1617,
+   "stored_score": -0.1617,
+   "low": -0.3041,
+   "high": -0.0175,
+   "half_width": 0.1433
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "management_guidance",
+   "window": "all_time",
+   "n": 229,
+   "score": 0.3924,
+   "stored_score": 0.3924,
+   "low": 0.3062,
+   "high": 0.4751,
+   "half_width": 0.0845
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "net_interest_margin",
+   "window": "all_time",
+   "n": 169,
+   "score": -0.0353,
+   "stored_score": -0.0353,
+   "low": -0.1649,
+   "high": 0.0937,
+   "half_width": 0.1293
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "other",
+   "window": "all_time",
+   "n": 1220,
+   "score": 0.0981,
+   "stored_score": 0.0981,
+   "low": 0.0725,
+   "high": 0.1234,
+   "half_width": 0.0254
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "retail_banking_sentiment",
+   "window": "all_time",
+   "n": 3598,
+   "score": -0.0294,
+   "stored_score": -0.0294,
+   "low": -0.0531,
+   "high": -0.005,
+   "half_width": 0.024
+  },
+  {
+   "bank": "OCBC",
+   "aspect": "wealth_business",
+   "window": "all_time",
+   "n": 271,
+   "score": 0.5425,
+   "stored_score": 0.5425,
+   "low": 0.4739,
+   "high": 0.6073,
+   "half_width": 0.0667
+  },
+  {
+   "bank": "UOB",
+   "aspect": "ALL",
+   "window": "all_time",
+   "n": 13092,
+   "score": 0.1069,
+   "stored_score": 0.1069,
+   "low": 0.095,
+   "high": 0.1182,
+   "half_width": 0.0116
+  },
+  {
+   "bank": "UOB",
+   "aspect": "ALL",
+   "window": "30d",
+   "n": 136,
+   "score": 0.1851,
+   "stored_score": 0.1851,
+   "low": 0.0956,
+   "high": 0.2779,
+   "half_width": 0.0911
+  },
+  {
+   "bank": "UOB",
+   "aspect": "ALL",
+   "window": "7d",
+   "n": 60,
+   "score": 0.275,
+   "stored_score": 0.275,
+   "low": 0.1418,
+   "high": 0.4109,
+   "half_width": 0.1346
+  },
+  {
+   "bank": "UOB",
+   "aspect": "asset_quality",
+   "window": "all_time",
+   "n": 386,
+   "score": -0.0479,
+   "stored_score": -0.0479,
+   "low": -0.123,
+   "high": 0.0278,
+   "half_width": 0.0754
+  },
+  {
+   "bank": "UOB",
+   "aspect": "capital_liquidity",
+   "window": "all_time",
+   "n": 258,
+   "score": 0.396,
+   "stored_score": 0.396,
+   "low": 0.33,
+   "high": 0.4624,
+   "half_width": 0.0662
+  },
+  {
+   "bank": "UOB",
+   "aspect": "dividend_policy",
+   "window": "all_time",
+   "n": 62,
+   "score": 0.3397,
+   "stored_score": 0.3397,
+   "low": 0.1861,
+   "high": 0.4787,
+   "half_width": 0.1463
+  },
+  {
+   "bank": "UOB",
+   "aspect": "income_profit_results",
+   "window": "all_time",
+   "n": 698,
+   "score": 0.2819,
+   "stored_score": 0.2819,
+   "low": 0.2171,
+   "high": 0.347,
+   "half_width": 0.0649
+  },
+  {
+   "bank": "UOB",
+   "aspect": "investor_stock_sentiment",
+   "window": "all_time",
+   "n": 888,
+   "score": 0.1946,
+   "stored_score": 0.1946,
+   "low": 0.1454,
+   "high": 0.2427,
+   "half_width": 0.0486
+  },
+  {
+   "bank": "UOB",
+   "aspect": "macro_market_environment",
+   "window": "all_time",
+   "n": 188,
+   "score": 0.1421,
+   "stored_score": 0.1421,
+   "low": 0.0184,
+   "high": 0.2653,
+   "half_width": 0.1234
+  },
+  {
+   "bank": "UOB",
+   "aspect": "management_guidance",
+   "window": "all_time",
+   "n": 242,
+   "score": 0.4126,
+   "stored_score": 0.4126,
+   "low": 0.3236,
+   "high": 0.4997,
+   "half_width": 0.088
+  },
+  {
+   "bank": "UOB",
+   "aspect": "net_interest_margin",
+   "window": "all_time",
+   "n": 188,
+   "score": -0.0713,
+   "stored_score": -0.0713,
+   "low": -0.1988,
+   "high": 0.0548,
+   "half_width": 0.1268
+  },
+  {
+   "bank": "UOB",
+   "aspect": "other",
+   "window": "all_time",
+   "n": 1689,
+   "score": 0.0731,
+   "stored_score": 0.0731,
+   "low": 0.0535,
+   "high": 0.0924,
+   "half_width": 0.0195
+  },
+  {
+   "bank": "UOB",
+   "aspect": "retail_banking_sentiment",
+   "window": "all_time",
+   "n": 8180,
+   "score": 0.0635,
+   "stored_score": 0.0635,
+   "low": 0.049,
+   "high": 0.0781,
+   "half_width": 0.0146
+  },
+  {
+   "bank": "UOB",
+   "aspect": "wealth_business",
+   "window": "all_time",
+   "n": 313,
+   "score": 0.4004,
+   "stored_score": 0.4004,
+   "low": 0.3414,
+   "high": 0.4597,
+   "half_width": 0.0592
+  }
+ ],
+ "gaps": [
+  {
+   "window": "all_time",
+   "gap": "DBS - OCBC",
+   "point": 0.0145,
+   "low": -0.0039,
+   "high": 0.0318,
+   "share_above_zero": 0.937
+  },
+  {
+   "window": "all_time",
+   "gap": "DBS - UOB",
+   "point": 0.0361,
+   "low": 0.0215,
+   "high": 0.0502,
+   "share_above_zero": 1.0
+  },
+  {
+   "window": "all_time",
+   "gap": "OCBC - UOB",
+   "point": 0.0216,
+   "low": 0.0027,
+   "high": 0.0413,
+   "share_above_zero": 0.991
+  },
+  {
+   "window": "30d",
+   "gap": "DBS - OCBC",
+   "point": -0.2272,
+   "low": -0.3617,
+   "high": -0.0839,
+   "share_above_zero": 0.001
+  },
+  {
+   "window": "30d",
+   "gap": "DBS - UOB",
+   "point": -0.1413,
+   "low": -0.2552,
+   "high": -0.0216,
+   "share_above_zero": 0.009
+  },
+  {
+   "window": "30d",
+   "gap": "OCBC - UOB",
+   "point": 0.0859,
+   "low": -0.0649,
+   "high": 0.2424,
+   "share_above_zero": 0.86
+  },
+  {
+   "window": "7d",
+   "gap": "DBS - OCBC",
+   "point": 0.0192,
+   "low": -0.2217,
+   "high": 0.282,
+   "share_above_zero": 0.57
+  },
+  {
+   "window": "7d",
+   "gap": "DBS - UOB",
+   "point": -0.1073,
+   "low": -0.3025,
+   "high": 0.0953,
+   "share_above_zero": 0.142
+  },
+  {
+   "window": "7d",
+   "gap": "OCBC - UOB",
+   "point": -0.1265,
+   "low": -0.3639,
+   "high": 0.0927,
+   "share_above_zero": 0.136
+  }
+ ],
+ "measurement": [
+  {
+   "test sentences": "all 399",
+   "n": 399,
+   "net balance, people": 0.185,
+   "net balance, model": 0.153,
+   "difference": -0.033,
+   "low": -0.095,
+   "high": 0.03
+  },
+  {
+   "test sentences": "Reddit",
+   "n": 184,
+   "net balance, people": 0.011,
+   "net balance, model": 0.011,
+   "difference": 0.0,
+   "low": -0.103,
+   "high": 0.103
+  },
+  {
+   "test sentences": "earnings",
+   "n": 79,
+   "net balance, people": 0.544,
+   "net balance, model": 0.557,
+   "difference": 0.013,
+   "low": -0.101,
+   "high": 0.127
+  },
+  {
+   "test sentences": "broker research",
+   "n": 100,
+   "net balance, people": 0.19,
+   "net balance, model": 0.09,
+   "difference": -0.1,
+   "low": -0.22,
+   "high": 0.02
+  }
+ ]
+}

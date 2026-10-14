@@ -452,6 +452,12 @@ def _month_name(point: dict) -> str:
     return f"{name} {year} {_figures(point['score'], point['n'])}"
 
 
+# A sentiment result's figures, which chat_get_trend moves under
+# all_time_not_recent when the trend falls back to the all-time window.
+_FIGURE_FIELDS = ("window", "score", "n", "positive_n", "neutral_n", "negative_n", "confidence_mean",
+                  "reading", "positive_pct", "neutral_pct", "negative_pct", "insufficient_data")
+
+
 def chat_get_trend(bank: str, aspect: str | None = None) -> dict:
     """The trend with one sentence that states it (trend_in_words): the last 7
     days against the last 30 when both have enough sentences, else the latest
@@ -473,8 +479,23 @@ def chat_get_trend(bank: str, aspect: str | None = None) -> dict:
         out["trend_in_words"] = (f"{week} {_compared(out['direction']).replace('was', 'were')} {month}."
                                  if out["direction"] != "unclear" else f"{week} against {month}: {_TOO_FEW}.")
     else:                                    # the 7- and 30-day windows were too thin
+        # The fallback is the all-time figure. Asked about "the last 7 days", a
+        # local model reported it as the week's in every run, although the note
+        # said otherwise. So it is kept apart, under a name that says what it
+        # is, beside how many sentences the recent windows hold.
+        figures = {k: out.pop(k) for k in _FIGURE_FIELDS if k in out}
+        counts = {w: get_sentiment(bank, aspect, w).get("n", 0) for w in ("7d", "30d")}
         series, error = _monthly_series(bank, aspect)
-        out.update(_month_on_month(series))
+        months = _month_on_month(series)
+        older = (f" The monthly figures below are for {_month_name(months['latest_month']).split(' (')[0]} and "
+                 f"{_month_name(months['previous_month']).split(' (')[0]}, not for the last 7 or 30 days."
+                 if months.get("month_on_month_available") else "")
+        # First, so it is read first: the answer to a question about a recent window.
+        out = {"recent_windows": (f"There is no figure for the last 7 days ({counts['7d']} sentences) or the last "
+                                  f"30 days ({counts['30d']} sentences): at least {MIN_VOLUME_FOR_SCORE} are needed. "
+                                  "Say so, and give no score for those periods." + older),
+               **out, "all_time_not_recent": figures}
+        out.update(months)
         out["note"] = ("Too few sentences in the last 7 or 30 days for that comparison; "
                        "trend_in_words compares the latest months instead." if len(series) > 1 else
                        f"No recent trend: {error or 'fewer than two months with enough sentences'}.")

@@ -1422,7 +1422,7 @@
     24
    ],
    "ok",
-   "chatbot_eval_results_rescored2_v2.jsonl"
+   "chatbot_eval_results_trendfix2_v2.jsonl"
   ],
   [
    "Table 8",
@@ -1436,7 +1436,7 @@
     8
    ],
    "ok",
-   "chatbot_eval_results_rescored2_v2.jsonl"
+   "chatbot_eval_results_trendfix2_v2.jsonl"
   ],
   [
    "Table 8",
@@ -1452,15 +1452,15 @@
     0
    ],
    "ok",
-   "chatbot_eval_results_rescored2_v2.jsonl"
+   "chatbot_eval_results_trendfix2_v2.jsonl"
   ],
   [
    "Table 8",
    "median seconds per answer",
-   40,
-   40,
+   61,
+   61,
    "ok",
-   "times_rescored2_v2.jsonl"
+   "times_trendfix2_v2.jsonl"
   ],
   [
    "4.5",
@@ -1662,7 +1662,7 @@
     ]
    ],
    "ok",
-   "chatbot_eval_summary_rescored2_v2.md"
+   "chatbot_eval_summary_trendfix2_v2.md"
   ],
   [
    "Table 8",
@@ -1684,7 +1684,7 @@
   ],
   [
    "Table 8",
-   "conversation turns and conversations correct (rescored2_mt)",
+   "conversation turns and conversations correct (trendfix2_mt)",
    [
     9,
     9,
@@ -1698,7 +1698,7 @@
     4
    ],
    "ok",
-   "chatbot_multiturn_summary_rescored2_mt.md"
+   "chatbot_multiturn_summary_trendfix2_mt.md"
   ],
   [
    "Table 8",
@@ -1723,6 +1723,190 @@
    0.515,
    "ok",
    "train.evaluate.eval_tfidf_logreg, people's labels (its printed accuracy: 0.57)"
+  ],
+  [
+   "Table 8",
+   "model wrote unsearched evidence: before the check, earlier database, submitted database",
+   [
+    [
+     11,
+     32
+    ],
+    [
+     3,
+     32
+    ],
+    [
+     3,
+     32
+    ]
+   ],
+   [
+    [
+     11,
+     32
+    ],
+    [
+     3,
+     32
+    ],
+    [
+     3,
+     32
+    ]
+   ],
+   "ok",
+   "the three summaries"
+  ],
+  [
+   "Table 8 note",
+   "questions answered by a guard, without the model",
+   6,
+   6,
+   "ok",
+   "chatbot_eval_results_trendfix2_v2.jsonl"
+  ],
+  [
+   "4.5",
+   "the 7-day question now says there is no 7-day figure",
+   true,
+   true,
+   "ok",
+   "chatbot_eval_results_trendfix2_v2.jsonl"
+  ],
+  [
+   "4.5",
+   "repeated tries of the 7-day question that say there is no figure",
+   [
+    3,
+    3
+   ],
+   [
+    3,
+    3
+   ],
+   "ok",
+   "chatbot_thin_probe_trendfix2.jsonl"
+  ],
+  [
+   "Table 6",
+   "95% intervals DBS, OCBC, UOB all time",
+   [
+    [
+     0.134,
+     0.152
+    ],
+    [
+     0.113,
+     0.145
+    ],
+    [
+     0.095,
+     0.118
+    ]
+   ],
+   [
+    [
+     0.134,
+     0.152
+    ],
+    [
+     0.113,
+     0.145
+    ],
+    [
+     0.095,
+     0.118
+    ]
+   ],
+   "ok",
+   "index-uncertainty/results.json"
+  ],
+  [
+   "4.4",
+   "gaps all time: DBS-UOB, OCBC-UOB, DBS-OCBC (point, low, high)",
+   [
+    [
+     0.036,
+     0.021,
+     0.05
+    ],
+    [
+     0.022,
+     0.003,
+     0.041
+    ],
+    [
+     0.015,
+     -0.004,
+     0.032
+    ]
+   ],
+   [
+    [
+     0.036,
+     0.021,
+     0.05
+    ],
+    [
+     0.022,
+     0.003,
+     0.041
+    ],
+    [
+     0.015,
+     -0.004,
+     0.032
+    ]
+   ],
+   "ok",
+   "index-uncertainty/results.json"
+  ],
+  [
+   "4.4",
+   "7-day interval widths (narrowest, widest)",
+   [
+    0.27,
+    0.39
+   ],
+   [
+    0.27,
+    0.39
+   ],
+   "ok",
+   "index-uncertainty/results.json"
+  ],
+  [
+   "4.4",
+   "net balance on the 399 test sentences: model, people; Reddit difference",
+   [
+    0.153,
+    0.185,
+    0.0
+   ],
+   [
+    0.153,
+    0.185,
+    0.0
+   ],
+   "ok",
+   "index-uncertainty/results.json"
+  ],
+  [
+   "3.6",
+   "largest move of an all-time headline across the variants",
+   0.011,
+   0.011,
+   "ok",
+   "index-uncertainty/sensitivity.csv"
+  ],
+  [
+   "3.6",
+   "the order DBS, OCBC, UOB holds in every variant",
+   true,
+   true,
+   "ok",
+   "index-uncertainty/sensitivity.csv"
   ]
  ]
 }

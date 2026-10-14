@@ -1,10 +1,10 @@
 model sets in report_data.json: {'first': ['base', 'people_1oct', 'people_4oct', 'people_7oct', 'opus_finbert', 'opus_adapted', 'adapted_weighted'], 'broker': ['base', 'people_1oct', 'people_4oct', 'people_7oct', 'opus_finbert', 'opus_adapted', 'adapted_weighted'], 'all': ['base', 'people_1oct', 'people_4oct', 'people_7oct', 'opus_finbert', 'opus_adapted', 'adapted_weighted']}
 one entry: {"single": {"accuracy": 0.6989966555183946, "macro_f1": 0.5712002428538251, "negative": {"precision": 0.5333333333333333, "recall": 0.20512820512820512, "f1": 0.2962962962962963, "support": 39}, "neutral": {"precision": 0.6832579185520362, "recall": 0.9096385542168675, "f1": 0.7803617571059431, "support": 166}, "positive": {"precision": 0.7936507936507936, "recall": 0.5319148936170213, "f1": 0.6369426751592356, "support": 94}}}
 37 checks so far; 37 ok
-Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 56733.18it/s]
-Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 8573.65it/s]
-Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 8708.08it/s]
-Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 18930.59it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 44936.58it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 7956.95it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 7176.04it/s]
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 6876.30it/s]
 
 === vader_lexicon ===
 Macro-F1: 0.4270
@@ -35,4 +35,4 @@ weighted avg       0.60      0.57      0.58       299
 Accuracy by source: arctic_shift 0.55 (n=184), earnings 0.62 (n=79), google_news 0.53 (n=34), yahoo_news 0.50 (n=2)
 
 DIFFERENCES:
-105 checks; 105 ok
+115 checks; 115 ok

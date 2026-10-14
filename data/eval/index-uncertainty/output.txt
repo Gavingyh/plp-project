@@ -1,0 +1,64 @@
+42 cells; recomputed scores that differ from the stored index: 0
+Headlines:
+bank aspect   window     n  score  stored_score     low   high  half_width
+ DBS    ALL all_time 24978 0.1430        0.1430  0.1343 0.1516      0.0086
+ DBS    ALL      30d   371 0.0438        0.0438 -0.0297 0.1191      0.0744
+ DBS    ALL       7d    90 0.1677        0.1677  0.0255 0.3230      0.1487
+OCBC    ALL all_time  7774 0.1285        0.1285  0.1129 0.1447      0.0159
+OCBC    ALL      30d   115 0.2710        0.2710  0.1485 0.3906      0.1210
+OCBC    ALL       7d    42 0.1485        0.1485 -0.0509 0.3419      0.1964
+ UOB    ALL all_time 13092 0.1069        0.1069  0.0950 0.1182      0.0116
+ UOB    ALL      30d   136 0.1851        0.1851  0.0956 0.2779      0.0911
+ UOB    ALL       7d    60 0.2750        0.2750  0.1418 0.4109      0.1346
+Gaps between banks:
+  window        gap   point     low    high  share_above_zero
+all_time DBS - OCBC  0.0145 -0.0039  0.0318             0.937
+all_time  DBS - UOB  0.0361  0.0215  0.0502             1.000
+all_time OCBC - UOB  0.0216  0.0027  0.0413             0.991
+     30d DBS - OCBC -0.2272 -0.3617 -0.0839             0.001
+     30d  DBS - UOB -0.1413 -0.2552 -0.0216             0.009
+     30d OCBC - UOB  0.0859 -0.0649  0.2424             0.860
+      7d DBS - OCBC  0.0192 -0.2217  0.2820             0.570
+      7d  DBS - UOB -0.1073 -0.3025  0.0953             0.142
+      7d OCBC - UOB -0.1265 -0.3639  0.0927             0.136
+Per aspect, all time (widest intervals first):
+bank                   aspect   window    n   score  stored_score     low    high  half_width
+ UOB          dividend_policy all_time   62  0.3397        0.3397  0.1861  0.4787      0.1463
+OCBC macro_market_environment all_time  134 -0.1617       -0.1617 -0.3041 -0.0175      0.1433
+OCBC      net_interest_margin all_time  169 -0.0353       -0.0353 -0.1649  0.0937      0.1293
+ UOB      net_interest_margin all_time  188 -0.0713       -0.0713 -0.1988  0.0548      0.1268
+ UOB macro_market_environment all_time  188  0.1421        0.1421  0.0184  0.2653      0.1234
+OCBC          dividend_policy all_time  138  0.4525        0.4525  0.3501  0.5487      0.0993
+ UOB      management_guidance all_time  242  0.4126        0.4126  0.3236  0.4997      0.0880
+OCBC      management_guidance all_time  229  0.3924        0.3924  0.3062  0.4751      0.0845
+OCBC            asset_quality all_time  337  0.0625        0.0625 -0.0189  0.1403      0.0796
+ UOB            asset_quality all_time  386 -0.0479       -0.0479 -0.1230  0.0278      0.0754
+OCBC        capital_liquidity all_time  262  0.3168        0.3168  0.2461  0.3892      0.0716
+OCBC          wealth_business all_time  271  0.5425        0.5425  0.4739  0.6073      0.0667
+ UOB        capital_liquidity all_time  258  0.3960        0.3960  0.3300  0.4624      0.0662
+ UOB    income_profit_results all_time  698  0.2819        0.2819  0.2171  0.3470      0.0649
+ UOB          wealth_business all_time  313  0.4004        0.4004  0.3414  0.4597      0.0592
+OCBC investor_stock_sentiment all_time  640  0.2758        0.2758  0.2192  0.3334      0.0571
+ DBS          dividend_policy all_time  414  0.4553        0.4553  0.4000  0.5107      0.0553
+OCBC    income_profit_results all_time  776  0.4808        0.4808  0.4258  0.5325      0.0534
+ DBS macro_market_environment all_time  853  0.0632        0.0632  0.0109  0.1138      0.0515
+ DBS      net_interest_margin all_time 1068  0.1627        0.1627  0.1129  0.2131      0.0501
+ UOB investor_stock_sentiment all_time  888  0.1946        0.1946  0.1454  0.2427      0.0486
+ DBS        capital_liquidity all_time  742  0.3191        0.3191  0.2710  0.3678      0.0484
+ DBS            asset_quality all_time  976  0.1566        0.1566  0.1086  0.2023      0.0468
+ DBS          wealth_business all_time  839  0.4594        0.4594  0.4172  0.4984      0.0406
+ DBS    income_profit_results all_time 2360  0.4291        0.4291  0.3969  0.4601      0.0316
+ DBS      management_guidance all_time 1713  0.2719        0.2719  0.2466  0.2985      0.0259
+OCBC                    other all_time 1220  0.0981        0.0981  0.0725  0.1234      0.0254
+ DBS investor_stock_sentiment all_time 3037  0.3151        0.3151  0.2903  0.3407      0.0252
+OCBC retail_banking_sentiment all_time 3598 -0.0294       -0.0294 -0.0531 -0.0050      0.0240
+ UOB                    other all_time 1689  0.0731        0.0731  0.0535  0.0924      0.0195
+ UOB retail_banking_sentiment all_time 8180  0.0635        0.0635  0.0490  0.0781      0.0146
+ DBS retail_banking_sentiment all_time 9099 -0.0284       -0.0284 -0.0426 -0.0136      0.0145
+ DBS                    other all_time 3877  0.0538        0.0538  0.0395  0.0683      0.0144
+Measurement, model against people on the test sentences:
+ test sentences   n  net balance, people  net balance, model  difference    low  high
+        all 399 399                0.185               0.153      -0.033 -0.095 0.030
+         Reddit 184                0.011               0.011       0.000 -0.103 0.103
+       earnings  79                0.544               0.557       0.013 -0.101 0.127
+broker research 100                0.190               0.090      -0.100 -0.220 0.020

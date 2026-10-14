@@ -234,15 +234,15 @@ check("4.3", "corpus sentences where the two methods differ", 258, len(diffc), s
 check("4.3", "of them: alias matching UOB, recogniser no bank", 145, int(((diffc.alias == "UOB") & (diffc.ner == "")).sum()), source="preprocess.bank_ner corpus-diff")
 
 # ---- 4.5 chatbot
-res = [json.loads(l) for l in open("data/eval/chatbot_eval_results_rescored2_v2.jsonl")]
+res = [json.loads(l) for l in open("data/eval/chatbot_eval_results_trendfix2_v2.jsonl")]
 ts_ = [x["tool_selection_check"] for x in res if x.get("tool_selection_check") and x["tool_selection_check"].get("applicable")]
 bh = [x["behavior_check"] for x in res if x.get("behavior_check") and x["behavior_check"].get("applicable")]
-check("Table 8", "right tool chosen", (23, 24), (sum(1 for t in ts_ if t["correct"]), len(ts_)), source="chatbot_eval_results_rescored2_v2.jsonl")
-check("Table 8", "advice declined, missing data admitted", (8, 8), (sum(1 for t in bh if t["correct"]), len(bh)), source="chatbot_eval_results_rescored2_v2.jsonl")
-check("Table 8", "answers; citing unreturned evidence; with an unreturned figure", (32, 0, 0), (len(res), sum(bool(x.get("citation_fabricated")) for x in res), sum(bool(x.get("unverified_numbers")) for x in res)), source="chatbot_eval_results_rescored2_v2.jsonl")
-tm = [json.loads(l)["seconds"] for l in open("data/run/eval-2026-10-14/times_rescored2_v2.jsonl") if l.strip()]
-check("Table 8", "median seconds per answer", 40, round(statistics.median(tm)), source="times_rescored2_v2.jsonl")
-rl = open("data/run/eval-2026-10-14/retrieval_eval.log").read()
+check("Table 8", "right tool chosen", (23, 24), (sum(1 for t in ts_ if t["correct"]), len(ts_)), source="chatbot_eval_results_trendfix2_v2.jsonl")
+check("Table 8", "advice declined, missing data admitted", (8, 8), (sum(1 for t in bh if t["correct"]), len(bh)), source="chatbot_eval_results_trendfix2_v2.jsonl")
+check("Table 8", "answers; citing unreturned evidence; with an unreturned figure", (32, 0, 0), (len(res), sum(bool(x.get("citation_fabricated")) for x in res), sum(bool(x.get("unverified_numbers")) for x in res)), source="chatbot_eval_results_trendfix2_v2.jsonl")
+tm = [json.loads(l)["seconds"] for l in open("data/run/eval-2026-10-14c/times_trendfix2_v2.jsonl") if l.strip()]
+check("Table 8", "median seconds per answer", 61, round(statistics.median(tm)), source="times_trendfix2_v2.jsonl")
+rl = open("data/run/eval-2026-10-14c/retrieval_eval.log").read()
 g = lambda name: [float(x) for x in re.search(r"^" + re.escape(name) + r"\s+([\d. ]+)$", rl, flags=re.M).group(1).split()]
 check("4.5", "evidence precision at 5: by aspect name, random, by the question (all with the filter)", (0.66, 0.74, 0.62),
       (round(g("label + stored-aspect filter")[3], 2), round(g("label + stored-aspect filter (random)")[3], 2), round(g("question + stored-aspect filter")[3], 2)), tol=0.005, source="retrieval_eval.log")
@@ -266,8 +266,8 @@ def summ(tag):
     return g1(r"Tool selection: (\d+)/(\d+)"), g1(r"Behavior[^:]*: (\d+)/(\d+)"), g1(r"Citation fabrication flagged: (\d+)/(\d+)"), g1(r"figure no tool returned: (\d+)/(\d+)")
 check("Table 8", "before the code checks: tool, behaviour, citing unreturned evidence", ((20, 24), (8, 8), (11, 32)), summ("llama8b_v2_idle")[:3], source="chatbot_eval_summary_llama8b_v2_idle.md")
 check("Table 8", "after them, earlier database: tool, behaviour, citations, figures", ((23, 24), (8, 8), (0, 32), (0, 32)), summ("final3_v2"), source="chatbot_eval_summary_final3_v2.md")
-check("Table 8", "submitted database, from its summary: the same", ((23, 24), (8, 8), (0, 32), (0, 32)), summ("rescored2_v2"), source="chatbot_eval_summary_rescored2_v2.md")
-for tag, rep in (("final3_mt", (9, 9, 4, 4)), ("rescored2_mt", (9, 9, 4, 4))):
+check("Table 8", "submitted database, from its summary: the same", ((23, 24), (8, 8), (0, 32), (0, 32)), summ("trendfix2_v2"), source="chatbot_eval_summary_trendfix2_v2.md")
+for tag, rep in (("final3_mt", (9, 9, 4, 4)), ("trendfix2_mt", (9, 9, 4, 4))):
     t = open(f"data/eval/chatbot_multiturn_summary_{tag}.md").read()
     check("Table 8", f"conversation turns and conversations correct ({tag})", rep, tuple(int(x) for x in re.search(r"Turns correct: (\d+)/(\d+); conversations with every turn correct: (\d+)/(\d+)", t).groups()), source=f"chatbot_multiturn_summary_{tag}.md")
 t0 = [json.loads(l)["seconds"] for l in open("data/run/overnight/times_final3_v2.jsonl") if l.strip()]
@@ -280,6 +280,32 @@ try:
 except Exception as ex:
     print("baselines not recomputed:", repr(ex)[:300])
 
+def stripped(tag):
+    t = open(f"data/eval/chatbot_eval_summary_{tag}.md").read()
+    m = re.search(r"Evidence written without a search, removed by CHATBOT_ENFORCE_EVIDENCE: (\d+)/(\d+)", t)
+    return tuple(int(x) for x in m.groups())
+check("Table 8", "model wrote unsearched evidence: before the check, earlier database, submitted database",
+      ((11, 32), (3, 32), (3, 32)), (summ("llama8b_v2_idle")[2], stripped("final3_v2"), stripped("trendfix2_v2")), source="the three summaries")
+check("Table 8 note", "questions answered by a guard, without the model", 6, sum(1 for x in res if x.get("input_guard")), source="chatbot_eval_results_trendfix2_v2.jsonl")
+thin = [x for x in res if x["id"] == "thin-1"][0]
+check("4.5", "the 7-day question now says there is no 7-day figure", True, "insufficient" in thin["answer"].lower() or "no 7-day" in thin["answer"].lower() or "not available" in thin["answer"].lower(), source="chatbot_eval_results_trendfix2_v2.jsonl")
+probe = [json.loads(l) for l in open("data/eval/chatbot_thin_probe_trendfix2.jsonl")]
+ok7 = sum(1 for x in probe if x["q"].startswith("What is UOB's") and ("insufficient" in x["answer"].lower() or "not available" in x["answer"].lower()))
+check("4.5", "repeated tries of the 7-day question that say there is no figure", (3, 3), (ok7, sum(1 for x in probe if x["q"].startswith("What is UOB's"))), source="chatbot_thin_probe_trendfix2.jsonl")
+U = json.load(open("data/eval/index-uncertainty/results.json"))
+ci = {(c["bank"], c["aspect"], c["window"]): (round(c["low"], 3), round(c["high"], 3)) for c in U["cells"]}
+check("Table 6", "95% intervals DBS, OCBC, UOB all time", ((0.134, 0.152), (0.113, 0.145), (0.095, 0.118)), tuple(ci[(b_, "ALL", "all_time")] for b_ in ("DBS", "OCBC", "UOB")), source="index-uncertainty/results.json")
+g = {(x["window"], x["gap"]): (round(x["point"], 3), round(x["low"], 3), round(x["high"], 3)) for x in U["gaps"]}
+check("4.4", "gaps all time: DBS-UOB, OCBC-UOB, DBS-OCBC (point, low, high)", ((0.036, 0.021, 0.05), (0.022, 0.003, 0.041), (0.015, -0.004, 0.032)),
+      (g[("all_time", "DBS - UOB")], g[("all_time", "OCBC - UOB")], g[("all_time", "DBS - OCBC")]), source="index-uncertainty/results.json")
+w7 = [round(ci[(b_, "ALL", "7d")][1] - ci[(b_, "ALL", "7d")][0], 2) for b_ in ("DBS", "OCBC", "UOB")]
+check("4.4", "7-day interval widths (narrowest, widest)", (0.27, 0.39), (min(w7), max(w7)), tol=0.005, source="index-uncertainty/results.json")
+M = {x["test sentences"]: x for x in U["measurement"]}
+check("4.4", "net balance on the 399 test sentences: model, people; Reddit difference", (0.153, 0.185, 0.0), (M["all 399"]["net balance, model"], M["all 399"]["net balance, people"], M["Reddit"]["difference"]), source="index-uncertainty/results.json")
+sens = pd.read_csv("data/eval/index-uncertainty/sensitivity.csv")
+base = sens.iloc[0]; cols = [c for c in sens.columns if c.endswith("all time")]
+check("3.6", "largest move of an all-time headline across the variants", 0.011, round(max(abs(sens[c] - base[c]).max() for c in cols), 3), source="index-uncertainty/sensitivity.csv")
+check("3.6", "the order DBS, OCBC, UOB holds in every variant", True, bool(all(r["DBS all time"] > r["OCBC all time"] > r["UOB all time"] for _, r in sens.iterrows())), source="index-uncertainty/sensitivity.csv")
 json.dump({"rows": ROWS}, open(os.path.join(os.path.dirname(__file__), "checks.json"), "w"), default=str, indent=1)
 print("\nDIFFERENCES:")
 for row_ in ROWS:

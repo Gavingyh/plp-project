@@ -106,8 +106,10 @@ neg, neu, pos = np.mean(probs, axis=0)                 # labels 0, 1, 2
 label = ("negative", "neutral", "positive")[int(np.argmax([neg, neu, pos]))]
 ```
 
-In the project, `train/evaluate.py` and `aggregate/preview.py` load the
-models this way, and `config/model_version.py` lists them under the version
+To get the models, download the `adapted-2026-10-11/` folder of this repo
+and place it at `models/experiments-2026-10-11/dapt/` (commands in the
+project README, "Sharing the data and models"). In the project,
+`train/evaluate.py` and `aggregate/preview.py` load the models this way, and `config/model_version.py` lists them under the version
 the product serves, `finbert-adapted-finetuned-2026-10-11-3seed-m0`.
 
 ## Limitations
@@ -157,7 +159,7 @@ Each folder holds `config.json`, `model.safetensors` (437,961,724 bytes),
 `training_args.bin` and `dev_ids.json` are left out of any upload: the first
 records a local path, and nothing needs either to load the model.
 
-| folder under `models/experiments-2026-10-11/dapt/` | SHA-256 of `model.safetensors` |
+| folder (`adapted-2026-10-11/` in this repo, `models/experiments-2026-10-11/dapt/` in the project) | SHA-256 of `model.safetensors` |
 |---|---|
 | `seed_42/final` | `1677836f4ee226f2bcb5839dae8e6f2a2a30fd7ed8440c64fce4b3263e33d41c` |
 | `seed_1/final` | `8ef23d69590fcf8a03e1cfbcafd321d3fc45c0e1299fd6a5961c8ebdbcaf2028` |

@@ -168,33 +168,40 @@ What a teammate needs, beyond `git clone` and the Quick start:
 | `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 132 MB |
 | the three fine-tuned models (`models/experiments-2026-10-11/dapt/seed_{42,1,7}/final`) | only to score new sentences, reproduce the sentiment results or re-score; the database already holds their scores for every stored sentence | 3 × 438 MB |
 
-`scripts/share_bundle.sh OUT_DIR [--with-models]` copies these into one
-folder with a `SHA256SUMS` file (check with `shasum -a 256 -c SHA256SUMS`);
-the models go to `models/experiments-2026-10-01/label/seed_*/final/` on the
-receiving side. FinBERT downloads from Hugging Face on first use, and each
+`scripts/share_bundle.sh OUT_DIR` copies the snapshot, the embeddings, the
+aspect model's answers and the teammates' note (`data/README-teams.md`) into
+one folder with a `SHA256SUMS` file (check with `shasum -a 256 -c
+SHA256SUMS`), for the team's shared drive. The models go through Hugging Face
+instead (below); `--with-models` adds them to the folder only if that is not
+possible. FinBERT downloads from Hugging Face on first use, and each
 machine pulls its own Ollama models. Never share `.env` (API keys) or
 `data/cna/` (CNA's articles).
 
-The models are also in a private Hugging Face model repo,
+The models are in a private Hugging Face model repo,
 `plp-bank-sentiment/plp-finbert-absa`, open to the organisation's members
 (ask to be added); [docs/model-card.md](docs/model-card.md) is its
-`README.md`. `hf` is installed in the project's environment, not on your
-PATH. Log in with your own token, download, and check the checksums against
-the table at the end of the model card:
+`README.md`. The models in use are in its `adapted-2026-10-11/` folder; the
+top-level `seed_*` folders hold the earlier models trained on people's
+labels. `hf` is installed in the project's environment, not on your PATH.
+Log in with your own token, download the folder, move it to where
+`config/model_version.py` looks for it, and check the checksums against the
+table at the end of the model card:
 
 ```bash
 .venv-plp/bin/hf auth login
-.venv-plp/bin/hf download plp-bank-sentiment/plp-finbert-absa --local-dir models/experiments-2026-10-01/label
-shasum -a 256 models/experiments-2026-10-01/label/seed_*/final/model.safetensors
+.venv-plp/bin/hf download plp-bank-sentiment/plp-finbert-absa --include "adapted-2026-10-11/*" --local-dir models/hf-download
+mkdir -p models/experiments-2026-10-11
+mv models/hf-download/adapted-2026-10-11 models/experiments-2026-10-11/dapt
+shasum -a 256 models/experiments-2026-10-11/dapt/seed_*/final/model.safetensors
 ```
 
-To upload a new version, leave `training_args.bin` out (it records a local
-path):
+To upload a new version, leave out `training_args.bin` (it records a local
+path) and `dev_ids.json` (nothing needs it to load the model):
 
 ```bash
 for s in 42 1 7; do
-  .venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa models/experiments-2026-10-01/label/seed_$s/final seed_$s/final \
-      --exclude "training_args.bin" --private
+  .venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa models/experiments-2026-10-11/dapt/seed_$s/final adapted-2026-10-11/seed_$s/final \
+      --exclude "training_args.bin" --exclude "dev_ids.json" --private
 done
 .venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa docs/model-card.md README.md --private
 ```

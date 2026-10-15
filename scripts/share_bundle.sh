@@ -3,16 +3,17 @@
 # Gather what a teammate needs to run the system, with a checksum list, into
 # one folder to upload to the team's shared drive.
 #
-#   scripts/share_bundle.sh OUT_DIR                 # snapshot + embedding cache
-#   scripts/share_bundle.sh OUT_DIR --with-models   # also the fine-tuned models
+#   scripts/share_bundle.sh OUT_DIR                 # snapshot, embedding cache, aspect answers
+#   scripts/share_bundle.sh OUT_DIR --with-models   # also the fine-tuned models (normally from Hugging Face)
 #
 # Contents (see "Sharing the data and models" in README.md):
 #   plp-<date>.db.gz             the latest database snapshot   -> gunzip to data/plp.db
 #   sentence_embeddings.npz      the evidence-search cache       -> data/
 #   aspect_llm/<model>.<prompt>.jsonl  the LLM's aspect per sentence for the
 #                                current prompt (ids and labels, no text) -> data/aspect_llm/
-#   models/seed_*/               fine-tuned FinBERT, without training_args.bin
-#                                -> models/experiments-2026-10-01/label/
+#   models/seed_*/               the served fine-tuned models, without training_args.bin
+#                                -> models/experiments-2026-10-11/dapt/
+#   README-teams.md              where each file goes; read first
 #   SHA256SUMS                   check with: shasum -a 256 -c SHA256SUMS
 #
 # Never included: .env (API keys), data/cna/ (CNA's articles stay within the
@@ -21,13 +22,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:?usage: scripts/share_bundle.sh OUT_DIR [--with-models]}"
 WITH_MODELS="${2:-}"
-MODEL_DIR="$ROOT/models/experiments-2026-10-01/label"
+MODEL_DIR="$ROOT/models/experiments-2026-10-11/dapt"
 
 snapshot="$(ls -1 "$ROOT"/data/snapshots/plp-*.db.gz 2>/dev/null | sort | tail -1)"
 [ -n "$snapshot" ] || { echo "no snapshot in data/snapshots/" >&2; exit 1; }
 mkdir -p "$OUT"
 cp "$snapshot" "$OUT/"
 [ -f "$ROOT/data/sentence_embeddings.npz" ] && cp "$ROOT/data/sentence_embeddings.npz" "$OUT/"
+[ -f "$ROOT/data/README-teams.md" ] && cp "$ROOT/data/README-teams.md" "$OUT/"
 # Only the current prompt's answers: an older prompt's file would be ignored by the code anyway.
 aspects="$(cd "$ROOT" && .venv-plp/bin/python3 -c \
     "from aspects.llm_classify import answer_cache_path; print(answer_cache_path('llama3.1:8b'))")"

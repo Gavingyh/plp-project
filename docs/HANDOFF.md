@@ -1930,3 +1930,14 @@ The report's figure validation was run a third time: 115 of 115 match.
 Two more results files are committed, so a fresh clone collects 2523 tests
 in `tests/` and 2570 from the root. The conversation results of the final
 run quote a CNA article and are kept out of git, as with earlier runs.
+
+**Models on Hugging Face; the SharePoint folder without them (15 Oct).** The
+three models in use are in the team's private repo
+`plp-bank-sentiment/plp-finbert-absa`, folder `adapted-2026-10-11/`, beside
+the earlier models (top level) and a teammate's 5 Oct retrain; all three
+weight files match the local checksums, and the repo's README is the current
+model card. The README's download and upload commands, the model card and
+`scripts/share_bundle.sh` now point at them. The folder for the team's
+shared drive is rebuilt by `scripts/share_bundle.sh data/run/share` (155 MB:
+snapshot, embeddings, aspect answers, `README-teams.md`, `SHA256SUMS`);
+`data/README-teams.md` is now tracked.

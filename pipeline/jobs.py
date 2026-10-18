@@ -5,7 +5,10 @@ commands concurrently with it. macOS and Linux release flock after a crash;
 no timeout or PID guess can accidentally unlock a slow, still-running job.
 """
 
-import fcntl
+try:
+    import fcntl
+except ImportError:  # Keep existing API/data/chat routes usable on native Windows.
+    fcntl = None
 import json
 import os
 import tempfile
@@ -15,7 +18,18 @@ from pathlib import Path
 from uuid import UUID
 
 DEFAULT_DIRECTORY = Path(__file__).resolve().parents[1] / "data/run/pipeline"
-ACTIVE_STATUSES = {"running"}
+ACTIVE_STATUSES = {"queued", "running"}
+
+
+class LockLease:
+    """Keep the same OS lock held while a child inherits its descriptor."""
+
+    def __init__(self, descriptor: int):
+        self.descriptor = descriptor
+        self.transferred = False
+
+    def hand_off(self) -> None:
+        self.transferred = True
 
 
 def timestamp() -> str:
@@ -68,18 +82,48 @@ class RunStore:
 
     @contextmanager
     def lock(self):
+        backend = fcntl
+        if backend is None:
+            raise OSError(
+                "Manual pipeline workers require macOS or Linux; use Docker on Windows."
+            )
         self.directory.mkdir(parents=True, exist_ok=True)
         with (self.directory / "worker.lock").open("a") as stream:
             try:
-                fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                backend.flock(stream.fileno(), backend.LOCK_EX | backend.LOCK_NB)
             except BlockingIOError as exc:
                 raise PipelineBusy(
                     "A manual pipeline run is already in progress."
                 ) from exc
+            lease = LockLease(stream.fileno())
+            try:
+                yield lease
+            finally:
+                # LOCK_UN would also unlock the child's inherited descriptor.
+                # After handoff, close only our copy; the child keeps the lock.
+                if not lease.transferred:
+                    backend.flock(stream.fileno(), backend.LOCK_UN)
+
+    @contextmanager
+    def inherited_lock(self, descriptor: int):
+        """Adopt the descriptor passed by the launcher, closing it on exit."""
+        backend = fcntl
+        if backend is None:
+            raise OSError(
+                "Manual pipeline workers require macOS or Linux; use Docker on Windows."
+            )
+        expected = (self.directory / "worker.lock").stat()
+        actual = os.fstat(descriptor)
+        if (expected.st_dev, expected.st_ino) != (actual.st_dev, actual.st_ino):
+            raise ValueError(
+                "Inherited descriptor does not belong to this pipeline lock"
+            )
+        with os.fdopen(descriptor, "a") as stream:
+            backend.flock(stream.fileno(), backend.LOCK_EX | backend.LOCK_NB)
             try:
                 yield
             finally:
-                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+                backend.flock(stream.fileno(), backend.LOCK_UN)
 
     def recover_interrupted(self) -> list[dict]:
         """Call while holding lock(): no live worker can own these records."""

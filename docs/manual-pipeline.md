@@ -8,9 +8,9 @@ Implementation milestones:
 
 1. **Runner (implemented):** reusable orchestration, prerequisite checks,
    persisted progress, file outcomes, process locking and interruption recovery.
-2. **FastAPI (next):** launch a worker and expose source/start/status/history
-   endpoints. There are no pipeline API endpoints in milestone 1.
-3. **Dashboard (later):** Data Management source checkboxes, run button,
+2. **FastAPI (implemented):** launch a separate worker and expose
+   source/start/status/history endpoints, with HTTP 202/409/503 handling.
+3. **Dashboard (next):** Data Management source checkboxes, run button,
    progress/history and refresh of the dashboard's cached API responses.
 
 ## Select sources and run
@@ -44,6 +44,34 @@ assignment and scoring stages finish **all pending work in the database**,
 including work from previous failed runs or other sources. The final index
 is recomputed from the full stored corpus. Previously scored rows are retained;
 there is no full re-score or taxonomy change.
+
+## Start and monitor through FastAPI
+
+Restart the API after installing the milestone 2 code. The API provides
+`GET /pipeline/sources`, `POST /pipeline/runs`, `GET /pipeline/runs` and
+`GET /pipeline/runs/{run_id}`. See the
+[request/response contract](api-integration.md#manual-pipeline-api-milestone-2).
+
+The POST accepts `{"sources": ["earnings", "sgx_research"]}` and returns
+HTTP 202 with a queued run and a status URL in `Location`. It does not wait
+for model inference. The existing lock is reserved before launch and handed
+to the separate worker without an unlocked gap. Another start request gets
+409 during both queueing and processing. The process uses the API's Python
+interpreter and explicitly inherits its configured DB/embedding paths.
+
+Poll the status URL every two seconds and read history after reconnecting.
+GETs never launch another worker. A worker which fails prerequisite checks
+is reported as `failed` at its status URL; a failure to launch its process
+gives HTTP 503 and a failed saved record. `queued` and `running` are active
+states; all other states are terminal. An API restart does not stop its
+separate worker. Stopping the worker itself releases the OS lock and its
+saved run is recovered as interrupted/failed rather than left active forever.
+
+Startup output is saved to `<run_id>.worker.log`; stage logs remain in
+`<run_id>.log`. The API's process reaper records an exit code when it can
+acquire the lock. The run status and stage results, not the optional exit
+code, determine completion. History returns summaries; the status URL
+includes the full file outcomes and import manifest.
 
 ## Stages and prerequisites
 
@@ -111,7 +139,8 @@ Ctrl+C persists an interrupted run and releases the lock. After a process
 crash or SIGTERM/SIGKILL, the OS releases the lock; the next history check or
 new run marks the unfinished record interrupted. No timeout guesses that a
 slow inference job has died. Reopening the page in milestone 3 will read this
-same persisted status.
+same persisted status. During API launch, the queued record is protected by
+the inherited lock as well, so it is not mistaken for a stopped worker.
 
 Completed database stages are **not rolled back** after a later failure.
 Rerun to finish missing work. A candidate document manifest is saved before
@@ -155,7 +184,9 @@ packaging requirement; no Docker setup command is implemented in milestone 1.
 
 `pipeline/runner.py` coordinates the stages; `pipeline/stages.py` adapts the
 existing functions; `pipeline/jobs.py` owns persisted records and the process
-lock. Neither the API nor dashboard imports the worker in this milestone.
+lock. `pipeline/service.py` launches and reaps a separate worker process;
+`api/pipeline.py` exposes its HTTP contract. The API does not run the model
+stages in its own process. The dashboard controls follow in milestone 3.
 
 Tests use temporary SQLite databases and embedding files, fake PDF text and
 fake model predictions. They exercise the real preprocessing/assignment/
@@ -164,7 +195,7 @@ or writing to the shared corpus.
 
 ```bash
 HF_HUB_OFFLINE=1 LOG_FILE=none .venv-plp/bin/python3 -m pytest \
-  tests/test_pipeline_runner.py tests/test_pipeline_preflight.py \
+  tests/test_pipeline_runner.py tests/test_pipeline_preflight.py tests/test_pipeline_api.py \
   tests/test_earnings_extract.py tests/test_sgx_research_extract.py \
   tests/test_assign_method.py tests/test_finetuned_pass.py -q
 ```

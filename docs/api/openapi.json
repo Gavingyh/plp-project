@@ -74,6 +74,485 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "PipelineHistory": {
+        "properties": {
+          "active_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Run Id"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineRunSummary"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "runs",
+          "active_run_id"
+        ],
+        "title": "PipelineHistory",
+        "type": "object"
+      },
+      "PipelineRun": {
+        "properties": {
+          "current_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage"
+          },
+          "db_path": {
+            "title": "Db Path",
+            "type": "string"
+          },
+          "embeddings_path": {
+            "title": "Embeddings Path",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "import_candidates": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Import Candidates",
+            "type": "array"
+          },
+          "imported_documents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Imported Documents",
+            "type": "array"
+          },
+          "log_path": {
+            "title": "Log Path",
+            "type": "string"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "pid": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pid"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "enum": [
+                "earnings",
+                "sgx_research"
+              ],
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStage"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "completed_with_warnings",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "worker_exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Exit Code"
+          },
+          "worker_log_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Log Path"
+          }
+        },
+        "required": [
+          "run_id",
+          "status",
+          "sources",
+          "started_at",
+          "finished_at",
+          "pid",
+          "db_path",
+          "embeddings_path",
+          "model_version",
+          "current_stage",
+          "log_path",
+          "import_candidates",
+          "imported_documents",
+          "warnings",
+          "error",
+          "stages"
+        ],
+        "title": "PipelineRun",
+        "type": "object"
+      },
+      "PipelineRunResponse": {
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/PipelineRun"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "title": "PipelineRunResponse",
+        "type": "object"
+      },
+      "PipelineRunSummary": {
+        "properties": {
+          "current_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage"
+          },
+          "documents_inserted": {
+            "title": "Documents Inserted",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "enum": [
+                "earnings",
+                "sgx_research"
+              ],
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "completed_with_warnings",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "warnings_count": {
+            "title": "Warnings Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "status",
+          "sources",
+          "started_at",
+          "finished_at",
+          "current_stage",
+          "model_version",
+          "error",
+          "warnings_count",
+          "documents_inserted"
+        ],
+        "title": "PipelineRunSummary",
+        "type": "object"
+      },
+      "PipelineSources": {
+        "properties": {
+          "analysis_scope": {
+            "const": "all_pending",
+            "default": "all_pending",
+            "title": "Analysis Scope",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceOption"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sources"
+        ],
+        "title": "PipelineSources",
+        "type": "object"
+      },
+      "PipelineStage": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "files": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "title": "Metrics",
+            "type": "object"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "status",
+          "started_at",
+          "finished_at",
+          "metrics",
+          "files",
+          "error"
+        ],
+        "title": "PipelineStage",
+        "type": "object"
+      },
+      "SourceOption": {
+        "properties": {
+          "exists": {
+            "title": "Exists",
+            "type": "boolean"
+          },
+          "folder": {
+            "title": "Folder",
+            "type": "string"
+          },
+          "key": {
+            "enum": [
+              "earnings",
+              "sgx_research"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "pdf_count": {
+            "title": "Pdf Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "folder",
+          "exists",
+          "pdf_count"
+        ],
+        "title": "SourceOption",
+        "type": "object"
+      },
+      "StartPipelineRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "sources": {
+            "items": {
+              "enum": [
+                "earnings",
+                "sgx_research"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sources"
+        ],
+        "title": "StartPipelineRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -117,7 +596,7 @@
     }
   },
   "info": {
-    "description": "The system's interface: the sentiment index, its evidence, analyst consensus and the chatbot, for any dashboard or client to read. Read-only except POST /chat, which only calls a model. Integration guide: docs/api-integration.md.",
+    "description": "The system's interface: the sentiment index, its evidence, analyst consensus and the chatbot, for any dashboard or client to read. POST /chat calls a model; POST /pipeline/runs starts an incremental PDF pipeline which writes to the database. Other data routes are read-only. Integration guide: docs/api-integration.md.",
     "title": "SG Bank Sentiment API",
     "version": "0.1.0"
   },
@@ -494,6 +973,176 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/pipeline/runs": {
+      "get": {
+        "description": "Newest run summaries and the active ID, recovering stopped workers' metadata.",
+        "operationId": "pipeline_history_pipeline_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "Pipeline worker or run storage unavailable"
+          }
+        },
+        "summary": "Pipeline History",
+        "tags": [
+          "pipeline"
+        ]
+      },
+      "post": {
+        "description": "Start an incremental PDF run in a separate process and return its queued record.\n\nThis endpoint writes to the configured database. It accepts source keys,\nnot paths, commands or model changes. Poll Location for progress; never\nautomatically retry a POST whose response was lost.",
+        "operationId": "start_pipeline_pipeline_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartPipelineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Another manual pipeline run is active"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The background worker could not be started"
+          }
+        },
+        "summary": "Start Pipeline",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
+    "/pipeline/runs/{run_id}": {
+      "get": {
+        "description": "Full stage metrics, file outcomes, warnings and import manifest for one run.",
+        "operationId": "pipeline_status_pipeline_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Unknown pipeline run"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "Pipeline worker or run storage unavailable"
+          }
+        },
+        "summary": "Pipeline Status",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
+    "/pipeline/sources": {
+      "get": {
+        "description": "Supported local folders and PDF counts; does not fetch, import or analyse.",
+        "operationId": "pipeline_sources_pipeline_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineSources"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "Pipeline worker or run storage unavailable"
+          }
+        },
+        "summary": "Pipeline Sources",
+        "tags": [
+          "pipeline"
+        ]
       }
     },
     "/sentiment": {

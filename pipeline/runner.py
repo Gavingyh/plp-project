@@ -4,8 +4,8 @@ USAGE (from the project root):
   .venv-plp/bin/python3 -m pipeline.runner --sources earnings sgx_research
   .venv-plp/bin/python3 -m pipeline.runner --history
 
-The runner is synchronous; the next milestone launches it in a background
-worker through FastAPI. The shared database is used by default. Imports are
+The runner can run in the terminal or as a separate FastAPI-launched worker.
+The shared database is used by default. Imports are
 selected by source; downstream stages finish all pending database work.
 """
 
@@ -79,8 +79,56 @@ def history(store: RunStore | None = None, limit: int = 20) -> list[dict]:
     return store.history(limit)
 
 
+def new_run(
+    sources: list[str], store: RunStore, run_id: str, *, queued: bool = False
+) -> dict:
+    """Build a record; callers save it while holding the pipeline lock."""
+    from ingest import db
+
+    record_path = store.path(run_id)
+    return {
+        "run_id": run_id,
+        "status": "queued" if queued else "running",
+        "sources": stages.selected_sources(sources),
+        "started_at": timestamp(),
+        "finished_at": None,
+        "pid": None if queued else os.getpid(),
+        "db_path": str(Path(db.DB_PATH).resolve()),
+        "embeddings_path": str(
+            Path(
+                os.environ.get("PLP_EMBEDDINGS_PATH")
+                or stages.ROOT / "data/sentence_embeddings.npz"
+            ).resolve()
+        ),
+        "model_version": None,
+        "current_stage": None,
+        "log_path": str(record_path.with_suffix(".log")),
+        "import_candidates": [],
+        "imported_documents": [],
+        "warnings": [],
+        "error": None,
+        "stages": [
+            {
+                "key": key,
+                "label": label,
+                "status": "pending",
+                "started_at": None,
+                "finished_at": None,
+                "metrics": {},
+                "files": [],
+                "error": None,
+            }
+            for key, label in STEP_NAMES
+        ],
+    }
+
+
 def run_pipeline(
-    sources: list[str], *, store: RunStore | None = None, run_id: str | None = None
+    sources: list[str],
+    *,
+    store: RunStore | None = None,
+    run_id: str | None = None,
+    lock_fd: int | None = None,
 ) -> dict:
     """Execute once; failed runs return their saved record. Invalid/busy requests raise.
 
@@ -96,45 +144,22 @@ def run_pipeline(
     store = store or RunStore()
     run_id = run_id or uuid4().hex
     record_path = store.path(run_id)  # validate before creating files
-    with store.lock():
-        _recover(store)
-        if record_path.exists():
-            raise ValueError(f"Run {run_id} already exists; use a new run ID.")
-        run = {
-            "run_id": run_id,
-            "status": "running",
-            "sources": sources,
-            "started_at": timestamp(),
-            "finished_at": None,
-            "pid": os.getpid(),
-            "db_path": str(Path(db.DB_PATH).resolve()),
-            "embeddings_path": str(
-                Path(
-                    os.environ.get("PLP_EMBEDDINGS_PATH")
-                    or stages.ROOT / "data/sentence_embeddings.npz"
-                ).resolve()
-            ),
-            "model_version": None,
-            "current_stage": None,
-            "log_path": str(record_path.with_suffix(".log")),
-            "import_candidates": [],
-            "imported_documents": [],
-            "warnings": [],
-            "error": None,
-            "stages": [
-                {
-                    "key": key,
-                    "label": label,
-                    "status": "pending",
-                    "started_at": None,
-                    "finished_at": None,
-                    "metrics": {},
-                    "files": [],
-                    "error": None,
-                }
-                for key, label in STEP_NAMES
-            ],
-        }
+    lock = store.lock() if lock_fd is None else store.inherited_lock(lock_fd)
+    with lock:
+        if lock_fd is None:
+            _recover(store)
+            if record_path.exists():
+                raise ValueError(f"Run {run_id} already exists; use a new run ID.")
+            run = new_run(sources, store, run_id)
+        else:
+            run = store.get(run_id)
+            if (
+                run["status"] != "queued"
+                or run["sources"] != sources
+                or run["db_path"] != str(Path(db.DB_PATH).resolve())
+            ):
+                raise ValueError("Worker configuration does not match the reserved run")
+            run.update(status="running", pid=os.getpid())
         store.save(run)
         current = None
         import_stage = run["stages"][1]
@@ -229,6 +254,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--run-id", help="optional UUID hex identifier for a background worker"
     )
+    parser.add_argument(
+        "--state-dir", help="directory for run records (default: data/run/pipeline)"
+    )
+    parser.add_argument("--lock-fd", type=int, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     # Set offline mode before importing any model libraries in this process.
     os.environ["HF_HUB_OFFLINE"] = "1"
@@ -237,9 +266,19 @@ def main(argv: list[str] | None = None) -> int:
     setup_logging()
     try:
         if args.history:
-            print(json.dumps(history(), indent=2))
+            print(
+                json.dumps(
+                    history(RunStore(args.state_dir) if args.state_dir else None),
+                    indent=2,
+                )
+            )
             return 0
-        run = run_pipeline(args.sources, run_id=args.run_id)
+        run = run_pipeline(
+            args.sources,
+            run_id=args.run_id,
+            store=RunStore(args.state_dir) if args.state_dir else None,
+            lock_fd=args.lock_fd,
+        )
     except PipelineBusy as exc:
         logger.error("%s", exc)
         return 3

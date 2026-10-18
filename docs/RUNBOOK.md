@@ -94,6 +94,44 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
 ```
 
+### Manual PDF updates through the API
+
+The [manual pipeline](manual-pipeline.md) coordinates local earnings/research
+PDF extraction through index aggregation, using the existing trained models
+and `data/plp.db` by default. Selected sources control imports; subsequent
+analysis completes all pending work in that database. Model training is not
+part of a run.
+
+Restart the API to load the new routes:
+
+```bash
+scripts/stop.sh api
+scripts/start.sh api
+curl http://localhost:8000/pipeline/sources
+```
+
+To start a real incremental update (**writes to the configured database**):
+
+```bash
+curl -X POST http://localhost:8000/pipeline/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"sources":["earnings","sgx_research"]}'
+```
+
+Use either source key or both. HTTP 202 returns a queued run and a `Location`
+header containing `/pipeline/runs/<run_id>`; poll it every two seconds for
+stage results. `GET /pipeline/runs` lists recent run summaries and the active
+ID. A missing model or source folder appears as a failed run at that URL.
+HTTP 409 means another run is active; 503 means worker launch or state storage
+failed. The API responds without waiting for inference. There is no dashboard
+run button until milestone 3.
+
+Run records and logs are saved under `data/run/pipeline/`. Restarting the API
+does not stop a running worker. Completed data remains after a later failure;
+rerun to finish pending stages. For terminal use and prerequisite checks, see
+[manual-pipeline.md](manual-pipeline.md); for fields and response codes, see
+[the API contract](api-integration.md#manual-pipeline-api-milestone-2).
+
 ### Expected timings
 
 Do not assume a hang. On an M-series Mac with MPS:

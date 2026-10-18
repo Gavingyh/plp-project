@@ -36,9 +36,73 @@ requests show service errors.
   generating a client. A test fails if it falls behind the code; regenerate
   it with
   `.venv-plp/bin/python3 -c "import json; from api.main import app; open('docs/api/openapi.json','w').write(json.dumps(app.openapi(), indent=2, sort_keys=True) + '\n')"`
-- Every endpoint is `GET` and read-only, except `POST /chat`, which only
-  calls a model. CORS is open (`*`), so a browser app on any port can call
-  it. There is no authentication: run it locally, not on the internet.
+- `POST /chat` calls a model. **`POST /pipeline/runs` starts a worker which
+  writes to the configured database.** The sentiment/evidence endpoints remain
+  read-only; pipeline status/history reads may recover interrupted job metadata.
+  CORS is open (`*`) and there is no authentication: run this API locally,
+  not on the internet.
+
+## Manual pipeline API (milestone 2)
+
+The Data Management UI follows in milestone 3. These endpoints already let
+a client select local sources, launch a separate worker, and poll its saved
+status. They do not run model inference in the API process.
+
+| Method and path | Result |
+|---|---|
+| `GET /pipeline/sources` | `sources`: key, label, folder, `exists`, and `pdf_count`; `analysis_scope: "all_pending"` |
+| `POST /pipeline/runs` | HTTP 202, `{"run": {...}}`; `Location` is the status URL and `Retry-After: 2` suggests the polling interval |
+| `GET /pipeline/runs?limit=20` | Newest run summaries and `active_run_id` (null when idle); limit 1–100 |
+| `GET /pipeline/runs/{run_id}` | Full saved run under `run`, with stage metrics, file outcomes, warnings and imported document IDs |
+
+The POST body is `{"sources": ["earnings"]}`, `{"sources": ["sgx_research"]}`
+or both keys. Source order is normalised and duplicates removed. Empty lists,
+unknown sources, more than two items and extra fields give HTTP 422. The
+request cannot supply a database path, filesystem command or model change.
+Imports use only the selected folders; later analysis finishes all pending
+database work, including work from earlier runs, then rebuilds the full index.
+
+Example start request (**this writes to the configured database**):
+
+```bash
+curl -X POST http://localhost:8000/pipeline/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"sources":["earnings","sgx_research"]}'
+```
+
+The returned record initially has `status: "queued"`. Poll its `Location`
+every two seconds; the worker may already have advanced by the first poll.
+Status moves to `running`, then `completed`, `completed_with_warnings`,
+`failed` or `interrupted`. HTTP 202 means the job was accepted; it does not
+mean prerequisite checks or analysis succeeded. A missing model or source
+folder is a failed **run**, visible at the status URL, rather than a long
+blocked HTTP request.
+
+HTTP 409 means another manual run already holds the lock, including while
+its process is starting. HTTP 503 means the worker could not be launched or
+its state storage is unavailable. A valid but unknown run ID gives 404;
+malformed IDs give 422. The API only accepts the documented source keys.
+If a POST response is lost, check history before trying again: the client
+must not automatically retry a potentially successful launch.
+
+History summaries omit the full file lists; `warnings_count` and
+`documents_inserted` are counts recorded so far, not an estimate of remaining
+work. Fetch the per-run URL for detailed results. Pending stages remain
+pending if an earlier stage fails; earlier committed data is retained.
+Keep showing an update-in-progress indicator until the active run ends,
+then clear the dashboard's cached index/evidence/trend/source/suggestion
+responses. Cache refresh is part of milestone 3.
+
+The launcher reserves the existing process lock before saving a queued job
+and passes that same lock to its worker, so there is no unlocked startup
+gap. A worker survives an API restart; saved records remain readable by the
+new API process. Crashed/killed workers are recovered through the process
+reaper or the next status/history request. Ordinary GET status calls do not
+restart or resume work. macOS/Linux workers are supported; native Windows
+can still use the existing data/chat API routes.
+
+See [manual-pipeline.md](manual-pipeline.md) for prerequisites, terminal use,
+failure recovery and the existing-data analysis scope.
 
 ## Dashboard presentation review — 18 October 2026
 

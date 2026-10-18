@@ -4,7 +4,7 @@ that builds on it (DESIGN decision 23; docs/api-integration.md is the
 contract, docs/api/openapi.json the machine-readable one). Deliberately
 thin: every endpoint is a pass-through to an existing function in
 chatbot/tools.py (already tested against the real DB) or a plain read of the
-database. No new business logic lives here.
+database. Manual-pipeline routes delegate job launch/status to pipeline/service.py.
 
 CORS is wide open (allow_origins=["*"]) - this is a school project running
 locally/on a grader's machine, not a public deployment; a real deployment
@@ -38,6 +38,7 @@ from chatbot.tools import (ASPECT_KEYS, MIN_VOLUME_FOR_SCORE, compare_banks, get
                             version_has_rows)
 from ingest.base import BANK_NAMES
 from ingest.db import get_connection
+from api.pipeline import router as pipeline_router
 
 setup_logging()
 logger = get_logger(__name__)
@@ -66,12 +67,14 @@ app = FastAPI(
     title="SG Bank Sentiment API",
     description="The system's interface: the sentiment index, its evidence, analyst "
                  "consensus and the chatbot, for any dashboard or client to read. "
-                 "Read-only except POST /chat, which only calls a model. "
+                 "POST /chat calls a model; POST /pipeline/runs starts an incremental "
+                 "PDF pipeline which writes to the database. Other data routes are read-only. "
                  "Integration guide: docs/api-integration.md.",
 )
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
+app.include_router(pipeline_router)
 
 
 @app.get("/health")

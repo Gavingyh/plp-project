@@ -220,7 +220,8 @@ receives Reddit or CNA evidence text, or text from a source not listed in
 
 ```json
 {"question": "And OCBC?", "answer": "…", "guard": null,
- "citation_unverified": false, "unverified_numbers": []}
+ "citation_unverified": false, "unverified_numbers": [],
+ "unverified_readings": []}
 ```
 
 The UI must show the flags, not just the answer:
@@ -229,10 +230,17 @@ The UI must show the flags, not just the answer:
   model: `advice`, `other_bank`, `off_topic`, `greeting`, `thanks`,
   `goodbye`, `help`, `service`, `injection` or `feedback`; `null` when the
   model answered (`config/intents.yaml` has the replies);
+- an answer is checked before it is returned (`CHATBOT_VERIFY_BEFORE_REPLY`,
+  on by default): a draft with a figure, a reading or a quote no tool returned
+  is rewritten, trimmed or replaced by a reply that says no answer could be
+  backed up, so the three flags below are empty and the UI has no warning to
+  show. They are set only when that setting is `false`;
 - `citation_unverified: true` means the answer cites evidence the tools
   never returned: mark the answer as not to be trusted;
 - `unverified_numbers` lists figures in the answer that match nothing the
-  tools returned.
+  tools returned;
+- `unverified_readings` lists words the answer uses for a score ("neutral",
+  "slightly positive") that no tool returned as that score's reading.
 
 A local model takes seconds to tens of seconds per answer; show a spinner.
 To try the bot without any UI: `.venv-plp/bin/python3 -m chatbot.chat`.

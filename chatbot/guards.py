@@ -6,6 +6,9 @@ the guardrails of the Conversational UIs module (DESIGN decision 19).
     that match nothing the tools returned.
   - unverified_sentence_ids(answer, retrieved_ids): sentence ids the answer
     cites that were never retrieved.
+  - unverified_readings(answer, tool_results): a score described as "neutral"
+    or "slightly/moderately/clearly positive/negative" in words no tool
+    returned as a reading.
 
 They compare the answer with what the tools returned, so they are rules by
 design. The input side, deciding what a question asks for (advice, small
@@ -380,3 +383,53 @@ _SENTENCE_ID = re.compile(r"\b[0-9a-f]{24}\b")
 def unverified_sentence_ids(answer: str, retrieved_ids: set[str]) -> list[str]:
     """24-character sentence ids cited in the answer that were never retrieved."""
     return [sid for sid in _SENTENCE_ID.findall(answer or "") if sid not in retrieved_ids]
+
+
+# --- output: readings --------------------------------------------------------------
+
+# A score in words, as chatbot.tools.reading writes it. "neutral" alone is also a share of
+# sentences ("30% neutral", "the neutral share"), which is not a reading, so those are left out.
+_READING = re.compile(
+    r"(?<!\bnot )(?<!\bno )(?<![\d%] )(?<![\d%])\b"
+    r"(?:(?:slightly|moderately|clearly)\s+(?:positive|negative)|neutral)\b"
+    r"(?!\s+(?:sentences?|shares?|mentions?|comments?|posts?|items?|articles?|reports?|results?|ones)\b)"
+    r"(?!\s*\(?\s*\d+(?:\.\d+)?\s*%)", re.IGNORECASE)
+# Words inside quote marks are a retrieved sentence's, not the answer's own reading of a score.
+_QUOTED = re.compile(r'["“][^"“”]*["”]')
+
+
+def _collect_readings(obj, out: set[str]) -> None:
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if str(k) == "reading" and isinstance(v, str):
+                out.add(v.strip().lower())
+            else:
+                _collect_readings(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _collect_readings(v, out)
+
+
+def returned_readings(tool_results: list) -> set[str]:
+    """Every reading the tools returned, lower case."""
+    out: set[str] = set()
+    _collect_readings(tool_results, out)
+    return out
+
+
+def unverified_readings(answer: str, tool_results: list) -> list[str]:
+    """Readings the answer gives a score that no tool returned as a reading.
+
+    The tools put each score in words (`reading`: "neutral", "slightly",
+    "moderately" or "clearly" positive or negative, bands in
+    config/chatbot.yaml). An answer once called a topic "neutral" and
+    "slightly positive" beside a score the tool read as "clearly positive". A
+    reading in the answer must be one a tool returned for this question; it is
+    not checked against which score it describes, so a bank's overall
+    reading can vouch for a topic's. Words in quote marks are evidence, and
+    "neutral" as a share of sentences is not a reading; neither is checked.
+    """
+    returned = returned_readings(tool_results)
+    text = _QUOTED.sub(" ", answer or "")
+    found = {re.sub(r"\s+", " ", m.group(0).lower()) for m in _READING.finditer(text)}
+    return sorted(found - returned)

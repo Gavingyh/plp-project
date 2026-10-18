@@ -14,7 +14,7 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sources.
 
 @functools.cache
 def _load() -> dict:
-    with open(CONFIG_PATH) as f:
+    with open(CONFIG_PATH, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     for name, spec in cfg["sources"].items():
         if (not isinstance(spec.get("weight"), (int, float)) or not isinstance(spec.get("personal_text"), bool)

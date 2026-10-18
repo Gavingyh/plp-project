@@ -573,7 +573,31 @@ Decided:
   bank's score, as `topic_score` or `bank_overall_score`, and the data date:
   asked what people say and how they feel, the model had searched only,
   called the mood "neutral" with no score, and given a quote's date as the
-  data's. A trend comes with one sentence that states it
+  data's. The search takes a `window` (7d, 30d or all_time): the quotes are
+  limited to those days, counted back from the newest stored sentence as the
+  index counts them, and the score says which window it covers (before
+  18 Oct 2026 the score was always all-time, under an answer about "the last
+  week"). A reading check flags an answer that describes a score in reading
+  words no tool returned (`unverified_readings`), after one called a topic
+  "neutral" and "slightly positive" beside a score read as "clearly
+  positive". The checks now run before the answer is returned: a failed draft
+  is rewritten once with the problem named to the model, then trimmed to the
+  sentences that pass, then withheld, and no warning is shown to the reader
+  (`CHATBOT_VERIFY_BEFORE_REPLY`, 18 Oct 2026). A follow-up ("and UOB?") had
+  been answered with no tool call and three warnings under it. A search for
+  "DBS's app" with `sentiment="all"` matched nothing and the answer gave the bank's overall
+  score as the view on the app (18 Oct 2026): a sentiment that is not positive, neutral or
+  negative is now dropped, an empty search returns `no_evidence`, and the score attached to
+  a search says what it covers (`covers`). The model is shown each topic with its
+  definition (config/aspects.yaml) and picks the one that fits the question; when none fits it
+  leaves the topic out and says it found no matching topic and is giving the overall. Every score
+  and search result carries a `period` ("the last 30 days of data (26 Aug 2026 to 25 Sep 2026)"), the
+  prompt asks the model to state it, and the harness adds a "Period searched" line under the answer
+  from those fields, so the reader is told which days were searched even when the model chose the
+  window (18 Oct 2026). With no period named, the chatbot's tools use all stored data
+  (`CHATBOT_DEFAULT_WINDOW`, decided 18 Oct 2026, the same as the API's default; `30d` or `7d` can be set, and
+  fall back to all stored data when too thin or a search finds nothing), and the line under the answer always
+  states that rule. A trend comes with one sentence that states it
   (`trend_in_words`): the last 7 days against the last 30 when both have
   enough sentences, else the latest month against the one before (the change
   computed before shrinkage, as for 7 against 30 days). The API's results are

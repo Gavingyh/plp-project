@@ -1,6 +1,6 @@
 flowchart TB
   accTitle: One chatbot turn
-  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a citation check (quote marks around words no search returned count as unretrieved evidence) and a figure check, and the citations it retrieved are numbered with their sources listed, before it is shown.
+  accDescr: A local model sorts the question first; every intent except in-scope gets a fixed reply without the chatbot model, and a question the classifier can't sort goes on to the model. Otherwise the model calls tools in a loop of at most eight calls; its answer then passes an empty-answer check, a check of the whole draft before it is returned (quote marks around words no search returned count as unretrieved evidence; a figure or a reading such as slightly positive that no tool returned is also caught); a draft that fails is written again once with the problem named, then trimmed of the sentences that state it, and withheld if too little is left, so no warning is ever shown; the citations it retrieved are numbered with their sources listed, before it is shown.
 
   q(["Question"])
   cls{"Intent classifier (local model):<br/>what is the question asking for?"}
@@ -13,10 +13,12 @@ flowchart TB
   budget["Answer: couldn't finish<br/>within the budget"]
   emp{"Empty, or just braces?"}
   empR["Fixed reply: couldn't answer,<br/>with an example question"]
-  cite{"Cites evidence it didn't retrieve?<br/>URL, quote or sentence id, or quote<br/>marks around words no search returned"}
-  w1["Append VERIFICATION WARNING"]
-  num{"States a figure<br/>no tool returned?"}
-  w2["Append NUMBER CHECK"]
+  chk{"Cites evidence no search returned,<br/>states a figure no tool returned, or<br/>describes the mood in words no tool returned?"}
+  used{"Second try already used?"}
+  again["Tell the model what was wrong,<br/>and write the answer again"]
+  trim["Drop the sentences with the<br/>unconfirmed figure or reading"]
+  left{"Enough left to be an answer?"}
+  wh["Fixed reply: couldn't back up an answer"]
   refs["Number the citations it retrieved,<br/>list their sources under the answer"]
   out(["Answer and turn record"])
 
@@ -28,8 +30,10 @@ flowchart TB
   cap -- yes --> budget --> emp
   tc -- no --> emp
   emp -- yes --> empR --> out
-  emp -- no --> cite
-  cite -- yes --> w1 --> num
-  cite -- no --> num
-  num -- yes --> w2 --> refs
-  num -- no --> refs --> out
+  emp -- no --> chk
+  chk -- no --> refs --> out
+  chk -- yes --> used
+  used -- no --> again --> llm
+  used -- yes --> trim --> left
+  left -- yes --> refs
+  left -- no --> wh --> out

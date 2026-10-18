@@ -159,7 +159,8 @@ def test_chat_calls_agent_and_returns_answer(monkeypatch):
     resp = client.post("/chat", json={"message": "hello", "backend": "ollama"})
     assert resp.status_code == 200
     assert resp.json() == {"question": "hello", "answer": "fake answer", "guard": None,
-                           "citation_unverified": False, "unverified_numbers": []}
+                           "citation_unverified": False, "unverified_numbers": [],
+                           "unverified_readings": []}
     assert _FakeConversation.seen == {"messages": [], "backend": "ollama"}
 
 

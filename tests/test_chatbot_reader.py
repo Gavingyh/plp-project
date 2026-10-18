@@ -63,7 +63,7 @@ def test_overall_score_comes_with_shares_topics_and_the_data_date(temp_db):
                      ("DBS", "retail_banking_sentiment", "2026-08", 1, 3, 6),
                      ("DBS", "net_interest_margin", "2026-09", 4, 6, 0),
                      ("DBS", "asset_quality", "2026-09", 2, 7, 1)])
-    r = tools.chat_get_sentiment("DBS")
+    r = tools.chat_get_sentiment("DBS", window="all_time")
     print(f"\n{r}")
     assert r["reading"] == tools.reading(r["score"])
     assert abs(r["positive_pct"] + r["neutral_pct"] + r["negative_pct"] - 100) < 0.2

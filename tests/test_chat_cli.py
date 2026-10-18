@@ -1,14 +1,13 @@
 """Tests for chatbot/chat.py, the terminal chat for testing the bot (no model calls)."""
 
-from types import SimpleNamespace
-
 import chatbot.chat as chat
+from chatbot.agent import TurnResult
 
 
 def _turn(**kw):
-    base = dict(answer="DBS sentiment is +0.12.", guard=None, citation_unverified=False,
-                unverified_numbers=[], calls=[{"name": "get_sentiment", "arguments": {"bank": "DBS"}, "result": {}}])
-    return SimpleNamespace(**{**base, **kw})
+    base = dict(question="q", answer="DBS sentiment is +0.12.",
+                calls=[{"name": "get_sentiment", "arguments": {"bank": "DBS"}, "result": {}}])
+    return TurnResult(**{**base, **kw})
 
 
 def test_a_clean_answer_has_no_flags():
@@ -18,6 +17,16 @@ def test_a_clean_answer_has_no_flags():
 def test_flags_are_shown_like_the_api_returns_them():
     out = chat.format_turn(_turn(guard="advice", citation_unverified=True, unverified_numbers=[0.42]))
     assert "advice guard" in out and "don't trust it" in out and "0.42" in out
+
+
+def test_a_reading_no_tool_gave_is_shown():
+    out = chat.format_turn(_turn(unverified_readings=["neutral"]))
+    assert "neutral" in out and "[!]" in out
+
+
+def test_a_verified_answer_shows_no_flags_whatever_the_first_draft_got_wrong():
+    out = chat.format_turn(_turn(verified=True, unverified_numbers=["0.41"], repaired="rewritten"))
+    assert "0.41" not in out and "rewritten" in out
 
 
 def test_tool_calls_are_listed():

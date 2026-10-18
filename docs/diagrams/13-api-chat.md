@@ -22,7 +22,7 @@ sequenceDiagram
     conv->>turn: same turn as the terminal chat (diagram 08)
     turn-->>conv: TurnResult
     conv-->>api: TurnResult
-    api-->>client: answer, guard, citation_unverified, unverified_numbers
+    api-->>client: answer, guard, citation_unverified, unverified_numbers, unverified_readings
   end
   Note over client,api: the client keeps the conversation and sends it back next time
 ```
@@ -48,5 +48,5 @@ Each row names the file and line an element comes from, and the text that line m
 | empty message rejected | `api/main.py:318` | `detail="message must not be empty"` |
 | rebuild from messages | `api/main.py:319` | `conv = Conversation.from_messages(` |
 | one turn | `api/main.py:321` | `turn = conv.ask(req.message)` |
-| response fields | `api/main.py:325` | `return {"question": req.message, "answer": turn.answer, "guard": turn.guard,` |
-| state from banks named | `chatbot/agent.py:2282` | `def from_messages(cls, messages: list[dict]` |
+| response fields | `api/main.py:327` | `return {"question": req.message, "answer": turn.answer, "guard": turn.guard,` |
+| state from banks named | `chatbot/agent.py:2451` | `def from_messages(cls, messages: list[dict]` |

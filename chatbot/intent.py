@@ -40,7 +40,7 @@ IN_SCOPE = "in_scope"
 
 @functools.cache
 def load_config() -> dict:
-    with open(CONFIG_PATH) as f:
+    with open(CONFIG_PATH, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

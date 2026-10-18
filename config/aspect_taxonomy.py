@@ -14,7 +14,7 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aspects.
 
 @functools.cache
 def load() -> dict:
-    with open(CONFIG_PATH) as f:
+    with open(CONFIG_PATH, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

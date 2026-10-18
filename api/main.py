@@ -322,6 +322,6 @@ def chat(req: ChatRequest):
     except BackendUnavailable as e:   # no Ollama running, a missing or rejected key: the service, not the request
         logger.warning("chat backend unavailable: %s", e)
         raise HTTPException(status_code=503, detail=f"chat backend unavailable: {e}")
-    return {"question": req.message, "answer": turn.answer, "guard": turn.guard,
-            "citation_unverified": turn.citation_unverified,
-            "unverified_numbers": turn.unverified_numbers}
+    # The flags of the answer shown: none when it was verified before it was returned
+    # (CHATBOT_VERIFY_BEFORE_REPLY), so the reader never sees a warning for it.
+    return {"question": req.message, "answer": turn.answer, "guard": turn.guard, **turn.shown_flags()}

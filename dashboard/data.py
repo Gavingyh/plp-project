@@ -1,6 +1,7 @@
 """API responses adapted for dashboard views; no database or model imports."""
 
 from datetime import datetime
+import math
 
 import pandas as pd
 
@@ -110,6 +111,25 @@ def load_suggestions(limit: int = 6) -> list[dict]:
     return suggestions
 
 
+def load_trend(bank: str, aspect: str) -> dict:
+    """Use the API's unshrunk 7d-versus-30d comparison, not displayed-score subtraction."""
+    payload = request_json(
+        "GET", "/sentiment/trend", params={"bank": bank, "aspect": aspect}
+    )
+    if type(payload.get("trend_available")) is not bool:
+        raise ApiError("The API returned invalid trend data.")
+    if payload["trend_available"]:
+        delta = payload.get("delta_7d_vs_30d")
+        if (
+            payload.get("direction") not in ("improving", "declining", "stable")
+            or isinstance(delta, bool)
+            or not isinstance(delta, (int, float))
+            or not math.isfinite(delta)
+        ):
+            raise ApiError("The API returned invalid trend data.")
+    return payload
+
+
 def load_time_series(bank: str, aspect: str, bucket: str) -> pd.DataFrame:
     payload = request_json(
         "GET",
@@ -149,4 +169,6 @@ def load_time_series(bank: str, aspect: str, bucket: str) -> pd.DataFrame:
     frame["sufficient"] = frame["sufficient"].eq(True)
     for column in ("n", "pos_n", "neu_n", "neg_n"):
         frame[column] = frame[column].fillna(0).astype(int)
+    frame["period_start"] = frame.index.start_time
+    frame["period_end"] = frame.index.end_time
     return frame.reset_index(drop=True)

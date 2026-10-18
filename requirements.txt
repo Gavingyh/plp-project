@@ -17,7 +17,7 @@ spacy>=3.8.0
 # after installing, also run: python -m spacy download en_core_web_sm
 
 # Dashboard
-streamlit>=1.40.0
+streamlit>=1.57.0
 # Required by pandas Styler.background_gradient, which the dashboard's heatmaps
 # use. pandas defers the matplotlib import until the Styler is rendered, so
 # without this the dashboard starts fine and then crashes on the Aspect Heatmap

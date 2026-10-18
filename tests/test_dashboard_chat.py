@@ -29,6 +29,7 @@ class ChatAdapterTests(unittest.TestCase):
                 "guard": None,
                 "citation_unverified": True,
                 "unverified_numbers": [0.5],
+                "unverified_readings": ["neutral"],
             },
         ]
         original = deepcopy(history)
@@ -56,6 +57,9 @@ class ChatAdapterTests(unittest.TestCase):
             {**VALID_ANSWER, "citation_unverified": None},
             {**VALID_ANSWER, "citation_unverified": "false"},
             {**VALID_ANSWER, "unverified_numbers": None},
+            {**VALID_ANSWER, "unverified_readings": None},
+            {**VALID_ANSWER, "unverified_readings": "neutral"},
+            {**VALID_ANSWER, "unverified_readings": [1]},
             {**VALID_ANSWER, "guard": []},
         ]
         for payload in invalid_answers:
@@ -138,6 +142,25 @@ class ChatPageTests(DashboardAppTestCase):
         self.assertEqual(
             self.chat_calls()[0].kwargs["json"], {"message": question, "history": []}
         )
+        app.run()
+        self.assertEqual(len(self.chat_calls()), 1)
+
+    def test_brand_navigation_preserves_chat_and_theme(self):
+        app = self.page("Ask")
+        self.ask(app, "DBS?")
+        app.toggle(key="dark_mode").set_value(True).run()
+        history = deepcopy(app.session_state["api_chat_history"])
+        app.button(key="brand_home").click().run()
+        self.assertFalse(app.exception, [e.message for e in app.exception])
+        self.assertEqual(app.sidebar.radio(key="nav").value, "Overview")
+        self.assertEqual(app.query_params["page"], "Overview")
+        self.assertEqual(app.query_params["theme"], "dark")
+        self.assertTrue(app.toggle(key="dark_mode").value)
+        self.assertEqual(app.session_state["api_chat_history"], history)
+        app.sidebar.radio(key="nav").set_value("Ask").run()
+        self.assertFalse(app.exception)
+        self.assertEqual(len(app.chat_message), 2)
+        self.assertEqual(len(self.chat_calls()), 1)
 
     def test_flags_survive_navigation_and_clear_removes_history_and_flags(self):
         self.request.side_effect = fake_api(
@@ -145,16 +168,18 @@ class ChatPageTests(DashboardAppTestCase):
                 **VALID_ANSWER,
                 "citation_unverified": True,
                 "unverified_numbers": [0.5],
+                "unverified_readings": ["neutral"],
             }
         )
         app = self.page("Ask")
         self.ask(app, "DBS?")
-        self.assertEqual(len(app.warning), 2)
+        self.assertEqual(len(app.warning), 3)
         self.assertIn("0.5", app.warning[1].value)
+        self.assertIn("neutral", app.warning[2].value)
         app.radio(key="nav").set_value("Topics").run()
         app.radio(key="nav").set_value("Ask").run()
         self.assertFalse(app.exception)
-        self.assertEqual(len(app.warning), 2)
+        self.assertEqual(len(app.warning), 3)
         self.assertEqual(len(self.chat_calls()), 1)
         app.button(key="clear_chat").click().run()
         self.assertFalse(app.exception)
@@ -180,6 +205,7 @@ class ChatPageTests(DashboardAppTestCase):
 
     def test_clear_is_available_immediately_after_first_answer(self):
         app = self.page("Ask")
+        self.assertTrue(app.button(key="clear_chat").disabled)
         self.ask(app, "DBS?")
         self.assertFalse(app.button(key="clear_chat").disabled)
         app.button(key="clear_chat").click().run()
@@ -194,10 +220,24 @@ class ChatPageTests(DashboardAppTestCase):
         self.assertTrue(app.error)
         self.assertIn("HTTP 503", app.error[0].value)
         self.assertEqual(app.session_state["api_chat_history"], [])
+        self.assertFalse(app.chat_input[0].disabled)
         self.request.side_effect = fake_api()
         self.ask(app, "OCBC?")
         self.assertFalse(app.error)
         self.assertEqual(self.chat_calls()[-1].kwargs["json"]["history"], [])
+
+    def test_clear_removes_failed_turn_and_does_not_retry(self):
+        self.request.side_effect = fake_api(fail_path="/chat")
+        app = self.page("Ask")
+        self.ask(app, "DBS?")
+        app.run()
+        self.assertEqual(len(self.chat_calls()), 1)
+        self.assertTrue(app.error)
+        app.button(key="clear_chat").click().run()
+        self.assertFalse(app.error)
+        self.assertEqual(len(app.chat_message), 0)
+        self.assertEqual(app.session_state["api_chat_history"], [])
+        self.assertEqual(len(self.chat_calls()), 1)
 
     def test_suggestion_failure_leaves_typed_chat_available(self):
         self.request.side_effect = fake_api(fail_path="/suggestions")

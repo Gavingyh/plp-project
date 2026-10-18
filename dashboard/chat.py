@@ -34,11 +34,14 @@ def send_chat(message: str, history: list[dict]) -> dict:
         },
         read_timeout=600,
     )
+    readings = payload.get("unverified_readings", [])
     if (
         not isinstance(payload.get("answer"), str)
         or not payload["answer"].strip()
         or not isinstance(payload.get("citation_unverified"), bool)
         or not isinstance(payload.get("unverified_numbers"), list)
+        or not isinstance(readings, list)
+        or any(not isinstance(reading, str) for reading in readings)
         or (payload.get("guard") is not None and not isinstance(payload["guard"], str))
     ):
         raise ApiError("The API returned an invalid chat response.")

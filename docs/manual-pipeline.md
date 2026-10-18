@@ -10,8 +10,62 @@ Implementation milestones:
    persisted progress, file outcomes, process locking and interruption recovery.
 2. **FastAPI (implemented):** launch a separate worker and expose
    source/start/status/history endpoints, with HTTP 202/409/503 handling.
-3. **Dashboard (next):** Data Management source checkboxes, run button,
+3. **Dashboard (implemented):** Data Management source checkboxes, run button,
    progress/history and refresh of the dashboard's cached API responses.
+
+## Run from the dashboard
+
+Open **Data Management** below Ask in the sidebar. Place PDFs in the listed
+folders on the API host, select Bank earnings PDFs, Broker research PDFs, or
+**All PDF sources**, then click **Run selected sources**. The All checkbox
+selects both local PDF sources; individual choices and All stay in sync.
+Online news and Reddit collectors are separate workflows in this milestone.
+This writes to the configured
+database, normally `data/plp.db`. It uses the existing trained models and
+completes all pending analysis; selecting a folder limits imports only.
+
+The page shows each folder's PDF inventory, not an estimate of new documents.
+The source-selection and recent-activity panels have equal widths and stretch
+to the same height on wider screens; they stack on narrow screens. The run
+selector sits inside the activity panel so both panel headings align.
+Completed stage lists are collapsed by default; active and failed runs show
+their stages immediately. Cards show compact folder names;
+**Folder locations** reveals the absolute paths returned by the API. Those
+paths are derived from each checkout's location, not a particular user's
+home directory. For example, a checkout under `/srv/bankpulse` reads earnings
+from `/srv/bankpulse/data/earnings_pdfs`; another checkout can be elsewhere.
+The relative `data/earnings_pdfs` and `data/sgx_research` layout is fixed by
+the existing extractors. In a remote setup, use the API machine's folders.
+
+A missing folder cannot be selected. An existing empty folder can still be
+selected to resume pending database work. The worker checks the database,
+models and other prerequisites after the run is accepted.
+
+The six stages update every two seconds while the page is open. Progress
+counts completed stages; it is not an estimate of elapsed or remaining time.
+New-document and already-stored-PDF counts, warnings, file outcomes, stage
+metrics and the imported document manifest are available in run details.
+The latest 20 runs are loaded from the API, including after a page refresh.
+Older records remain on disk. There is no cancel/delete control in this version.
+
+Run controls are disabled while a job is queued/running or its status cannot
+be checked. The API also rejects concurrent starts. HTTP 409, launch failures
+and lost responses show a **Check run status** action. Starts are never
+retried automatically; checking, polling and navigation make GET requests.
+Review the saved history before explicitly starting another run.
+
+Other tabs show an update-in-progress notice while a run is active. Scores
+remain at the last computed index until aggregation; evidence may change as
+earlier stages commit. On completion, cached index, evidence, source, series,
+trend, analyst and suggestion responses are cleared and the page reloads.
+Failure/interruption also clears caches because earlier stages can have
+committed data. The conversation and user selections remain intact; existing
+chat answers retain their original text and are not regenerated.
+
+Data Management remains accessible when the sentiment index is empty or its
+endpoint fails. The API must still be reachable to start or inspect a run.
+Status polling uses Streamlit [fragments](https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment),
+so charts and the conversation are not rebuilt on every progress poll.
 
 ## Select sources and run
 
@@ -95,6 +149,18 @@ the three served checkpoints are listed in `config/model_version.py`. Merely
 restoring the database is enough for the existing dashboard, but not for
 scoring new documents.
 
+If a saved run failed with `Missing dependencies: en_core_web_sm`, install
+spaCy's separate English model in the API's Python environment:
+
+```bash
+.venv-plp/bin/python3 -m spacy download en_core_web_sm
+```
+
+This is the existing setup step in README and RUNBOOK. The UI shows the
+command and explains when no import started. A failed record remains an
+accurate history entry after setup is fixed; start a new incremental update
+to continue. Installing the package does not restart the old job.
+
 Topic assignment currently uses Ollama's `llama3.1:8b`, from
 `config/aspects.yaml`. Its address is `OLLAMA_BASE_URL`, default
 `http://localhost:11434`. This is independent of the chatbot backend.
@@ -138,7 +204,7 @@ inventory, not a count of new/unprocessed documents.
 Ctrl+C persists an interrupted run and releases the lock. After a process
 crash or SIGTERM/SIGKILL, the OS releases the lock; the next history check or
 new run marks the unfinished record interrupted. No timeout guesses that a
-slow inference job has died. Reopening the page in milestone 3 will read this
+slow inference job has died. Reopening Data Management reads this
 same persisted status. During API launch, the queued record is protected by
 the inherited lock as well, so it is not mistaken for a stopped worker.
 
@@ -186,7 +252,9 @@ packaging requirement; no Docker setup command is implemented in milestone 1.
 existing functions; `pipeline/jobs.py` owns persisted records and the process
 lock. `pipeline/service.py` launches and reaps a separate worker process;
 `api/pipeline.py` exposes its HTTP contract. The API does not run the model
-stages in its own process. The dashboard controls follow in milestone 3.
+stages in its own process. `dashboard/pipeline_client.py` makes uncached HTTP
+calls; `dashboard/manage.py` renders controls and polls status. The dashboard
+imports no pipeline worker, database or model modules.
 
 Tests use temporary SQLite databases and embedding files, fake PDF text and
 fake model predictions. They exercise the real preprocessing/assignment/
@@ -197,5 +265,7 @@ or writing to the shared corpus.
 HF_HUB_OFFLINE=1 LOG_FILE=none .venv-plp/bin/python3 -m pytest \
   tests/test_pipeline_runner.py tests/test_pipeline_preflight.py tests/test_pipeline_api.py \
   tests/test_earnings_extract.py tests/test_sgx_research_extract.py \
-  tests/test_assign_method.py tests/test_finetuned_pass.py -q
+  tests/test_assign_method.py tests/test_finetuned_pass.py \
+  tests/test_dashboard_pipeline.py tests/test_dashboard_api_client.py \
+  tests/test_dashboard_views.py -q
 ```

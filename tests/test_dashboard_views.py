@@ -69,7 +69,9 @@ def fake_api(
         path = urlparse(url).path
         status = 503 if path == fail_path else 200
         params = params or {}
-        if path == "/sentiment/index":
+        if path == "/pipeline/runs":
+            payload = {"runs": [], "active_run_id": None}
+        elif path == "/sentiment/index":
             rows = [
                 index_row(b, a, n=2 if params["window"] == "7d" else 100)
                 for b in BANKS

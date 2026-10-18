@@ -127,6 +127,13 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
 ```
 
+For local earnings/research PDFs, the dashboard's **Data Management** page
+can run the incremental pipeline and show progress/history. Select one or
+both folders and click **Run selected sources**. This updates the configured
+database using existing trained models; analysis finishes all pending work.
+See [manual-pipeline.md](docs/manual-pipeline.md) for source locations,
+prerequisites and failure recovery.
+
 No API key is required — the pipeline runs on Reddit, earnings PDFs and
 local models alone. Two things that will otherwise cost you time:
 **always invoke `.venv-plp/bin/python3` by path**, and set `HF_HUB_OFFLINE=1`

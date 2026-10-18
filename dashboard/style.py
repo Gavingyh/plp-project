@@ -158,6 +158,7 @@ section[data-testid="stSidebar"] .st-key-nav [data-testid="stRadio"],
 section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"],
 section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] > div {{ width:100% !important; min-width:0; }}
 section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] {{ align-items:stretch; gap:3px; }}
+section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] > div:has(input[value="5"]) {{ margin-top:12px; padding-top:12px; border-top:1px solid {LINE}; }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"] {{
     width:100%; box-sizing:border-box; min-height:42px; padding:9px 12px; border-radius:8px; margin:0;
     color: {MUTED}; transition: background .2s, color .2s; cursor: pointer;
@@ -227,6 +228,51 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
     background:{SURFACE}; border:1px solid {LINE} !important; border-radius:{RADIUS};
     box-shadow:0 3px 12px #0F233B04; padding:20px !important;
 }}
+.st-key-pipeline_controls, .st-key-pipeline_activity, [class*="st-key-pipeline_source_"] {{
+    background:{SURFACE}; border:1px solid {LINE} !important; border-radius:{RADIUS}; padding:20px !important;
+}}
+.st-key-pipeline_controls, .st-key-pipeline_activity {{ gap:12px; }}
+.st-key-pipeline_run {{ gap:10px; }}
+[class*="st-key-pipeline_source_"] {{ background:{BG}; padding:14px !important; gap:10px; min-height:180px; }}
+[class*="st-key-pipeline_source_"]:has(input:checked) {{ border-color:{ACCENT}88 !important; background:{ACCENT}06; }}
+.st-key-pipeline_controls [data-testid="stWidgetLabel"] p {{ font-size:.78rem; line-height:1.45; }}
+.st-key-pipeline_controls [data-testid="stCaptionContainer"] p {{ font-size:.73rem; }}
+.pipeline-source-count {{ display:flex; flex-direction:column; gap:2px; margin:5px 0 10px; }}
+.pipeline-source-count strong {{ font-size:1.85rem; line-height:1.1; color:{INK}; font-weight:750; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }}
+.pipeline-source-count span {{ color:{MUTED}; font-size:.71rem; }}
+.pipeline-folder {{ color:{MUTED}; font-size:.68rem; padding-top:10px; border-top:1px solid {LINE}; overflow-wrap:anywhere; }}
+.pipeline-selection {{ display:flex; flex-direction:column; gap:4px; padding:0 0 4px; }}
+.pipeline-selection strong {{ font-size:.8rem; color:{INK}; font-weight:600; }}
+.pipeline-selection span {{ font-size:.7rem; color:{MUTED}; }}
+.pipeline-scope-note {{ color:{MUTED}; font-size:.73rem; line-height:1.65; padding:4px 0; }}
+.pipeline-scope-note strong {{ color:{INK}; font-weight:600; }}
+.st-key-pipeline_controls button:disabled {{ background:{SURFACE_2} !important; color:{MUTED} !important; border-color:{LINE} !important; cursor:not-allowed; }}
+.st-key-pipeline_controls button:disabled p {{ color:{MUTED}; }}
+.st-key-pipeline_controls :is(pre,code), .st-key-pipeline_run :is(pre,code) {{ background:{SURFACE_2} !important; color:{INK} !important; }}
+.st-key-pipeline_run [data-testid="stMetric"] {{ padding:10px !important; border:0 !important; background:{BG}; border-radius:8px; }}
+.st-key-pipeline_run [data-testid="stMetricValue"] {{ font-size:1.4rem; }}
+.st-key-pipeline_run [data-testid="stMetricLabel"] p {{ font-size:.68rem; }}
+.pipeline-run-heading {{ display:flex; justify-content:space-between; align-items:center; gap:14px; }}
+.pipeline-run-heading h3 {{ margin:0; padding:0; font-size:1rem; }}
+.pipeline-state {{ padding:6px 10px; border-radius:6px; font-size:.75rem; font-weight:600; background:{SURFACE_2}; color:{INK}; }}
+.state-running, .state-queued {{ background:{ACCENT}18; color:{ACCENT}; }}
+.state-completed {{ background:{POS}18; color:{POS}; }}
+.state-failed, .state-interrupted {{ background:{NEG}18; color:{NEG}; }}
+.pipeline-stages {{ display:flex; flex-direction:column; gap:0; margin:0 0 8px; }}
+.pipeline-step {{ display:flex; gap:10px; align-items:center; padding:11px 6px; border-bottom:1px solid {LINE}; }}
+.pipeline-step:last-child {{ border-bottom:0; }}
+.pipeline-step > div {{ flex:1; min-width:0; }}
+.pipeline-step-number {{ display:grid; place-items:center; width:24px; height:24px; flex-shrink:0; border-radius:50%; background:{SURFACE_2}; color:{MUTED}; font-size:.7rem; }}
+.pipeline-step strong {{ display:block; font-size:.75rem; color:{INK}; font-weight:500; }}
+.pipeline-step-status {{ color:{MUTED}; font-size:.68rem; white-space:nowrap; }}
+.step-running {{ background:{ACCENT}08; border-radius:6px; }}
+.step-completed .pipeline-step-number {{ color:{POS}; background:{POS}16; }}
+.step-failed, .step-interrupted {{ background:{NEG}08; border-radius:6px; }}
+.step-failed :is(.pipeline-step-number,.pipeline-step-status), .step-interrupted .pipeline-step-status {{ color:{NEG}; }}
+.pipeline-empty {{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:260px; border:1px dashed {LINE}; border-radius:{RADIUS}; padding:30px; text-align:center; background:{BG}; }}
+.pipeline-empty-icon {{ color:{ACCENT}; font-size:2rem; padding:8px 15px; background:{ACCENT}0C; border-radius:12px; margin-bottom:14px; }}
+.pipeline-empty h3 {{ color:{INK}; font-size:1rem; padding:0; margin:0 0 8px; }}
+.pipeline-empty p {{ color:{MUTED}; font-size:.8rem; line-height:1.65; max-width:32ch; margin:0; }}
 .st-key-topic_controls, .st-key-trend_controls, .st-key-evidence_controls {{ padding:16px 20px !important; }}
 [class*="st-key-topic_card_"] {{ padding:16px 18px 12px !important; gap:10px; }}
 [class*="st-key-topic_card_"] [data-testid="stHorizontalBlock"] {{ gap:8px; }}

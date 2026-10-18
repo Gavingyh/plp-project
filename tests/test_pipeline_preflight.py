@@ -63,6 +63,7 @@ def test_missing_spacy_model_is_reported_before_import(prerequisites, monkeypatc
     result = runner.run_pipeline(["earnings"], store=store)
     assert result["status"] == "failed"
     assert "Missing dependencies: en_core_web_sm" in result["error"]
+    assert ".venv-plp/bin/python3 -m spacy download en_core_web_sm" in result["error"]
     assert result["import_candidates"] == []
 
 

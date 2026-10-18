@@ -139,7 +139,13 @@ def preflight(sources: list[str]) -> dict:
         dependencies.extend(["pypdfium2", "rapidocr_onnxruntime", "wordninja"])
     missing = [name for name in dependencies if importlib.util.find_spec(name) is None]
     if missing:
-        raise RuntimeError("Missing dependencies: " + ", ".join(missing))
+        message = "Missing dependencies: " + ", ".join(missing)
+        if "en_core_web_sm" in missing:
+            message += (
+                ". Install the English model on the API host: "
+                ".venv-plp/bin/python3 -m spacy download en_core_web_sm"
+            )
+        raise RuntimeError(message)
     from config import aspect_taxonomy, model_version
 
     config = aspect_taxonomy.load()

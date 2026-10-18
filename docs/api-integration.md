@@ -44,9 +44,14 @@ requests show service errors.
 
 ## Manual pipeline API (milestone 2)
 
-The Data Management UI follows in milestone 3. These endpoints already let
-a client select local sources, launch a separate worker, and poll its saved
-status. They do not run model inference in the API process.
+The dashboard's Data Management page uses these endpoints through
+`dashboard/pipeline_client.py`. A client can select local sources, launch a
+separate worker, and poll its saved status. Model inference runs in the worker.
+**All PDF sources** submits both supported keys. It does not launch online
+collectors. Source cards show compact folder names, with each API-host path
+under **Folder locations**. The absolute paths are resolved by the existing
+extractors from their checkout location; each teammate can use a different
+checkout directory.
 
 | Method and path | Result |
 |---|---|
@@ -89,9 +94,15 @@ History summaries omit the full file lists; `warnings_count` and
 `documents_inserted` are counts recorded so far, not an estimate of remaining
 work. Fetch the per-run URL for detailed results. Pending stages remain
 pending if an earlier stage fails; earlier committed data is retained.
-Keep showing an update-in-progress indicator until the active run ends,
-then clear the dashboard's cached index/evidence/trend/source/suggestion
-responses. Cache refresh is part of milestone 3.
+The dashboard polls every two seconds and shows an update-in-progress notice
+on the other tabs. Terminal run records invalidate its cached
+index/evidence/trend/series/source/analyst/suggestion responses and reload
+the page. Failed/interrupted runs also invalidate caches because earlier
+stages may have committed evidence. Chat history is retained. Run controls
+are disabled during active jobs or unavailable status checks; start errors
+require a status check and never cause automatic POST retries. Source folder
+paths refer to the API host. Data Management remains accessible without an
+existing sentiment index.
 
 The launcher reserves the existing process lock before saving a queued job
 and passes that same lock to its worker, so there is no unlocked startup

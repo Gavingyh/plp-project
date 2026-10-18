@@ -12,6 +12,10 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 class ApiError(RuntimeError):
     """The API request failed or returned an invalid response."""
 
+    def __init__(self, message: str, *, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+
 
 def request_json(
     method: str,
@@ -48,7 +52,8 @@ def request_json(
         if exc.response is None:
             raise ApiError(f"The API returned an HTTP error for {path}.") from exc
         raise ApiError(
-            f"The API returned HTTP {exc.response.status_code} for {path}."
+            f"The API returned HTTP {exc.response.status_code} for {path}.",
+            status_code=exc.response.status_code,
         ) from exc
     except requests.RequestException as exc:
         raise ApiError("The API request failed.") from exc

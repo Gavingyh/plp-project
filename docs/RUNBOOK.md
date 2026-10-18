@@ -123,8 +123,20 @@ header containing `/pipeline/runs/<run_id>`; poll it every two seconds for
 stage results. `GET /pipeline/runs` lists recent run summaries and the active
 ID. A missing model or source folder appears as a failed run at that URL.
 HTTP 409 means another run is active; 503 means worker launch or state storage
-failed. The API responds without waiting for inference. There is no dashboard
-run button until milestone 3.
+failed. The API responds without waiting for inference.
+
+The dashboard also provides **Data Management**, below Ask in the sidebar:
+place PDFs in the displayed API-host folders, select one or both sources,
+or **All PDF sources**, and click **Run selected sources**. All selects
+earnings and broker research PDFs; online collection remains separate.
+Folder paths are resolved from the API checkout location and can be viewed
+under **Folder locations**. This writes to the configured database.
+The page polls progress every two seconds and keeps the latest 20 runs
+available for inspection. Controls are disabled while a run is active;
+after an uncertain start, use **Check run status** before retrying. Other
+tabs display an update notice and reload cached data when the run ends.
+Existing chat messages are preserved. The page remains accessible when the
+sentiment index is empty; it still needs a working API connection.
 
 Run records and logs are saved under `data/run/pipeline/`. Restarting the API
 does not stop a running worker. Completed data remains after a later failure;

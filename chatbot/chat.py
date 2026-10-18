@@ -25,10 +25,15 @@ def format_turn(turn) -> str:
     flags = []
     if turn.guard:
         flags.append(f"answered by the {turn.guard} guard, not the model")
-    if turn.citation_unverified:
+    shown = turn.shown_flags()
+    if shown["citation_unverified"]:
         flags.append("cites evidence the tools never returned: don't trust it")
-    if turn.unverified_numbers:
-        flags.append("figures matching nothing the tools returned: " + ", ".join(map(str, turn.unverified_numbers)))
+    if shown["unverified_numbers"]:
+        flags.append("figures matching nothing the tools returned: " + ", ".join(map(str, shown["unverified_numbers"])))
+    if shown["unverified_readings"]:
+        flags.append("describes the mood in words the tools never returned: " + ", ".join(shown["unverified_readings"]))
+    if getattr(turn, "repaired", None):
+        flags.append(f"(checked before it was shown: {turn.repaired})")
     if flags:
         lines += [""] + [f"  [!] {f}" for f in flags]
     return "\n".join(lines)

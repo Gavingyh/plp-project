@@ -24,6 +24,7 @@ classDiagram
     +model_answer
     +citation_unverified
     +unverified_numbers
+    +unverified_readings
   }
   class agent {
     <<module>>
@@ -45,6 +46,7 @@ classDiagram
   class guards {
     <<module>>
     +unverified_numbers(answer, tool_results, question)
+    +unverified_readings(answer, tool_results)
     +unverified_sentence_ids(answer, retrieved_ids)
   }
   class tools {
@@ -98,18 +100,18 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:2272` | `class Conversation:` |
-| state fields | `chatbot/agent.py:2278` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:2282` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:2140` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:2153` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:757` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:919` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:2441` | `class Conversation:` |
+| state fields | `chatbot/agent.py:2447` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:2451` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:2159` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:2307` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:776` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:938` | `def answer_has_unverified_citation(self, answer: str)` |
 | intent | `chatbot/intent.py:108` | `def classify_intent(question: str` |
 | reply_for | `chatbot/intent.py:127` | `def reply_for(intent` |
-| guards | `chatbot/guards.py:312` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
-| intent and model_answer kept | `chatbot/agent.py:2146` | `intent: str` |
-| tools | `chatbot/tools.py:667` | `TOOL_FUNCTIONS = {` |
+| guards | `chatbot/guards.py:315` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
+| intent and model_answer kept | `chatbot/agent.py:2165` | `intent: str` |
+| tools | `chatbot/tools.py:808` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:87` | `class OllamaBackend(LLMBackend):` |

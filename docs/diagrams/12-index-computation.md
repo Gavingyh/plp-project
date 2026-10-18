@@ -63,7 +63,7 @@ Each row names the file and line an element comes from, and the text that line m
 | shrinkage constant | `aggregate/index.py:45` | `SHRINKAGE_K = 5` |
 | deleted and rewritten | `aggregate/index.py:323` | `conn.execute("DELETE FROM sentiment_index")` |
 | volume floor | `aggregate/index.py:46` | `MIN_N = 5` |
-| volume floor, applied when read | `chatbot/tools.py:29` | `MIN_VOLUME_FOR_SCORE = MIN_N` |
+| volume floor, applied when read | `chatbot/tools.py:30` | `MIN_VOLUME_FOR_SCORE = MIN_N` |
 | time-series floor | `aggregate/index.py:156` | `min_n: int = MIN_N` |
-| thin buckets left off the chart | `docs/api-integration.md:87` | `gap, not a line through them, and not a zero.` |
-| insufficient data reported | `chatbot/tools.py:108` | `if n < MIN_VOLUME_FOR_SCORE:` |
+| thin buckets left off the chart | `docs/api-integration.md:98` | `gap, not a line through them, and not a zero.` |
+| insufficient data reported | `chatbot/tools.py:109` | `if n < MIN_VOLUME_FOR_SCORE:` |

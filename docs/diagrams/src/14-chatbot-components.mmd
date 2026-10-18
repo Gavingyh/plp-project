@@ -19,6 +19,7 @@ classDiagram
     +model_answer
     +citation_unverified
     +unverified_numbers
+    +unverified_readings
   }
   class agent {
     <<module>>
@@ -40,6 +41,7 @@ classDiagram
   class guards {
     <<module>>
     +unverified_numbers(answer, tool_results, question)
+    +unverified_readings(answer, tool_results)
     +unverified_sentence_ids(answer, retrieved_ids)
   }
   class tools {

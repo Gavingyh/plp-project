@@ -17,6 +17,6 @@ sequenceDiagram
     conv->>turn: same turn as the terminal chat (diagram 08)
     turn-->>conv: TurnResult
     conv-->>api: TurnResult
-    api-->>client: answer, guard, citation_unverified, unverified_numbers
+    api-->>client: answer, guard, citation_unverified, unverified_numbers, unverified_readings
   end
   Note over client,api: the client keeps the conversation and sends it back next time

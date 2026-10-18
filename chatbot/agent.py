@@ -71,9 +71,10 @@ from config.logging_config import get_logger, setup_logging
 from chatbot import intent as intents
 from chatbot import progress
 from chatbot import settings
-from chatbot.guards import _ABBREVIATION, is_evidence_text_key, unverified_numbers, unverified_sentence_ids
+from chatbot.guards import (_ABBREVIATION, is_evidence_text_key, returned_readings, unverified_numbers,
+                            unverified_readings, unverified_sentence_ids)
 from chatbot.prompts import SYSTEM_PROMPT, with_state
-from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments
+from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments, default_period_sentence
 from ingest.base import BANK_NAMES, detect_banks
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -531,6 +532,24 @@ EMPTY_ANSWER_REPLY = (
 UNVERIFIED_NUMBER_WARNING = (
     "\n\n⚠️ NUMBER CHECK: {figures} did not match any value the tools returned for this "
     "question. Treat {them} as unverified."
+)
+
+UNVERIFIED_READING_WARNING = (
+    "\n\n⚠️ READING CHECK: {words} is not the reading the tools gave for this question "
+    "({returned}). Treat that description of the mood as unverified."
+)
+
+WITHHELD_REPLY = (
+    "I couldn't back up an answer to that with the data I have, so I haven't given one. Try asking "
+    "about one bank or topic at a time, for example \"How is sentiment on OCBC's dividends?\""
+)
+
+# Said to the model when its answer is rejected, added to its instructions for the second try.
+REWRITE_NOTE = (
+    "\n\nYOUR PREVIOUS ANSWER WAS REJECTED because it {problems}. Call the tools for this question now "
+    "(get_sentiment, compare_banks or get_trend for a score, search_evidence for what people say), even if "
+    "an earlier turn covered the same bank, then write the answer again using only what they return. "
+    "Do not repeat the rejected wording."
 )
 
 EVIDENCE_REMOVED_NOTE = (
@@ -2147,7 +2166,142 @@ class TurnResult:
     model_answer: str | None = None          # the answer before the harness's warnings were appended
     citation_unverified: bool = False
     unverified_numbers: list = field(default_factory=list)
+    unverified_readings: list = field(default_factory=list)   # "neutral", "slightly positive"... no tool returned
     evidence_enforced: str | None = None     # "strip" or "search" if CHATBOT_ENFORCE_EVIDENCE removed evidence
+    retried: bool = False                    # the first answer failed a check and the model wrote it again
+    repaired: str | None = None              # "rewritten", "trimmed" or "withheld": what verification did (CHATBOT_VERIFY_BEFORE_REPLY)
+    verified: bool = False                   # the answer shown holds nothing the checks flagged (the flags above are the first draft's)
+
+    def shown_flags(self) -> dict:
+        """The three flags as the reader should see them: none, when the answer shown was verified."""
+        if self.verified:
+            return {"citation_unverified": False, "unverified_numbers": [], "unverified_readings": []}
+        return {"citation_unverified": self.citation_unverified, "unverified_numbers": self.unverified_numbers,
+                "unverified_readings": self.unverified_readings}
+
+
+@dataclass
+class _Checked:
+    """One draft of an answer after the checks: the answer (evidence enforced) and what the checks found."""
+    answer: str
+    citation: bool = False
+    figures: list = field(default_factory=list)
+    readings: list = field(default_factory=list)
+    enforced: str | None = None
+
+    @property
+    def clean(self) -> bool:
+        return not (self.citation or self.figures or self.readings)
+
+    def problems(self) -> str:
+        found = []
+        if self.figures:
+            found.append("stated " + ", ".join(self.figures) + ", which no tool returned for this question")
+        if self.readings:
+            found.append("described the mood as " + " and ".join(f'"{w}"' for w in self.readings)
+                         + ", which is not the reading the tools gave")
+        if self.citation:
+            found.append("cited evidence no search returned")
+        return " and ".join(found)
+
+
+def _periods(obj, out: list[str], key: str = "period") -> None:
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if str(k) == key and isinstance(v, str):
+                if v not in out:
+                    out.append(v)
+            else:
+                _periods(v, out, key)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _periods(v, out, key)
+
+
+def period_footer(tracker: "_ToolCallTracker") -> str:
+    """The line under an answer naming the period its tools covered, from their own `period` fields,
+    so the reader is told even when the model does not say it ("DBS's app" was searched over the last 30
+    days, a window the model chose, and the answer never said so), and what a default was when no
+    period was asked for: the standing rule, whether or not the model passed a window itself.
+    Empty when no tool gave a period."""
+    periods: list[str] = []
+    _periods(_model_results(tracker), periods)
+    if not periods:
+        return ""
+    return f"Period searched: {'; '.join(periods)}. {default_period_sentence()}"
+
+
+def _model_results(tracker: "_ToolCallTracker") -> list:
+    return [c.get("result") for c in tracker.calls if c.get("by") != "harness"]
+
+
+def _figure_and_reading_flags(answer: str, tracker: "_ToolCallTracker", question: str) -> tuple[list, list]:
+    """The figures and the reading words in the model's own text that no tool returned.
+    Only the model's own text and calls: a harness search run afterwards must
+    not vouch for figures the model wrote before it, and the real quotes the
+    harness added are not the model's figures.
+    A marker read as plain numbers ("[12-45]" is 12 and 45, not 12 and -45),
+    and one dropped from the answer checked all the same, so a figure in
+    brackets can't escape the check (found in validation). A citation
+    marker is a single digit, which is never checked."""
+    body = answer.split(EVIDENCE_FOUND_HEADING)[0]
+    checked = _BARE_MARK.sub(lambda m: " " + re.sub(r"\D+", " ", m.group(0)) + " ", body)
+    checked += "".join("\n" + re.sub(r"\D+", " ", g) for g in tracker.dropped_marks)
+    results = _model_results(tracker)
+    return unverified_numbers(checked, results, question), unverified_readings(body, results)
+
+
+def _check_answer(answer: str, tracker: "_ToolCallTracker", question: str, mode: str, verbose: bool) -> _Checked:
+    """The checks on one draft: evidence enforced (enforce_evidence), then the figures and the readings."""
+    enforced_mode = None
+    enforced, flagged = enforce_evidence(answer, tracker, question, mode)
+    if enforced != answer:
+        # Evidence went, not only a stray marker or the quote marks around the model's own words.
+        plain = _drop_bare_marks(_decoded_marks(answer))
+        if enforced not in (plain, _demark(plain, tracker)):
+            if verbose:
+                logger.warning("evidence no search returned was removed (%s)", mode)
+            enforced_mode = mode
+    if flagged and verbose:
+        logger.warning("citation check failed: answer contains evidence not actually retrieved via search_evidence")
+    figures, readings = _figure_and_reading_flags(enforced, tracker, question)
+    if figures and verbose:
+        logger.warning("number check failed: %s not returned by any tool", figures)
+    if readings and verbose:
+        logger.warning("reading check failed: %s not returned by any tool (%s)", readings,
+                       sorted(returned_readings(_model_results(tracker))))
+    return _Checked(enforced, bool(flagged), figures, readings, enforced_mode)
+
+
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+
+
+def _trim_unverified(draft: _Checked, tracker: "_ToolCallTracker", question: str) -> str | None:
+    """The draft without the sentences that state a figure or a reading no tool returned, checked
+    again until nothing is flagged; None if too little is left to be an answer. When the draft
+    still cites evidence no search returned (not in strip mode, which leaves nothing to raise)
+    nothing is kept."""
+    if draft.citation:
+        return None
+    text, figures, readings = draft.answer.split(EVIDENCE_FOUND_HEADING)[0], draft.figures, draft.readings
+    for _ in range(4):
+        bad = [re.compile(r"(?<![\w.])" + re.escape(f.lstrip("+-\u2212")) + r"(?![\w])") for f in figures]
+        bad += [re.compile(r"\b" + re.sub(r"\s+", r"\\s+", re.escape(w)) + r"\b", re.IGNORECASE) for w in readings]
+        kept = []
+        for line in text.split("\n"):
+            pieces = _SENTENCE_END.split(line)
+            keep = [p for p in pieces if not any(b.search(p) for b in bad)]
+            if keep:
+                kept.append(" ".join(keep))
+            elif not line.strip():
+                kept.append(line)
+        text = re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip()
+        figures, readings = _figure_and_reading_flags(text, tracker, question)
+        if not (figures or readings):
+            break
+    else:
+        return None
+    return text if _word_count(text) >= 4 else None
 
 
 def answer_turn(question: str, backend_name: str | None = None, history: list | None = None,
@@ -2175,54 +2329,62 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
 
     tracker = _ToolCallTracker(earlier_calls)
     tracker.on_step = on_step
-    progress.notify(on_step, progress.Step("think", "Deciding what to look up, then writing the answer", done=False))
-    answer = backend.ask(question, with_state(SYSTEM_PROMPT, state), TOOL_SCHEMAS,
-                         tracker.execute, verbose=verbose, history=history)
-    progress.notify(on_step, progress.Step("check", "Checking quotes and figures against the data", done=False))
-    if not (answer or "").strip(" \n{}[]\"'"):
-        # An empty answer, or a bare "{}" from a model that tried to emit a tool call
-        # as text. The replacement is the harness's own text, so it skips the checks.
-        progress.notify(on_step, progress.Step("done", "Done", "the model gave no answer"))
-        return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls)
-    result = TurnResult(question=question, answer=answer, calls=tracker.calls, intent=intent)
-
+    verify = bool(settings.get("verify_before_reply"))
     mode = enforce_evidence_mode()
-    enforced, flagged = enforce_evidence(answer, tracker, question, mode)
-    if enforced != answer:
-        # Evidence went, not only a stray marker or the quote marks around the model's own words.
-        plain = _drop_bare_marks(_decoded_marks(answer))
-        if enforced not in (plain, _demark(plain, tracker)):
+    if verify and mode == "off":
+        mode = "strip"            # nothing is shown with evidence no search returned
+    base_system = with_state(SYSTEM_PROMPT, state)
+    system, draft, first, retried = base_system, None, None, False
+    tries = 1 + (max(int(settings.get("verify_retries") or 0), 0) if verify else 0)
+    for attempt in range(tries):
+        if attempt:
+            tracker.dropped_marks.clear()
+            progress.notify(on_step, progress.Step("think", "Checking the answer against the data, writing it again",
+                                                   done=False))
+        else:
+            progress.notify(on_step, progress.Step("think", "Deciding what to look up, then writing the answer",
+                                                   done=False))
+        answer = backend.ask(question, system, TOOL_SCHEMAS, tracker.execute, verbose=verbose, history=history)
+        progress.notify(on_step, progress.Step("check", "Checking quotes and figures against the data", done=False))
+        if not (answer or "").strip(" \n{}[]\"'"):
+            # An empty answer, or a bare "{}" from a model that tried to emit a tool call
+            # as text. The replacement is the harness's own text, so it skips the checks.
+            if draft is not None:
+                break             # a rewrite that came back empty: the first draft is trimmed below
+            progress.notify(on_step, progress.Step("done", "Done", "the model gave no answer"))
+            return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls)
+        draft = _check_answer(answer, tracker, question, mode, verbose)
+        first = first or draft
+        if draft.clean or not verify or attempt == tries - 1:
+            break
+        retried = True
+        system = base_system + REWRITE_NOTE.format(problems=draft.problems())
+    result = TurnResult(question=question, answer=draft.answer, calls=tracker.calls, intent=intent,
+                        citation_unverified=first.citation, unverified_numbers=first.figures,
+                        unverified_readings=first.readings, evidence_enforced=first.enforced, retried=retried)
+    result.model_answer = draft.answer
+    if verify:
+        result.verified = True
+        if not draft.clean:
+            trimmed = _trim_unverified(draft, tracker, question)
+            result.repaired = "trimmed" if trimmed else "withheld"
+            result.answer = trimmed or WITHHELD_REPLY
             if verbose:
-                logger.warning("evidence no search returned was removed (%s)", mode)
-            result.evidence_enforced = mode
-        answer = result.answer = enforced
-
-    result.model_answer = answer
-    if flagged:
-        if verbose:
-            logger.warning("citation check failed: answer contains evidence not "
-                           "actually retrieved via search_evidence")
-        result.citation_unverified = True
-        result.answer += UNVERIFIED_CITATION_WARNING
-
-    # Only the model's own text and calls: a harness search run afterwards must
-    # not vouch for figures the model wrote before it, and the real quotes the
-    # harness added are not the model's figures.
-    # A marker read as plain numbers ("[12-45]" is 12 and 45, not 12 and -45),
-    # and one dropped from the answer checked all the same, so a figure in
-    # brackets can't escape the check (found in validation). A citation
-    # marker is a single digit, which is never checked.
-    body = answer.split(EVIDENCE_FOUND_HEADING)[0]
-    checked = _BARE_MARK.sub(lambda m: " " + re.sub(r"\D+", " ", m.group(0)) + " ", body)
-    checked += "".join("\n" + re.sub(r"\D+", " ", g) for g in tracker.dropped_marks)
-    figures = unverified_numbers(checked, [c.get("result") for c in tracker.calls if c.get("by") != "harness"],
-                                 question)
-    if figures:
-        if verbose:
-            logger.warning("number check failed: %s not returned by any tool", figures)
-        result.unverified_numbers = figures
-        result.answer += UNVERIFIED_NUMBER_WARNING.format(
-            figures=", ".join(figures), them="it" if len(figures) == 1 else "them")
+                logger.warning("answer %s: it kept %s", result.repaired, draft.problems())
+        elif retried:
+            result.repaired = "rewritten"
+    else:
+        if first.citation:
+            result.answer += UNVERIFIED_CITATION_WARNING
+        if first.figures:
+            result.answer += UNVERIFIED_NUMBER_WARNING.format(
+                figures=", ".join(first.figures), them="it" if len(first.figures) == 1 else "them")
+        if first.readings:
+            returned = sorted(returned_readings(_model_results(tracker)))
+            result.answer += UNVERIFIED_READING_WARNING.format(
+                words=" and ".join(f"\"{w}\"" for w in first.readings), returned=", ".join(returned) or "none")
+    if result.repaired != "withheld" and (footer := period_footer(tracker)):
+        result.answer = result.answer.rstrip() + "\n\n" + footer
     result.answer = number_citations(result.answer, tracker)
     progress.notify(on_step, progress.Step("check", "Checked quotes and figures", _check_summary(result)))
     progress.notify(on_step, progress.Step("done", "Done"))
@@ -2240,12 +2402,19 @@ _FIXED_REPLY_KIND = {"advice": "an investment-advice question", "other_bank": "a
 def _check_summary(result: TurnResult) -> str:
     """One line on what the checks did to this answer."""
     notes = []
+    if result.repaired:
+        notes.append({"rewritten": "found a problem in the first answer and wrote it again",
+                      "trimmed": "left out what it couldn't confirm",
+                      "withheld": "couldn't confirm an answer, so gave none"}[result.repaired])
     if result.evidence_enforced:
         notes.append("removed quotes no search returned")
-    if result.citation_unverified:
-        notes.append("flagged evidence it couldn't confirm")
-    if result.unverified_numbers:
-        notes.append("flagged " + ", ".join(result.unverified_numbers))
+    if not result.verified:
+        if result.citation_unverified:
+            notes.append("flagged evidence it couldn't confirm")
+        if result.unverified_numbers:
+            notes.append("flagged " + ", ".join(result.unverified_numbers))
+        if result.unverified_readings:
+            notes.append("flagged the reading " + ", ".join(result.unverified_readings))
     return "; ".join(notes) if notes else "everything matches what the tools returned"
 
 
@@ -2265,7 +2434,7 @@ def _strip_warnings(answer: str) -> str:
     the numbered markers and the list of sources the reader saw. Neither can be
     checked on a later turn, which has no record of the searches behind them
     (found in validation)."""
-    text = answer.split("\n\n⚠️")[0].split("\n\nSources:\n")[0]
+    text = answer.split("\n\n⚠️")[0].split("\n\nSources:\n")[0].split("\n\nPeriod searched:")[0]
     return _BARE_MARK.sub("", text)
 
 

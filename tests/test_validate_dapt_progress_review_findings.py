@@ -125,9 +125,9 @@ def test_an_odd_tool_result_never_breaks_a_turn_without_a_display(monkeypatch):
 
         def ask(self, question, system, schemas, execute, verbose=True, history=None):
             execute("get_sentiment", {"bank": "DBS"})
-            return "DBS reads slightly positive."
+            return "DBS reads well."
     r = agent.answer_turn("How is DBS?", backend=Model(), verbose=False)
-    assert r.answer.startswith("DBS reads slightly positive")
+    assert r.answer.startswith("DBS reads well")
 
 
 # ----- Base model not recorded --------------------------------------------------

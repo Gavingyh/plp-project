@@ -13,9 +13,10 @@ confabulating when it doesn't.
 
 import re
 import sqlite3
+from datetime import date, timedelta
 
 import config.model_version as current_model
-from aggregate.index import MIN_N, SHRINKAGE_K, compute_time_series
+from aggregate.index import MIN_N, SHRINKAGE_K, WINDOWS, compute_time_series, data_as_of
 from chatbot import settings
 from chatbot.retrieval import search_evidence as _search_evidence
 from config import aspect_taxonomy
@@ -332,6 +333,8 @@ def _for_reader(result: dict) -> dict:
     out = {k: v for k, v in result.items() if k not in _NOT_FOR_THE_READER}
     if "aspect" in out:
         out["topic_name"] = _topic_name(out["aspect"])
+    if out.get("window") in WINDOWS and (period := period_text(out["window"])):
+        out["period"] = period
     if out.get("insufficient_data") is False and out.get("n"):
         out["reading"] = reading(out["score"])
         for label in ("positive", "neutral", "negative"):
@@ -365,12 +368,49 @@ def _topics(bank: str, window: str) -> tuple[list[dict], list[dict]]:
     return topics[:k], topics[k:][::-1][:k]
 
 
-def chat_get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time") -> dict:
+def _default_window() -> str:
+    """The period used when none is asked for (config/chatbot.yaml, default_window)."""
+    window = settings.get("default_window")
+    return window if window in WINDOWS else "30d"
+
+
+def _label(window: str) -> str:
+    days = WINDOWS.get(window)
+    return f"the last {days} days" if days else "all stored data"
+
+
+def default_period_sentence() -> str:
+    """The rule for the reader, under every answer that searched: what is used when no period is named."""
+    window = _default_window()
+    if window == "all_time":
+        return "If no period is named, all stored data is used."
+    return f"If no period is named, {_label(window)} is used, or all stored data if that holds too little."
+
+
+def _defaulted(window: str) -> str:
+    return f"No period was asked for, so {_label(window)} is used."
+
+
+def _too_little(window: str) -> str:
+    return f"No period was asked for. {_label(window).capitalize()} held too little to report, so all stored data is used."
+
+
+def chat_get_sentiment(bank: str, aspect: str | None = None, window: str | None = None) -> dict:
     """One bank's score, with the other two banks' for the same topic and
     window: told to say how a bank compares, a local model asked about DBS
     alone said it ranked above OCBC, and asked about OCBC that it ranked below
-    both. OCBC was the highest of the three."""
+    both. OCBC was the highest of the three. With no window the default
+    period is used, or all stored data if that holds too little to report;
+    `period_note` says which, for the reader."""
+    asked, window = window, window or _default_window()
     out = _for_reader(get_sentiment(bank, aspect, window))
+    note = None
+    if asked is None:
+        if out.get("insufficient_data") and window != "all_time":
+            note, window = _too_little(window), "all_time"
+            out = _for_reader(get_sentiment(bank, aspect, window))
+        else:
+            note = _defaulted(window)
     if out.get("insufficient_data") is False:
         peers = chat_compare_banks(aspect, window)
         out["ranking_high_to_low"] = peers["ranking_high_to_low"]
@@ -379,16 +419,31 @@ def chat_get_sentiment(bank: str, aspect: str | None = None, window: str = "all_
         if out["aspect"] == "ALL":
             out["strongest_topics"], out["weakest_topics"] = _topics(bank, window)
     out["data_runs_to"] = _data_runs_to(bank)
+    if note and out.get("period"):
+        out["period_note"] = note
     return out
 
 
-def chat_compare_banks(aspect: str | None = None, window: str = "all_time") -> dict:
+def chat_compare_banks(aspect: str | None = None, window: str | None = None) -> dict:
+    asked, window = window, window or _default_window()
     result = compare_banks(aspect, window)
+    note = None
+    if asked is None:
+        if window != "all_time" and any(r.get("insufficient_data") for r in result["banks"].values()):
+            note, window = _too_little(window), "all_time"
+            result = compare_banks(aspect, window)
+        else:
+            note = _defaulted(window)
     banks = {b: _for_reader(r) for b, r in result["banks"].items()}
     ranked = sorted((b for b, r in banks.items() if r.get("insufficient_data") is False),
                     key=lambda b: banks[b]["score"], reverse=True)
-    return {**result, "topic_name": _topic_name(result["aspect"]), "banks": banks,
-            "ranking_high_to_low": ranked, "data_runs_to": _data_runs_to()}
+    out = {**result, "topic_name": _topic_name(result["aspect"]), "banks": banks,
+           "ranking_high_to_low": ranked, "data_runs_to": _data_runs_to()}
+    if period := period_text(window):
+        out["period"] = period
+        if note:
+            out["period_note"] = note
+    return out
 
 
 def _month_on_month(series: list[dict]) -> dict:
@@ -538,20 +593,85 @@ def _pick_evidence(pool: list[dict], k: int, polar_boost: float) -> list[dict]:
     return (picked + held_back)[:k]
 
 
+def _day(iso: str) -> str:
+    d = date.fromisoformat(iso[:10])
+    return f"{d.day} {d:%b %Y}"
+
+
+def period_text(window: str, newest: str | None = None) -> str:
+    """The days a window covers, in words for the reader: "the last 30 days of data (26 Aug 2026 to
+    25 Sep 2026)", or "all stored data, up to 25 Sep 2026". The 7- and 30-day windows count back from
+    the newest stored sentence, not from today (aggregate.index.as_of_fields). Empty before any data
+    is stored, or when the database has no such table (a fresh copy)."""
+    try:
+        newest = newest or data_as_of()
+    except sqlite3.Error:
+        return ""
+    if not newest:
+        return ""
+    days = WINDOWS.get(window)
+    if not days:
+        return f"all stored data, up to {_day(newest)}"
+    start = date.fromisoformat(newest) - timedelta(days=days)
+    return f"the last {days} days of data ({_day(start.isoformat())} to {_day(newest)})"
+
+
+def _evidence_from(window: str) -> str | None:
+    """The first day a search is limited to for a 7- or 30-day window: the days
+    the index counts back from its newest stored sentence (aggregate.index.
+    as_of_fields), not from today. None for all_time, or before any data."""
+    days, newest = WINDOWS.get(window), data_as_of()
+    if not days or not newest:
+        return None
+    return (date.fromisoformat(newest) - timedelta(days=days)).isoformat()
+
+
 def chat_search_evidence(query: str, bank: str | None = None, aspect: str | None = None,
-                         sentiment: str | None = None, k: int = 5) -> dict:
+                         sentiment: str | None = None, k: int = 5, window: str | None = None) -> dict:
+    """Evidence for the question, in the window asked about (a quote and the
+    score beside it cover the same days). Asked for "the last week", the
+    search once ranked the whole corpus and the score beside it was all-time,
+    yet the answer read as about the last week. With no window the default
+    period is searched, and all stored data if that finds nothing; `period_note`
+    says which, for the reader."""
+    asked, window = window, window or _default_window()
+    out = _search_in(query, bank, aspect, sentiment, k, window)
+    if asked is None:
+        if not out["results"] and window != "all_time":
+            note = f"No period was asked for. Nothing was found in {_label(window)}, so all stored data was searched."
+            out = _search_in(query, bank, aspect, sentiment, k, "all_time")
+        else:
+            note = _defaulted(window)
+        if out.get("period"):
+            out["period_note"] = note
+    return out
+
+
+def _search_in(query: str, bank: str | None, aspect: str | None, sentiment: str | None, k: int,
+               window: str) -> dict:
     k = max(int(k), 0)
-    pool = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment,
+    date_from = _evidence_from(window)
+    pool = _search_evidence(query, bank=bank, aspect=aspect, sentiment=sentiment, date_from=date_from,
                             k=k * settings.get("evidence.pool_factor"))
     boost = 0.0 if sentiment else settings.get("evidence.polar_boost")
     out = _package_evidence(query, _pick_evidence(pool, k, boost))
     for item in out["results"]:
         item["source_name"] = source_config.label(item.get("source"))
-    out.update(_evidence_context(bank, aspect))
+    out.update(_evidence_context(bank, aspect, window, query))
+    if date_from:
+        out["evidence_from"], out["evidence_to"] = date_from, data_as_of()
+    if period := period_text(window):
+        out["period"] = period            # the days the quotes and the score beside them cover
+    if not out["results"]:
+        # Without this the model saw an empty list beside the bank's overall score and wrote
+        # the score up as the view on the question ("what do people think of DBS's app").
+        out["no_evidence"] = (f"Nothing was found for the search about {query}"
+                              + (f" about {bank}" if bank else "") + (" in that period" if date_from else "")
+                              + ". Say so first. The score here is not about what was searched for.")
     return out
 
 
-def _evidence_context(bank: str | None, aspect: str | None) -> dict:
+def _evidence_context(bank: str | None, aspect: str | None, window: str = "all_time", query: str = "") -> dict:
     """What a search alone leaves the model to guess: the bank's score for
     the topic, read as get_sentiment reads it, and the date the data runs to.
     Asked what people say and how they feel, a local model
@@ -561,18 +681,35 @@ def _evidence_context(bank: str | None, aspect: str | None) -> dict:
     out = {}
     try:
         if bank:
-            r = _for_reader(get_sentiment(bank, aspect))
+            r = _for_reader(get_sentiment(bank, aspect, window))
             # Named for what it is: given the bank's overall score under a neutral name, the
             # model reported it as the score for the topic it had asked about.
             # The neutral share too: a model that worked it out from the other two was flagged
             # for a figure no tool returned (found in validation).
-            out["topic_score" if aspect else "bank_overall_score"] = {
-                k: r[k] for k in ("topic_name", "reading", "score", "n", "positive_pct", "neutral_pct",
-                                  "negative_pct", "insufficient_data") if k in r}
+            score = {k: r[k] for k in ("topic_name", "window", "reading", "score", "n", "positive_pct",
+                                       "neutral_pct", "negative_pct", "insufficient_data") if k in r}
+            # What the score covers: it is the stored figure for the bank or the topic, whatever
+            # the question searched for ("DBS app" has no score of its own).
+            covers = (f"{bank}'s score for the topic {r.get('topic_name')}" if aspect
+                      else f"{bank}'s overall score across all topics")
+            score["covers"] = covers + (f", not a score for the search about {query}" if query else "")
+            if not aspect:
+                # The model is meant to pick a topic when one fits; when it did not, it says so.
+                score["covers"] += (". No topic was chosen: if the question fits none of the topics, say that "
+                                    "no matching topic was found and that this is the overall")
+            out["topic_score" if aspect else "bank_overall_score"] = score
         out["data_runs_to"] = _data_runs_to(bank)
     except sqlite3.Error as e:
         logger.warning("no score or data date for the evidence: %s", e)
     return out
+
+
+SENTIMENT_LABELS = ("positive", "neutral", "negative")
+_WINDOW_PROP = {"type": "string", "enum": list(WINDOWS),
+                "description": "The period the user named: 7d for 'the last week', 30d for 'the last month', "
+                               "all_time for all the data. Leave it out when they named none. "
+                               + default_period_sentence() + " A search is "
+                               "limited to those days and the score beside it covers them."}
 
 
 # Anthropic tool-use schema for the four structured-data tools + search_evidence.
@@ -591,6 +728,7 @@ TOOL_SCHEMAS = [
                            "description": "One of the frozen aspect keys, using underscores "
                                           "(e.g. \"dividend_policy\", not \"dividend policy\"), "
                                           "or omit for overall sentiment."},
+                "window": _WINDOW_PROP,
             },
             "required": ["bank"],
         },
@@ -600,7 +738,7 @@ TOOL_SCHEMAS = [
         "description": "Compare sentiment across all three banks for one aspect, or overall.",
         "input_schema": {
             "type": "object",
-            "properties": {"aspect": {"type": "string", "enum": ASPECT_KEYS}},
+            "properties": {"aspect": {"type": "string", "enum": ASPECT_KEYS}, "window": _WINDOW_PROP},
         },
     },
     {
@@ -643,8 +781,11 @@ TOOL_SCHEMAS = [
                 "query": {"type": "string", "description": "What to search for, in natural language."},
                 "bank": {"type": "string", "enum": list(BANK_NAMES)},
                 "aspect": {"type": "string", "enum": ASPECT_KEYS},
-                "sentiment": {"type": "string", "enum": ["positive", "neutral", "negative"]},
+                "sentiment": {"type": "string", "enum": list(SENTIMENT_LABELS),
+                              "description": "Only to see complaints (negative) or praise (positive); "
+                                             "leave it out for anything else, never 'all'."},
                 "k": {"type": "integer", "description": "Max results, default 5"},
+                "window": _WINDOW_PROP,
             },
             "required": ["query"],
         },
@@ -714,5 +855,11 @@ def coerce_tool_arguments(tool_name: str, arguments: dict) -> dict:
             value = value.strip().lower() in ("true", "1", "yes")
         elif key == "aspect" and isinstance(value, str):
             value = normalize_aspect(value)
+        elif key == "sentiment" and isinstance(value, str):
+            # llama3.1:8b searched with sentiment="all", which matched nothing: only a real
+            # label filters, and anything else ("all", "any") means no filter.
+            value = value.strip().lower()
+            if value not in SENTIMENT_LABELS:
+                continue
         coerced[key] = value
     return coerced

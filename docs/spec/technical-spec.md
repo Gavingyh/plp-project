@@ -338,8 +338,11 @@ backend converts them to what it needs.
 | `compare_banks` | `aspect` | All three banks |
 | `get_trend` | `bank*`, `aspect` | Direction plus a capped monthly series |
 | `get_coverage` | `bank`, `aspect` | Distinguishes no data from neutral |
-| `search_evidence` | `query*`, `bank`, `aspect`, `sentiment`, `k` | Retrieval; calling this is what makes a citation legitimate |
+| `search_evidence` | `query*`, `bank`, `aspect`, `sentiment`, `k`, `window` | Retrieval; calling this is what makes a citation legitimate. `window` (`7d`, `30d`, `all_time`) limits the quotes to those days and sets the days the attached score covers; `get_sentiment` and `compare_banks` take it too. With none, all stored data (`CHATBOT_DEFAULT_WINDOW`; a `30d` or `7d` default falls back to all stored data when too thin). A `sentiment` other than positive, neutral or negative ("all") is dropped, not applied; a search that finds nothing returns `no_evidence`, and the attached score says what it covers (`covers`). Results carry a `period` in words, and the answer ends with a "Period searched" line built from them |
 | `get_analyst_consensus` | `bank*` | Yahoo aggregates |
+
+The system prompt lists each topic with its definition from `config/aspects.yaml`, so the model can match a
+question to a topic by meaning; if none fits it leaves `aspect` out and says it found no matching topic.
 
 `aspect` arguments are validated against the real taxonomy, so a hallucinated
 aspect name fails loudly instead of returning an empty result that reads like
@@ -376,6 +379,20 @@ instructions alone failed in testing:
    and the response is flagged. Added after a local model invented sources
    twice, once as plausible URLs and once as placeholder tokens a URL-matching
    check alone would have missed.
+3. *Reading check.* A score described in words (`neutral`, `slightly`,
+   `moderately` or `clearly` positive or negative) must use a reading a tool
+   returned for the question (`unverified_readings`). Added on 18 Oct 2026
+   after an answer called a topic "neutral" and "slightly positive" beside a
+   score the tools read as "clearly positive".
+4. *Verified before it is returned.* A draft that fails the citation, figure
+   or reading check is never shown with a warning. The model is told what was
+   wrong and writes the answer again once; a second failure is trimmed to the
+   sentences that pass, and an answer with too little left is replaced by a
+   reply saying no answer could be backed up. The API's three flags are then
+   empty. The first draft's flags stay on the turn for the evaluation
+   (`chatbot/agent.py`, `answer_turn`; `CHATBOT_VERIFY_BEFORE_REPLY`,
+   `CHATBOT_VERIFY_RETRIES`). Added on 18 Oct 2026 after a follow-up ("and
+   UOB?") was answered from no tool call, with three warnings under it.
 
 **Evaluation.** A gold set in `chatbot/eval_gold_set.py` covering lookups,
 comparisons, trends, out-of-scope questions, thin data, evidence requests and
@@ -445,7 +462,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-2523 tests in `tests/` (2570 from the repository root, adding the diagram and
+2666 tests in `tests/` (2713 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.

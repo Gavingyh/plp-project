@@ -40,12 +40,21 @@ def test_a_turn_reports_its_steps_in_order(monkeypatch):
     assert r.answer.startswith("DBS reads slightly positive")
 
 
-def test_a_flagged_figure_shows_in_the_check_step(monkeypatch):
+def test_a_flagged_figure_shows_in_the_check_step_when_verifying_is_off(monkeypatch):
+    monkeypatch.setenv("CHATBOT_VERIFY_BEFORE_REPLY", "false")
     model = _fake_turn(monkeypatch, "DBS scored +0.45 on 120 sentences.",
                        [("get_sentiment", {"bank": "DBS"})])
     steps = []
     agent.answer_turn("How is DBS?", backend=model, verbose=False, on_step=steps.append)
     assert "flagged" in steps[-2].detail and "0.45" in steps[-2].detail
+
+
+def test_an_answer_that_could_not_be_confirmed_says_so_in_the_check_step(monkeypatch):
+    model = _fake_turn(monkeypatch, "DBS scored +0.45 on 120 sentences.",
+                       [("get_sentiment", {"bank": "DBS"})])
+    steps = []
+    r = agent.answer_turn("How is DBS?", backend=model, verbose=False, on_step=steps.append)
+    assert r.repaired == "withheld" and "couldn't confirm" in steps[-2].detail
 
 
 def test_a_set_reply_says_what_kind_of_question_it_was(monkeypatch):

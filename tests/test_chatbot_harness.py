@@ -112,7 +112,8 @@ def test_correct_figure_gets_no_number_warning(fake_sentiment):
     assert r.unverified_numbers == [] and "NUMBER CHECK" not in r.answer
 
 
-def test_wrong_figure_gets_number_warning(fake_sentiment):
+def test_wrong_figure_gets_number_warning_when_verifying_is_off(fake_sentiment, monkeypatch):
+    monkeypatch.setenv("CHATBOT_VERIFY_BEFORE_REPLY", "false")
     r = answer_turn("DBS dividends?", backend=_ToolUsingBackend("Score 0.41 (n=13,452)."),
                     verbose=False)
     assert r.unverified_numbers == ["0.41"] and "NUMBER CHECK" in r.answer
@@ -121,7 +122,7 @@ def test_wrong_figure_gets_number_warning(fake_sentiment):
 # --- memory -----------------------------------------------------------------------------
 
 def test_follow_up_receives_history_and_state(fake_sentiment, monkeypatch):
-    backend = _ToolUsingBackend("Neutral.")
+    backend = _ToolUsingBackend("Noted.")
     monkeypatch.setattr(agent, "get_backend", lambda name=None: backend)
     conv = Conversation()
     conv.ask("What is sentiment on DBS dividends?")
@@ -258,7 +259,7 @@ def test_the_classifier_sees_the_conversation():
 
 
 def test_follow_up_reaches_the_model_in_a_conversation(fake_sentiment, monkeypatch):
-    backend = _ToolUsingBackend("Neutral.")
+    backend = _ToolUsingBackend("Noted.")
     monkeypatch.setattr(agent, "get_backend", lambda name=None: backend)
     conv = Conversation()
     conv.ask("What is sentiment on DBS dividends?")
@@ -290,6 +291,7 @@ def test_enforcement_is_strip_by_default(fake_sentiment, monkeypatch):
 
 def test_enforcement_off_still_flags_and_keeps_the_answer(fake_sentiment, monkeypatch):
     monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "off")
+    monkeypatch.setenv("CHATBOT_VERIFY_BEFORE_REPLY", "false")      # verifying turns "off" into strip
     r = answer_turn("DBS dividends?", backend=_ToolUsingBackend(INVENTED), verbose=False)
     assert r.evidence_enforced is None and r.citation_unverified and "12345" in r.answer
 
@@ -1282,13 +1284,13 @@ def test_answer_turn_does_not_call_carriage_returns_evidence_removed(monkeypatch
         name, model = "fake", "fake"
 
         def ask(self, question, system, schemas, execute, verbose=True, history=None):
-            return "DBS reads slightly positive.\r\nIt is mixed."
+            return "DBS reads well.\r\nIt is mixed."
 
     monkeypatch.setattr(agent.intents, "classify_intent", lambda *a, **k: None)
     monkeypatch.setattr(agent.intents, "reply_for", lambda *a, **k: None)
     monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "strip")
     r = agent.answer_turn("How is DBS?", backend=Backend(), verbose=False)
-    assert r.answer == "DBS reads slightly positive.\nIt is mixed." and r.evidence_enforced is None
+    assert r.answer == "DBS reads well.\nIt is mixed." and r.evidence_enforced is None
 
 
 @pytest.mark.parametrize("text, at, role", [

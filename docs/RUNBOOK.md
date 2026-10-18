@@ -465,17 +465,26 @@ chatbot's prompt and tools; the backend waits out a 429 or 503 (after
 Groq's `Retry-After` when sent) four times. Not yet run against Groq: the
 first successful answer is this setup's verification.
 
-Two warnings
-can be appended to an answer, and both mean "don't trust this part":
-
-- `⚠️ VERIFICATION WARNING`: the model cited evidence (a quote, sentence id or
-  URL) it never retrieved, or put words no search returned in quote marks.
-  With `CHATBOT_ENFORCE_EVIDENCE` at `strip`, the default, such evidence is
-  removed and the quote marks come off such words first (DESIGN decision
-  26), so the warning shows only with `off`.
-- `⚠️ NUMBER CHECK`: a figure in the answer matches nothing the tools returned
-  for that question. The check is strict: a figure the model derived
-  legitimately in an unusual way can also trip it, so read the flagged one.
+An answer is checked before it is returned, and the reader never sees a warning
+(`CHATBOT_VERIFY_BEFORE_REPLY`, on by default since 18 Oct 2026). Each draft is
+checked for three things: evidence (a quote, sentence id or URL) no search
+returned, or words no search returned in quote marks; a figure that matches
+nothing the tools returned for that question (strict: a figure the model
+derived legitimately in an unusual way can also trip it); and a score described
+as "neutral", "slightly positive" or the like in words the tools did not return
+as that score's reading (the bands are in `config/chatbot.yaml`, `reading`; the
+check does not know which score the words describe, so a bank's overall reading
+can vouch for a topic's). A draft that fails is not shown. The model is told
+what was wrong and asked once more (`CHATBOT_VERIFY_RETRIES`); a second draft
+that fails is cut down to the sentences that pass; and if too little is left the
+reply says it could not back up an answer. A turn that was rewritten, trimmed or
+withheld has `repaired` set in the trace and the terminal chat; the first draft's
+flags stay on the turn for the evaluation, and the API and dashboard flags
+(`citation_unverified`, `unverified_numbers`, `unverified_readings`) are empty for
+a verified answer. With no period named, the chatbot's tools use all stored data (`CHATBOT_DEFAULT_WINDOW`, `all_time`; `30d` or `7d` can be set), and the line says so. An answer that used a tool ends with a "Period searched" line, followed by the standing rule ("If no period is named, all stored data is used.") (for example "the last 30 days of data (26 Aug 2026 to 25 Sep 2026)"), added by the harness from the tools' own `period` fields. A rewrite costs a second model call, so a flagged answer
+takes about twice as long. With `CHATBOT_VERIFY_BEFORE_REPLY=false` the old
+behaviour returns: the answer is shown with a `NUMBER CHECK`, `READING CHECK` or
+`VERIFICATION WARNING` under it.
 
 Before the model runs, a local model sorts the question into an intent
 (`chatbot/intent.py`, DESIGN decision 24): buy/sell/hold and price
@@ -502,6 +511,9 @@ changed:
 | `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
+| `CHATBOT_VERIFY_BEFORE_REPLY` | `true` (since 18 Oct) | an answer with a figure, a reading or a quote no tool returned is rewritten, trimmed or withheld before it is returned; `false` shows it with a warning instead |
+| `CHATBOT_DEFAULT_WINDOW` | `all_time` (since 18 Oct) | the chatbot's period when the question names none: `all_time`, `30d` or `7d`; a `30d` or `7d` default that holds too little to report, or a search that finds nothing in it, falls back to all stored data and says so |
+| `CHATBOT_VERIFY_RETRIES` | `1` | times the model is asked to write a failed answer again before it is trimmed |
 | `CHATBOT_ENFORCE_EVIDENCE` | `strip` (since 4 Oct) | `strip` removes evidence no search returned and takes the quote marks off any other words no search returned, so only text a search returned stands in quote marks (the Grounded chatbot claim relies on it; DESIGN decision 26); `search` also adds real quotes the harness finds; `off` only flags it |
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
 | `OLLAMA_KEEP_ALIVE` | `30m` | how long Ollama keeps the local model loaded after a question; a shorter time frees its memory sooner, and the next question then waits for the model to load |
@@ -608,7 +620,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2523 tests in `tests/`; `pytest -q` from the repository root runs 2570,
+2666 tests in `tests/`; `pytest -q` from the repository root runs 2713,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for

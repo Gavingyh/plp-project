@@ -36,7 +36,7 @@ sequenceDiagram
     turn->>g: cited ids and figures against recorded results
     g-->>turn: anything unverified
   end
-  turn-->>conv: TurnResult, with any warnings
+  turn-->>conv: TurnResult, checked before it is returned
   conv->>conv: update state from the tool calls, keep the turn
   conv-->>ui: answer
   ui-->>user: shows the answer

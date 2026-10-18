@@ -251,7 +251,11 @@ Summarised from [STATUS.md](../STATUS.md), which is the authority.
    retrieved, and none does now. A wrong description passes: one gold-set
    question, asked about "the last 7 days", is answered with the all-time
    figure in every recent run
-   ([evidence](../evidence/chatbot-eval-rescored-2026-10-14.md)).
+   ([evidence](../evidence/chatbot-eval-rescored-2026-10-14.md)). Since
+   18 Oct 2026 the evidence search takes a window, a check catches reading
+   words no tool returned, and an answer that fails any check is rewritten,
+   trimmed or withheld before it is returned, with no warning shown; none of
+   this has been run on the gold set yet.
 4. **Bank attribution is by alias matching.** The entity recogniser is
    evaluated but not applied to the stored sentences, so a sentence naming
    only UOB Kay Hian still counts for UOB (258 sentences would change).

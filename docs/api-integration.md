@@ -49,7 +49,7 @@ the earlier interface and the reviewed replacement for the project report.
 | Area | Before | After | Purpose |
 |---|---|---|---|
 | Appearance | Fixed dark background, pastel series colours and small chart labels | Light canvas with white cards by default, a sidebar dark-mode toggle, palettes for both modes and larger labels | Improve readability during the five-minute presentation and allow personal preference |
-| Sidebar | Navigation highlights sized to each label; theme control above navigation; long timestamps and a lengthy note | Equal-width navigation rows with tighter spacing, compact snapshot dates and expandable timestamp details; a short note and a Display section below the snapshot | Match the data pages and keep navigation, provenance and the theme control visible at laptop height |
+| Sidebar | Navigation highlights sized to each label; theme control above navigation; long timestamps and a lengthy note | Equal-width navigation rows, compact snapshot dates and borderless details; a short note and Help/theme controls grouped at the bottom | Match the data pages and keep navigation, provenance and the theme control visible at laptop height |
 | Overview | Long page with source and analyst sections always expanded; weighting details in the introduction | Short introduction, visible all-data period, prominent bank scores, expandable source/analyst context and method notes | Keep the main bank comparison visible and let the presenter open supporting detail when needed |
 | Topics opening view | All-topic heatmap followed by each bank's "strengths and weak spots" | Topic selector, plain-language topic description, comparison summary and three bank cards with sentence counts | Start with a concrete question about one topic across DBS, OCBC and UOB |
 | Topic evidence | Navigate to Evidence and manually choose the bank and topic again | Each bank card has a View evidence button that carries both selections to Evidence; returning to Topics retains the chosen topic | Make the path from score to supporting text explicit |
@@ -60,6 +60,7 @@ the earlier interface and the reviewed replacement for the project report.
 | Evidence reading | Up to 30 sentences rendered together, with bank/topic controls only and an unexplained confidence percentage | Ten examples initially, Show next controls, source/sentiment filters and Reset filters; explicit Model confidence labels and original-source links, or a link-unavailable note | Let the reader inspect a manageable set of examples and understand their provenance and model metadata |
 | Evidence scope | Recent examples without prominent loaded-set counts/date coverage | Loaded-row count and date range; source/sentiment filters explicitly apply only to the loaded recent set; an empty filter result does not imply no matches in the full dataset | Avoid implying full-corpus search or treating recent examples as a representative sample |
 | Cross-page context | Topic-to-evidence navigation | Bank/topic context flows from Topics to Trends and then Evidence, and is included in the URL for refresh | Support a connected five-minute demonstration with minimal repeated selections |
+| Ask | Long introductory warnings, six large suggestion buttons, default chat avatars and disclosures beneath the conversation | Three starter cards, a narrower conversation with neutral/teal avatars, detailed help in the sidebar and a short note beneath the pinned input | Keep the conversation easy to read while retaining guidance and verification warnings |
 
 The underlying API scores and selected sentiment model are the same. The old
 heatmap uses two decimal places and the new focus cards use three: for example,
@@ -69,9 +70,8 @@ the API suppresses scores below its volume floor (currently five sentences),
 while topic headline comparisons and rankings require at least 30 sentences.
 The 30-sentence rule is a display threshold, not a statistical confidence test.
 
-Overview, Topics, Trends and Evidence have received layout reviews. Ask
-inherits the shared styling and clearer labels; its complete layout review
-is still pending.
+Overview, Topics, Trends, Evidence and Ask have received layout reviews.
+Ask uses the shared header and palette with a narrower conversation layout.
 
 The history range filters displayed calendar buckets, not the rolling-window
 cards or the recent-trend calculation. A bucket overlapping the start of the
@@ -81,7 +81,7 @@ no per-topic sentiment labels in the current endpoint; sentiment filtering is
 disabled until a specific topic is selected. Historical-period evidence and
 full-corpus source/date filters would require additional API support.
 
-Validation: 58 dashboard tests cover the API adapters, rendered views,
+Validation: 61 dashboard tests cover the API adapters, rendered views,
 topic/trend/evidence navigation, sample suppression, 24-month range and gaps,
 incomplete periods, evidence filters/reset/paging, mixed-format publication
 dates normalised to UTC, and chat integration.
@@ -104,11 +104,31 @@ The visual pass preserves the API integration, sample thresholds and existing
 widget selections. Browser checks cover both themes at desktop and laptop
 widths; the dashboard test suite still covers the data and navigation behavior.
 
-The sidebar uses equal-width navigation rows and aligned icons. Its data
+The sidebar aligns BankPulse and Streamlit's native collapse arrow in one
+top row, with the subtitle underneath. The native button retains its keyboard
+and collapse/expand behaviour. Clicking either the BankPulse name or pulse icon
+returns to Overview within the current session, preserving chat history and
+the selected theme. The brand also supports keyboard activation and truncates
+when the sidebar is resized too narrowly. Navigation uses equal-width rows
+and aligned icons. Its data
 snapshot retains the sentence count and distinguishes the newest text date
 from the index computation date. Snapshot details preserves the full UTC
 timestamp and explains that recalculating scores does not imply new text
-was collected. Dark mode is grouped under Display below the snapshot.
+was collected. Help and Dark mode form one bottom utility group on all five
+pages, separated from the snapshot by flexible space. The group sits near
+the bottom of taller viewports and remains in the normal scroll flow on
+short screens or when either disclosure expands. The redundant Display
+heading is removed. **How BankPulse works** and **Snapshot details** share
+the same borderless, transparent expander style. The Help expander explains score
+interpretation, model/source limitations and data windows; on Ask it also
+includes chatbot behaviour and verification. The same label and position
+remain available when navigating between pages. Dark mode sits immediately
+below Help. The data pages retain their short advice/date footer,
+with the detailed method explanation available in the sidebar instead of a
+duplicate expander below the page.
+To find the chatbot-specific guidance, select **Ask**, then expand
+**Help → How BankPulse works**. **How answers work** and **Verification**
+appear first, followed by the shared score explanations.
 Browser checks verify all five navigation items, keyboard navigation, the
 snapshot disclosure and theme persistence after refresh. The compact sidebar
 fits an 800-pixel-high laptop viewport with Snapshot details collapsed.
@@ -253,10 +273,42 @@ flags in Streamlit session state. Every `/chat` request sends only earlier
 in `message`. The API selects the backend and reconstructs the conversation.
 The dashboard does not send provider keys or select models.
 
-Citation and number warnings remain visible on reruns, and fixed replies
-show a readable response type. Clearing the conversation removes all stored
-turns and warnings. History belongs to the browser session and is not saved
-to the database. Reloading or closing that session can reset it.
+Citation, number and sentiment-description warnings remain visible on reruns
+and navigation, and fixed replies show a readable response type. The adapter
+accepts an omitted `unverified_readings` field for compatibility with older
+API responses, but rejects malformed values when that field is present.
+Clearing the conversation removes stored turns, warnings and failed-turn
+display state. History belongs to the browser session and is not saved to
+the database. Reloading or closing that session can reset it.
+
+The Ask layout is in `dashboard/ask.py`. The empty state shows up to three
+API-generated starter cards, with remaining suggestions under More questions.
+Once a conversation starts, all suggestions move into a collapsed Suggested
+questions section. The Clear conversation control is disabled when there is
+nothing to clear. Messages use neutral and teal avatars in a reading column
+at most 920 pixels wide, with a pinned input and expandable answer guidance.
+Answers, citations and the backend's period disclosure are displayed as
+returned; the dashboard does not rewrite or parse the answer text.
+
+The shared **Help → How BankPulse works** expander is visible in the same
+bottom sidebar utility group on every page, above Dark mode. On
+Ask it adds chatbot behaviour and verification guidance to the score/method
+limitations available throughout the dashboard. Neither the conversation nor
+the data pages repeat the detailed guidance in a footer expander.
+The snapshot retains the exact computation timestamp under Snapshot details.
+A short, accessible caption beneath the pinned input reads: “AI answers can
+contain mistakes. Check the evidence. Not financial advice.” The four data
+pages retain their short financial-advice notice and snapshot-date footer.
+
+Typed and suggested questions share a submission callback. Each pending
+question is consumed once, and the view reruns after success without making
+another chat request. A failed question stays visible as an error, with the
+input available again, and is excluded from the history sent on the next
+request. There is no automatic retry. Preparing your answer displays elapsed
+time using `st.spinner(show_time=True)`. The input and its caption use the
+public `st.bottom` container, introduced in Streamlit 1.57
+([release notes](https://docs.streamlit.io/develop/quick-reference/release-notes/2026#version-1570));
+the minimum dependency version is 1.57. The local environment already uses 1.66.
 
 Suggested questions are cached for five minutes. Their failure shows a
 warning while leaving typed chat available. Chat generation is never cached

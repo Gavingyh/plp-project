@@ -3,7 +3,7 @@ Pure presentation - no data logic lives here."""
 
 from dataclasses import dataclass
 import html
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 import altair as alt
 import pandas as pd
@@ -101,6 +101,12 @@ def css(palette: Palette = LIGHT) -> str:
     INK, MUTED = palette.ink, palette.muted
     ACCENT, ON_ACCENT = palette.accent, palette.on_accent
     POS, NEG = palette.pos, palette.neg
+    brand_icon = quote(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">'
+        f'<path d="M2 13h5l3-8 4 15 3-9h5" stroke="{ON_ACCENT}" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        safe="",
+    )
     return f"""
 <style>
 html, body, .stApp,
@@ -121,8 +127,31 @@ hr {{ border-color: {LINE}; }}
 
 /* ---------- sidebar navigation ---------- */
 section[data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE}; }}
-.brand {{ display:flex; align-items:center; gap:10px; font-size: 1.45rem; font-weight: 750; color: {INK}; letter-spacing: -.04em; }}
-.brand-mark {{ width:32px; height:32px; display:grid; place-items:center; background:{ACCENT}; color:{ON_ACCENT}; border-radius:10px; }}
+/* Share the top row with Streamlit's native, accessible collapse control. */
+section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] {{ position:relative; height:36px; min-height:36px; margin:16px 0 -36px; z-index:1; pointer-events:none; }}
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {{ margin:0; pointer-events:auto; }}
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {{ color:{MUTED}; }}
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button :is(span,svg) {{ color:inherit; }}
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {{ padding-top:0; padding-bottom:20px; }}
+/* Grow the spacer on tall screens; let the entire sidebar scroll when needed. */
+.st-key-sidebar_layout {{ min-height:calc(100dvh - 36px); }}
+.st-key-sidebar_layout > [data-testid="stLayoutWrapper"] {{ flex-shrink:0; }}
+.st-key-sidebar_layout > [data-testid="stLayoutWrapper"]:has(> .st-key-sidebar_utilities) {{ margin-top:auto; }}
+.st-key-sidebar_utilities {{ gap:12px; }}
+.st-key-sidebar_brand {{ gap:0; }}
+.stApp .st-key-brand_home button {{ display:flex; align-items:center; justify-content:flex-start; gap:10px;
+    width:calc(100% - 40px); min-height:36px; padding:0; border:0; border-radius:8px;
+    background:transparent; color:{INK}; box-shadow:none; }}
+.st-key-brand_home button::before {{ content:""; width:32px; height:32px; flex:0 0 32px; border-radius:10px;
+    background:{ACCENT} url("data:image/svg+xml,{brand_icon}") center / 21px 21px no-repeat; }}
+.st-key-brand_home button > div {{ min-width:0; justify-content:flex-start; }}
+.st-key-brand_home button > div > span {{ min-width:0; }}
+.st-key-brand_home button [data-testid="stMarkdownContainer"] {{ min-width:0; overflow:hidden; }}
+.st-key-brand_home button p {{ font-size:1.45rem; line-height:1.6; font-weight:750; letter-spacing:-.04em;
+    color:inherit; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+.stApp .st-key-brand_home button:hover {{ background:transparent; color:{ACCENT}; }}
+.stApp .st-key-brand_home button:active {{ transform:none; }}
+.stApp .st-key-brand_home button:focus-visible {{ outline:2px solid {ACCENT}; outline-offset:4px; }}
 .brand-sub {{ color: {MUTED}; font-size: .72rem; margin: .55rem 0 .65rem; letter-spacing:.025em; }}
 section[data-testid="stSidebar"] .st-key-nav,
 section[data-testid="stSidebar"] .st-key-nav [data-testid="stRadio"],
@@ -155,11 +184,16 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 .side-stat span:first-child {{ color:{MUTED}; }}
 .side-stat span:last-child {{ text-align:right; font-weight:600; white-space:nowrap; }}
 .stApp p.side-note {{ color:{MUTED}; font-size:.71rem; line-height:1.55; margin:0; }}
-.st-key-sidebar_snapshot [data-testid="stExpander"] details {{ background:transparent; border:0 !important; border-radius:6px; }}
-.st-key-sidebar_snapshot [data-testid="stExpander"] summary {{ padding:5px 0; min-height:28px; }}
-.st-key-sidebar_snapshot [data-testid="stExpander"] summary p {{ font-size:.74rem; color:{MUTED}; }}
+:is(.st-key-sidebar_snapshot, .st-key-sidebar_help) [data-testid="stExpander"] details {{ background:transparent; border:0 !important; border-radius:6px; }}
+:is(.st-key-sidebar_snapshot, .st-key-sidebar_help) [data-testid="stExpander"] summary {{ padding:5px 0; min-height:28px; }}
+:is(.st-key-sidebar_snapshot, .st-key-sidebar_help) [data-testid="stExpander"] summary p {{ font-size:.74rem; color:{MUTED}; }}
 .st-key-sidebar_snapshot [data-testid="stCaptionContainer"] p {{ font-size:.74rem; }}
-.st-key-sidebar_settings {{ border-top:1px solid {LINE}; padding-top:16px; margin-top:6px; gap:4px; }}
+.st-key-sidebar_help {{ border-top:1px solid {LINE}; padding-top:10px; gap:6px; }}
+.st-key-sidebar_help .side-label {{ margin-bottom:0; }}
+.st-key-sidebar_help [data-testid="stMarkdownContainer"]:has(> .side-label) {{ margin-bottom:0; }}
+.st-key-sidebar_help [data-testid="stMarkdownContainer"] p {{ color:{INK}; font-size:.75rem; line-height:1.65; }}
+.st-key-sidebar_help [data-testid="stCaptionContainer"] p {{ color:{MUTED}; font-size:.68rem; overflow-wrap:anywhere; }}
+.st-key-sidebar_settings {{ gap:4px; }}
 .st-key-sidebar_settings [data-testid="stWidgetLabel"] p {{ font-weight:500; font-size:.82rem; }}
 
 /* ---------- page header ---------- */
@@ -254,6 +288,48 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 .chip.neg {{ background: {NEG}22; color: {NEG}; }}
 .chip.neu {{ background: {SURFACE_2}; color: {MUTED}; }}
 
+/* ---------- conversation ---------- */
+.st-key-ask_view {{ max-width:920px; margin-inline:auto; }}
+.ask-context {{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; color:{INK}; font-size:.76rem; font-weight:600; }}
+.ask-context > span {{ width:6px; height:6px; border-radius:50%; background:{ACCENT}; }}
+.ask-context small {{ display:block; flex-basis:100%; margin-left:14px; font-size:.7rem; font-weight:400; color:{MUTED}; }}
+.st-key-clear_chat button {{ min-height:34px; }}
+.st-key-clear_chat button p {{ font-size:.73rem; }}
+.st-key-clear_chat button:disabled {{ color:{MUTED}; opacity:.55; }}
+.ask-welcome {{ padding:28px 26px 24px; background:linear-gradient(120deg, {SURFACE}, {ACCENT}0A);
+    border:1px solid {LINE}; border-radius:14px; margin:6px 0 8px; }}
+.ask-welcome h3 {{ font-size:1.5rem; padding:0; margin:10px 0 8px; color:{INK}; letter-spacing:-.035em; }}
+.ask-welcome h3 span {{ color:inherit; font-size:inherit; }}
+.ask-welcome p {{ font-size:.85rem; color:{MUTED}; line-height:1.65; margin:0; max-width:65ch; }}
+[class*="st-key-ask_starter_"] {{ background:{SURFACE}; border:1px solid {LINE} !important;
+    border-radius:12px; padding:17px 18px 12px !important; gap:8px; height:100%;
+    transition:border-color .15s, box-shadow .15s; }}
+[class*="st-key-ask_starter_"]:hover {{ border-color:{ACCENT}77 !important; box-shadow:0 4px 14px #0F233B08; }}
+.ask-card-label {{ color:{ACCENT}; font-size:.64rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; }}
+[class*="st-key-ask_starter_"] .stButton > button {{ justify-content:flex-start; align-items:flex-start;
+    text-align:left; background:transparent !important; border:0 !important; padding:0; min-height:58px; }}
+[class*="st-key-ask_starter_"] .stButton > button p {{ color:{INK}; font-size:.86rem; font-weight:600; line-height:1.6; text-align:left; }}
+.st-key-ask_view [data-testid="stChatMessage"] {{ padding:18px 20px; border-radius:12px; gap:14px; }}
+.st-key-ask_view [class*="st-key-ask_user_"] [data-testid="stChatMessage"] {{ background:{SURFACE_2}; border-color:transparent; }}
+.st-key-ask_view [class*="st-key-ask_assistant_"] [data-testid="stChatMessage"] {{ background:{SURFACE}; border-color:{LINE}; }}
+.st-key-ask_view [data-testid="stChatMessageAvatarCustom"] {{ background:{ACCENT}16; color:{ACCENT}; border-radius:9px; }}
+.st-key-ask_view [class*="st-key-ask_user_"] [data-testid="stChatMessageAvatarCustom"] {{ background:{BG}; color:{MUTED}; }}
+.st-key-ask_view [data-testid="stChatMessageAvatarCustom"] :is(span,svg) {{ color:inherit; }}
+.ask-author {{ color:{MUTED}; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px; }}
+.st-key-ask_view [data-testid="stChatMessageContent"] [data-testid="stMarkdownContainer"] p {{ color:{INK}; font-size:.92rem; line-height:1.75; }}
+.st-key-ask_view [data-testid="stChatMessageContent"] a {{ color:{ACCENT}; text-decoration:underline; text-underline-offset:2px; }}
+.st-key-ask_view [data-testid="stChatMessageContent"] [data-testid="stCaptionContainer"] p {{ font-size:.73rem; }}
+.st-key-ask_view [data-testid="stSpinner"] p {{ color:{MUTED}; font-size:.86rem; }}
+.st-key-ask_composer {{ max-width:920px; margin-inline:auto; gap:7px; }}
+.st-key-ask_composer [data-testid="stCaptionContainer"] p {{ text-align:center; font-size:.68rem; line-height:1.5; margin:0; }}
+.st-key-ask_input {{ max-width:920px; margin-inline:auto; }}
+.stApp:has(.st-key-ask_view) [data-testid="stBottomBlockContainer"] {{ padding:1rem 2.5rem 1.5rem; }}
+.stApp .st-key-ask_input [data-testid="stChatInput"] {{ background:{SURFACE}; border:1px solid {LINE}; border-radius:12px; box-shadow:0 3px 14px #0F233B06; }}
+.st-key-ask_input [data-testid="stChatInput"] div {{ background:transparent; border-color:{LINE}; }}
+.st-key-ask_input [data-testid="stChatInput"]:focus-within {{ border-color:{ACCENT}; box-shadow:0 0 0 2px {ACCENT}16; }}
+.st-key-ask_input textarea {{ background:{SURFACE} !important; color:{INK}; font-size:.9rem; }}
+.st-key-ask_input button:not(:disabled) {{ background:{ACCENT}; color:{ON_ACCENT}; border-radius:8px; }}
+
 /* ---------- native widgets ---------- */
 div[data-testid="stMetric"] {{ background: {SURFACE}; border: 1px solid {LINE}; border-radius: {RADIUS}; padding: 14px 18px; }}
 div[data-testid="stMetricValue"] {{ font-weight: 700; font-variant-numeric: tabular-nums; }}
@@ -310,6 +386,7 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
     .control-description {{ border:0; padding:0; }}
     .quote {{ padding:16px; }}
     .quote .meta a {{ margin-left:0; }}
+    .stApp:has(.st-key-ask_view) [data-testid="stBottomBlockContainer"] {{ padding:1rem; }}
 }}
 </style>
 """

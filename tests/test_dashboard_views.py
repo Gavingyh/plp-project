@@ -301,6 +301,15 @@ class DashboardAppTestCase(unittest.TestCase):
 
 
 class DashboardPageTests(DashboardAppTestCase):
+    def test_brand_returns_each_data_page_to_overview(self):
+        for name in ("Overview", "Topics", "Trends", "Evidence"):
+            with self.subTest(page=name):
+                app = self.page(name)
+                app.button(key="brand_home").click().run()
+                self.assertFalse(app.exception, [e.message for e in app.exception])
+                self.assertEqual(app.sidebar.radio(key="nav").value, "Overview")
+                self.assertEqual(app.query_params["page"], "Overview")
+
     def test_topic_evidence_opens_the_selected_bank_and_topic(self):
         frame = data.load_index()
         extra = frame[frame.aspect == "dividend_policy"].assign(aspect="asset_quality")

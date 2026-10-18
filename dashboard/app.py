@@ -19,8 +19,8 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dashboard.api_client import ApiError
-from dashboard.chat import GUARD_LABELS, send_chat
-from dashboard import data, trends, evidence as evidence_view
+from dashboard.chat import send_chat
+from dashboard import ask as ask_view, data, trends, evidence as evidence_view
 from config.logging_config import get_logger, setup_logging
 
 setup_logging()
@@ -81,27 +81,38 @@ from dashboard.style import (  # noqa: E402
     trend_chart,
 )
 
+
+def open_overview():
+    """Navigate within this session, preserving the conversation and theme."""
+    st.session_state.nav = "Overview"
+
+
 with st.sidebar:
-    st.markdown(
-        '<div class="brand"><span class="brand-mark" aria-hidden="true">'
-        '<svg width="21" height="21" viewBox="0 0 24 24" fill="none">'
-        '<path d="M2 13h5l3-8 4 15 3-9h5" stroke="currentColor" stroke-width="2" '
-        'stroke-linecap="round" stroke-linejoin="round"/></svg></span>BankPulse</div>'
-        '<div class="brand-sub">SINGAPORE BANK SENTIMENT</div>',
-        unsafe_allow_html=True,
-    )
-    # Reserve the visual order here so the theme is available before loading
-    # data; the navigation and snapshot are filled once their data is ready.
-    sidebar_navigation = st.container(key="sidebar_navigation")
-    sidebar_snapshot = st.container(key="sidebar_snapshot")
-    with st.container(key="sidebar_settings"):
-        st.markdown('<div class="side-label">Display</div>', unsafe_allow_html=True)
-        dark_mode = st.toggle(
-            "Dark mode",
-            value=st.query_params.get("theme") == "dark",
-            key="dark_mode",
-            help="Switch between light and dark themes.",
-        )
+    with st.container(key="sidebar_layout"):
+        with st.container(key="sidebar_brand"):
+            st.button(
+                "BankPulse",
+                key="brand_home",
+                on_click=open_overview,
+                use_container_width=True,
+            )
+            st.markdown(
+                '<div class="brand-sub">SINGAPORE BANK SENTIMENT</div>',
+                unsafe_allow_html=True,
+            )
+        # Reserve the visual order here so the theme is available before loading
+        # data; the navigation and snapshot are filled once their data is ready.
+        sidebar_navigation = st.container(key="sidebar_navigation")
+        sidebar_snapshot = st.container(key="sidebar_snapshot")
+        with st.container(key="sidebar_utilities"):
+            sidebar_help = st.container(key="sidebar_help")
+            with st.container(key="sidebar_settings"):
+                dark_mode = st.toggle(
+                    "Dark mode",
+                    value=st.query_params.get("theme") == "dark",
+                    key="dark_mode",
+                    help="Switch between light and dark themes.",
+                )
 
 palette = DARK if dark_mode else LIGHT
 if dark_mode:
@@ -147,47 +158,29 @@ def load_suggestions() -> list[dict]:
     return data.load_suggestions(limit=6)
 
 
-def render_chat_message(message: dict):
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-        if message.get("citation_unverified"):
-            st.warning(
-                "Verification warning: supporting citations could not be verified. Do not rely on this answer."
-            )
-        if message.get("unverified_numbers"):
-            numbers = ", ".join(str(number) for number in message["unverified_numbers"])
-            st.warning(
-                f"Verification warning: these figures could not be verified: {numbers}."
-            )
-        if message.get("guard"):
-            label = GUARD_LABELS.get(message["guard"], "Predefined response")
-            st.caption(f"Response type: {label}")
-
-
 def disclosure_footer():
     with st.container(key="disclosure"):
-        _disclosure_content()
-
-
-def _disclosure_content():
-    st.caption(
-        f"Not financial advice. Data as of: {data_as_of}. Index computed: {computed_at}."
-    )
-    with st.expander("How to read these scores and their limitations"):
-        st.markdown(
-            "**Scores run from −1 (negative) to +1 (positive); 0 is neutral.** "
-            "The index weights sentence labels by confidence and source, and shrinks "
-            "small samples toward neutral. The sentence mix shows raw label shares, "
-            "so it is not the same calculation as the index.\n\n"
-            "Sentiment comes from the selected fine-tuned FinBERT ensemble. A local LLM "
-            "assigns each sentence one topic. Source coverage differs between banks; "
-            "earnings releases reflect management's own framing. These scores describe "
-            "the collected text, rather than a representative survey of investors. "
-            "Very small samples show no score.\n\n"
-            "Yahoo analyst consensus is separate from sentiment. Recent 7-day and "
-            "30-day windows end on the newest stored data date, not today's date."
+        st.caption(
+            f"Not financial advice. Data as of: {data_as_of}. Index computed: {computed_at}."
         )
-        st.caption(f"Sentiment model: {model_version}.")
+
+
+def score_guidance():
+    """Shared score explanations in the sidebar on every page."""
+    st.markdown(
+        "**Scores run from −1 (negative) to +1 (positive); 0 is neutral.** "
+        "The index weights sentence labels by confidence and source, and shrinks "
+        "small samples toward neutral. The sentence mix shows raw label shares, "
+        "so it is not the same calculation as the index.\n\n"
+        "Sentiment comes from the selected fine-tuned FinBERT ensemble. A local LLM "
+        "assigns each sentence one topic. Source coverage differs between banks; "
+        "earnings releases reflect management's own framing. These scores describe "
+        "the collected text, rather than a representative survey of investors. "
+        "Very small samples show no score.\n\n"
+        "Yahoo analyst consensus is separate from sentiment. Recent 7-day and "
+        "30-day windows end on the newest stored data date, not today's date."
+    )
+    st.caption(f"Sentiment model: {model_version}.")
 
 
 try:
@@ -269,6 +262,13 @@ with sidebar_snapshot:
         '<p class="side-note">Sentiment is an indicator, not investment advice.</p>',
         unsafe_allow_html=True,
     )
+
+with sidebar_help:
+    st.markdown('<div class="side-label">Help</div>', unsafe_allow_html=True)
+    with st.expander("How BankPulse works"):
+        if page == "Ask":
+            ask_view.render_answer_guidance()
+        score_guidance()
 
 
 def page_header(title: str, sub: str):
@@ -778,70 +778,10 @@ elif page == "Evidence":
 
 # --------------------------------------------------------------------- Ask
 elif page == "Ask":
-    page_header(
-        "Ask about the data",
-        "Answers come from the sentiment index in this dashboard, not from the model's own "
-        "knowledge. It does not give investment advice.",
-    )
-
-    st.caption(
-        "A local model may still cite evidence it never retrieved. Answers flagged with a "
-        "verification warning should not be trusted, and figures that match nothing the tools "
-        "returned are flagged too. It remembers the last few turns, so follow-ups like "
-        '"and OCBC?" work.'
-    )
-
-    # API history contains messages and display metadata, not backend objects.
-    # Use a separate key from the old in-process Conversation implementation.
-    if "api_chat_history" not in st.session_state:
-        st.session_state.api_chat_history = []
-    history = st.session_state.api_chat_history
-
-    if st.button("Clear conversation", key="clear_chat"):
-        st.session_state.api_chat_history = []
-        history = st.session_state.api_chat_history
-
-    for message in history:
-        render_chat_message(message)
-
-    # Suggestions are generated from what the index actually holds, so a
-    # clicked suggestion won't dead-end on "insufficient data".
-    pending = None
-    st.markdown("**Try one of these**")
-    try:
-        suggestions = load_suggestions()
-    except ApiError as exc:
-        st.warning(f"Suggested questions are unavailable. {exc}")
-        suggestions = []
-    for row_start in range(0, len(suggestions), 2):
-        for col, item in zip(st.columns(2), suggestions[row_start : row_start + 2]):
-            if col.button(
-                item["question"],
-                key=f"sugg-{row_start}-{item['question']}",
-                use_container_width=True,
-            ):
-                pending = item["question"]
-
-    typed = st.chat_input("Or ask your own question")
-    question = pending or typed
-
-    if question and question.strip():
-        with st.chat_message("user"):
-            st.markdown(question)
-        with st.spinner("Thinking - a local model can take a minute..."):
-            try:
-                result = send_chat(question, history)
-            except ApiError as exc:
-                st.error(f"Could not get an answer. {exc}")
-            else:
-                answer = {
-                    "role": "assistant",
-                    "content": result["answer"],
-                    "guard": result.get("guard"),
-                    "citation_unverified": result["citation_unverified"],
-                    "unverified_numbers": result["unverified_numbers"],
-                }
-                history.extend([{"role": "user", "content": question}, answer])
-                render_chat_message(answer)
-
-    disclosure_footer()
+    chat_area = st.container(key="ask_view")
+    with chat_area:
+        page_header(
+            "Ask BankPulse",
+            "Explore bank sentiment, compare topics and find supporting evidence through conversation.",
+        )
+    ask_view.render(chat_area, load_suggestions, send_chat)

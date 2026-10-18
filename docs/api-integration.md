@@ -1,10 +1,11 @@
 # Building the dashboard on the API
 
-For whoever builds a frontend on the API. The Streamlit dashboard in
-`dashboard/` (a teammate's) reads the database directly; everything it
-shows is also available through a read-only REST API (DESIGN decision 23). This page is how to run it, which endpoint feeds which
-view, what the responses look like, and what the screen must say about the
-numbers.
+For whoever builds a frontend on the API. The Streamlit dashboard's data
+views now use this API through `dashboard/api_client.py` and `dashboard/data.py`.
+The Ask page uses `/suggestions` and `/chat` through `dashboard/chat.py`;
+the dashboard imports no database or model backends. This page is how to run
+the API, which endpoint feeds which view, what the responses look like, and
+what the screen must say about the numbers.
 
 ## Run the API
 
@@ -17,6 +18,16 @@ PLP_API_PORT=8100 scripts/start.sh api     # another port, API only (PLP_DASHBOA
 scripts/status.sh
 scripts/stop.sh
 ```
+
+The Streamlit server connects to `http://127.0.0.1:8000` by default. Set
+`PLP_API_PORT` for a different local port, or `PLP_API_URL` for the complete
+address (for example, `http://api:8000` inside Docker Compose). This request
+comes from the Streamlit server, not the browser. Data loaders cache successful
+responses for five minutes. Start the API before opening the dashboard.
+
+The sidebar distinguishes **Data as of** (the newest stored sentence) from
+**Index computed** (when the selected model's aggregate was built). Empty
+API results show no-data messages; failed requests show service errors.
 
 - Interactive docs: `http://localhost:8000/docs`
 - Machine-readable spec: [`docs/api/openapi.json`](api/openapi.json), for
@@ -150,6 +161,25 @@ The UI must show the flags, not just the answer:
 
 A local model takes seconds to tens of seconds per answer; show a spinner.
 To try the bot without any UI: `.venv-plp/bin/python3 -m chatbot.chat`.
+
+### Streamlit chat behaviour
+
+The Ask page stores successful question/answer pairs and their verification
+flags in Streamlit session state. Every `/chat` request sends only earlier
+`role`/`content` messages in `history`; the new question appears separately
+in `message`. The API selects the backend and reconstructs the conversation.
+The dashboard does not send provider keys or select models.
+
+Citation and number warnings remain visible on reruns, and fixed replies
+show a readable response type. Clearing the conversation removes all stored
+turns and warnings. History belongs to the browser session and is not saved
+to the database. Reloading or closing that session can reset it.
+
+Suggested questions are cached for five minutes. Their failure shows a
+warning while leaving typed chat available. Chat generation is never cached
+or automatically retried. It allows a five-second connection timeout and a
+600-second read timeout for local model/tool calls. Failed exchanges show an
+error and are excluded from subsequent conversation history.
 
 ## What the screen must say
 

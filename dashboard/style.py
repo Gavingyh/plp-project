@@ -123,16 +123,22 @@ hr {{ border-color: {LINE}; }}
 section[data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE}; }}
 .brand {{ display:flex; align-items:center; gap:10px; font-size: 1.45rem; font-weight: 750; color: {INK}; letter-spacing: -.04em; }}
 .brand-mark {{ width:32px; height:32px; display:grid; place-items:center; background:{ACCENT}; color:{ON_ACCENT}; border-radius:10px; }}
-.brand-sub {{ color: {MUTED}; font-size: .78rem; margin: .55rem 0 1.5rem; }}
-section[data-testid="stSidebar"] [role="radiogroup"] {{ gap: 4px; }}
+.brand-sub {{ color: {MUTED}; font-size: .72rem; margin: .55rem 0 .65rem; letter-spacing:.025em; }}
+section[data-testid="stSidebar"] .st-key-nav,
+section[data-testid="stSidebar"] .st-key-nav [data-testid="stRadio"],
+section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"],
+section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] > div {{ width:100% !important; min-width:0; }}
+section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] {{ align-items:stretch; gap:3px; }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"] {{
-    width: 100%; padding: 11px 14px; border-radius: 10px; margin: 0;
+    width:100%; box-sizing:border-box; min-height:42px; padding:9px 12px; border-radius:8px; margin:0;
     color: {MUTED}; transition: background .2s, color .2s; cursor: pointer;
 }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:hover {{ background: {SURFACE_2}; color: {INK}; }}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:has(input:focus-visible) {{ outline:2px solid {ACCENT}; outline-offset:2px; }}
 /* hide the radio circle: the element just before the option's name (Streamlit 1.63 wraps both in one block) */
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"] div:has(+ [data-testid="stMarkdownContainer"]) {{ display: none; }}
-section[data-testid="stSidebar"] label[data-testid="stRadioOption"] p {{ font-weight: 500; font-size: .95rem; }}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"] p {{ display:flex; align-items:center; gap:10px; font-weight:500; font-size:.9rem; }}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"] [role="img"] {{ width:20px; font-size:18px; text-align:center; }}
 .stApp label[data-testid="stRadioOption"] {{ color: {INK}; }}
 .stApp label[data-testid="stRadioOption"] p {{ color: inherit; }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] {{
@@ -141,10 +147,20 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] p {{
     color: {ON_ACCENT}; font-weight: 600;
 }}
-.side-label {{ font-size: .65rem; text-transform:uppercase; font-weight:700; color: {MUTED}; margin: 2rem 0 .6rem; letter-spacing: .12em; }}
-.side-stat {{ display:flex; justify-content:space-between; gap:12px; padding:.45rem 0; font-size:.9rem;
-              color:{INK}; border-bottom:1px solid {LINE}; font-variant-numeric: tabular-nums; }}
+.side-label {{ font-size:.65rem; text-transform:uppercase; font-weight:700; color:{MUTED}; margin:0 0 .6rem; letter-spacing:.12em; }}
+.st-key-sidebar_snapshot {{ border-top:1px solid {LINE}; margin-top:10px; padding-top:18px; gap:10px; }}
+.side-stat {{ display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; gap:8px; padding:8px 0; font-size:.77rem;
+              color:{INK}; border-bottom:1px solid {LINE}; font-variant-numeric:tabular-nums; }}
+.side-stat:last-child {{ border-bottom:0; }}
 .side-stat span:first-child {{ color:{MUTED}; }}
+.side-stat span:last-child {{ text-align:right; font-weight:600; white-space:nowrap; }}
+.stApp p.side-note {{ color:{MUTED}; font-size:.71rem; line-height:1.55; margin:0; }}
+.st-key-sidebar_snapshot [data-testid="stExpander"] details {{ background:transparent; border:0 !important; border-radius:6px; }}
+.st-key-sidebar_snapshot [data-testid="stExpander"] summary {{ padding:5px 0; min-height:28px; }}
+.st-key-sidebar_snapshot [data-testid="stExpander"] summary p {{ font-size:.74rem; color:{MUTED}; }}
+.st-key-sidebar_snapshot [data-testid="stCaptionContainer"] p {{ font-size:.74rem; }}
+.st-key-sidebar_settings {{ border-top:1px solid {LINE}; padding-top:16px; margin-top:6px; gap:4px; }}
+.st-key-sidebar_settings [data-testid="stWidgetLabel"] p {{ font-weight:500; font-size:.82rem; }}
 
 /* ---------- page header ---------- */
 .page-heading {{ margin-bottom:.65rem; }}

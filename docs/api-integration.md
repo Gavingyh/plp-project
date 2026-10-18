@@ -25,9 +25,11 @@ address (for example, `http://api:8000` inside Docker Compose). This request
 comes from the Streamlit server, not the browser. Data loaders cache successful
 responses for five minutes. Start the API before opening the dashboard.
 
-The sidebar distinguishes **Data as of** (the newest stored sentence) from
-**Index computed** (when the selected model's aggregate was built). Empty
-API results show no-data messages; failed requests show service errors.
+The sidebar distinguishes **Text through** (the newest stored sentence) from
+**Scores computed** (when the selected model's aggregate was built). It shows
+compact dates, with the exact UTC computation timestamp and an explanation
+under **Snapshot details**. Empty API results show no-data messages; failed
+requests show service errors.
 
 - Interactive docs: `http://localhost:8000/docs`
 - Machine-readable spec: [`docs/api/openapi.json`](api/openapi.json), for
@@ -43,16 +45,15 @@ API results show no-data messages; failed requests show service errors.
 The presentation work is on `feat/dashboard-presentation`, starting from
 `bd508d7` (the dashboard API integration merge). The comparisons below record
 the earlier interface and the reviewed replacement for the project report.
-The Topics "before" screenshots already include the new light theme and
-sidebar toggle; the topic layout changed in a later step.
 
 | Area | Before | After | Purpose |
 |---|---|---|---|
-| Appearance | Fixed dark background, pastel series colours and small chart labels | White by default, a sidebar dark-mode toggle, palettes for both modes and larger labels | Improve readability during the five-minute presentation and allow personal preference |
+| Appearance | Fixed dark background, pastel series colours and small chart labels | Light canvas with white cards by default, a sidebar dark-mode toggle, palettes for both modes and larger labels | Improve readability during the five-minute presentation and allow personal preference |
+| Sidebar | Navigation highlights sized to each label; theme control above navigation; long timestamps and a lengthy note | Equal-width navigation rows with tighter spacing, compact snapshot dates and expandable timestamp details; a short note and a Display section below the snapshot | Match the data pages and keep navigation, provenance and the theme control visible at laptop height |
 | Overview | Long page with source and analyst sections always expanded; weighting details in the introduction | Short introduction, visible all-data period, prominent bank scores, expandable source/analyst context and method notes | Keep the main bank comparison visible and let the presenter open supporting detail when needed |
 | Topics opening view | All-topic heatmap followed by each bank's "strengths and weak spots" | Topic selector, plain-language topic description, comparison summary and three bank cards with sentence counts | Start with a concrete question about one topic across DBS, OCBC and UOB |
 | Topic evidence | Navigate to Evidence and manually choose the bank and topic again | Each bank card has a View evidence button that carries both selections to Evidence; returning to Topics retains the chosen topic | Make the path from score to supporting text explicit |
-| Topic detail | Sentence counts mainly in hover details and tables; "other" mixed into the main matrix | Expandable full heatmap with score and count in every cell; uncategorised text is optional; full tables remain available | Preserve analytical depth while shortening the default view |
+| Topic detail | Sentence counts mainly in hover details and tables; "other" mixed into the main matrix | Secondary tabs for the full heatmap, within-bank rankings and data tables; heatmap cells show score and count, with uncategorised text optional | Preserve analytical depth while keeping the selected-topic comparison prominent |
 | Relative rankings | "Best/weakest" wording; positive scores could be coloured red when ranked lowest | "Highest/lowest sentiment" wording; colour follows the score's sign, with a reminder that lowest need not mean negative | Avoid presenting sentiment rankings as financial strengths or weaknesses |
 | Trends summary | Three scores and a historical chart, without a recent-movement interpretation | A summary from `/sentiment/trend`, with rolling-window scores and sentence counts together in each card | Explain recent movement using the backend's existing unshrunk comparison rather than subtracting displayed scores |
 | Trends history | All history by default, a smooth filled curve and sample sizes mainly on hover | Latest 24 calendar months by default, monthly grouping, straight line segments, aligned sentence-volume bars, visible gaps and an incomplete-period note; All history, quarterly and weekly views remain available | Make recent movement readable while exposing changes in coverage and partial calendar periods |
@@ -87,15 +88,6 @@ dates normalised to UTC, and chat integration.
 Browser checks compare live scores with the API and exercise navigation,
 history grouping, evidence filters/paging and both themes.
 
-Screenshots capture the first viewport at 1440 × 1000, in light mode:
-
-- Trends: [before](screenshots/dashboard/trends-before.png) and
-  [after](screenshots/dashboard/trends-after.png).
-- Evidence: [before](screenshots/dashboard/evidence-before.png) and
-  [after](screenshots/dashboard/evidence-after.png). The after example is
-  reached from OCBC's dividend topic, so the selected bank/topic differs
-  from the default before screenshot.
-
 ### Visual polish across the four data pages
 
 A further visual pass uses a light canvas with white cards, a matching dark
@@ -108,19 +100,18 @@ separate panels, and Evidence presents each excerpt with a source/date
 header, sentiment label, model confidence and original-source link.
 The chart uses the full −1 to +1 scale; suppressed scores remain absent.
 
-These pairs use the same viewport, bank (DBS) and topic (capital & liquidity)
-so the layout changes can be reviewed directly:
-
-| Page | Before visual polish | After visual polish |
-|---|---|---|
-| Overview | [Before](screenshots/dashboard/overview-before-polish.png) | [After](screenshots/dashboard/overview-polished-light.png) |
-| Topics | [Before](screenshots/dashboard/topics-before-polish.png) | [After](screenshots/dashboard/topics-polished-light.png) |
-| Trends | [Before](screenshots/dashboard/trends-before-polish.png) | [After](screenshots/dashboard/trends-polished-light.png) |
-| Evidence | [Before](screenshots/dashboard/evidence-before-polish.png) | [After](screenshots/dashboard/evidence-polished-light.png) |
-
 The visual pass preserves the API integration, sample thresholds and existing
 widget selections. Browser checks cover both themes at desktop and laptop
 widths; the dashboard test suite still covers the data and navigation behavior.
+
+The sidebar uses equal-width navigation rows and aligned icons. Its data
+snapshot retains the sentence count and distinguishes the newest text date
+from the index computation date. Snapshot details preserves the full UTC
+timestamp and explains that recalculating scores does not imply new text
+was collected. Dark mode is grouped under Display below the snapshot.
+Browser checks verify all five navigation items, keyboard navigation, the
+snapshot disclosure and theme persistence after refresh. The compact sidebar
+fits an 800-pixel-high laptop viewport with Snapshot details collapsed.
 
 ## Which endpoint feeds which view
 

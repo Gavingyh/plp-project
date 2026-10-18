@@ -90,12 +90,18 @@ with st.sidebar:
         '<div class="brand-sub">SINGAPORE BANK SENTIMENT</div>',
         unsafe_allow_html=True,
     )
-    dark_mode = st.toggle(
-        "Dark mode",
-        value=st.query_params.get("theme") == "dark",
-        key="dark_mode",
-        help="Switch between white and dark backgrounds.",
-    )
+    # Reserve the visual order here so the theme is available before loading
+    # data; the navigation and snapshot are filled once their data is ready.
+    sidebar_navigation = st.container(key="sidebar_navigation")
+    sidebar_snapshot = st.container(key="sidebar_snapshot")
+    with st.container(key="sidebar_settings"):
+        st.markdown('<div class="side-label">Display</div>', unsafe_allow_html=True)
+        dark_mode = st.toggle(
+            "Dark mode",
+            value=st.query_params.get("theme") == "dark",
+            key="dark_mode",
+            help="Switch between light and dark themes.",
+        )
 
 palette = DARK if dark_mode else LIGHT
 if dark_mode:
@@ -215,7 +221,7 @@ PAGES = {
     "Ask": ":material/chat:",
 }
 _total = df_all[(df_all.window == "all_time") & (df_all.aspect == "ALL")]["n"].sum()
-with st.sidebar:
+with sidebar_navigation:
     _start = st.query_params.get("page")  # deep link: ?page=Topics
     page = st.radio(
         "Navigate",
@@ -229,19 +235,39 @@ with st.sidebar:
         st.query_params.get("page") != page
     ):  # keep the address in step, so a refresh stays on this page
         st.query_params["page"] = page
-    st.markdown('<div class="side-label">Data snapshot</div>', unsafe_allow_html=True)
-    for label, value in (
-        ("Sentences scored", f"{int(_total):,}"),
-        ("Data as of", data_as_of),
-        ("Index computed", computed_at),
-    ):
-        st.markdown(
-            f'<div class="side-stat"><span>{label}</span><span>{html.escape(str(value))}</span></div>',
-            unsafe_allow_html=True,
+with sidebar_snapshot:
+    text_date = pd.to_datetime(data_as_of, errors="coerce")
+    snapshot_rows = "".join(
+        f'<div class="side-stat"><span>{label}</span><span>{html.escape(str(value))}</span></div>'
+        for label, value in (
+            ("Sentences", f"{int(_total):,}"),
+            (
+                "Text through",
+                text_date.strftime("%d %b %Y") if pd.notna(text_date) else "Unknown",
+            ),
+            (
+                "Scores computed",
+                (
+                    timestamps.max().strftime("%d %b %Y")
+                    if not timestamps.empty
+                    else "Unknown"
+                ),
+            ),
         )
-    st.caption(
-        "Sentiment is an indicator, not a recommendation. "
-        "Check how many sentences sit behind a number."
+    )
+    st.markdown(
+        '<div class="side-label">Data snapshot</div>' + snapshot_rows,
+        unsafe_allow_html=True,
+    )
+    with st.expander("Snapshot details"):
+        st.caption(
+            f"Data as of: {data_as_of}. Index computed: {computed_at}. "
+            "Text through is the newest stored sentence date. Scores computed is "
+            "when the index was calculated; it does not indicate new text was collected."
+        )
+    st.markdown(
+        '<p class="side-note">Sentiment is an indicator, not investment advice.</p>',
+        unsafe_allow_html=True,
     )
 
 

@@ -54,7 +54,15 @@ def series_row(period, n=10):
     )
 
 
-def fake_api(*, empty=False, fail_path=None, chat_payload=None, suggestions=None):
+def fake_api(
+    *,
+    empty=False,
+    fail_path=None,
+    chat_payload=None,
+    suggestions=None,
+    trend_payload=None,
+    evidence_rows=None,
+):
     """Exercise the real HTTP client while replacing only its transport."""
 
     def request(method, url, *, params=None, json=None, timeout=None):
@@ -72,6 +80,12 @@ def fake_api(*, empty=False, fail_path=None, chat_payload=None, suggestions=None
             payload = {"window": params["window"], "rows": [] if empty else rows}
             if not empty:
                 payload["data_as_of"] = "2026-09-25"
+        elif path == "/sentiment/trend":
+            payload = (
+                trend_payload
+                if trend_payload is not None
+                else {"trend_available": False}
+            )
         elif path == "/sentiment/series":
             labels = {
                 "month": ("2026-07", "2026-09"),
@@ -107,7 +121,13 @@ def fake_api(*, empty=False, fail_path=None, chat_payload=None, suggestions=None
             )
             if "aspect" in params:
                 row.update(aspect=params["aspect"], label="positive", confidence=0.9)
-            payload = {"rows": [] if empty else [row]}
+            payload = {
+                "rows": (
+                    []
+                    if empty
+                    else evidence_rows if evidence_rows is not None else [row]
+                )
+            }
         elif path == "/suggestions":
             payload = {
                 "suggestions": (

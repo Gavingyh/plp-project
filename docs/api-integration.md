@@ -54,6 +54,11 @@ sidebar toggle; the topic layout changed in a later step.
 | Topic evidence | Navigate to Evidence and manually choose the bank and topic again | Each bank card has a View evidence button that carries both selections to Evidence; returning to Topics retains the chosen topic | Make the path from score to supporting text explicit |
 | Topic detail | Sentence counts mainly in hover details and tables; "other" mixed into the main matrix | Expandable full heatmap with score and count in every cell; uncategorised text is optional; full tables remain available | Preserve analytical depth while shortening the default view |
 | Relative rankings | "Best/weakest" wording; positive scores could be coloured red when ranked lowest | "Highest/lowest sentiment" wording; colour follows the score's sign, with a reminder that lowest need not mean negative | Avoid presenting sentiment rankings as financial strengths or weaknesses |
+| Trends summary | Three scores and a historical chart, without a recent-movement interpretation | A summary from `/sentiment/trend`, with rolling-window scores and sentence counts together in each card | Explain recent movement using the backend's existing unshrunk comparison rather than subtracting displayed scores |
+| Trends history | All history by default, a smooth filled curve and sample sizes mainly on hover | Latest 24 calendar months by default, monthly grouping, straight line segments, aligned sentence-volume bars, visible gaps and an incomplete-period note; All history, quarterly and weekly views remain available | Make recent movement readable while exposing changes in coverage and partial calendar periods |
+| Evidence reading | Up to 30 sentences rendered together, with bank/topic controls only and an unexplained confidence percentage | Ten examples initially, Show next controls, source/sentiment filters and Reset filters; explicit Model confidence labels and original-source links, or a link-unavailable note | Let the reader inspect a manageable set of examples and understand their provenance and model metadata |
+| Evidence scope | Recent examples without prominent loaded-set counts/date coverage | Loaded-row count and date range; source/sentiment filters explicitly apply only to the loaded recent set; an empty filter result does not imply no matches in the full dataset | Avoid implying full-corpus search or treating recent examples as a representative sample |
+| Cross-page context | Topic-to-evidence navigation | Bank/topic context flows from Topics to Trends and then Evidence, and is included in the URL for refresh | Support a connected five-minute demonstration with minimal repeated selections |
 
 The underlying API scores and selected sentiment model are the same. The old
 heatmap uses two decimal places and the new focus cards use three: for example,
@@ -63,14 +68,59 @@ the API suppresses scores below its volume floor (currently five sentences),
 while topic headline comparisons and rankings require at least 30 sentences.
 The 30-sentence rule is a display threshold, not a statistical confidence test.
 
-Overview and Topics have received layout reviews. Trends, Evidence and Ask
-currently inherit shared styling and clearer labels; their complete layout
-reviews are still pending. Evidence also accepts the topic navigation callback.
+Overview, Topics, Trends and Evidence have received layout reviews. Ask
+inherits the shared styling and clearer labels; its complete layout review
+is still pending.
 
-Validation: 48 dashboard tests pass, including topic-to-evidence navigation,
-retaining the selected topic and suppressing insufficient samples. Chrome
-checks confirmed the focus cards match live API scores/counts, evidence opens
-the requested bank/topic, and the page works in light and dark modes.
+The history range filters displayed calendar buckets, not the rolling-window
+cards or the recent-trend calculation. A bucket overlapping the start of the
+24-month range is retained in full. Evidence loads at most the latest 30 rows
+for the bank/topic and pages/filters those rows locally. Overall evidence has
+no per-topic sentiment labels in the current endpoint; sentiment filtering is
+disabled until a specific topic is selected. Historical-period evidence and
+full-corpus source/date filters would require additional API support.
+
+Validation: 58 dashboard tests cover the API adapters, rendered views,
+topic/trend/evidence navigation, sample suppression, 24-month range and gaps,
+incomplete periods, evidence filters/reset/paging, mixed-format publication
+dates normalised to UTC, and chat integration.
+Browser checks compare live scores with the API and exercise navigation,
+history grouping, evidence filters/paging and both themes.
+
+Screenshots capture the first viewport at 1440 × 1000, in light mode:
+
+- Trends: [before](screenshots/dashboard/trends-before.png) and
+  [after](screenshots/dashboard/trends-after.png).
+- Evidence: [before](screenshots/dashboard/evidence-before.png) and
+  [after](screenshots/dashboard/evidence-after.png). The after example is
+  reached from OCBC's dividend topic, so the selected bank/topic differs
+  from the default before screenshot.
+
+### Visual polish across the four data pages
+
+A further visual pass uses a light canvas with white cards, a matching dark
+palette, compact page headers and snapshot dates, consistent typography,
+and quieter controls. Topics now places a bank comparison chart beside
+compact bank cards with their actions inside; the full matrix, rankings and
+tables are available through a secondary tab bar. Overview pairs its
+conversation mix and history charts, Trends groups filters and history in
+separate panels, and Evidence presents each excerpt with a source/date
+header, sentiment label, model confidence and original-source link.
+The chart uses the full −1 to +1 scale; suppressed scores remain absent.
+
+These pairs use the same viewport, bank (DBS) and topic (capital & liquidity)
+so the layout changes can be reviewed directly:
+
+| Page | Before visual polish | After visual polish |
+|---|---|---|
+| Overview | [Before](screenshots/dashboard/overview-before-polish.png) | [After](screenshots/dashboard/overview-polished-light.png) |
+| Topics | [Before](screenshots/dashboard/topics-before-polish.png) | [After](screenshots/dashboard/topics-polished-light.png) |
+| Trends | [Before](screenshots/dashboard/trends-before-polish.png) | [After](screenshots/dashboard/trends-polished-light.png) |
+| Evidence | [Before](screenshots/dashboard/evidence-before-polish.png) | [After](screenshots/dashboard/evidence-polished-light.png) |
+
+The visual pass preserves the API integration, sample thresholds and existing
+widget selections. Browser checks cover both themes at desktop and laptop
+widths; the dashboard test suite still covers the data and navigation behavior.
 
 ## Which endpoint feeds which view
 

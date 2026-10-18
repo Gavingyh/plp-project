@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dashboard.api_client import ApiError
 from dashboard.chat import GUARD_LABELS, send_chat
-from dashboard import data
+from dashboard import data, trends, evidence as evidence_view
 from config.logging_config import get_logger, setup_logging
 
 setup_logging()
@@ -68,13 +68,12 @@ from dashboard.style import (  # noqa: E402
     DARK,
     LIGHT,
     css,
-    area_chart,
     bank_card,
+    comparison_chart,
     heatmap_chart,
     mix_chart,
     pretty,
-    quote_card,
-    score_word,
+    section_heading,
     sentiment_cmap,
     source_chart,
     strengths_card,
@@ -84,8 +83,11 @@ from dashboard.style import (  # noqa: E402
 
 with st.sidebar:
     st.markdown(
-        '<div class="brand">BankPulse</div>'
-        '<div class="brand-sub">Singapore bank sentiment</div>',
+        '<div class="brand"><span class="brand-mark" aria-hidden="true">'
+        '<svg width="21" height="21" viewBox="0 0 24 24" fill="none">'
+        '<path d="M2 13h5l3-8 4 15 3-9h5" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round"/></svg></span>BankPulse</div>'
+        '<div class="brand-sub">SINGAPORE BANK SENTIMENT</div>',
         unsafe_allow_html=True,
     )
     dark_mode = st.toggle(
@@ -125,6 +127,11 @@ def load_time_series(bank: str, aspect: str, bucket: str) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=300)
+def load_trend(bank: str, aspect: str) -> dict:
+    return data.load_trend(bank, aspect)
+
+
+@st.cache_data(ttl=300)
 def load_analyst_consensus() -> pd.DataFrame:
     return data.load_analyst_consensus()
 
@@ -152,6 +159,11 @@ def render_chat_message(message: dict):
 
 
 def disclosure_footer():
+    with st.container(key="disclosure"):
+        _disclosure_content()
+
+
+def _disclosure_content():
     st.caption(
         f"Not financial advice. Data as of: {data_as_of}. Index computed: {computed_at}."
     )
@@ -234,14 +246,28 @@ with st.sidebar:
 
 
 def page_header(title: str, sub: str):
-    st.markdown(
-        f'<p class="hello">{title}</p><p class="sub">{sub}</p>', unsafe_allow_html=True
+    labels = {
+        "Overview": "Market overview",
+        "Topics": "Topic explorer",
+        "Trends": "Sentiment history",
+        "Evidence": "Evidence library",
+        "Ask": "Research assistant",
+    }
+    snapshot = pd.to_datetime(data_as_of, errors="coerce")
+    date_label = snapshot.strftime("%d %b %Y") if pd.notna(snapshot) else data_as_of
+    meta = (
+        '<div class="report-meta"><span>All available data</span>'
+        "<span>−1 negative &nbsp; / &nbsp; 0 neutral &nbsp; / &nbsp; +1 positive</span></div>"
+        if page in ("Overview", "Topics")
+        else ""
     )
-    if page in ("Overview", "Topics"):
-        st.caption(
-            f"Period: All available data · Data through {data_as_of} · "
-            "Scores: −1 negative / 0 neutral / +1 positive"
-        )
+    st.markdown(
+        '<div class="page-heading"><div class="heading-top">'
+        f'<span class="eyebrow">{labels[page]}</span>'
+        f'<span class="snapshot-badge">Data through {html.escape(date_label)}</span></div>'
+        f'<p class="hello">{html.escape(title)}</p><p class="sub">{html.escape(sub)}</p>{meta}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 # sentiment_index carries 3 rows per (bank, aspect), one per window
@@ -268,12 +294,19 @@ def open_topic_evidence(bank: str, aspect: str):
     st.session_state.nav = "Evidence"
     st.session_state.evidence_bank = bank
     st.session_state.evidence_aspect = aspect
+    evidence_view.reset_filters()
+
+
+def open_topic_trends(bank: str, aspect: str):
+    st.session_state.nav = "Trends"
+    st.session_state.ts_bank = bank
+    st.session_state.ts_aspect = aspect
 
 
 def card(title: str, hint: str = ""):
     """A bordered container with a heading and a one-line 'what am I looking at'."""
-    box = st.container(border=True)
-    box.markdown(f"#### {title}")
+    box = st.container(border=True, key=f"panel_{title.replace(' ', '_')}")
+    box.markdown(section_heading(title), unsafe_allow_html=True)
     if hint:
         box.caption(hint)
     return box
@@ -288,8 +321,8 @@ def overall(bank: str):
 if page == "Overview":
     page_header(
         "Singapore bank sentiment",
-        "Compare DBS, OCBC and UOB, explore the topics behind their scores, "
-        "and read the supporting evidence.",
+        "A view of the conversation around DBS, OCBC and UOB. "
+        "Compare sentiment, follow its movement and explore the source text.",
     )
 
     scored = {b: overall(b) for b in BANKS}
@@ -304,7 +337,7 @@ if page == "Overview":
             msg = (
                 f"The banks have similar scores. <b>{top}</b> is highest at {live[top]['score']:+.3f} "
                 f"and <b>{low}</b> lowest at {live[low]['score']:+.3f}. "
-                "The small gap should be read alongside source coverage and sample sizes."
+                "Read the gap alongside source coverage and sample sizes."
             )
         else:
             msg = (
@@ -352,12 +385,11 @@ if page == "Overview":
         "Coverage includes news, social discussion, bank earnings and broker research. "
         "Source mix and sentence counts differ between banks."
     )
-    st.write("")
     left, right = st.columns([1, 1])
     with left:
         box = card(
-            "Positive, neutral or negative?",
-            "Share of each bank's sentences that were positive, neutral or negative.",
+            "The conversation mix",
+            "Positive, neutral and negative sentences · raw label shares",
         )
         mix_rows = []
         for b, r in live.items():
@@ -381,7 +413,9 @@ if page == "Overview":
         mix = pd.DataFrame(mix_rows)
         if not mix.empty:
             box.altair_chart(
-                mix_chart(mix, palette=palette), use_container_width=True, theme=None
+                mix_chart(mix, height=230, palette=palette),
+                use_container_width=True,
+                theme=None,
             )
             neutral_share = mix[mix.label == "Neutral"]["count"].sum() / max(
                 mix["count"].sum(), 1
@@ -393,7 +427,7 @@ if page == "Overview":
     with right:
         box = card(
             "How sentiment changed",
-            "Quarterly sentiment. Gaps indicate missing data or too few sentences that quarter.",
+            "Quarterly index · gaps mean missing or insufficient coverage",
         )
         frames = []
         for b in live:
@@ -407,12 +441,15 @@ if page == "Overview":
         if frames and any(f["sufficient"].any() for f in frames):
             trend_df = pd.concat(frames)
             box.altair_chart(
-                trend_chart(trend_df, palette=palette),
+                trend_chart(trend_df, height=230, palette=palette),
                 use_container_width=True,
                 theme=None,
             )
         else:
             box.info("Not enough history to draw a trend yet.")
+        box.caption(
+            "The index weights confidence and source. Zero represents neutral sentiment."
+        )
 
     st.write("")
     box = st.expander("Source breakdown · check what is behind the comparison")
@@ -511,20 +548,28 @@ elif page == "Topics":
         st.info("No topic-level data yet.")
     else:
         remembered = st.query_params.get("topic", "dividend_policy")
-        selected_topic = st.selectbox(
-            "Topic to compare",
-            topics,
-            index=topics.index(remembered) if remembered in topics else 0,
-            format_func=pretty,
-            key="topics_aspect",
-        )
+        with st.container(border=True, key="topic_controls"):
+            chooser, description = st.columns([1, 1.6], vertical_alignment="center")
+            selected_topic = chooser.selectbox(
+                "Topic to compare",
+                topics,
+                index=topics.index(remembered) if remembered in topics else 0,
+                format_func=pretty,
+                key="topics_aspect",
+            )
+            description.markdown(
+                '<div class="control-description">'
+                f"<strong>{html.escape(pretty(selected_topic))}</strong><p>"
+                + html.escape(
+                    TOPIC_DESCRIPTIONS.get(
+                        selected_topic, "Sentiment in the collected text on this topic."
+                    )
+                )
+                + "</p></div>",
+                unsafe_allow_html=True,
+            )
         if st.query_params.get("topic") != selected_topic:
             st.query_params["topic"] = selected_topic
-        st.caption(
-            TOPIC_DESCRIPTIONS.get(
-                selected_topic, "Sentiment in the collected text on this topic."
-            )
-        )
 
         focus = aspect_df[aspect_df.aspect == selected_topic]
         comparable = focus[(focus.n >= MIN_TOPIC_N) & focus.score.notna()]
@@ -547,7 +592,7 @@ elif page == "Topics":
                     f"{scope}<b>{html.escape(pretty(selected_topic))}</b>: "
                     f"<b>{hi.bank}</b> has the highest sentiment score ({hi.score:+.3f}) "
                     f"and <b>{lo.bank}</b> the lowest ({lo.score:+.3f}). "
-                    "Lowest is a relative comparison; it does not necessarily mean negative sentiment."
+                    "The ranking describes sentiment in the collected text."
                 )
             st.markdown(
                 takeaway("Selected topic · bank comparison", finding),
@@ -559,33 +604,63 @@ elif page == "Topics":
                 "There is not enough coverage for a headline comparison."
             )
 
-        for col, bank in zip(st.columns(3), BANKS):
-            row = focus[focus.bank == bank]
-            r = None if row.empty else row.iloc[0]
-            n = 0 if r is None else int(r["n"])
-            score = None if r is None or pd.isna(r["score"]) else float(r["score"])
-            with col:
+        visual, bank_details = st.columns([1.35, 1], gap="medium")
+        with visual:
+            with card(
+                "Bank comparison", "One topic. Three banks. The same −1 to +1 scale."
+            ):
+                st.altair_chart(
+                    comparison_chart(focus, palette=palette),
+                    use_container_width=True,
+                    theme=None,
+                )
                 st.markdown(
-                    bank_card(bank, score, n, None, [], palette=palette),
+                    '<div class="reading-note"><b>Read the score with its coverage.</b> '
+                    f"Headline comparisons require {MIN_TOPIC_N}+ sentences per bank. "
+                    "Higher sentiment does not imply a better investment; source mix differs between banks.</div>",
                     unsafe_allow_html=True,
                 )
-                if 0 < n < MIN_TOPIC_N:
-                    st.caption(f"Small sample: fewer than {MIN_TOPIC_N} sentences.")
-                st.button(
-                    f"View {bank} evidence",
-                    key=f"topic_evidence_{bank}",
-                    on_click=open_topic_evidence,
-                    args=(bank, selected_topic),
-                    disabled=n == 0,
-                    use_container_width=True,
-                )
-        st.caption(
-            f"Headline comparisons require at least {MIN_TOPIC_N} sentences per bank. "
-            "Sentence counts and source mix differ; a higher score is not a stock recommendation."
-        )
+        with bank_details:
+            for bank in BANKS:
+                row = focus[focus.bank == bank]
+                r = None if row.empty else row.iloc[0]
+                n = 0 if r is None else int(r["n"])
+                score = None if r is None or pd.isna(r["score"]) else float(r["score"])
+                with st.container(border=True, key=f"topic_card_{bank}"):
+                    st.markdown(
+                        bank_card(
+                            bank, score, n, None, [], palette=palette, compact=True
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                    if 0 < n < MIN_TOPIC_N:
+                        st.caption(f"Small sample: fewer than {MIN_TOPIC_N} sentences.")
+                    trend_col, evidence_col = st.columns(2)
+                    trend_col.button(
+                        f"View {bank} trend",
+                        key=f"topic_trend_{bank}",
+                        on_click=open_topic_trends,
+                        args=(bank, selected_topic),
+                        disabled=n == 0,
+                        use_container_width=True,
+                    )
+                    evidence_col.button(
+                        f"View {bank} evidence",
+                        key=f"topic_evidence_{bank}",
+                        on_click=open_topic_evidence,
+                        args=(bank, selected_topic),
+                        disabled=n == 0,
+                        use_container_width=True,
+                    )
 
-        st.write("")
-        with st.expander("Compare all topics"):
+        matrix_tab, rankings_tab, numbers_tab = st.tabs(
+            ["Compare all topics", "Within each bank", "Scores & coverage"]
+        )
+        with matrix_tab:
+            st.markdown(
+                section_heading("The full topic picture", "Score + sentence count"),
+                unsafe_allow_html=True,
+            )
             st.caption(
                 "Green is positive, red is negative. Each cell shows its score and sentence count. "
                 f"Faded cells have fewer than {MIN_TOPIC_N} sentences; a dash means no reliable score."
@@ -606,7 +681,11 @@ elif page == "Topics":
                     "Uncategorised text did not match an investment topic; it is not a separate investment finding."
                 )
 
-        with st.expander("Highest and lowest topic scores within each bank"):
+        with rankings_tab:
+            st.markdown(
+                section_heading("Highest and lowest topic scores"),
+                unsafe_allow_html=True,
+            )
             st.caption(
                 f"Relative sentiment rankings, using topics with at least {MIN_TOPIC_N} sentences. These are not ratings of financial performance."
             )
@@ -637,7 +716,7 @@ elif page == "Topics":
                         unsafe_allow_html=True,
                     )
 
-        with st.expander("Scores and sample sizes"):
+        with numbers_tab:
             pivot_score = aspect_df.pivot(
                 index="aspect", columns="bank", values="score"
             ).rename(index=pretty)
@@ -654,147 +733,21 @@ elif page == "Topics":
 # ------------------------------------------------------------------ Trends
 elif page == "Trends":
     page_header(
-        "How has sentiment moved?",
-        "Pick a bank and a topic. The line uses the same weighting as the headline numbers, "
-        "and a gap means there was too little data that period, not neutral sentiment.",
+        "Track sentiment over time",
+        "See recent movement, inspect the history and check how much text supports each period.",
     )
-    c1, c2, c3 = st.columns([1, 1, 1.2])
-    with c1:
-        ts_bank = st.selectbox("Bank", BANKS, key="ts_bank")
-    with c2:
-        ts_aspects = ["ALL"] + sorted(
-            df_all[df_all.aspect != "ALL"]["aspect"].unique().tolist()
-        )
-        ts_aspect = st.selectbox(
-            "Topic",
-            ts_aspects,
-            key="ts_aspect",
-            format_func=lambda a: "Overall" if a == "ALL" else pretty(a),
-        )
-    with c3:
-        bucket = st.radio(
-            "Group by",
-            ["month", "quarter", "week"],
-            index=1,
-            horizontal=True,
-            key="ts_bucket",
-        )
-
-    window_df = df_all[(df_all.bank == ts_bank) & (df_all.aspect == ts_aspect)]
-    window_order = {"7d": 0, "30d": 1, "all_time": 2}
-    window_names = {"7d": "Last 7 days", "30d": "Last 30 days", "all_time": "All time"}
-    st.caption(f"Recent windows end on {data_as_of}, the newest stored data date.")
-    window_df = window_df.assign(_order=window_df.window.map(window_order)).sort_values(
-        "_order"
+    trends.render(
+        df_all, data_as_of, palette, load_time_series, load_trend, open_topic_evidence
     )
-
-    if window_df.empty:
-        st.info("No data for this bank and topic.")
-    else:
-        for col, (_, r) in zip(st.columns(3), window_df.iterrows()):
-            with col:
-                name = window_names.get(r["window"], r["window"])
-                if r["n"] == 0:
-                    st.metric(name, "No data")
-                elif r["insufficient_data"]:
-                    st.metric(name, "Too little data")
-                    st.caption(f"Only {int(r['n'])} sentences")
-                else:
-                    st.metric(
-                        name, f"{r['score']:+.3f}", help=f"{int(r['n'])} sentences"
-                    )
-                    st.caption(
-                        f"{score_word(float(r['score']))}, from {int(r['n']):,} sentences"
-                    )
-
-    try:
-        series = load_time_series(ts_bank, ts_aspect, bucket)
-    except ApiError as exc:
-        st.error(str(exc))
-        st.stop()
-    st.write("")
-    box = card(
-        f"{ts_bank}: {'overall' if ts_aspect == 'ALL' else pretty(ts_aspect).lower()} sentiment over time"
-    )
-    if series.empty:
-        box.info("Not enough data to plot a series for this selection.")
-    else:
-        if not series["sufficient"].any():
-            box.info("Every period in this selection is below the volume floor.")
-        else:
-            box.altair_chart(
-                area_chart(
-                    series,
-                    color=palette.bank_colors.get(ts_bank, palette.accent),
-                    palette=palette,
-                ),
-                use_container_width=True,
-                theme=None,
-            )
-            thin = int((~series.sufficient).sum())
-            if thin:
-                box.caption(
-                    f"{thin} period(s) with missing or insufficient data appear as gaps."
-                )
-            with box.expander("See the numbers"):
-                st.dataframe(
-                    series.assign(score=series["score"].where(series["sufficient"]))[
-                        [
-                            "period",
-                            "score",
-                            "n",
-                            "pos_n",
-                            "neu_n",
-                            "neg_n",
-                            "sufficient",
-                        ]
-                    ],
-                    use_container_width=True,
-                    hide_index=True,
-                )
     disclosure_footer()
 
 # ---------------------------------------------------------------- Evidence
 elif page == "Evidence":
     page_header(
-        "What do the sentences actually say?",
-        "The most recent sentences behind a score, so you can judge the numbers for yourself.",
+        "Supporting evidence",
+        "Read recent sentences and open their original sources to assess the model's predictions.",
     )
-    c1, c2 = st.columns(2)
-    with c1:
-        sel_bank = st.selectbox("Bank", BANKS, key="evidence_bank")
-    with c2:
-        aspects_available = ["ALL"] + sorted(
-            df[df.aspect != "ALL"]["aspect"].unique().tolist()
-        )
-        sel_aspect = st.selectbox(
-            "Topic",
-            aspects_available,
-            format_func=lambda a: "Overall" if a == "ALL" else pretty(a),
-            key="evidence_aspect",
-        )
-
-    try:
-        evidence = load_evidence(sel_bank, sel_aspect)
-    except ApiError as exc:
-        st.error(str(exc))
-        st.stop()
-    if evidence.empty:
-        st.info("No evidence sentences for this selection.")
-    else:
-        has_label = "label" in evidence.columns
-        for _, row in evidence.iterrows():
-            st.markdown(
-                quote_card(
-                    row["text"],
-                    row["source"],
-                    row["published_at"],
-                    row["url"],
-                    row["label"] if has_label else None,
-                    row["confidence"] if has_label else None,
-                ),
-                unsafe_allow_html=True,
-            )
+    evidence_view.render(df_all, load_evidence)
     disclosure_footer()
 
 # --------------------------------------------------------------------- Ask

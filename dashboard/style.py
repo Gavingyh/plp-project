@@ -3,15 +3,16 @@ Pure presentation - no data logic lives here."""
 
 from dataclasses import dataclass
 import html
+from urllib.parse import urlsplit
 
 import altair as alt
 import pandas as pd
 
 # Match .streamlit/config.toml so native widgets and custom HTML agree.
-BG = "#FFFFFF"
-SURFACE = "#F7F9FC"
-SURFACE_2 = "#EDF2F7"
-LINE = "#D9E2EC"
+BG = "#F5F7FA"
+SURFACE = "#FFFFFF"
+SURFACE_2 = "#EEF2F6"
+LINE = "#E1E7EE"
 
 # Type
 INK = "#172B4D"
@@ -87,7 +88,7 @@ DARK = Palette(
 )
 
 RADIUS = "14px"  # one corner radius: cards, buttons, inputs, nav items
-FONT = "'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 
 
 def css(palette: Palette = LIGHT) -> str:
@@ -108,22 +109,24 @@ html, body, .stApp,
 }}
 .stApp {{ background: {BG}; color: {INK}; color-scheme: {palette.mode}; }}
 .stMain {{ background: {BG}; color: {INK}; }}
-.block-container {{ padding: 2rem 2.5rem 3rem; max-width: 1360px; }}
+.block-container {{ padding: 2.6rem 2.5rem 3rem; max-width: 1440px; }}
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] {{ gap: 1.15rem; }}
 header[data-testid="stHeader"] {{ background: transparent; }}
 h1, h2, h3, h4 {{ color: {INK}; letter-spacing: -.02em; font-weight: 600; }}
 h3 {{ font-size: 1.15rem; }}
 [data-testid="stCaptionContainer"], .stApp [data-testid="stCaptionContainer"] p,
-.stApp small {{ color: {MUTED}; font-size: .9rem; }}
+.stApp small {{ color: {MUTED}; font-size: .8rem; line-height: 1.5; }}
 .stApp [data-testid="stCaptionContainer"] {{ opacity: 1; }}
 hr {{ border-color: {LINE}; }}
 
 /* ---------- sidebar navigation ---------- */
 section[data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px solid {LINE}; }}
-.brand {{ font-size: 1.5rem; font-weight: 700; color: {INK}; letter-spacing: -.02em; }}
-.brand-sub {{ color: {MUTED}; font-size: .9rem; margin: .1rem 0 1.6rem; }}
+.brand {{ display:flex; align-items:center; gap:10px; font-size: 1.45rem; font-weight: 750; color: {INK}; letter-spacing: -.04em; }}
+.brand-mark {{ width:32px; height:32px; display:grid; place-items:center; background:{ACCENT}; color:{ON_ACCENT}; border-radius:10px; }}
+.brand-sub {{ color: {MUTED}; font-size: .78rem; margin: .55rem 0 1.5rem; }}
 section[data-testid="stSidebar"] [role="radiogroup"] {{ gap: 4px; }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"] {{
-    width: 100%; padding: 11px 14px; border-radius: {RADIUS}; margin: 0;
+    width: 100%; padding: 11px 14px; border-radius: 10px; margin: 0;
     color: {MUTED}; transition: background .2s, color .2s; cursor: pointer;
 }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:hover {{ background: {SURFACE_2}; color: {INK}; }}
@@ -138,14 +141,30 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] p {{
     color: {ON_ACCENT}; font-weight: 600;
 }}
-.side-label {{ font-size: .75rem; color: {MUTED}; margin: 2rem 0 .4rem; letter-spacing: .02em; }}
+.side-label {{ font-size: .65rem; text-transform:uppercase; font-weight:700; color: {MUTED}; margin: 2rem 0 .6rem; letter-spacing: .12em; }}
 .side-stat {{ display:flex; justify-content:space-between; gap:12px; padding:.45rem 0; font-size:.9rem;
               color:{INK}; border-bottom:1px solid {LINE}; font-variant-numeric: tabular-nums; }}
 .side-stat span:first-child {{ color:{MUTED}; }}
 
 /* ---------- page header ---------- */
-.stApp p.hello {{ font-size: 2.1rem; font-weight: 700; color: {INK}; margin: 0; letter-spacing: -.03em; }}
-.stApp p.sub {{ color: {MUTED}; font-size: 1rem; margin: .3rem 0 1rem; max-width: 85ch; line-height: 1.5; }}
+.page-heading {{ margin-bottom:.65rem; }}
+.heading-top {{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }}
+.eyebrow {{ color:{ACCENT}; font-size:.67rem; font-weight:750; letter-spacing:.14em; text-transform:uppercase; }}
+.snapshot-badge {{ color:{MUTED}; font-size:.72rem; display:flex; align-items:center; gap:7px; white-space:nowrap; }}
+.snapshot-badge::before {{ content:""; width:6px; height:6px; border-radius:50%; background:{ACCENT}; }}
+.stApp p.hello {{ font-size: 2.15rem; font-weight: 750; color: {INK}; margin: 0; letter-spacing: -.045em; line-height:1.2; }}
+.stApp p.sub {{ color: {MUTED}; font-size: .94rem; margin: .65rem 0 0; max-width: 80ch; line-height: 1.6; }}
+.report-meta {{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }}
+.report-meta span {{ font-size:.69rem; color:{MUTED}; border:1px solid {LINE}; border-radius:6px; padding:4px 8px; background:{SURFACE}; }}
+.section-heading {{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0 0 2px; }}
+.section-heading h3 {{ color:{INK}; font-size:1.05rem; font-weight:700; margin:0; padding:0; letter-spacing:-.025em; }}
+.section-heading h3 span {{ font-size:inherit; color:inherit; }}
+.section-heading > span {{ color:{MUTED}; font-size:.72rem; }}
+.control-description {{ padding:3px 0 0 20px; border-left:1px solid {LINE}; }}
+.control-description strong {{ color:{INK}; font-size:.88rem; display:block; margin-bottom:5px; }}
+.control-description p {{ color:{MUTED}; font-size:.8rem; margin:0; line-height:1.6; }}
+.reading-note {{ padding:12px 14px; background:{BG}; border-radius:8px; color:{MUTED}; font-size:.76rem; line-height:1.6; }}
+.reading-note b {{ color:{INK}; }}
 
 /* ---------- surfaces ---------- */
 .panel {{ background: {SURFACE}; border: 1px solid {LINE}; border-radius: {RADIUS};
@@ -153,24 +172,42 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 .panel h4 {{ margin: 0 0 .15rem; font-size: 1rem; }}
 .panel .hint {{ color: {MUTED}; font-size: .85rem; margin: 0 0 .6rem; line-height: 1.5; max-width: 70ch; }}
 [data-testid="stVerticalBlockBorderWrapper"] {{ border-color: {LINE} !important; border-radius: {RADIUS}; }}
+[class*="st-key-panel_"], .st-key-topic_controls, .st-key-trend_controls,
+.st-key-evidence_controls, [class*="st-key-topic_card_"], [class*="st-key-trend_window_"] {{
+    background:{SURFACE}; border:1px solid {LINE} !important; border-radius:{RADIUS};
+    box-shadow:0 3px 12px #0F233B04; padding:20px !important;
+}}
+.st-key-topic_controls, .st-key-trend_controls, .st-key-evidence_controls {{ padding:16px 20px !important; }}
+[class*="st-key-topic_card_"] {{ padding:16px 18px 12px !important; gap:10px; }}
+[class*="st-key-topic_card_"] [data-testid="stHorizontalBlock"] {{ gap:8px; }}
+[class*="st-key-topic_card_"] .stButton > button {{ min-height:32px; padding:3px 6px; }}
+[class*="st-key-topic_card_"] .stButton p {{ font-size:.72rem; }}
+.st-key-topic_card_DBS {{ border-left:3px solid {palette.bank_colors['DBS']} !important; }}
+.st-key-topic_card_OCBC {{ border-left:3px solid {palette.bank_colors['OCBC']} !important; }}
+.st-key-topic_card_UOB {{ border-left:3px solid {palette.bank_colors['UOB']} !important; }}
 
 /* the answer to "so what?", always first on a page */
-.takeaway {{ background: {SURFACE}; border: 1px solid {LINE}; border-left: 3px solid {ACCENT};
-             border-radius: {RADIUS}; padding: 16px 20px; margin-bottom: 18px; }}
-.takeaway .kicker {{ color: {ACCENT}; font-size: .78rem; font-weight: 600; margin-bottom: .3rem; }}
-.takeaway .body {{ font-size: 1.05rem; line-height: 1.55; color: {INK}; max-width: 75ch; }}
+.takeaway {{ background: {ACCENT}0C; border:1px solid {ACCENT}22;
+             border-radius:10px; padding:13px 18px; margin:4px 0 12px; }}
+.takeaway .kicker {{ color: {ACCENT}; font-size: .65rem; text-transform:uppercase; letter-spacing:.08em; font-weight: 750; margin-bottom: .25rem; }}
+.takeaway .body {{ font-size: .87rem; line-height: 1.6; color: {INK}; }}
 
 /* ---------- bank cards ---------- */
-.bank-card {{ background: {BG}; border: 1px solid {LINE}; border-top: 4px solid var(--bank-color);
-              border-radius: {RADIUS}; padding: 18px 20px; height: 100%; }}
+.bank-card {{ background: {SURFACE}; border: 1px solid {LINE};
+              border-radius: {RADIUS}; padding: 22px 22px 18px; height: 100%; box-shadow:0 3px 12px #0F233B04; }}
 .bank-top {{ display:flex; align-items:center; gap:10px; font-weight:600; font-size:.95rem; }}
 .bank-dot {{ width:10px; height:10px; border-radius:50%; }}
-.bank-score {{ font-size: 2.6rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.1;
-               margin-top: 14px; font-variant-numeric: tabular-nums; }}
-.bank-word {{ font-size: .9rem; margin-top: 2px; }}
-.bank-meta {{ color: {MUTED}; font-size: .9rem; margin-top: 12px; line-height: 1.5; }}
-.spark-label {{ color: {MUTED}; font-size: .8rem; margin-top: .45rem; }}
-.bank-card svg {{ float: right; margin-top: -58px; }}
+.bank-score {{ font-size: 2.65rem; font-weight: 750; letter-spacing: -.055em; line-height: 1.1;
+               margin-top: 18px; font-variant-numeric: tabular-nums; }}
+.bank-word {{ font-size: .75rem; margin-top: 5px; }}
+.bank-meta {{ color: {MUTED}; font-size: .73rem; margin-top: 16px; line-height: 1.8; }}
+.spark-label {{ color: {MUTED}; font-size: .65rem; margin-top: .55rem; }}
+.bank-card svg {{ float: right; margin-top: -64px; }}
+.bank-summary {{ display:flex; justify-content:space-between; align-items:center; gap:12px; }}
+.bank-summary .bank-score {{ font-size:1.85rem; margin:0; }}
+.bank-details {{ display:flex; justify-content:space-between; gap:8px; align-items:center; margin-top:6px; margin-bottom:8px; }}
+.bank-details .bank-word, .bank-details .bank-meta {{ margin:0; font-size:.72rem; }}
+[class*="st-key-topic_card_"] .bank-card {{ padding:0; border:0; background:transparent; border-radius:0; box-shadow:none; }}
 .up {{ color: {POS}; }} .down {{ color: {NEG}; }} .flat {{ color: {MUTED}; }}
 
 /* ---------- strengths / weaknesses ---------- */
@@ -182,11 +219,20 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 .sw .tag {{ color: {MUTED}; font-size:.75rem; margin-top:.5rem; }}
 
 /* ---------- evidence ---------- */
-.quote {{ background: {SURFACE}; border: 1px solid {LINE}; border-radius: {RADIUS};
-          padding: 14px 18px; margin-bottom: 10px; }}
-.quote .text {{ line-height: 1.55; color: {INK}; }}
-.quote .meta {{ color: {MUTED}; font-size: .8rem; margin-top: .5rem; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }}
+.quote {{ background: {SURFACE}; border: 1px solid {LINE}; border-radius:12px;
+          padding:20px 24px; margin-bottom:10px; box-shadow:0 2px 8px #0F233B03; }}
+.quote .text {{ line-height: 1.75; color: {INK}; font-size:.94rem; padding:12px 0 14px; }}
+.quote .quote-heading {{ display:flex; justify-content:space-between; gap:12px; align-items:center; }}
+.quote .source-name {{ color:{INK}; font-weight:650; font-size:.78rem; }}
+.quote .source-date {{ color:{MUTED}; font-size:.73rem; }}
+.quote .meta {{ color: {MUTED}; font-size: .71rem; padding-top:12px; border-top:1px solid {LINE}; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }}
+.quote .meta a, .quote .meta > span:last-child {{ margin-left:auto; }}
 .quote a {{ color: {ACCENT}; text-decoration: none; }}
+.quote a:hover {{ text-decoration:underline; }}
+.evidence-context {{ display:flex; align-items:center; gap:16px; margin:6px 0; }}
+.evidence-context .count {{ color:{INK}; font-size:2rem; font-weight:750; letter-spacing:-.04em; line-height:1; }}
+.evidence-context strong {{ color:{INK}; font-size:.91rem; display:block; }}
+.evidence-context span {{ color:{MUTED}; font-size:.74rem; }}
 .chip {{ display:inline-block; padding: 2px 10px; border-radius: 999px; font-size:.75rem; font-weight:600; }}
 .chip.pos {{ background: {POS}22; color: {POS}; }}
 .chip.neg {{ background: {NEG}22; color: {NEG}; }}
@@ -195,7 +241,7 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 /* ---------- native widgets ---------- */
 div[data-testid="stMetric"] {{ background: {SURFACE}; border: 1px solid {LINE}; border-radius: {RADIUS}; padding: 14px 18px; }}
 div[data-testid="stMetricValue"] {{ font-weight: 700; font-variant-numeric: tabular-nums; }}
-.stButton > button {{ border-radius: {RADIUS}; border: 1px solid {LINE}; background: {SURFACE_2}; color: {INK};
+.stButton > button {{ border-radius:8px; border: 1px solid {LINE}; background: {SURFACE}; color: {INK};
     transition: border-color .2s, color .2s, transform .1s; }}
 .stButton > button:hover {{ border-color: {ACCENT}; color: {ACCENT}; }}
 .stButton > button:active {{ transform: translateY(1px); }}
@@ -203,8 +249,16 @@ div[data-testid="stMetricValue"] {{ font-weight: 700; font-variant-numeric: tabu
 .stButton > button[kind="primary"] {{ background: {ACCENT}; color: {ON_ACCENT}; border: none; font-weight: 600; }}
 div[data-baseweb="select"] > div {{ border-radius: {RADIUS}; background: {SURFACE_2}; border: 1px solid {LINE}; }}
 div[data-testid="stDataFrame"] {{ border-radius: {RADIUS}; overflow: hidden; }}
-details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-radius: {RADIUS}; }}
+details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-radius:10px; }}
+[data-testid="stExpander"] summary p {{ font-size:.8rem; }}
+[data-testid="stTabs"] [role="tablist"] {{ border-bottom:1px solid {LINE}; gap:24px; }}
+[data-testid="stTabs"] [role="tab"] {{ background:transparent; color:{MUTED}; padding:10px 0 12px; font-size:.82rem; }}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {{ color:{ACCENT}; font-weight:700; }}
+[data-testid="stTabs"] [role="tab"]:hover {{ color:{ACCENT}; }}
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] {{ background-color:{ACCENT}; }}
 [data-testid="stChatMessage"] {{ background: {SURFACE}; border: 1px solid {LINE}; border-radius: {RADIUS}; }}
+[class*="st-key-trend_window_"] [data-testid="stMetric"] {{ background: transparent; border: none; padding: 0; }}
+[class*="st-key-trend_window_"] {{ border-color: {LINE}; }}
 
 /* Native widgets inherit the session's palette as well as the custom cards. */
 .stApp [data-testid="stWidgetLabel"], .stApp [data-testid="stMetricLabel"],
@@ -215,10 +269,18 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
 .stApp [data-testid="stChatInput"] {{ background: {SURFACE_2}; color: {INK}; }}
 .stApp textarea::placeholder, .stApp input::placeholder {{ color: {MUTED}; }}
 .stApp [data-testid="stBottomBlockContainer"] {{ background: {BG}; }}
-.stApp [data-testid="stButton"] button {{ background: {SURFACE_2}; color: {INK}; border-color: {LINE}; }}
+.stApp [role="alert"] [data-testid="stMarkdownContainer"],
+.stApp [role="alert"] p, .stApp [data-testid="stAlert"] p {{ color: {INK}; }}
+.stApp [data-testid="stButton"] button {{ background: {SURFACE}; color: {INK}; border-color: {LINE}; }}
 .stApp [data-testid="stButton"] button[kind="primary"] {{ background: {ACCENT}; color: {ON_ACCENT}; }}
-.stApp [data-testid="stSelectbox"] [role="group"] {{ background: {SURFACE_2}; border-color: {LINE}; }}
-.stApp [data-testid="stSelectbox"] button {{ background: {SURFACE_2}; color: {INK}; }}
+.stApp [data-testid="stSelectbox"] [role="group"] {{ background: {BG}; border-color: {LINE}; border-radius:8px; }}
+.stApp [data-testid="stSelectbox"] button {{ background: {BG}; color: {INK}; }}
+.stApp [data-testid="stWidgetLabel"] p {{ font-size:.76rem; font-weight:600; }}
+.stApp [data-testid="stRadio"] [role="radiogroup"] {{ gap:10px; }}
+.stApp [data-testid="stRadio"] label p {{ font-size:.78rem; }}
+[class*="st-key-trend_window_"] [data-testid="stMetricValue"] {{ font-size:2.15rem; letter-spacing:-.04em; }}
+.st-key-disclosure {{ margin-top:12px; padding-top:16px; border-top:1px solid {LINE}; }}
+.st-key-disclosure [data-testid="stCaptionContainer"] p {{ font-size:.7rem; }}
 [role="listbox"], [role="option"] {{ background: {SURFACE_2}; color: {INK}; }}
 [role="option"]:hover, [role="option"][data-focused="true"] {{ background: {LINE}; }}
 
@@ -228,6 +290,10 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
     .stApp p.hello {{ font-size: 1.65rem; }}
     .bank-score {{ font-size: 2rem; }}
     .bank-card svg {{ display: none; }}
+    .heading-top {{ flex-wrap:wrap; }}
+    .control-description {{ border:0; padding:0; }}
+    .quote {{ padding:16px; }}
+    .quote .meta a {{ margin-left:0; }}
 }}
 </style>
 """
@@ -282,6 +348,13 @@ def takeaway(kicker: str, body: str) -> str:
     )
 
 
+def section_heading(title: str, detail: str = "") -> str:
+    return (
+        f'<div class="section-heading"><h3>{html.escape(title)}</h3>'
+        f"<span>{html.escape(detail)}</span></div>"
+    )
+
+
 def sparkline(values, color=ACCENT, w=96, h=34) -> str:
     """Inline SVG polyline for a bank card; empty string if too few points."""
     vals = [v for v in values if v is not None and pd.notna(v)]
@@ -318,12 +391,22 @@ def bank_card(
     spark_values,
     *,
     palette: Palette = LIGHT,
+    compact: bool = False,
 ) -> str:
     color = palette.bank_colors.get(bank, palette.muted)
     head = (
         f'<div class="bank-top"><span class="bank-dot" style="background:{color}"></span>'
         f"{html.escape(bank)}</div>"
     )
+    if compact:
+        value = "—" if score is None else f"{score:+.3f}"
+        word = "Not enough data" if score is None else score_word(score)
+        return (
+            f'<div class="bank-card" style="--bank-color:{color}">'
+            f'<div class="bank-summary">{head}<div class="bank-score">{value}</div></div>'
+            f'<div class="bank-details"><span class="bank-word" style="color:{color}">{word}</span>'
+            f'<span class="bank-meta">Based on {n:,} sentences</span></div></div>'
+        )
     if score is None:
         return (
             f'<div class="bank-card" style="--bank-color:{color}">{head}'
@@ -385,23 +468,27 @@ def strengths_card(
 
 def quote_card(text, source, published, url, label=None, confidence=None) -> str:
     chip = ""
+    confidence_text = ""
     if label:
         key = {"positive": "pos", "negative": "neg"}.get(str(label).lower(), "neu")
-        conf = (
-            f" {confidence:.0%}"
-            if confidence is not None and pd.notna(confidence)
-            else ""
-        )
-        chip = f'<span class="chip {key}">{html.escape(str(label).capitalize())}{conf}</span>'
+        chip = f'<span class="chip {key}">{html.escape(str(label).capitalize())}</span>'
+        if confidence is not None and pd.notna(confidence):
+            confidence_text = f"<span>Model confidence: {confidence:.0%}</span>"
+    try:
+        valid_url = bool(url) and urlsplit(str(url)).scheme.lower() in ("http", "https")
+    except ValueError:
+        valid_url = False
     link = (
-        f'<a href="{html.escape(str(url))}" target="_blank">Open source</a>'
-        if url
-        else ""
+        f'<a href="{html.escape(str(url))}" target="_blank" rel="noopener noreferrer">Open original source ↗</a>'
+        if valid_url
+        else "<span>Source link unavailable</span>"
     )
     return (
-        f'<div class="quote"><div class="text">{html.escape(str(text))}</div>'
-        f'<div class="meta">{chip}<span>{html.escape(pretty(source))}</span>'
-        f"<span>{html.escape(str(published)[:10])}</span>{link}</div></div>"
+        '<div class="quote"><div class="quote-heading">'
+        f'<span class="source-name">{html.escape(pretty(source))}</span>'
+        f'<span class="source-date">{html.escape(str(published)[:10])}</span></div>'
+        f'<div class="text">{html.escape(str(text))}</div>'
+        f'<div class="meta">{chip}{confidence_text}{link}</div></div>'
     )
 
 
@@ -447,6 +534,60 @@ def _themed(chart, height, palette: Palette = LIGHT):
 def _bank_scale(banks, palette: Palette = LIGHT):
     present = [b for b in palette.bank_colors if b in set(banks)]
     return alt.Scale(domain=present, range=[palette.bank_colors[b] for b in present])
+
+
+def comparison_chart(frame: pd.DataFrame, *, palette: Palette = LIGHT):
+    """Compare stored topic scores on the full sentiment scale; retain missing rows."""
+    frame = frame.copy()
+    frame["display"] = frame.score.map(
+        lambda score: "No score" if pd.isna(score) else f"{score:+.3f}"
+    )
+    base = alt.Chart(frame).encode(
+        y=alt.Y(
+            "bank:N",
+            title=None,
+            sort=["DBS", "OCBC", "UOB"],
+            axis=alt.Axis(
+                domain=False, ticks=False, labelPadding=14, labelFontWeight=600
+            ),
+        ),
+        x=alt.X(
+            "score:Q",
+            title=None,
+            scale=alt.Scale(domain=[-1, 1]),
+            axis=alt.Axis(
+                values=[-1, -0.5, 0, 0.5, 1],
+                format="+.1f",
+                gridDash=[2, 5],
+                domain=False,
+                tickSize=0,
+                labelPadding=12,
+            ),
+        ),
+        color=alt.Color("bank:N", scale=_bank_scale(frame.bank, palette), legend=None),
+        tooltip=[
+            alt.Tooltip("bank:N", title="Bank"),
+            alt.Tooltip("display:N", title="Score"),
+            alt.Tooltip("n:Q", title="Sentences", format=","),
+        ],
+    )
+    bars = base.mark_bar(size=16, cornerRadius=4, opacity=0.25)
+    dots = base.mark_circle(size=130, opacity=1)
+    labels = (
+        base.mark_text(align="left", dx=14, fontSize=15, fontWeight=700)
+        .encode(
+            text="display:N",
+            color=alt.value(palette.ink),
+            x=alt.X("label_position:Q", scale=alt.Scale(domain=[-1, 1])),
+        )
+        .transform_calculate(label_position="isValid(datum.score) ? datum.score : 0")
+    )
+    zero = (
+        alt.Chart(pd.DataFrame({"zero": [0]}))
+        .mark_rule(color=palette.muted, strokeDash=[4, 4], opacity=0.55)
+        .encode(x="zero:Q")
+    )
+    return _themed(bars + dots + labels + zero, 235, palette)
 
 
 def _zero_rule(palette: Palette = LIGHT):
@@ -538,6 +679,87 @@ def trend_chart(df, height=300, *, palette: Palette = LIGHT):
         + _zero_rule(palette),
         height,
         palette,
+    )
+
+
+def history_chart(df, color, *, palette: Palette = LIGHT):
+    """Aligned sentiment and volume panels; straight segments preserve observed buckets."""
+    frame = _plot_data(df)
+    periods = sorted(frame.period.unique())
+    x = alt.X(
+        "period:N",
+        title=None,
+        scale=alt.Scale(domain=periods),
+        axis=alt.Axis(labels=False, ticks=False, grid=False),
+    )
+    base = alt.Chart(frame).encode(
+        x=x,
+        y=alt.Y(
+            "score:Q",
+            title="Sentiment score",
+            scale=alt.Scale(zero=True),
+            axis=alt.Axis(
+                gridDash=[3, 3],
+                gridColor=alt.condition(
+                    "datum.value === 0",
+                    alt.value(palette.muted),
+                    alt.value(palette.line),
+                ),
+            ),
+        ),
+        detail=alt.Detail("_segment:N"),
+        tooltip=[
+            alt.Tooltip("period:N", title="Period"),
+            alt.Tooltip("score:Q", title="Score", format="+.3f"),
+            alt.Tooltip("n:Q", title="Scored sentences", format=","),
+            alt.Tooltip("period_status:N", title="Coverage"),
+        ],
+    )
+    # Keep each vconcat child a unit chart. Streamlit can then fit both panels
+    # to the container; a nested layer triggers its overflowing 'pad' sizing.
+    line = base.mark_line(
+        color=color,
+        strokeWidth=2.5,
+        interpolate="linear",
+        point=alt.OverlayMarkDef(filled=True, size=48),
+    ).properties(height=230)
+    volume = (
+        alt.Chart(frame)
+        .mark_bar(
+            color=color, opacity=0.45, cornerRadiusTopLeft=2, cornerRadiusTopRight=2
+        )
+        .encode(
+            x=alt.X(
+                "period:N",
+                title=None,
+                scale=alt.Scale(domain=periods),
+                axis=alt.Axis(labelAngle=0, labelOverlap=True, grid=False),
+            ),
+            y=alt.Y("n:Q", title="Sentences", axis=alt.Axis(tickCount=3, grid=False)),
+            tooltip=[
+                alt.Tooltip("period:N", title="Period"),
+                alt.Tooltip("n:Q", title="Scored sentences", format=","),
+                alt.Tooltip("period_status:N", title="Coverage"),
+            ],
+        )
+        .properties(height=65)
+    )
+    return (
+        alt.vconcat(line, volume, spacing=12)
+        .resolve_scale(x="shared")
+        .properties(background="transparent")
+        .configure_view(strokeWidth=0)
+        .configure_axis(
+            labelColor=palette.muted,
+            titleColor=palette.muted,
+            gridColor=palette.line,
+            domainColor=palette.line,
+            tickColor=palette.line,
+            labelFont="Arial",
+            titleFont="Arial",
+            labelFontSize=13,
+            titleFontSize=13,
+        )
     )
 
 

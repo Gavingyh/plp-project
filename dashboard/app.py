@@ -19,6 +19,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dashboard.api_client import ApiError
+from dashboard.chat import GUARD_LABELS, send_chat
 from dashboard import data
 from config.logging_config import get_logger, setup_logging
 
@@ -107,6 +108,28 @@ def load_time_series(bank: str, aspect: str, bucket: str) -> pd.DataFrame:
 @st.cache_data(ttl=300)
 def load_analyst_consensus() -> pd.DataFrame:
     return data.load_analyst_consensus()
+
+
+@st.cache_data(ttl=300)
+def load_suggestions() -> list[dict]:
+    return data.load_suggestions(limit=6)
+
+
+def render_chat_message(message: dict):
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        if message.get("citation_unverified"):
+            st.warning(
+                "Verification warning: supporting citations could not be verified. Do not rely on this answer."
+            )
+        if message.get("unverified_numbers"):
+            numbers = ", ".join(str(number) for number in message["unverified_numbers"])
+            st.warning(
+                f"Verification warning: these figures could not be verified: {numbers}."
+            )
+        if message.get("guard"):
+            label = GUARD_LABELS.get(message["guard"], "Predefined response")
+            st.caption(f"Response type: {label}")
 
 
 def disclosure_footer():
@@ -633,12 +656,6 @@ elif page == "Ask":
         "knowledge. It does not give investment advice.",
     )
 
-    # Imported lazily: chatbot.agent pulls in the model backends and the
-    # embedding store, which would slow every dashboard start even for
-    # someone who never opens this page.
-    from chatbot.agent import Conversation
-    from chatbot.suggestions import get_suggestions
-
     st.caption(
         "A local model may still cite evidence it never retrieved. Answers flagged with a "
         "verification warning should not be trusted, and figures that match nothing the tools "
@@ -646,20 +663,28 @@ elif page == "Ask":
         '"and OCBC?" work.'
     )
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = Conversation()
+    # API history contains messages and display metadata, not backend objects.
+    # Use a separate key from the old in-process Conversation implementation.
+    if "api_chat_history" not in st.session_state:
+        st.session_state.api_chat_history = []
+    history = st.session_state.api_chat_history
 
-    for role, content in st.session_state.chat_history:
-        with st.chat_message(role):
-            st.markdown(content)
+    if st.button("Clear conversation", key="clear_chat"):
+        st.session_state.api_chat_history = []
+        history = st.session_state.api_chat_history
+
+    for message in history:
+        render_chat_message(message)
 
     # Suggestions are generated from what the index actually holds, so a
     # clicked suggestion won't dead-end on "insufficient data".
     pending = None
     st.markdown("**Try one of these**")
-    suggestions = get_suggestions(limit=6)
+    try:
+        suggestions = load_suggestions()
+    except ApiError as exc:
+        st.warning(f"Suggested questions are unavailable. {exc}")
+        suggestions = []
     for row_start in range(0, len(suggestions), 2):
         for col, item in zip(st.columns(2), suggestions[row_start : row_start + 2]):
             if col.button(
@@ -672,26 +697,23 @@ elif page == "Ask":
     typed = st.chat_input("Or ask your own question")
     question = pending or typed
 
-    if question:
-        st.session_state.chat_history.append(("user", question))
+    if question and question.strip():
         with st.chat_message("user"):
             st.markdown(question)
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking - a local model can take a minute..."):
-                try:
-                    answer = st.session_state.conversation.ask(question).answer
-                except Exception as exc:  # backend unreachable, bad key, etc.
-                    answer = (
-                        f"The chatbot backend could not be reached: `{exc}`\n\n"
-                        "If you are using the local backend, check that "
-                        "`ollama serve` is running."
-                    )
-            st.markdown(answer)
-        st.session_state.chat_history.append(("assistant", answer))
-
-    if st.session_state.chat_history and st.button("Clear conversation"):
-        st.session_state.chat_history = []
-        st.session_state.conversation = Conversation()
-        st.rerun()
+        with st.spinner("Thinking - a local model can take a minute..."):
+            try:
+                result = send_chat(question, history)
+            except ApiError as exc:
+                st.error(f"Could not get an answer. {exc}")
+            else:
+                answer = {
+                    "role": "assistant",
+                    "content": result["answer"],
+                    "guard": result.get("guard"),
+                    "citation_unverified": result["citation_unverified"],
+                    "unverified_numbers": result["unverified_numbers"],
+                }
+                history.extend([{"role": "user", "content": question}, answer])
+                render_chat_message(answer)
 
     disclosure_footer()

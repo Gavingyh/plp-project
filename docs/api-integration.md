@@ -2,10 +2,10 @@
 
 For whoever builds a frontend on the API. The Streamlit dashboard's data
 views now use this API through `dashboard/api_client.py` and `dashboard/data.py`.
-The Ask page still calls the chatbot directly until the chat migration is
-completed. This page is how to run the API, which endpoint feeds which
-view, what the responses look like, and what the screen must say about the
-numbers.
+The Ask page uses `/suggestions` and `/chat` through `dashboard/chat.py`;
+the dashboard imports no database or model backends. This page is how to run
+the API, which endpoint feeds which view, what the responses look like, and
+what the screen must say about the numbers.
 
 ## Run the API
 
@@ -161,6 +161,25 @@ The UI must show the flags, not just the answer:
 
 A local model takes seconds to tens of seconds per answer; show a spinner.
 To try the bot without any UI: `.venv-plp/bin/python3 -m chatbot.chat`.
+
+### Streamlit chat behaviour
+
+The Ask page stores successful question/answer pairs and their verification
+flags in Streamlit session state. Every `/chat` request sends only earlier
+`role`/`content` messages in `history`; the new question appears separately
+in `message`. The API selects the backend and reconstructs the conversation.
+The dashboard does not send provider keys or select models.
+
+Citation and number warnings remain visible on reruns, and fixed replies
+show a readable response type. Clearing the conversation removes all stored
+turns and warnings. History belongs to the browser session and is not saved
+to the database. Reloading or closing that session can reset it.
+
+Suggested questions are cached for five minutes. Their failure shows a
+warning while leaving typed chat available. Chat generation is never cached
+or automatically retried. It allows a five-second connection timeout and a
+600-second read timeout for local model/tool calls. Failed exchanges show an
+error and are excluded from subsequent conversation history.
 
 ## What the screen must say
 

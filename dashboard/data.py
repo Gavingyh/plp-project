@@ -97,6 +97,19 @@ def load_analyst_consensus() -> pd.DataFrame:
     )
 
 
+def load_suggestions(limit: int = 6) -> list[dict]:
+    payload = request_json("GET", "/suggestions", params={"limit": limit})
+    suggestions = payload.get("suggestions")
+    if not isinstance(suggestions, list) or any(
+        not isinstance(item, dict)
+        or not isinstance(item.get("question"), str)
+        or not item["question"].strip()
+        for item in suggestions
+    ):
+        raise ApiError("The API returned invalid suggested questions.")
+    return suggestions
+
+
 def load_time_series(bank: str, aspect: str, bucket: str) -> pd.DataFrame:
     payload = request_json(
         "GET",

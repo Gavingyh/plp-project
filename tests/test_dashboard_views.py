@@ -54,7 +54,7 @@ def series_row(period, n=10):
     )
 
 
-def fake_api(*, empty=False, fail_path=None):
+def fake_api(*, empty=False, fail_path=None, chat_payload=None, suggestions=None):
     """Exercise the real HTTP client while replacing only its transport."""
 
     def request(method, url, *, params=None, json=None, timeout=None):
@@ -108,6 +108,35 @@ def fake_api(*, empty=False, fail_path=None):
             if "aspect" in params:
                 row.update(aspect=params["aspect"], label="positive", confidence=0.9)
             payload = {"rows": [] if empty else [row]}
+        elif path == "/suggestions":
+            payload = {
+                "suggestions": (
+                    suggestions
+                    if suggestions is not None
+                    else [
+                        {
+                            "question": "What is the overall sentiment on DBS?",
+                            "category": "overall",
+                        },
+                        {
+                            "question": "What is the overall sentiment on OCBC?",
+                            "category": "overall",
+                        },
+                    ]
+                )
+            }
+        elif path == "/chat":
+            payload = (
+                chat_payload
+                if chat_payload is not None
+                else {
+                    "question": json["message"],
+                    "answer": f"Stored response for: {json['message']}",
+                    "guard": None,
+                    "citation_unverified": False,
+                    "unverified_numbers": [],
+                }
+            )
         else:
             raise AssertionError(f"Unexpected request: {method} {path}")
         result = requests.Response()
@@ -225,7 +254,7 @@ class DashboardDataTests(unittest.TestCase):
         self.assertEqual(svg.count("<polyline"), 2)
 
 
-class DashboardPageTests(unittest.TestCase):
+class DashboardAppTestCase(unittest.TestCase):
     def setUp(self):
         env = patch.dict(os.environ, {"LOG_FILE": "none"})
         env.start()
@@ -250,6 +279,8 @@ class DashboardPageTests(unittest.TestCase):
         self.assertFalse(app.exception, [e.message for e in app.exception])
         return app
 
+
+class DashboardPageTests(DashboardAppTestCase):
     def test_four_data_pages_render_without_database_access(self):
         for name in ("Overview", "Topics", "Trends", "Evidence"):
             with self.subTest(page=name):

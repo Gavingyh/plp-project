@@ -38,6 +38,40 @@ API results show no-data messages; failed requests show service errors.
   calls a model. CORS is open (`*`), so a browser app on any port can call
   it. There is no authentication: run it locally, not on the internet.
 
+## Dashboard presentation review — 18 October 2026
+
+The presentation work is on `feat/dashboard-presentation`, starting from
+`bd508d7` (the dashboard API integration merge). The comparisons below record
+the earlier interface and the reviewed replacement for the project report.
+The Topics "before" screenshots already include the new light theme and
+sidebar toggle; the topic layout changed in a later step.
+
+| Area | Before | After | Purpose |
+|---|---|---|---|
+| Appearance | Fixed dark background, pastel series colours and small chart labels | White by default, a sidebar dark-mode toggle, palettes for both modes and larger labels | Improve readability during the five-minute presentation and allow personal preference |
+| Overview | Long page with source and analyst sections always expanded; weighting details in the introduction | Short introduction, visible all-data period, prominent bank scores, expandable source/analyst context and method notes | Keep the main bank comparison visible and let the presenter open supporting detail when needed |
+| Topics opening view | All-topic heatmap followed by each bank's "strengths and weak spots" | Topic selector, plain-language topic description, comparison summary and three bank cards with sentence counts | Start with a concrete question about one topic across DBS, OCBC and UOB |
+| Topic evidence | Navigate to Evidence and manually choose the bank and topic again | Each bank card has a View evidence button that carries both selections to Evidence; returning to Topics retains the chosen topic | Make the path from score to supporting text explicit |
+| Topic detail | Sentence counts mainly in hover details and tables; "other" mixed into the main matrix | Expandable full heatmap with score and count in every cell; uncategorised text is optional; full tables remain available | Preserve analytical depth while shortening the default view |
+| Relative rankings | "Best/weakest" wording; positive scores could be coloured red when ranked lowest | "Highest/lowest sentiment" wording; colour follows the score's sign, with a reminder that lowest need not mean negative | Avoid presenting sentiment rankings as financial strengths or weaknesses |
+
+The underlying API scores and selected sentiment model are the same. The old
+heatmap uses two decimal places and the new focus cards use three: for example,
+`+0.46` and `+0.455` can represent the same underlying result. A colour or
+rounding change is not a model improvement. The existing sample rules remain:
+the API suppresses scores below its volume floor (currently five sentences),
+while topic headline comparisons and rankings require at least 30 sentences.
+The 30-sentence rule is a display threshold, not a statistical confidence test.
+
+Overview and Topics have received layout reviews. Trends, Evidence and Ask
+currently inherit shared styling and clearer labels; their complete layout
+reviews are still pending. Evidence also accepts the topic navigation callback.
+
+Validation: 48 dashboard tests pass, including topic-to-evidence navigation,
+retaining the selected topic and suppressing insufficient samples. Chrome
+checks confirmed the focus cards match live API scores/counts, evidence opens
+the requested bank/topic, and the page works in light and dark modes.
+
 ## Which endpoint feeds which view
 
 | dashboard view | endpoint | notes |

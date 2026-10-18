@@ -281,6 +281,52 @@ class DashboardAppTestCase(unittest.TestCase):
 
 
 class DashboardPageTests(DashboardAppTestCase):
+    def test_topic_evidence_opens_the_selected_bank_and_topic(self):
+        frame = data.load_index()
+        extra = frame[frame.aspect == "dividend_policy"].assign(aspect="asset_quality")
+        with patch(
+            "dashboard.data.load_index",
+            return_value=pd.concat([frame, extra], ignore_index=True),
+        ):
+            app = self.page("Topics")
+        self.assertEqual(app.selectbox(key="topics_aspect").value, "dividend_policy")
+        app.selectbox(key="topics_aspect").set_value("asset_quality").run()
+        app.button(key="topic_evidence_OCBC").click().run()
+        self.assertFalse(app.exception, [e.message for e in app.exception])
+        self.assertEqual(app.sidebar.radio(key="nav").value, "Evidence")
+        self.assertEqual(app.selectbox(key="evidence_bank").value, "OCBC")
+        self.assertEqual(app.selectbox(key="evidence_aspect").value, "asset_quality")
+        self.assertEqual(
+            self.request.call_args.kwargs["params"],
+            {
+                "bank": "OCBC",
+                "aspect": "asset_quality",
+                "limit": 30,
+            },
+        )
+        app.sidebar.radio(key="nav").set_value("Topics").run()
+        self.assertFalse(app.exception, [e.message for e in app.exception])
+        self.assertEqual(app.selectbox(key="topics_aspect").value, "asset_quality")
+
+    def test_topic_comparison_does_not_rank_insufficient_samples(self):
+        frame = data.load_index()
+        mask = frame.aspect == "dividend_policy"
+        frame.loc[mask, "n"] = 2
+        frame.loc[mask, "insufficient_data"] = True
+        with patch("dashboard.data.load_index", return_value=frame):
+            app = self.page("Topics")
+        self.assertTrue(any("Fewer than two banks" in item.value for item in app.info))
+        cards = [
+            item.value for item in app.markdown if 'class="bank-card"' in item.value
+        ]
+        self.assertEqual(len(cards), 3)
+        for card in cards:
+            self.assertIn("Not enough data", card)
+            self.assertIn("Based on 2 sentences", card)
+            self.assertNotIn("+0.120", card)
+        # The original API result remains available; the view only suppresses its display.
+        self.assertEqual(frame.loc[mask, "score"].iloc[0], 0.12)
+
     def test_four_data_pages_render_without_database_access(self):
         for name in ("Overview", "Topics", "Trends", "Evidence"):
             with self.subTest(page=name):

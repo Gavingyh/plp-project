@@ -23,6 +23,7 @@ The API is the documented interface for any frontend:
 | [docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html) | What the database holds: sources, bank balance, coverage over time, pipeline status, caveats |
 | **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way — the decision log with the evidence behind each choice |
 | **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
+| [docs/manual-pipeline.md](docs/manual-pipeline.md) | Manual PDF pipeline: source selection, stages, prerequisites, persisted run status and failure recovery |
 | **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
 | **[docs/api-integration.md](docs/api-integration.md)** | For whoever builds the dashboard: running the API, which endpoint feeds which view, example responses, the chat contract, and what the screen must say |
 | [docs/report/report-draft.md](docs/report/report-draft.md) | Draft of the report's factual sections, every figure linked to its evidence; conclusions and contributions left to the team |

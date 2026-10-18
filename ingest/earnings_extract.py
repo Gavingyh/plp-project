@@ -26,6 +26,7 @@ USAGE:
 
 import os
 import re
+from collections.abc import Callable
 from datetime import datetime
 
 from ingest.base import BANKS
@@ -149,7 +150,12 @@ def extract_prose(pdf_path: str) -> list[str]:
     return paragraphs
 
 
-def pull() -> list[dict]:
+def pull(*, skip_doc_ids: set[str] | None = None,
+         report: Callable[[dict], None] | None = None) -> list[dict]:
+    """Read PDFs, optionally skipping stored ids and reporting file outcomes.
+
+    Existing CLI callers still receive the same document dictionaries.
+    """
     if not os.path.isdir(PDF_DIR):
         logger.warning(f"No {PDF_DIR} directory found.")
         logger.info("Create data/earnings_pdfs/<BANK>/*.pdf and re-run - "
@@ -167,18 +173,28 @@ def pull() -> list[dict]:
         logger.info(f"{bank}: {len(pdfs)} PDF(s) found")
         for fname in pdfs:
             path = os.path.join(bank_dir, fname)
+            doc_id = make_doc_id("earnings", f"{bank}:{fname}")
+            event = {"source": "earnings", "file": f"{bank}/{fname}", "doc_id": doc_id}
+            if skip_doc_ids and doc_id in skip_doc_ids:
+                if report:
+                    report({**event, "status": "already_stored"})
+                continue
             try:
                 paragraphs = extract_prose(path)
             except Exception as e:
                 logger.error(f"{fname}: ERROR extracting text - {e}")
+                if report:
+                    report({**event, "status": "failed", "message": str(e)})
                 continue
             body = "\n".join(paragraphs)
             if not body.strip():
                 logger.info(f"{fname}: no prose extracted (table-only or scanned PDF?)")
+                if report:
+                    report({**event, "status": "skipped", "message": "No usable prose extracted."})
                 continue
             logger.info(f"{fname}: {len(paragraphs)} prose lines extracted")
             docs.append({
-                "doc_id": make_doc_id("earnings", f"{bank}:{fname}"),
+                "doc_id": doc_id,
                 "source": "earnings",
                 "source_detail": fname,
                 "bank": bank,
@@ -199,6 +215,10 @@ def pull() -> list[dict]:
                 "ingested_at": now_iso(),
                 "raw": {"filename": fname, "n_prose_lines": len(paragraphs)},
             })
+            if report:
+                warning = (None if _quarter_to_announcement_date(fname) else
+                           "No reporting period recognised in the filename; using the import date.")
+                report({**event, "status": "extracted", "warning": warning})
     return docs
 
 

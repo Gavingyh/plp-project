@@ -1,0 +1,613 @@
+{
+ "model_version": "finbert-adapted-finetuned-2026-10-11-3seed-m0",
+ "bootstrap": 2000,
+ "seed": 2026,
+ "anchor": "2026-09-25 10:37:46+00:00",
+ "check_against_index": {
+  "DBS": {
+   "computed": 0.143,
+   "index_formula": 0.143,
+   "stored": 0.143
+  },
+  "OCBC": {
+   "computed": 0.1285,
+   "index_formula": 0.1285,
+   "stored": 0.1285
+  },
+  "UOB": {
+   "computed": 0.1069,
+   "index_formula": 0.1069,
+   "stored": 0.1069
+  }
+ },
+ "by_unit": {
+  "document": {
+   "rows": [
+    {
+     "group": "DBS headline",
+     "window": "all_time",
+     "n": 24978,
+     "documents": 12560,
+     "score": 0.143,
+     "low": 0.1218,
+     "high": 0.1647,
+     "half_width": 0.0215
+    },
+    {
+     "group": "DBS arctic_shift",
+     "window": "all_time",
+     "n": 12226,
+     "documents": 9840,
+     "score": 0.0579,
+     "low": 0.0464,
+     "high": 0.0695,
+     "half_width": 0.0115
+    },
+    {
+     "group": "DBS earnings",
+     "window": "all_time",
+     "n": 9093,
+     "documents": 75,
+     "score": 0.2763,
+     "low": 0.2357,
+     "high": 0.3169,
+     "half_width": 0.0406
+    },
+    {
+     "group": "DBS headline",
+     "window": "30d",
+     "n": 371,
+     "documents": 300,
+     "score": 0.0438,
+     "low": -0.0313,
+     "high": 0.122,
+     "half_width": 0.0767
+    },
+    {
+     "group": "DBS retail_banking_sentiment",
+     "window": "all_time",
+     "n": 9099,
+     "documents": 7077,
+     "score": -0.0284,
+     "low": -0.0471,
+     "high": -0.009,
+     "half_width": 0.019
+    },
+    {
+     "group": "DBS wealth_business",
+     "window": "all_time",
+     "n": 839,
+     "documents": 418,
+     "score": 0.4594,
+     "low": 0.4087,
+     "high": 0.5066,
+     "half_width": 0.0489
+    },
+    {
+     "group": "DBS dividend_policy",
+     "window": "all_time",
+     "n": 414,
+     "documents": 179,
+     "score": 0.4553,
+     "low": 0.3794,
+     "high": 0.5273,
+     "half_width": 0.0739
+    },
+    {
+     "group": "DBS income_profit_results",
+     "window": "all_time",
+     "n": 2360,
+     "documents": 234,
+     "score": 0.4291,
+     "low": 0.3622,
+     "high": 0.5091,
+     "half_width": 0.0734
+    },
+    {
+     "group": "DBS net_interest_margin",
+     "window": "all_time",
+     "n": 1068,
+     "documents": 140,
+     "score": 0.1627,
+     "low": 0.0913,
+     "high": 0.2307,
+     "half_width": 0.0697
+    },
+    {
+     "group": "OCBC headline",
+     "window": "all_time",
+     "n": 7774,
+     "documents": 4820,
+     "score": 0.1285,
+     "low": 0.1031,
+     "high": 0.1538,
+     "half_width": 0.0254
+    },
+    {
+     "group": "OCBC arctic_shift",
+     "window": "all_time",
+     "n": 3936,
+     "documents": 3230,
+     "score": -0.0093,
+     "low": -0.0305,
+     "high": 0.0117,
+     "half_width": 0.0211
+    },
+    {
+     "group": "OCBC earnings",
+     "window": "all_time",
+     "n": 1561,
+     "documents": 39,
+     "score": 0.343,
+     "low": 0.3017,
+     "high": 0.3864,
+     "half_width": 0.0424
+    },
+    {
+     "group": "OCBC headline",
+     "window": "30d",
+     "n": 115,
+     "documents": 95,
+     "score": 0.271,
+     "low": 0.13,
+     "high": 0.3905,
+     "half_width": 0.1302
+    },
+    {
+     "group": "OCBC retail_banking_sentiment",
+     "window": "all_time",
+     "n": 3598,
+     "documents": 2930,
+     "score": -0.0294,
+     "low": -0.055,
+     "high": -0.0028,
+     "half_width": 0.0261
+    },
+    {
+     "group": "OCBC wealth_business",
+     "window": "all_time",
+     "n": 271,
+     "documents": 206,
+     "score": 0.5425,
+     "low": 0.4646,
+     "high": 0.6149,
+     "half_width": 0.0752
+    },
+    {
+     "group": "OCBC dividend_policy",
+     "window": "all_time",
+     "n": 138,
+     "documents": 70,
+     "score": 0.4525,
+     "low": 0.339,
+     "high": 0.5453,
+     "half_width": 0.1031
+    },
+    {
+     "group": "OCBC income_profit_results",
+     "window": "all_time",
+     "n": 776,
+     "documents": 144,
+     "score": 0.4808,
+     "low": 0.4235,
+     "high": 0.5431,
+     "half_width": 0.0598
+    },
+    {
+     "group": "OCBC net_interest_margin",
+     "window": "all_time",
+     "n": 169,
+     "documents": 54,
+     "score": -0.0353,
+     "low": -0.2022,
+     "high": 0.1192,
+     "half_width": 0.1607
+    },
+    {
+     "group": "UOB headline",
+     "window": "all_time",
+     "n": 13092,
+     "documents": 8933,
+     "score": 0.1069,
+     "low": 0.0905,
+     "high": 0.1243,
+     "half_width": 0.0169
+    },
+    {
+     "group": "UOB arctic_shift",
+     "window": "all_time",
+     "n": 9371,
+     "documents": 7293,
+     "score": 0.0577,
+     "low": 0.0438,
+     "high": 0.0711,
+     "half_width": 0.0136
+    },
+    {
+     "group": "UOB earnings",
+     "window": "all_time",
+     "n": 1600,
+     "documents": 66,
+     "score": 0.3323,
+     "low": 0.2651,
+     "high": 0.3957,
+     "half_width": 0.0653
+    },
+    {
+     "group": "UOB headline",
+     "window": "30d",
+     "n": 136,
+     "documents": 118,
+     "score": 0.1851,
+     "low": 0.0954,
+     "high": 0.2794,
+     "half_width": 0.092
+    },
+    {
+     "group": "UOB retail_banking_sentiment",
+     "window": "all_time",
+     "n": 8180,
+     "documents": 6446,
+     "score": 0.0635,
+     "low": 0.0481,
+     "high": 0.0791,
+     "half_width": 0.0155
+    },
+    {
+     "group": "UOB wealth_business",
+     "window": "all_time",
+     "n": 313,
+     "documents": 276,
+     "score": 0.4004,
+     "low": 0.3386,
+     "high": 0.4634,
+     "half_width": 0.0624
+    },
+    {
+     "group": "UOB dividend_policy",
+     "window": "all_time",
+     "n": 62,
+     "documents": 43,
+     "score": 0.3397,
+     "low": 0.1792,
+     "high": 0.4849,
+     "half_width": 0.1529
+    },
+    {
+     "group": "UOB income_profit_results",
+     "window": "all_time",
+     "n": 698,
+     "documents": 155,
+     "score": 0.2819,
+     "low": 0.1753,
+     "high": 0.3752,
+     "half_width": 0.0999
+    },
+    {
+     "group": "UOB net_interest_margin",
+     "window": "all_time",
+     "n": 188,
+     "documents": 109,
+     "score": -0.0713,
+     "low": -0.2215,
+     "high": 0.0745,
+     "half_width": 0.148
+    }
+   ],
+   "pairs": {
+    "DBS minus OCBC": {
+     "difference": 0.014434394921210653,
+     "low": -0.018062733498691662,
+     "high": 0.048058947391229005,
+     "share_a_higher": 0.8145
+    },
+    "DBS minus UOB": {
+     "difference": 0.03603381731760044,
+     "low": 0.0073836299437969434,
+     "high": 0.06245968442624935,
+     "share_a_higher": 0.9925
+    },
+    "OCBC minus UOB": {
+     "difference": 0.02159942239638979,
+     "low": -0.009798381469376538,
+     "high": 0.05279785197718505,
+     "share_a_higher": 0.911
+    }
+   }
+  },
+  "sentence": {
+   "rows": [
+    {
+     "group": "DBS headline",
+     "window": "all_time",
+     "n": 24978,
+     "documents": 12560,
+     "score": 0.143,
+     "low": 0.1343,
+     "high": 0.1516,
+     "half_width": 0.0086
+    },
+    {
+     "group": "DBS arctic_shift",
+     "window": "all_time",
+     "n": 12226,
+     "documents": 9840,
+     "score": 0.0579,
+     "low": 0.0468,
+     "high": 0.0697,
+     "half_width": 0.0114
+    },
+    {
+     "group": "DBS earnings",
+     "window": "all_time",
+     "n": 9093,
+     "documents": 75,
+     "score": 0.2763,
+     "low": 0.2628,
+     "high": 0.2905,
+     "half_width": 0.0139
+    },
+    {
+     "group": "DBS headline",
+     "window": "30d",
+     "n": 371,
+     "documents": 300,
+     "score": 0.0438,
+     "low": -0.0289,
+     "high": 0.1141,
+     "half_width": 0.0715
+    },
+    {
+     "group": "DBS retail_banking_sentiment",
+     "window": "all_time",
+     "n": 9099,
+     "documents": 7077,
+     "score": -0.0284,
+     "low": -0.0432,
+     "high": -0.0135,
+     "half_width": 0.0149
+    },
+    {
+     "group": "DBS wealth_business",
+     "window": "all_time",
+     "n": 839,
+     "documents": 418,
+     "score": 0.4594,
+     "low": 0.4214,
+     "high": 0.4985,
+     "half_width": 0.0385
+    },
+    {
+     "group": "DBS dividend_policy",
+     "window": "all_time",
+     "n": 414,
+     "documents": 179,
+     "score": 0.4553,
+     "low": 0.4036,
+     "high": 0.5061,
+     "half_width": 0.0513
+    },
+    {
+     "group": "DBS income_profit_results",
+     "window": "all_time",
+     "n": 2360,
+     "documents": 234,
+     "score": 0.4291,
+     "low": 0.3972,
+     "high": 0.46,
+     "half_width": 0.0314
+    },
+    {
+     "group": "DBS net_interest_margin",
+     "window": "all_time",
+     "n": 1068,
+     "documents": 140,
+     "score": 0.1627,
+     "low": 0.1137,
+     "high": 0.2157,
+     "half_width": 0.051
+    },
+    {
+     "group": "OCBC headline",
+     "window": "all_time",
+     "n": 7774,
+     "documents": 4820,
+     "score": 0.1285,
+     "low": 0.1128,
+     "high": 0.1442,
+     "half_width": 0.0157
+    },
+    {
+     "group": "OCBC arctic_shift",
+     "window": "all_time",
+     "n": 3936,
+     "documents": 3230,
+     "score": -0.0093,
+     "low": -0.0294,
+     "high": 0.0109,
+     "half_width": 0.0202
+    },
+    {
+     "group": "OCBC earnings",
+     "window": "all_time",
+     "n": 1561,
+     "documents": 39,
+     "score": 0.343,
+     "low": 0.3074,
+     "high": 0.3779,
+     "half_width": 0.0352
+    },
+    {
+     "group": "OCBC headline",
+     "window": "30d",
+     "n": 115,
+     "documents": 95,
+     "score": 0.271,
+     "low": 0.1568,
+     "high": 0.3936,
+     "half_width": 0.1184
+    },
+    {
+     "group": "OCBC retail_banking_sentiment",
+     "window": "all_time",
+     "n": 3598,
+     "documents": 2930,
+     "score": -0.0294,
+     "low": -0.0532,
+     "high": -0.0059,
+     "half_width": 0.0236
+    },
+    {
+     "group": "OCBC wealth_business",
+     "window": "all_time",
+     "n": 271,
+     "documents": 206,
+     "score": 0.5425,
+     "low": 0.474,
+     "high": 0.6107,
+     "half_width": 0.0683
+    },
+    {
+     "group": "OCBC dividend_policy",
+     "window": "all_time",
+     "n": 138,
+     "documents": 70,
+     "score": 0.4525,
+     "low": 0.3494,
+     "high": 0.5498,
+     "half_width": 0.1002
+    },
+    {
+     "group": "OCBC income_profit_results",
+     "window": "all_time",
+     "n": 776,
+     "documents": 144,
+     "score": 0.4808,
+     "low": 0.4275,
+     "high": 0.534,
+     "half_width": 0.0533
+    },
+    {
+     "group": "OCBC net_interest_margin",
+     "window": "all_time",
+     "n": 169,
+     "documents": 54,
+     "score": -0.0353,
+     "low": -0.1669,
+     "high": 0.0907,
+     "half_width": 0.1288
+    },
+    {
+     "group": "UOB headline",
+     "window": "all_time",
+     "n": 13092,
+     "documents": 8933,
+     "score": 0.1069,
+     "low": 0.0951,
+     "high": 0.1179,
+     "half_width": 0.0114
+    },
+    {
+     "group": "UOB arctic_shift",
+     "window": "all_time",
+     "n": 9371,
+     "documents": 7293,
+     "score": 0.0577,
+     "low": 0.0448,
+     "high": 0.0707,
+     "half_width": 0.0129
+    },
+    {
+     "group": "UOB earnings",
+     "window": "all_time",
+     "n": 1600,
+     "documents": 66,
+     "score": 0.3323,
+     "low": 0.2971,
+     "high": 0.3684,
+     "half_width": 0.0356
+    },
+    {
+     "group": "UOB headline",
+     "window": "30d",
+     "n": 136,
+     "documents": 118,
+     "score": 0.1851,
+     "low": 0.0929,
+     "high": 0.2816,
+     "half_width": 0.0943
+    },
+    {
+     "group": "UOB retail_banking_sentiment",
+     "window": "all_time",
+     "n": 8180,
+     "documents": 6446,
+     "score": 0.0635,
+     "low": 0.0486,
+     "high": 0.078,
+     "half_width": 0.0147
+    },
+    {
+     "group": "UOB wealth_business",
+     "window": "all_time",
+     "n": 313,
+     "documents": 276,
+     "score": 0.4004,
+     "low": 0.3391,
+     "high": 0.4628,
+     "half_width": 0.0619
+    },
+    {
+     "group": "UOB dividend_policy",
+     "window": "all_time",
+     "n": 62,
+     "documents": 43,
+     "score": 0.3397,
+     "low": 0.1826,
+     "high": 0.4805,
+     "half_width": 0.149
+    },
+    {
+     "group": "UOB income_profit_results",
+     "window": "all_time",
+     "n": 698,
+     "documents": 155,
+     "score": 0.2819,
+     "low": 0.2155,
+     "high": 0.3497,
+     "half_width": 0.0671
+    },
+    {
+     "group": "UOB net_interest_margin",
+     "window": "all_time",
+     "n": 188,
+     "documents": 109,
+     "score": -0.0713,
+     "low": -0.1957,
+     "high": 0.0528,
+     "half_width": 0.1243
+    }
+   ],
+   "pairs": {
+    "DBS minus OCBC": {
+     "difference": 0.014434394921210653,
+     "low": -0.0036747069023603716,
+     "high": 0.031015292457485376,
+     "share_a_higher": 0.939
+    },
+    "DBS minus UOB": {
+     "difference": 0.03603381731760044,
+     "low": 0.021692013156723994,
+     "high": 0.051356351847624084,
+     "share_a_higher": 1.0
+    },
+    "OCBC minus UOB": {
+     "difference": 0.02159942239638979,
+     "low": 0.002866084974585036,
+     "high": 0.04150797873663763,
+     "share_a_higher": 0.987
+    }
+   }
+  }
+ }
+}

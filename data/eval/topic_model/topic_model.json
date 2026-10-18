@@ -1,0 +1,546 @@
+{
+ "sentences": 45844,
+ "labelled": 1277,
+ "runs": [
+  {
+   "method": "nmf",
+   "k": 11,
+   "coherence_mean": 0.2472,
+   "nmi": 0.268,
+   "ari": 0.1155,
+   "purity": 0.4863,
+   "chance": {
+    "nmi": 0.0192,
+    "ari": 0.0001,
+    "purity": 0.3735
+   },
+   "topics": [
+    {
+     "topic": 0,
+     "top_words": [
+      "income",
+      "net",
+      "non",
+      "fee",
+      "trading",
+      "book",
+      "commercial",
+      "treasury",
+      "customer",
+      "lower"
+     ],
+     "coherence": 0.4056,
+     "corpus_sentences": 2146
+    },
+    {
+     "topic": 1,
+     "top_words": [
+      "account",
+      "savings",
+      "multiplier",
+      "open",
+      "salary",
+      "multi",
+      "currency",
+      "stash",
+      "money",
+      "currently"
+     ],
+     "coherence": 0.067,
+     "corpus_sentences": 3278
+    },
+    {
+     "topic": 2,
+     "top_words": [
+      "card",
+      "credit",
+      "debit",
+      "use",
+      "spending",
+      "lady",
+      "pay",
+      "miles",
+      "lady's",
+      "visa"
+     ],
+     "coherence": 0.1949,
+     "corpus_sentences": 3334
+    },
+    {
+     "topic": 3,
+     "top_words": [
+      "usd",
+      "transfer",
+      "ibkr",
+      "sgd",
+      "currency",
+      "multi",
+      "deposit",
+      "free",
+      "moomoo",
+      "remit"
+     ],
+     "coherence": 0.2925,
+     "corpus_sentences": 2734
+    },
+    {
+     "topic": 4,
+     "top_words": [
+      "year",
+      "ago",
+      "half",
+      "previous",
+      "compared",
+      "growth",
+      "years",
+      "fixed",
+      "second",
+      "rate"
+     ],
+     "coherence": 0.1831,
+     "corpus_sentences": 1979
+    },
+    {
+     "topic": 5,
+     "top_words": [
+      "just",
+      "buy",
+      "use",
+      "like",
+      "vickers",
+      "stocks",
+      "shares",
+      "money",
+      "stock",
+      "think"
+     ],
+     "coherence": 0.103,
+     "corpus_sentences": 10033
+    },
+    {
+     "topic": 6,
+     "top_words": [
+      "million",
+      "allowances",
+      "total",
+      "higher",
+      "basis",
+      "points",
+      "specific",
+      "loans",
+      "general",
+      "expenses"
+     ],
+     "coherence": 0.339,
+     "corpus_sentences": 2213
+    },
+    {
+     "topic": 7,
+     "top_words": [
+      "wealth",
+      "management",
+      "fees",
+      "banking",
+      "growth",
+      "loan",
+      "related",
+      "new",
+      "investment",
+      "led"
+     ],
+     "coherence": 0.2786,
+     "corpus_sentences": 7954
+    },
+    {
+     "topic": 8,
+     "top_words": [
+      "quarter",
+      "ratio",
+      "dividend",
+      "share",
+      "capital",
+      "cents",
+      "return",
+      "npl",
+      "cost",
+      "ordinary"
+     ],
+     "coherence": 0.3402,
+     "corpus_sentences": 4706
+    },
+    {
+     "topic": 9,
+     "top_words": [
+      "billion",
+      "profit",
+      "rose",
+      "expenses",
+      "sgd",
+      "net",
+      "grew",
+      "increased",
+      "quarter",
+      "constant"
+     ],
+     "coherence": 0.3097,
+     "corpus_sentences": 1874
+    },
+    {
+     "topic": 10,
+     "top_words": [
+      "spend",
+      "cashback",
+      "month",
+      "salary",
+      "miles",
+      "cards",
+      "bonus",
+      "citi",
+      "min",
+      "minimum"
+     ],
+     "coherence": 0.2054,
+     "corpus_sentences": 5593
+    }
+   ],
+   "alignment": [
+    {
+     "topic": 0,
+     "labelled_sentences": 84,
+     "best_aspect": "income_profit_results",
+     "share": 0.393
+    },
+    {
+     "topic": 1,
+     "labelled_sentences": 59,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.881
+    },
+    {
+     "topic": 2,
+     "labelled_sentences": 87,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.943
+    },
+    {
+     "topic": 3,
+     "labelled_sentences": 73,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.863
+    },
+    {
+     "topic": 4,
+     "labelled_sentences": 67,
+     "best_aspect": "income_profit_results",
+     "share": 0.269
+    },
+    {
+     "topic": 5,
+     "labelled_sentences": 216,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.449
+    },
+    {
+     "topic": 6,
+     "labelled_sentences": 86,
+     "best_aspect": "asset_quality",
+     "share": 0.407
+    },
+    {
+     "topic": 7,
+     "labelled_sentences": 234,
+     "best_aspect": "wealth_business",
+     "share": 0.226
+    },
+    {
+     "topic": 8,
+     "labelled_sentences": 153,
+     "best_aspect": "capital_liquidity",
+     "share": 0.183
+    },
+    {
+     "topic": 9,
+     "labelled_sentences": 71,
+     "best_aspect": "income_profit_results",
+     "share": 0.479
+    },
+    {
+     "topic": 10,
+     "labelled_sentences": 147,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.857
+    }
+   ]
+  },
+  {
+   "method": "lda",
+   "k": 11,
+   "coherence_mean": 0.1614,
+   "nmi": 0.2638,
+   "ari": 0.1216,
+   "purity": 0.5067,
+   "chance": {
+    "nmi": 0.0192,
+    "ari": -0.0001,
+    "purity": 0.3735
+   },
+   "topics": [
+    {
+     "topic": 0,
+     "top_words": [
+      "income",
+      "net",
+      "million",
+      "billion",
+      "profit",
+      "total",
+      "quarter",
+      "year",
+      "non",
+      "ratio"
+     ],
+     "coherence": 0.3215,
+     "corpus_sentences": 7879
+    },
+    {
+     "topic": 1,
+     "top_words": [
+      "like",
+      "gold",
+      "money",
+      "shares",
+      "buy",
+      "long",
+      "invest",
+      "term",
+      "app",
+      "best"
+     ],
+     "coherence": 0.0694,
+     "corpus_sentences": 5102
+    },
+    {
+     "topic": 2,
+     "top_words": [
+      "card",
+      "credit",
+      "miles",
+      "cards",
+      "citi",
+      "visa",
+      "use",
+      "spend",
+      "online",
+      "lady"
+     ],
+     "coherence": 0.2158,
+     "corpus_sentences": 4486
+    },
+    {
+     "topic": 3,
+     "top_words": [
+      "usd",
+      "account",
+      "transfer",
+      "ibkr",
+      "sgd",
+      "fee",
+      "currency",
+      "fees",
+      "charge",
+      "free"
+     ],
+     "coherence": 0.211,
+     "corpus_sentences": 3660
+    },
+    {
+     "topic": 4,
+     "top_words": [
+      "said",
+      "ceo",
+      "grew",
+      "group",
+      "financial",
+      "customers",
+      "gupta",
+      "tan",
+      "piyush",
+      "singapore"
+     ],
+     "coherence": 0.1015,
+     "corpus_sentences": 3337
+    },
+    {
+     "topic": 5,
+     "top_words": [
+      "singapore",
+      "banking",
+      "asia",
+      "services",
+      "global",
+      "malaysia",
+      "digital",
+      "loan",
+      "indonesia",
+      "price"
+     ],
+     "coherence": 0.121,
+     "corpus_sentences": 2668
+    },
+    {
+     "topic": 6,
+     "top_words": [
+      "wealth",
+      "management",
+      "customer",
+      "fees",
+      "growth",
+      "banking",
+      "loan",
+      "trade",
+      "new",
+      "business"
+     ],
+     "coherence": 0.2405,
+     "corpus_sentences": 2871
+    },
+    {
+     "topic": 7,
+     "top_words": [
+      "account",
+      "savings",
+      "just",
+      "multiplier",
+      "currently",
+      "cash",
+      "rates",
+      "salary",
+      "accounts",
+      "cent"
+     ],
+     "coherence": 0.1197,
+     "corpus_sentences": 5494
+    },
+    {
+     "topic": 8,
+     "top_words": [
+      "buy",
+      "vickers",
+      "stock",
+      "just",
+      "years",
+      "cash",
+      "stocks",
+      "time",
+      "clients",
+      "says"
+     ],
+     "coherence": -0.002,
+     "corpus_sentences": 3858
+    },
+    {
+     "topic": 9,
+     "top_words": [
+      "card",
+      "cashback",
+      "spend",
+      "month",
+      "credit",
+      "salary",
+      "minimum",
+      "hit",
+      "spending",
+      "pay"
+     ],
+     "coherence": 0.2323,
+     "corpus_sentences": 3701
+    },
+    {
+     "topic": 10,
+     "top_words": [
+      "loans",
+      "year",
+      "rate",
+      "rates",
+      "basis",
+      "points",
+      "billion",
+      "china",
+      "hong",
+      "kong"
+     ],
+     "coherence": 0.1443,
+     "corpus_sentences": 2788
+    }
+   ],
+   "alignment": [
+    {
+     "topic": 0,
+     "labelled_sentences": 307,
+     "best_aspect": "income_profit_results",
+     "share": 0.404
+    },
+    {
+     "topic": 1,
+     "labelled_sentences": 120,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.4
+    },
+    {
+     "topic": 2,
+     "labelled_sentences": 107,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.953
+    },
+    {
+     "topic": 3,
+     "labelled_sentences": 95,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.842
+    },
+    {
+     "topic": 4,
+     "labelled_sentences": 77,
+     "best_aspect": "other",
+     "share": 0.286
+    },
+    {
+     "topic": 5,
+     "labelled_sentences": 87,
+     "best_aspect": "other",
+     "share": 0.356
+    },
+    {
+     "topic": 6,
+     "labelled_sentences": 95,
+     "best_aspect": "wealth_business",
+     "share": 0.284
+    },
+    {
+     "topic": 7,
+     "labelled_sentences": 111,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.712
+    },
+    {
+     "topic": 8,
+     "labelled_sentences": 91,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.33
+    },
+    {
+     "topic": 9,
+     "labelled_sentences": 98,
+     "best_aspect": "retail_banking_sentiment",
+     "share": 0.867
+    },
+    {
+     "topic": 10,
+     "labelled_sentences": 89,
+     "best_aspect": "asset_quality",
+     "share": 0.213
+    }
+   ]
+  }
+ ]
+}

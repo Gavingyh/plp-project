@@ -1,0 +1,55 @@
+{
+ "labels": "C:\\Users\\Admin\\plp-project-1\\data\\labeled\\llm_rater\\rules-2026-10-10\\training_set.csv",
+ "folds": 5,
+ "seed": 42,
+ "rows": [
+  {
+   "model": "naive_bayes",
+   "cv_macro_f1_mean": 0.4819097848982353,
+   "cv_macro_f1_sd": 0.03296737069646923,
+   "test_macro_f1": 0.5469123317483974,
+   "test_ci_low": 0.47664075597653616,
+   "test_ci_high": 0.613136517487839,
+   "test_accuracy": 0.6421404682274248,
+   "n_train": 1563,
+   "n_test": 299,
+   "with_aspect": true
+  },
+  {
+   "model": "complement_nb",
+   "cv_macro_f1_mean": 0.5414452116022619,
+   "cv_macro_f1_sd": 0.01578276777319308,
+   "test_macro_f1": 0.5759344049269225,
+   "test_ci_low": 0.5092974975642824,
+   "test_ci_high": 0.6342531121634686,
+   "test_accuracy": 0.6287625418060201,
+   "n_train": 1563,
+   "n_test": 299,
+   "with_aspect": true
+  },
+  {
+   "model": "linear_svm",
+   "cv_macro_f1_mean": 0.5568874046294618,
+   "cv_macro_f1_sd": 0.03550733922413907,
+   "test_macro_f1": 0.5396510857232726,
+   "test_ci_low": 0.47292507755127283,
+   "test_ci_high": 0.6002108124120095,
+   "test_accuracy": 0.5819397993311036,
+   "n_train": 1563,
+   "n_test": 299,
+   "with_aspect": true
+  },
+  {
+   "model": "logistic_regression",
+   "cv_macro_f1_mean": 0.5556998768969726,
+   "cv_macro_f1_sd": 0.034788620560945435,
+   "test_macro_f1": 0.5299013654808803,
+   "test_ci_low": 0.46471141356921797,
+   "test_ci_high": 0.5881285540234037,
+   "test_accuracy": 0.5752508361204013,
+   "n_train": 1563,
+   "n_test": 299,
+   "with_aspect": true
+  }
+ ]
+}

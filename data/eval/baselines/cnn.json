@@ -1,0 +1,43 @@
+{
+ "summary": {
+  "arch": "cnn",
+  "glove": false,
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "test_macro_f1_mean": 0.4377624133127145,
+  "test_macro_f1_sd": 0.044558326396199645,
+  "vote_macro_f1": 0.45504136977005194,
+  "vote_ci": [
+   0.4003369536180071,
+   0.5094319616294443
+  ],
+  "n_train": 1563,
+  "n_test": 299
+ },
+ "runs": [
+  {
+   "seed": 42,
+   "dev_macro_f1": 0.4733225173602122,
+   "epochs_run": 6,
+   "test_macro_f1": 0.4243740069827026,
+   "test_accuracy": 0.4882943143812709
+  },
+  {
+   "seed": 43,
+   "dev_macro_f1": 0.556769681573673,
+   "epochs_run": 21,
+   "test_macro_f1": 0.4874799518108525,
+   "test_accuracy": 0.5652173913043478
+  },
+  {
+   "seed": 44,
+   "dev_macro_f1": 0.5980963089336827,
+   "epochs_run": 16,
+   "test_macro_f1": 0.40143328114458826,
+   "test_accuracy": 0.40468227424749165
+  }
+ ]
+}

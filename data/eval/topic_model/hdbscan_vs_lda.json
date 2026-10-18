@@ -1,0 +1,1949 @@
+{
+ "embedded": 43331,
+ "database_sentences": 45844,
+ "labelled": 1277,
+ "runs": [
+  {
+   "min_cluster_size": 10,
+   "clusters": 345,
+   "noise_share": 0.6323,
+   "coherence_mean": -0.1321,
+   "scores": {
+    "noise_as_group": {
+     "nmi": 0.2736948673338948,
+     "ari": 0.05052000327849405,
+     "purity": 0.5426781519185592,
+     "chance": {
+      "nmi": 0.17274205381417346,
+      "ari": 0.001654756256643452,
+      "purity": 0.4426977290524667
+     }
+    },
+    "clustered_only": {
+     "nmi": 0.466450729014234,
+     "ari": 0.10994453036155281,
+     "purity": 0.756701030927835,
+     "chance": {
+      "nmi": 0.31153119136002927,
+      "ari": -0.0005182525902003332,
+      "purity": 0.525381443298969
+     },
+     "labelled_covered": 485
+    },
+    "alignment": [
+     {
+      "topic": -1,
+      "labelled_sentences": 792,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.412
+     },
+     {
+      "topic": 1,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 6,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 7,
+      "labelled_sentences": 5,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.8
+     },
+     {
+      "topic": 12,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 13,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 14,
+      "labelled_sentences": 6,
+      "best_aspect": "other",
+      "share": 0.5
+     },
+     {
+      "topic": 16,
+      "labelled_sentences": 2,
+      "best_aspect": "other",
+      "share": 0.5
+     },
+     {
+      "topic": 17,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 18,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 21,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 25,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 28,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 29,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 31,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 33,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 34,
+      "labelled_sentences": 3,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 35,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 44,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 45,
+      "labelled_sentences": 1,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 48,
+      "labelled_sentences": 3,
+      "best_aspect": "other",
+      "share": 0.667
+     },
+     {
+      "topic": 49,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 50,
+      "labelled_sentences": 3,
+      "best_aspect": "other",
+      "share": 0.667
+     },
+     {
+      "topic": 52,
+      "labelled_sentences": 3,
+      "best_aspect": "capital_liquidity",
+      "share": 0.667
+     },
+     {
+      "topic": 54,
+      "labelled_sentences": 2,
+      "best_aspect": "dividend_policy",
+      "share": 1.0
+     },
+     {
+      "topic": 55,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 56,
+      "labelled_sentences": 1,
+      "best_aspect": "macro_market_environment",
+      "share": 1.0
+     },
+     {
+      "topic": 57,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 60,
+      "labelled_sentences": 2,
+      "best_aspect": "dividend_policy",
+      "share": 0.5
+     },
+     {
+      "topic": 62,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 63,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 68,
+      "labelled_sentences": 1,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 69,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 71,
+      "labelled_sentences": 2,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 0.5
+     },
+     {
+      "topic": 72,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 83,
+      "labelled_sentences": 1,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 85,
+      "labelled_sentences": 3,
+      "best_aspect": "income_profit_results",
+      "share": 0.667
+     },
+     {
+      "topic": 88,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 90,
+      "labelled_sentences": 1,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     },
+     {
+      "topic": 93,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 98,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 104,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 105,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 115,
+      "labelled_sentences": 3,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 116,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 117,
+      "labelled_sentences": 2,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 123,
+      "labelled_sentences": 2,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 124,
+      "labelled_sentences": 9,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.778
+     },
+     {
+      "topic": 126,
+      "labelled_sentences": 2,
+      "best_aspect": "management_guidance",
+      "share": 0.5
+     },
+     {
+      "topic": 133,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 134,
+      "labelled_sentences": 3,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 135,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 139,
+      "labelled_sentences": 1,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 140,
+      "labelled_sentences": 1,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 141,
+      "labelled_sentences": 3,
+      "best_aspect": "income_profit_results",
+      "share": 0.667
+     },
+     {
+      "topic": 142,
+      "labelled_sentences": 2,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 145,
+      "labelled_sentences": 2,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 148,
+      "labelled_sentences": 7,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 149,
+      "labelled_sentences": 2,
+      "best_aspect": "management_guidance",
+      "share": 0.5
+     },
+     {
+      "topic": 150,
+      "labelled_sentences": 4,
+      "best_aspect": "asset_quality",
+      "share": 0.5
+     },
+     {
+      "topic": 152,
+      "labelled_sentences": 2,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 155,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 156,
+      "labelled_sentences": 2,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 157,
+      "labelled_sentences": 1,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     },
+     {
+      "topic": 161,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.5
+     },
+     {
+      "topic": 164,
+      "labelled_sentences": 1,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 166,
+      "labelled_sentences": 7,
+      "best_aspect": "dividend_policy",
+      "share": 0.857
+     },
+     {
+      "topic": 168,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 171,
+      "labelled_sentences": 3,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 176,
+      "labelled_sentences": 1,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 177,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 178,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 179,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 181,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 182,
+      "labelled_sentences": 3,
+      "best_aspect": "other",
+      "share": 0.333
+     },
+     {
+      "topic": 183,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 184,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 185,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 186,
+      "labelled_sentences": 1,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 187,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 188,
+      "labelled_sentences": 1,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 191,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 197,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 198,
+      "labelled_sentences": 1,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 199,
+      "labelled_sentences": 23,
+      "best_aspect": "income_profit_results",
+      "share": 0.478
+     },
+     {
+      "topic": 200,
+      "labelled_sentences": 1,
+      "best_aspect": "net_interest_margin",
+      "share": 1.0
+     },
+     {
+      "topic": 201,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 204,
+      "labelled_sentences": 2,
+      "best_aspect": "asset_quality",
+      "share": 0.5
+     },
+     {
+      "topic": 205,
+      "labelled_sentences": 7,
+      "best_aspect": "income_profit_results",
+      "share": 0.714
+     },
+     {
+      "topic": 206,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 209,
+      "labelled_sentences": 16,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.688
+     },
+     {
+      "topic": 210,
+      "labelled_sentences": 5,
+      "best_aspect": "income_profit_results",
+      "share": 0.4
+     },
+     {
+      "topic": 212,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 215,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 216,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 217,
+      "labelled_sentences": 4,
+      "best_aspect": "macro_market_environment",
+      "share": 0.5
+     },
+     {
+      "topic": 219,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 220,
+      "labelled_sentences": 4,
+      "best_aspect": "dividend_policy",
+      "share": 0.25
+     },
+     {
+      "topic": 223,
+      "labelled_sentences": 1,
+      "best_aspect": "net_interest_margin",
+      "share": 1.0
+     },
+     {
+      "topic": 225,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 226,
+      "labelled_sentences": 1,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 236,
+      "labelled_sentences": 5,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 238,
+      "labelled_sentences": 1,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 239,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 241,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 243,
+      "labelled_sentences": 1,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     },
+     {
+      "topic": 245,
+      "labelled_sentences": 1,
+      "best_aspect": "net_interest_margin",
+      "share": 1.0
+     },
+     {
+      "topic": 246,
+      "labelled_sentences": 1,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     },
+     {
+      "topic": 249,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 250,
+      "labelled_sentences": 3,
+      "best_aspect": "capital_liquidity",
+      "share": 0.333
+     },
+     {
+      "topic": 251,
+      "labelled_sentences": 1,
+      "best_aspect": "capital_liquidity",
+      "share": 1.0
+     },
+     {
+      "topic": 252,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 253,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 254,
+      "labelled_sentences": 1,
+      "best_aspect": "net_interest_margin",
+      "share": 1.0
+     },
+     {
+      "topic": 255,
+      "labelled_sentences": 1,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 256,
+      "labelled_sentences": 1,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 257,
+      "labelled_sentences": 3,
+      "best_aspect": "asset_quality",
+      "share": 0.667
+     },
+     {
+      "topic": 259,
+      "labelled_sentences": 2,
+      "best_aspect": "asset_quality",
+      "share": 0.5
+     },
+     {
+      "topic": 260,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 262,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 264,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 265,
+      "labelled_sentences": 3,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 266,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 267,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 268,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 270,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 271,
+      "labelled_sentences": 3,
+      "best_aspect": "management_guidance",
+      "share": 0.667
+     },
+     {
+      "topic": 272,
+      "labelled_sentences": 1,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 273,
+      "labelled_sentences": 7,
+      "best_aspect": "income_profit_results",
+      "share": 0.429
+     },
+     {
+      "topic": 275,
+      "labelled_sentences": 2,
+      "best_aspect": "asset_quality",
+      "share": 0.5
+     },
+     {
+      "topic": 277,
+      "labelled_sentences": 2,
+      "best_aspect": "capital_liquidity",
+      "share": 0.5
+     },
+     {
+      "topic": 278,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 279,
+      "labelled_sentences": 3,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 280,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 283,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 284,
+      "labelled_sentences": 5,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 285,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 286,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 288,
+      "labelled_sentences": 5,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 290,
+      "labelled_sentences": 67,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.731
+     },
+     {
+      "topic": 291,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 293,
+      "labelled_sentences": 2,
+      "best_aspect": "net_interest_margin",
+      "share": 1.0
+     },
+     {
+      "topic": 294,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 295,
+      "labelled_sentences": 2,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     },
+     {
+      "topic": 297,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 299,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 301,
+      "labelled_sentences": 1,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 302,
+      "labelled_sentences": 2,
+      "best_aspect": "management_guidance",
+      "share": 0.5
+     },
+     {
+      "topic": 303,
+      "labelled_sentences": 2,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     },
+     {
+      "topic": 304,
+      "labelled_sentences": 3,
+      "best_aspect": "management_guidance",
+      "share": 0.667
+     },
+     {
+      "topic": 305,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 306,
+      "labelled_sentences": 2,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 308,
+      "labelled_sentences": 5,
+      "best_aspect": "management_guidance",
+      "share": 0.6
+     },
+     {
+      "topic": 309,
+      "labelled_sentences": 1,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     },
+     {
+      "topic": 314,
+      "labelled_sentences": 1,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 315,
+      "labelled_sentences": 1,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 316,
+      "labelled_sentences": 7,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.429
+     },
+     {
+      "topic": 317,
+      "labelled_sentences": 1,
+      "best_aspect": "net_interest_margin",
+      "share": 1.0
+     },
+     {
+      "topic": 322,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 324,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 326,
+      "labelled_sentences": 3,
+      "best_aspect": "management_guidance",
+      "share": 0.667
+     },
+     {
+      "topic": 327,
+      "labelled_sentences": 1,
+      "best_aspect": "wealth_business",
+      "share": 1.0
+     },
+     {
+      "topic": 329,
+      "labelled_sentences": 5,
+      "best_aspect": "other",
+      "share": 0.8
+     },
+     {
+      "topic": 330,
+      "labelled_sentences": 8,
+      "best_aspect": "other",
+      "share": 0.875
+     },
+     {
+      "topic": 332,
+      "labelled_sentences": 3,
+      "best_aspect": "asset_quality",
+      "share": 0.667
+     },
+     {
+      "topic": 333,
+      "labelled_sentences": 4,
+      "best_aspect": "macro_market_environment",
+      "share": 0.5
+     },
+     {
+      "topic": 334,
+      "labelled_sentences": 1,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 335,
+      "labelled_sentences": 5,
+      "best_aspect": "asset_quality",
+      "share": 0.4
+     },
+     {
+      "topic": 336,
+      "labelled_sentences": 5,
+      "best_aspect": "other",
+      "share": 0.4
+     },
+     {
+      "topic": 337,
+      "labelled_sentences": 4,
+      "best_aspect": "wealth_business",
+      "share": 0.75
+     },
+     {
+      "topic": 338,
+      "labelled_sentences": 1,
+      "best_aspect": "income_profit_results",
+      "share": 1.0
+     },
+     {
+      "topic": 339,
+      "labelled_sentences": 4,
+      "best_aspect": "income_profit_results",
+      "share": 0.75
+     },
+     {
+      "topic": 342,
+      "labelled_sentences": 28,
+      "best_aspect": "management_guidance",
+      "share": 0.393
+     },
+     {
+      "topic": 344,
+      "labelled_sentences": 4,
+      "best_aspect": "management_guidance",
+      "share": 1.0
+     }
+    ]
+   },
+   "largest": [
+    {
+     "cluster": 290,
+     "sentences": 1234,
+     "top_words": [
+      "bad",
+      "fraudulent",
+      "called",
+      "worst",
+      "told",
+      "blocked",
+      "scam",
+      "police",
+      "problem",
+      "got"
+     ],
+     "coherence": -0.1968
+    },
+    {
+     "cluster": 209,
+     "sentences": 701,
+     "top_words": [
+      "fixed",
+      "years",
+      "months",
+      "cash",
+      "eir",
+      "current",
+      "vwra",
+      "cpf",
+      "mth",
+      "emergency"
+     ],
+     "coherence": 0.0611
+    },
+    {
+     "cluster": 199,
+     "sentences": 653,
+     "top_words": [
+      "fell",
+      "declined",
+      "lower",
+      "previous",
+      "million",
+      "quarter",
+      "decreased",
+      "decline",
+      "offset",
+      "net"
+     ],
+     "coherence": 0.2937
+    },
+    {
+     "cluster": 124,
+     "sentences": 590,
+     "top_words": [
+      "does",
+      "did",
+      "buy",
+      "what's",
+      "ask",
+      "instead",
+      "work",
+      "curious",
+      "invest",
+      "know"
+     ],
+     "coherence": -0.1057
+    },
+    {
+     "cluster": 342,
+     "sentences": 462,
+     "top_words": [
+      "strong",
+      "structural",
+      "growing",
+      "position",
+      "opportunities",
+      "continue",
+      "franchise",
+      "flows",
+      "seeing",
+      "growth"
+     ],
+     "coherence": 0.2201
+    },
+    {
+     "cluster": 148,
+     "sentences": 325,
+     "top_words": [
+      "usd",
+      "transfer",
+      "multi",
+      "free",
+      "currency",
+      "open",
+      "account",
+      "send",
+      "remit",
+      "directly"
+     ],
+     "coherence": 0.2532
+    },
+    {
+     "cluster": 316,
+     "sentences": 301,
+     "top_words": [
+      "started",
+      "applied",
+      "opened",
+      "approved",
+      "years",
+      "signed",
+      "got",
+      "happened",
+      "open",
+      "went"
+     ],
+     "coherence": -0.1653
+    },
+    {
+     "cluster": 236,
+     "sentences": 247,
+     "top_words": [
+      "better",
+      "good",
+      "decent",
+      "rates",
+      "pretty",
+      "imo",
+      "quite",
+      "exchange",
+      "attractive",
+      "superior"
+     ],
+     "coherence": -0.0795
+    },
+    {
+     "cluster": 14,
+     "sentences": 197,
+     "top_words": [
+      "laundering",
+      "claim",
+      "court",
+      "lawsuit",
+      "scams",
+      "phishing",
+      "scam",
+      "jail",
+      "rejects",
+      "police"
+     ],
+     "coherence": -0.3163
+    },
+    {
+     "cluster": 220,
+     "sentences": 196,
+     "top_words": [
+      "beats",
+      "hits",
+      "estimates",
+      "record",
+      "profit",
+      "rises",
+      "posts",
+      "jumps",
+      "shares",
+      "lifts"
+     ],
+     "coherence": -0.1161
+    },
+    {
+     "cluster": 265,
+     "sentences": 196,
+     "top_words": [
+      "currently",
+      "savings",
+      "sitting",
+      "account",
+      "emergency",
+      "salary",
+      "credited",
+      "i'm",
+      "frank",
+      "cash"
+     ],
+     "coherence": 0.1561
+    },
+    {
+     "cluster": 308,
+     "sentences": 183,
+     "top_words": [
+      "stake",
+      "acquire",
+      "indonesia",
+      "allianzgi",
+      "acquires",
+      "allianz",
+      "commonwealth",
+      "arm",
+      "talks",
+      "completes"
+     ],
+     "coherence": -0.337
+    },
+    {
+     "cluster": 306,
+     "sentences": 173,
+     "top_words": [
+      "spend",
+      "salary",
+      "earn",
+      "month",
+      "min",
+      "monthly",
+      "credit",
+      "grabpay",
+      "spending",
+      "gives"
+     ],
+     "coherence": 0.1563
+    },
+    {
+     "cluster": 284,
+     "sentences": 171,
+     "top_words": [
+      "travel",
+      "online",
+      "contactless",
+      "shopping",
+      "dining",
+      "visa",
+      "miles",
+      "spend",
+      "transport",
+      "ppv"
+     ],
+     "coherence": 0.3251
+    },
+    {
+     "cluster": 205,
+     "sentences": 166,
+     "top_words": [
+      "yoy",
+      "qoq",
+      "core",
+      "record",
+      "nim",
+      "nii",
+      "npl",
+      "profit",
+      "digit",
+      "income"
+     ],
+     "coherence": 0.336
+    }
+   ]
+  },
+  {
+   "min_cluster_size": 100,
+   "clusters": 27,
+   "noise_share": 0.5868,
+   "coherence_mean": 0.2031,
+   "scores": {
+    "noise_as_group": {
+     "nmi": 0.2531801104784758,
+     "ari": 0.08596330200964258,
+     "purity": 0.5223179326546593,
+     "chance": {
+      "nmi": 0.049995935304559085,
+      "ari": 0.0009959476904356545,
+      "purity": 0.378371182458888
+     }
+    },
+    "clustered_only": {
+     "nmi": 0.40878757040057456,
+     "ari": 0.21860940235446133,
+     "purity": 0.6237458193979933,
+     "chance": {
+      "nmi": 0.0860239550854762,
+      "ari": 0.00016818940384135859,
+      "purity": 0.3260033444816054
+     },
+     "labelled_covered": 598
+    },
+    "alignment": [
+     {
+      "topic": -1,
+      "labelled_sentences": 679,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.433
+     },
+     {
+      "topic": 0,
+      "labelled_sentences": 5,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 1,
+      "labelled_sentences": 5,
+      "best_aspect": "other",
+      "share": 0.8
+     },
+     {
+      "topic": 2,
+      "labelled_sentences": 7,
+      "best_aspect": "other",
+      "share": 0.571
+     },
+     {
+      "topic": 3,
+      "labelled_sentences": 87,
+      "best_aspect": "other",
+      "share": 0.529
+     },
+     {
+      "topic": 4,
+      "labelled_sentences": 13,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.538
+     },
+     {
+      "topic": 5,
+      "labelled_sentences": 1,
+      "best_aspect": "investor_stock_sentiment",
+      "share": 1.0
+     },
+     {
+      "topic": 6,
+      "labelled_sentences": 19,
+      "best_aspect": "income_profit_results",
+      "share": 0.526
+     },
+     {
+      "topic": 7,
+      "labelled_sentences": 2,
+      "best_aspect": "income_profit_results",
+      "share": 0.5
+     },
+     {
+      "topic": 8,
+      "labelled_sentences": 3,
+      "best_aspect": "asset_quality",
+      "share": 0.667
+     },
+     {
+      "topic": 9,
+      "labelled_sentences": 7,
+      "best_aspect": "dividend_policy",
+      "share": 0.857
+     },
+     {
+      "topic": 10,
+      "labelled_sentences": 84,
+      "best_aspect": "income_profit_results",
+      "share": 0.643
+     },
+     {
+      "topic": 11,
+      "labelled_sentences": 34,
+      "best_aspect": "income_profit_results",
+      "share": 0.471
+     },
+     {
+      "topic": 12,
+      "labelled_sentences": 11,
+      "best_aspect": "income_profit_results",
+      "share": 0.727
+     },
+     {
+      "topic": 13,
+      "labelled_sentences": 2,
+      "best_aspect": "asset_quality",
+      "share": 1.0
+     },
+     {
+      "topic": 14,
+      "labelled_sentences": 5,
+      "best_aspect": "income_profit_results",
+      "share": 0.4
+     },
+     {
+      "topic": 15,
+      "labelled_sentences": 10,
+      "best_aspect": "income_profit_results",
+      "share": 0.3
+     },
+     {
+      "topic": 16,
+      "labelled_sentences": 63,
+      "best_aspect": "management_guidance",
+      "share": 0.444
+     },
+     {
+      "topic": 17,
+      "labelled_sentences": 35,
+      "best_aspect": "management_guidance",
+      "share": 0.314
+     },
+     {
+      "topic": 18,
+      "labelled_sentences": 5,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.6
+     },
+     {
+      "topic": 19,
+      "labelled_sentences": 11,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.818
+     },
+     {
+      "topic": 20,
+      "labelled_sentences": 20,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.9
+     },
+     {
+      "topic": 21,
+      "labelled_sentences": 12,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.667
+     },
+     {
+      "topic": 22,
+      "labelled_sentences": 13,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.538
+     },
+     {
+      "topic": 23,
+      "labelled_sentences": 54,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.907
+     },
+     {
+      "topic": 24,
+      "labelled_sentences": 74,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.757
+     },
+     {
+      "topic": 25,
+      "labelled_sentences": 10,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.7
+     },
+     {
+      "topic": 26,
+      "labelled_sentences": 6,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 1.0
+     }
+    ]
+   },
+   "largest": [
+    {
+     "cluster": 3,
+     "sentences": 2303,
+     "top_words": [
+      "singapore",
+      "launches",
+      "digital",
+      "asia",
+      "banking",
+      "new",
+      "launch",
+      "malaysia",
+      "india",
+      "financing"
+     ],
+     "coherence": 0.1509
+    },
+    {
+     "cluster": 10,
+     "sentences": 1962,
+     "top_words": [
+      "rose",
+      "income",
+      "billion",
+      "net",
+      "grew",
+      "higher",
+      "million",
+      "increased",
+      "year",
+      "fees"
+     ],
+     "coherence": 0.3268
+    },
+    {
+     "cluster": 23,
+     "sentences": 1935,
+     "top_words": [
+      "spend",
+      "miles",
+      "card",
+      "cashback",
+      "month",
+      "spending",
+      "better",
+      "bonus",
+      "online",
+      "credit"
+     ],
+     "coherence": 0.2026
+    },
+    {
+     "cluster": 16,
+     "sentences": 1647,
+     "top_words": [
+      "growth",
+      "strong",
+      "wealth",
+      "continue",
+      "management",
+      "opportunities",
+      "customers",
+      "business",
+      "new",
+      "structural"
+     ],
+     "coherence": 0.2541
+    },
+    {
+     "cluster": 24,
+     "sentences": 1389,
+     "top_words": [
+      "card",
+      "account",
+      "got",
+      "just",
+      "bad",
+      "called",
+      "like",
+      "fraudulent",
+      "told",
+      "transactions"
+     ],
+     "coherence": 0.0574
+    },
+    {
+     "cluster": 20,
+     "sentences": 984,
+     "top_words": [
+      "account",
+      "usd",
+      "transfer",
+      "app",
+      "use",
+      "open",
+      "ibkr",
+      "multi",
+      "free",
+      "currency"
+     ],
+     "coherence": 0.2048
+    },
+    {
+     "cluster": 11,
+     "sentences": 747,
+     "top_words": [
+      "lower",
+      "fell",
+      "declined",
+      "million",
+      "income",
+      "quarter",
+      "net",
+      "billion",
+      "previous",
+      "non"
+     ],
+     "coherence": 0.3458
+    },
+    {
+     "cluster": 6,
+     "sentences": 695,
+     "top_words": [
+      "net",
+      "assets",
+      "income",
+      "equity",
+      "non",
+      "allowances",
+      "amortisation",
+      "loans",
+      "losses",
+      "subsidiaries"
+     ],
+     "coherence": 0.4181
+    },
+    {
+     "cluster": 21,
+     "sentences": 662,
+     "top_words": [
+      "does",
+      "did",
+      "buy",
+      "know",
+      "account",
+      "just",
+      "instead",
+      "work",
+      "like",
+      "curious"
+     ],
+     "coherence": 0.0602
+    },
+    {
+     "cluster": 17,
+     "sentences": 616,
+     "top_words": [
+      "rates",
+      "rate",
+      "year",
+      "billion",
+      "piyush",
+      "gupta",
+      "cuts",
+      "quarter",
+      "think",
+      "growth"
+     ],
+     "coherence": 0.1238
+    },
+    {
+     "cluster": 22,
+     "sentences": 587,
+     "top_words": [
+      "fixed",
+      "years",
+      "sgd",
+      "cash",
+      "months",
+      "usd",
+      "eir",
+      "month",
+      "yield",
+      "loan"
+     ],
+     "coherence": 0.031
+    },
+    {
+     "cluster": 19,
+     "sentences": 506,
+     "top_words": [
+      "account",
+      "custodian",
+      "endowus",
+      "use",
+      "currently",
+      "held",
+      "using",
+      "card",
+      "ibkr",
+      "srs"
+     ],
+     "coherence": 0.0782
+    },
+    {
+     "cluster": 25,
+     "sentences": 464,
+     "top_words": [
+      "account",
+      "started",
+      "years",
+      "opened",
+      "ago",
+      "got",
+      "open",
+      "card",
+      "just",
+      "recently"
+     ],
+     "coherence": 0.0682
+    },
+    {
+     "cluster": 2,
+     "sentences": 417,
+     "top_words": [
+      "ceo",
+      "appoints",
+      "head",
+      "names",
+      "tan",
+      "chairman",
+      "chief",
+      "india",
+      "gupta",
+      "piyush"
+     ],
+     "coherence": 0.2458
+    },
+    {
+     "cluster": 4,
+     "sentences": 412,
+     "top_words": [
+      "services",
+      "disruption",
+      "claim",
+      "laundering",
+      "outage",
+      "restored",
+      "court",
+      "linked",
+      "scams",
+      "scam"
+     ],
+     "coherence": -0.3829
+    }
+   ]
+  },
+  {
+   "min_cluster_size": 200,
+   "clusters": 5,
+   "noise_share": 0.1069,
+   "coherence_mean": 0.183,
+   "scores": {
+    "noise_as_group": {
+     "nmi": 0.10314871611491268,
+     "ari": 0.07848298804261872,
+     "purity": 0.413469068128426,
+     "chance": {
+      "nmi": 0.013772000280843586,
+      "ari": 0.000576769938821858,
+      "purity": 0.3740759592795615
+     }
+    },
+    "clustered_only": {
+     "nmi": 0.11275249988709353,
+     "ari": 0.06179080242001169,
+     "purity": 0.43417611159546643,
+     "chance": {
+      "nmi": 0.014370347685799714,
+      "ari": 0.0006586542363656743,
+      "purity": 0.39037489102005224
+     },
+     "labelled_covered": 1147
+    },
+    "alignment": [
+     {
+      "topic": -1,
+      "labelled_sentences": 130,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.231
+     },
+     {
+      "topic": 0,
+      "labelled_sentences": 4,
+      "best_aspect": "other",
+      "share": 1.0
+     },
+     {
+      "topic": 1,
+      "labelled_sentences": 78,
+      "best_aspect": "other",
+      "share": 0.526
+     },
+     {
+      "topic": 2,
+      "labelled_sentences": 7,
+      "best_aspect": "other",
+      "share": 0.571
+     },
+     {
+      "topic": 3,
+      "labelled_sentences": 26,
+      "best_aspect": "income_profit_results",
+      "share": 0.385
+     },
+     {
+      "topic": 4,
+      "labelled_sentences": 1032,
+      "best_aspect": "retail_banking_sentiment",
+      "share": 0.425
+     }
+    ]
+   },
+   "largest": [
+    {
+     "cluster": 4,
+     "sentences": 34889,
+     "top_words": [
+      "account",
+      "card",
+      "income",
+      "year",
+      "billion",
+      "just",
+      "net",
+      "credit",
+      "higher",
+      "like"
+     ],
+     "coherence": 0.0237
+    },
+    {
+     "cluster": 1,
+     "sentences": 2034,
+     "top_words": [
+      "singapore",
+      "launches",
+      "banking",
+      "digital",
+      "new",
+      "asia",
+      "wealth",
+      "launch",
+      "malaysia",
+      "india"
+     ],
+     "coherence": 0.1367
+    },
+    {
+     "cluster": 3,
+     "sentences": 1042,
+     "top_words": [
+      "net",
+      "income",
+      "assets",
+      "loans",
+      "non",
+      "equity",
+      "total",
+      "allowances",
+      "profit",
+      "group"
+     ],
+     "coherence": 0.3645
+    },
+    {
+     "cluster": 2,
+     "sentences": 390,
+     "top_words": [
+      "ceo",
+      "appoints",
+      "head",
+      "names",
+      "tan",
+      "chairman",
+      "chief",
+      "new",
+      "india",
+      "group"
+     ],
+     "coherence": 0.2066
+    },
+    {
+     "cluster": 0,
+     "sentences": 344,
+     "top_words": [
+      "financial",
+      "statements",
+      "group",
+      "audit",
+      "information",
+      "consolidated",
+      "report",
+      "statement",
+      "presentation",
+      "results"
+     ],
+     "coherence": 0.1834
+    }
+   ]
+  }
+ ]
+}

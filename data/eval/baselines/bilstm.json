@@ -1,0 +1,43 @@
+{
+ "summary": {
+  "arch": "bilstm",
+  "glove": false,
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "test_macro_f1_mean": 0.49015158383450447,
+  "test_macro_f1_sd": 0.008898819861429546,
+  "vote_macro_f1": 0.5187465412285556,
+  "vote_ci": [
+   0.45839662230754125,
+   0.5757534586553271
+  ],
+  "n_train": 1563,
+  "n_test": 299
+ },
+ "runs": [
+  {
+   "seed": 42,
+   "dev_macro_f1": 0.5236297400231826,
+   "epochs_run": 16,
+   "test_macro_f1": 0.49738834422657957,
+   "test_accuracy": 0.5451505016722408
+  },
+  {
+   "seed": 43,
+   "dev_macro_f1": 0.5440653931244713,
+   "epochs_run": 27,
+   "test_macro_f1": 0.48021569074200654,
+   "test_accuracy": 0.5183946488294314
+  },
+  {
+   "seed": 44,
+   "dev_macro_f1": 0.5371142304866244,
+   "epochs_run": 13,
+   "test_macro_f1": 0.4928507165349271,
+   "test_accuracy": 0.5317725752508361
+  }
+ ]
+}

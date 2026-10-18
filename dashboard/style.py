@@ -165,17 +165,28 @@ def takeaway(kicker: str, body: str) -> str:
 
 def sparkline(values, color=ACCENT, w=96, h=34) -> str:
     """Inline SVG polyline for a bank card; empty string if too few points."""
-    vals = [v for v in values if v is not None]
+    vals = [v for v in values if v is not None and pd.notna(v)]
     if len(vals) < 2:
         return ""
     lo, hi = min(vals), max(vals)
     span = (hi - lo) or 1.0
-    pts = " ".join(
-        f"{i * w / (len(vals) - 1):.1f},{h - 3 - (v - lo) / span * (h - 6):.1f}"
-        for i, v in enumerate(vals))
+    # Preserve missing periods as gaps rather than joining their neighbours.
+    segments, points = [], []
+    for i, value in enumerate(values):
+        if value is None or pd.isna(value):
+            if points:
+                segments.append(" ".join(points))
+                points = []
+        else:
+            points.append(f"{i * w / (len(values) - 1):.1f},{h - 3 - (value - lo) / span * (h - 6):.1f}")
+    if points:
+        segments.append(" ".join(points))
+    lines = "".join(
+        f'<polyline fill="none" stroke="{color}" stroke-width="2" '
+        f'stroke-linejoin="round" stroke-linecap="round" points="{pts}"/>'
+        for pts in segments)
     return (f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
-            f'<polyline fill="none" stroke="{color}" stroke-width="2" '
-            f'stroke-linejoin="round" stroke-linecap="round" points="{pts}"/></svg>')
+            f'{lines}</svg>')
 
 
 def bank_card(bank: str, score: float | None, n: int, delta: float | None,
@@ -184,7 +195,7 @@ def bank_card(bank: str, score: float | None, n: int, delta: float | None,
     head = (f'<div class="bank-top"><span class="bank-dot" style="background:{color}"></span>'
             f'{html.escape(bank)}</div>')
     if score is None:
-        return f'<div class="bank-card">{head}<div class="bank-score">No data</div></div>'
+        return f'<div class="bank-card">{head}<div class="bank-score">Not enough data</div></div>'
     if delta is None:
         trend = ""
     elif abs(delta) < 0.005:
@@ -255,11 +266,26 @@ def _zero_rule():
     return alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(color=MUTED, strokeDash=[4, 4]).encode(y="y:Q")
 
 
+def _plot_data(df):
+    """Split each series at missing/thin periods so paths cannot bridge gaps."""
+    df = df.sort_values((["bank"] if "bank" in df.columns else []) + ["period"]).copy()
+    if "sufficient" in df.columns:
+        df["score"] = df["score"].where(df["sufficient"])
+    if "bank" in df.columns:
+        df["_segment"] = df.groupby("bank")["score"].transform(lambda s: s.isna().cumsum())
+    else:
+        df["_segment"] = df["score"].isna().cumsum()
+    return df
+
+
 def area_chart(df, height=320, color=ACCENT):
     """One series: area + line with a soft gradient fill."""
+    df = _plot_data(df)
     base = alt.Chart(df).encode(
-        x=alt.X("period:N", title=None, axis=alt.Axis(labelAngle=0, grid=False, labelOverlap=True)),
+        x=alt.X("period:N", title=None, scale=alt.Scale(domain=sorted(df.period.unique())),
+                axis=alt.Axis(labelAngle=0, grid=False, labelOverlap=True)),
         y=alt.Y("score:Q", title=None, axis=alt.Axis(gridDash=[3, 3])),
+        detail=alt.Detail("_segment:N"),
         tooltip=[alt.Tooltip("period", title="Period"), alt.Tooltip("score:Q", format="+.3f", title="Score"),
                  alt.Tooltip("n:Q", title="Sentences")])
     area = base.mark_area(
@@ -272,9 +298,12 @@ def area_chart(df, height=320, color=ACCENT):
 
 def trend_chart(df, height=300):
     """df: period, bank, score, n. One line per bank."""
+    df = _plot_data(df)
     base = alt.Chart(df).encode(
-        x=alt.X("period:N", title=None, axis=alt.Axis(labelAngle=0, grid=False, labelOverlap=True)),
+        x=alt.X("period:N", title=None, scale=alt.Scale(domain=sorted(df.period.unique())),
+                axis=alt.Axis(labelAngle=0, grid=False, labelOverlap=True)),
         y=alt.Y("score:Q", title=None, axis=alt.Axis(gridDash=[3, 3])),
+        detail=alt.Detail("_segment:N"),
         color=alt.Color("bank:N", scale=_bank_scale(df.bank)),
         tooltip=["bank", "period", alt.Tooltip("score:Q", format="+.3f"),
                  alt.Tooltip("n:Q", title="Sentences")])

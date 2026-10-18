@@ -1,8 +1,9 @@
 # Building the dashboard on the API
 
-For whoever builds a frontend on the API. The Streamlit dashboard in
-`dashboard/` (a teammate's) reads the database directly; everything it
-shows is also available through a read-only REST API (DESIGN decision 23). This page is how to run it, which endpoint feeds which
+For whoever builds a frontend on the API. The Streamlit dashboard's data
+views now use this API through `dashboard/api_client.py` and `dashboard/data.py`.
+The Ask page still calls the chatbot directly until the chat migration is
+completed. This page is how to run the API, which endpoint feeds which
 view, what the responses look like, and what the screen must say about the
 numbers.
 
@@ -17,6 +18,16 @@ PLP_API_PORT=8100 scripts/start.sh api     # another port, API only (PLP_DASHBOA
 scripts/status.sh
 scripts/stop.sh
 ```
+
+The Streamlit server connects to `http://127.0.0.1:8000` by default. Set
+`PLP_API_PORT` for a different local port, or `PLP_API_URL` for the complete
+address (for example, `http://api:8000` inside Docker Compose). This request
+comes from the Streamlit server, not the browser. Data loaders cache successful
+responses for five minutes. Start the API before opening the dashboard.
+
+The sidebar distinguishes **Data as of** (the newest stored sentence) from
+**Index computed** (when the selected model's aggregate was built). Empty
+API results show no-data messages; failed requests show service errors.
 
 - Interactive docs: `http://localhost:8000/docs`
 - Machine-readable spec: [`docs/api/openapi.json`](api/openapi.json), for

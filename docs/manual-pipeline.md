@@ -1,6 +1,6 @@
 # Manual data-update pipeline
 
-The manual runner imports selected local PDFs or collects Google News/Reddit, completes pending
+The manual runner imports selected local PDFs/CNA cache records or collects Google News/Reddit, completes pending
 analysis with the existing trained models, and rebuilds the sentiment index
 in `data/plp.db`. It does not train a model or change the selected model version.
 
@@ -14,23 +14,26 @@ Implementation milestones:
    progress/history and refresh of the dashboard's cached API responses.
 4. **Google News and Reddit (implemented):** bounded online collection,
    per-source results, deduplication and visible partial/failure reporting.
-5. **CNA (planned):** verify recent discovery/fetching before enabling it.
+5. **CNA (implemented):** local article-cache import, record validation,
+   shared news relevance/dedup checks and skipped-record reporting. No web discovery.
 6. **Final integration (planned):** review the complete multi-source workflow
    for presentation. Other news providers remain outside this allowlist.
 
 ## Run from the dashboard
 
 Open **Data Management** below Ask in the sidebar. Place PDFs in the listed
-folders on the API host, or select Google News and Reddit to collect online.
+folders on the API host, provide `data/cna/articles.jsonl`, or select Google News
+and Reddit to collect online.
 **All available sources** selects both online collectors and each existing
-PDF folder; a missing folder is skipped. Individual choices and All stay in sync.
+PDF folder plus the readable CNA cache; missing local inputs are skipped.
+Individual choices and All stay in sync.
 Choose collection dates if an online source is selected, then click
 **Run selected sources**. An online-only run needs no PDF folder selection.
 This writes to the configured
 database, normally `data/plp.db`. It uses the existing trained models and
 completes all pending analysis; selecting a folder limits imports only.
 
-The page shows each folder's PDF inventory, not an estimate of new documents.
+The page shows PDF counts and usable cached CNA article counts, including already stored data.
 The source-selection and recent-activity panels have equal widths and stretch
 to the same height on wider screens; they stack on narrow screens. The run
 selector sits inside the activity panel so both panel headings align.
@@ -89,6 +92,46 @@ into the configured database; no article drop folder is required.
 | `sgx_research` | `data/sgx_research/*.pdf` |
 | `google_news` | Google News RSS headlines for DBS, OCBC and UOB |
 | `arctic_shift` | Bank-related Reddit posts/comments via Arctic Shift |
+| `cna` | `data/cna/articles.jsonl` on the API host; local import only |
+
+### CNA article-cache import
+
+Select **CNA article cache**, then **Run selected sources**. The path is derived
+from the API checkout, so each teammate uses their own `data/cna/` directory.
+Append new article records to this single file before starting an update.
+Other JSONL filenames in the folder are not scanned.
+`articles.jsonl` is the existing archive collector's format: one JSON object
+per nonblank line. Required fields are `id`, `section`, `url`, `title`, `text`
+and `published`. `url` must be an original HTTP(S) CNA URL; `published` must
+be ISO 8601. A timestamp without an offset is interpreted as Singapore time.
+Optional metadata includes `author` and `fetched_from`. `candidates.json`
+contains discovery URLs only and is not imported.
+
+Usable records published from **1 January 2023 through today in Singapore**
+are considered, retaining the original CNA collector's coverage start. Older
+and future-dated records are counted separately and skipped. The source card
+counts articles within this coverage, before relevance and duplicate checks.
+Online date filters do not limit this local import, including in a
+mixed-source run. The final record for a repeated article ID takes precedence,
+matching the existing CNA archive loader. Stable IDs and the shared news
+filter skip stored/duplicate articles and unrelated text; full CNA text can
+be retained when the stored copy is only a Google headline.
+
+Cached fetch errors, malformed JSON and missing/invalid fields are skipped.
+The run reports one summary warning and the line-specific reasons under
+**File outcomes and stage metrics**. A cache with no usable records because
+of errors fails clearly; an empty valid cache can finish pending analysis.
+Missing/unreadable files are unavailable in source selection and fail the
+worker's prerequisite check if selected through the API. **Source results**
+uses **Read** for CNA, or **Fetched / read** in mixed online/cache runs.
+
+The manual import never calls Wayback, CNA pages or RSS. Populate the cache
+separately using the existing team data or collection scripts. No imported
+cache content belongs in Git; `data/cna/` is already ignored.
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pipeline.runner --sources cna
+```
 
 ### Online collection dates and results
 
@@ -120,8 +163,8 @@ Database/storage failures stop the job. Earlier commits remain and are reconcile
 against the candidate manifest, including after interruption. Read per-source
 results before considering the selected date range fully covered.
 
-CNA, Yahoo News, NewsAPI, Alpha Vantage and analyst-consensus fetching are not
-selectable in this milestone. No unverified provider is started by All.
+CNA online discovery/fetching, Yahoo News, NewsAPI, Alpha Vantage and
+analyst-consensus fetching are not enabled by the manual runner.
 
 From the repository root, **these commands perform a real import and write
 to the configured database**:

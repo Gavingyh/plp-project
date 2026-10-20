@@ -90,6 +90,7 @@ class PipelineAPI:
             "sgx_research": 25,
             "google_news": 0,
             "arctic_shift": 0,
+            "cna": 0,
         }
         self.failure = None
         self.history_status = 200
@@ -114,13 +115,20 @@ class PipelineAPI:
                             "key": key,
                             "label": label,
                             "kind": (
-                                "online"
-                                if key in pipeline_client.ONLINE_SOURCES
-                                else "local_pdf"
+                                "local_cache"
+                                if key == "cna"
+                                else (
+                                    "online"
+                                    if key in pipeline_client.ONLINE_SOURCES
+                                    else "local_pdf"
+                                )
                             ),
                             "folder": f"/synthetic/data/{key}",
                             "exists": key not in self.missing,
                             "pdf_count": self.counts[key],
+                            "article_count": 420 if key == "cna" else 0,
+                            "invalid_count": 27 if key == "cna" else 0,
+                            "excluded_date_count": 0,
                         }
                         for key, label in pipeline_client.SOURCES.items()
                     ]
@@ -461,7 +469,7 @@ class DashboardPipelineTests(DashboardAppTestCase):
         app.button(key="pipeline_start").click().run()
         self.assertEqual(
             self.api.posts[0]["sources"],
-            ["sgx_research", "google_news", "arctic_shift"],
+            ["sgx_research", "google_news", "arctic_shift", "cna"],
         )
 
     def test_collection_failures_and_duplicate_counts_are_visible(self):
@@ -494,6 +502,48 @@ class DashboardPipelineTests(DashboardAppTestCase):
         self.assertEqual(app.metric[1].label, "Duplicates skipped")
         self.assertEqual(app.metric[1].value, "15")
         self.assertTrue(app.warning)
+
+    def test_cna_only_uses_cached_article_counts_and_no_online_dates(self):
+        app = self.page("Data Management")
+        app.checkbox(key="pipeline_select_cna").check().run()
+        self.assertFalse(app.exception)
+        self.assertFalse(app.date_input)
+        text = " ".join(item.value for item in app.markdown)
+        self.assertIn("420 cached articles", text)
+        self.assertNotIn("0 PDFs", text)
+        app.button(key="pipeline_start").click().run()
+        self.assertEqual(self.api.posts, [{"sources": ["cna"]}])
+        self.assertIn("CNA cache", app.selectbox(key="pipeline_focus").options[0])
+
+    def test_missing_cna_cache_is_excluded_from_all_available_sources(self):
+        self.api.missing.add("cna")
+        app = self.page("Data Management")
+        self.assertTrue(app.checkbox(key="pipeline_select_cna").disabled)
+        app.checkbox(key="pipeline_all_sources").check().run()
+        app.button(key="pipeline_start").click().run()
+        self.assertNotIn("cna", self.api.posts[0]["sources"])
+
+    def test_cna_cache_results_show_read_counts_and_skipped_records(self):
+        run = run_record("completed_with_warnings", ["cna"])
+        run["source_results"] = {
+            "cna": {
+                "kind": "local_cache",
+                "status": "partial",
+                "fetched": 447,
+                "documents_inserted": 1,
+                "duplicates": 207,
+                "filtered": 239,
+            }
+        }
+        run["warnings"] = [{"source": "cna", "message": "27 cached records skipped"}]
+        run["stages"][1]["files"] = []
+        self.api.runs = [run]
+        app = self.page("Data Management")
+        self.assertFalse(app.exception)
+        result = app.dataframe[0].value
+        self.assertEqual(result["Read"].tolist(), [447])
+        self.assertEqual(result["Status"].tolist(), ["Some records skipped"])
+        self.assertEqual(app.metric[1].value, "207")
 
 
 def test_pipeline_http_errors_retain_status_without_backend_details():

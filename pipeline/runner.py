@@ -192,7 +192,7 @@ def run_pipeline(
         import_stage = run["stages"][1]
 
         def report(event):
-            if event.get("kind") == "collection":
+            if event.get("kind") in {"collection", "source_result"}:
                 result = event["result"]
                 run.setdefault("source_results", {})[event["source"]] = result
                 import_stage["metrics"][event["source"]] = result
@@ -202,6 +202,7 @@ def run_pipeline(
                             "stage": "import",
                             "source": event["source"],
                             "message": result.get("error")
+                            or result.get("warning_message")
                             or "Some collection windows were incomplete; retry the same dates.",
                             "incomplete_windows": result.get("incomplete_windows", []),
                         }

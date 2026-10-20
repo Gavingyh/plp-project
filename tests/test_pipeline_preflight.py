@@ -13,6 +13,9 @@ from pipeline.jobs import RunStore
 def prerequisites(temp_db, tmp_path, monkeypatch):
     from config import aspect_taxonomy
     from ingest import earnings_extract, sgx_research_extract
+    from pipeline import cna_cache
+
+    monkeypatch.setattr(cna_cache, "CACHE_PATH", tmp_path / "cna/articles.jsonl")
 
     for source, module in (
         ("earnings", earnings_extract),
@@ -51,6 +54,33 @@ def test_missing_database_is_not_silently_created(prerequisites, monkeypatch, tm
     result = runner.run_pipeline(["earnings"], store=store)
     assert result["status"] == "failed" and result["current_stage"] == "preflight"
     assert not missing.exists()
+
+
+def test_missing_cna_cache_fails_preflight_before_import(prerequisites, monkeypatch):
+    _, store = prerequisites
+    importer = Mock(side_effect=AssertionError("must not import"))
+    monkeypatch.setattr(stages, "import_sources", importer)
+    run = runner.run_pipeline(["cna"], store=store)
+    assert run["current_stage"] == "preflight" and run["status"] == "failed"
+    assert "articles.jsonl" in run["error"]
+    importer.assert_not_called()
+
+
+def test_cna_cache_does_not_require_pdf_or_article_extraction_dependencies(
+    prerequisites, monkeypatch
+):
+    from pipeline import cna_cache
+
+    cna_cache.CACHE_PATH.parent.mkdir()
+    cna_cache.CACHE_PATH.write_text("")
+    monkeypatch.setattr(
+        stages.importlib.util,
+        "find_spec",
+        lambda name: (
+            None if name in {"pdfplumber", "trafilatura", "feedparser"} else object()
+        ),
+    )
+    assert stages.preflight(["cna"])["sources"][0]["kind"] == "local_cache"
 
 
 def test_missing_spacy_model_is_reported_before_import(prerequisites, monkeypatch):
@@ -177,6 +207,7 @@ def test_inventory_counts_supported_pdf_locations(prerequisites):
         "sgx_research": 1,
         "google_news": 0,
         "arctic_shift": 0,
+        "cna": 0,
     }
 
 

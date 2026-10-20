@@ -11,6 +11,7 @@ SOURCES = {
     "sgx_research": "Broker research PDFs",
     "google_news": "Google News",
     "arctic_shift": "Reddit",
+    "cna": "CNA article cache",
 }
 ONLINE_SOURCES = {"google_news", "arctic_shift"}
 SOURCE_VERSION_ERROR = (
@@ -46,11 +47,27 @@ def load_sources() -> list[dict]:
         or not isinstance(row.get("key"), str)
         or row.get("key") not in SOURCES
         or row.get("kind")
-        != ("online" if row.get("key") in ONLINE_SOURCES else "local_pdf")
+        != (
+            "local_cache"
+            if row.get("key") == "cna"
+            else "online" if row.get("key") in ONLINE_SOURCES else "local_pdf"
+        )
         or not isinstance(row.get("folder"), str)
         or type(row.get("exists")) is not bool
         or type(row.get("pdf_count")) is not int
         or row["pdf_count"] < 0
+        or (
+            row.get("key") == "cna"
+            and (
+                type(row.get("article_count")) is not int
+                or row["article_count"] < 0
+                or type(row.get("invalid_count")) is not int
+                or row["invalid_count"] < 0
+                or type(row.get("excluded_date_count")) is not int
+                or row["excluded_date_count"] < 0
+            )
+        )
+        or (row.get("error") is not None and not isinstance(row["error"], str))
         for row in rows
     ):
         raise ApiError(SOURCE_VERSION_ERROR)

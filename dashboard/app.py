@@ -820,7 +820,7 @@ elif page == "Ask":
 elif page == "Data Management":
     page_header(
         "Manage data updates",
-        "Update from local PDFs or online sources, follow analysis progress and review previous runs.",
+        "Update from local files or online sources, follow analysis progress and review previous runs.",
     )
     if index_error is not None:
         st.warning(f"The sentiment snapshot is unavailable: {index_error}")

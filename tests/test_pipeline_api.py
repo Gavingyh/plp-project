@@ -71,6 +71,12 @@ def eventually(check, *, timeout=8):
 @pytest.fixture
 def pipeline_api(temp_db, tmp_path, monkeypatch):
     from ingest import earnings_extract, sgx_research_extract
+    from pipeline import cna_cache
+
+    cache = tmp_path / "cna/articles.jsonl"
+    cache.parent.mkdir()
+    cache.write_text("")
+    monkeypatch.setattr(cna_cache, "CACHE_PATH", cache)
 
     for source, module in (
         ("earnings", earnings_extract),
@@ -154,6 +160,7 @@ def test_source_inventory_and_empty_history_never_start_a_worker(pipeline_api):
         "sgx_research",
         "google_news",
         "arctic_shift",
+        "cna",
     }
     assert response.json()["analysis_scope"] == "all_pending"
     assert state.client.get("/pipeline/runs").json() == {
@@ -413,7 +420,7 @@ def test_online_request_carries_fixed_window_into_the_reserved_worker(pipeline_a
         {"sources": ["earnings"], "since": "2024-05-01", "until": "2024-05-08"},
         {"sources": ["google_news"], "since": "invalid", "until": "2024-05-08"},
         {"sources": ["google_news"], "url": "https://untrusted.test"},
-        {"sources": ["cna"]},
+        {"sources": ["cna"], "since": "2024-05-01", "until": "2024-05-02"},
         {"sources": ["yahoo_news"]},
     ],
 )
@@ -421,6 +428,29 @@ def test_collection_options_are_validated_before_reserving_a_worker(pipeline_api
     state = pipeline_api
     assert state.client.post("/pipeline/runs", json=body).status_code == 422
     assert not state.calls and state.store.history() == []
+
+
+@pytest.mark.parametrize(
+    "sources",
+    [["cna"], ["earnings", "sgx_research", "google_news", "arctic_shift", "cna"]],
+)
+def test_cna_and_all_five_sources_can_be_queued(pipeline_api, sources):
+    state = pipeline_api
+    response = start(state, sources)
+    run = response.json()["run"]
+    assert run["sources"] == sources
+    if sources == ["cna"]:
+        assert run["collection_window"] is None
+    assert (
+        next(
+            s
+            for s in state.client.get("/pipeline/sources").json()["sources"]
+            if s["key"] == "cna"
+        )["kind"]
+        == "local_cache"
+    )
+    eventually(lambda: (state.control / f"{run['run_id']}.ready").exists())
+    finish(state, run["run_id"])
 
 
 def test_online_default_is_a_persisted_seven_day_window(pipeline_api):

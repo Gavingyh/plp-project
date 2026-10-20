@@ -97,7 +97,7 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
 ### Manual data updates through the API
 
 The [manual pipeline](manual-pipeline.md) coordinates local earnings/research
-PDF extraction and selected Google News/Reddit collection through index aggregation, using the existing trained models
+PDF extraction, cached CNA article import and selected Google News/Reddit collection through index aggregation, using the existing trained models
 and `data/plp.db` by default. Selected sources control imports; subsequent
 analysis completes all pending work in that database. Model training is not
 part of a run.
@@ -124,7 +124,7 @@ curl -X POST http://localhost:8000/pipeline/runs \
   -d '{"sources":["earnings","sgx_research"]}'
 ```
 
-Use PDF keys, `google_news`, `arctic_shift` (Reddit), or a combination. Online
+Use PDF keys, `cna` (local article cache), `google_news`, `arctic_shift` (Reddit), or a combination. Online
 collection accepts `since` (inclusive) and `until` (exclusive) in UTC, limited
 to 1–31 days; omitting both defaults to the last seven days including today.
 For example, `{"sources":["google_news","arctic_shift"],"since":"2026-10-01","until":"2026-10-08"}`.
@@ -141,10 +141,14 @@ HTTP 409 means another run is active; 503 means worker launch or state storage
 failed. The API responds without waiting for inference.
 
 The dashboard also provides **Data Management**, below Ask in the sidebar:
-place PDFs in the displayed API-host folders, or select Google News and Reddit.
+place PDFs in the displayed API-host folders, supply `data/cna/articles.jsonl`,
+or select Google News and Reddit.
 Choose sources or **All available sources**, set online collection dates when
-needed, and click **Run selected sources**. All selects existing PDF folders
-and both online collectors. Missing folders are skipped. Other providers are not started.
+needed, and click **Run selected sources**. All selects existing PDF folders,
+the readable CNA cache and both online collectors. Missing local inputs are skipped.
+CNA reads usable cached articles from 1 Jan 2023 through today in Singapore
+without online discovery; online dates
+apply only to Google News and Reddit. Other providers are not started.
 Folder paths are resolved from the API checkout location and can be viewed
 under **Folder locations**. This writes to the configured database.
 The page polls progress every two seconds and keeps the latest 20 runs

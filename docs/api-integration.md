@@ -47,26 +47,26 @@ requests show service errors.
 The dashboard's Data Management page uses these endpoints through
 `dashboard/pipeline_client.py`. A client can select local and online sources, launch a
 separate worker, and poll its saved status. Model inference runs in the worker.
-**All available sources** submits Google News, Reddit and the existing PDF
-folders. Source cards show compact folder names, with each API-host path
+**All available sources** submits Google News, Reddit, existing PDF folders
+and the readable CNA article cache. Source cards show compact locations, with each API-host path
 under **Folder locations**. The absolute paths are resolved by the existing
 extractors from their checkout location; each teammate can use a different
 checkout directory.
 
 | Method and path | Result |
 |---|---|
-| `GET /pipeline/sources` | `sources`: key, label, `kind` (`local_pdf` or `online`), folder, `exists`, and `pdf_count`; `analysis_scope: "all_pending"`. Online options have an empty folder, `exists: true`, and zero PDF count. This endpoint never fetches online. |
+| `GET /pipeline/sources` | `sources`: key, label, `kind` (`local_pdf`, `local_cache` or `online`), folder, `exists`, `pdf_count`, `article_count`, `invalid_count`, `excluded_date_count` and optional `error`; `analysis_scope: "all_pending"`. CNA counts usable in-coverage articles and separately counts invalid/out-of-coverage records, with zero PDFs. Online options have an empty folder, `exists: true`, and zero file counts. This endpoint never fetches online. |
 | `POST /pipeline/runs` | HTTP 202, `{"run": {...}}`; `Location` is the status URL and `Retry-After: 2` suggests the polling interval |
 | `GET /pipeline/runs?limit=20` | Newest run summaries and `active_run_id` (null when idle); limit 1–100 |
 | `GET /pipeline/runs/{run_id}` | Full saved run under `run`, with stage metrics, file outcomes, warnings and imported document IDs |
 
-The POST accepts any selection of `earnings`, `sgx_research`, `google_news`
-and `arctic_shift` (Reddit). Source order is normalised and duplicates removed.
+The POST accepts any selection of `earnings`, `sgx_research`, `google_news`,
+`arctic_shift` (Reddit) and `cna` (local cache). Source order is normalised and duplicates removed.
 Online requests optionally include both `since` and `until` as YYYY-MM-DD:
 UTC start inclusive, end exclusive, 1–31 days, through at most tomorrow's UTC
 midnight. Omitting both resolves the last seven days including today when
-the job is queued. Dates on PDF-only requests are rejected. Empty lists,
-unknown sources, more than four items and extra fields give HTTP 422. The
+the job is queued. Dates on requests with no online source are rejected. Empty lists,
+unknown sources, more than five items and extra fields give HTTP 422. The
 request cannot supply a database path, filesystem command or model change.
 Collection/import uses only selected sources; later analysis finishes all pending
 database work, including work from earlier runs, then rebuilds the full index.
@@ -81,10 +81,17 @@ curl -X POST http://localhost:8000/pipeline/runs \
 
 An online-only request can use
 `{"sources":["google_news","arctic_shift"],"since":"2026-10-01","until":"2026-10-08"}`.
-The saved run includes `collection_window` (null for PDF-only runs) and
-`source_results`, keyed by online source. Results contain `status` (`running`,
+The saved run includes `collection_window` (null for local-only runs) and
+`source_results`, keyed by online/cache source. Results contain `status` (`running`,
 `completed`, `partial`, `failed` or `interrupted`), `fetched`, `documents_inserted`,
-`duplicates`, `filtered`, `batches_completed`, `incomplete_windows` and `error`.
+`duplicates`, `filtered`, `incomplete_windows` and `error`; online results also
+include `batches_completed`. For CNA, `fetched` counts nonblank cache records
+read, with `kind: "local_cache"`, `invalid_records`, `superseded_records` and
+`filter_stats`, `excluded_date_records` and `coverage_start`. A partial CNA result means unusable records were skipped, with line-specific
+input issues in the import stage's `files`. A cache with only unusable records
+fails clearly. `cna` never performs discovery, page fetching or cache writes;
+it considers usable cache records from 1 Jan 2023 through Singapore's current
+date, independently of online collection dates.
 Progress and successful commits are retained when another provider fails.
 Partial/failed sources produce warnings, not silent empty successes; all
 selected sources failing fails the run before analysis. Storage errors remain fatal.

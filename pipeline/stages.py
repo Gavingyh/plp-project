@@ -8,6 +8,7 @@ from contextlib import closing
 from pathlib import Path
 
 from pipeline.collection import ONLINE_SOURCES, collection_window, collect
+from pipeline import cna_cache
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = {
@@ -15,6 +16,7 @@ SOURCES = {
     "sgx_research": "Broker research PDFs",
     "google_news": "Google News",
     "arctic_shift": "Reddit",
+    "cna": "CNA article cache",
 }
 
 
@@ -45,6 +47,9 @@ def describe_sources(sources: list[str] | None = None) -> list[dict]:
     out = []
     for source in selected_sources(sources) if sources is not None else SOURCES:
         label = SOURCES[source]
+        if source == "cna":
+            out.append(cna_cache.inventory())
+            continue
         if source in ONLINE_SOURCES:
             out.append(
                 {
@@ -142,6 +147,8 @@ def preflight(sources: list[str]) -> dict:
     inventory = describe_sources(sources)
     for item in inventory:
         if not item["exists"]:
+            if item["key"] == "cna":
+                raise RuntimeError(f"CNA cache unavailable: {item['error']}")
             raise RuntimeError(f"Source folder is missing: {item['folder']}")
     path = Path(db.DB_PATH).resolve()
     # mode=ro also avoids accidentally creating a blank database for a typo.
@@ -154,8 +161,10 @@ def preflight(sources: list[str]) -> dict:
         "transformers",
         "yaml",
     ]
-    if any(source not in ONLINE_SOURCES for source in sources):
+    if {"earnings", "sgx_research"}.intersection(sources):
         dependencies.append("pdfplumber")
+    if "cna" in sources:
+        dependencies.extend(["requests", "bs4"])
     if ONLINE_SOURCES.intersection(sources):
         dependencies.append("requests")
     if "google_news" in sources:
@@ -202,6 +211,11 @@ def import_sources(sources: list[str], *, report, before_insert, window=None) ->
         known = {row[0] for row in conn.execute("SELECT doc_id FROM documents")}
     summary = {}
     for source in sources:
+        if source == "cna":
+            summary[source] = cna_cache.import_cache(
+                report=report, before_insert=before_insert
+            )
+            continue
         if source in ONLINE_SOURCES:
             summary[source] = collect(
                 source,
@@ -229,7 +243,7 @@ def import_sources(sources: list[str], *, report, before_insert, window=None) ->
         }
     if summary and all(item.get("status") == "failed" for item in summary.values()):
         raise RuntimeError(
-            "All selected online sources failed. Check source results and retry the same collection dates."
+            "All selected article sources failed. Check source results and resolve the reported issues."
         )
     return summary
 

@@ -18,7 +18,7 @@ router = APIRouter(
     responses={503: {"description": "Pipeline worker or run storage unavailable"}},
 )
 logger = logging.getLogger(__name__)
-SourceKey = Literal["earnings", "sgx_research", "google_news", "arctic_shift"]
+SourceKey = Literal["earnings", "sgx_research", "google_news", "arctic_shift", "cna"]
 RunStatus = Literal[
     "queued", "running", "completed", "completed_with_warnings", "failed", "interrupted"
 ]
@@ -31,10 +31,14 @@ def get_pipeline_service() -> PipelineService:
 class SourceOption(BaseModel):
     key: SourceKey
     label: str
-    kind: Literal["local_pdf", "online"]
+    kind: Literal["local_pdf", "online", "local_cache"]
     folder: str
     exists: bool
     pdf_count: int
+    article_count: int = 0
+    invalid_count: int = 0
+    excluded_date_count: int = 0
+    error: str | None = None
 
 
 class PipelineSources(BaseModel):
@@ -44,7 +48,7 @@ class PipelineSources(BaseModel):
 
 class StartPipelineRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    sources: list[SourceKey] = Field(min_length=1, max_length=4)
+    sources: list[SourceKey] = Field(min_length=1, max_length=5)
     since: date | None = None
     until: date | None = None
 

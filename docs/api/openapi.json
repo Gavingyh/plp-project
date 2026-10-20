@@ -216,7 +216,8 @@
                 "earnings",
                 "sgx_research",
                 "google_news",
-                "arctic_shift"
+                "arctic_shift",
+                "cna"
               ],
               "type": "string"
             },
@@ -370,7 +371,8 @@
                 "earnings",
                 "sgx_research",
                 "google_news",
-                "arctic_shift"
+                "arctic_shift",
+                "cna"
               ],
               "type": "string"
             },
@@ -518,6 +520,27 @@
       },
       "SourceOption": {
         "properties": {
+          "article_count": {
+            "default": 0,
+            "title": "Article Count",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "excluded_date_count": {
+            "default": 0,
+            "title": "Excluded Date Count",
+            "type": "integer"
+          },
           "exists": {
             "title": "Exists",
             "type": "boolean"
@@ -526,12 +549,18 @@
             "title": "Folder",
             "type": "string"
           },
+          "invalid_count": {
+            "default": 0,
+            "title": "Invalid Count",
+            "type": "integer"
+          },
           "key": {
             "enum": [
               "earnings",
               "sgx_research",
               "google_news",
-              "arctic_shift"
+              "arctic_shift",
+              "cna"
             ],
             "title": "Key",
             "type": "string"
@@ -539,7 +568,8 @@
           "kind": {
             "enum": [
               "local_pdf",
-              "online"
+              "online",
+              "local_cache"
             ],
             "title": "Kind",
             "type": "string"
@@ -585,11 +615,12 @@
                 "earnings",
                 "sgx_research",
                 "google_news",
-                "arctic_shift"
+                "arctic_shift",
+                "cna"
               ],
               "type": "string"
             },
-            "maxItems": 4,
+            "maxItems": 5,
             "minItems": 1,
             "title": "Sources",
             "type": "array"

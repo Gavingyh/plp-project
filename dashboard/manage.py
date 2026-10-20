@@ -88,6 +88,7 @@ def _history_label(run: dict) -> str:
             "sgx_research": "Research",
             "google_news": "Google News",
             "arctic_shift": "Reddit",
+            "cna": "CNA cache",
         }[source]
         for source in run["sources"]
     )
@@ -179,20 +180,34 @@ def _run_details(run: dict):
         )
     source_results = run.get("source_results", {})
     if source_results:
-        st.markdown("**Online source results**")
+        cached_input = "cna" in source_results
+        count_label = (
+            "Read"
+            if set(source_results) == {"cna"}
+            else "Fetched / read" if cached_input else "Fetched"
+        )
+        st.markdown("**Source results**")
         st.dataframe(
             pd.DataFrame(
                 [
                     {
                         "Source": client.SOURCES.get(source, source),
-                        "Status": {
-                            "running": "Collecting",
-                            "partial": "Incomplete",
-                            "failed": "Failed",
-                            "interrupted": "Interrupted",
-                            "completed": "Completed",
-                        }.get(result["status"], result["status"]),
-                        "Fetched": result["fetched"],
+                        "Status": (
+                            "Reading cache"
+                            if source == "cna" and result["status"] == "running"
+                            else (
+                                "Some records skipped"
+                                if source == "cna" and result["status"] == "partial"
+                                else {
+                                    "running": "Collecting",
+                                    "partial": "Incomplete",
+                                    "failed": "Failed",
+                                    "interrupted": "Interrupted",
+                                    "completed": "Completed",
+                                }.get(result["status"], result["status"])
+                            )
+                        ),
+                        count_label: result["fetched"],
                         "New": result["documents_inserted"],
                         "Duplicates": result["duplicates"],
                         "Filtered": result["filtered"],
@@ -239,7 +254,7 @@ def _run_details(run: dict):
         metrics[2].metric("Warnings", len(run.get("warnings", [])))
         if source_results:
             st.caption(
-                "Fetched counts include candidates that were filtered out or already stored."
+                "Counts include records excluded by validation, relevance or duplicate checks."
             )
         else:
             st.caption("Previously stored PDFs were skipped automatically.")
@@ -251,12 +266,12 @@ def _run_details(run: dict):
     with st.expander("File outcomes and stage metrics"):
         if source_results:
             st.caption(
-                "Google News supplies headlines; Reddit supplies bank-related posts and comments."
+                "CNA reads cached article text. Google News supplies headlines; Reddit supplies bank-related posts and comments."
             )
         if files:
             st.dataframe(pd.DataFrame(files), hide_index=True, width="stretch")
         else:
-            st.caption("No PDF outcomes have been recorded yet.")
+            st.caption("No local input issues or PDF outcomes have been recorded yet.")
         for stage in stages:
             if stage.get("error"):
                 st.error(f"{stage['label']}: {stage['error']}")
@@ -292,7 +307,9 @@ def _run_details(run: dict):
 def render_guidance():
     st.markdown(
         "**Manual data updates**\n\n"
-        "Place PDFs in the listed server folders, or select Google News and Reddit to fetch online. "
+        "Place PDFs in the listed server folders or CNA article records in data/cna/articles.jsonl. "
+        "CNA imports the local cache without fetching pages or calling Wayback. "
+        "Select Google News and Reddit to fetch online. "
         "Run timestamps are shown in Singapore time (SGT). "
         "Collection dates use UTC, cover at most 31 days and default to the last 7 days including today. "
         "Select sources and start a run. "
@@ -374,8 +391,8 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
             )
             for index, source in enumerate(sources):
                 if index % 2 == 0:
-                    columns = st.columns(2)
-                column = columns[index % 2]
+                    columns = st.columns(1 if index == len(sources) - 1 else 2)
+                column = columns[index % len(columns)]
                 with column.container(
                     border=True,
                     height="stretch",
@@ -389,16 +406,35 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                         disabled=blocked or not source["exists"],
                     )
                     online = source["kind"] == "online"
+                    cached = source["kind"] == "local_cache"
                     availability = (
                         "No API key required"
                         if online
-                        else ("PDFs found" if source["exists"] else "Folder missing")
+                        else (
+                            (
+                                "Cached articles"
+                                if source["exists"]
+                                else "Cache unavailable"
+                            )
+                            if cached
+                            else (
+                                "PDFs found" if source["exists"] else "Folder missing"
+                            )
+                        )
                     )
-                    count_label = "Online" if online else f"{source['pdf_count']:,}"
+                    count_label = (
+                        "Online"
+                        if online
+                        else f"{source['article_count'] if cached else source['pdf_count']:,}"
+                    )
                     location = (
                         "Fetched when you run"
                         if online
-                        else _folder_label(source["folder"])
+                        else (
+                            "data/cna/articles.jsonl"
+                            if cached
+                            else _folder_label(source["folder"])
+                        )
                     )
                     st.markdown(
                         '<div class="pipeline-source-count">'
@@ -412,20 +448,41 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                             "sgx_research": "Broker reports · place PDFs directly here",
                             "google_news": "Headlines · DBS, OCBC and UOB",
                             "arctic_shift": "Bank-related Reddit posts and comments",
+                            "cna": "Local article text · 2023 onwards",
                         }[source["key"]]
                     )
+                    if cached and source.get("error"):
+                        st.caption(source["error"])
+                    elif cached and source["invalid_count"]:
+                        st.caption(
+                            f"{source['invalid_count']:,} unusable records will be skipped and reported."
+                        )
+                    if cached and source.get("excluded_date_count"):
+                        st.caption(
+                            f"{source['excluded_date_count']:,} records outside publication coverage will be skipped."
+                        )
                     if checked and source["exists"]:
                         selected.append(source["key"])
             count = sum(
                 source["pdf_count"] for source in sources if source["key"] in selected
             )
+            local_counts = []
+            if {"earnings", "sgx_research"}.intersection(selected):
+                local_counts.append(f"{count:,} PDFs")
+            if "cna" in selected:
+                articles = next(
+                    source["article_count"]
+                    for source in sources
+                    if source["key"] == "cna"
+                )
+                local_counts.append(f"{articles:,} cached articles")
             selection_hint = (
-                f"{count:,} PDFs in these folders · includes already stored files"
-                if any(source not in client.ONLINE_SOURCES for source in selected)
+                " + ".join(local_counts) + " · includes already stored data"
+                if local_counts
                 else (
                     "Fetches the selected online sources for the chosen dates"
                     if selected
-                    else "Select local folders, online sources, or both"
+                    else "Select local files, online sources, or both"
                 )
             )
             st.markdown(
@@ -469,7 +526,7 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                         "until": (through + timedelta(days=1)).isoformat(),
                     }
                 st.caption(
-                    "Both displayed dates are included. Existing documents are skipped; an overlapping range can recover missed data."
+                    "Both dates are included for Google News and Reddit. Local files use their stored publication dates."
                 )
         uncertain = st.session_state.get("pipeline_start_uncertain", False)
         notice = st.session_state.get("pipeline_start_notice")
@@ -513,13 +570,26 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                     if source["kind"] == "online":
                         continue
                     st.caption(client.SOURCES[source["key"]])
-                    st.code(source["folder"], language=None, wrap_lines=True)
+                    location = (
+                        str(PurePosixPath(source["folder"]) / "articles.jsonl")
+                        if source["kind"] == "local_cache"
+                        else source["folder"]
+                    )
+                    st.code(location, language=None, wrap_lines=True)
+                    if source["kind"] == "local_cache":
+                        st.caption(
+                            "Append new article records to this file. Other JSONL filenames are not scanned."
+                        )
                 st.caption(
                     "These locations belong to the machine running the API; they may differ from the computer displaying this page."
                 )
         with st.expander("What does All available sources include?"):
             st.markdown(
-                "**Available local PDF folders, Google News and Reddit.** Online sources fetch only the selected dates. Each source reports new documents, duplicates and collection problems. CNA and other providers are not enabled in this milestone. Models are used for inference; they are not retrained."
+                "**Available PDF folders, the local CNA article cache, Google News and Reddit.** "
+                "CNA imports usable records published from 1 Jan 2023 through today (Singapore time). "
+                "candidates.json contains URLs only and is not imported. "
+                "Online dates apply to Google News and Reddit. Yahoo News and NewsAPI are not enabled here. "
+                "Each source reports new documents, duplicates and input problems. Models are used for inference; they are not retrained."
             )
 
 

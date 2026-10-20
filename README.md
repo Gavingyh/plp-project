@@ -127,8 +127,9 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
 ```
 
-The dashboard's **Data Management** page runs local earnings/research PDFs
-and online Google News/Reddit updates with progress and history. Select sources
+The dashboard's **Data Management** page imports local earnings/research PDFs
+and cached CNA articles (`data/cna/articles.jsonl`), and collects Google News/Reddit
+with progress and history. CNA imports do not call Wayback or fetch article pages. Select sources
 or **All available sources**, choose collection dates for online sources,
 and click **Run selected sources**. Collection defaults to seven UTC days
 including today and is limited to 31 days per run. This updates the configured

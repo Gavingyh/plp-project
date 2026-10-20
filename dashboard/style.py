@@ -233,14 +233,23 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 }}
 .st-key-pipeline_controls, .st-key-pipeline_activity {{ gap:12px; }}
 .st-key-pipeline_run {{ gap:10px; }}
-[class*="st-key-pipeline_source_"] {{ background:{BG}; padding:14px !important; gap:10px; min-height:180px; }}
+.st-key-pipeline_sources {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:1fr; gap:12px; }}
+.st-key-pipeline_sources > [data-testid="stLayoutWrapper"] {{ min-width:0; display:flex; }}
+[class*="st-key-pipeline_source_"] {{ background:{BG}; padding:14px !important; gap:8px; min-width:0; }}
 [class*="st-key-pipeline_source_"]:has(input:checked) {{ border-color:{ACCENT}88 !important; background:{ACCENT}06; }}
+[class*="st-key-pipeline_source_"] [data-testid="stCheckbox"] {{ min-height:38px; }}
+[class*="st-key-pipeline_source_"] [data-testid="stMarkdownContainer"]:has(> .pipeline-source-body) {{ margin-bottom:0; }}
 .st-key-pipeline_controls [data-testid="stWidgetLabel"] p {{ font-size:.78rem; line-height:1.45; }}
 .st-key-pipeline_controls [data-testid="stCaptionContainer"] p {{ font-size:.73rem; }}
-.pipeline-source-count {{ display:flex; flex-direction:column; gap:2px; margin:5px 0 10px; }}
-.pipeline-source-count strong {{ font-size:1.85rem; line-height:1.1; color:{INK}; font-weight:750; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }}
-.pipeline-source-count span {{ color:{MUTED}; font-size:.71rem; }}
-.pipeline-folder {{ color:{MUTED}; font-size:.68rem; padding-top:10px; border-top:1px solid {LINE}; overflow-wrap:anywhere; }}
+.pipeline-source-body {{ display:flex; flex-direction:column; gap:8px; }}
+.pipeline-source-summary {{ display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:4px; min-height:54px; }}
+.pipeline-source-summary strong {{ font-size:1.75rem; line-height:1.1; color:{INK}; font-weight:750; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }}
+.pipeline-source-unit {{ color:{MUTED}; font-size:.71rem; line-height:1.5; }}
+.pipeline-source-kind {{ color:{ACCENT}; background:{ACCENT}10; border-radius:5px; padding:2px 7px; font-size:.66rem; font-weight:600; line-height:1.5; }}
+.pipeline-source-action {{ color:{INK}; font-size:.78rem; font-weight:600; line-height:1.5; }}
+.stApp p.pipeline-source-description {{ color:{MUTED}; font-size:.73rem; line-height:1.5; min-height:3em; margin:0; }}
+.pipeline-source-status {{ color:{MUTED}; font-size:.68rem; line-height:1.5; padding-top:9px; border-top:1px solid {LINE}; }}
+.pipeline-source-status.is-unavailable {{ color:{NEG}; }}
 .pipeline-selection {{ display:flex; flex-direction:column; gap:4px; padding:0 0 4px; }}
 .pipeline-selection strong {{ font-size:.8rem; color:{INK}; font-weight:600; }}
 .pipeline-selection span {{ font-size:.7rem; color:{MUTED}; }}
@@ -438,6 +447,14 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
 [role="option"]:hover, [role="option"][data-focused="true"] {{ background: {LINE}; }}
 
 @media (prefers-reduced-motion: reduce) {{ * {{ transition: none !important; }} }}
+@media (max-width: 1100px) {{
+    .st-key-pipeline_workspace > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] {{
+        flex-direction:column; align-items:stretch;
+    }}
+    .st-key-pipeline_workspace > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+        width:100% !important; flex:1 1 auto !important;
+    }}
+}}
 @media (max-width: 800px) {{
     .pipeline-run-heading {{ align-items:flex-start; flex-direction:column; }}
     .pipeline-run-times {{ grid-template-columns:1fr; gap:12px; }}
@@ -450,6 +467,11 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
     .quote {{ padding:16px; }}
     .quote .meta a {{ margin-left:0; }}
     .stApp:has(.st-key-ask_view) [data-testid="stBottomBlockContainer"] {{ padding:1rem; }}
+}}
+@media (max-width: 640px) {{
+    .st-key-pipeline_sources {{ grid-template-columns:minmax(0,1fr); grid-auto-rows:auto; }}
+    [class*="st-key-pipeline_source_"] [data-testid="stCheckbox"] {{ min-height:0; }}
+    .stApp p.pipeline-source-description {{ min-height:0; }}
 }}
 </style>
 """

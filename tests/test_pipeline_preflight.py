@@ -66,6 +66,23 @@ def test_missing_cna_cache_fails_preflight_before_import(prerequisites, monkeypa
     importer.assert_not_called()
 
 
+@pytest.mark.parametrize("key", ["", "your_newsapi_key_here"])
+def test_missing_newsapi_key_fails_before_import_without_affecting_other_sources(
+    prerequisites, monkeypatch, key
+):
+    _, store = prerequisites
+    monkeypatch.setenv("NEWSAPI_KEY", key)
+    importer = Mock(side_effect=AssertionError("must not import"))
+    monkeypatch.setattr(stages, "import_sources", importer)
+    option = stages.describe_sources(["newsapi"])[0]
+    assert not option["exists"] and "NEWSAPI_KEY" in option["error"]
+    assert stages.describe_sources(["google_news"])[0]["exists"]
+    run = runner.run_pipeline(["newsapi"], store=store)
+    assert run["status"] == "failed" and run["current_stage"] == "preflight"
+    assert "NewsAPI unavailable" in run["error"]
+    importer.assert_not_called()
+
+
 def test_cna_cache_does_not_require_pdf_or_article_extraction_dependencies(
     prerequisites, monkeypatch
 ):
@@ -208,6 +225,7 @@ def test_inventory_counts_supported_pdf_locations(prerequisites):
         "google_news": 0,
         "arctic_shift": 0,
         "cna": 0,
+        "newsapi": 0,
     }
 
 

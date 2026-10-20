@@ -18,7 +18,9 @@ router = APIRouter(
     responses={503: {"description": "Pipeline worker or run storage unavailable"}},
 )
 logger = logging.getLogger(__name__)
-SourceKey = Literal["earnings", "sgx_research", "google_news", "arctic_shift", "cna"]
+SourceKey = Literal[
+    "earnings", "sgx_research", "google_news", "arctic_shift", "cna", "newsapi"
+]
 RunStatus = Literal[
     "queued", "running", "completed", "completed_with_warnings", "failed", "interrupted"
 ]
@@ -48,7 +50,7 @@ class PipelineSources(BaseModel):
 
 class StartPipelineRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    sources: list[SourceKey] = Field(min_length=1, max_length=5)
+    sources: list[SourceKey] = Field(min_length=1, max_length=6)
     since: date | None = None
     until: date | None = None
 

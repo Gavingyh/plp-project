@@ -89,6 +89,7 @@ def _history_label(run: dict) -> str:
             "google_news": "Google News",
             "arctic_shift": "Reddit",
             "cna": "CNA cache",
+            "newsapi": "NewsAPI",
         }[source]
         for source in run["sources"]
     )
@@ -100,12 +101,6 @@ def _history_label(run: dict) -> str:
         else STATUS_LABELS[run["status"]]
     )
     return f"{when} · {sources} · {status} · {run['run_id'][:4]}"
-
-
-def _folder_label(folder: str) -> str:
-    """A compact location hint; the API's full path stays in Folder locations."""
-    parts = PurePosixPath(folder.replace("\\", "/")).parts
-    return "/".join(parts[-2:])
 
 
 def _outcome(run: dict):
@@ -265,9 +260,28 @@ def _run_details(run: dict):
             )
     with st.expander("File outcomes and stage metrics"):
         if source_results:
+            descriptions = {
+                "cna": "CNA reads cached article text.",
+                "google_news": "Google News supplies headlines.",
+                "newsapi": "NewsAPI supplies titles and descriptions.",
+                "arctic_shift": "Reddit supplies bank-related posts and comments.",
+            }
             st.caption(
-                "CNA reads cached article text. Google News supplies headlines; Reddit supplies bank-related posts and comments."
+                " ".join(
+                    descriptions[source]
+                    for source in source_results
+                    if source in descriptions
+                )
             )
+        cna = source_results.get("cna", {})
+        if "invalid_records" in cna or "excluded_date_records" in cna:
+            st.markdown("**CNA input checks for this run**")
+            if "invalid_records" in cna:
+                st.caption(f"Unusable records skipped: {cna['invalid_records']:,}")
+            if "excluded_date_records" in cna:
+                st.caption(
+                    f"Outside publication coverage: {cna['excluded_date_records']:,}"
+                )
         if files:
             st.dataframe(pd.DataFrame(files), hide_index=True, width="stretch")
         else:
@@ -309,7 +323,7 @@ def render_guidance():
         "**Manual data updates**\n\n"
         "Place PDFs in the listed server folders or CNA article records in data/cna/articles.jsonl. "
         "CNA imports the local cache without fetching pages or calling Wayback. "
-        "Select Google News and Reddit to fetch online. "
+        "Select Google News, Reddit or NewsAPI to fetch online. NewsAPI requires NEWSAPI_KEY on the API machine. "
         "Run timestamps are shown in Singapore time (SGT). "
         "Collection dates use UTC, cover at most 31 days and default to the last 7 days including today. "
         "Select sources and start a run. "
@@ -353,8 +367,63 @@ def _sync_all_sources(keys: list[str]):
     )
 
 
+def _source_card(source: dict, keys: list[str], blocked: bool) -> bool:
+    with st.container(
+        border=True, height="stretch", key=f"pipeline_source_{source['key']}"
+    ):
+        checked = st.checkbox(
+            client.SOURCES[source["key"]],
+            key=f"pipeline_select_{source['key']}",
+            on_change=_sync_all_sources,
+            args=(keys,),
+            disabled=blocked or not source["exists"],
+        )
+        online = source["kind"] == "online"
+        cached = source["kind"] == "local_cache"
+        if source["key"] == "newsapi":
+            availability = (
+                "API key configured" if source["exists"] else "Setup required"
+            )
+        elif online:
+            availability = "No API key required"
+        elif cached:
+            availability = "Cache ready" if source["exists"] else "Cache unavailable"
+        else:
+            availability = "Folder ready" if source["exists"] else "Folder missing"
+        if online:
+            summary = '<span class="pipeline-source-kind">Online</span><span class="pipeline-source-action">Fetch when run</span>'
+        else:
+            count = source["article_count"] if cached else source["pdf_count"]
+            unit = "Cached articles" if cached else "PDFs available"
+            summary = f'<strong>{count:,}</strong><span class="pipeline-source-unit">{unit}</span>'
+        description = {
+            "earnings": "Bank results and earnings reports",
+            "sgx_research": "Broker research on the three banks",
+            "google_news": "News headlines mentioning the banks",
+            "arctic_shift": "Bank-related posts and comments",
+            "cna": "Cached article text from 2023 onwards",
+            "newsapi": "News headlines and descriptions",
+        }[source["key"]]
+        status_class = "" if source["exists"] else " is-unavailable"
+        st.markdown(
+            '<div class="pipeline-source-body">'
+            f'<div class="pipeline-source-summary">{summary}</div>'
+            f'<p class="pipeline-source-description">{html.escape(description)}</p>'
+            f'<span class="pipeline-source-status{status_class}">{availability}</span></div>',
+            unsafe_allow_html=True,
+        )
+    return checked and source["exists"]
+
+
+def _source_setup_notes(sources: list[dict]):
+    """Show actionable setup issues before the user starts an update."""
+    for source in sources:
+        if source.get("error"):
+            st.caption(f"{client.SOURCES[source['key']]}: {source['error']}")
+
+
 def _source_controls(history: dict | None, active_id: str | None, refresh: Callable):
-    with st.container(border=True, height="stretch", key="pipeline_controls"):
+    with st.container(border=True, key="pipeline_controls"):
         st.markdown(
             section_heading("Start a data update", "Local & online"),
             unsafe_allow_html=True,
@@ -389,80 +458,11 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                 args=(keys,),
                 disabled=blocked or not keys,
             )
-            for index, source in enumerate(sources):
-                if index % 2 == 0:
-                    columns = st.columns(1 if index == len(sources) - 1 else 2)
-                column = columns[index % len(columns)]
-                with column.container(
-                    border=True,
-                    height="stretch",
-                    key=f"pipeline_source_{source['key']}",
-                ):
-                    checked = st.checkbox(
-                        client.SOURCES[source["key"]],
-                        key=f"pipeline_select_{source['key']}",
-                        on_change=_sync_all_sources,
-                        args=(keys,),
-                        disabled=blocked or not source["exists"],
-                    )
-                    online = source["kind"] == "online"
-                    cached = source["kind"] == "local_cache"
-                    availability = (
-                        "No API key required"
-                        if online
-                        else (
-                            (
-                                "Cached articles"
-                                if source["exists"]
-                                else "Cache unavailable"
-                            )
-                            if cached
-                            else (
-                                "PDFs found" if source["exists"] else "Folder missing"
-                            )
-                        )
-                    )
-                    count_label = (
-                        "Online"
-                        if online
-                        else f"{source['article_count'] if cached else source['pdf_count']:,}"
-                    )
-                    location = (
-                        "Fetched when you run"
-                        if online
-                        else (
-                            "data/cna/articles.jsonl"
-                            if cached
-                            else _folder_label(source["folder"])
-                        )
-                    )
-                    st.markdown(
-                        '<div class="pipeline-source-count">'
-                        f"<strong>{count_label}</strong><span>{availability}</span></div>"
-                        f'<div class="pipeline-folder">{html.escape(location)}</div>',
-                        unsafe_allow_html=True,
-                    )
-                    st.caption(
-                        {
-                            "earnings": "Bank results · DBS / OCBC / UOB subfolders",
-                            "sgx_research": "Broker reports · place PDFs directly here",
-                            "google_news": "Headlines · DBS, OCBC and UOB",
-                            "arctic_shift": "Bank-related Reddit posts and comments",
-                            "cna": "Local article text · 2023 onwards",
-                        }[source["key"]]
-                    )
-                    if cached and source.get("error"):
-                        st.caption(source["error"])
-                    elif cached and source["invalid_count"]:
-                        st.caption(
-                            f"{source['invalid_count']:,} unusable records will be skipped and reported."
-                        )
-                    if cached and source.get("excluded_date_count"):
-                        st.caption(
-                            f"{source['excluded_date_count']:,} records outside publication coverage will be skipped."
-                        )
-                    if checked and source["exists"]:
+            with st.container(key="pipeline_sources"):
+                for source in sources:
+                    if _source_card(source, keys, blocked):
                         selected.append(source["key"])
+            _source_setup_notes(sources)
             count = sum(
                 source["pdf_count"] for source in sources if source["key"] in selected
             )
@@ -526,8 +526,12 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                         "until": (through + timedelta(days=1)).isoformat(),
                     }
                 st.caption(
-                    "Both dates are included for Google News and Reddit. Local files use their stored publication dates."
+                    "Both dates are included for online sources. Local files use their stored publication dates."
                 )
+                if "newsapi" in selected:
+                    st.caption(
+                        "NewsAPI's Developer plan has a 24-hour delay and about one month of history. Plan limits and incomplete results are reported in the run."
+                    )
         uncertain = st.session_state.get("pipeline_start_uncertain", False)
         notice = st.session_state.get("pipeline_start_notice")
         if notice:
@@ -576,7 +580,13 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                         else source["folder"]
                     )
                     st.code(location, language=None, wrap_lines=True)
-                    if source["kind"] == "local_cache":
+                    if source["key"] == "earnings":
+                        st.caption("Place PDFs in the DBS, OCBC or UOB subfolder.")
+                    elif source["key"] == "sgx_research":
+                        st.caption(
+                            "Place broker research PDFs directly in this folder."
+                        )
+                    elif source["kind"] == "local_cache":
                         st.caption(
                             "Append new article records to this file. Other JSONL filenames are not scanned."
                         )
@@ -585,10 +595,10 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                 )
         with st.expander("What does All available sources include?"):
             st.markdown(
-                "**Available PDF folders, the local CNA article cache, Google News and Reddit.** "
+                "**Available PDF folders, the local CNA article cache, Google News, Reddit and configured NewsAPI.** "
                 "CNA imports usable records published from 1 Jan 2023 through today (Singapore time). "
                 "candidates.json contains URLs only and is not imported. "
-                "Online dates apply to Google News and Reddit. Yahoo News and NewsAPI are not enabled here. "
+                "Online dates apply to Google News, Reddit and NewsAPI. NewsAPI is skipped when its API key is missing. Yahoo News is not enabled here. "
                 "Each source reports new documents, duplicates and input problems. Models are used for inference; they are not retrained."
             )
 
@@ -673,5 +683,5 @@ def render(refresh: Callable):
         with controls:
             _source_controls(history, known["active_run_id"], refresh)
         with activity:
-            with st.container(border=True, height="stretch", key="pipeline_activity"):
+            with st.container(border=True, key="pipeline_activity"):
                 _recent_activity(known, history, refresh)

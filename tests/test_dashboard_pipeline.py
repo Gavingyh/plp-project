@@ -91,6 +91,7 @@ class PipelineAPI:
             "google_news": 0,
             "arctic_shift": 0,
             "cna": 0,
+            "newsapi": 0,
         }
         self.failure = None
         self.history_status = 200
@@ -129,6 +130,11 @@ class PipelineAPI:
                             "article_count": 420 if key == "cna" else 0,
                             "invalid_count": 27 if key == "cna" else 0,
                             "excluded_date_count": 0,
+                            "error": (
+                                "Set NEWSAPI_KEY in .env on the API machine, then restart the API."
+                                if key == "newsapi" and key in self.missing
+                                else None
+                            ),
                         }
                         for key, label in pipeline_client.SOURCES.items()
                     ]
@@ -469,7 +475,7 @@ class DashboardPipelineTests(DashboardAppTestCase):
         app.button(key="pipeline_start").click().run()
         self.assertEqual(
             self.api.posts[0]["sources"],
-            ["sgx_research", "google_news", "arctic_shift", "cna"],
+            ["sgx_research", "google_news", "arctic_shift", "cna", "newsapi"],
         )
 
     def test_collection_failures_and_duplicate_counts_are_visible(self):
@@ -533,6 +539,8 @@ class DashboardPipelineTests(DashboardAppTestCase):
                 "documents_inserted": 1,
                 "duplicates": 207,
                 "filtered": 239,
+                "invalid_records": 3,
+                "excluded_date_records": 17,
             }
         }
         run["warnings"] = [{"source": "cna", "message": "27 cached records skipped"}]
@@ -544,6 +552,47 @@ class DashboardPipelineTests(DashboardAppTestCase):
         self.assertEqual(result["Read"].tolist(), [447])
         self.assertEqual(result["Status"].tolist(), ["Some records skipped"])
         self.assertEqual(app.metric[1].value, "207")
+        self.assertFalse(
+            any(item.label.startswith("CNA cache ·") for item in app.expander)
+        )
+        details = next(
+            item
+            for item in app.expander
+            if item.label == "File outcomes and stage metrics"
+        )
+        captions = [item.value for item in details.caption]
+        self.assertIn("Unusable records skipped: 3", captions)
+        self.assertIn("Outside publication coverage: 17", captions)
+        self.assertNotIn("Unusable records skipped: 27", captions)
+
+    def test_newsapi_without_key_is_disabled_and_excluded_from_all(self):
+        self.api.missing.add("newsapi")
+        app = self.page("Data Management")
+        self.assertTrue(app.checkbox(key="pipeline_select_newsapi").disabled)
+        self.assertTrue(any("NEWSAPI_KEY" in item.value for item in app.caption))
+        app.checkbox(key="pipeline_all_sources").check().run()
+        app.button(key="pipeline_start").click().run()
+        self.assertNotIn("newsapi", self.api.posts[0]["sources"])
+
+    def test_newsapi_uses_online_dates_and_shows_plan_guidance(self):
+        from datetime import date
+
+        app = self.page("Data Management")
+        app.checkbox(key="pipeline_select_newsapi").check().run()
+        self.assertEqual(len(app.date_input), 2)
+        self.assertTrue(any("24-hour delay" in item.value for item in app.caption))
+        app.date_input(key="pipeline_since").set_value(date(2024, 5, 1)).run()
+        app.date_input(key="pipeline_through").set_value(date(2024, 5, 2)).run()
+        app.button(key="pipeline_start").click().run()
+        self.assertEqual(
+            self.api.posts,
+            [{"sources": ["newsapi"], "since": "2024-05-01", "until": "2024-05-03"}],
+        )
+        self.assertIn("NewsAPI", app.selectbox(key="pipeline_focus").options[0])
+        self.assertFalse(
+            any(item.label.startswith("CNA cache ·") for item in app.expander)
+        )
+        self.assertFalse(any("CNA input checks" in item.value for item in app.markdown))
 
 
 def test_pipeline_http_errors_retain_status_without_backend_details():

@@ -47,7 +47,7 @@ requests show service errors.
 The dashboard's Data Management page uses these endpoints through
 `dashboard/pipeline_client.py`. A client can select local and online sources, launch a
 separate worker, and poll its saved status. Model inference runs in the worker.
-**All available sources** submits Google News, Reddit, existing PDF folders
+**All available sources** submits Google News, Reddit, configured NewsAPI, existing PDF folders
 and the readable CNA article cache. Source cards show compact locations, with each API-host path
 under **Folder locations**. The absolute paths are resolved by the existing
 extractors from their checkout location; each teammate can use a different
@@ -55,19 +55,22 @@ checkout directory.
 
 | Method and path | Result |
 |---|---|
-| `GET /pipeline/sources` | `sources`: key, label, `kind` (`local_pdf`, `local_cache` or `online`), folder, `exists`, `pdf_count`, `article_count`, `invalid_count`, `excluded_date_count` and optional `error`; `analysis_scope: "all_pending"`. CNA counts usable in-coverage articles and separately counts invalid/out-of-coverage records, with zero PDFs. Online options have an empty folder, `exists: true`, and zero file counts. This endpoint never fetches online. |
+| `GET /pipeline/sources` | `sources`: key, label, `kind` (`local_pdf`, `local_cache` or `online`), folder, `exists`, `pdf_count`, `article_count`, `invalid_count`, `excluded_date_count` and optional `error`; `analysis_scope: "all_pending"`. CNA counts usable in-coverage articles and separately counts invalid/out-of-coverage records, with zero PDFs. Online options have an empty folder and zero file counts. NewsAPI has `exists: false` and setup guidance when its key is missing; other online options have `exists: true`. This endpoint never fetches online or returns credentials. |
 | `POST /pipeline/runs` | HTTP 202, `{"run": {...}}`; `Location` is the status URL and `Retry-After: 2` suggests the polling interval |
 | `GET /pipeline/runs?limit=20` | Newest run summaries and `active_run_id` (null when idle); limit 1–100 |
 | `GET /pipeline/runs/{run_id}` | Full saved run under `run`, with stage metrics, file outcomes, warnings and imported document IDs |
 
 The POST accepts any selection of `earnings`, `sgx_research`, `google_news`,
-`arctic_shift` (Reddit) and `cna` (local cache). Source order is normalised and duplicates removed.
+`arctic_shift` (Reddit), `cna` (local cache) and `newsapi`. Source order is normalised and duplicates removed.
 Online requests optionally include both `since` and `until` as YYYY-MM-DD:
 UTC start inclusive, end exclusive, 1–31 days, through at most tomorrow's UTC
 midnight. Omitting both resolves the last seven days including today when
 the job is queued. Dates on requests with no online source are rejected. Empty lists,
-unknown sources, more than five items and extra fields give HTTP 422. The
+unknown sources, more than six items and extra fields give HTTP 422. The
 request cannot supply a database path, filesystem command or model change.
+NewsAPI credentials belong in the API host's ignored `.env` or environment,
+not in this request. The worker fails preflight if a selected NewsAPI source
+has no key; provider authentication/quota failures are visible source results.
 Collection/import uses only selected sources; later analysis finishes all pending
 database work, including work from earlier runs, then rebuilds the full index.
 

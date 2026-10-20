@@ -217,7 +217,8 @@
                 "sgx_research",
                 "google_news",
                 "arctic_shift",
-                "cna"
+                "cna",
+                "newsapi"
               ],
               "type": "string"
             },
@@ -372,7 +373,8 @@
                 "sgx_research",
                 "google_news",
                 "arctic_shift",
-                "cna"
+                "cna",
+                "newsapi"
               ],
               "type": "string"
             },
@@ -560,7 +562,8 @@
               "sgx_research",
               "google_news",
               "arctic_shift",
-              "cna"
+              "cna",
+              "newsapi"
             ],
             "title": "Key",
             "type": "string"
@@ -616,11 +619,12 @@
                 "sgx_research",
                 "google_news",
                 "arctic_shift",
-                "cna"
+                "cna",
+                "newsapi"
               ],
               "type": "string"
             },
-            "maxItems": 5,
+            "maxItems": 6,
             "minItems": 1,
             "title": "Sources",
             "type": "array"

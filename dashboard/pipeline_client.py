@@ -12,8 +12,9 @@ SOURCES = {
     "google_news": "Google News",
     "arctic_shift": "Reddit",
     "cna": "CNA article cache",
+    "newsapi": "NewsAPI",
 }
-ONLINE_SOURCES = {"google_news", "arctic_shift"}
+ONLINE_SOURCES = {"google_news", "arctic_shift", "newsapi"}
 SOURCE_VERSION_ERROR = (
     "The API and dashboard source definitions do not match. "
     "Restart both services to load the latest code, then refresh this page."

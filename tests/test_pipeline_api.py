@@ -70,6 +70,7 @@ def eventually(check, *, timeout=8):
 
 @pytest.fixture
 def pipeline_api(temp_db, tmp_path, monkeypatch):
+    monkeypatch.setenv("NEWSAPI_KEY", "synthetic-test-key")
     from ingest import earnings_extract, sgx_research_extract
     from pipeline import cna_cache
 
@@ -161,8 +162,10 @@ def test_source_inventory_and_empty_history_never_start_a_worker(pipeline_api):
         "google_news",
         "arctic_shift",
         "cna",
+        "newsapi",
     }
     assert response.json()["analysis_scope"] == "all_pending"
+    assert "synthetic-test-key" not in response.text
     assert state.client.get("/pipeline/runs").json() == {
         "runs": [],
         "active_run_id": None,
@@ -432,9 +435,13 @@ def test_collection_options_are_validated_before_reserving_a_worker(pipeline_api
 
 @pytest.mark.parametrize(
     "sources",
-    [["cna"], ["earnings", "sgx_research", "google_news", "arctic_shift", "cna"]],
+    [
+        ["cna"],
+        ["newsapi"],
+        ["earnings", "sgx_research", "google_news", "arctic_shift", "cna", "newsapi"],
+    ],
 )
-def test_cna_and_all_five_sources_can_be_queued(pipeline_api, sources):
+def test_cna_newsapi_and_all_six_sources_can_be_queued(pipeline_api, sources):
     state = pipeline_api
     response = start(state, sources)
     run = response.json()["run"]

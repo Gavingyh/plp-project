@@ -7,7 +7,7 @@ are reported per source so another selected source can still be collected.
 from datetime import date, datetime, time, timedelta, timezone
 from contextlib import closing
 
-ONLINE_SOURCES = {"google_news", "arctic_shift"}
+ONLINE_SOURCES = {"google_news", "arctic_shift", "newsapi"}
 MAX_COLLECTION_DAYS = 31
 
 
@@ -38,8 +38,13 @@ def collect(source, window, *, report, before_insert):
     from ingest import db
 
     since, until = window["since"], window["until"]
-    if source == "google_news":
-        from ingest import google_news as adapter, news_filter
+    if source in {"google_news", "newsapi"}:
+        from ingest import news_filter
+
+        if source == "newsapi":
+            from ingest import newsapi as adapter
+        else:
+            from ingest import google_news as adapter
 
         adapter.FAILED_WINDOWS.clear()
         gaps = adapter.FAILED_WINDOWS
@@ -111,7 +116,7 @@ def collect(source, window, *, report, before_insert):
                 eligible.append(doc)
             else:
                 result["filtered"] += 1
-        if source == "google_news":
+        if source in {"google_news", "newsapi"}:
             kept, stats = news_filter.filter_and_dedup(eligible, index)
             result["duplicates"] += stats["already_stored"] + stats["duplicate"]
             result["filtered"] += (
@@ -134,6 +139,8 @@ def collect(source, window, *, report, before_insert):
         result["incomplete_windows"] = list(gaps)
         progress()
     result["incomplete_windows"] = list(gaps)
+    if source == "newsapi" and gaps and not result["error"]:
+        result["error"] = "; ".join(gaps[:3])
     problem = bool(gaps or result["error"])
     result["status"] = (
         "partial"

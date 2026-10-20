@@ -17,6 +17,7 @@ SOURCES = {
     "google_news": "Google News",
     "arctic_shift": "Reddit",
     "cna": "CNA article cache",
+    "newsapi": "NewsAPI",
 }
 
 
@@ -51,14 +52,24 @@ def describe_sources(sources: list[str] | None = None) -> list[dict]:
             out.append(cna_cache.inventory())
             continue
         if source in ONLINE_SOURCES:
+            configured = True
+            if source == "newsapi":
+                from config.newsapi import api_key
+
+                configured = bool(api_key())
             out.append(
                 {
                     "key": source,
                     "label": label,
                     "kind": "online",
                     "folder": "",
-                    "exists": True,
+                    "exists": configured,
                     "pdf_count": 0,
+                    "error": (
+                        None
+                        if configured
+                        else "Set NEWSAPI_KEY in .env on the API machine, then restart the API."
+                    ),
                 }
             )
             continue
@@ -149,6 +160,8 @@ def preflight(sources: list[str]) -> dict:
         if not item["exists"]:
             if item["key"] == "cna":
                 raise RuntimeError(f"CNA cache unavailable: {item['error']}")
+            if item["key"] == "newsapi":
+                raise RuntimeError(f"NewsAPI unavailable: {item['error']}")
             raise RuntimeError(f"Source folder is missing: {item['folder']}")
     path = Path(db.DB_PATH).resolve()
     # mode=ro also avoids accidentally creating a blank database for a typo.

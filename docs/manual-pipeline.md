@@ -1,6 +1,6 @@
 # Manual data-update pipeline
 
-The manual runner imports selected local PDFs/CNA cache records or collects Google News/Reddit, completes pending
+The manual runner imports selected local PDFs/CNA cache records or collects Google News/Reddit/NewsAPI, completes pending
 analysis with the existing trained models, and rebuilds the sentiment index
 in `data/plp.db`. It does not train a model or change the selected model version.
 
@@ -16,16 +16,19 @@ Implementation milestones:
    per-source results, deduplication and visible partial/failure reporting.
 5. **CNA (implemented):** local article-cache import, record validation,
    shared news relevance/dedup checks and skipped-record reporting. No web discovery.
-6. **Final integration (planned):** review the complete multi-source workflow
+6. **NewsAPI (implemented):** server-side key configuration, bounded page collection,
+   shared relevance/dedup checks and visible authentication/quota/coverage failures.
+7. **Final integration (planned):** review the complete multi-source workflow
    for presentation. Other news providers remain outside this allowlist.
 
 ## Run from the dashboard
 
 Open **Data Management** below Ask in the sidebar. Place PDFs in the listed
-folders on the API host, provide `data/cna/articles.jsonl`, or select Google News
-and Reddit to collect online.
-**All available sources** selects both online collectors and each existing
-PDF folder plus the readable CNA cache; missing local inputs are skipped.
+folders on the API host, provide `data/cna/articles.jsonl`, or select Google News,
+Reddit and NewsAPI to collect online.
+**All available sources** selects Google News, Reddit, configured NewsAPI,
+each existing PDF folder and the readable CNA cache. Missing local inputs
+and NewsAPI without a configured key are skipped.
 Individual choices and All stay in sync.
 Choose collection dates if an online source is selected, then click
 **Run selected sources**. An online-only run needs no PDF folder selection.
@@ -34,16 +37,23 @@ database, normally `data/plp.db`. It uses the existing trained models and
 completes all pending analysis; selecting a folder limits imports only.
 
 The page shows PDF counts and usable cached CNA article counts, including already stored data.
-The source-selection and recent-activity panels have equal widths and stretch
-to the same height on wider screens; they stack on narrow screens. The run
+The source-selection and recent-activity panels have equal widths, aligned
+headings and independent content heights. They stack at 1100px and below so
+source cards remain readable beside the sidebar. Six source cards share an
+equal-height two-column grid, becoming one column on mobile. Local inventories
+remain prominent; online sources use a small badge and a fetch-on-run label.
+CNA skip counts appear only in the relevant run's **File outcomes and stage
+metrics**, using that run's saved counts. The selection panel shows source
+availability and setup issues. The run
 selector sits inside the activity panel so both panel headings align.
 Completed stage lists are collapsed by default; active and failed runs show
 their stages immediately. Run summaries keep the status badge separate from
 the start/finish timestamps and stack these fields on narrow screens. History
 labels are shortened; the full run ID remains in technical details. Run history
 and start/finish times are displayed in Singapore time (SGT, UTC+8); stored
-timestamps and online collection date filters use UTC. Cards show compact folder names;
-**Folder locations** reveals the absolute paths returned by the API. Those
+timestamps and online collection date filters use UTC. Cards show short source
+descriptions; **Folder locations** holds file-placement instructions and the
+absolute paths returned by the API. Those
 paths are derived from each checkout's location, not a particular user's
 home directory. For example, a checkout under `/srv/bankpulse` reads earnings
 from `/srv/bankpulse/data/earnings_pdfs`; another checkout can be elsewhere.
@@ -93,6 +103,47 @@ into the configured database; no article drop folder is required.
 | `google_news` | Google News RSS headlines for DBS, OCBC and UOB |
 | `arctic_shift` | Bank-related Reddit posts/comments via Arctic Shift |
 | `cna` | `data/cna/articles.jsonl` on the API host; local import only |
+| `newsapi` | NewsAPI Everything search; requires server-side `NEWSAPI_KEY` |
+
+### NewsAPI setup and collection
+
+Create a key at [NewsAPI](https://newsapi.org/register) and add
+`NEWSAPI_KEY=your_actual_key` to the repository's ignored `.env` on the **API
+machine**, or set it in the server environment. Restart the API after changing
+credentials and refresh the dashboard. Never put the key in frontend code,
+request bodies, `.env.example` or Git. The source inventory exposes only
+availability and setup guidance; it never returns the key or calls NewsAPI.
+Blank/example keys disable the NewsAPI checkbox and exclude it from All.
+The worker checks configuration again before imports.
+
+Select **NewsAPI**, choose dates and click **Run selected sources**. The worker
+queries the existing DBS/OCBC/UOB bank aliases with Singapore/SGX context.
+It requests up to four pages of 100 articles per bank (12 page requests per
+run before transient retries). Each successful page is committed separately;
+earlier pages survive a later provider or storage failure. Shared filtering
+checks relevance, stable IDs, cross-source duplicates and the exact UTC
+publication window. NewsAPI supplies **titles and descriptions**, not full
+article text. No publisher pages are scraped.
+
+The [Developer plan](https://newsapi.org/pricing) currently has 100 requests/day,
+a 24-hour delay and roughly one month of searchable history. Today-only runs
+can legitimately return no articles. Plan limits are provider-specific and
+are reported rather than silently truncating coverage. Narrow the dates when
+the page/result cap is reached; historical dates may require a different plan.
+
+Authentication/quota errors stop further NewsAPI requests in that run without
+retrying them. Connection failures and server errors have at most three attempts
+per page. Keys are sent in the [X-Api-Key header](https://newsapi.org/docs/authentication),
+not query strings. Stored errors use fixed, actionable messages rather than raw
+provider text that could echo credentials. Successful pages can continue through
+analysis when later collection fails; other selected sources still run.
+
+For example (**writes to the configured database**):
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pipeline.runner \
+  --sources newsapi --since 2026-10-12 --until 2026-10-19
+```
 
 ### CNA article-cache import
 
@@ -163,7 +214,7 @@ Database/storage failures stop the job. Earlier commits remain and are reconcile
 against the candidate manifest, including after interruption. Read per-source
 results before considering the selected date range fully covered.
 
-CNA online discovery/fetching, Yahoo News, NewsAPI, Alpha Vantage and
+CNA online discovery/fetching, Yahoo News, Alpha Vantage and
 analyst-consensus fetching are not enabled by the manual runner.
 
 From the repository root, **these commands perform a real import and write

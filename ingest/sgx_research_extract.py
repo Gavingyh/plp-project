@@ -28,6 +28,7 @@ USAGE:
 
 import os
 import re
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
 from ingest.base import detect_banks
@@ -342,7 +343,9 @@ def build_document(path: str) -> dict | None:
     }
 
 
-def pull() -> list[dict]:
+def pull(*, skip_doc_ids: set[str] | None = None,
+         report: Callable[[dict], None] | None = None) -> list[dict]:
+    """Read PDFs, optionally skipping stored ids and reporting file outcomes."""
     if not os.path.isdir(PDF_DIR):
         logger.warning(f"No {PDF_DIR} directory found.")
         return []
@@ -350,15 +353,28 @@ def pull() -> list[dict]:
     for fname in sorted(os.listdir(PDF_DIR)):
         if not fname.lower().endswith(".pdf"):
             continue
+        event = {"source": SOURCE, "file": fname, "doc_id": make_doc_id(SOURCE, fname)}
+        if skip_doc_ids and event["doc_id"] in skip_doc_ids:
+            if report:
+                report({**event, "status": "already_stored"})
+            continue
         try:
             doc = build_document(os.path.join(PDF_DIR, fname))
         except Exception as e:
             logger.error(f"{fname}: ERROR extracting text - {e}")
+            if report:
+                report({**event, "status": "failed", "message": str(e)})
             continue
         if doc:
             logger.info(f"{fname[:60]}: {doc['bank']:5s} {doc['published_at'][:10]} "
                         f"{doc['raw']['read_by']:11s} {len(doc['body']):6,d} chars")
             docs.append(doc)
+            if report:
+                report({**event, "status": "extracted"})
+        elif report:
+            report({**event, "status": "skipped",
+                    "message": ("Report is outside the covered banks." if _NOT_ABOUT_THE_BANKS.search(fname)
+                                else "No usable prose extracted.")})
     return docs
 
 

@@ -124,6 +124,8 @@ def averaged_probs(pairs: pd.DataFrame, model_dirs: list[str], cache_path: str |
     if len(todo):
         print(f"scoring {len(todo)} of {len(pairs)} pairs ({len(pairs) - len(todo)} cached) "
               f"into {cache_path}", flush=True)
+    # Fresh checkouts have no generated preview/cache directory yet.
+    os.makedirs(os.path.dirname(os.path.abspath(cache_path)), exist_ok=True)
     with open(cache_path, "a") as f:
         for i in range(0, len(todo), chunk):
             part = todo.iloc[i:i + chunk]

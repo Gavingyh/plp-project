@@ -23,6 +23,7 @@ The API is the documented interface for any frontend:
 | [docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html) | What the database holds: sources, bank balance, coverage over time, pipeline status, caveats |
 | **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way — the decision log with the evidence behind each choice |
 | **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
+| [docs/manual-pipeline.md](docs/manual-pipeline.md) | Manual updates: local PDFs, Google News and Reddit, stages, prerequisites, persisted run status and failure recovery |
 | **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
 | **[docs/api-integration.md](docs/api-integration.md)** | For whoever builds the dashboard: running the API, which endpoint feeds which view, example responses, the chat contract, and what the screen must say |
 | [docs/report/report-draft.md](docs/report/report-draft.md) | Draft of the report's factual sections, every figure linked to its evidence; conclusions and contributions left to the team |
@@ -126,7 +127,19 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
 ```
 
-No API key is required — the pipeline runs on Reddit, earnings PDFs and
+The dashboard's **Data Management** page imports local earnings/research PDFs
+and cached CNA articles (`data/cna/articles.jsonl`), and collects Google News/Reddit/NewsAPI
+with progress and history. CNA imports do not call Wayback or fetch article pages. Select sources
+or **All available sources**, choose collection dates for online sources,
+and click **Run selected sources**. Collection defaults to seven UTC days
+including today and is limited to 31 days per run. This updates the configured
+database using existing trained models; analysis finishes all pending work.
+See [manual-pipeline.md](docs/manual-pipeline.md) for source locations,
+prerequisites and failure recovery.
+NewsAPI is enabled when `NEWSAPI_KEY` is configured in the API machine's ignored
+`.env`; it is excluded from All when the key is missing. See [API_KEYS.md](API_KEYS.md).
+
+NewsAPI is optional; the pipeline also runs without API keys on Reddit, earnings PDFs and
 local models alone. Two things that will otherwise cost you time:
 **always invoke `.venv-plp/bin/python3` by path**, and set `HF_HUB_OFFLINE=1`
 for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.

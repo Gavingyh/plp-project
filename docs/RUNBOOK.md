@@ -94,6 +94,80 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
 ```
 
+### Manual data updates through the API
+
+The [manual pipeline](manual-pipeline.md) coordinates local earnings/research
+PDF extraction, cached CNA article import and selected Google News/Reddit/NewsAPI collection through index aggregation, using the existing trained models
+and `data/plp.db` by default. Selected sources control imports; subsequent
+analysis completes all pending work in that database. Model training is not
+part of a run.
+
+Restart the API to load the new routes:
+
+```bash
+scripts/stop.sh api
+scripts/start.sh api
+curl http://localhost:8000/pipeline/sources
+```
+
+When an update changes both the source list and dashboard modules, restart
+the dashboard as well (`scripts/stop.sh dashboard`, then
+`scripts/start.sh dashboard`). A browser refresh alone can retain imported
+modules in the running Streamlit process. A source-definition mismatch is a
+service-version issue, not a problem with the PDFs or stored documents.
+
+To start a real incremental update (**writes to the configured database**):
+
+```bash
+curl -X POST http://localhost:8000/pipeline/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"sources":["earnings","sgx_research"]}'
+```
+
+Use PDF keys, `cna` (local article cache), `google_news`, `arctic_shift` (Reddit),
+`newsapi`, or a combination. NewsAPI requires `NEWSAPI_KEY` in the API host's
+ignored `.env` or environment; restart the API after changing credentials. Online
+collection accepts `since` (inclusive) and `until` (exclusive) in UTC, limited
+to 1–31 days; omitting both defaults to the last seven days including today.
+For example, `{"sources":["google_news","arctic_shift"],"since":"2026-10-01","until":"2026-10-08"}`.
+The dashboard displays inclusive From/Through dates and converts the end date.
+Inspect `source_results` and warnings for failed/incomplete collection windows;
+retry the same dates to recover gaps without duplicating stored documents.
+Google News and Reddit need no key; NewsAPI uses the configured server-side key.
+Other providers are not enabled.
+
+HTTP 202 returns a queued run and a `Location`
+header containing `/pipeline/runs/<run_id>`; poll it every two seconds for
+stage results. `GET /pipeline/runs` lists recent run summaries and the active
+ID. A missing model or source folder appears as a failed run at that URL.
+HTTP 409 means another run is active; 503 means worker launch or state storage
+failed. The API responds without waiting for inference.
+
+The dashboard also provides **Data Management**, below Ask in the sidebar:
+place PDFs in the displayed API-host folders, supply `data/cna/articles.jsonl`,
+or select Google News, Reddit and NewsAPI.
+Choose sources or **All available sources**, set online collection dates when
+needed, and click **Run selected sources**. All selects existing PDF folders,
+the readable CNA cache, Google News, Reddit and configured NewsAPI. Missing local
+inputs and NewsAPI without a key are skipped.
+CNA reads usable cached articles from 1 Jan 2023 through today in Singapore
+without online discovery; online dates
+apply only to Google News, Reddit and NewsAPI. Other providers are not started.
+Folder paths are resolved from the API checkout location and can be viewed
+under **Folder locations**. This writes to the configured database.
+The page polls progress every two seconds and keeps the latest 20 runs
+available for inspection. Controls are disabled while a run is active;
+after an uncertain start, use **Check run status** before retrying. Other
+tabs display an update notice and reload cached data when the run ends.
+Existing chat messages are preserved. The page remains accessible when the
+sentiment index is empty; it still needs a working API connection.
+
+Run records and logs are saved under `data/run/pipeline/`. Restarting the API
+does not stop a running worker. Completed data remains after a later failure;
+rerun to finish pending stages. For terminal use and prerequisite checks, see
+[manual-pipeline.md](manual-pipeline.md); for fields and response codes, see
+[the API contract](api-integration.md#manual-pipeline-api-milestone-2).
+
 ### Expected timings
 
 Do not assume a hang. On an M-series Mac with MPS:

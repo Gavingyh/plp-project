@@ -1,7 +1,8 @@
 """
 Streamlit dashboard — see docs/DESIGN.md.
 
-Five pages in a side navigation: overview, topics, trends, evidence and chat. Every view carries the disclosures the design calls for — sample size
+Six pages in a side navigation: overview, topics, trends, evidence, chat and
+data management. Every data view carries the disclosures the design calls for — sample size
 (n), last-refresh timestamp, and a not-financial-advice notice. Those are the
 trust anchors, not decoration.
 
@@ -21,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dashboard.api_client import ApiError
 from dashboard.chat import send_chat
 from dashboard import ask as ask_view, data, trends, evidence as evidence_view
+from dashboard import manage as manage_view
 from config.logging_config import get_logger, setup_logging
 
 setup_logging()
@@ -158,6 +160,20 @@ def load_suggestions() -> list[dict]:
     return data.load_suggestions(limit=6)
 
 
+def refresh_pipeline_data():
+    """Invalidate API-derived views without clearing chat history or user choices."""
+    for loader in (
+        load_index,
+        load_evidence,
+        load_source_breakdown,
+        load_time_series,
+        load_trend,
+        load_analyst_consensus,
+        load_suggestions,
+    ):
+        loader.clear()
+
+
 def disclosure_footer():
     with st.container(key="disclosure"):
         st.caption(
@@ -183,17 +199,13 @@ def score_guidance():
     st.caption(f"Sentiment model: {model_version}.")
 
 
+manage_view.sync_history(refresh_pipeline_data)
+index_error = None
 try:
     df_all = load_index()
 except ApiError as exc:
-    st.error(str(exc))
-    st.stop()
-if df_all.empty:
-    st.warning(
-        "No sentiment results are available for the selected model. "
-        "Check that the API is using the project's matching database snapshot."
-    )
-    st.stop()
+    index_error = str(exc)
+    df_all = pd.DataFrame(columns=data.INDEX_COLUMNS + ["window", "data_as_of"])
 
 data_as_of = next(iter(df_all["data_as_of"].dropna()), "Unknown")
 timestamps = pd.to_datetime(df_all["computed_at"], utc=True, errors="coerce").dropna()
@@ -212,6 +224,7 @@ PAGES = {
     "Trends": ":material/show_chart:",
     "Evidence": ":material/format_quote:",
     "Ask": ":material/chat:",
+    "Data Management": ":material/database:",
 }
 _total = df_all[(df_all.window == "all_time") & (df_all.aspect == "ALL")]["n"].sum()
 with sidebar_navigation:
@@ -233,7 +246,7 @@ with sidebar_snapshot:
     snapshot_rows = "".join(
         f'<div class="side-stat"><span>{label}</span><span>{html.escape(str(value))}</span></div>'
         for label, value in (
-            ("Sentences", f"{int(_total):,}"),
+            ("Sentences", f"{int(_total):,}" if index_error is None else "Unknown"),
             (
                 "Text through",
                 text_date.strftime("%d %b %Y") if pd.notna(text_date) else "Unknown",
@@ -268,6 +281,8 @@ with sidebar_help:
     with st.expander("How BankPulse works"):
         if page == "Ask":
             ask_view.render_answer_guidance()
+        if page == "Data Management":
+            manage_view.render_guidance()
         score_guidance()
 
 
@@ -278,6 +293,7 @@ def page_header(title: str, sub: str):
         "Trends": "Sentiment history",
         "Evidence": "Evidence library",
         "Ask": "Research assistant",
+        "Data Management": "Data operations",
     }
     snapshot = pd.to_datetime(data_as_of, errors="coerce")
     date_label = snapshot.strftime("%d %b %Y") if pd.notna(snapshot) else data_as_of
@@ -294,6 +310,20 @@ def page_header(title: str, sub: str):
         f'<p class="hello">{html.escape(title)}</p><p class="sub">{html.escape(sub)}</p>{meta}</div>',
         unsafe_allow_html=True,
     )
+
+
+if page != "Data Management":
+    manage_view.render_update_notice(refresh_pipeline_data)
+    if index_error is not None:
+        st.error(index_error)
+        st.stop()
+    if df_all.empty:
+        st.warning(
+            "No sentiment results are available for the selected model. "
+            "Check that the API is using the project's matching database snapshot, "
+            "or open Data Management to inspect manual updates."
+        )
+        st.stop()
 
 
 # sentiment_index carries 3 rows per (bank, aspect), one per window
@@ -785,3 +815,13 @@ elif page == "Ask":
             "Explore bank sentiment, compare topics and find supporting evidence through conversation.",
         )
     ask_view.render(chat_area, load_suggestions, send_chat)
+
+# --------------------------------------------------------- Data Management
+elif page == "Data Management":
+    page_header(
+        "Manage data updates",
+        "Update from local files or online sources, follow analysis progress and review previous runs.",
+    )
+    if index_error is not None:
+        st.warning(f"The sentiment snapshot is unavailable: {index_error}")
+    manage_view.render(refresh_pipeline_data)

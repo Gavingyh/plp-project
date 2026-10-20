@@ -36,9 +36,109 @@ requests show service errors.
   generating a client. A test fails if it falls behind the code; regenerate
   it with
   `.venv-plp/bin/python3 -c "import json; from api.main import app; open('docs/api/openapi.json','w').write(json.dumps(app.openapi(), indent=2, sort_keys=True) + '\n')"`
-- Every endpoint is `GET` and read-only, except `POST /chat`, which only
-  calls a model. CORS is open (`*`), so a browser app on any port can call
-  it. There is no authentication: run it locally, not on the internet.
+- `POST /chat` calls a model. **`POST /pipeline/runs` starts a worker which
+  writes to the configured database.** The sentiment/evidence endpoints remain
+  read-only; pipeline status/history reads may recover interrupted job metadata.
+  CORS is open (`*`) and there is no authentication: run this API locally,
+  not on the internet.
+
+## Manual pipeline API (milestone 2)
+
+The dashboard's Data Management page uses these endpoints through
+`dashboard/pipeline_client.py`. A client can select local and online sources, launch a
+separate worker, and poll its saved status. Model inference runs in the worker.
+**All available sources** submits Google News, Reddit, configured NewsAPI, existing PDF folders
+and the readable CNA article cache. Source cards show compact locations, with each API-host path
+under **Folder locations**. The absolute paths are resolved by the existing
+extractors from their checkout location; each teammate can use a different
+checkout directory.
+
+| Method and path | Result |
+|---|---|
+| `GET /pipeline/sources` | `sources`: key, label, `kind` (`local_pdf`, `local_cache` or `online`), folder, `exists`, `pdf_count`, `article_count`, `invalid_count`, `excluded_date_count` and optional `error`; `analysis_scope: "all_pending"`. CNA counts usable in-coverage articles and separately counts invalid/out-of-coverage records, with zero PDFs. Online options have an empty folder and zero file counts. NewsAPI has `exists: false` and setup guidance when its key is missing; other online options have `exists: true`. This endpoint never fetches online or returns credentials. |
+| `POST /pipeline/runs` | HTTP 202, `{"run": {...}}`; `Location` is the status URL and `Retry-After: 2` suggests the polling interval |
+| `GET /pipeline/runs?limit=20` | Newest run summaries and `active_run_id` (null when idle); limit 1–100 |
+| `GET /pipeline/runs/{run_id}` | Full saved run under `run`, with stage metrics, file outcomes, warnings and imported document IDs |
+
+The POST accepts any selection of `earnings`, `sgx_research`, `google_news`,
+`arctic_shift` (Reddit), `cna` (local cache) and `newsapi`. Source order is normalised and duplicates removed.
+Online requests optionally include both `since` and `until` as YYYY-MM-DD:
+UTC start inclusive, end exclusive, 1–31 days, through at most tomorrow's UTC
+midnight. Omitting both resolves the last seven days including today when
+the job is queued. Dates on requests with no online source are rejected. Empty lists,
+unknown sources, more than six items and extra fields give HTTP 422. The
+request cannot supply a database path, filesystem command or model change.
+NewsAPI credentials belong in the API host's ignored `.env` or environment,
+not in this request. The worker fails preflight if a selected NewsAPI source
+has no key; provider authentication/quota failures are visible source results.
+Collection/import uses only selected sources; later analysis finishes all pending
+database work, including work from earlier runs, then rebuilds the full index.
+
+Example start request (**this writes to the configured database**):
+
+```bash
+curl -X POST http://localhost:8000/pipeline/runs \
+  -H 'Content-Type: application/json' \
+  -d '{"sources":["earnings","sgx_research"]}'
+```
+
+An online-only request can use
+`{"sources":["google_news","arctic_shift"],"since":"2026-10-01","until":"2026-10-08"}`.
+The saved run includes `collection_window` (null for local-only runs) and
+`source_results`, keyed by online/cache source. Results contain `status` (`running`,
+`completed`, `partial`, `failed` or `interrupted`), `fetched`, `documents_inserted`,
+`duplicates`, `filtered`, `incomplete_windows` and `error`; online results also
+include `batches_completed`. For CNA, `fetched` counts nonblank cache records
+read, with `kind: "local_cache"`, `invalid_records`, `superseded_records` and
+`filter_stats`, `excluded_date_records` and `coverage_start`. A partial CNA result means unusable records were skipped, with line-specific
+input issues in the import stage's `files`. A cache with only unusable records
+fails clearly. `cna` never performs discovery, page fetching or cache writes;
+it considers usable cache records from 1 Jan 2023 through Singapore's current
+date, independently of online collection dates.
+Progress and successful commits are retained when another provider fails.
+Partial/failed sources produce warnings, not silent empty successes; all
+selected sources failing fails the run before analysis. Storage errors remain fatal.
+Old run records without these additional fields remain readable.
+
+The returned record initially has `status: "queued"`. Poll its `Location`
+every two seconds; the worker may already have advanced by the first poll.
+Status moves to `running`, then `completed`, `completed_with_warnings`,
+`failed` or `interrupted`. HTTP 202 means the job was accepted; it does not
+mean prerequisite checks or analysis succeeded. A missing model or source
+folder is a failed **run**, visible at the status URL, rather than a long
+blocked HTTP request.
+
+HTTP 409 means another manual run already holds the lock, including while
+its process is starting. HTTP 503 means the worker could not be launched or
+its state storage is unavailable. A valid but unknown run ID gives 404;
+malformed IDs give 422. The API only accepts the documented source keys.
+If a POST response is lost, check history before trying again: the client
+must not automatically retry a potentially successful launch.
+
+History summaries omit the full file lists; `warnings_count` and
+`documents_inserted` are counts recorded so far, not an estimate of remaining
+work. Fetch the per-run URL for detailed results. Pending stages remain
+pending if an earlier stage fails; earlier committed data is retained.
+The dashboard polls every two seconds and shows an update-in-progress notice
+on the other tabs. Terminal run records invalidate its cached
+index/evidence/trend/series/source/analyst/suggestion responses and reload
+the page. Failed/interrupted runs also invalidate caches because earlier
+stages may have committed evidence. Chat history is retained. Run controls
+are disabled during active jobs or unavailable status checks; start errors
+require a status check and never cause automatic POST retries. Source folder
+paths refer to the API host. Data Management remains accessible without an
+existing sentiment index.
+
+The launcher reserves the existing process lock before saving a queued job
+and passes that same lock to its worker, so there is no unlocked startup
+gap. A worker survives an API restart; saved records remain readable by the
+new API process. Crashed/killed workers are recovered through the process
+reaper or the next status/history request. Ordinary GET status calls do not
+restart or resume work. macOS/Linux workers are supported; native Windows
+can still use the existing data/chat API routes.
+
+See [manual-pipeline.md](manual-pipeline.md) for prerequisites, terminal use,
+failure recovery and the existing-data analysis scope.
 
 ## Dashboard presentation review — 18 October 2026
 

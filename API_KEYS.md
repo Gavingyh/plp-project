@@ -54,8 +54,11 @@ is kept for the record; `ingest/arctic_shift.py` is what actually runs.
    ```
 
 Free tier limits: 100 requests/day, and article search only covers roughly
-the last month. Fine for the volume survey; not enough for a longer
-historical pull.
+the last month, with a 24-hour delay ([current plans](https://newsapi.org/pricing)).
+Fine for local development/testing; today's articles may not be available yet.
+The dashboard's **Data Management → NewsAPI** option uses this key on the API
+machine. Restart the API after changing it, then refresh the dashboard. Missing
+keys disable this source and exclude it from **All available sources**.
 
 ## 2. Alpha Vantage *(historical — contributes nothing, see above)*
 
@@ -101,12 +104,13 @@ Reddit's API terms.
 
 ## Verifying it worked
 
-Run the NewsAPI pull on its own first, so a bad key fails fast and cheap:
+Run NewsAPI on its own through **Data Management**, or use the manual runner
+(**this collects, analyses and writes to the configured database**):
 
 ```bash
-.venv-plp/bin/python3 run_news_pull.py --source newsapi
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pipeline.runner --sources newsapi
 ```
 
-A missing key is reported for that source rather than crashing. A key that
-is present but wrong shows the HTTP error (401 or 403 usually means a bad or
-not-yet-active key).
+A missing key fails prerequisite checks before import. Invalid/disabled keys,
+exhausted quota and plan/date limits are reported in the run without exposing
+the key. The API and worker never send the key to the dashboard.

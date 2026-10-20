@@ -84,16 +84,25 @@ def _get(endpoint: str, **params) -> list[dict]:
             problem = f"request error: {e}"
             continue
         if resp.status_code == 429:
-            time.sleep(int(resp.headers.get("Retry-After", 5)))
+            try:
+                pause = min(60, max(0, int(resp.headers.get("Retry-After", 5))))
+            except ValueError:
+                pause = 5
+            time.sleep(pause)
             problem = "rate limited"
             continue
         if resp.status_code != 200:
             problem = f"{endpoint} search returned {resp.status_code}: {resp.text[:120]}"
             continue
         try:
-            return resp.json().get("data") or []
-        except json.JSONDecodeError:
-            problem = "unreadable JSON"
+            payload = resp.json()
+            if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+                raise ValueError("Missing data array")
+            if any(not isinstance(row, dict) or not isinstance(row.get("created_utc"), (int, float)) for row in payload["data"]):
+                raise ValueError("Invalid archive record")
+            return payload["data"]
+        except (ValueError, TypeError):
+            problem = "unreadable JSON or invalid archive response"
     raise PageFailed(f"{problem} (after {len(RETRY_WAITS) + 1} attempts)")
 
 
@@ -112,11 +121,17 @@ def _harvest_window(endpoint: str, subreddit: str, after: str, before: str, fiel
             break
         if not page:
             break
+        next_cursor = str(int(page[-1]["created_utc"]) + 1)
+        if cursor.isdigit() and int(next_cursor) <= int(cursor):
+            INCOMPLETE_WINDOWS.append(f"r/{subreddit} {endpoint} from {cursor} to {before}: pagination did not advance")
+            break
         rows.extend(page)
-        cursor = str(page[-1]["created_utc"] + 1)
+        cursor = next_cursor
         time.sleep(POLITE_DELAY_SECONDS)
         if len(page) < PAGE_LIMIT:
             break
+    else:
+        INCOMPLETE_WINDOWS.append(f"r/{subreddit} {endpoint} from {cursor} to {before}: page limit reached")
     return rows
 
 

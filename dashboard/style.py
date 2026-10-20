@@ -158,6 +158,7 @@ section[data-testid="stSidebar"] .st-key-nav [data-testid="stRadio"],
 section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"],
 section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] > div {{ width:100% !important; min-width:0; }}
 section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] {{ align-items:stretch; gap:3px; }}
+section[data-testid="stSidebar"] .st-key-nav [role="radiogroup"] > div:has(input[value="5"]) {{ margin-top:12px; padding-top:12px; border-top:1px solid {LINE}; }}
 section[data-testid="stSidebar"] label[data-testid="stRadioOption"] {{
     width:100%; box-sizing:border-box; min-height:42px; padding:9px 12px; border-radius:8px; margin:0;
     color: {MUTED}; transition: background .2s, color .2s; cursor: pointer;
@@ -227,6 +228,75 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
     background:{SURFACE}; border:1px solid {LINE} !important; border-radius:{RADIUS};
     box-shadow:0 3px 12px #0F233B04; padding:20px !important;
 }}
+.st-key-pipeline_controls, .st-key-pipeline_activity, [class*="st-key-pipeline_source_"] {{
+    background:{SURFACE}; border:1px solid {LINE} !important; border-radius:{RADIUS}; padding:20px !important;
+}}
+.st-key-pipeline_controls, .st-key-pipeline_activity {{ gap:12px; }}
+.st-key-pipeline_run {{ gap:10px; }}
+.st-key-pipeline_sources {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:1fr; gap:12px; }}
+.st-key-pipeline_sources > [data-testid="stLayoutWrapper"] {{ min-width:0; display:flex; }}
+[class*="st-key-pipeline_source_"] {{ background:{BG}; padding:14px !important; gap:8px; min-width:0; }}
+[class*="st-key-pipeline_source_"]:has(input:checked) {{ border-color:{ACCENT}88 !important; background:{ACCENT}06; }}
+[class*="st-key-pipeline_source_"] [data-testid="stCheckbox"] {{ min-height:38px; }}
+[class*="st-key-pipeline_source_"] [data-testid="stMarkdownContainer"]:has(> .pipeline-source-body) {{ margin-bottom:0; }}
+.st-key-pipeline_controls [data-testid="stWidgetLabel"] p {{ font-size:.78rem; line-height:1.45; }}
+.st-key-pipeline_controls [data-testid="stCaptionContainer"] p {{ font-size:.73rem; }}
+.pipeline-source-body {{ display:flex; flex-direction:column; gap:8px; }}
+.pipeline-source-summary {{ display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:4px; min-height:54px; }}
+.pipeline-source-summary strong {{ font-size:1.75rem; line-height:1.1; color:{INK}; font-weight:750; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }}
+.pipeline-source-unit {{ color:{MUTED}; font-size:.71rem; line-height:1.5; }}
+.pipeline-source-kind {{ color:{ACCENT}; background:{ACCENT}10; border-radius:5px; padding:2px 7px; font-size:.66rem; font-weight:600; line-height:1.5; }}
+.pipeline-source-action {{ color:{INK}; font-size:.78rem; font-weight:600; line-height:1.5; }}
+.stApp p.pipeline-source-description {{ color:{MUTED}; font-size:.73rem; line-height:1.5; min-height:3em; margin:0; }}
+.pipeline-source-status {{ color:{MUTED}; font-size:.68rem; line-height:1.5; padding-top:9px; border-top:1px solid {LINE}; }}
+.pipeline-source-status.is-unavailable {{ color:{NEG}; }}
+.pipeline-selection {{ display:flex; flex-direction:column; gap:4px; padding:0 0 4px; }}
+.pipeline-selection strong {{ font-size:.8rem; color:{INK}; font-weight:600; }}
+.pipeline-selection span {{ font-size:.7rem; color:{MUTED}; }}
+.pipeline-scope-note {{ color:{MUTED}; font-size:.73rem; line-height:1.65; padding:4px 0; }}
+.pipeline-scope-note strong {{ color:{INK}; font-weight:600; }}
+.st-key-pipeline_controls button:disabled {{ background:{SURFACE_2} !important; color:{MUTED} !important; border-color:{LINE} !important; cursor:not-allowed; }}
+.st-key-pipeline_controls button:disabled p {{ color:{MUTED}; }}
+.st-key-pipeline_controls :is(pre,code), .st-key-pipeline_run :is(pre,code) {{ background:{SURFACE_2} !important; color:{INK} !important; }}
+.st-key-pipeline_run [data-testid="stMetric"] {{ padding:10px !important; border:0 !important; background:{BG}; border-radius:8px; }}
+.st-key-pipeline_run [data-testid="stMetricValue"] {{ font-size:1.4rem; }}
+.st-key-pipeline_run [data-testid="stMetricLabel"] p {{ font-size:.68rem; }}
+/* Streamlit subtracts paragraph spacing from Markdown. This custom header
+   has no trailing paragraph margin, so that subtraction overlaps the alert. */
+.st-key-pipeline_run [data-testid="stMarkdownContainer"]:has(> .pipeline-run-header) {{ margin-bottom:0; }}
+.pipeline-run-header {{ display:flex; flex-direction:column; gap:14px; padding:3px 0 2px; }}
+.pipeline-run-heading {{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px 14px; }}
+.pipeline-run-heading h3 {{ margin:0; padding:0; font-size:1rem; line-height:1.45; }}
+.pipeline-state {{ display:inline-flex; align-items:center; gap:7px; flex:0 1 auto; max-width:100%; box-sizing:border-box;
+    padding:6px 10px; border-radius:20px; font-size:.7rem; line-height:1.5; font-weight:600;
+    white-space:normal; overflow-wrap:anywhere; background:{SURFACE_2}; color:{INK}; }}
+.pipeline-state::before {{ content:""; width:6px; height:6px; flex:0 0 6px; border-radius:50%; background:currentColor; }}
+.pipeline-run-times {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 18px;
+    padding:12px 0 0; margin:0; border-top:1px solid {LINE}; }}
+.pipeline-run-times > div {{ min-width:0; }}
+.pipeline-run-times dt {{ margin:0 0 4px; color:{MUTED}; font-size:.65rem; line-height:1.4; }}
+.pipeline-run-times dd {{ margin:0; color:{INK}; font-size:.73rem; line-height:1.55; overflow-wrap:anywhere; }}
+.st-key-pipeline_run [data-testid="stAlert"] {{ border-radius:10px; }}
+.st-key-pipeline_run [data-testid="stAlert"] p {{ font-size:.8rem; line-height:1.6; }}
+.state-completed_with_warnings {{ background:{'#FFF4DB' if palette.mode == 'light' else '#3C3020'}; color:{'#865B15' if palette.mode == 'light' else '#F0CB80'}; }}
+.state-running, .state-queued {{ background:{ACCENT}18; color:{ACCENT}; }}
+.state-completed {{ background:{POS}18; color:{POS}; }}
+.state-failed, .state-interrupted {{ background:{NEG}18; color:{NEG}; }}
+.pipeline-stages {{ display:flex; flex-direction:column; gap:0; margin:0 0 8px; }}
+.pipeline-step {{ display:flex; gap:10px; align-items:center; padding:11px 6px; border-bottom:1px solid {LINE}; }}
+.pipeline-step:last-child {{ border-bottom:0; }}
+.pipeline-step > div {{ flex:1; min-width:0; }}
+.pipeline-step-number {{ display:grid; place-items:center; width:24px; height:24px; flex-shrink:0; border-radius:50%; background:{SURFACE_2}; color:{MUTED}; font-size:.7rem; }}
+.pipeline-step strong {{ display:block; font-size:.75rem; color:{INK}; font-weight:500; }}
+.pipeline-step-status {{ color:{MUTED}; font-size:.68rem; white-space:nowrap; }}
+.step-running {{ background:{ACCENT}08; border-radius:6px; }}
+.step-completed .pipeline-step-number {{ color:{POS}; background:{POS}16; }}
+.step-failed, .step-interrupted {{ background:{NEG}08; border-radius:6px; }}
+.step-failed :is(.pipeline-step-number,.pipeline-step-status), .step-interrupted .pipeline-step-status {{ color:{NEG}; }}
+.pipeline-empty {{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:260px; border:1px dashed {LINE}; border-radius:{RADIUS}; padding:30px; text-align:center; background:{BG}; }}
+.pipeline-empty-icon {{ color:{ACCENT}; font-size:2rem; padding:8px 15px; background:{ACCENT}0C; border-radius:12px; margin-bottom:14px; }}
+.pipeline-empty h3 {{ color:{INK}; font-size:1rem; padding:0; margin:0 0 8px; }}
+.pipeline-empty p {{ color:{MUTED}; font-size:.8rem; line-height:1.65; max-width:32ch; margin:0; }}
 .st-key-topic_controls, .st-key-trend_controls, .st-key-evidence_controls {{ padding:16px 20px !important; }}
 [class*="st-key-topic_card_"] {{ padding:16px 18px 12px !important; gap:10px; }}
 [class*="st-key-topic_card_"] [data-testid="stHorizontalBlock"] {{ gap:8px; }}
@@ -377,7 +447,17 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
 [role="option"]:hover, [role="option"][data-focused="true"] {{ background: {LINE}; }}
 
 @media (prefers-reduced-motion: reduce) {{ * {{ transition: none !important; }} }}
+@media (max-width: 1100px) {{
+    .st-key-pipeline_workspace > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] {{
+        flex-direction:column; align-items:stretch;
+    }}
+    .st-key-pipeline_workspace > [data-testid="stLayoutWrapper"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+        width:100% !important; flex:1 1 auto !important;
+    }}
+}}
 @media (max-width: 800px) {{
+    .pipeline-run-heading {{ align-items:flex-start; flex-direction:column; }}
+    .pipeline-run-times {{ grid-template-columns:1fr; gap:12px; }}
     .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
     .stApp p.hello {{ font-size: 1.65rem; }}
     .bank-score {{ font-size: 2rem; }}
@@ -387,6 +467,11 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
     .quote {{ padding:16px; }}
     .quote .meta a {{ margin-left:0; }}
     .stApp:has(.st-key-ask_view) [data-testid="stBottomBlockContainer"] {{ padding:1rem; }}
+}}
+@media (max-width: 640px) {{
+    .st-key-pipeline_sources {{ grid-template-columns:minmax(0,1fr); grid-auto-rows:auto; }}
+    [class*="st-key-pipeline_source_"] [data-testid="stCheckbox"] {{ min-height:0; }}
+    .stApp p.pipeline-source-description {{ min-height:0; }}
 }}
 </style>
 """

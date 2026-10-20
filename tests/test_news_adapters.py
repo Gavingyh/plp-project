@@ -167,3 +167,26 @@ def test_dbs_intitle_query_needs_banking_context():
     # American football; the pilot found about a third of results were junk
     dbs_intitle = [q for q in gn.QUERIES["DBS"] if q.startswith("intitle:")]
     assert dbs_intitle and "bank" in dbs_intitle[0] and "Singapore" in dbs_intitle[0]
+
+
+def test_invalid_google_feed_is_not_a_successful_empty_result(monkeypatch):
+    from types import SimpleNamespace
+    monkeypatch.setattr(gn.time, 'sleep', lambda s: None)
+    monkeypatch.setattr(gn, 'request_with_retries', lambda *a, **k: SimpleNamespace(content=b'<html><body>Service unavailable</body></html>'))
+    with pytest.raises(ValueError, match='invalid RSS'):
+        gn._fetch('DBS')
+
+
+def test_valid_empty_google_feed_is_a_successful_empty_result(monkeypatch):
+    from types import SimpleNamespace
+    monkeypatch.setattr(gn.time, 'sleep', lambda s: None)
+    content = b'<rss version="2.0"><channel><title>News</title><link>https://example.test</link><description>News</description></channel></rss>'
+    monkeypatch.setattr(gn, 'request_with_retries', lambda *a, **k: SimpleNamespace(content=content))
+    assert gn._fetch('DBS') == []
+
+
+def test_unsplittable_google_feed_cap_marks_coverage_incomplete(monkeypatch):
+    monkeypatch.setattr(gn, 'FAILED_WINDOWS', [])
+    monkeypatch.setattr(gn, '_fetch', lambda query: [GOOGLE_ENTRY] * gn.SPLIT_AT)
+    assert gn._fetch_window('DBS', 'DBS bank Singapore', date(2024, 5, 1), date(2024, 5, 2))
+    assert 'daily feed cap' in gn.FAILED_WINDOWS[0]

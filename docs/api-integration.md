@@ -45,26 +45,30 @@ requests show service errors.
 ## Manual pipeline API (milestone 2)
 
 The dashboard's Data Management page uses these endpoints through
-`dashboard/pipeline_client.py`. A client can select local sources, launch a
+`dashboard/pipeline_client.py`. A client can select local and online sources, launch a
 separate worker, and poll its saved status. Model inference runs in the worker.
-**All PDF sources** submits both supported keys. It does not launch online
-collectors. Source cards show compact folder names, with each API-host path
+**All available sources** submits Google News, Reddit and the existing PDF
+folders. Source cards show compact folder names, with each API-host path
 under **Folder locations**. The absolute paths are resolved by the existing
 extractors from their checkout location; each teammate can use a different
 checkout directory.
 
 | Method and path | Result |
 |---|---|
-| `GET /pipeline/sources` | `sources`: key, label, folder, `exists`, and `pdf_count`; `analysis_scope: "all_pending"` |
+| `GET /pipeline/sources` | `sources`: key, label, `kind` (`local_pdf` or `online`), folder, `exists`, and `pdf_count`; `analysis_scope: "all_pending"`. Online options have an empty folder, `exists: true`, and zero PDF count. This endpoint never fetches online. |
 | `POST /pipeline/runs` | HTTP 202, `{"run": {...}}`; `Location` is the status URL and `Retry-After: 2` suggests the polling interval |
 | `GET /pipeline/runs?limit=20` | Newest run summaries and `active_run_id` (null when idle); limit 1–100 |
 | `GET /pipeline/runs/{run_id}` | Full saved run under `run`, with stage metrics, file outcomes, warnings and imported document IDs |
 
-The POST body is `{"sources": ["earnings"]}`, `{"sources": ["sgx_research"]}`
-or both keys. Source order is normalised and duplicates removed. Empty lists,
-unknown sources, more than two items and extra fields give HTTP 422. The
+The POST accepts any selection of `earnings`, `sgx_research`, `google_news`
+and `arctic_shift` (Reddit). Source order is normalised and duplicates removed.
+Online requests optionally include both `since` and `until` as YYYY-MM-DD:
+UTC start inclusive, end exclusive, 1–31 days, through at most tomorrow's UTC
+midnight. Omitting both resolves the last seven days including today when
+the job is queued. Dates on PDF-only requests are rejected. Empty lists,
+unknown sources, more than four items and extra fields give HTTP 422. The
 request cannot supply a database path, filesystem command or model change.
-Imports use only the selected folders; later analysis finishes all pending
+Collection/import uses only selected sources; later analysis finishes all pending
 database work, including work from earlier runs, then rebuilds the full index.
 
 Example start request (**this writes to the configured database**):
@@ -74,6 +78,17 @@ curl -X POST http://localhost:8000/pipeline/runs \
   -H 'Content-Type: application/json' \
   -d '{"sources":["earnings","sgx_research"]}'
 ```
+
+An online-only request can use
+`{"sources":["google_news","arctic_shift"],"since":"2026-10-01","until":"2026-10-08"}`.
+The saved run includes `collection_window` (null for PDF-only runs) and
+`source_results`, keyed by online source. Results contain `status` (`running`,
+`completed`, `partial`, `failed` or `interrupted`), `fetched`, `documents_inserted`,
+`duplicates`, `filtered`, `batches_completed`, `incomplete_windows` and `error`.
+Progress and successful commits are retained when another provider fails.
+Partial/failed sources produce warnings, not silent empty successes; all
+selected sources failing fails the run before analysis. Storage errors remain fatal.
+Old run records without these additional fields remain readable.
 
 The returned record initially has `status: "queued"`. Poll its `Location`
 every two seconds; the worker may already have advanced by the first poll.

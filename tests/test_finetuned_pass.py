@@ -1,5 +1,7 @@
 """Tests for sentiment/finetuned.py: new pairs get the served fine-tuned version's scores."""
 
+import json
+
 import numpy as np
 import pytest
 
@@ -44,6 +46,23 @@ def test_only_missing_pairs_are_scored(db):
     conn = db.get_connection()
     assert ft.score_missing(conn, VERSION, now_iso()) == 1
     conn.close()
+    assert _versions(db) == [("s1", "positive", VERSION), ("s2", "negative", VERSION)]
+
+
+def test_first_finetuned_run_creates_its_cache_directory(db, tmp_path, monkeypatch):
+    import aggregate.preview as pv
+
+    cache = tmp_path / "data" / "preview" / "scores.test.jsonl"
+    monkeypatch.setattr(pv, "scores_cache_path", lambda models: str(cache))
+    assert not cache.parent.exists()
+    conn = db.get_connection()
+    try:
+        assert ft.score_missing(conn, VERSION, now_iso()) == 1
+        assert ft.score_missing(conn, VERSION, now_iso()) == 0
+    finally:
+        conn.close()
+    rows = [json.loads(line) for line in cache.read_text().splitlines()]
+    assert len(rows) == 1 and rows[0]["sentence_id"] == "s2"
     assert _versions(db) == [("s1", "positive", VERSION), ("s2", "negative", VERSION)]
 
 

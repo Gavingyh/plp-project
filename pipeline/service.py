@@ -45,11 +45,14 @@ class PipelineService:
     def sources(self) -> list[dict]:
         return stages.describe_sources()
 
-    def start(self, sources: list[str]) -> dict:
+    def start(self, sources: list[str], *, since=None, until=None) -> dict:
         sources = stages.selected_sources(sources)
+        window = stages.collection_window(sources, since, until)
         with self.store.lock() as lease:
             runner._recover(self.store)
-            run = runner.new_run(sources, self.store, uuid4().hex, queued=True)
+            run = runner.new_run(
+                sources, self.store, uuid4().hex, queued=True, window=window
+            )
             run["worker_log_path"] = str(
                 self.store.path(run["run_id"]).with_suffix(".worker.log")
             )
@@ -75,6 +78,8 @@ class PipelineService:
                 "--lock-fd",
                 str(lease.descriptor),
             ]
+            if window:
+                command.extend(["--since", window["since"], "--until", window["until"]])
             try:
                 with Path(run["worker_log_path"]).open("a", encoding="utf-8") as output:
                     process = self._popen(

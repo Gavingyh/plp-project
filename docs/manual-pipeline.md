@@ -1,6 +1,6 @@
-# Manual PDF pipeline
+# Manual data-update pipeline
 
-The manual runner imports selected local PDF sources, completes pending
+The manual runner imports selected local PDFs or collects Google News/Reddit, completes pending
 analysis with the existing trained models, and rebuilds the sentiment index
 in `data/plp.db`. It does not train a model or change the selected model version.
 
@@ -12,14 +12,20 @@ Implementation milestones:
    source/start/status/history endpoints, with HTTP 202/409/503 handling.
 3. **Dashboard (implemented):** Data Management source checkboxes, run button,
    progress/history and refresh of the dashboard's cached API responses.
+4. **Google News and Reddit (implemented):** bounded online collection,
+   per-source results, deduplication and visible partial/failure reporting.
+5. **CNA (planned):** verify recent discovery/fetching before enabling it.
+6. **Final integration (planned):** review the complete multi-source workflow
+   for presentation. Other news providers remain outside this allowlist.
 
 ## Run from the dashboard
 
 Open **Data Management** below Ask in the sidebar. Place PDFs in the listed
-folders on the API host, select Bank earnings PDFs, Broker research PDFs, or
-**All PDF sources**, then click **Run selected sources**. The All checkbox
-selects both local PDF sources; individual choices and All stay in sync.
-Online news and Reddit collectors are separate workflows in this milestone.
+folders on the API host, or select Google News and Reddit to collect online.
+**All available sources** selects both online collectors and each existing
+PDF folder; a missing folder is skipped. Individual choices and All stay in sync.
+Choose collection dates if an online source is selected, then click
+**Run selected sources**. An online-only run needs no PDF folder selection.
 This writes to the configured
 database, normally `data/plp.db`. It uses the existing trained models and
 completes all pending analysis; selecting a folder limits imports only.
@@ -29,7 +35,11 @@ The source-selection and recent-activity panels have equal widths and stretch
 to the same height on wider screens; they stack on narrow screens. The run
 selector sits inside the activity panel so both panel headings align.
 Completed stage lists are collapsed by default; active and failed runs show
-their stages immediately. Cards show compact folder names;
+their stages immediately. Run summaries keep the status badge separate from
+the start/finish timestamps and stack these fields on narrow screens. History
+labels are shortened; the full run ID remains in technical details. Run history
+and start/finish times are displayed in Singapore time (SGT, UTC+8); stored
+timestamps and online collection date filters use UTC. Cards show compact folder names;
 **Folder locations** reveals the absolute paths returned by the API. Those
 paths are derived from each checkout's location, not a particular user's
 home directory. For example, a checkout under `/srv/bankpulse` reads earnings
@@ -69,13 +79,49 @@ so charts and the conversation are not rebuilt on every progress poll.
 
 ## Select sources and run
 
-Put files in the existing locations. The runner does not upload PDFs or
-download online news, Reddit, earnings or research reports.
+Put PDFs in the existing locations. The runner does not upload files or
+download earnings/research PDFs. Selected online collectors fetch directly
+into the configured database; no article drop folder is required.
 
 | Source key | Files read |
 |---|---|
 | `earnings` | `data/earnings_pdfs/DBS/*.pdf`, `OCBC/*.pdf`, `UOB/*.pdf` |
 | `sgx_research` | `data/sgx_research/*.pdf` |
+| `google_news` | Google News RSS headlines for DBS, OCBC and UOB |
+| `arctic_shift` | Bank-related Reddit posts/comments via Arctic Shift |
+
+### Online collection dates and results
+
+The UI's **From (UTC)** and **Through (UTC)** dates are both included. They
+default to the last seven days including today. Runs cover 1–31 days and
+cannot extend into the future. The API/CLI represent the same interval as
+`since` inclusive and `until` exclusive; provide both or neither. The resolved
+window is saved with the queued run and passed unchanged to its worker.
+Dates apply only to collection: all pending stored analysis is still completed.
+
+Google reuses its date-windowed RSS collector, relevance checks and cross-news
+deduplication; it stores headlines, not article pages. Reddit reuses its existing
+bank-mention adapter and retry handling, saving one UTC day at a time. Existing
+document IDs are skipped. Neither collector needs an API key. Offline Hugging
+Face mode controls model downloads; these selected collectors still use the network.
+
+Run details include `source_results` with fetched candidate documents, new
+documents, duplicates, filtered candidates, incomplete windows and provider
+errors. Reddit's candidate count already excludes text without bank mentions.
+A legitimate empty response is completed with zero new documents. Failed or
+malformed responses and exhausted pagination are never treated as empty results.
+Successful batches are committed as they arrive; retrying the same dates skips
+already-stored documents and attempts the missing work again.
+
+A failed source does not prevent another selected source from collecting.
+Usable data continues through analysis and the run ends `completed_with_warnings`.
+If every selected source fails, the run fails at collection/import instead.
+Database/storage failures stop the job. Earlier commits remain and are reconciled
+against the candidate manifest, including after interruption. Read per-source
+results before considering the selected date range fully covered.
+
+CNA, Yahoo News, NewsAPI, Alpha Vantage and analyst-consensus fetching are not
+selectable in this milestone. No unverified provider is started by All.
 
 From the repository root, **these commands perform a real import and write
 to the configured database**:
@@ -86,6 +132,10 @@ to the configured database**:
 
 # Both sources, once each
 .venv-plp/bin/python3 -m pipeline.runner --sources earnings sgx_research
+
+# Online only; end date is exclusive
+.venv-plp/bin/python3 -m pipeline.runner --sources google_news arctic_shift \
+  --since 2026-10-01 --until 2026-10-08
 ```
 
 The existing environment variables still apply: `PLP_DB_PATH` selects the
@@ -134,9 +184,9 @@ The order is fixed:
 1. **Check prerequisites:** existing database and source folders, Python/PDF
    dependencies, installed `en_core_web_sm`, cached `ProsusAI/finbert`, the
    configured fine-tuned model files, and the configured topic model in Ollama.
-2. **Import documents:** call the selected existing PDF extractors and
-   `ingest.db.upsert_documents`. Already-stored document IDs are skipped
-   before extracting a PDF again.
+2. **Collect / import documents:** call selected PDF extractors or online
+   adapters and `ingest.db.upsert_documents`. Already-stored IDs are skipped;
+   news also uses the existing relevance and cross-source dedup rules.
 3. **Prepare sentences:** `preprocess.pipeline.run()`.
 4. **Assign topics and update embeddings:** `aspects.assign.run()`.
 5. **Score sentiment:** `sentiment.score.run()`, including missing scores

@@ -112,7 +112,10 @@ def _fetch(query: str) -> list:
     params = {"q": query, **EDITION}
     resp = request_with_retries(RSS_URL, params, timeout=20, headers=HEADERS)
     time.sleep(REQUEST_DELAY)
-    return feedparser.parse(resp.content).entries
+    feed = feedparser.parse(resp.content)
+    if not feed.version or feed.bozo:
+        raise ValueError("Google News returned an invalid RSS feed.")
+    return feed.entries
 
 
 def _fetch_window(bank: str, query: str, start: date, end: date) -> list[dict]:
@@ -128,6 +131,8 @@ def _fetch_window(bank: str, query: str, start: date, end: date) -> list[dict]:
         mid = start + (end - start) / 2
         logger.debug(f"{bank} {q!r}: {len(entries)} items, splitting at {mid}")
         return _fetch_window(bank, query, start, mid) + _fetch_window(bank, query, mid, end)
+    if len(entries) >= SPLIT_AT:
+        FAILED_WINDOWS.append(f"{bank} {start.isoformat()} to {end.isoformat()} {query!r}: daily feed cap reached; coverage may be incomplete")
     window = (start.isoformat(), end.isoformat())
     return [d for d in (to_document(e, bank, query, window) for e in entries) if d]
 

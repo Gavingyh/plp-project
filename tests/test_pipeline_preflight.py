@@ -175,6 +175,8 @@ def test_inventory_counts_supported_pdf_locations(prerequisites):
     assert {item["key"]: item["pdf_count"] for item in stages.describe_sources()} == {
         "earnings": 1,
         "sgx_research": 1,
+        "google_news": 0,
+        "arctic_shift": 0,
     }
 
 
@@ -240,3 +242,23 @@ def test_cli_exit_status_and_json_do_not_require_real_pipeline(monkeypatch, caps
         runner, "run_pipeline", Mock(side_effect=PipelineBusy("Already running"))
     )
     assert runner.main(["--sources", "earnings"]) == 3
+
+
+def test_online_only_preflight_does_not_require_pdf_folders_or_pdf_dependencies(
+    prerequisites, monkeypatch
+):
+    from ingest import earnings_extract, sgx_research_extract
+
+    monkeypatch.setattr(earnings_extract, "PDF_DIR", "/missing/earnings")
+    monkeypatch.setattr(sgx_research_extract, "PDF_DIR", "/missing/research")
+    monkeypatch.setattr(
+        stages.importlib.util,
+        "find_spec",
+        lambda name: (
+            None
+            if name in {"pdfplumber", "pypdfium2", "rapidocr_onnxruntime", "wordninja"}
+            else object()
+        ),
+    )
+    result = stages.preflight(["google_news", "arctic_shift"])
+    assert {row["kind"] for row in result["sources"]} == {"online"}

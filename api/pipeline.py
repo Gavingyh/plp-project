@@ -1,15 +1,16 @@
 """HTTP contract for the manual pipeline; source/model work runs in its worker."""
 
 import logging
+from datetime import date
 from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from pipeline.jobs import PipelineBusy
 from pipeline.service import PipelineService, WorkerLaunchError
-from pipeline.stages import selected_sources
+from pipeline.stages import selected_sources, collection_window
 
 router = APIRouter(
     prefix="/pipeline",
@@ -17,7 +18,7 @@ router = APIRouter(
     responses={503: {"description": "Pipeline worker or run storage unavailable"}},
 )
 logger = logging.getLogger(__name__)
-SourceKey = Literal["earnings", "sgx_research"]
+SourceKey = Literal["earnings", "sgx_research", "google_news", "arctic_shift"]
 RunStatus = Literal[
     "queued", "running", "completed", "completed_with_warnings", "failed", "interrupted"
 ]
@@ -30,6 +31,7 @@ def get_pipeline_service() -> PipelineService:
 class SourceOption(BaseModel):
     key: SourceKey
     label: str
+    kind: Literal["local_pdf", "online"]
     folder: str
     exists: bool
     pdf_count: int
@@ -42,12 +44,23 @@ class PipelineSources(BaseModel):
 
 class StartPipelineRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    sources: list[SourceKey] = Field(min_length=1, max_length=2)
+    sources: list[SourceKey] = Field(min_length=1, max_length=4)
+    since: date | None = None
+    until: date | None = None
 
     @field_validator("sources")
     @classmethod
     def unique_sources(cls, value):
         return selected_sources(value)
+
+    @model_validator(mode="after")
+    def bounded_collection_window(self):
+        window = collection_window(self.sources, self.since, self.until)
+        if window:
+            self.since, self.until = date.fromisoformat(
+                window["since"]
+            ), date.fromisoformat(window["until"])
+        return self
 
 
 class PipelineStage(BaseModel):
@@ -65,6 +78,8 @@ class PipelineRun(BaseModel):
     run_id: str
     status: RunStatus
     sources: list[SourceKey]
+    collection_window: dict[str, str] | None = None
+    source_results: dict[str, Any] = Field(default_factory=dict)
     started_at: str
     finished_at: str | None
     pid: int | None
@@ -114,7 +129,7 @@ def _unavailable(exc: Exception) -> HTTPException:
 
 @router.get("/sources", response_model=PipelineSources)
 def pipeline_sources(service: PipelineService = Depends(get_pipeline_service)):
-    """Supported local folders and PDF counts; does not fetch, import or analyse."""
+    """Supported local folders and online collectors; never fetches on GET."""
     try:
         return {"sources": service.sources(), "analysis_scope": "all_pending"}
     except OSError as exc:
@@ -135,14 +150,14 @@ def start_pipeline(
     response: Response,
     service: PipelineService = Depends(get_pipeline_service),
 ):
-    """Start an incremental PDF run in a separate process and return its queued record.
+    """Start an incremental run in a separate process and return its queued record.
 
     This endpoint writes to the configured database. It accepts source keys,
     not paths, commands or model changes. Poll Location for progress; never
     automatically retry a POST whose response was lost.
     """
     try:
-        run = service.start(req.sources)
+        run = service.start(req.sources, since=req.since, until=req.until)
     except PipelineBusy as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except (WorkerLaunchError, OSError, ValueError) as exc:

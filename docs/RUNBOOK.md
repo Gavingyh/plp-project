@@ -94,10 +94,10 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m sentiment.score
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.index
 ```
 
-### Manual PDF updates through the API
+### Manual data updates through the API
 
 The [manual pipeline](manual-pipeline.md) coordinates local earnings/research
-PDF extraction through index aggregation, using the existing trained models
+PDF extraction and selected Google News/Reddit collection through index aggregation, using the existing trained models
 and `data/plp.db` by default. Selected sources control imports; subsequent
 analysis completes all pending work in that database. Model training is not
 part of a run.
@@ -110,6 +110,12 @@ scripts/start.sh api
 curl http://localhost:8000/pipeline/sources
 ```
 
+When an update changes both the source list and dashboard modules, restart
+the dashboard as well (`scripts/stop.sh dashboard`, then
+`scripts/start.sh dashboard`). A browser refresh alone can retain imported
+modules in the running Streamlit process. A source-definition mismatch is a
+service-version issue, not a problem with the PDFs or stored documents.
+
 To start a real incremental update (**writes to the configured database**):
 
 ```bash
@@ -118,7 +124,16 @@ curl -X POST http://localhost:8000/pipeline/runs \
   -d '{"sources":["earnings","sgx_research"]}'
 ```
 
-Use either source key or both. HTTP 202 returns a queued run and a `Location`
+Use PDF keys, `google_news`, `arctic_shift` (Reddit), or a combination. Online
+collection accepts `since` (inclusive) and `until` (exclusive) in UTC, limited
+to 1–31 days; omitting both defaults to the last seven days including today.
+For example, `{"sources":["google_news","arctic_shift"],"since":"2026-10-01","until":"2026-10-08"}`.
+The dashboard displays inclusive From/Through dates and converts the end date.
+Inspect `source_results` and warnings for failed/incomplete collection windows;
+retry the same dates to recover gaps without duplicating stored documents.
+Neither online collector requires an API key. Other providers are not enabled.
+
+HTTP 202 returns a queued run and a `Location`
 header containing `/pipeline/runs/<run_id>`; poll it every two seconds for
 stage results. `GET /pipeline/runs` lists recent run summaries and the active
 ID. A missing model or source folder appears as a failed run at that URL.
@@ -126,9 +141,10 @@ HTTP 409 means another run is active; 503 means worker launch or state storage
 failed. The API responds without waiting for inference.
 
 The dashboard also provides **Data Management**, below Ask in the sidebar:
-place PDFs in the displayed API-host folders, select one or both sources,
-or **All PDF sources**, and click **Run selected sources**. All selects
-earnings and broker research PDFs; online collection remains separate.
+place PDFs in the displayed API-host folders, or select Google News and Reddit.
+Choose sources or **All available sources**, set online collection dates when
+needed, and click **Run selected sources**. All selects existing PDF folders
+and both online collectors. Missing folders are skipped. Other providers are not started.
 Folder paths are resolved from the API checkout location and can be viewed
 under **Folder locations**. This writes to the configured database.
 The page polls progress every two seconds and keeps the latest 20 runs

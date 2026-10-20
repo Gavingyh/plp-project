@@ -1,6 +1,7 @@
 """Data Management presentation and polling. FastAPI owns all pipeline work."""
 
 from collections.abc import Callable
+from datetime import date, datetime, timedelta, timezone
 import html
 from pathlib import PurePosixPath
 
@@ -67,17 +68,37 @@ def render_update_notice(refresh: Callable):
 
 def _date(value) -> str:
     date = pd.to_datetime(value, utc=True, errors="coerce")
-    return date.strftime("%d %b %Y, %H:%M UTC") if pd.notna(date) else "—"
+    return (
+        date.tz_convert("Asia/Singapore").strftime("%d %b %Y, %H:%M SGT")
+        if pd.notna(date)
+        else "—"
+    )
 
 
 def _history_label(run: dict) -> str:
     date = pd.to_datetime(run.get("started_at"), utc=True, errors="coerce")
-    when = date.strftime("%d %b · %H:%M UTC") if pd.notna(date) else "Unknown date"
+    when = (
+        date.tz_convert("Asia/Singapore").strftime("%d %b · %H:%M SGT")
+        if pd.notna(date)
+        else "Unknown date"
+    )
     sources = " + ".join(
-        {"earnings": "Earnings", "sgx_research": "Research"}[source]
+        {
+            "earnings": "Earnings",
+            "sgx_research": "Research",
+            "google_news": "Google News",
+            "arctic_shift": "Reddit",
+        }[source]
         for source in run["sources"]
     )
-    return f"{when} · {sources} · {STATUS_LABELS[run['status']]} · {run['run_id'][:8]}"
+    if len(run["sources"]) > 2:
+        sources = f"{len(run['sources'])} sources"
+    status = (
+        "Warnings"
+        if run["status"] == "completed_with_warnings"
+        else STATUS_LABELS[run["status"]]
+    )
+    return f"{when} · {sources} · {status} · {run['run_id'][:4]}"
 
 
 def _folder_label(folder: str) -> str:
@@ -91,7 +112,7 @@ def _outcome(run: dict):
     if state == "completed":
         st.success("Update complete. The dashboard is refreshed.")
     elif state == "completed_with_warnings":
-        st.warning("Update complete. Review the file warnings below.")
+        st.warning("Update complete. Review the warnings below.")
     elif state in {"failed", "interrupted"}:
         preflight_failed = any(
             stage["key"] == "preflight" and stage["status"] == "failed"
@@ -131,21 +152,57 @@ def _run_details(run: dict):
     state = run["status"]
     stages = run["stages"]
     completed = sum(stage["status"] == "completed" for stage in stages)
+    warning_count = len(run.get("warnings", []))
+    status_label = STATUS_LABELS[state]
+    if state == "completed_with_warnings" and warning_count:
+        status_label = f"Completed · {warning_count} {'warning' if warning_count == 1 else 'warnings'}"
+    end_label = "Finished" if run.get("finished_at") else "Live updates"
+    end_value = (
+        _date(run["finished_at"]) if run.get("finished_at") else "Every 2 seconds"
+    )
     st.markdown(
-        '<div class="pipeline-run-heading"><div>'
-        f'<h3>{"Update in progress" if state in client.ACTIVE else "Update summary"}</h3></div>'
-        f'<span class="pipeline-state state-{state}">{STATUS_LABELS[state]}</span></div>',
+        '<div class="pipeline-run-header"><div class="pipeline-run-heading">'
+        f'<h3>{"Update in progress" if state in client.ACTIVE else "Update summary"}</h3>'
+        f'<span class="pipeline-state state-{state}">{html.escape(status_label)}</span></div>'
+        '<dl class="pipeline-run-times">'
+        f'<div><dt>Started</dt><dd>{html.escape(_date(run.get("started_at")))}</dd></div>'
+        f"<div><dt>{end_label}</dt><dd>{html.escape(end_value)}</dd></div>"
+        "</dl></div>",
         unsafe_allow_html=True,
     )
-    st.caption(
-        f"Started {_date(run.get('started_at'))} · "
-        + (
-            f"Finished {_date(run['finished_at'])}"
-            if run.get("finished_at")
-            else "Updates every 2 seconds while this page is open"
-        )
-    )
     _outcome(run)
+    window = run.get("collection_window")
+    if window:
+        through = date.fromisoformat(window["until"]) - timedelta(days=1)
+        st.caption(
+            f"Online collection: {window['since']} through {through.isoformat()} (UTC)"
+        )
+    source_results = run.get("source_results", {})
+    if source_results:
+        st.markdown("**Online source results**")
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Source": client.SOURCES.get(source, source),
+                        "Status": {
+                            "running": "Collecting",
+                            "partial": "Incomplete",
+                            "failed": "Failed",
+                            "interrupted": "Interrupted",
+                            "completed": "Completed",
+                        }.get(result["status"], result["status"]),
+                        "Fetched": result["fetched"],
+                        "New": result["documents_inserted"],
+                        "Duplicates": result["duplicates"],
+                        "Filtered": result["filtered"],
+                    }
+                    for source, result in source_results.items()
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
     st.progress(
         completed / len(stages) if stages else 0,
         text=f"{completed} of {len(stages)} stages complete",
@@ -171,18 +228,31 @@ def _run_details(run: dict):
     if files or run.get("imported_documents") or state.startswith("completed"):
         metrics = st.columns(3)
         metrics[0].metric("New documents", len(run.get("imported_documents", [])))
+        online_duplicates = sum(
+            result.get("duplicates", 0) for result in source_results.values()
+        )
         metrics[1].metric(
-            "Skipped PDFs",
-            sum(file.get("status") == "already_stored" for file in files),
+            "Duplicates skipped" if source_results else "Skipped PDFs",
+            sum(file.get("status") == "already_stored" for file in files)
+            + online_duplicates,
         )
         metrics[2].metric("Warnings", len(run.get("warnings", [])))
-        st.caption("Counts recorded so far; skipped PDFs were already stored.")
+        if source_results:
+            st.caption(
+                "Fetched counts include candidates that were filtered out or already stored."
+            )
+        else:
+            st.caption("Previously stored PDFs were skipped automatically.")
     if run.get("warnings"):
         with st.expander(f"Warnings ({len(run['warnings'])})"):
             st.dataframe(
                 pd.DataFrame(run["warnings"]), hide_index=True, width="stretch"
             )
     with st.expander("File outcomes and stage metrics"):
+        if source_results:
+            st.caption(
+                "Google News supplies headlines; Reddit supplies bank-related posts and comments."
+            )
         if files:
             st.dataframe(pd.DataFrame(files), hide_index=True, width="stretch")
         else:
@@ -222,7 +292,10 @@ def _run_details(run: dict):
 def render_guidance():
     st.markdown(
         "**Manual data updates**\n\n"
-        "Place PDFs in the listed server folders, select sources and start a run. "
+        "Place PDFs in the listed server folders, or select Google News and Reddit to fetch online. "
+        "Run timestamps are shown in Singapore time (SGT). "
+        "Collection dates use UTC, cover at most 31 days and default to the last 7 days including today. "
+        "Select sources and start a run. "
         "Existing document IDs are skipped; later stages finish all pending database "
         "work and rebuild the index. Existing trained models are used.\n\n"
         "Only one manual run can be active. Progress survives a page refresh or API "
@@ -230,8 +303,18 @@ def render_guidance():
     )
 
 
-def _queue_run(sources: list[str]):
-    st.session_state.pipeline_pending_sources = list(sources)
+def _queue_run(sources: list[str], window=None):
+    st.session_state.pipeline_pending_sources = {
+        "sources": list(sources),
+        **(window or {}),
+    }
+
+
+def _remember_collection_dates():
+    st.session_state.pipeline_collection_dates = (
+        st.session_state.pipeline_since,
+        st.session_state.pipeline_through,
+    )
 
 
 def _select_all_sources(keys: list[str]):
@@ -256,10 +339,13 @@ def _sync_all_sources(keys: list[str]):
 def _source_controls(history: dict | None, active_id: str | None, refresh: Callable):
     with st.container(border=True, height="stretch", key="pipeline_controls"):
         st.markdown(
-            section_heading("Start a data update", "Local PDFs"), unsafe_allow_html=True
+            section_heading("Start a data update", "Local & online"),
+            unsafe_allow_html=True,
         )
         st.caption("Choose your sources. Existing documents are skipped automatically.")
         selected = []
+        window = None
+        dates_valid = True
         sources_ready = False
         try:
             sources = client.load_sources()
@@ -267,8 +353,7 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
             st.error(str(exc))
         else:
             sources_ready = True
-            keys = [source["key"] for source in sources]
-            all_present = all(source["exists"] for source in sources)
+            keys = [source["key"] for source in sources if source["exists"]]
             blocked = bool(active_id) or history is None
             # Preserve choices when a start/completion rerun temporarily removes
             # widgets. Streamlit cleans up widget state, but keeps this data key.
@@ -277,19 +362,24 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                 st.session_state[f"pipeline_select_{source['key']}"] = (
                     source["key"] in remembered and source["exists"]
                 )
-            st.session_state.pipeline_all_sources = all_present and all(
+            st.session_state.pipeline_all_sources = bool(keys) and all(
                 st.session_state[f"pipeline_select_{key}"] for key in keys
             )
             st.checkbox(
-                "All PDF sources",
+                "All available sources",
                 key="pipeline_all_sources",
                 on_change=_select_all_sources,
                 args=(keys,),
-                disabled=blocked or not all_present,
+                disabled=blocked or not keys,
             )
-            for column, source in zip(st.columns(2), sources):
+            for index, source in enumerate(sources):
+                if index % 2 == 0:
+                    columns = st.columns(2)
+                column = columns[index % 2]
                 with column.container(
-                    border=True, key=f"pipeline_source_{source['key']}"
+                    border=True,
+                    height="stretch",
+                    key=f"pipeline_source_{source['key']}",
                 ):
                     checked = st.checkbox(
                         client.SOURCES[source["key"]],
@@ -298,30 +388,89 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                         args=(keys,),
                         disabled=blocked or not source["exists"],
                     )
+                    online = source["kind"] == "online"
                     availability = (
-                        "PDFs found" if source["exists"] else "Folder missing"
+                        "No API key required"
+                        if online
+                        else ("PDFs found" if source["exists"] else "Folder missing")
+                    )
+                    count_label = "Online" if online else f"{source['pdf_count']:,}"
+                    location = (
+                        "Fetched when you run"
+                        if online
+                        else _folder_label(source["folder"])
                     )
                     st.markdown(
                         '<div class="pipeline-source-count">'
-                        f'<strong>{source["pdf_count"]:,}</strong><span>{availability}</span></div>'
-                        f'<div class="pipeline-folder">{html.escape(_folder_label(source["folder"]))}</div>',
+                        f"<strong>{count_label}</strong><span>{availability}</span></div>"
+                        f'<div class="pipeline-folder">{html.escape(location)}</div>',
                         unsafe_allow_html=True,
                     )
                     st.caption(
-                        "Bank results · DBS / OCBC / UOB subfolders"
-                        if source["key"] == "earnings"
-                        else "Broker reports · place PDFs directly here"
+                        {
+                            "earnings": "Bank results · DBS / OCBC / UOB subfolders",
+                            "sgx_research": "Broker reports · place PDFs directly here",
+                            "google_news": "Headlines · DBS, OCBC and UOB",
+                            "arctic_shift": "Bank-related Reddit posts and comments",
+                        }[source["key"]]
                     )
                     if checked and source["exists"]:
                         selected.append(source["key"])
             count = sum(
                 source["pdf_count"] for source in sources if source["key"] in selected
             )
+            selection_hint = (
+                f"{count:,} PDFs in these folders · includes already stored files"
+                if any(source not in client.ONLINE_SOURCES for source in selected)
+                else (
+                    "Fetches the selected online sources for the chosen dates"
+                    if selected
+                    else "Select local folders, online sources, or both"
+                )
+            )
             st.markdown(
                 f'<div class="pipeline-selection"><strong>{len(selected)} of {len(sources)} sources selected</strong>'
-                f"<span>{count:,} PDFs in these folders · includes already stored files</span></div>",
+                f"<span>{selection_hint}</span></div>",
                 unsafe_allow_html=True,
             )
+            if client.ONLINE_SOURCES.intersection(selected):
+                today = datetime.now(timezone.utc).date()
+                remembered_dates = st.session_state.get(
+                    "pipeline_collection_dates", (today - timedelta(days=6), today)
+                )
+                for key, value in zip(
+                    ("pipeline_since", "pipeline_through"), remembered_dates
+                ):
+                    st.session_state[key] = min(value, today)
+                st.markdown("**Online collection dates**")
+                left, right = st.columns(2)
+                start = left.date_input(
+                    "From (UTC)",
+                    key="pipeline_since",
+                    max_value=today,
+                    disabled=blocked,
+                    on_change=_remember_collection_dates,
+                )
+                through = right.date_input(
+                    "Through (UTC)",
+                    key="pipeline_through",
+                    max_value=today,
+                    disabled=blocked,
+                    on_change=_remember_collection_dates,
+                )
+                dates_valid = 0 <= (through - start).days < 31
+                if not dates_valid:
+                    st.error(
+                        "Choose an end date on or after the start, covering at most 31 days."
+                    )
+                else:
+                    window = {
+                        "since": start.isoformat(),
+                        "until": (through + timedelta(days=1)).isoformat(),
+                    }
+                st.caption(
+                    "Both displayed dates are included. Existing documents are skipped; an overlapping range can recover missed data."
+                )
         uncertain = st.session_state.get("pipeline_start_uncertain", False)
         notice = st.session_state.get("pipeline_start_notice")
         if notice:
@@ -337,13 +486,14 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
             type="primary",
             key="pipeline_start",
             on_click=_queue_run,
-            args=(selected,),
+            args=(selected, window),
             use_container_width=True,
             disabled=not selected
             or not sources_ready
             or history is None
             or bool(active_id)
-            or uncertain,
+            or uncertain
+            or not dates_valid,
         )
         if active_id:
             st.caption(
@@ -360,14 +510,16 @@ def _source_controls(history: dict | None, active_id: str | None, refresh: Calla
                     "Detected on the API machine from its checkout location. Each teammate can clone the project to a different directory."
                 )
                 for source in sources:
+                    if source["kind"] == "online":
+                        continue
                     st.caption(client.SOURCES[source["key"]])
                     st.code(source["folder"], language=None, wrap_lines=True)
                 st.caption(
                     "These locations belong to the machine running the API; they may differ from the computer displaying this page."
                 )
-        with st.expander("What does All PDF sources include?"):
+        with st.expander("What does All available sources include?"):
             st.markdown(
-                "**Bank earnings and broker research PDFs.** This version imports the two local PDF folders. Online news and Reddit collection are separate workflows. Models are used for inference; they are not retrained."
+                "**Available local PDF folders, Google News and Reddit.** Online sources fetch only the selected dates. Each source reports new documents, duplicates and collection problems. CNA and other providers are not enabled in this milestone. Models are used for inference; they are not retrained."
             )
 
 
@@ -423,7 +575,7 @@ def render(refresh: Callable):
     pending = st.session_state.pop("pipeline_pending_sources", None)
     if pending is not None:
         try:
-            run = client.start_run(pending)
+            run = client.start_run(**pending)
         except ApiError as exc:
             st.session_state.pipeline_start_uncertain = True
             st.session_state.pipeline_start_notice = (

@@ -26,6 +26,8 @@ p.add_argument('--sources', nargs='+')
 p.add_argument('--run-id')
 p.add_argument('--state-dir')
 p.add_argument('--lock-fd', type=int)
+p.add_argument('--since')
+p.add_argument('--until')
 a = p.parse_args()
 mode = os.environ['PIPELINE_TEST_MODE']
 control = Path(os.environ['PIPELINE_TEST_CONTROL'])
@@ -150,6 +152,8 @@ def test_source_inventory_and_empty_history_never_start_a_worker(pipeline_api):
     assert {item["key"] for item in response.json()["sources"]} == {
         "earnings",
         "sgx_research",
+        "google_news",
+        "arctic_shift",
     }
     assert response.json()["analysis_scope"] == "all_pending"
     assert state.client.get("/pipeline/runs").json() == {
@@ -375,3 +379,58 @@ def test_real_cli_worker_adopts_reservation_and_reports_preflight_failure(
     assert run["status"] == "failed" and run["current_stage"] == "preflight"
     assert run["stages"][0]["status"] == "failed" and run["import_candidates"] == []
     assert not missing.exists()
+
+
+def test_online_request_carries_fixed_window_into_the_reserved_worker(pipeline_api):
+    state = pipeline_api
+    response = state.client.post(
+        "/pipeline/runs",
+        json={
+            "sources": ["arctic_shift", "google_news"],
+            "since": "2024-05-01",
+            "until": "2024-05-08",
+        },
+    )
+    assert response.status_code == 202, response.text
+    run = response.json()["run"]
+    assert run["sources"] == ["google_news", "arctic_shift"]
+    assert run["collection_window"] == {"since": "2024-05-01", "until": "2024-05-08"}
+    assert run["source_results"] == {}
+    command, _ = state.calls[-1]
+    assert command[command.index("--since") + 1] == "2024-05-01"
+    assert command[command.index("--until") + 1] == "2024-05-08"
+    eventually(lambda: (state.control / f"{run['run_id']}.ready").exists())
+    finish(state, run["run_id"])
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"sources": ["google_news"], "since": "2024-05-01"},
+        {"sources": ["google_news"], "since": "2024-05-01", "until": "2024-06-02"},
+        {"sources": ["arctic_shift"], "since": "2024-05-01", "until": "2024-05-01"},
+        {"sources": ["arctic_shift"], "since": "2099-01-01", "until": "2099-01-02"},
+        {"sources": ["earnings"], "since": "2024-05-01", "until": "2024-05-08"},
+        {"sources": ["google_news"], "since": "invalid", "until": "2024-05-08"},
+        {"sources": ["google_news"], "url": "https://untrusted.test"},
+        {"sources": ["cna"]},
+        {"sources": ["yahoo_news"]},
+    ],
+)
+def test_collection_options_are_validated_before_reserving_a_worker(pipeline_api, body):
+    state = pipeline_api
+    assert state.client.post("/pipeline/runs", json=body).status_code == 422
+    assert not state.calls and state.store.history() == []
+
+
+def test_online_default_is_a_persisted_seven_day_window(pipeline_api):
+    from datetime import date
+
+    state = pipeline_api
+    response = start(state, ["google_news"])
+    run = response.json()["run"]
+    window = run["collection_window"]
+    assert (
+        date.fromisoformat(window["until"]) - date.fromisoformat(window["since"])
+    ).days == 7
+    finish(state, run["run_id"])

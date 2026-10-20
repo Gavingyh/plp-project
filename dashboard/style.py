@@ -252,9 +252,24 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selecte
 .st-key-pipeline_run [data-testid="stMetric"] {{ padding:10px !important; border:0 !important; background:{BG}; border-radius:8px; }}
 .st-key-pipeline_run [data-testid="stMetricValue"] {{ font-size:1.4rem; }}
 .st-key-pipeline_run [data-testid="stMetricLabel"] p {{ font-size:.68rem; }}
-.pipeline-run-heading {{ display:flex; justify-content:space-between; align-items:center; gap:14px; }}
-.pipeline-run-heading h3 {{ margin:0; padding:0; font-size:1rem; }}
-.pipeline-state {{ padding:6px 10px; border-radius:6px; font-size:.75rem; font-weight:600; background:{SURFACE_2}; color:{INK}; }}
+/* Streamlit subtracts paragraph spacing from Markdown. This custom header
+   has no trailing paragraph margin, so that subtraction overlaps the alert. */
+.st-key-pipeline_run [data-testid="stMarkdownContainer"]:has(> .pipeline-run-header) {{ margin-bottom:0; }}
+.pipeline-run-header {{ display:flex; flex-direction:column; gap:14px; padding:3px 0 2px; }}
+.pipeline-run-heading {{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px 14px; }}
+.pipeline-run-heading h3 {{ margin:0; padding:0; font-size:1rem; line-height:1.45; }}
+.pipeline-state {{ display:inline-flex; align-items:center; gap:7px; flex:0 1 auto; max-width:100%; box-sizing:border-box;
+    padding:6px 10px; border-radius:20px; font-size:.7rem; line-height:1.5; font-weight:600;
+    white-space:normal; overflow-wrap:anywhere; background:{SURFACE_2}; color:{INK}; }}
+.pipeline-state::before {{ content:""; width:6px; height:6px; flex:0 0 6px; border-radius:50%; background:currentColor; }}
+.pipeline-run-times {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 18px;
+    padding:12px 0 0; margin:0; border-top:1px solid {LINE}; }}
+.pipeline-run-times > div {{ min-width:0; }}
+.pipeline-run-times dt {{ margin:0 0 4px; color:{MUTED}; font-size:.65rem; line-height:1.4; }}
+.pipeline-run-times dd {{ margin:0; color:{INK}; font-size:.73rem; line-height:1.55; overflow-wrap:anywhere; }}
+.st-key-pipeline_run [data-testid="stAlert"] {{ border-radius:10px; }}
+.st-key-pipeline_run [data-testid="stAlert"] p {{ font-size:.8rem; line-height:1.6; }}
+.state-completed_with_warnings {{ background:{'#FFF4DB' if palette.mode == 'light' else '#3C3020'}; color:{'#865B15' if palette.mode == 'light' else '#F0CB80'}; }}
 .state-running, .state-queued {{ background:{ACCENT}18; color:{ACCENT}; }}
 .state-completed {{ background:{POS}18; color:{POS}; }}
 .state-failed, .state-interrupted {{ background:{NEG}18; color:{NEG}; }}
@@ -424,6 +439,8 @@ details {{ background: {SURFACE}; border: 1px solid {LINE} !important; border-ra
 
 @media (prefers-reduced-motion: reduce) {{ * {{ transition: none !important; }} }}
 @media (max-width: 800px) {{
+    .pipeline-run-heading {{ align-items:flex-start; flex-direction:column; }}
+    .pipeline-run-times {{ grid-template-columns:1fr; gap:12px; }}
     .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
     .stApp p.hello {{ font-size: 1.65rem; }}
     .bank-score {{ font-size: 2rem; }}

@@ -104,6 +104,20 @@
       },
       "PipelineRun": {
         "properties": {
+          "collection_window": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Window"
+          },
           "current_stage": {
             "anyOf": [
               {
@@ -191,11 +205,18 @@
             "title": "Run Id",
             "type": "string"
           },
+          "source_results": {
+            "additionalProperties": true,
+            "title": "Source Results",
+            "type": "object"
+          },
           "sources": {
             "items": {
               "enum": [
                 "earnings",
-                "sgx_research"
+                "sgx_research",
+                "google_news",
+                "arctic_shift"
               ],
               "type": "string"
             },
@@ -347,7 +368,9 @@
             "items": {
               "enum": [
                 "earnings",
-                "sgx_research"
+                "sgx_research",
+                "google_news",
+                "arctic_shift"
               ],
               "type": "string"
             },
@@ -506,9 +529,19 @@
           "key": {
             "enum": [
               "earnings",
-              "sgx_research"
+              "sgx_research",
+              "google_news",
+              "arctic_shift"
             ],
             "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "local_pdf",
+              "online"
+            ],
+            "title": "Kind",
             "type": "string"
           },
           "label": {
@@ -523,6 +556,7 @@
         "required": [
           "key",
           "label",
+          "kind",
           "folder",
           "exists",
           "pdf_count"
@@ -533,18 +567,44 @@
       "StartPipelineRequest": {
         "additionalProperties": false,
         "properties": {
+          "since": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
           "sources": {
             "items": {
               "enum": [
                 "earnings",
-                "sgx_research"
+                "sgx_research",
+                "google_news",
+                "arctic_shift"
               ],
               "type": "string"
             },
-            "maxItems": 2,
+            "maxItems": 4,
             "minItems": 1,
             "title": "Sources",
             "type": "array"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
           }
         },
         "required": [
@@ -596,7 +656,7 @@
     }
   },
   "info": {
-    "description": "The system's interface: the sentiment index, its evidence, analyst consensus and the chatbot, for any dashboard or client to read. POST /chat calls a model; POST /pipeline/runs starts an incremental PDF pipeline which writes to the database. Other data routes are read-only. Integration guide: docs/api-integration.md.",
+    "description": "The system's interface: the sentiment index, its evidence, analyst consensus and the chatbot, for any dashboard or client to read. POST /chat calls a model; POST /pipeline/runs starts an incremental local/online update pipeline which writes to the database. Other data routes are read-only. Integration guide: docs/api-integration.md.",
     "title": "SG Bank Sentiment API",
     "version": "0.1.0"
   },
@@ -1024,7 +1084,7 @@
         ]
       },
       "post": {
-        "description": "Start an incremental PDF run in a separate process and return its queued record.\n\nThis endpoint writes to the configured database. It accepts source keys,\nnot paths, commands or model changes. Poll Location for progress; never\nautomatically retry a POST whose response was lost.",
+        "description": "Start an incremental run in a separate process and return its queued record.\n\nThis endpoint writes to the configured database. It accepts source keys,\nnot paths, commands or model changes. Poll Location for progress; never\nautomatically retry a POST whose response was lost.",
         "operationId": "start_pipeline_pipeline_runs_post",
         "requestBody": {
           "content": {
@@ -1122,7 +1182,7 @@
     },
     "/pipeline/sources": {
       "get": {
-        "description": "Supported local folders and PDF counts; does not fetch, import or analyse.",
+        "description": "Supported local folders and online collectors; never fetches on GET.",
         "operationId": "pipeline_sources_pipeline_sources_get",
         "responses": {
           "200": {

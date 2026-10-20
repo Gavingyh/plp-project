@@ -1,4 +1,4 @@
-"""Run the existing PDF ingestion/inference pipeline with durable progress.
+"""Run selected local/online ingestion and inference with durable progress.
 
 USAGE (from the project root):
   .venv-plp/bin/python3 -m pipeline.runner --sources earnings sgx_research
@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import sqlite3
+from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
 from uuid import uuid4
@@ -54,6 +55,17 @@ def _run_log(path: Path):
 def _reconcile(run: dict) -> None:
     try:
         run["imported_documents"] = stages.imported_documents(run)
+        inserted = Counter(doc["source"] for doc in run["imported_documents"])
+        for source, result in run.get("source_results", {}).items():
+            result["documents_inserted"] = inserted[source]
+            if (
+                run["status"] in {"failed", "interrupted"}
+                and result["status"] == "running"
+            ):
+                result.update(status=run["status"], error=run["error"])
+            for stage in run["stages"]:
+                if stage["key"] == "import" and source in stage["metrics"]:
+                    stage["metrics"][source] = dict(result)
     except (OSError, sqlite3.Error) as exc:
         run["warnings"].append(
             {
@@ -80,7 +92,12 @@ def history(store: RunStore | None = None, limit: int = 20) -> list[dict]:
 
 
 def new_run(
-    sources: list[str], store: RunStore, run_id: str, *, queued: bool = False
+    sources: list[str],
+    store: RunStore,
+    run_id: str,
+    *,
+    queued: bool = False,
+    window: dict | None = None,
 ) -> dict:
     """Build a record; callers save it while holding the pipeline lock."""
     from ingest import db
@@ -90,6 +107,8 @@ def new_run(
         "run_id": run_id,
         "status": "queued" if queued else "running",
         "sources": stages.selected_sources(sources),
+        "collection_window": window,
+        "source_results": {},
         "started_at": timestamp(),
         "finished_at": None,
         "pid": None if queued else os.getpid(),
@@ -110,7 +129,11 @@ def new_run(
         "stages": [
             {
                 "key": key,
-                "label": label,
+                "label": (
+                    "Collect / import documents"
+                    if key == "import" and window
+                    else label
+                ),
                 "status": "pending",
                 "started_at": None,
                 "finished_at": None,
@@ -129,6 +152,8 @@ def run_pipeline(
     store: RunStore | None = None,
     run_id: str | None = None,
     lock_fd: int | None = None,
+    since=None,
+    until=None,
 ) -> dict:
     """Execute once; failed runs return their saved record. Invalid/busy requests raise.
 
@@ -136,6 +161,7 @@ def run_pipeline(
     KeyboardInterrupt is persisted as interrupted and then propagated.
     """
     sources = stages.selected_sources(sources)
+    window = stages.collection_window(sources, since, until)
     from dotenv import load_dotenv
 
     load_dotenv(stages.ROOT / ".env")
@@ -150,13 +176,14 @@ def run_pipeline(
             _recover(store)
             if record_path.exists():
                 raise ValueError(f"Run {run_id} already exists; use a new run ID.")
-            run = new_run(sources, store, run_id)
+            run = new_run(sources, store, run_id, window=window)
         else:
             run = store.get(run_id)
             if (
                 run["status"] != "queued"
                 or run["sources"] != sources
                 or run["db_path"] != str(Path(db.DB_PATH).resolve())
+                or run.get("collection_window") != window
             ):
                 raise ValueError("Worker configuration does not match the reserved run")
             run.update(status="running", pid=os.getpid())
@@ -165,6 +192,22 @@ def run_pipeline(
         import_stage = run["stages"][1]
 
         def report(event):
+            if event.get("kind") == "collection":
+                result = event["result"]
+                run.setdefault("source_results", {})[event["source"]] = result
+                import_stage["metrics"][event["source"]] = result
+                if result["status"] in {"partial", "failed"}:
+                    run["warnings"].append(
+                        {
+                            "stage": "import",
+                            "source": event["source"],
+                            "message": result.get("error")
+                            or "Some collection windows were incomplete; retry the same dates.",
+                            "incomplete_windows": result.get("incomplete_windows", []),
+                        }
+                    )
+                store.save(run)
+                return
             import_stage["files"].append(event)
             if event["status"] in ("failed", "skipped") or event.get("warning"):
                 run["warnings"].append(
@@ -182,7 +225,7 @@ def run_pipeline(
                 {
                     "doc_id": doc["doc_id"],
                     "source": doc["source"],
-                    "title": doc["title"],
+                    "title": doc.get("title"),
                     "url": doc["url"],
                 }
                 for doc in docs
@@ -192,7 +235,10 @@ def run_pipeline(
         tasks = {
             "preflight": lambda: stages.preflight(sources),
             "import": lambda: stages.import_sources(
-                sources, report=report, before_insert=before_insert
+                sources,
+                report=report,
+                before_insert=before_insert,
+                window=window,
             ),
             "preprocess": stages.preprocess,
             "assign": stages.assign_topics,
@@ -258,6 +304,10 @@ def main(argv: list[str] | None = None) -> int:
         "--state-dir", help="directory for run records (default: data/run/pipeline)"
     )
     parser.add_argument("--lock-fd", type=int, help=argparse.SUPPRESS)
+    parser.add_argument("--since", help="Online collection start date (UTC), inclusive")
+    parser.add_argument(
+        "--until", help="Online collection end date (UTC), exclusive; maximum 31 days"
+    )
     args = parser.parse_args(argv)
     # Set offline mode before importing any model libraries in this process.
     os.environ["HF_HUB_OFFLINE"] = "1"
@@ -278,6 +328,8 @@ def main(argv: list[str] | None = None) -> int:
             run_id=args.run_id,
             store=RunStore(args.state_dir) if args.state_dir else None,
             lock_fd=args.lock_fd,
+            since=args.since,
+            until=args.until,
         )
     except PipelineBusy as exc:
         logger.error("%s", exc)

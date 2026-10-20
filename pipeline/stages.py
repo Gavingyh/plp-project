@@ -7,8 +7,15 @@ from collections import Counter
 from contextlib import closing
 from pathlib import Path
 
+from pipeline.collection import ONLINE_SOURCES, collection_window, collect
+
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = {"earnings": "Bank earnings PDFs", "sgx_research": "Broker research PDFs"}
+SOURCES = {
+    "earnings": "Bank earnings PDFs",
+    "sgx_research": "Broker research PDFs",
+    "google_news": "Google News",
+    "arctic_shift": "Reddit",
+}
 
 
 def selected_sources(sources) -> list[str]:
@@ -38,6 +45,18 @@ def describe_sources(sources: list[str] | None = None) -> list[dict]:
     out = []
     for source in selected_sources(sources) if sources is not None else SOURCES:
         label = SOURCES[source]
+        if source in ONLINE_SOURCES:
+            out.append(
+                {
+                    "key": source,
+                    "label": label,
+                    "kind": "online",
+                    "folder": "",
+                    "exists": True,
+                    "pdf_count": 0,
+                }
+            )
+            continue
         folder = Path(source_module(source).PDF_DIR)
         folders = [folder]
         if source == "earnings":
@@ -55,6 +74,7 @@ def describe_sources(sources: list[str] | None = None) -> list[dict]:
             {
                 "key": source,
                 "label": label,
+                "kind": "local_pdf",
                 "folder": str(folder),
                 "exists": folder.is_dir(),
                 "pdf_count": count,
@@ -128,13 +148,18 @@ def preflight(sources: list[str]) -> dict:
     with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as conn:
         conn.execute("SELECT doc_id FROM documents LIMIT 1").fetchall()
     dependencies = [
-        "pdfplumber",
         "spacy",
         "en_core_web_sm",
         "torch",
         "transformers",
         "yaml",
     ]
+    if any(source not in ONLINE_SOURCES for source in sources):
+        dependencies.append("pdfplumber")
+    if ONLINE_SOURCES.intersection(sources):
+        dependencies.append("requests")
+    if "google_news" in sources:
+        dependencies.append("feedparser")
     if "sgx_research" in sources:
         dependencies.extend(["pypdfium2", "rapidocr_onnxruntime", "wordninja"])
     missing = [name for name in dependencies if importlib.util.find_spec(name) is None]
@@ -170,13 +195,21 @@ def preflight(sources: list[str]) -> dict:
     }
 
 
-def import_sources(sources: list[str], *, report, before_insert) -> dict:
+def import_sources(sources: list[str], *, report, before_insert, window=None) -> dict:
     from ingest import db
 
     with closing(db.get_connection()) as conn:
         known = {row[0] for row in conn.execute("SELECT doc_id FROM documents")}
     summary = {}
     for source in sources:
+        if source in ONLINE_SOURCES:
+            summary[source] = collect(
+                source,
+                window or collection_window(sources),
+                report=report,
+                before_insert=before_insert,
+            )
+            continue
         events = []
 
         def on_file(event):
@@ -194,6 +227,10 @@ def import_sources(sources: list[str], *, report, before_insert) -> dict:
             "documents_attempted": attempted,
             "documents_inserted": inserted,
         }
+    if summary and all(item.get("status") == "failed" for item in summary.values()):
+        raise RuntimeError(
+            "All selected online sources failed. Check source results and retry the same collection dates."
+        )
     return summary
 
 

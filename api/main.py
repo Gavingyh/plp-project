@@ -68,7 +68,7 @@ app = FastAPI(
     description="The system's interface: the sentiment index, its evidence, analyst "
                  "consensus and the chatbot, for any dashboard or client to read. "
                  "POST /chat calls a model; POST /pipeline/runs starts an incremental "
-                 "PDF pipeline which writes to the database. Other data routes are read-only. "
+                 "local/online update pipeline which writes to the database. Other data routes are read-only. "
                  "Integration guide: docs/api-integration.md.",
 )
 app.add_middleware(

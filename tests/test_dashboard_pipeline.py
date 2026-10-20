@@ -85,14 +85,21 @@ class PipelineAPI:
         self.posts = []
         self.gets = Counter()
         self.missing = set()
-        self.counts = {"earnings": 182, "sgx_research": 25}
+        self.counts = {
+            "earnings": 182,
+            "sgx_research": 25,
+            "google_news": 0,
+            "arctic_shift": 0,
+        }
         self.failure = None
         self.history_status = 200
         self.sources_status = 200
         self.updated = False
 
     def finish(self, status="completed"):
+        window = self.runs[0].get("collection_window")
         self.runs = [run_record(status, self.runs[0]["sources"])]
+        self.runs[0]["collection_window"] = window
         self.updated = True
 
     def __call__(self, method, url, *, params=None, json=None, timeout=None):
@@ -106,6 +113,11 @@ class PipelineAPI:
                         {
                             "key": key,
                             "label": label,
+                            "kind": (
+                                "online"
+                                if key in pipeline_client.ONLINE_SOURCES
+                                else "local_pdf"
+                            ),
                             "folder": f"/synthetic/data/{key}",
                             "exists": key not in self.missing,
                             "pdf_count": self.counts[key],
@@ -134,6 +146,11 @@ class PipelineAPI:
                 self.runs = [run_record("running", ["sgx_research"])]
                 return response({"detail": "Another run is active"}, 409)
             self.runs = [run_record(sources=json["sources"])]
+            if "since" in json:
+                self.runs[0]["collection_window"] = {
+                    "since": json["since"],
+                    "until": json["until"],
+                }
             if self.failure == "timeout":
                 raise requests.Timeout(
                     "The worker accepted the run but the response was lost"
@@ -194,7 +211,7 @@ class DashboardPipelineTests(DashboardAppTestCase):
 
     def test_both_sources_and_reopening_page_follow_saved_run(self):
         app = self.page("Data Management")
-        for key in pipeline_client.SOURCES:
+        for key in ("earnings", "sgx_research"):
             app.checkbox(key=f"pipeline_select_{key}").check().run()
         app.button(key="pipeline_start").click().run()
         self.assertEqual(self.api.posts, [{"sources": ["earnings", "sgx_research"]}])
@@ -202,6 +219,31 @@ class DashboardPipelineTests(DashboardAppTestCase):
         self.assertTrue(reopened.button(key="pipeline_start").disabled)
         self.assertEqual(reopened.selectbox(key="pipeline_focus").value, RUN_ID)
         self.assertEqual(len(self.api.posts), 1)
+
+    def test_history_and_run_times_use_singapore_time_including_date_rollover(self):
+        for start, finish in (
+            ("2026-10-18T18:00:00+00:00", "2026-10-18T18:02:00+00:00"),
+            ("2026-10-19T02:00:00+08:00", "2026-10-19T02:02:00+08:00"),
+        ):
+            with self.subTest(start=start):
+                run = run_record("completed")
+                run.update(started_at=start, finished_at=finish)
+                self.api.runs = [run]
+                app = self.page("Data Management")
+                self.assertFalse(app.exception)
+                self.assertIn(
+                    "19 Oct · 02:00 SGT",
+                    app.selectbox(key="pipeline_focus").options[0],
+                )
+                header = next(
+                    item.value
+                    for item in app.markdown
+                    if 'class="pipeline-run-header"' in item.value
+                )
+                self.assertIn("19 Oct 2026, 02:00 SGT", header)
+                self.assertIn("19 Oct 2026, 02:02 SGT", header)
+                self.assertEqual(self.api.runs[0]["started_at"], start)
+                self.assertFalse(self.api.posts)
 
     def test_all_pdf_sources_selects_both_and_stays_in_sync_with_individual_choices(
         self,
@@ -222,7 +264,9 @@ class DashboardPipelineTests(DashboardAppTestCase):
         app.checkbox(key="pipeline_all_sources").check().run()
         app.button(key="pipeline_start").click().run()
         self.assertFalse(app.exception)
-        self.assertEqual(self.api.posts, [{"sources": ["earnings", "sgx_research"]}])
+        self.assertEqual(self.api.posts[0]["sources"], list(pipeline_client.SOURCES))
+        self.assertIn("since", self.api.posts[0])
+        self.assertIn("until", self.api.posts[0])
         self.assertTrue(app.checkbox(key="pipeline_all_sources").disabled)
         self.api.finish()
         app.run()
@@ -241,7 +285,7 @@ class DashboardPipelineTests(DashboardAppTestCase):
         self.api.counts["sgx_research"] = 0
         app = self.page("Data Management")
         self.assertTrue(app.checkbox(key="pipeline_select_earnings").disabled)
-        self.assertTrue(app.checkbox(key="pipeline_all_sources").disabled)
+        self.assertFalse(app.checkbox(key="pipeline_all_sources").disabled)
         self.assertFalse(app.checkbox(key="pipeline_select_sgx_research").disabled)
         app.checkbox(key="pipeline_select_sgx_research").check().run()
         self.assertFalse(app.button(key="pipeline_start").disabled)
@@ -368,6 +412,89 @@ class DashboardPipelineTests(DashboardAppTestCase):
         self.assertFalse(app.metric)
         self.assertFalse(self.api.posts)
 
+    def test_online_only_selection_posts_inclusive_ui_dates_once(self):
+        from datetime import date
+
+        app = self.page("Data Management")
+        app.checkbox(key="pipeline_select_google_news").check().run()
+        app.date_input(key="pipeline_since").set_value(date(2024, 5, 1)).run()
+        app.date_input(key="pipeline_through").set_value(date(2024, 5, 2)).run()
+        self.assertFalse(app.exception)
+        self.assertFalse(app.button(key="pipeline_start").disabled)
+        app.button(key="pipeline_start").click().run()
+        self.assertEqual(
+            self.api.posts,
+            [
+                {
+                    "sources": ["google_news"],
+                    "since": "2024-05-01",
+                    "until": "2024-05-03",
+                }
+            ],
+        )
+        app.run()
+        self.assertEqual(len(self.api.posts), 1)
+        self.api.finish()
+        app.run()
+        self.assertEqual(app.date_input(key="pipeline_since").value, date(2024, 5, 1))
+        self.assertEqual(app.date_input(key="pipeline_through").value, date(2024, 5, 2))
+
+    def test_invalid_online_dates_disable_submit_and_pdf_only_drops_dates(self):
+        from datetime import date
+
+        app = self.page("Data Management")
+        app.checkbox(key="pipeline_select_arctic_shift").check().run()
+        app.date_input(key="pipeline_since").set_value(date(2024, 5, 1)).run()
+        app.date_input(key="pipeline_through").set_value(date(2024, 6, 2)).run()
+        self.assertTrue(app.button(key="pipeline_start").disabled)
+        self.assertTrue(app.error)
+        app.checkbox(key="pipeline_select_arctic_shift").uncheck().run()
+        app.checkbox(key="pipeline_select_earnings").check().run()
+        app.button(key="pipeline_start").click().run()
+        self.assertEqual(self.api.posts, [{"sources": ["earnings"]}])
+
+    def test_all_available_sources_skips_a_missing_pdf_folder(self):
+        self.api.missing.add("earnings")
+        app = self.page("Data Management")
+        app.checkbox(key="pipeline_all_sources").check().run()
+        self.assertFalse(app.checkbox(key="pipeline_select_earnings").value)
+        app.button(key="pipeline_start").click().run()
+        self.assertEqual(
+            self.api.posts[0]["sources"],
+            ["sgx_research", "google_news", "arctic_shift"],
+        )
+
+    def test_collection_failures_and_duplicate_counts_are_visible(self):
+        run = run_record("completed_with_warnings", ["google_news", "arctic_shift"])
+        run["source_results"] = {
+            "google_news": {
+                "status": "failed",
+                "fetched": 0,
+                "documents_inserted": 0,
+                "duplicates": 0,
+                "filtered": 0,
+            },
+            "arctic_shift": {
+                "status": "partial",
+                "fetched": 20,
+                "documents_inserted": 5,
+                "duplicates": 15,
+                "filtered": 0,
+            },
+        }
+        run["warnings"] = [
+            {"source": "google_news", "message": "Window request failed"}
+        ]
+        run["stages"][1]["files"] = []
+        self.api.runs = [run]
+        app = self.page("Data Management")
+        self.assertFalse(app.exception)
+        results = app.dataframe[0].value
+        self.assertEqual(results["Status"].tolist(), ["Failed", "Incomplete"])
+        self.assertEqual(app.metric[1].label, "Duplicates skipped")
+        self.assertEqual(app.metric[1].value, "15")
+        self.assertTrue(app.warning)
+
 
 def test_pipeline_http_errors_retain_status_without_backend_details():
     with patch(
@@ -393,3 +520,26 @@ def test_malformed_history_cannot_be_treated_as_idle(payload):
     with patch("dashboard.pipeline_client.request_json", return_value=payload):
         with pytest.raises(ApiError):
             pipeline_client.load_history()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "sources": [
+                {
+                    "key": "earnings",
+                    "label": "Bank earnings PDFs",
+                    "folder": "/data/earnings",
+                    "exists": True,
+                    "pdf_count": 1,
+                }
+            ]
+        },
+        {"sources": []},
+    ],
+)
+def test_source_version_mismatch_explains_that_both_services_need_restarting(payload):
+    with patch("dashboard.pipeline_client.request_json", return_value=payload):
+        with pytest.raises(ApiError, match="Restart both services"):
+            pipeline_client.load_sources()

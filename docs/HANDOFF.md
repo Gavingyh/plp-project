@@ -1969,11 +1969,18 @@ about 0.03 ([evidence](evidence/search-models-2026-10-24.md), decision 27).
 
 **Merged** the teammates' OpenAI change into `feat/chatbot-misdescription-fixes`;
 diagrams brought up to date (343 rows check; Gemini gone, the dashboard reads
-through the API). A fresh clone of the branch collects 2892 tests in `tests/`
-and 2939 from the root; all pass on this Mac after Streamlit was upgraded
+through the API). A fresh clone of the branch collects 2894 tests in `tests/`
+and 2941 from the root; all pass on this Mac after Streamlit was upgraded
 from 1.63.0 to 1.66.1, which the five dashboard navigation tests needed.
 Replacement text for the Word report, now the master on SharePoint, is in
 `docs/report/word-updates-2026-10-24.md`.
+
+**CNA and broker research cleared for the hosted model** (the team's
+decision, DESIGN decision 28): both stay team-only, but `hosted_model: true`
+in `config/sources.yaml` lets gpt-6-luna quote them; Reddit is still
+withheld. Rerun on the 32 questions (US$0.0068): the same checks, and its
+answers now quote CNA and broker research once each. CLAUDE.md's rules now
+name the OpenAI key (Gemini is gone) and this exception.
 
 **Needs a human:**
 - Push the branch and merge it to `main` (not pushed).

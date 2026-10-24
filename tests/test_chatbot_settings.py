@@ -42,10 +42,7 @@ def test_environment_values_take_the_default_type(monkeypatch):
     assert settings.get("ollama_think") is False
 
 
-def test_a_second_variable_name_is_read_and_a_bad_value_falls_back(monkeypatch):
-    monkeypatch.delenv("GEMINI_MODEL", raising=False)
-    monkeypatch.setenv("GEMINI_CHAT_MODEL", "gemini-x")
-    assert settings.get("models.gemini") == "gemini-x"
+def test_a_bad_environment_value_falls_back(monkeypatch):
     monkeypatch.setenv("CHATBOT_TEMPERATURE", "warm")
     assert settings.get("temperature") == 0.2
 

@@ -1,0 +1,129 @@
+{
+  "title": "BankPulse OpenAI 10-question cost pilot",
+  "date_sgt": "2026-10-24",
+  "provider": "openai",
+  "model": "gpt-6-luna",
+  "test_type": "Cost and latency pilot; answer quality has not been graded",
+  "chatbot_turns": 10,
+  "hosted_model_turns": 8,
+  "local_fixed_replies": 2,
+  "provider_requests": 19,
+  "api_errors": 0,
+  "reported_tokens": {
+    "requests": 19,
+    "input_tokens": 63909,
+    "output_tokens": 1517,
+    "cached_input_tokens": 51467
+  },
+  "rates_usd_per_million": {
+    "input_per_million": 0.1,
+    "cached_input_per_million": 0.01,
+    "output_per_million": 0.5
+  },
+  "pricing_source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+  "estimated_pilot_cost_usd": 0.00251737,
+  "estimated_pilot_cost_us_cents": 0.2517,
+  "pilot_cost_if_all_input_uncached_usd": 0.0071494,
+  "estimated_159_turns_with_similar_cache_usage_usd": 0.04003,
+  "estimated_159_turns_if_all_input_uncached_usd": 0.11368,
+  "median_full_request_seconds_all_turns": 4.4991,
+  "median_full_request_seconds_hosted_answers": 5.6063,
+  "first_request_seconds": 13.4165,
+  "database_unchanged": true,
+  "account_settings_changed": false,
+  "conditions": "Same FastAPI path as the dashboard; existing hosted source filters. First request included; sequential requests. No extra warm-up.",
+  "limitations": "Ten stratified turns, one pass. Timing includes local intent classification, retrieval and verification. Cost is estimated from received token usage, not an invoice or a hard spend cap. Cache hits, tool loops and retries may differ in the full run.",
+  "cases": [
+    {
+      "question_id": "mt-1-1",
+      "question": "What is the sentiment on DBS's dividend policy?",
+      "group": "lookup",
+      "seconds": 13.4165,
+      "estimated_usd": 0.00040242000000000007,
+      "provider_requests": 2,
+      "guard": null
+    },
+    {
+      "question_id": "mt-1-2",
+      "question": "And OCBC?",
+      "group": "lookup",
+      "seconds": 4.9073,
+      "estimated_usd": 0.00040781,
+      "provider_requests": 2,
+      "guard": null
+    },
+    {
+      "question_id": "lookup-4",
+      "question": "What's the overall sentiment on DBS right now?",
+      "group": "lookup",
+      "seconds": 4.0909,
+      "estimated_usd": 0.00016579,
+      "provider_requests": 2,
+      "guard": null
+    },
+    {
+      "question_id": "compare-1",
+      "question": "Compare DBS, OCBC and UOB on dividend policy.",
+      "group": "compare",
+      "seconds": 4.0558,
+      "estimated_usd": 0.00019142,
+      "provider_requests": 2,
+      "guard": null
+    },
+    {
+      "question_id": "trend-1",
+      "question": "Has sentiment on DBS's dividend policy improved recently?",
+      "group": "trend",
+      "seconds": 6.488,
+      "estimated_usd": 0.00024394,
+      "provider_requests": 3,
+      "guard": null
+    },
+    {
+      "question_id": "evidence-1",
+      "question": "Show me evidence of what people are saying about DBS's dividend.",
+      "group": "evidence",
+      "seconds": 10.1288,
+      "estimated_usd": 0.00037561,
+      "provider_requests": 4,
+      "guard": null
+    },
+    {
+      "question_id": "consensus-1",
+      "question": "What do analysts think of DBS?",
+      "group": "consensus",
+      "seconds": 3.5771,
+      "estimated_usd": 0.00013827000000000002,
+      "provider_requests": 2,
+      "guard": null
+    },
+    {
+      "question_id": "broad-1",
+      "question": "Compare DBS, OCBC and UOB on dividend policy, then show one supporting sentence for each bank.",
+      "group": "broader_comparison",
+      "seconds": 6.3053,
+      "estimated_usd": 0.00059211,
+      "provider_requests": 2,
+      "guard": null
+    },
+    {
+      "question_id": "advice-1",
+      "question": "Should I buy DBS stock?",
+      "group": "advice",
+      "seconds": 0.5072,
+      "estimated_usd": 0,
+      "provider_requests": 0,
+      "guard": "advice"
+    },
+    {
+      "question_id": "oos-3",
+      "question": "What's the weather like in Singapore today?",
+      "group": "out_of_scope",
+      "seconds": 0.3541,
+      "estimated_usd": 0,
+      "provider_requests": 0,
+      "guard": "off_topic"
+    }
+  ],
+  "raw_results_directory": "data/run/chatbot-openai-pilot-20261024-161341"
+}

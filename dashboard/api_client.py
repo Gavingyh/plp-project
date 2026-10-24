@@ -12,9 +12,12 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 class ApiError(RuntimeError):
     """The API request failed or returned an invalid response."""
 
-    def __init__(self, message: str, *, status_code: int | None = None):
+    def __init__(self, message: str, *, status_code: int | None = None,
+                 error_code: str | None = None, setup_hint: str | None = None):
         super().__init__(message)
         self.status_code = status_code
+        self.error_code = error_code
+        self.setup_hint = setup_hint
 
 
 def request_json(
@@ -51,6 +54,17 @@ def request_json(
     except requests.HTTPError as exc:
         if exc.response is None:
             raise ApiError(f"The API returned an HTTP error for {path}.") from exc
+        if path.strip("/") == "chat" and exc.response.status_code == 503:
+            try:
+                payload = exc.response.json()
+            except ValueError:
+                payload = None
+            detail = payload.get("detail") if isinstance(payload, dict) else None
+            if (isinstance(detail, dict) and isinstance(detail.get("code"), str)
+                    and isinstance(detail.get("message"), str) and detail["message"].strip()
+                    and (detail.get("setup_hint") is None or isinstance(detail["setup_hint"], str))):
+                raise ApiError(detail["message"], status_code=503,
+                               error_code=detail["code"], setup_hint=detail.get("setup_hint")) from exc
         raise ApiError(
             f"The API returned HTTP {exc.response.status_code} for {path}.",
             status_code=exc.response.status_code,

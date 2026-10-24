@@ -28,7 +28,8 @@ class ClaudeBackend(LLMBackend):
         if not api_key:
             raise BackendUnavailable(
                 "ANTHROPIC_API_KEY not set. Either set it in .env to use Claude, or use the "
-                "local Ollama backend instead (see chatbot/backends/ollama_backend.py / README)."
+                "local Ollama backend instead (see chatbot/backends/ollama_backend.py / README).",
+                code="claude_key_missing",
             )
         self.model = model
         self._api_key = api_key

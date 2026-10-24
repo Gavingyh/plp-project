@@ -40,7 +40,7 @@ def test_provider_for_names_the_host_behind_an_openai_compatible_url():
     assert provider_for("openai", "https://api.groq.com/openai/v1") == "groq"
     assert provider_for("openai", "https://openrouter.ai/api/v1") == "openrouter"
     assert provider_for("openai", "https://api.openai.com/v1") == "openai"
-    assert provider_for("gemini") == "gemini"
+    assert provider_for("claude") == "claude"
 
 
 def test_requests_are_spaced_to_the_per_minute_budget():
@@ -128,9 +128,8 @@ def test_a_provider_without_configured_limits_is_not_paced():
 
 
 def test_configured_limits_sit_below_the_published_free_tiers():
-    groq, gemini = ratelimit.limits_for("groq"), ratelimit.limits_for("gemini")
+    groq = ratelimit.limits_for("groq")
     assert groq["rpm"] <= 30 and groq["rpd"] <= 1000          # Groq publishes 30 a minute, 1,000 a day
-    assert gemini["rpm"] <= 15 and gemini["rpd"] <= 1500      # Gemini publishes up to 15 a minute, 1,500 a day
 
 
 # ----- the backends go through the pacer -----
@@ -165,17 +164,6 @@ def test_the_openai_backend_paces_each_attempt_and_waits_out_a_429(monkeypatch):
     assert clock.slept >= 5.0
 
 
-def test_the_gemini_backend_counts_every_attempt(monkeypatch):
-    from chatbot.backends import gemini_backend
-    clock = Clock()
-    p = pacer(clock, rpm=60)
-    monkeypatch.setattr(ratelimit, "get_pacer", lambda provider: p)
-    monkeypatch.setattr(gemini_backend.time, "sleep", clock.sleep)
-    replies = iter([FakeResponse(503), FakeResponse(200, {"candidates": [{"content": {"parts": [{"text": "x"}]}}]})])
-    monkeypatch.setattr(gemini_backend.requests, "post", lambda *a, **k: next(replies))
-    backend = gemini_backend.GeminiBackend(api_key="k", model="m")
-    backend._generate([{"role": "user", "parts": [{"text": "hi"}]}], "system", [])
-    assert p.requests_this_session == 2
 
 
 def test_an_exhausted_budget_stops_before_any_request_is_sent(monkeypatch, tmp_path):

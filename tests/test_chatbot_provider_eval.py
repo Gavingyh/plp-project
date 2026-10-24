@@ -74,7 +74,7 @@ class FakeConversation:
     def ask(self, question):
         type(self).asked += 1
         if type(self).budget_after is not None and type(self).asked > type(self).budget_after:
-            raise DailyBudgetExhausted("gemini: budget spent")
+            raise DailyBudgetExhausted("openai: budget spent")
         return _turn()
 
 
@@ -122,9 +122,9 @@ def test_the_report_computes_every_figure_from_the_result_files(tmp_path):
 
 
 def test_the_report_says_when_an_arm_did_not_finish(tmp_path):
-    _write(tmp_path, "chatbot_eval_results_gemini-v2.jsonl", [_row(i) for i in GOLD_SET_V2[:5]])
-    report = provider_report.build(["gemini"], eval_dir=str(tmp_path), today="2026-10-06")
-    assert f"| gemini | 5/{len(GOLD_SET_V2)} |" in report
+    _write(tmp_path, "chatbot_eval_results_openai-v2.jsonl", [_row(i) for i in GOLD_SET_V2[:5]])
+    report = provider_report.build(["openai"], eval_dir=str(tmp_path), today="2026-10-06")
+    assert f"| openai | 5/{len(GOLD_SET_V2)} |" in report
     assert "This report is incomplete" in report
 
 
@@ -159,8 +159,17 @@ def test_an_openai_key_pointing_somewhere_else_is_not_taken_for_a_groq_key():
 
 
 def test_an_arm_without_its_key_is_not_ready_and_says_which_variable_to_set():
-    assert "GEMINI_API_KEY" in provider_eval.arm_settings("gemini", {})[1]
-    assert provider_eval.arm_settings("gemini", {"GEMINI_API_KEY": "k"})[1] is None
+    assert "OPENAI_API_KEY" in provider_eval.arm_settings("openai", {})[1]
+    assert provider_eval.arm_settings("openai", {"OPENAI_API_KEY": "k"})[1] is None
+
+
+def test_openai_comparison_uses_its_model_and_official_endpoint():
+    env, why = provider_eval.arm_settings("openai", {"OPENAI_API_KEY": "secret", "OPENAI_MODEL": "gpt-6-luna"})
+    assert why is None and env["OPENAI_MODEL"] == "gpt-6-luna"
+    assert env["OPENAI_BASE_URL"] == "https://api.openai.com/v1"
+    _, why = provider_eval.arm_settings("openai", {"OPENAI_API_KEY": "secret", "OPENAI_BASE_URL": provider_eval.GROQ_URL})
+    assert why and "secret" not in why
+    assert provider_report.DEFAULT_ARMS == ["ollama", "openai"]
 
 
 def test_the_request_estimate_comes_from_the_local_runs_tool_calls(tmp_path):
@@ -177,8 +186,8 @@ def test_a_key_the_provider_rejects_is_reported_before_a_run_and_a_good_one_pass
     seen = []
     monkeypatch.setattr(provider_eval.requests, "get",
                         lambda url, headers, timeout: seen.append((url, headers)) or SimpleNamespace(status_code=next(statuses)))
-    gemini = {"GEMINI_API_KEY": "k"}
-    assert "rejected the key (HTTP 401)" in provider_eval.key_problem("gemini", gemini)
+    openai = {"OPENAI_API_KEY": "k", "OPENAI_BASE_URL": "https://api.openai.com/v1"}
+    assert "rejected the key (HTTP 401)" in provider_eval.key_problem("openai", openai)
     groq = {"OPENAI_API_KEY": "k", "OPENAI_BASE_URL": "https://api.groq.com/openai/v1"}
     assert provider_eval.key_problem("groq", groq) is None
     assert "HTTP 429" in provider_eval.key_problem("groq", groq)
@@ -188,9 +197,9 @@ def test_a_key_the_provider_rejects_is_reported_before_a_run_and_a_good_one_pass
 
 def test_the_report_says_why_an_arm_was_not_run_and_marks_hosted_arms_as_hosted(tmp_path):
     _write(tmp_path, "chatbot_eval_results_ollama-v2.jsonl", [_row(i, requests=0) for i in GOLD_SET_V2])
-    provider_eval.save_status({"gemini": {"state": "skipped", "note": "the provider rejected the key (HTTP 401)"}},
+    provider_eval.save_status({"openai": {"state": "skipped", "note": "the provider rejected the key (HTTP 401)"}},
                               eval_dir=str(tmp_path))
-    report = provider_report.build(["ollama", "gemini"], eval_dir=str(tmp_path), today="2026-10-07")
-    assert "- **gemini**: not run (the provider rejected the key (HTTP 401))." in report
-    assert "| gemini | `not run` | 8 / 200 | 0 |" in report           # a hosted arm is not "local"
-    assert "mostly waiting" in report
+    report = provider_report.build(["ollama", "openai"], eval_dir=str(tmp_path), today="2026-10-07")
+    assert "- **openai**: not run (the provider rejected the key (HTTP 401))." in report
+    assert "| openai | `not run` | account limits (paid API) | 0 |" in report           # a hosted arm is not "local"
+    assert "Timing includes rate-limit waits" in report

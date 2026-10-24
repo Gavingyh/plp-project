@@ -8,7 +8,7 @@ rate limit, the report says how far it got instead of hiding the gap.
 
 USAGE:
   python -m chatbot.provider_report                       # all arms found, today's date
-  python -m chatbot.provider_report --arms ollama groq gemini --out docs/evidence/x.md
+  python -m chatbot.provider_report --arms ollama openai --out docs/evidence/x.md
 """
 
 import argparse
@@ -22,7 +22,8 @@ from chatbot.eval_gold_set import GOLD_SET_V2, MULTI_TURN, MULTI_TURN_SCOPE, SCO
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EVAL_DIR = os.path.join(BASE_DIR, "data", "eval")
-ARM_ORDER = ["ollama", "groq", "gemini"]
+DEFAULT_ARMS = ["ollama", "openai"]
+ARM_ORDER = [*DEFAULT_ARMS, "groq"]
 SINGLE_SETS = {"v2": ("Gold set", GOLD_SET_V2), "scope": ("Scope set", SCOPE_SET)}
 MULTI_SETS = {"multi": ("Multi-turn conversations", MULTI_TURN), "multiscope": ("Multi-turn scope conversations", MULTI_TURN_SCOPE)}
 
@@ -116,14 +117,16 @@ def _status(item_result: dict | None) -> str:
 def build(arms: list[str], eval_dir: str = EVAL_DIR, today: str | None = None) -> str:
     today = today or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     arms = [a for a in ARM_ORDER if a in arms] + [a for a in arms if a not in ARM_ORDER]
-    out = [f"# Chatbot evaluation across Ollama, Groq and Gemini ({today})", ""]
+    labels = {"ollama": "Ollama", "openai": "OpenAI", "groq": "Groq"}
+    title = " / ".join(labels.get(a, a) for a in arms) or "selected providers"
+    out = [f"# Chatbot evaluation across {title} ({today})", ""]
 
     # --- what was run
     out += ["## What was compared", "",
             "The same questions, asked through the same chatbot code (tools, prompt, evidence checks), with only the "
             "answering model changed. The questions are the project's gold sets in `chatbot/eval_gold_set.py`. "
             "The intent classifier that decides whether a question is in scope is the local Ollama model in every arm.", "",
-            "| arm | model | free-tier budget used (requests per minute / per 24 hours) | requests sent | time spent answering |",
+            "| arm | model | request budget (per minute / per 24 hours) | requests sent | time spent answering |",
             "|---|---|---|---|---|"]
     for arm in arms:
         req = sec = 0
@@ -136,8 +139,8 @@ def build(arms: list[str], eval_dir: str = EVAL_DIR, today: str | None = None) -
         try:
             lim = (f"{settings.get(f'rate_limits.{arm}.rpm')} / {settings.get(f'rate_limits.{arm}.rpd')}")
         except KeyError:
-            lim = "local, no limit"
-        local = lim == "local, no limit"
+            lim = "local, no limit" if arm == "ollama" else "account limits (paid API)"
+        local = arm == "ollama"
         out.append(f"| {arm} | `{model_of(arm, eval_dir)}` | {lim} | {'n/a (local)' if local else req} | "
                    f"{sec / 60:.1f} minutes |")
     out.append("")
@@ -216,16 +219,16 @@ def build(arms: list[str], eval_dir: str = EVAL_DIR, today: str | None = None) -
             "that no-data cases said so, and that no figure or quote appeared that no tool returned. They do not test "
             "that a stated number is right or that evidence is relevant; a person must read the answers in "
             "`data/eval/chatbot_eval_results_<arm>-<set>.jsonl` for that.",
-            "- **The arms do not see the same evidence.** The hosted models (Groq, Gemini) never receive text written by "
+            "- **The arms do not see the same evidence.** Hosted models never receive text written by "
             "members of the public (Reddit), CNA articles or broker research; those quotes are replaced by a placeholder "
             "(`chatbot/backends/base.py`, decided 4 Oct 2026). The local Ollama model sees them. A hosted model can therefore "
             "look worse on questions that need those quotes, and its tool calls and figures are the fair comparison.",
-            "- **Free-tier limits shaped the run.** Requests were paced below the providers' published free limits "
-            "(`rate_limits` in `config/chatbot.yaml`, `chatbot/ratelimit.py`) and a run that reached its budget stopped and "
+            "- **Configured limits shape the run.** Where request budgets are configured, requests are paced "
+            "(`rate_limits` in `config/chatbot.yaml`, `chatbot/ratelimit.py`) and a run that reaches its budget stops and "
             "can be resumed, not retried in a loop. 'Answered' above shows how far each arm got.",
-            "- **Seconds are not speed for the hosted arms.** Requests to Groq and Gemini are deliberately spread out to "
-            "stay under their limits, so their seconds per question are mostly waiting. Only the local arm's time "
-            "reflects how fast a model answers.",
+            "- **Timing includes rate-limit waits.** Configured pacing and retry waits contribute to elapsed time. "
+            "OpenAI has no application pacing cap by default; account limits and network latency still apply. "
+            "Record these conditions when comparing providers.",
             f"- **Sample sizes are small.** With {len(GOLD_SET_V2)} and {len(SCOPE_SET)} questions, a difference of one or two is inside what a "
             "different run of the same model can produce. Only repeated differences across sets mean much.", ""]
     if not all_complete:
@@ -257,7 +260,7 @@ def write_report(arms: list[str], out_path: str | None = None, eval_dir: str = E
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--arms", nargs="+", default=ARM_ORDER)
+    ap.add_argument("--arms", nargs="+", default=DEFAULT_ARMS, choices=ARM_ORDER)
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     print("wrote", write_report(args.arms, args.out))

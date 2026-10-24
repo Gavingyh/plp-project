@@ -48,7 +48,7 @@ def format_calls(turn) -> str:
 
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    p.add_argument("--backend", default=None, help="claude | openai | gemini | ollama (default: auto)")
+    p.add_argument("--backend", default=None, help="claude | openai | ollama (default: CHATBOT_BACKEND, otherwise openai)")
     p.add_argument("--trace", default=None, help="append each turn as JSON to this file")
     args = p.parse_args()
 

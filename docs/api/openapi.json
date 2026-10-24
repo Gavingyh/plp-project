@@ -23,6 +23,35 @@
         "title": "ChatMessage",
         "type": "object"
       },
+      "ChatProblem": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "setup_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setup Hint"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ChatProblem",
+        "type": "object"
+      },
       "ChatRequest": {
         "properties": {
           "backend": {
@@ -31,7 +60,6 @@
                 "enum": [
                   "claude",
                   "openai",
-                  "gemini",
                   "ollama"
                 ],
                 "type": "string"
@@ -59,6 +87,41 @@
           "message"
         ],
         "title": "ChatRequest",
+        "type": "object"
+      },
+      "ChatServiceError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/ChatProblem"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ChatServiceError",
+        "type": "object"
+      },
+      "ChatStatus": {
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChatProblem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "configured"
+        ],
+        "title": "ChatStatus",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -816,9 +879,38 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatServiceError"
+                }
+              }
+            },
+            "description": "Chat service unavailable"
           }
         },
         "summary": "Chat"
+      }
+    },
+    "/chat/status": {
+      "get": {
+        "description": "Check server configuration only; never call a model or reveal credentials.\n\nA configured key may still be rejected or out of credit at request time.\nThis endpoint does not check connectivity, model availability or billing.",
+        "operationId": "chat_status_chat_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Chat Status"
       }
     },
     "/coverage": {

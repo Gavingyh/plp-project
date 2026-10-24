@@ -352,6 +352,55 @@ def _data_runs_to(bank: str | None = None) -> str | None:
         conn.close()
 
 
+def _day_in_words(day: str | None) -> str | None:
+    """'2026-09-25' as '25 September 2026'. A local model given the ISO date
+    wrote "the data runs to September 2023" in three answers of 26, which a
+    person rating them found and no check did."""
+    try:
+        d = date.fromisoformat(str(day)[:10])
+    except (TypeError, ValueError):
+        return None
+    return f"{d.day} {d.strftime('%B %Y')}"
+
+
+def _runs_to(out: dict, bank: str | None = None) -> dict:
+    """Adds the date the data runs to, as data_runs_to and in words to copy."""
+    out["data_runs_to"] = _data_runs_to(bank)
+    if words := _day_in_words(out["data_runs_to"]):
+        out["data_runs_to_in_words"] = words
+    return out
+
+
+_PLACES = ("first", "second", "third")
+
+
+def _rank_in_words(bank: str, ranked: list[str], topic: str | None) -> str | None:
+    """Where the bank stands, as a sentence: a model given the ranking list
+    ["DBS", "OCBC", "UOB"] called OCBC "third place" while naming DBS above it
+    and UOB below it."""
+    if bank not in ranked or len(ranked) < 2:
+        return None
+    on = f" on {topic}" if topic else " overall"
+    of = "three banks" if len(ranked) == 3 else f"{len(ranked)} banks with enough data"
+    places = ", ".join(f"{b} {_PLACES[i]}" for i, b in enumerate(ranked))
+    return f"Of the {of}{on}, {bank} is {_PLACES[ranked.index(bank)]} ({places})."
+
+
+def _topics_in_words(strongest: list[dict], weakest: list[dict]) -> str | None:
+    """The topics lifting and dragging a bank's overall score, as a sentence to copy."""
+    say = lambda ts: ", ".join(f"{t['topic_name']} ({t['score']:+.2f})" for t in ts)  # noqa: E731
+    parts = ([f"lifting it: {say(strongest)}"] if strongest else []) + ([f"dragging it: {say(weakest)}"] if weakest else [])
+    return ("Topics " + "; ".join(parts) + ".") if parts else None
+
+
+def _topic_scope(topic: str | None) -> str | None:
+    """For a score on one topic: the tools give no breakdown within it. A model
+    comparing the banks on the macro environment named "the Singapore economy"
+    and "inflation" as its strongest and weakest topics, which no tool returned."""
+    return (f"This is the score for {topic} as a whole. The tools give no breakdown into smaller topics "
+            "within it, so name none.") if topic else None
+
+
 def _topics(bank: str, window: str) -> tuple[list[dict], list[dict]]:
     """The bank's highest- and lowest-scoring named topics in this window,
     among those with enough sentences to report; none appears in both."""
@@ -416,9 +465,16 @@ def chat_get_sentiment(bank: str, aspect: str | None = None, window: str | None 
         out["ranking_high_to_low"] = peers["ranking_high_to_low"]
         out["other_banks"] = {b: {k: r[k] for k in ("score", "reading")} for b, r in peers["banks"].items()
                               if b != bank and r.get("insufficient_data") is False}
+        topic = _topic_name(out["aspect"]) if out["aspect"] != "ALL" else None
+        if rank := _rank_in_words(bank, out["ranking_high_to_low"], topic):
+            out["rank_in_words"] = rank
         if out["aspect"] == "ALL":
             out["strongest_topics"], out["weakest_topics"] = _topics(bank, window)
-    out["data_runs_to"] = _data_runs_to(bank)
+            if topics := _topics_in_words(out["strongest_topics"], out["weakest_topics"]):
+                out["topics_in_words"] = topics
+        elif scope := _topic_scope(topic):
+            out["topic_scope"] = scope
+    _runs_to(out, bank)
     if note and out.get("period"):
         out["period_note"] = note
     return out
@@ -437,8 +493,15 @@ def chat_compare_banks(aspect: str | None = None, window: str | None = None) -> 
     banks = {b: _for_reader(r) for b, r in result["banks"].items()}
     ranked = sorted((b for b, r in banks.items() if r.get("insufficient_data") is False),
                     key=lambda b: banks[b]["score"], reverse=True)
-    out = {**result, "topic_name": _topic_name(result["aspect"]), "banks": banks,
-           "ranking_high_to_low": ranked, "data_runs_to": _data_runs_to()}
+    topic = _topic_name(result["aspect"])
+    out = {**result, "topic_name": topic, "banks": banks, "ranking_high_to_low": ranked}
+    if ranked:
+        on = f"on {topic}" if result["aspect"] != "ALL" else "overall"
+        out["ranking_in_words"] = ("Highest to lowest " + on + ": "
+                                   + ", ".join(f"{b} ({banks[b]['score']:+.2f})" for b in ranked) + ".")
+    if result["aspect"] != "ALL" and (scope := _topic_scope(topic)):
+        out["topic_scope"] = scope
+    _runs_to(out)
     if period := period_text(window):
         out["period"] = period
         if note:
@@ -556,7 +619,7 @@ def chat_get_trend(bank: str, aspect: str | None = None) -> dict:
                        f"No recent trend: {error or 'fewer than two months with enough sentences'}.")
         out["monthly_series"] = series
     out["monthly_series"] = out.get("monthly_series", [])[-settings.get("trend.chat_months"):]
-    out["data_runs_to"] = _data_runs_to(bank)
+    _runs_to(out, bank)
     return out
 
 
@@ -698,7 +761,7 @@ def _evidence_context(bank: str | None, aspect: str | None, window: str = "all_t
                 score["covers"] += (". No topic was chosen: if the question fits none of the topics, say that "
                                     "no matching topic was found and that this is the overall")
             out["topic_score" if aspect else "bank_overall_score"] = score
-        out["data_runs_to"] = _data_runs_to(bank)
+        _runs_to(out, bank)
     except sqlite3.Error as e:
         logger.warning("no score or data date for the evidence: %s", e)
     return out

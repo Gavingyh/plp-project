@@ -450,7 +450,9 @@ def test_the_prompt_no_longer_asks_for_labelled_sections():
     # The old rule 6: "direct answer first, then supporting evidence ..., then the sample size ..., then any caveats".
     assert "answer format" not in SYSTEM_PROMPT.lower() and "sample size" not in SYSTEM_PROMPT.lower()
     assert "No headings or section labels" in SYSTEM_PROMPT
-    for field in ("reading", "positive_pct", "ranking_high_to_low", "strongest_topics", "trend_in_words", "source_name"):
+    # The rank, the topics and the data date are given as sentences to copy (the human ratings of 17 Oct).
+    for field in ("reading", "positive_pct", "rank_in_words", "ranking_in_words", "topics_in_words", "topic_scope",
+                  "data_runs_to_in_words", "trend_in_words", "source_name"):
         assert field in SYSTEM_PROMPT, field
 
 

@@ -51,6 +51,13 @@ def _is_boilerplate(text: str) -> bool:
 _LEXICAL_WEIGHT = 0.15  # small boost relative to cosine similarity, see module docstring
 
 
+def _instant(published_at: str | None) -> float:
+    """A sentence's publication time as a number for sorting, oldest for a missing or unreadable one."""
+    from aggregate.index import _utc
+    t = _utc(published_at)
+    return t.timestamp() if t else float("-inf")
+
+
 def _cosine_sim(query_vec: np.ndarray, matrix: np.ndarray) -> np.ndarray:
     q = query_vec / (np.linalg.norm(query_vec) + 1e-9)
     m = matrix / (np.linalg.norm(matrix, axis=1, keepdims=True) + 1e-9)
@@ -145,13 +152,28 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
             d["aspect"], d["sentiment"] = r[6], r[7]
         candidates.append(d)
 
+    use_aspect = aspect_query_enabled() if aspect_query is None else aspect_query
+    rank_text = ranking_query(query, aspect) if use_aspect else query
+    # With the aspect query, the overlap boost uses the same cleaned text, so
+    # question words ("what", "people", "say") don't favour chatter.
+    query_words = set(_WORD.findall(rank_text.lower()))
+    if aspect and settings.get("evidence.within_topic") == "words_then_newest":
+        # Within one stored topic, FinBERT similarity put fewer sentences people
+        # labelled with that topic in the top five than a random draw from the
+        # same pool did; the question's own words, then the newest first, put
+        # more, and no model built for search beat that ordering
+        # (chatbot/retrieval_eval.py, data/eval/search-models/compare.py), so no
+        # embedding is needed here.
+        for c in candidates:
+            c["score"] = round(_lexical_overlap(query_words, c["text"]), 4)
+        candidates.sort(key=lambda c: (c["score"], _instant(c["published_at"])), reverse=True)
+        return candidates[:max(int(k), 0)]
+
     cand_ids = {c["sentence_id"] for c in candidates}
     all_ids, all_vecs = load_for_search()
     id_to_idx = {sid: i for i, sid in enumerate(all_ids) if sid in cand_ids}
 
     scored = candidates
-    use_aspect = aspect_query_enabled() if aspect_query is None else aspect_query
-    rank_text = ranking_query(query, aspect) if use_aspect else query
     if id_to_idx:
         query_vec = embed_sentences([rank_text])[0]
         idxs = [id_to_idx[c["sentence_id"]] for c in candidates if c["sentence_id"] in id_to_idx]
@@ -160,9 +182,6 @@ def search_evidence(query: str, bank: str | None = None, aspect: str | None = No
     else:
         sim_by_id = {}
 
-    # With the aspect query, the overlap boost uses the same cleaned text, so
-    # question words ("what", "people", "say") don't favour chatter.
-    query_words = set(_WORD.findall(rank_text.lower()))
     for c in scored:
         cosine = float(sim_by_id.get(c["sentence_id"], 0.0))
         lexical = _lexical_overlap(query_words, c["text"])

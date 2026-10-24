@@ -6,6 +6,8 @@ the guardrails of the Conversational UIs module (DESIGN decision 19).
     that match nothing the tools returned.
   - unverified_sentence_ids(answer, retrieved_ids): sentence ids the answer
     cites that were never retrieved.
+  - unverified_years(answer, tool_results, question): years in the answer
+    that no tool returned and the user did not type.
   - unverified_readings(answer, tool_results): a score described as "neutral"
     or "slightly/moderately/clearly positive/negative" in words no tool
     returned as a reading.
@@ -374,6 +376,41 @@ def unverified_numbers(answer: str, tool_results: list, question: str = "") -> l
         flagged.append(token)
     return flagged
 
+
+
+# --- output: years -------------------------------------------------------------
+
+_YEAR = re.compile(r"(?<!\d)(?<!\d[.,])(?:19|20)\d{2}(?!\d|[.,]\d)")   # not "0.2023", "2,023" or "20231"
+
+
+def _collect_years(obj, out: set[str]) -> None:
+    if isinstance(obj, dict):
+        for v in obj.values():
+            _collect_years(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            _collect_years(v, out)
+    elif isinstance(obj, str):
+        out.update(_YEAR.findall(obj))
+    elif isinstance(obj, int) and not isinstance(obj, bool) and 1900 <= obj <= 2099:
+        out.add(str(obj))
+
+
+def unverified_years(answer: str, tool_results: list, question: str = "") -> list[str]:
+    """Years in the answer that no tool returned and the user did not type.
+
+    unverified_numbers leaves years alone, so a person rating the answers
+    found what no check did: "the data runs to September 2023" in three of 26
+    answers, where the tools said 2026-09-25. A year counts as returned if it
+    appears in any value a tool gave, a date ("2026-09-25"), a period
+    ("2026-Q2", "August 2026") or a retrieved sentence's text."""
+    known: set[str] = set(_YEAR.findall(question or ""))
+    _collect_years(tool_results, known)
+    flagged = []
+    for y in _YEAR.findall(answer or ""):
+        if y not in known and y not in flagged:
+            flagged.append(y)
+    return flagged
 
 # --- output: sentence ids --------------------------------------------------------
 

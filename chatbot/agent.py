@@ -72,7 +72,7 @@ from chatbot import intent as intents
 from chatbot import progress
 from chatbot import settings
 from chatbot.guards import (_ABBREVIATION, is_evidence_text_key, returned_readings, unverified_numbers,
-                            unverified_readings, unverified_sentence_ids)
+                            unverified_readings, unverified_sentence_ids, unverified_years)
 from chatbot.prompts import SYSTEM_PROMPT, with_state
 from chatbot.tools import TOOL_FUNCTIONS, TOOL_SCHEMAS, coerce_tool_arguments, default_period_sentence
 from ingest.base import BANK_NAMES, detect_banks
@@ -2248,7 +2248,11 @@ def _figure_and_reading_flags(answer: str, tracker: "_ToolCallTracker", question
     checked = _BARE_MARK.sub(lambda m: " " + re.sub(r"\D+", " ", m.group(0)) + " ", body)
     checked += "".join("\n" + re.sub(r"\D+", " ", g) for g in tracker.dropped_marks)
     results = _model_results(tracker)
-    return unverified_numbers(checked, results, question), unverified_readings(body, results)
+    figures = unverified_numbers(checked, results, question)
+    # A year is checked apart from the other figures, which leave years alone; it is flagged,
+    # rewritten and trimmed like them.
+    figures += [y for y in unverified_years(body, results, question) if y not in figures]
+    return figures, unverified_readings(body, results)
 
 
 def _check_answer(answer: str, tracker: "_ToolCallTracker", question: str, mode: str, verbose: bool) -> _Checked:

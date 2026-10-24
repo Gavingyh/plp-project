@@ -1941,3 +1941,52 @@ model card. The README's download and upload commands, the model card and
 shared drive is rebuilt by `scripts/share_bundle.sh data/run/share` (155 MB:
 snapshot, embeddings, aspect answers, `README-teams.md`, `SHA256SUMS`);
 `data/README-teams.md` is now tracked.
+
+### 24 October
+
+**Chatbot misdescriptions fixed, and measured on both models.** A person's
+ratings of the 32 gold-set answers found 7 of the 26 the model wrote
+contradicting the tool data although every number was a tool's: a wrong
+year (3), a wrong period (2), a wrong rank (1), wrong topics (1)
+([evidence](evidence/human-ratings-2026-10-24.md)). The tools now give the
+data's end date, rank, ranking and topics as sentences to copy, a single
+topic's score says it has no breakdown, and a year no tool returned is
+flagged. Asked the 7 questions three times each, the local model was right
+in 16 of 21 tries and OpenAI's gpt-6-luna (the default since the teammates'
+OpenAI change, merged today) in 21 of 21, for US$0.0158 under a US$0.05 cap
+([evidence](evidence/chatbot-fixes-2026-10-24.md)). The local model's
+remaining fault: with too little recent data on a topic, it reports the
+bank's overall score as the topic's.
+
+**Evidence search: FinBERT replaced.** Within a topic, FinBERT similarity
+ranked below a random draw, so the search orders by the question's words,
+then newest (0.82 against 0.74). With no topic, FinBERT was no better than
+random (0.12 against 0.10); all-MiniLM-L6-v2 now ranks those searches (0.31),
+from its own store `data/search_embeddings.npz` (66 MB), refreshed by the
+topic step. The search evaluation's precision at 5 divided by five even for
+pools under five; fixed, which raises the report's within-topic figures by
+about 0.03 ([evidence](evidence/search-models-2026-10-24.md), decision 27).
+
+**Merged** the teammates' OpenAI change into `feat/chatbot-misdescription-fixes`;
+diagrams brought up to date (343 rows check; Gemini gone, the dashboard reads
+through the API). A fresh clone of the branch collects 2892 tests in `tests/`
+and 2939 from the root; all pass on this Mac after Streamlit was upgraded
+from 1.63.0 to 1.66.1, which the five dashboard navigation tests needed.
+Replacement text for the Word report, now the master on SharePoint, is in
+`docs/report/word-updates-2026-10-24.md`.
+
+**Needs a human:**
+- Push the branch and merge it to `main` (not pushed).
+- Upload the new `data/search_embeddings.npz` to SharePoint (or rebuild it:
+  `python -m chatbot.search_vectors`, about 5 minutes).
+- Rotate the OpenAI key: the one in `.env` was pasted into a chat session.
+- Paste the replacement text into the Word report; a person to check the
+  three-try answers the AI assistant read.
+- 13 results files already in git hold CNA or broker-research text in their
+  recorded tool results (for example `data/eval/summaries/summaries.jsonl`).
+  The repo is private; removing them, from history too, is a team decision.
+- `chatbot/retrieval_eval_with_recall.py` divides precision by k like the
+  old evaluation did; its recall figures are unaffected.
+- The gold-set check doesn't recognise gpt-6-luna's way of declining an
+  out-of-scope bank ("I can't report …"), so it scores 6 of 8 where reading
+  gives 8 of 8.

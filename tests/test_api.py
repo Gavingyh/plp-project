@@ -248,7 +248,9 @@ def test_a_failing_chat_backend_is_a_503_not_a_500(monkeypatch):
         raise BackendUnavailable("Ollama isn't running")
     monkeypatch.setattr(api_main.Conversation, "ask", down)
     r = TestClient(api_main.app).post("/chat", json={"message": "How is DBS doing?"})
-    assert r.status_code == 503 and "Ollama" in r.json()["detail"]
+    assert r.status_code == 503
+    assert r.json()["detail"]["code"] == "backend_unavailable"
+    assert "temporarily unavailable" in r.json()["detail"]["message"]
 
 
 def test_a_bug_while_answering_is_a_500_not_backend_unavailable(monkeypatch):

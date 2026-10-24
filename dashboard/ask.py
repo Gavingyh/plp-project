@@ -25,7 +25,7 @@ def _clear_conversation():
     st.session_state.pop("api_chat_failure", None)
 
 
-def _suggestion_buttons(items: list[dict], *, start: int = 0, cards: bool = False):
+def _suggestion_buttons(items: list[dict], *, start: int = 0, cards: bool = False, disabled: bool = False):
     categories = {
         "overall": "Bank overview",
         "comparison": "Compare banks",
@@ -52,6 +52,7 @@ def _suggestion_buttons(items: list[dict], *, start: int = 0, cards: bool = Fals
                     on_click=_queue_question,
                     args=(item["question"],),
                     use_container_width=True,
+                    disabled=disabled,
                 )
     else:
         for index, item in enumerate(items, start=start):
@@ -61,6 +62,7 @@ def _suggestion_buttons(items: list[dict], *, start: int = 0, cards: bool = Fals
                 on_click=_queue_question,
                 args=(item["question"],),
                 use_container_width=True,
+                disabled=disabled,
             )
 
 
@@ -108,11 +110,32 @@ def render_answer_guidance():
     )
 
 
-def render(container, load_suggestions: Callable, send_message: Callable):
+def _setup_guidance(hint: str | None):
+    if hint:
+        with st.expander("Administrator setup"):
+            st.write(hint)
+
+
+def render(container, load_suggestions: Callable, send_message: Callable, load_status: Callable):
     history = st.session_state.setdefault("api_chat_history", [])
     # Consume each submission once. Reruns and navigation never resubmit it.
     pending = st.session_state.pop("api_chat_pending", None)
     failure = st.session_state.get("api_chat_failure")
+    try:
+        status = load_status()
+    except ApiError as exc:
+        status = {"configured": False, "problem": {
+            "message": f"Chatbot availability could not be checked. {exc}",
+        }}
+    configured = status["configured"]
+    problem = status.get("problem") or {}
+    if pending and not configured:
+        # A configuration change between submission and rerun must not lose
+        # the question or send it while chat is disabled.
+        failure = {"question": pending, "error": problem["message"],
+                   "setup_hint": problem.get("setup_hint")}
+        st.session_state.api_chat_failure = failure
+        pending = None
 
     # Keep the input and its accessible caption together in Streamlit's footer.
     with st.bottom:
@@ -121,7 +144,7 @@ def render(container, load_suggestions: Callable, send_message: Callable):
                 "Ask about DBS, OCBC or UOB…",
                 key="ask_input",
                 on_submit=_queue_typed_question,
-                disabled=bool(pending),
+                disabled=bool(pending) or not configured,
             )
             st.caption(
                 "AI answers can contain mistakes. Check the evidence. Not financial advice."
@@ -142,7 +165,11 @@ def render(container, load_suggestions: Callable, send_message: Callable):
             use_container_width=True,
         )
 
-        if not history and not pending and not failure:
+        if not configured:
+            st.warning(problem["message"])
+            _setup_guidance(problem.get("setup_hint"))
+
+        if configured and not history and not pending and not failure:
             st.markdown(
                 '<div class="ask-welcome"><div class="eyebrow">Start exploring</div>'
                 "<h3>What would you like to know?</h3>"
@@ -160,6 +187,8 @@ def render(container, load_suggestions: Callable, send_message: Callable):
             with st.container(key=f"ask_assistant_{len(history) + 1}"):
                 with st.chat_message("assistant", avatar=":material/monitoring:"):
                     st.error(f"Could not get an answer. {failure['error']}")
+                    if configured:
+                        _setup_guidance(failure.get("setup_hint"))
 
         if pending:
             _render_message({"role": "user", "content": pending}, len(history))
@@ -176,6 +205,7 @@ def render(container, load_suggestions: Callable, send_message: Callable):
                             st.session_state.api_chat_failure = {
                                 "question": pending,
                                 "error": str(exc),
+                                "setup_hint": exc.setup_hint,
                             }
                             st.rerun()
                         else:
@@ -208,12 +238,12 @@ def render(container, load_suggestions: Callable, send_message: Callable):
             suggestions = []
         if suggestions:
             if not history and not pending and not failure:
-                _suggestion_buttons(suggestions[:3], cards=True)
+                _suggestion_buttons(suggestions[:3], cards=True, disabled=not configured)
                 if len(suggestions) > 3:
                     with st.expander("More questions"):
-                        _suggestion_buttons(suggestions[3:], start=3)
+                        _suggestion_buttons(suggestions[3:], start=3, disabled=not configured)
             else:
                 with st.expander("Suggested questions"):
-                    _suggestion_buttons(suggestions)
+                    _suggestion_buttons(suggestions, disabled=not configured)
 
         st.caption("You can follow up with questions such as “And OCBC?”")

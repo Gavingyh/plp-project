@@ -59,6 +59,7 @@ def fake_api(
     empty=False,
     fail_path=None,
     chat_payload=None,
+    chat_status=None,
     suggestions=None,
     trend_payload=None,
     evidence_rows=None,
@@ -147,6 +148,8 @@ def fake_api(
                     ]
                 )
             }
+        elif path == "/chat/status":
+            payload = chat_status if chat_status is not None else {"configured": True, "problem": None}
         elif path == "/chat":
             payload = (
                 chat_payload

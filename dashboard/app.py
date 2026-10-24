@@ -20,7 +20,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dashboard.api_client import ApiError
-from dashboard.chat import send_chat
+from dashboard.chat import load_chat_status, send_chat
 from dashboard import ask as ask_view, data, trends, evidence as evidence_view
 from dashboard import manage as manage_view
 from config.logging_config import get_logger, setup_logging
@@ -814,7 +814,7 @@ elif page == "Ask":
             "Ask BankPulse",
             "Explore bank sentiment, compare topics and find supporting evidence through conversation.",
         )
-    ask_view.render(chat_area, load_suggestions, send_chat)
+    ask_view.render(chat_area, load_suggestions, send_chat, load_chat_status)
 
 # --------------------------------------------------------- Data Management
 elif page == "Data Management":

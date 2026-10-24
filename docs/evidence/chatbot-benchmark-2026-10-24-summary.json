@@ -1,0 +1,430 @@
+{
+  "schema_version": 2,
+  "updated_at_utc": "2026-10-24T08:35:40.865176+00:00",
+  "models": {
+    "local": {
+      "conditions": {
+        "run_id": "chatbot-benchmark-2026-10-24-local",
+        "prepared_at_utc": "2026-10-24T06:37:22.009291+00:00",
+        "prepared_at_sgt": "2026-10-24T14:37:22.009751+08:00",
+        "commit": "15d1ed8643792f47fbfed4477a08633be0a787ce",
+        "branch": "feat/chatbot-openai",
+        "backend": "ollama",
+        "answer_model": "llama3.1:8b",
+        "intent_model": "llama3.1:8b",
+        "network": "Local loopback; no hosted inference or collection",
+        "request_path": "POST /chat, same JSON history as dashboard; no UI-render time",
+        "repetitions": 3,
+        "order": "Fixed, sequential; conversation reset between scenarios",
+        "warmup": "One first-request probe, reported separately and excluded from warm metrics",
+        "source_visibility": "Existing local backend sees all permitted local evidence; hosted comparators not tested",
+        "database_signature": {
+          "documents": 28946,
+          "sentences": 45927,
+          "data_as_of": "2026-10-20T12:27:18+00:00",
+          "index": [
+            760,
+            "2026-10-20T15:22:08.194140+00:00"
+          ]
+        },
+        "database_snapshot_sha256": "37f98e871287352920da7d8595c034d2e88b647b528e5c165fb56d1ca867a57a",
+        "code_hashes": {
+          "api/main.py": "fa4617a03f38f97e65fe966cab385070e03260cc5788b883943b944a04946e77",
+          "aspects/embed.py": "1a1013cccf1592ae7c2f952a4ac34fb2fd4359adbd0c031f605420eea6bc96c6",
+          "aspects/embed_store.py": "19f880eb838632cffc2365eb944789c21d65c2ec3957170fad5674579affa859",
+          "chatbot/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "chatbot/agent.py": "4e24bffbca2a994d4e36ad85c81bb371d48845df34d535c5a49e1deeca4e657a",
+          "chatbot/backends/__init__.py": "c0a5ac6692a2e62369621c8ba9d37bfacfea7354151845e68d05ab0f563fdd62",
+          "chatbot/backends/_openai_compat.py": "a170443f5b1808862ddaf4bc7c3345ecb7aae75add5f687c311bc692b8d7e5c8",
+          "chatbot/backends/_text_tool_call.py": "143b04ae081818d61a5e097bed056f30fb22d70afc1eefafa04bd27ea98191b1",
+          "chatbot/backends/base.py": "ef47b3e9852d68273427f16c66e3587914b8391249dc792c985b1a64baf5a2e4",
+          "chatbot/backends/claude_backend.py": "7e343fb3dce727c57752e66eaacda56d42ee8183ef249c24ca78ec00bebe15fa",
+          "chatbot/backends/gemini_backend.py": "e4031ae31ca41c49b96b7c89199968a45a2fad758e44bc7c236a90b2dfeecb33",
+          "chatbot/backends/ollama_backend.py": "8d61458c27671e53a037134c09c1a83798e6aa88b950b367ecdcc0a87d253c5d",
+          "chatbot/backends/openai_backend.py": "5cf4e252cb287920d6c4c084d068df33fd18cef7b67cd0a9492d21b8265a448f",
+          "chatbot/chat.py": "565dc66b10855e9ba884a7c4fbffd819b0fc6f9410bdb3d3bfd8a988027bb313",
+          "chatbot/eval_gold_set.py": "eaec623e4eacf5d9008c76276ce83ab2c7f66bdf61b3357b7a278160d77e80e3",
+          "chatbot/eval_intent.py": "9acd581c82977c508cf2c4618bc00e8ef26242a7ddafbc4b56e632ed90104443",
+          "chatbot/guards.py": "61ba450a04e18a68269b13aa54df7621dfcb5f38db910051ec09697c806e6b90",
+          "chatbot/intent.py": "1182e7296b097841d333f4e6acef93014a635fe85df331d0e83a8e7c2fdd6b9a",
+          "chatbot/judge.py": "9ce92778db715c47f182c589adceb5ed2eb0acd488fa8832dd7f22f36ebaf91a",
+          "chatbot/ollama_load.py": "3f2704605d4b790ce0e61237c194629326a252330ebe1fc22744e9799c806e5c",
+          "chatbot/progress.py": "53c6a511822112cd8738598bfb2044ef118a87897db76d02467740969647cb92",
+          "chatbot/prompts.py": "85ae945539486d34c7f2e43275752e07bdf514484c3c313271fd6003c056db03",
+          "chatbot/provider_eval.py": "ee5890abe51e039b7a879c03ac0cac78e7881206ec8480da04c734f344f9d407",
+          "chatbot/provider_report.py": "44108a93a4a6220a7d20c907192a0801c063a961a1f64ec50943a57b105929ad",
+          "chatbot/ratelimit.py": "d9affefc34160416a64e1bc3b859a1ab017e41e1553a7f78e39aad01c5d0672d",
+          "chatbot/replay.py": "6cdd2f8a6f7891cf3f6b9555ac2fa816b1b84a3e09ec90c024fcc6aa192c8a44",
+          "chatbot/retrieval.py": "9f6587fde5b351020f7f05497c60945fee3baa137d1d22da84a5c0b88a4af017",
+          "chatbot/retrieval_eval.py": "020195b7d0cd32c499640632878fb0f712bec73283e9d76a393df765fa61a529",
+          "chatbot/retrieval_eval_with_recall.py": "840c266379a3f5eda9316cc6904c74cd13d3fdb7daa1da6a58e503ef3a9c1ff8",
+          "chatbot/run_eval.py": "966b358591555510c4c9422baa89f5a08b38440f5e43d240829165e5da89915c",
+          "chatbot/settings.py": "8af632145f9cd74db9cac8ba5b1496a29190fbf526ec1314f4d8b231e45eb4b0",
+          "chatbot/suggestions.py": "61eb4e4ef4830619bd8983d55ec2111895ae0be40999706867de713359aacdbb",
+          "chatbot/summarise.py": "9f42ebdaeeccbdc139cc2bd020b72a56d3772098b7151aff69ee3b070d3e1c19",
+          "chatbot/tools.py": "352605eb31aa7c6a4f2ea5b6bb6df8e4118326bc71436ffe4ce20b905dfa07e2",
+          "config/aspects.yaml": "d6bd2568dc04d8d2151d42e215075f641e3a6c3d8c650ccd66bfcfa2e76723b5",
+          "config/chatbot.yaml": "1c71426bc5fb442fbdcb2d1ae16a767892d2ff7e9d3843100661af5e7a044deb",
+          "config/intents.yaml": "7f0d0e824bc043bb0dcfaaacd250598574532d67199bcfa088f95343d0dc5334",
+          "config/model_version.py": "248e4d90c6e50823a98e4aa3590d83f9c24cf6c87d8db1734b8e45c50cc96f18",
+          "config/sources.yaml": "cc1adb370c475f5a0f715bfabb4d039fa0ffa78c11deef6d195de0360850fae0"
+        },
+        "test_plan_sha256": "af34d1dc6d5f26b4cb2589ef102af881611c6b4edb39cd5a5dc388b411bc4396",
+        "planned_warm_turns": 159,
+        "cpu": "Apple M2 Pro",
+        "memory_bytes": 17179869184,
+        "api_cost_usd": 0,
+        "cost_note": "Local inference; hardware/electricity excluded",
+        "runner_sha256": "35e6407aea9b939744744d376cf6bf4fad9680c2252755b69bced00b457fe063",
+        "model_digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e"
+      },
+      "results": {
+        "attempts": 159,
+        "answered": 159,
+        "errors": 0,
+        "trace_matches": 159,
+        "reviewed_turns": 159,
+        "unique_outputs": 135,
+        "overall_median_s": 12.5687,
+        "overall_p95_s": 32.69397,
+        "startup_s": 25.8565,
+        "quality": {
+          "faithfulness": {
+            "mean": 2.5238095238095237,
+            "n": 126
+          },
+          "relevance": {
+            "mean": 2.5723270440251573,
+            "n": 159
+          },
+          "correctness": {
+            "mean": 2.4779874213836477,
+            "n": 159
+          }
+        },
+        "checks": {
+          "task_pass": {
+            "passed": 99,
+            "n": 159
+          },
+          "evidence_pass": {
+            "passed": 6,
+            "n": 24
+          },
+          "behavior_pass": {
+            "passed": 44,
+            "n": 45
+          },
+          "followups": {
+            "passed": 20,
+            "n": 33
+          }
+        },
+        "latency_groups": {
+          "lookup": {
+            "attempts": 51,
+            "target_s": 5,
+            "median_s": 12.4655,
+            "p95_s": 20.65095,
+            "within_time": 0,
+            "correct_within_time": 0
+          },
+          "evidence": {
+            "attempts": 15,
+            "target_s": 10,
+            "median_s": 23.3193,
+            "p95_s": 47.34188,
+            "within_time": 0,
+            "correct_within_time": 0
+          },
+          "compare": {
+            "attempts": 18,
+            "target_s": 20,
+            "median_s": 15.76015,
+            "p95_s": 36.330555,
+            "within_time": 14,
+            "correct_within_time": 7
+          },
+          "broader_comparison": {
+            "attempts": 9,
+            "target_s": 20,
+            "median_s": 26.2404,
+            "p95_s": 33.94398,
+            "within_time": 2,
+            "correct_within_time": 0
+          }
+        },
+        "verification_rewrites": 16,
+        "verification_repairs": {
+          "none": 143,
+          "rewritten": 15,
+          "trimmed": 1
+        },
+        "answers_with_visible_verification_warning": 0,
+        "task_failures_without_visible_verification_warning": 60,
+        "reviewer": "Codex-assisted review of final API answers against actual tool traces and snapshot; not independent human ratings",
+        "local_api_cost_usd": 0,
+        "integrity_checks": {
+          "source_code_unchanged": true,
+          "database_content_unchanged": true,
+          "verified_tables": 6
+        }
+      }
+    },
+    "openai": {
+      "conditions": {
+        "run_id": "chatbot-benchmark-2026-10-24-openai",
+        "prepared_at_utc": "2026-10-24T08:23:00.861685+00:00",
+        "prepared_at_sgt": "2026-10-24T16:23:00.861921+08:00",
+        "commit": "15d1ed8643792f47fbfed4477a08633be0a787ce",
+        "branch": "feat/chatbot-openai",
+        "backend": "openai",
+        "answer_model": "gpt-6-luna",
+        "intent_model": "llama3.1:8b",
+        "network": "FastAPI and intent classification local; answer inference via OpenAI API",
+        "request_path": "POST /chat, same JSON history as dashboard; no UI-render time",
+        "repetitions": 3,
+        "order": "Fixed, sequential; conversation reset between scenarios",
+        "warmup": "One first-request probe, reported separately and excluded from warm metrics",
+        "source_visibility": "Existing hosted filters withhold Reddit, CNA, broker-research and unknown-source text, links and citations; earlier assistant answers withheld",
+        "database_signature": {
+          "documents": 28946,
+          "sentences": 45927,
+          "data_as_of": "2026-10-20T12:27:18+00:00",
+          "index": [
+            760,
+            "2026-10-20T15:22:08.194140+00:00"
+          ]
+        },
+        "database_snapshot_sha256": "37f98e871287352920da7d8595c034d2e88b647b528e5c165fb56d1ca867a57a",
+        "code_hashes": {
+          "api/main.py": "1ffdf4e54e10bc57215d7b5f6a3f1b614ba5f4425172f371fd2768eff2e4965f",
+          "aspects/embed.py": "1a1013cccf1592ae7c2f952a4ac34fb2fd4359adbd0c031f605420eea6bc96c6",
+          "aspects/embed_store.py": "19f880eb838632cffc2365eb944789c21d65c2ec3957170fad5674579affa859",
+          "chatbot/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "chatbot/agent.py": "940a5f279a0536c590d665f512e4d3120ac2cee75269fa6a815f0ec11be94be2",
+          "chatbot/backends/__init__.py": "7ec39e95a7d74d9e6b0cf8b898d1c4fb5a49dbba42c9e9f6d2663710e2c0987a",
+          "chatbot/backends/_openai_compat.py": "a170443f5b1808862ddaf4bc7c3345ecb7aae75add5f687c311bc692b8d7e5c8",
+          "chatbot/backends/_text_tool_call.py": "143b04ae081818d61a5e097bed056f30fb22d70afc1eefafa04bd27ea98191b1",
+          "chatbot/backends/base.py": "ffe95896a0b58d5c0c863c13e2529b605dbb363c65514fb2402ca29209ecdc9e",
+          "chatbot/backends/claude_backend.py": "7e343fb3dce727c57752e66eaacda56d42ee8183ef249c24ca78ec00bebe15fa",
+          "chatbot/backends/ollama_backend.py": "8d61458c27671e53a037134c09c1a83798e6aa88b950b367ecdcc0a87d253c5d",
+          "chatbot/backends/openai_backend.py": "1e10dabf18da3330abf702bee1b0884f1dae8eea97f2d73234ec4df2220369e8",
+          "chatbot/chat.py": "605035bfc4eeb2c1fcbff3b07905c411724f5adb50e92b070ce01defe11d5917",
+          "chatbot/eval_gold_set.py": "eaec623e4eacf5d9008c76276ce83ab2c7f66bdf61b3357b7a278160d77e80e3",
+          "chatbot/eval_intent.py": "9acd581c82977c508cf2c4618bc00e8ef26242a7ddafbc4b56e632ed90104443",
+          "chatbot/guards.py": "61ba450a04e18a68269b13aa54df7621dfcb5f38db910051ec09697c806e6b90",
+          "chatbot/intent.py": "1182e7296b097841d333f4e6acef93014a635fe85df331d0e83a8e7c2fdd6b9a",
+          "chatbot/judge.py": "9ce92778db715c47f182c589adceb5ed2eb0acd488fa8832dd7f22f36ebaf91a",
+          "chatbot/ollama_load.py": "3f2704605d4b790ce0e61237c194629326a252330ebe1fc22744e9799c806e5c",
+          "chatbot/progress.py": "53c6a511822112cd8738598bfb2044ef118a87897db76d02467740969647cb92",
+          "chatbot/prompts.py": "85ae945539486d34c7f2e43275752e07bdf514484c3c313271fd6003c056db03",
+          "chatbot/provider_eval.py": "4927e7260d6b84217bafa3f25f9f8966068d656fb0f752057e10bd093cf55850",
+          "chatbot/provider_report.py": "ad172af6a45ad27c30b85a69eb3ddc331a2d94ef42ae7ec65a32bc73b532a1ae",
+          "chatbot/ratelimit.py": "14bd9d9796b32b68a48165a31bf21ad3eb2f3695f0034765bebe63604ba99ee7",
+          "chatbot/replay.py": "6cdd2f8a6f7891cf3f6b9555ac2fa816b1b84a3e09ec90c024fcc6aa192c8a44",
+          "chatbot/retrieval.py": "9f6587fde5b351020f7f05497c60945fee3baa137d1d22da84a5c0b88a4af017",
+          "chatbot/retrieval_eval.py": "020195b7d0cd32c499640632878fb0f712bec73283e9d76a393df765fa61a529",
+          "chatbot/retrieval_eval_with_recall.py": "840c266379a3f5eda9316cc6904c74cd13d3fdb7daa1da6a58e503ef3a9c1ff8",
+          "chatbot/run_eval.py": "966b358591555510c4c9422baa89f5a08b38440f5e43d240829165e5da89915c",
+          "chatbot/settings.py": "8af632145f9cd74db9cac8ba5b1496a29190fbf526ec1314f4d8b231e45eb4b0",
+          "chatbot/suggestions.py": "61eb4e4ef4830619bd8983d55ec2111895ae0be40999706867de713359aacdbb",
+          "chatbot/summarise.py": "9f42ebdaeeccbdc139cc2bd020b72a56d3772098b7151aff69ee3b070d3e1c19",
+          "chatbot/tools.py": "352605eb31aa7c6a4f2ea5b6bb6df8e4118326bc71436ffe4ce20b905dfa07e2",
+          "config/aspects.yaml": "d6bd2568dc04d8d2151d42e215075f641e3a6c3d8c650ccd66bfcfa2e76723b5",
+          "config/chatbot.yaml": "c6e45c27f62ae8c85d45b22290b4cff3e6d62827f3aab838f0ca9905787c7e5e",
+          "config/intents.yaml": "7f0d0e824bc043bb0dcfaaacd250598574532d67199bcfa088f95343d0dc5334",
+          "config/model_version.py": "248e4d90c6e50823a98e4aa3590d83f9c24cf6c87d8db1734b8e45c50cc96f18",
+          "config/sources.yaml": "2d183a385b76ba82bf86a33063e2553dc4e152298bbd43a3111f247f6656ccbb"
+        },
+        "test_plan_sha256": "af34d1dc6d5f26b4cb2589ef102af881611c6b4edb39cd5a5dc388b411bc4396",
+        "planned_warm_turns": 159,
+        "cpu": "Apple M2 Pro",
+        "memory_bytes": 17179869184,
+        "api_cost_usd": null,
+        "cost_note": "Estimated from provider-reported token usage; standard rates US$0.10 input, US$0.01 cached input and US$0.50 output per million",
+        "pilot_already_run": true,
+        "account_settings_changed": false,
+        "intent_model_digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+        "runner_sha256": "fb89f3686a28ef568e35ba64f9ae825e848565cfd74aa83b3c7f862e9f4bb941",
+        "review_fingerprint_sha256": "f5c70d82fdb8248bb6e8d447444bb192f357f432f08068742d6cf73a1440877e",
+        "report_builder_sha256": "9276bde4d9b1054005f122042c70e7903f5bf599c0a708cb0ab0f70fa35374fa"
+      },
+      "results": {
+        "attempts": 159,
+        "answered": 159,
+        "errors": 0,
+        "trace_matches": 159,
+        "reviewed_turns": 159,
+        "unique_outputs": 136,
+        "overall_median_s": 4.0712,
+        "overall_p95_s": 9.460579999999998,
+        "startup_s": 6.8714,
+        "quality": {
+          "faithfulness": {
+            "mean": 2.992063492063492,
+            "n": 126
+          },
+          "relevance": {
+            "mean": 2.9371069182389937,
+            "n": 159
+          },
+          "correctness": {
+            "mean": 2.930817610062893,
+            "n": 159
+          }
+        },
+        "checks": {
+          "task_pass": {
+            "passed": 148,
+            "n": 159
+          },
+          "evidence_pass": {
+            "passed": 13,
+            "n": 24
+          },
+          "behavior_pass": {
+            "passed": 45,
+            "n": 45
+          },
+          "followups": {
+            "passed": 30,
+            "n": 33
+          }
+        },
+        "latency_groups": {
+          "lookup": {
+            "attempts": 51,
+            "target_s": 5,
+            "median_s": 5.5802,
+            "p95_s": 8.9954,
+            "within_time": 20,
+            "correct_within_time": 20
+          },
+          "evidence": {
+            "attempts": 15,
+            "target_s": 10,
+            "median_s": 5.5425,
+            "p95_s": 8.45209,
+            "within_time": 15,
+            "correct_within_time": 10
+          },
+          "compare": {
+            "attempts": 18,
+            "target_s": 20,
+            "median_s": 3.8253500000000003,
+            "p95_s": 7.466715,
+            "within_time": 18,
+            "correct_within_time": 18
+          },
+          "broader_comparison": {
+            "attempts": 9,
+            "target_s": 20,
+            "median_s": 9.7592,
+            "p95_s": 14.219019999999999,
+            "within_time": 9,
+            "correct_within_time": 3
+          }
+        },
+        "verification_rewrites": 4,
+        "verification_repairs": {
+          "none": 155,
+          "rewritten": 4
+        },
+        "answers_with_visible_verification_warning": 0,
+        "task_failures_without_visible_verification_warning": 11,
+        "reviewer": "Codex-assisted review of final API answers against actual tool traces and snapshot; not independent human ratings",
+        "integrity_checks": {
+          "source_code_unchanged": true,
+          "changed_code_files": [],
+          "database_content_unchanged": true,
+          "tables": {
+            "analyst_consensus": {
+              "unchanged": true,
+              "rows": 14,
+              "sha256": "e5ea86ae3272c86fb1e81124083df87567c8068dc73011f9a25e270d3a7420d8"
+            },
+            "aspect_sentiment": {
+              "unchanged": true,
+              "rows": 91854,
+              "sha256": "d567ec5637998c912424bf8584f8cf8d7ed81a76cc6c03137aaebfef813fe3ac"
+            },
+            "documents": {
+              "unchanged": true,
+              "rows": 28946,
+              "sha256": "54912e937144f79b28978de96aaad1fdca928e0128d2dd16d2c6944c175afe34"
+            },
+            "sentence_aspects": {
+              "unchanged": true,
+              "rows": 45927,
+              "sha256": "9fba1e9918e023e47d3895712fc2c8443d3b5d5b4130c02ea00de699f2553631"
+            },
+            "sentences": {
+              "unchanged": true,
+              "rows": 45927,
+              "sha256": "e5d2b58eb6ae6024ed99e42b3b36f0a2d56d324189b6f401717e4de1828d37e6"
+            },
+            "sentiment_index": {
+              "unchanged": true,
+              "rows": 760,
+              "sha256": "86324fc231154f8e3c1436be614bafd51fd14dbfdc6e879de36105805306fa67"
+            }
+          },
+          "same_snapshot_as_baseline": true,
+          "same_test_plan_as_baseline": true
+        },
+        "billing": {
+          "warm": {
+            "requests": 324,
+            "input_tokens": 1161774,
+            "cached_input_tokens": 1028995,
+            "output_tokens": 29198,
+            "estimated_usd": 0.03816685000000001,
+            "cached_input_fraction": 0.8857101295088373,
+            "uncached_rate_equivalent_usd": 0.13077640000000001
+          },
+          "probe": {
+            "requests": 2,
+            "input_tokens": 6222,
+            "cached_input_tokens": 5828,
+            "output_tokens": 131,
+            "estimated_usd": 0.00016318000000000002,
+            "cached_input_fraction": 0.9366763098682096,
+            "uncached_rate_equivalent_usd": 0.0006877000000000001
+          },
+          "all_requests": {
+            "requests": 326,
+            "input_tokens": 1167996,
+            "cached_input_tokens": 1034823,
+            "output_tokens": 29329,
+            "estimated_usd": 0.03833003,
+            "cached_input_fraction": 0.8859816300740756,
+            "uncached_rate_equivalent_usd": 0.1314641
+          },
+          "rates_usd_per_million": {
+            "input": 0.1,
+            "cached_input": 0.01,
+            "output": 0.5
+          },
+          "source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+          "note": "Provider-reported usage × standard rates; estimated, not an invoice; pilot and key-smoke usage excluded"
+        }
+      }
+    }
+  },
+  "comparison": {
+    "same_test_plan": true,
+    "same_database_snapshot": true,
+    "intent_model_unchanged": true,
+    "retrieval_implementation_unchanged": true,
+    "evidence_permissions_differ": true,
+    "earlier_assistant_history_visibility_differs": true,
+    "pure_model_isolation": false,
+    "median_speedup": 3.087222440558066,
+    "task_pass_change_percentage_points": 30.817610062893085,
+    "fixed_case_count": 53,
+    "repetitions": 3,
+    "warm_turns_per_model": 159,
+    "baseline_reused_without_new_local_inference": true
+  }
+}

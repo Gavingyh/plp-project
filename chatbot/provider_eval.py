@@ -1,6 +1,6 @@
 """
-Runs the chatbot evaluation through Ollama, Groq and Gemini, one after the other,
-without going over a free tier's limits, then writes the comparison report.
+Runs the chatbot evaluation through Ollama and OpenAI, one after the other,
+then writes the comparison report. Groq remains an optional compatible arm.
 
 What it does for each arm (an arm is one provider and model):
   1. Checks it is ready: a key for a hosted arm, a running Ollama with the model
@@ -17,13 +17,12 @@ how many requests the hosted arms will need.
 
 Keys are read from .env but never printed, and this script never writes to .env.
 Groq's key is read from GROQ_API_KEY, or from OPENAI_API_KEY when OPENAI_BASE_URL points
-at Groq. Gemini's is GEMINI_API_KEY. The Gemini key is for the chatbot only (the project's
-rule): it is used here only through the chatbot's own backend, never to label or judge.
+at Groq. OpenAI uses OPENAI_API_KEY and OPENAI_MODEL on the official API endpoint.
 
 USAGE:
   python -m chatbot.provider_eval --dry-run          # readiness and the request budget; no calls
   python -m chatbot.provider_eval                    # run every ready arm
-  python -m chatbot.provider_eval --arms groq        # one arm
+  python -m chatbot.provider_eval --arms openai      # one arm (paid API)
   python -m chatbot.provider_eval --resume           # keep saved answers, ask only the rest
 """
 
@@ -57,6 +56,14 @@ def arm_settings(arm: str, env: dict) -> tuple[dict, str | None]:
     """(environment for the arm's subprocess, why it can't run or None)."""
     if arm == "ollama":
         return {}, None
+    if arm == "openai":
+        if not env.get("OPENAI_API_KEY"):
+            return {}, "no OpenAI key: set OPENAI_API_KEY in .env"
+        url = env.get("OPENAI_BASE_URL") or "https://api.openai.com/v1"
+        if url.rstrip("/") != "https://api.openai.com/v1":
+            return {}, "the OpenAI arm requires OPENAI_BASE_URL=https://api.openai.com/v1; use --arms groq for Groq"
+        return {"OPENAI_API_KEY": env["OPENAI_API_KEY"], "OPENAI_BASE_URL": url,
+                "OPENAI_MODEL": env.get("OPENAI_MODEL") or settings.get("models.openai")}, None
     if arm == "groq":
         key = env.get("GROQ_API_KEY") or (env.get("OPENAI_API_KEY") if "groq" in env.get("OPENAI_BASE_URL", "") else "")
         if not key:
@@ -64,21 +71,14 @@ def arm_settings(arm: str, env: dict) -> tuple[dict, str | None]:
                         f"OPENAI_BASE_URL={GROQ_URL})")
         return {"OPENAI_API_KEY": key, "OPENAI_BASE_URL": GROQ_URL,
                 "OPENAI_MODEL": env.get("GROQ_MODEL") or GROQ_MODEL}, None
-    if arm == "gemini":
-        if not env.get("GEMINI_API_KEY"):
-            return {}, "no Gemini key: set GEMINI_API_KEY in .env"
-        return {"GEMINI_API_KEY": env["GEMINI_API_KEY"]}, None
     return {}, f"unknown arm {arm}"
 
 
 def key_problem(arm: str, arm_env: dict, timeout: float = 15.0) -> str | None:
     """None if the provider accepts the key, else why not. Lists models, which sends no prompt and
     uses none of the generation budget, so a wrong key is found before a long run starts."""
-    if arm == "groq":
+    if arm in ("groq", "openai"):
         url, headers = f"{arm_env['OPENAI_BASE_URL']}/models", {"Authorization": f"Bearer {arm_env['OPENAI_API_KEY']}"}
-    elif arm == "gemini":
-        url = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1"
-        headers = {"x-goog-api-key": arm_env["GEMINI_API_KEY"]}
     else:
         return None
     try:
@@ -87,12 +87,12 @@ def key_problem(arm: str, arm_env: dict, timeout: float = 15.0) -> str | None:
         return f"could not reach the provider: {type(e).__name__}"
     if status in (400, 401, 403):
         return (f"the provider rejected the key (HTTP {status}); create a new one "
-                f"({'aistudio.google.com/apikey' if arm == 'gemini' else 'console.groq.com'}) and update .env")
+                f"({'platform.openai.com/api-keys' if arm == 'openai' else 'console.groq.com'}) and update .env")
     return None if status < 400 else f"the provider answered HTTP {status}"
 
 
 def backend_for(arm: str) -> str:
-    return {"ollama": "ollama", "groq": "openai", "gemini": "gemini"}[arm]
+    return {"ollama": "ollama", "groq": "openai", "openai": "openai"}[arm]
 
 
 def ollama_ready(model: str | None = None, timeout: float = 3.0) -> str | None:
@@ -176,7 +176,7 @@ def run_arm(arm: str, env: dict, resume: bool) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--arms", nargs="+", default=provider_report.ARM_ORDER, choices=provider_report.ARM_ORDER)
+    ap.add_argument("--arms", nargs="+", default=provider_report.DEFAULT_ARMS, choices=provider_report.ARM_ORDER)
     ap.add_argument("--dry-run", action="store_true", help="check readiness and the budget; send nothing")
     ap.add_argument("--resume", action="store_true", help="keep answers already saved, ask only the rest")
     ap.add_argument("--no-report", action="store_true")
@@ -215,8 +215,10 @@ def main(argv=None) -> int:
                   f"paced at {p['rpm']} a minute that is about {p['minutes']:.0f} minutes. "
                   f"Budget left in the last 24 hours: {p['remaining_today']} of {p['rpd']}"
                   f"{'' if p['fits_today'] else '  <- NOT ENOUGH for one pass; it will stop and need --resume'}")
-        else:
+        elif arm == "ollama":
             print(f"  {arm:7s} ready (local, no limit)")
+        else:
+            print(f"  {arm:7s} ready (paid API; account limits apply). About {p['estimated_requests']} requests for {p['questions']} questions.")
     if args.dry_run or not ready:
         if not ready:
             print("\nNothing is ready, so nothing was run.")

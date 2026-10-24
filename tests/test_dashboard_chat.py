@@ -20,6 +20,20 @@ VALID_ANSWER = {
 
 
 class ChatAdapterTests(unittest.TestCase):
+    def test_configuration_status_is_loaded_only_from_fastapi(self):
+        payload = {"configured": True, "problem": None}
+        with patch("dashboard.chat.request_json", return_value=payload) as request:
+            self.assertEqual(chat.load_chat_status(), payload)
+        request.assert_called_once_with("GET", "/chat/status", read_timeout=5)
+
+    def test_invalid_configuration_status_does_not_enable_chat(self):
+        for payload in ({}, {"configured": "true"}, {"configured": False},
+                        {"configured": True, "problem": {}},
+                        {"configured": False, "problem": {"code": "missing", "message": " "}}):
+            with self.subTest(payload=payload), patch("dashboard.chat.request_json", return_value=payload):
+                with self.assertRaisesRegex(ApiError, "invalid chatbot status"):
+                    chat.load_chat_status()
+
     def test_request_separates_new_question_and_strips_display_metadata(self):
         history = [
             {"role": "user", "content": "DBS dividends?"},
@@ -98,6 +112,91 @@ class ChatAdapterTests(unittest.TestCase):
 
 
 class ChatPageTests(DashboardAppTestCase):
+    MISSING_KEY = {
+        "configured": False,
+        "problem": {
+            "code": "openai_key_missing",
+            "message": "Chatbot unavailable: API access has not been configured.",
+            "setup_hint": "Set OPENAI_API_KEY in the API server's .env, then restart the API.",
+        },
+    }
+
+    def test_missing_key_disables_input_and_suggestions_without_asking_for_a_secret(self):
+        self.request.side_effect = fake_api(chat_status=self.MISSING_KEY)
+        app = self.page("Ask")
+        self.assertTrue(app.chat_input[0].disabled)
+        self.assertIn("not been configured", app.warning[0].value)
+        self.assertTrue(all(b.disabled for b in app.button if b.label.startswith("What is the overall")))
+        self.assertIn("Administrator setup", [e.label for e in app.expander])
+        self.assertIn("OPENAI_API_KEY", " ".join(m.value for m in app.markdown))
+        self.assertEqual(len(app.text_input), 0)
+        self.assertEqual(self.chat_calls(), [])
+
+    def test_missing_credentials_preserve_history_and_other_tabs_and_recover(self):
+        app = self.page("Ask")
+        self.ask(app, "DBS?")
+        original = deepcopy(app.session_state["api_chat_history"])
+        self.request.side_effect = fake_api(chat_status=self.MISSING_KEY)
+        app.run()
+        self.assertTrue(app.chat_input[0].disabled)
+        self.assertEqual(app.session_state["api_chat_history"], original)
+        self.assertEqual(len(app.chat_message), 2)
+        for page in ("Overview", "Topics", "Trends", "Evidence"):
+            app.radio(key="nav").set_value(page).run()
+            self.assertFalse(app.exception)
+            self.assertFalse(app.error)
+        self.request.side_effect = fake_api()
+        app.radio(key="nav").set_value("Ask").run()
+        self.assertFalse(app.chat_input[0].disabled)
+        self.assertEqual(len(self.chat_calls()), 1)
+        self.ask(app, "And OCBC?")
+        self.assertEqual(self.chat_calls()[-1].kwargs["json"]["history"],
+                         [{"role": r["role"], "content": r["content"]} for r in original])
+
+    def test_status_failure_disables_chat_without_posting(self):
+        self.request.side_effect = fake_api(fail_path="/chat/status")
+        app = self.page("Ask")
+        self.assertTrue(app.chat_input[0].disabled)
+        self.assertIn("availability could not be checked", app.warning[0].value)
+        self.assertEqual(self.chat_calls(), [])
+
+    def test_pending_question_is_kept_if_configuration_disappears_before_rerun(self):
+        app = self.page("Ask")
+        self.request.side_effect = fake_api(chat_status=self.MISSING_KEY)
+        app.session_state["api_chat_pending"] = "And OCBC?"
+        app.run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["api_chat_failure"]["question"], "And OCBC?")
+        self.assertEqual(app.session_state["api_chat_history"], [])
+        self.assertEqual(self.chat_calls(), [])
+
+    def test_rejected_key_has_setup_guidance_and_keeps_prior_history(self):
+        app = self.page("Ask")
+        self.ask(app, "DBS?")
+        original = deepcopy(app.session_state["api_chat_history"])
+        normal_request = fake_api()
+
+        def reject_chat(method, url, **kwargs):
+            if urlparse(url).path == "/chat":
+                result = requests.Response()
+                result.status_code = 503
+                import json
+                result._content = json.dumps({"detail": {
+                    "code": "openai_key_rejected", "message": "The chatbot's API key was rejected.",
+                    "setup_hint": "Check OPENAI_API_KEY on the API server, then restart the API.",
+                }}).encode()
+                return result
+            return normal_request(method, url, **kwargs)
+
+        self.request.side_effect = reject_chat
+        self.ask(app, "And OCBC?")
+        self.assertIn("key was rejected", app.error[0].value)
+        self.assertNotIn("HTTP 503", app.error[0].value)
+        self.assertIn("Administrator setup", [e.label for e in app.expander])
+        self.assertEqual(app.session_state["api_chat_history"], original)
+        app.run()
+        self.assertEqual(len(self.chat_calls()), 2)
+
     def chat_calls(self):
         return [call for call in self.request.call_args_list if call.args[0] == "POST"]
 

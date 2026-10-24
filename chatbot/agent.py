@@ -6,7 +6,7 @@ capability, and the project report has to be able to explain whatever is
 used.
 
 The model backend is pluggable - a local model via Ollama (no API key, no
-cost) or a hosted model (Claude, GPT, Gemini). Backend selection is
+cost) or a hosted model (Claude, GPT). Backend selection is
 described in chatbot/backends/__init__.py. The local option exists so the
 chatbot can be run and graded without anyone needing to hold an API key.
 
@@ -629,8 +629,8 @@ def _collect_text(obj, out: list[str], key=None) -> None:
 # The turn's record keeps them all, for the checks and the source list.
 # A link stays: the hosted backends' filter (chatbot/backends/base.py) knows a
 # Reddit post that came through a news feed only by its reddit.com link, and
-# hiding links let such text reach Gemini (caught by
-# tests/test_validate_gemini_reddit_privacy.py).
+# hiding links let such text reach hosted providers (caught by
+# tests/test_validate_hosted_reddit_privacy.py).
 _HIDDEN_FROM_MODEL = frozenset({
     "sentence_id", "evidence_id", "relevance",
     "positive_n", "neutral_n", "negative_n",
@@ -2171,6 +2171,9 @@ class TurnResult:
     retried: bool = False                    # the first answer failed a check and the model wrote it again
     repaired: str | None = None              # "rewritten", "trimmed" or "withheld": what verification did (CHATBOT_VERIFY_BEFORE_REPLY)
     verified: bool = False                   # the answer shown holds nothing the checks flagged (the flags above are the first draft's)
+    provider: str | None = None              # actual answer provider; None for predefined replies
+    model: str | None = None
+    usage: dict | None = None                # received provider token counts, including tool loops/rewrites
 
     def shown_flags(self) -> dict:
         """The three flags as the reader should see them: none, when the answer shown was verified."""
@@ -2356,7 +2359,8 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
             if draft is not None:
                 break             # a rewrite that came back empty: the first draft is trimmed below
             progress.notify(on_step, progress.Step("done", "Done", "the model gave no answer"))
-            return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls)
+            return TurnResult(question=question, answer=EMPTY_ANSWER_REPLY, calls=tracker.calls,
+                              **_backend_metadata(backend))
         draft = _check_answer(answer, tracker, question, mode, verbose)
         first = first or draft
         if draft.clean or not verify or attempt == tries - 1:
@@ -2390,9 +2394,17 @@ def answer_turn(question: str, backend_name: str | None = None, history: list | 
     if result.repaired != "withheld" and (footer := period_footer(tracker)):
         result.answer = result.answer.rstrip() + "\n\n" + footer
     result.answer = number_citations(result.answer, tracker)
+    for key, value in _backend_metadata(backend).items():
+        setattr(result, key, value)
     progress.notify(on_step, progress.Step("check", "Checked quotes and figures", _check_summary(result)))
     progress.notify(on_step, progress.Step("done", "Done"))
     return result
+
+
+def _backend_metadata(backend) -> dict:
+    usage = getattr(backend, "usage", None)
+    return {"provider": backend.name, "model": getattr(backend, "model", None),
+            "usage": dict(usage) if isinstance(usage, dict) else None}
 
 
 # What a set reply answered, for the progress display.

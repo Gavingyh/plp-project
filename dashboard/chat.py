@@ -16,6 +16,25 @@ GUARD_LABELS = {
 }
 
 
+def load_chat_status() -> dict:
+    """Read configuration status from FastAPI, without handling any secret."""
+    payload = request_json("GET", "/chat/status", read_timeout=5)
+    problem = payload.get("problem")
+    if type(payload.get("configured")) is not bool:
+        raise ApiError("The API returned an invalid chatbot status.")
+    if payload["configured"]:
+        valid_problem = problem is None
+    else:
+        valid_problem = (
+            isinstance(problem, dict) and isinstance(problem.get("code"), str)
+            and isinstance(problem.get("message"), str) and bool(problem["message"].strip())
+            and (problem.get("setup_hint") is None or isinstance(problem["setup_hint"], str))
+        )
+    if not valid_problem:
+        raise ApiError("The API returned an invalid chatbot status.")
+    return payload
+
+
 def send_chat(message: str, history: list[dict]) -> dict:
     """Send earlier messages, excluding display-only verification metadata.
 

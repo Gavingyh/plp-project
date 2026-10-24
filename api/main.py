@@ -29,7 +29,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
 
 from chatbot.agent import Conversation
+from chatbot.backends import get_backend
 from chatbot.backends.base import BackendUnavailable
+from chatbot.ratelimit import DailyBudgetExhausted
 from aggregate.index import MIN_N, as_of_fields, compute_time_series
 from chatbot.suggestions import get_suggestions
 from config.logging_config import get_logger, setup_logging
@@ -297,6 +299,82 @@ def suggestions(limit: int = Query(6, ge=1, le=20)):
     return {"suggestions": get_suggestions(limit=limit)}
 
 
+# Public chat errors are fixed application messages. Provider responses, keys
+# and transport diagnostics stay out of this contract.
+_CHAT_PROBLEMS = {
+    "openai_key_missing": (
+        "Chatbot unavailable: API access has not been configured.",
+        "Set OPENAI_API_KEY in the API server's .env, then restart the API.",
+    ),
+    "claude_key_missing": (
+        "Chatbot unavailable: API access has not been configured.",
+        "Set ANTHROPIC_API_KEY in the API server's .env, then restart the API.",
+    ),
+    "openai_key_rejected": (
+        "The chatbot's API key was rejected. An administrator needs to update API access.",
+        "Check OPENAI_API_KEY in the API server's .env, then restart the API.",
+    ),
+    "provider_access_denied": (
+        "The chatbot does not have access to the configured model.",
+        "Check the API project's model permissions and OPENAI_MODEL on the API server.",
+    ),
+    "provider_quota_exhausted": (
+        "The chatbot's API credit or usage quota has been exhausted.",
+        "Check API billing, remaining credit and project usage limits before trying again.",
+    ),
+    "provider_rate_limited": ("The chatbot is receiving too many requests. Please try again shortly.", None),
+    "provider_connection_failed": ("The chatbot could not connect to its AI service. Please try again shortly.", None),
+    "provider_timed_out": ("The AI service took too long to respond. Please try again.", None),
+    "daily_budget_exhausted": (
+        "The chatbot's configured daily request budget has been reached.",
+        "Wait for the request budget to reset, or review the API server's configured provider limits.",
+    ),
+    "invalid_configuration": (
+        "Chatbot unavailable: its server configuration needs attention.",
+        "Set CHATBOT_BACKEND to openai, ollama or claude in the API server's .env, then restart the API.",
+    ),
+    "backend_unavailable": ("The chatbot is temporarily unavailable. Please try again shortly.", None),
+}
+
+
+class ChatProblem(BaseModel):
+    code: str
+    message: str
+    setup_hint: str | None = None
+
+
+class ChatStatus(BaseModel):
+    configured: bool
+    problem: ChatProblem | None = None
+
+
+class ChatServiceError(BaseModel):
+    detail: ChatProblem
+
+
+def _chat_problem(code: str) -> ChatProblem:
+    if code not in _CHAT_PROBLEMS:
+        code = "backend_unavailable"
+    message, setup_hint = _CHAT_PROBLEMS[code]
+    return ChatProblem(code=code, message=message, setup_hint=setup_hint)
+
+
+@app.get("/chat/status", response_model=ChatStatus)
+def chat_status():
+    """Check server configuration only; never call a model or reveal credentials.
+
+    A configured key may still be rejected or out of credit at request time.
+    This endpoint does not check connectivity, model availability or billing.
+    """
+    try:
+        get_backend()  # constructors only validate configuration; no inference
+    except BackendUnavailable as exc:
+        return ChatStatus(configured=False, problem=_chat_problem(exc.code))
+    except ValueError:
+        return ChatStatus(configured=False, problem=_chat_problem("invalid_configuration"))
+    return ChatStatus(configured=True)
+
+
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str
@@ -304,7 +382,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    backend: Literal["claude", "openai", "gemini", "ollama"] | None = None  # None: the server's CHATBOT_BACKEND (ollama by default)
+    backend: Literal["claude", "openai", "ollama"] | None = None  # None: the server's CHATBOT_BACKEND (OpenAI by default)
 
     @field_validator("backend", mode="before")
     @classmethod
@@ -315,16 +393,20 @@ class ChatRequest(BaseModel):
     history: list[ChatMessage] = []
 
 
-@app.post("/chat")
+@app.post("/chat", responses={503: {"model": ChatServiceError, "description": "Chat service unavailable"}})
 def chat(req: ChatRequest):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="message must not be empty")
     conv = Conversation.from_messages([m.model_dump() for m in req.history], backend_name=req.backend)
     try:
         turn = conv.ask(req.message)
-    except BackendUnavailable as e:   # no Ollama running, a missing or rejected key: the service, not the request
-        logger.warning("chat backend unavailable: %s", e)
-        raise HTTPException(status_code=503, detail=f"chat backend unavailable: {e}")
+    except (BackendUnavailable, DailyBudgetExhausted) as e:
+        code = e.code if isinstance(e, BackendUnavailable) else "daily_budget_exhausted"
+        logger.warning("chat backend unavailable: %s", code)
+        raise HTTPException(status_code=503, detail=_chat_problem(code).model_dump()) from e
     # The flags of the answer shown: none when it was verified before it was returned
     # (CHATBOT_VERIFY_BEFORE_REPLY), so the reader never sees a warning for it.
-    return {"question": req.message, "answer": turn.answer, "guard": turn.guard, **turn.shown_flags()}
+    metadata = ({"provider": turn.provider, "model": turn.model, "usage": turn.usage}
+                if turn.provider else {})
+    return {"question": req.message, "answer": turn.answer, "guard": turn.guard,
+            **turn.shown_flags(), **metadata}

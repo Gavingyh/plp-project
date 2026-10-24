@@ -2,7 +2,7 @@
 
 For whoever builds a frontend on the API. The Streamlit dashboard's data
 views now use this API through `dashboard/api_client.py` and `dashboard/data.py`.
-The Ask page uses `/suggestions` and `/chat` through `dashboard/chat.py`;
+The Ask page uses `/chat/status`, `/suggestions` and `/chat` through `dashboard/chat.py`;
 the dashboard imports no database or model backends. This page is how to run
 the API, which endpoint feeds which view, what the responses look like, and
 what the screen must say about the numbers.
@@ -248,6 +248,7 @@ fits an 800-pixel-high laptop viewport with Snapshot details collapsed.
 | evidence search | `GET /evidence?query=dividend+cut&bank=DBS&k=5` | semantic search, as the chatbot uses; `k` from 1 to 50 |
 | data behind a cell | `GET /coverage?bank=DBS&aspect=dividend_policy` | count, date range and sources |
 | labels for the UI | `GET /banks`, `GET /aspects` | aspect keys with readable names ("Dividend Policy") |
+| chat configuration | `GET /chat/status` | configured flag and a safe setup message; no model requests |
 | chat | `POST /chat` | below |
 | starter questions | `GET /suggestions?limit=6` | only questions the data can answer |
 | liveness | `GET /health` | `{"status": "ok"}` |
@@ -330,11 +331,30 @@ see "per-aspect scores" below.
  "backend": null}
 ```
 
-`backend` is `ollama`, `gemini`, `claude`, `openai`, or `null` to use the
-server's default (`CHATBOT_BACKEND` in `.env`); anything else, or a message
+`backend` is `ollama`, `claude`, `openai`, or `null` to use the
+server's default (`CHATBOT_BACKEND` in `.env`, OpenAI when omitted); anything else, or a message
 `role` other than `user` or `assistant`, gets HTTP 422. If the backend fails
-(Ollama not running, a missing or rejected key) the reply is HTTP 503 with
-the reason in `detail`. No hosted backend (Gemini, Claude, OpenAI or Groq)
+(Ollama not running, a missing or rejected key) the reply is HTTP 503 with a
+structured, safe `detail` object containing `code`, `message` and an optional
+`setup_hint`. It never includes the provider's raw error body or credentials.
+For example:
+
+```json
+{"detail": {"code": "openai_key_missing",
+ "message": "Chatbot unavailable: API access has not been configured.",
+ "setup_hint": "Set OPENAI_API_KEY in the API server's .env, then restart the API."}}
+```
+
+`GET /chat/status` returns `{"configured": true, "problem": null}` when the
+selected backend's required configuration is present. Otherwise it returns
+`{"configured": false, "problem": {...}}` with the same safe problem shape.
+This is a configuration check only: it makes no provider requests and does not
+check key validity, billing, connectivity or model availability. The dashboard
+disables Ask when configuration is missing, without blocking other tabs.
+Credentials and provider selection belong to the API server; no key-entry
+form or provider selector is needed in the dashboard.
+
+No hosted backend (Claude, OpenAI or Groq)
 receives Reddit or CNA evidence text, or text from a source not listed in
 `config/sources.yaml`, nor earlier answers that may quote them. The response:
 
@@ -343,6 +363,21 @@ receives Reddit or CNA evidence text, or text from a source not listed in
  "citation_unverified": false, "unverified_numbers": [],
  "unverified_readings": []}
 ```
+
+The existing dashboard omits `backend`: set `CHATBOT_BACKEND` in the API host's
+`.env` to switch providers, then restart the API. Keys and model selection stay
+on the server; the optional request override is for scripts and API clients.
+See [provider setup](RUNBOOK.md#chatbot-backends).
+
+When an answer model runs, the response also includes `provider`, `model` and
+`usage` for benchmarking. The dashboard ignores these optional fields. `usage`
+is `null` if the backend does not report tokens; otherwise it contains
+`requests`, `input_tokens`, `output_tokens`, `cached_input_tokens` and `complete`.
+Counts sum received provider responses across tool calls and verification
+rewrites. `complete=false` means some
+usage was missing. These are reported counts, not the account balance or a cost
+guarantee; failed requests and local intent-classification work are not counted.
+Predefined replies can omit all three fields because no answer model ran.
 
 The UI must show the flags, not just the answer:
 

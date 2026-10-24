@@ -891,11 +891,11 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2666 tests in `tests/`; `pytest -q` from the repository root runs 2713,
+2894 tests in `tests/`; `pytest -q` from the repository root runs 2941,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for
-each (six on the team's Mac, which therefore collects 2529 and 2576; checked against a fresh clone on 12 Oct, four results files added since). A bug that `/validate` confirms gets a
+each (ten on the team's Mac, which therefore collects 2904 and 2951; checked against a fresh clone on 24 Oct). A bug that `/validate` confirms gets a
 test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 "xfailed" until the bug is fixed; the marker comes off in the fixing commit.
 On 6 Oct 2026 three markers are left, covering five cases, each kept as a

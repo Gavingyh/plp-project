@@ -1,0 +1,41 @@
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4792.64it/s]
+[transformers] [1mBertModel LOAD REPORT[0m from: ProsusAI/finbert
+Key               | Status     |  | 
+------------------+------------+--+-
+classifier.weight | UNEXPECTED |  | 
+classifier.bias   | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+28 (bank, aspect) queries over 3 banks' labelled pools
+
+Mean over queries:
+                                                             hit@1  hit@5  hit@10   p@5    rr
+question                                                     0.107  0.286   0.393 0.121 0.217
+question (random)                                            0.098  0.319   0.478 0.098 0.217
+label                                                        0.464  0.679   0.750 0.293 0.559
+label (random)                                               0.098  0.319   0.478 0.098 0.217
+aspect query (CHATBOT_ASPECT_QUERY)                          0.464  0.679   0.750 0.293 0.559
+aspect query (CHATBOT_ASPECT_QUERY) (random)                 0.098  0.319   0.478 0.098 0.217
+question + stored-aspect filter                              0.500  1.000   1.000 0.654 0.698
+question + stored-aspect filter (random)                     0.738  0.996   1.000 0.738 0.853
+label + stored-aspect filter                                 0.679  1.000   1.000 0.696 0.810
+label + stored-aspect filter (random)                        0.738  0.996   1.000 0.738 0.853
+aspect query + stored-aspect filter                          0.679  1.000   1.000 0.696 0.810
+aspect query + stored-aspect filter (random)                 0.738  0.996   1.000 0.738 0.853
+words, then newest + stored-aspect filter (in use)           0.679  1.000   1.000 0.818 0.827
+words, then newest + stored-aspect filter (in use) (random)  0.738  0.996   1.000 0.738 0.853
+
+By aspect, question queries, no filter (mean over banks):
+                          relevant  hit@5  p@5   rr  random_p@5  random_rr
+aspect                                                                    
+asset_quality                26.00   0.00 0.00 0.01        0.05       0.16
+capital_liquidity            16.33   0.00 0.00 0.03        0.04       0.14
+dividend_policy              11.00   0.33 0.07 0.16        0.02       0.08
+income_profit_results        49.67   0.00 0.00 0.02        0.12       0.28
+investor_stock_sentiment     29.67   1.00 0.47 0.50        0.06       0.17
+macro_market_environment     10.00   0.00 0.00 0.03        0.02       0.07
+management_guidance          31.00   0.00 0.00 0.02        0.06       0.18
+net_interest_margin          28.00   0.00 0.00 0.04        0.04       0.13
+retail_banking_sentiment    159.00   1.00 0.47 1.00        0.43       0.62
+wealth_business              43.00   0.33 0.13 0.23        0.10       0.26

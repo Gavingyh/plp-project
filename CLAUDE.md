@@ -49,11 +49,15 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
 - **No personal names** anywhere in the repository: code, docs, commit
   messages.
 - **Ask before adding any paid API.**
-- **The Gemini key is for the chatbot backend only.** It is a free tier whose
-  inputs may be reviewed by people: never send it personal data or Reddit
-  evidence text, and never use it for labelling, classification or judging.
+- **The OpenAI key is for the chatbot backend only.** Never send it personal
+  data or Reddit evidence text, and never use it for labelling,
+  classification or judging. (The Gemini backend, with the same rule, was
+  removed on 24 Oct 2026.)
 - **CNA articles (`data/cna/`) stay within the team.** Never commit or share
-  them.
+  them. One exception, agreed by the team on 24 Oct 2026: the chatbot's
+  hosted model may receive CNA and broker-research sentences to quote
+  (`hosted_model` in `config/sources.yaml`). Reddit text is never sent to a
+  hosted model.
 - **Opus labels never replace the human labels.** They are an additional
   rater, kept in `data/labeled/llm_rater/`.
 - **`dashboard/` belongs to a teammate.** Don't edit it; report problems in

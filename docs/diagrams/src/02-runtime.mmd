@@ -10,6 +10,7 @@ flowchart TB
   subgraph files["Local files in data/"]
     db[("plp.db<br/>SQLite, not in git")]
     emb[("sentence_embeddings.npz<br/>cache, not in git")]
+    semb[("search_embeddings.npz<br/>evidence search, not in git")]
     flagged["news_flagged.csv<br/>news filter log"]
     snaps["snapshots/*.db.gz<br/>not in git"]
   end
@@ -22,12 +23,13 @@ flowchart TB
   plist["launchd daily job<br/>not installed"]
 
   ui -- "reads scores, evidence" --> db
-  ui -- "evidence search" --> emb
-  ui -- "chat" --> oll
+  ui -- "evidence search" --> semb
+  ui -- "chat: sorts each question;<br/>answers when chosen" --> oll
   pull -- "writes documents" --> db
   pull -- "logs decisions" --> flagged
   pipe -- "reads and writes" --> db
   pipe -- "updates" --> emb
+  pipe -- "updates" --> semb
   db -. "checkpoint and gzip, by hand" .-> snaps
   plist -. "would run" .-> pull
 

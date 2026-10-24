@@ -5,7 +5,7 @@ How the chatbot's record of what the conversation is about (banks, aspect, windo
 ```mermaid
 stateDiagram-v2
   accTitle: Conversation state
-  accDescr: A new conversation has no context. Each turn updates it from tool calls or from a bank named in a guard-answered question; the state is added to the next turn's system prompt. Window is never set today.
+  accDescr: A new conversation has no context. Each turn updates it from tool calls or from a bank named in a guard-answered question; the state is added to the next turn's system prompt. A window passed to get_sentiment or compare_banks sets the window.
 
   [*] --> NoContext : new conversation
   NoContext --> HasContext : a turn names a bank
@@ -17,14 +17,15 @@ stateDiagram-v2
     How a turn updates it:
     a tool call with a bank sets banks and aspect,
     compare_banks sets all three banks,
+    a window passed to get_sentiment or
+    compare_banks sets window,
     a guard-answered question naming a bank sets banks.
     The latest turn wins.
   end note
   note right of HasContext
     Added to the next turn's system prompt,
     so "and OCBC?" keeps the aspect.
-    window stays empty: no tool
-    takes a window argument today.
+    and a follow-up keeps the period.
   end note
 ```
 
@@ -34,10 +35,10 @@ Rendered for the report: [SVG](img/15-conversation-state.svg) · [PNG](img/15-co
 
 The state names (NoContext, HasContext) describe the situation; the code has no such
 enum. The state is a small dictionary: `banks`, `aspect` (empty means overall) and `window`.
-It is overwritten, not accumulated: the latest tool call wins. **Doc/code disagreement:**
-DESIGN decision 19 says the state tracks the time window, but none of the six tool schemas
-exposes a window argument (`get_sentiment` accepts one in Python, but the model is never
-offered it), so `window` is never set. The terminal chat's `/reset` starts a
+It is overwritten, not accumulated: the latest tool call wins. `get_sentiment` and
+`compare_banks` offer the model a `window` (`7d`, `30d`, `all_time`), and a call that passes
+one sets it; `search_evidence` takes a window too, but its calls don't update the state.
+The terminal chat's `/reset` starts a
 new `Conversation`; the API rebuilds state on every request from the banks the user named
 ([13](13-api-chat.md)).
 
@@ -47,13 +48,14 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| new conversation, empty state | `chatbot/agent.py:2447` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| compare_banks sets all three | `chatbot/agent.py:2479` | `if c["name"] == "compare_banks":` |
-| a tool call names a bank | `chatbot/agent.py:2481` | `elif args.get("bank"):` |
-| window only if a tool passes one | `chatbot/agent.py:2485` | `if args.get("window"):` |
-| guard-answered question names a bank | `chatbot/agent.py:2487` | `if not r.calls:` |
-| state into the system prompt | `chatbot/agent.py:2336` | `with_state(SYSTEM_PROMPT, state)` |
-| no window in get_sentiment's schema | `chatbot/tools.py:733` | `"required": ["bank"],` |
+| new conversation, empty state | `chatbot/agent.py:2463` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| compare_banks sets all three | `chatbot/agent.py:2495` | `if c["name"] == "compare_banks":` |
+| a tool call names a bank | `chatbot/agent.py:2497` | `elif args.get("bank"):` |
+| window only if a tool passes one | `chatbot/agent.py:2501` | `if args.get("window"):` |
+| guard-answered question names a bank | `chatbot/agent.py:2503` | `if not r.calls:` |
+| state into the system prompt | `chatbot/agent.py:2343` | `with_state(SYSTEM_PROMPT, state)` |
+| get_sentiment's schema offers a window | `chatbot/tools.py:794` | `"window": _WINDOW_PROP,` |
+| compare_banks's schema offers a window | `chatbot/tools.py:804` | `"window": _WINDOW_PROP}` |
 | get_sentiment accepts a window in Python | `chatbot/tools.py:77` | `def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time")` |
 | Clear conversation | `chatbot/chat.py:71` | `conv, last = Conversation(backend_name=args.backend, trace_path=args.trace), None` |
-| DESIGN claims the window is tracked | `docs/DESIGN.md:371` | `tracks the current bank, aspect and time window` |
+| DESIGN: the state tracks the window | `docs/DESIGN.md:373` | `tracks the current bank, aspect and time window` |

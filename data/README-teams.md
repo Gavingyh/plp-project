@@ -22,6 +22,10 @@ The database was re-scored twice, and the code now depends on it:
 - **Links to PDFs are relative paths** (`data/earnings_pdfs/...`,
   `data/sgx_research/...`), so no one's home folder is in the database.
 
+Since 24 Oct the chatbot's evidence search also needs **`search_embeddings.npz`**
+(below), vectors from a model built for search. FinBERT's vectors ranked
+evidence no better than a random draw when no topic was named.
+
 With an older database the API finds no rows for the served model and
 returns empty tables, so restore this one together with `git pull`.
 
@@ -38,7 +42,8 @@ returns empty tables, so restore this one together with `git pull`.
 | file in this upload | goes to | what it is | size |
 |---|---|---|---|
 | `plp-2026-10-14.db.gz` | unpack to `data/plp.db` | The database: 28,852 documents, 45,844 sentences, one aspect each, both models' scores, the index. The only snapshot you need. | 26.2 MB (101.4 MB unpacked) |
-| `sentence_embeddings.npz` | `data/sentence_embeddings.npz` | Needed for the chatbot's evidence search. Without it, search falls back to matching words. Unchanged since 11 Oct. | 132 MB |
+| `search_embeddings.npz` | `data/search_embeddings.npz` | **New.** The chatbot's evidence search, from a model built for search (all-MiniLM-L6-v2). Without it, a search that names no topic falls back to matching words. Or build it yourself: `HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.search_vectors`, about 5 minutes. | 66 MB |
+| `sentence_embeddings.npz` | `data/sentence_embeddings.npz` | FinBERT's vectors. Only for aspect discovery and the similarity method; the chatbot no longer reads it. Unchanged since 11 Oct. | 132 MB |
 | `aspect_llm/llama3.1_8b.eef9b342.jsonl` | `data/aspect_llm/` | The aspect model's answer for every sentence (sentence ids and aspects only, no text). Needed only to re-run the re-score, or to compare with the earlier answers. | 5 MB |
 | `SHA256SUMS` | nowhere | Checksums of every file above: `shasum -a 256 -c SHA256SUMS` | |
 

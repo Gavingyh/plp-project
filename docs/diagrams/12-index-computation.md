@@ -52,7 +52,7 @@ Each row names the file and line an element comes from, and the text that line m
 | window cutoff | `aggregate/index.py:280` | `if t is None or t < cutoff:` |
 | windows end at the newest sentence | `aggregate/index.py:270` | `cutoff = (anchor or datetime.now(timezone.utc)) - timedelta(days=days)` |
 | label scores | `aggregate/index.py:47` | `_LABEL_SCORE = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}` |
-| source weights | `config/sources.yaml:25` | `earnings:     {weight: 1.0` |
+| source weights | `config/sources.yaml:28` | `earnings:     {weight: 1.0` |
 | weights read by the index | `aggregate/index.py:51` | `_SOURCE_WEIGHT = sources.weights()` |
 | each item weighted | `aggregate/index.py:282` | `item = (label, confidence, _SOURCE_WEIGHT.get(source, _DEFAULT_WEIGHT))` |
 | group: aspect and source | `aggregate/index.py:283` | `groups[(bank, aspect, source, model_version)].append(item)` |
@@ -65,5 +65,5 @@ Each row names the file and line an element comes from, and the text that line m
 | volume floor | `aggregate/index.py:46` | `MIN_N = 5` |
 | volume floor, applied when read | `chatbot/tools.py:30` | `MIN_VOLUME_FOR_SCORE = MIN_N` |
 | time-series floor | `aggregate/index.py:156` | `min_n: int = MIN_N` |
-| thin buckets left off the chart | `docs/api-integration.md:98` | `gap, not a line through them, and not a zero.` |
+| thin buckets left off the chart | `docs/api-integration.md:294` | `gap, not a line through them, and not a zero.` |
 | insufficient data reported | `chatbot/tools.py:109` | `if n < MIN_VOLUME_FOR_SCORE:` |

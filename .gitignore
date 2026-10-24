@@ -20,6 +20,7 @@ data/plp.db
 data/plp.db-shm
 data/plp.db-wal
 data/sentence_embeddings.npz
+data/search_embeddings.npz
 data/snapshots/
 
 # full-text CNA articles fetched by ingest/cna_archive.py: CNA's copyright, not redistributed

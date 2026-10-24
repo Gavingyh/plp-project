@@ -67,7 +67,6 @@ classDiagram
   class OllamaBackend
   class ClaudeBackend
   class OpenAIBackend
-  class GeminiBackend
 
   Conversation "1" *-- "*" TurnResult : keeps
   Conversation ..> agent : calls answer_turn
@@ -79,7 +78,6 @@ classDiagram
   LLMBackend <|-- OllamaBackend
   LLMBackend <|-- ClaudeBackend
   LLMBackend <|-- OpenAIBackend
-  LLMBackend <|-- GeminiBackend
 ```
 
 Rendered for the report: [SVG](img/14-chatbot-components.svg) · [PNG](img/14-chatbot-components.png)
@@ -100,21 +98,20 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:2441` | `class Conversation:` |
-| state fields | `chatbot/agent.py:2447` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:2451` | `def from_messages(cls, messages: list[dict]` |
+| Conversation | `chatbot/agent.py:2457` | `class Conversation:` |
+| state fields | `chatbot/agent.py:2463` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:2467` | `def from_messages(cls, messages: list[dict]` |
 | TurnResult | `chatbot/agent.py:2159` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:2307` | `def answer_turn(question: str` |
+| answer_turn | `chatbot/agent.py:2314` | `def answer_turn(question: str` |
 | ToolCallTracker | `chatbot/agent.py:776` | `class _ToolCallTracker:` |
 | citation check | `chatbot/agent.py:938` | `def answer_has_unverified_citation(self, answer: str)` |
 | intent | `chatbot/intent.py:108` | `def classify_intent(question: str` |
 | reply_for | `chatbot/intent.py:127` | `def reply_for(intent` |
-| guards | `chatbot/guards.py:315` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
+| guards | `chatbot/guards.py:317` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
 | intent and model_answer kept | `chatbot/agent.py:2165` | `intent: str` |
-| tools | `chatbot/tools.py:808` | `TOOL_FUNCTIONS = {` |
-| LLMBackend | `chatbot/backends/base.py:36` | `class LLMBackend(ABC):` |
-| temperature | `chatbot/backends/base.py:42` | `temperature: float = DEFAULT_TEMPERATURE` |
+| tools | `chatbot/tools.py:871` | `TOOL_FUNCTIONS = {` |
+| LLMBackend | `chatbot/backends/base.py:48` | `class LLMBackend(ABC):` |
+| temperature | `chatbot/backends/base.py:55` | `temperature: float = DEFAULT_TEMPERATURE` |
 | OllamaBackend | `chatbot/backends/ollama_backend.py:87` | `class OllamaBackend(LLMBackend):` |
 | ClaudeBackend | `chatbot/backends/claude_backend.py:23` | `class ClaudeBackend(LLMBackend):` |
-| OpenAIBackend | `chatbot/backends/openai_backend.py:54` | `class OpenAIBackend(LLMBackend):` |
-| GeminiBackend | `chatbot/backends/gemini_backend.py:83` | `class GeminiBackend(LLMBackend):` |
+| OpenAIBackend | `chatbot/backends/openai_backend.py:52` | `class OpenAIBackend(LLMBackend):` |

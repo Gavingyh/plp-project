@@ -71,13 +71,13 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| headline score | `api/main.py:119` | `@app.get("/sentiment")` |
-| bank × aspect grid | `api/main.py:137` | `@app.get("/sentiment/index")` |
-| composition: sentence counts | `api/main.py:175` | `@app.get("/sources")` |
-| series computed from scored sentences | `api/main.py:265` | `@app.get("/sentiment/series")` |
-| each bank's newest consensus | `api/main.py:212` | `@app.get("/analyst-consensus/latest")` |
-| newest sentences for a bank and aspect | `api/main.py:232` | `@app.get("/evidence/latest")` |
-| semantic evidence search | `api/main.py:199` | `@app.get("/evidence")` |
-| chat | `api/main.py:315` | `@app.post("/chat")` |
-| starter questions | `api/main.py:284` | `@app.get("/suggestions")` |
-| CORS open to any origin | `api/main.py:73` | `CORSMiddleware, allow_origins=["*"]` |
+| headline score | `api/main.py:124` | `@app.get("/sentiment")` |
+| bank × aspect grid | `api/main.py:142` | `@app.get("/sentiment/index")` |
+| composition: sentence counts | `api/main.py:180` | `@app.get("/sources")` |
+| series computed from scored sentences | `api/main.py:270` | `@app.get("/sentiment/series")` |
+| each bank's newest consensus | `api/main.py:217` | `@app.get("/analyst-consensus/latest")` |
+| newest sentences for a bank and aspect | `api/main.py:237` | `@app.get("/evidence/latest")` |
+| semantic evidence search | `api/main.py:204` | `@app.get("/evidence")` |
+| chat | `api/main.py:396` | `@app.post("/chat",` |
+| starter questions | `api/main.py:289` | `@app.get("/suggestions")` |
+| CORS open to any origin | `api/main.py:77` | `CORSMiddleware, allow_origins=["*"]` |

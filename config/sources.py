@@ -1,7 +1,8 @@
 """
 The sources in config/sources.yaml: each one's weight in the index,
-whether members of the public wrote its text, and whether its text must stay
-within the team. Read once per process.
+whether members of the public wrote its text, whether its text must stay
+within the team, and whether a hosted chatbot model may still receive it.
+Read once per process.
 """
 
 import functools
@@ -18,9 +19,10 @@ def _load() -> dict:
         cfg = yaml.safe_load(f)
     for name, spec in cfg["sources"].items():
         if (not isinstance(spec.get("weight"), (int, float)) or not isinstance(spec.get("personal_text"), bool)
-                or not isinstance(spec.get("team_only"), bool)):
+                or not isinstance(spec.get("team_only"), bool)
+                or not isinstance(spec.get("hosted_model", False), bool)):
             raise ValueError(f"config/sources.yaml: {name} needs a numeric weight and true/false "
-                             f"personal_text and team_only")
+                             f"personal_text and team_only (and hosted_model, if given)")
     return cfg
 
 
@@ -38,6 +40,12 @@ def personal_text_sources() -> frozenset[str]:
 
 def team_only_sources() -> frozenset[str]:
     return frozenset(name for name, spec in _load()["sources"].items() if spec["team_only"])
+
+
+def withheld_team_only_sources() -> frozenset[str]:
+    """Team-only sources whose text a hosted chatbot model may not receive."""
+    return frozenset(name for name, spec in _load()["sources"].items()
+                     if spec["team_only"] and not spec.get("hosted_model", False))
 
 
 def label(source: str | None) -> str:

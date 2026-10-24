@@ -228,6 +228,8 @@ matrix is as correct as FAISS or Chroma and far simpler. SQL pre-filters on
 bank/aspect/date first, so the embedding comparison runs on a small
 candidate set. A small lexical-overlap boost is added so exact identifiers
 (ticker codes, product names) are not found by semantic proximity alone.
+*Changed 2026-10-24:* the vectors are no longer FinBERT's, and a search
+within one aspect uses none (decision 27).
 
 ### 11. Local model support (Ollama) alongside hosted models
 
@@ -540,7 +542,7 @@ they compare the answer with what the tools returned.
 *Decided 2026-10-04 (PLAN section 2):* every hosted backend (Gemini, Claude,
 OpenAI or Groq) is denied Reddit text, CNA text and text from unlisted
 sources, the safe default given Reddit's developer policy on third-party use
-of its content; the demo model is `llama3.1:8b`; strip enforcement and the
+of its content (CNA and broker research cleared on 2026-10-24, decision 28); the demo model is `llama3.1:8b`; strip enforcement and the
 aspect query are on by default; and the 7- and 30-day figures count back from
 the newest sentence, labelled "as of" its date.
 
@@ -784,6 +786,58 @@ other words, false alarms in 5 of the 540 answers git tracks and 7 of the
 seven, and passes instead a figure moved onto another subject where two of
 its nearest words happen to match (`docs/evidence/chatbot-answers-2026-10-04.md`,
 Known limits). The Grounded chatbot claim was reworded on 6 Oct to what the checks prove, within those limits.
+
+### 27. Evidence is ranked by its words within a topic, by a model built for search otherwise
+
+*2026-10-24.* The chatbot's evidence search ranked sentences by base FinBERT
+similarity. Measured on the 28 queries of `chatbot/retrieval_eval.py` over the
+1,277 sentences people labelled, counting how many of the top five people
+labelled with the topic asked about (precision at 5;
+`docs/evidence/search-models-2026-10-24.md`):
+
+- Within one stored topic, FinBERT ranked below a random draw from the same
+  pool (0.65 to 0.70 against 0.74). The question's own words, then the newest
+  first, rank above it (0.82; gain over random 0.08, 95% interval 0.01 to
+  0.15). The ordering was chosen on these same queries, so that gain is an
+  optimistic estimate.
+- With no topic, FinBERT ranked no better than random (0.12 against 0.10;
+  gain 0.02, interval -0.04 to 0.09).
+
+Three small models trained to match sentences by meaning were scored against
+a rule set before the results: replace the word ordering within a topic only
+at 0.85 or more, and replace FinBERT with no topic if well above 0.12. None
+beat the word ordering within a topic (best 0.80). With no topic all three
+did, at 0.29 to 0.31, too close to separate.
+
+Decided:
+- Within a topic, the question's words, then the newest first, with no
+  vectors (`evidence.within_topic`; `embedding` restores FinBERT similarity).
+- With no topic, cosine similarity over vectors from
+  `sentence-transformers/all-MiniLM-L6-v2` plus the word bonus: 0.31 on the
+  corpus store, against 0.10 for random. Of the three it is the smallest (91
+  MB of weights) and fastest (tens of milliseconds a question on a laptop
+  processor), and is Apache 2.0, so a public install can download it.
+  `Qwen3-Embedding-0.6B` was left out: it had not finished the labelled
+  sentences after about 15 minutes on this hardware.
+- The vectors live in their own store, `data/search_embeddings.npz`
+  (`chatbot/search_vectors.py`), refreshed by the topic step with FinBERT's.
+  FinBERT's store stays for aspect discovery and the similarity method.
+
+Not decided: whether to rank within a topic by a model at all. The 28
+queries can't separate the word ordering (0.82) from the best model (0.80),
+and a test set with more queries per topic would be needed to.
+
+### 28. CNA and broker research may be quoted by the hosted chatbot model
+
+*2026-10-24, the team's decision.* OpenAI's `gpt-6-luna` became the chatbot's
+default, and it was denied the text of every team-only source, so its
+evidence came from results reports and news alone. CNA articles and broker
+research stay team-only (never committed, never shared), but a hosted model
+may now receive their sentences to quote: `hosted_model: true` for `cna` and
+`sgx_research` in `config/sources.yaml`. Reddit text is still never sent: it
+is written by members of the public and Reddit's developer policy restricts
+third-party use of its content. Text from a source the config doesn't list
+is still withheld.
 
 ## Notable implementation details
 

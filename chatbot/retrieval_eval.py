@@ -5,12 +5,15 @@ sentences people labelled (Hit@K, MRR, precision@K).
 For each bank and each aspect with enough labelled sentences for that bank,
 the question "What do people say about <bank>'s <aspect label>?" ranks that
 bank's labelled sentences with the same score `search_evidence` uses
-(FinBERT cosine plus a small word-overlap boost). A sentence is relevant if
+(cosine over the search model's vectors plus a small word-overlap boost;
+within one topic, the question's words then the newest). A sentence is relevant if
 people gave it that aspect. Judging only the labelled pool keeps every
 relevance judgement human: over the whole corpus most retrieved sentences
 would have no judgement at all. A random ranking is the baseline.
 
-Reads only. Needs the embedding cache (python -m aspects.embed_store).
+Reads only. Needs the search vectors (python -m chatbot.search_vectors).
+FinBERT's figures, from before the search changed model, are in
+data/eval/search-models/.
 
 USAGE:
   HF_HUB_OFFLINE=1 python -m chatbot.retrieval_eval
@@ -23,7 +26,7 @@ from math import comb
 import numpy as np
 import pandas as pd
 
-from chatbot.retrieval import _LEXICAL_WEIGHT, _WORD, _cosine_sim, _lexical_overlap, ranking_query
+from chatbot.retrieval import _LEXICAL_WEIGHT, _WORD, _cosine_sim, _instant, _lexical_overlap, ranking_query
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LABELS_PATH = os.path.join(BASE_DIR, "data", "labeled", "candidates.csv")
@@ -39,14 +42,15 @@ def rank(query_vec: np.ndarray, query: str, vecs: np.ndarray, texts: list[str]) 
 
 
 def metrics(relevant_in_order: list[bool], ks=KS) -> dict:
-    """Hit@K, precision@K and reciprocal rank for one ranked list."""
+    """Hit@K, precision@K and reciprocal rank for one ranked list. A list shorter
+    than K is scored over its own length, as the random baseline (r / n) is."""
     out = {}
     first = next((i for i, r in enumerate(relevant_in_order) if r), None)
     out["rr"] = 0.0 if first is None else 1.0 / (first + 1)
     for k in ks:
         top = relevant_in_order[:k]
         out[f"hit@{k}"] = float(any(top))
-        out[f"p@{k}"] = sum(top) / k
+        out[f"p@{k}"] = sum(top) / max(len(top), 1)
     return out
 
 
@@ -86,7 +90,14 @@ def evaluate(labels: pd.DataFrame, vec_by_id: dict, embed, aspect_label: dict,
             query = label if query_style == "label" else question
             if query_style == "aspect-query":            # as search_evidence with CHATBOT_ASPECT_QUERY=1
                 query = ranking_query(question, aspect)
-            order = rank(embed(query), query, vecs, pool["text"].tolist())
+            if query_style == "words-newest":             # as search_evidence orders within one topic
+                query = ranking_query(question, aspect)
+                words = set(_WORD.findall(query.lower()))
+                lex = np.array([_lexical_overlap(words, t) for t in pool["text"]])
+                newest = np.array([_instant(p) for p in pool["published_at"]])
+                order = np.lexsort((-newest, -lex))
+            else:
+                order = rank(embed(query), query, vecs, pool["text"].tolist())
             rel = (pool["aspect"].values[order] == aspect).tolist()
             rows.append({"bank": bank, "aspect": aspect, "pool": len(pool), "relevant": r,
                          **metrics(rel), **{f"random_{k}": v for k, v in random_baseline(len(pool), r).items()}})
@@ -95,8 +106,7 @@ def evaluate(labels: pd.DataFrame, vec_by_id: dict, embed, aspect_label: dict,
 
 def main():
     argparse.ArgumentParser(description=__doc__.split("\n\n")[0]).parse_args()
-    from aspects.embed import embed_sentences
-    from aspects.embed_store import load_for_search
+    from chatbot.search_vectors import embed_sentences, load_for_search
     from config import aspect_taxonomy
     aspect_label = aspect_taxonomy.labels()
     labels = pd.read_csv(LABELS_PATH)
@@ -107,6 +117,10 @@ def main():
     conn = get_connection()
     try:
         sa = pd.read_sql("SELECT sentence_id, aspect FROM sentence_aspects", conn)
+        # The search orders by the stored date, which for a few sentences differs from the
+        # date in the labelled file.
+        pub = dict(conn.execute("SELECT sentence_id, published_at FROM sentences").fetchall())
+        labels["published_at"] = labels["sentence_id"].map(pub).fillna(labels["published_at"])
     finally:
         conn.close()
     sa = sa[sa["sentence_id"].isin(wanted)]
@@ -119,7 +133,8 @@ def main():
                               ("aspect query (CHATBOT_ASPECT_QUERY)", "aspect-query", None),
                               ("question + stored-aspect filter", "question", stored),
                               ("label + stored-aspect filter", "label", stored),
-                              ("aspect query + stored-aspect filter", "aspect-query", stored)):
+                              ("aspect query + stored-aspect filter", "aspect-query", stored),
+                              ("words, then newest + stored-aspect filter (in use)", "words-newest", stored)):
         res = evaluate(labels, vec_by_id, embed, aspect_label, style, filt)
         table[name] = res[cols].mean()
         table[f"{name} (random)"] = res[[f"random_{c}" for c in cols]].mean().set_axis(cols)

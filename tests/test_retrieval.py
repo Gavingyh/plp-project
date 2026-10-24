@@ -38,8 +38,12 @@ def _two_dividend_sentences(temp_db):
 
 
 def test_aspect_query_flag_ranks_by_the_aspect_not_the_question_words(temp_db, monkeypatch):
-    """Question words favour chatter by default; CHATBOT_ASPECT_QUERY ranks by the aspect."""
+    """Question words favour chatter by default; CHATBOT_ASPECT_QUERY ranks by the aspect.
+    This is the FinBERT ordering, kept behind evidence.within_topic: embedding."""
     import numpy as np
+    real_get = retrieval.settings.get
+    monkeypatch.setattr(retrieval.settings, "get",
+                        lambda path: "embedding" if path == "evidence.within_topic" else real_get(path))
     monkeypatch.setattr(retrieval, "load_for_search", lambda: (["s1", "s2"], np.eye(2)))
     embedded = []
     monkeypatch.setattr(retrieval, "embed_sentences", lambda texts: embedded.append(texts[0]) or np.array([[0.5, 0.5]]))

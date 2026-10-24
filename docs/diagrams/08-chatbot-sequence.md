@@ -67,16 +67,16 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | chat client hands over the question | `chatbot/chat.py:82` | `last = conv.ask(q)` |
-| Conversation.ask | `chatbot/agent.py:2492` | `def ask(self, question: str, verbose: bool = False, on_step=None)` |
-| last three turns and state | `chatbot/agent.py:2494` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
-| intent classifier first | `chatbot/agent.py:2315` | `intent = intents.classify_intent(question, state, previous)` |
-| fixed reply | `chatbot/agent.py:2316` | `reply = intents.reply_for(intent, question, state)` |
-| backend chosen | `chatbot/agent.py:2326` | `backend = backend or get_backend(backend_name)` |
+| Conversation.ask | `chatbot/agent.py:2508` | `def ask(self, question: str, verbose: bool = False, on_step=None)` |
+| last three turns and state | `chatbot/agent.py:2510` | `r = answer_turn(question, backend_name=self.backend_name, history=self.history(),` |
+| intent classifier first | `chatbot/agent.py:2322` | `intent = intents.classify_intent(question, state, previous)` |
+| fixed reply | `chatbot/agent.py:2323` | `reply = intents.reply_for(intent, question, state)` |
+| backend chosen | `chatbot/agent.py:2333` | `backend = backend or get_backend(backend_name)` |
 | model call | `chatbot/backends/ollama_backend.py:170` | `self._chat(messages, ollama_tools)` |
 | temperature sent | `chatbot/backends/ollama_backend.py:114` | `"options": {"temperature": self.temperature}` |
 | tool executed and recorded | `chatbot/agent.py:812` | `result = fn(**coerce_tool_arguments(name, tool_input))` |
 | tools read the database | `chatbot/tools.py:77` | `def get_sentiment(bank: str` |
-| evidence search uses embeddings | `chatbot/retrieval.py:156` | `query_vec = embed_sentences([rank_text])[0]` |
-| figures checked against results | `chatbot/agent.py:2251` | `return unverified_numbers(checked, results, question)` |
-| state updated | `chatbot/agent.py:2496` | `self._update_state(r)` |
-| turn kept | `chatbot/agent.py:2497` | `self.turns.append(r)` |
+| evidence search uses embeddings | `chatbot/retrieval.py:180` | `query_vec = embed_sentences([rank_text])[0]` |
+| figures checked against results | `chatbot/agent.py:2254` | `figures = unverified_numbers(checked, results, question)` |
+| state updated | `chatbot/agent.py:2512` | `self._update_state(r)` |
+| turn kept | `chatbot/agent.py:2513` | `self.turns.append(r)` |

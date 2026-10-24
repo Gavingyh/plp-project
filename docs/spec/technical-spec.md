@@ -40,7 +40,8 @@ similarity floor for `net_interest_margin`, giving a `sentence_aspects` row.
 writes `aspect_sentiment` with a label, a confidence, and a `model_version`.
 `aggregate.index` folds it into `sentiment_index` rows for DBS with weighting
 and shrinkage. When a user later asks the chatbot about DBS margins,
-`search_evidence` retrieves it by cosine similarity over the cached embedding,
+`search_evidence` finds it among the sentences stored under that aspect,
+ordered by the question's words and then by date,
 and the answer cites it by that same `sentence_id` and the transcript's URL.
 The Streamlit dashboard reads the same rows from the database; any other
 frontend reads them through the REST API ([api-integration.md](../api-integration.md)).
@@ -62,7 +63,7 @@ criticise an app in consecutive sentences.
 | `aspects/` | FinBERT embeddings, embedding cache, taxonomy discovery, assignment, taxonomy comparison, the LLM aspect classifier and assignment evaluation | `assign`, `discover`, `compare_taxonomies`, `embed_store`, `llm_classify` (evaluation and the corpus run), `assignment_eval` |
 | `sentiment/` | Aspect-conditioned sentiment classification | `score` (base FinBERT; also scores new pairs with a served fine-tuned version through `finetuned`) |
 | `aggregate/` | The sentiment index, continuous time series, and the read-only preview of pending changes | `index`, `preview` |
-| `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation, a terminal chat for testing | `chat`, `agent`, `run_eval` |
+| `chatbot/` | Tool-calling agent, tools, RAG retrieval, prompts, backends, evaluation, a terminal chat for testing | `chat`, `agent`, `run_eval`, `search_vectors` (the evidence search's vectors) |
 | `train/` | Label cleaning, fine-tuning, evaluation, pre-labelling, annotator agreement, the Opus labeller | `labels`, `finetune`, `evaluate`, `llm_prelabel`, `agreement`, `rater_labels` |
 | `api/` | FastAPI REST API: the documented interface for any frontend (DESIGN decision 23) | `uvicorn api.main:app` |
 | `dashboard/` | Streamlit dashboard, maintained by a teammate; reads the database directly | `streamlit run dashboard/app.py` |
@@ -290,7 +291,9 @@ re-run `aspects.assign` (after clearing `sentence_aspects`) and
 | `SHRINKAGE_K` | 5 | `aggregate/index.py` | `score × n/(n+k)` |
 | `MIN_VOLUME_FOR_SCORE` | 5 | `chatbot/tools.py` | Below this, report insufficient data |
 | `_SOURCE_WEIGHT` | earnings 1.0, arctic_shift 1.0; news sources 1.5 (google_news, yahoo_news, newsapi, cna, alphavantage) | `aggregate/index.py` | Earnings was 3.0 until it became the second-largest and most positively skewed source |
-| `_LEXICAL_WEIGHT` | 0.15 | `chatbot/retrieval.py` | Keyword-overlap boost over cosine similarity |
+| `_LEXICAL_WEIGHT` | 0.15 | `chatbot/retrieval.py` | Keyword-overlap boost over cosine similarity, for a search with no aspect |
+| `evidence.within_topic` | `words_then_newest` | `config/chatbot.yaml` | Within one aspect: the question's words, then the newest first, with no vectors |
+| `MODEL_NAME` | `sentence-transformers/all-MiniLM-L6-v2` | `chatbot/search_vectors.py` | The vectors for a search with no aspect |
 | `similarity_floor` | 0.65 | `config/aspects.yaml` | Below it, a sentence falls to `other` |
 
 ---
@@ -363,11 +366,16 @@ need an abstraction layer purely to paper over that. Tool *schemas* stay in one
 place. See `chatbot/backends/base.py`.
 
 **Retrieval is hybrid, sized to the corpus.** A SQL pre-filter on bank, aspect,
-sentiment and date does most of the narrowing; cosine similarity over cached
-FinBERT embeddings ranks what survives; a small lexical-overlap boost ensures
-exact identifiers like ticker codes or "DBS Multiplier" are not found by
-semantic proximity alone. At tens of thousands of sentences, brute-force cosine
-over an in-memory matrix is as correct as FAISS or Chroma and far simpler.
+sentiment and date does most of the narrowing. Within one aspect, what
+survives is ordered by the question's words and then by date, with no
+vectors: FinBERT similarity ranked that pool below a random draw, and no model
+built for search beat the word ordering. With no aspect, cosine similarity
+over cached vectors from a model built for search (all-MiniLM-L6-v2,
+`chatbot/search_vectors.py`) ranks what survives, and a small lexical-overlap
+boost ensures exact identifiers like ticker codes or "DBS Multiplier" are not
+found by semantic proximity alone (`docs/evidence/search-models-2026-10-24.md`).
+At tens of thousands of sentences, brute-force cosine over an in-memory matrix
+is as correct as FAISS or Chroma and far simpler.
 
 **Grounding is enforced in code, not requested in the prompt**, because prompt
 instructions alone failed in testing:
@@ -462,7 +470,7 @@ classifier: `llama3.1:8b` top-1 0.729 against the human aspect, seed-centroid
 
 ## 10. Testing
 
-2666 tests in `tests/` (2713 from the repository root, adding the diagram and
+2894 tests in `tests/` (2941 from the repository root, adding the diagram and
 notebook checks), no network calls. External APIs are mocked with captured real
 payloads, so a provider changing its response shape surfaces as a failing test
 rather than a silent production break.

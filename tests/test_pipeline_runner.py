@@ -51,6 +51,7 @@ def small_pipeline(temp_db, tmp_path, monkeypatch):
         "embed_sentences",
         lambda texts: np.ones((len(texts), 768), dtype=np.float32),
     )
+    monkeypatch.setattr(assign, "update_search_vectors", lambda: {})
     monkeypatch.setattr(assign, "_load_config", lambda: {"assignment_method": "llm"})
     monkeypatch.setattr(
         llm_classify,

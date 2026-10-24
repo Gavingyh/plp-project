@@ -70,7 +70,7 @@ Each row names the file and line an element comes from, and the text that line m
 | discovery | `aspects/discover.py:49` | `def run(min_cluster_size: int = 10)` |
 | 338 clusters | `docs/evidence/aspect-taxonomy-2026-09-25.md:11` | `338 clusters, 27,949 noise points (65%)` |
 | labels drafted with an AI assistant | `docs/evidence/aspect-taxonomy-2026-09-25.md:16` | `notes record that an AI assistant (Claude, in a chat session) drafted` |
-| assignment | `aspects/assign.py:94` | `def run() -> dict:` |
+| assignment | `aspects/assign.py:95` | `def run() -> dict:` |
 | export candidates | `preprocess/export_candidates.py:59` | `def export(train_dev_target: int` |
 | LLM suggestions | `train/llm_prelabel.py:146` | `def run(model: str = DEFAULT_MODEL` |
 | blind test sheet | `preprocess/export_blind_test.py:104` | `def export_blind(` |

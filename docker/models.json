@@ -14,5 +14,10 @@
       "seed_1": "8ef23d69590fcf8a03e1cfbcafd321d3fc45c0e1299fd6a5961c8ebdbcaf2028",
       "seed_7": "627548907b1cd859ce7b10800c933bb177df2646b072ce6376443a9f860e47c4"
     }
+  },
+  "search": {
+    "repo": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "width": 384
   }
 }

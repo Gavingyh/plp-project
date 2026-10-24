@@ -22,11 +22,10 @@ from transformers import AutoModel, AutoTokenizer
 
 from aspects import embed_store
 from config.logging_config import get_logger, setup_logging
+from config.search_model import MODEL_NAME, MODEL_REVISION, WIDTH
 
 logger = get_logger(__name__)
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-WIDTH = 384
 _MAX_LENGTH = 128
 _BATCH_SIZE = 64
 
@@ -42,8 +41,8 @@ def _get_model():
     # the local language model keeps the GPU.
     global _tokenizer, _model
     if _model is None:
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        _model = AutoModel.from_pretrained(MODEL_NAME).float().eval()
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, revision=MODEL_REVISION)
+        _model = AutoModel.from_pretrained(MODEL_NAME, revision=MODEL_REVISION).float().eval()
     return _tokenizer, _model
 
 
@@ -62,6 +61,9 @@ def embed_sentences(sentences: list[str]) -> np.ndarray:
             mask = enc["attention_mask"].unsqueeze(-1).float()
             pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
             out.append(torch.nn.functional.normalize(pooled, dim=-1).numpy())
+            done = min(i + _BATCH_SIZE, len(sentences))
+            if done % 1024 == 0 or done == len(sentences):
+                logger.info("Search vectors: embedded %d/%d sentences", done, len(sentences))
     return np.concatenate(out).astype(np.float32)
 
 

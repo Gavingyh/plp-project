@@ -46,7 +46,7 @@ existing manual-pipeline subprocess runs inside the API container, using the
 same database, models and run directory. No separate job queue is needed.
 
 The setup service strips the archive's existing `data/` prefix, restores only
-the database, embedding cache, CNA cache and aspect-answer caches, and checks
+the database, FinBERT embedding cache, optional search cache, CNA cache and aspect-answer caches, and checks
 SQLite integrity, the served model version and embedding IDs. Old archive and
 preview files in the ZIP are ignored. Existing files are preserved. A missing,
 invalid or mismatched dataset stops setup with a specific error before the
@@ -55,7 +55,8 @@ application starts. A partial restoration can be retried with the same command.
 `docker/models.json` records the public Hugging Face revisions and the three
 fine-tuned checkpoint SHA-256 hashes. The Docker runtime uses the same pinned
 base-model revision that setup downloaded, with Hugging Face offline mode
-enabled. Each unique configured Ollama model is pulled once and reused.
+enabled. MiniLM is pinned in both the manifest and `config/search_model.py`,
+so cache creation and runtime queries use the same search model revision. Each unique configured Ollama model is pulled once and reused.
 Setup warms the local intent classifier with a synthetic question before
 starting the API/UI, so the first real question can reuse its model/prompt.
 Docker uses a 180-second intent timeout for CPU-only cold requests; native
@@ -65,11 +66,28 @@ when reviewing only the read-only data pages. No paid API is used for warm-up.
 The optional evaluation judge is not needed to run the app; add
 `PLP_EXTRA_OLLAMA_MODELS=qwen3:4b` if running judge-based evaluations.
 
+Setup runs search-vector preparation in a separate process before warming
+Ollama, releasing MiniLM's model memory first. If `search_embeddings.npz` is
+absent from the supplied ZIP, setup generates it from the database; no new
+bundle or teammate-provided cache is required. An optional supplied cache is
+checked for unique sentence IDs, finite 384-dimensional vectors and database
+coverage, separately from FinBERT's 768-dimensional vectors. Invalid search
+caches are rebuilt. Complete caches are reused without rewriting them; partial
+caches embed only missing sentences and remove deleted IDs. Writes use atomic
+replacement so interruption cannot expose a half-written cache. The database
+is not modified by this preparation. First-time generation logs its progress
+and can take several minutes depending on CPU resources.
+
+The API's pipeline preflight checks that MiniLM is cached before importing
+documents. Runtime Hugging Face access stays offline. If this check fails,
+rerun setup with `docker compose up --build` rather than enabling runtime
+downloads.
+
 | persisted asset | location |
 |---|---|
 | ZIP, database, embeddings, CNA, PDF inputs, run history, logs | host `data/` mounted at `/app/data` |
 | fine-tuned checkpoints | host `models/` mounted at `/app/models` |
-| base model and downloaded Hugging Face snapshots | project-scoped `hf-cache` Docker volume |
+| base FinBERT, MiniLM and downloaded Hugging Face snapshots | project-scoped `hf-cache` Docker volume |
 | Ollama models | project-scoped `ollama-models` Docker volume |
 
 For an automatic dataset download, supply a direct HTTPS `PLP_DATA_URL` in
@@ -136,8 +154,10 @@ For additional local-model inference checks (use the selected project name):
 docker compose -p <project-name> exec -T api python -m docker.smoke --inference
 ```
 
-This checks an actual offline FinBERT embedding, all three fine-tuned models
-and an Ollama intent response. Run `--ui` separately to render all six pages;
+This checks actual offline MiniLM and FinBERT embeddings, all three fine-tuned
+models and an Ollama intent response. The default smoke check also verifies
+full search-cache coverage and calls `/evidence` without a topic filter to
+exercise semantic retrieval without a hosted chatbot request. Run `--ui` separately to render all six pages;
 the flags are mutually exclusive so UI test state is released before loading
 the 8B model. Wait until image builds finish before running inference tests.
 These checks make no OpenAI/Claude requests. To exercise the update workflow, select a
@@ -147,7 +167,7 @@ that setup reports the models as already downloaded. Stopping during a run
 leaves saved work intact; the existing runner recovers it as interrupted and
 the next incremental run completes pending work.
 
-### Docker validation (24 Oct 2026)
+### Initial Docker validation (24 Oct 2026, before the MiniLM integration)
 
 Validated using Linux ARM64 containers on an Apple Silicon Mac with an 8 GB
 Docker allocation, isolated data/model folders and empty project model caches
@@ -171,6 +191,31 @@ collection. Windows/x86 hardware was not directly exercised. Containerised
 Ollama on a Mac is slower than native GPU inference; warm-up is a readiness
 step rather than a chatbot latency guarantee. Run UI and model tests separately
 and finish image builds before model inference to avoid competing memory use.
+
+### MiniLM integration validation (24 Oct 2026)
+
+Validated after merging the chatbot fixes from `main`, using the existing
+`data.zip` without a search cache and the same Apple Silicon Docker setup.
+
+| check | result |
+|---|---|
+| Automatic preparation | Pinned MiniLM downloaded; 45,844 search vectors generated from the restored database |
+| Network-disabled inference | MiniLM produced valid normalized vectors with Docker networking disabled and cached files mounted read-only |
+| Evidence retrieval | `/evidence` without a topic filter passed with Hugging Face offline mode enabled |
+| New local PDF | On a disposable database/cache copy, one synthetic PDF added one document/sentence; all six stages completed, including both embedding caches and the served fine-tuned sentiment model |
+| Repeated ingestion | No duplicate documents/sentences/scores; search cache unchanged |
+| Dashboard | All six pages rendered against the merged API |
+| Restart | Complete search vectors reused without rebuilding; cache checksum and modification time preserved |
+| Regression suite | 2,935 passed and 58 subtests passed; 2 skipped and 46 expected failures |
+
+The synthetic PDF and its run records remain under the ignored
+`data/run/minilm-validation-*/` folder; the dashboard database retains its
+45,844 sentences. No hosted-model requests or online collection were used.
+The host regression run reused the existing Python test environment (linked
+temporarily for the native startup-script test, then removed); Docker startup
+and inference required no host Python environment. An existing sklearn
+single-label warning and Streamlit deprecation warnings remain unrelated to
+this integration.
 
 ### Docker troubleshooting
 
@@ -891,7 +936,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2894 tests in `tests/`; `pytest -q` from the repository root runs 2941,
+2936 tests in `tests/`; `pytest -q` from the repository root runs 2983,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for

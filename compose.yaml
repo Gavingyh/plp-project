@@ -21,6 +21,7 @@ x-runtime: &runtime
   FINBERT_REVISION: 0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031
   PLP_DB_PATH: /app/data/plp.db
   PLP_EMBEDDINGS_PATH: /app/data/sentence_embeddings.npz
+  PLP_SEARCH_EMBEDDINGS_PATH: /app/data/search_embeddings.npz
   OLLAMA_BASE_URL: http://ollama:11434
   OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
   CHATBOT_INTENT_MODEL: ${CHATBOT_INTENT_MODEL:-llama3.1:8b}

@@ -33,6 +33,22 @@ def main():
 
     preflight(["earnings", "sgx_research", "cna"])
     print("PASS PDF/CNA pipeline prerequisites and local models", flush=True)
+    from contextlib import closing
+    import os
+    import sqlite3
+    from docker.bootstrap import validate_embeddings
+
+    with closing(sqlite3.connect(os.environ["PLP_DB_PATH"])) as conn:
+        ids = {row[0] for row in conn.execute("SELECT sentence_id FROM sentences")}
+    count = validate_embeddings(Path(os.environ["PLP_SEARCH_EMBEDDINGS_PATH"]), ids, width=384)
+    if count != len(ids):
+        raise RuntimeError("Search cache does not cover the stored sentences")
+    print(f"PASS MiniLM search cache ({count:,} vectors)", flush=True)
+    response = requests.get(api + "/evidence", params={"query": "DBS earnings and banking services", "bank": "DBS", "k": 3}, timeout=120)
+    response.raise_for_status()
+    if not response.json():
+        raise RuntimeError("Offline evidence retrieval returned no results")
+    print("PASS evidence retrieval with the offline MiniLM model", flush=True)
     if args.ui:
         from streamlit.testing.v1 import AppTest
 
@@ -44,6 +60,7 @@ def main():
                 raise RuntimeError(f"Streamlit {page}: {app.exception[0].message}")
             print(f"PASS Streamlit {page} render", flush=True)
     if args.inference:
+        subprocess.run([sys.executable, "-m", "docker.model_smoke", "--search"], check=True)
         # Release all FinBERT/PyTorch test memory before loading Ollama's 8B model.
         subprocess.run([sys.executable, "-m", "docker.model_smoke"], check=True)
         from config.model_version import FINETUNED, MODEL_VERSION

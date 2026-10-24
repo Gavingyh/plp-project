@@ -15,6 +15,7 @@ from pathlib import Path, PurePosixPath
 import shutil
 import sqlite3
 import stat
+import subprocess
 import sys
 import tempfile
 import time
@@ -22,7 +23,7 @@ from urllib.parse import urlsplit
 from zipfile import BadZipFile, ZipFile, is_zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME_FILES = {"plp.db", "sentence_embeddings.npz", "cna/articles.jsonl", "cna/candidates.json"}
+RUNTIME_FILES = {"plp.db", "sentence_embeddings.npz", "search_embeddings.npz", "cna/articles.jsonl", "cna/candidates.json"}
 MODEL_FILES = ("config.json", "model.safetensors", "tokenizer.json", "tokenizer_config.json", "input_format.json")
 
 
@@ -115,16 +116,17 @@ def validate_database(path: Path, model_version: str) -> set[str]:
         raise SetupError("The database is unreadable or its schema is incomplete. Use a valid team dataset.") from exc
 
 
-def validate_embeddings(path: Path, sentence_ids: set[str]) -> int:
+def validate_embeddings(path: Path, sentence_ids: set[str], *, width: int = 768, allow_stale: bool = False) -> int:
     import numpy as np
 
     try:
         with np.load(path, allow_pickle=False) as cache:
             ids, vectors = cache["sentence_ids"], cache["vectors"]
-            if ids.ndim != 1 or ids.dtype.kind not in "US" or vectors.shape != (len(ids), 768):
+            if ids.ndim != 1 or ids.dtype.kind not in "US" or vectors.shape != (len(ids), width):
                 raise ValueError("invalid shape or sentence IDs")
             identifiers = set(ids.tolist())
-            if len(identifiers) != len(ids) or not identifiers.issubset(sentence_ids) or not np.isfinite(vectors).all():
+            if (len(identifiers) != len(ids) or (not allow_stale and not identifiers.issubset(sentence_ids))
+                    or not np.isfinite(vectors).all()):
                 raise ValueError("invalid or stale entries")
             if sentence_ids and not len(ids):
                 raise ValueError("empty embedding cache")
@@ -274,6 +276,37 @@ def prepare_models(root: Path) -> dict:
         raise SetupError("FinBERT preparation failed. Check internet access and the public model repository; HF_TOKEN is optional if access is restricted. Re-run to resume downloads.") from exc
 
 
+def prepare_search_model() -> None:
+    from huggingface_hub import snapshot_download
+    from config.search_model import DOWNLOAD_PATTERNS, MODEL_NAME, MODEL_REVISION, WIDTH
+    from pipeline.stages import _cached_search_model
+
+    spec = json.loads((ROOT / "docker/models.json").read_text())["search"]
+    if (spec["repo"], spec["revision"], spec["width"]) != (MODEL_NAME, MODEL_REVISION, WIDTH):
+        raise SetupError("The search model manifest does not match config/search_model.py. Update both together.")
+    log("Checking the public MiniLM search model and tokenizer.")
+    try:
+        try:
+            _cached_search_model()
+        except RuntimeError:
+            snapshot_download(MODEL_NAME, revision=MODEL_REVISION, allow_patterns=DOWNLOAD_PATTERNS,
+                              token=os.environ.get("HF_TOKEN") or False)
+            _cached_search_model()
+    except Exception as exc:
+        raise SetupError("MiniLM preparation failed. Check internet access and re-run setup to resume the public model download.") from exc
+    log("MiniLM search model ready for offline use.")
+
+
+def prepare_search_cache(data: Path) -> None:
+    # Release the search model and its inference memory before warming Ollama.
+    environment = {**os.environ, "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
+                   "PLP_DB_PATH": str((data / "plp.db").resolve()),
+                   "PLP_SEARCH_EMBEDDINGS_PATH": str((data / "search_embeddings.npz").resolve())}
+    result = subprocess.run([sys.executable, "-m", "docker.search_cache", "--data", str(data)], env=environment)
+    if result.returncode:
+        raise SetupError("Search cache preparation failed. Review the setup logs and re-run; the database is preserved.")
+
+
 def ollama_models() -> list[str]:
     import yaml
     from chatbot import settings
@@ -351,6 +384,8 @@ def main() -> int:
             prepare_data(data, MODEL_VERSION)
             if not args.data_only:
                 prepare_models(args.root)
+                prepare_search_model()
+                prepare_search_cache(data)
                 prepare_ollama(os.environ.get("OLLAMA_BASE_URL", "http://ollama:11434"))
                 if os.environ.get("PLP_WARM_INTENT", "1").strip().lower() not in ("0", "false", "no"):
                     warm_intent()

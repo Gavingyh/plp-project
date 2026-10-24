@@ -12,8 +12,19 @@ from train.evaluate import finetuned_probs
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", choices=FINETUNED[MODEL_VERSION]["models"])
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--model", choices=FINETUNED[MODEL_VERSION]["models"])
+    mode.add_argument("--search", action="store_true")
     args = parser.parse_args()
+    if args.search:
+        from chatbot.search_vectors import embed_sentences
+
+        vectors = embed_sentences(["DBS reported higher earnings."])
+        if (vectors.shape != (1, 384) or not np.isfinite(vectors).all()
+                or not np.allclose(np.linalg.norm(vectors, axis=1), 1, atol=1e-5)):
+            raise RuntimeError("Invalid MiniLM search embeddings")
+        print("PASS offline MiniLM inference", flush=True)
+        return
     if not args.model:
         vectors = embed.embed_sentences(["DBS reported higher earnings."])
         if vectors.shape != (1, 768) or not np.isfinite(vectors).all():

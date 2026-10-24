@@ -144,13 +144,22 @@ restoration and model download progress. Open:
 
 The setup service validates the supplied database/model version and embedding
 cache, restores only missing runtime files from the ZIP, downloads public
-FinBERT and the three SHA-256-verified fine-tuned checkpoints, and pulls the
-configured Ollama models. Intent classification, topic assignment and optional
+FinBERT and the three SHA-256-verified fine-tuned checkpoints, downloads the
+pinned public MiniLM search model, and pulls the configured Ollama models. Intent classification, topic assignment and optional
 local answers currently share `llama3.1:8b`, downloaded once. The default answer
 provider remains OpenAI. Setup also warms the local intent classifier with a
 synthetic question before starting the interfaces; a CPU-only cold load can
 take several minutes. Setup does not collect new articles, retrain models or
 send questions to a paid API.
+
+Setup also prepares **`data/search_embeddings.npz`** for evidence retrieval.
+Your existing `data.zip` remains usable: if it does not include this cache,
+Docker generates it from the restored database automatically. This adds a
+one-time CPU processing step with progress in the setup logs. Valid cached
+vectors are reused; later data updates embed only new sentences. FinBERT's
+separate `sentence_embeddings.npz` stays available for aspect analysis.
+Both search and sentiment models are available offline after setup; OpenAI
+answers and online collection still require internet access.
 
 Data and imported documents stay under `data/`; fine-tuned checkpoints stay
 under `models/`. Docker volumes retain the base FinBERT and Ollama caches.
@@ -300,6 +309,25 @@ The two vector files aren't in git either. Each is a cache rebuilt from the
 database: `python -m chatbot.search_vectors` rebuilds `data/search_embeddings.npz`,
 the chatbot's evidence search (about 5 minutes on a laptop processor), and
 `python -m aspects.embed_store` rebuilds FinBERT's `data/sentence_embeddings.npz`.
+
+### Updating an existing native installation
+
+Docker remains optional; existing native installations can keep using
+`scripts/start.sh`. After pulling these changes, ensure the pinned MiniLM
+revision is cached before running the pipeline with Hugging Face offline mode.
+From the project root, run once with internet access:
+
+```bash
+HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 .venv-plp/bin/python3 - <<'PYTHON'
+from chatbot.search_vectors import embed_sentences, update
+embed_sentences(["DBS banking services."])  # cache the pinned model even if vectors already exist
+print(update())                          # embed only missing sentences
+PYTHON
+```
+
+This uses the local search model, preserves the database and needs no paid
+API call. Docker performs the equivalent preparation automatically. Stop the
+native servers before using Docker with the same data folder and host ports.
 
 ### Sharing the data and models
 
@@ -462,6 +490,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2894 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2941: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2936 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2983: adds the diagram and notebook checks
 ```

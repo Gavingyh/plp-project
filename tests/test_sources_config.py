@@ -28,6 +28,11 @@ def test_only_cna_and_the_broker_reports_must_stay_within_the_team():
     assert sources.team_only_sources() == {"cna", "sgx_research"}
 
 
+def test_the_team_cleared_cna_and_the_broker_reports_for_a_hosted_model():
+    assert sources.withheld_team_only_sources() == frozenset()
+    assert "arctic_shift" in sources.personal_text_sources()     # Reddit is never cleared this way
+
+
 def test_every_source_the_ingesters_write_is_configured():
     named = set()
     for f in (ROOT / "ingest").glob("*.py"):

@@ -346,16 +346,30 @@ def test_hosted_withholds_evidence_from_an_unknown_or_missing_source():
     assert out == ["OCBC raised its dividend.", WITHHELD_UNKNOWN, WITHHELD_UNKNOWN]
 
 
-def test_hosted_never_receives_cna_text():
-    # CNA articles stay within the team (CLAUDE.md); hosted backends withhold it.
+def test_hosted_receives_cna_and_broker_text_the_team_cleared():
+    # CNA and broker research stay within the team (CLAUDE.md), but the team
+    # cleared both for a hosted chatbot model (config/sources.yaml, hosted_model).
+    from chatbot.backends.base import withhold_reddit
+    content = {"results": [{"source": "cna", "text": "DBS posted record profit, CNA reported.",
+                            "url": "https://www.channelnewsasia.com/x", "cite_as": "[DBS, 2026-01-01]"},
+                           {"source": "sgx_research", "text": "We keep our BUY call on UOB.",
+                            "url": "data/sgx_research/x.pdf", "cite_as": "[UOB, 2026-01-02]"}]}
+    out = withhold_reddit("search_evidence", content)["results"]
+    assert [r["text"] for r in out] == ["DBS posted record profit, CNA reported.", "We keep our BUY call on UOB."]
+    assert out[0]["cite_as"] == "[DBS, 2026-01-01]"
+
+
+def test_a_team_only_source_not_cleared_is_still_withheld(monkeypatch):
+    from chatbot.backends import base
     from chatbot.backends.base import WITHHELD_TEAM_ONLY, withhold_reddit
+    monkeypatch.setattr(base.sources, "withheld_team_only_sources", lambda: frozenset({"cna"}))
     content = {"results": [{"source": "cna", "text": "DBS posted record profit, CNA reported.",
                             "url": "https://www.channelnewsasia.com/x", "cite_as": "[DBS, 2026-01-01]"}]}
     item = withhold_reddit("search_evidence", content)["results"][0]
     assert item["text"] == WITHHELD_TEAM_ONLY and item["url"] is None and item["cite_as"] is None
 
 
-# --- Every hosted backend withholds Reddit, CNA and unlisted text ------------------------
+# --- Every hosted backend withholds Reddit and unlisted text; CNA is cleared -------------
 
 _EVIDENCE = {"query": "q", "results": [
     {"sentence_id": "a" * 24, "source": "arctic_shift", "text": "my OCBC app keeps crashing lol",
@@ -370,16 +384,17 @@ _HISTORY = [{"role": "user", "content": "quotes on OCBC?"},
 
 
 def _assert_nothing_private_left(sent: list[str]):
-    from chatbot.backends.base import EARLIER_ANSWER, WITHHELD, WITHHELD_TEAM_ONLY, WITHHELD_UNKNOWN
+    from chatbot.backends.base import EARLIER_ANSWER, WITHHELD, WITHHELD_UNKNOWN
     blob = "\n".join(sent)
-    for private in ("keeps crashing", "reddit.com", "record profit", "channelnewsasia", "card got blocked"):
+    for private in ("keeps crashing", "reddit.com", "card got blocked"):
         assert private not in blob, private
-    assert WITHHELD in blob and WITHHELD_TEAM_ONLY in blob and WITHHELD_UNKNOWN in blob
+    assert WITHHELD in blob and WITHHELD_UNKNOWN in blob
     assert "OCBC raised its dividend." in blob                  # cleared news still goes
+    assert "record profit" in blob                              # so does CNA, cleared by the team
     assert EARLIER_ANSWER in blob and "quotes on OCBC?" in blob   # the user's question stays
 
 
-def test_claude_never_receives_reddit_cna_or_unlisted_text(monkeypatch):
+def test_claude_never_receives_reddit_or_unlisted_text(monkeypatch):
     import types
     import anthropic
     sent = []
@@ -403,7 +418,7 @@ def test_claude_never_receives_reddit_cna_or_unlisted_text(monkeypatch):
     _assert_nothing_private_left(sent)
 
 
-def test_openai_never_receives_reddit_cna_or_unlisted_text(monkeypatch):
+def test_openai_never_receives_reddit_or_unlisted_text(monkeypatch):
     from chatbot.backends.openai_backend import OpenAIBackend
     sent = []
     replies = iter([

@@ -542,7 +542,7 @@ they compare the answer with what the tools returned.
 *Decided 2026-10-04 (PLAN section 2):* every hosted backend (Gemini, Claude,
 OpenAI or Groq) is denied Reddit text, CNA text and text from unlisted
 sources, the safe default given Reddit's developer policy on third-party use
-of its content; the demo model is `llama3.1:8b`; strip enforcement and the
+of its content (CNA and broker research cleared on 2026-10-24, decision 28); the demo model is `llama3.1:8b`; strip enforcement and the
 aspect query are on by default; and the 7- and 30-day figures count back from
 the newest sentence, labelled "as of" its date.
 
@@ -826,6 +826,18 @@ Decided:
 Not decided: whether to rank within a topic by a model at all. The 28
 queries can't separate the word ordering (0.82) from the best model (0.80),
 and a test set with more queries per topic would be needed to.
+
+### 28. CNA and broker research may be quoted by the hosted chatbot model
+
+*2026-10-24, the team's decision.* OpenAI's `gpt-6-luna` became the chatbot's
+default, and it was denied the text of every team-only source, so its
+evidence came from results reports and news alone. CNA articles and broker
+research stay team-only (never committed, never shared), but a hosted model
+may now receive their sentences to quote: `hosted_model: true` for `cna` and
+`sgx_research` in `config/sources.yaml`. Reddit text is still never sent: it
+is written by members of the public and Reddit's developer policy restricts
+third-party use of its content. Text from a source the config doesn't list
+is still withheld.
 
 ## Notable implementation details
 

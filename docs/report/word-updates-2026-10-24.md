@@ -16,7 +16,7 @@ file's notes to the team.
 
 Replace "The chatbot answers questions about the three banks … Three layers of code sit around the model." with:
 
-> The chatbot answers questions about the three banks from the index and the stored sentences, and is built so that it cannot quietly make things up. A language model chooses among six tools: a bank's sentiment, a comparison of the three, a trend, data coverage, a search for evidence sentences, and analyst consensus. By default that model is OpenAI's gpt-6-luna. A local model, llama3.1:8b, answers instead when chosen, needs no key or payment, and sorts every question by intent whichever model answers. A hosted model never receives the text of Reddit posts, CNA articles or broker research, because the people and publishers who wrote them have not agreed to its being passed on: it sees that such a sentence exists, with its bank, date and sentiment, but cannot quote it. Three layers of code sit around the model.
+> The chatbot answers questions about the three banks from the index and the stored sentences, and is built so that it cannot quietly make things up. A language model chooses among six tools: a bank's sentiment, a comparison of the three, a trend, data coverage, a search for evidence sentences, and analyst consensus. By default that model is OpenAI's gpt-6-luna. A local model, llama3.1:8b, answers instead when chosen, needs no key or payment, and sorts every question by intent whichever model answers. A hosted model never receives the text of Reddit posts, which members of the public wrote and whose platform restricts passing them on: it sees that such a sentence exists, with its bank, date and sentiment, but cannot quote it. Three layers of code sit around the model.
 
 ## 3.7, the paragraph after the numbered list
 
@@ -93,7 +93,7 @@ Replace its last sentence, "The automated results are therefore a floor for trus
 
 ## 8, Table 9 (where generative AI was used)
 
-- Row "Component of the system": add "OpenAI gpt-6-luna, the chatbot's default answer model (never sent Reddit, CNA or broker research text)" to the tools.
+- Row "Component of the system": add "OpenAI gpt-6-luna, the chatbot's default answer model (never sent Reddit text)" to the tools.
 - Row "Alternative chatbot backends": Gemini has been removed from the code, and the product's default is now gpt-6-luna. Reword it to say that Gemini and Groq were tried, and that the product uses gpt-6-luna with the local model as the no-key option.
 - Row "Evaluation scoring": add "read the 42 three-try chatbot answers (21 per model) against the tool results".
 - Not generative, so not in Table 9: all-MiniLM-L6-v2. If the references list models, add it with Reimers and Gurevych (2019), Sentence-BERT.

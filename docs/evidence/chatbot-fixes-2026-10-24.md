@@ -92,6 +92,30 @@ Answers: `data/run/eval-2026-10-24b/probe_rated.jsonl` (local),
 git with the gold-set results files, whose recorded tool results contain CNA
 and broker-research text.
 
+## gpt-6-luna after CNA and broker research were cleared
+
+The team then let a hosted model receive CNA and broker-research sentences
+(DESIGN decision 28; Reddit stays withheld), and the 32 questions were run
+again on `gpt-6-luna` (`data/eval/chatbot_eval_summary_luna_cna_v2.md`,
+US$0.0068).
+
+| Check | Before clearing | After clearing |
+|---|---|---|
+| Right tool chosen | 23 / 24 | 23 / 24 |
+| Advice declined, missing data admitted, on reading (automated check) | 8 / 8 (6 / 8) | 8 / 8 (7 / 8) |
+| Citation fabrication flagged | 0 / 32 | 0 / 32 |
+| Figures no tool returned, in the answer shown (automated, any draft) | 0 / 32 (1) | 0 / 32 (2) |
+| Answers that searched for evidence | 15 | 12 |
+| Quoted search results by source | results reports 8, news 4 | results reports 5, news 2, CNA 1, broker research 1 |
+
+The tool miss is `compare-3` both times (two lookups instead of the
+comparison tool, figures right). The automated misses on behaviour are
+correct declines in wording the check doesn't recognise. The figure flags
+are the 24 of "24 September 2026" and, after clearing, a 17 in `lookup-2`'s
+first draft that the check removed before the answer was shown. With one run
+each, the drop from 15 to 12 searching answers is within run-to-run variation;
+what changed is that CNA and broker research can now be quoted.
+
 ## Cost of the gpt-6-luna run
 
 US$0.0158 in all: US$0.0089 for the 32 questions and US$0.0069 for the 21
@@ -107,7 +131,9 @@ cap, US$0.05, was never reached.
   ones the fixes target, so these are not held-out results.
 - The three-try results are the AI assistant's reading, not a person's
   rating; a person should check them before the report relies on them.
-- `gpt-6-luna` never sees Reddit, CNA or broker-research text (it sees that a
-  sentence exists, its bank, date and sentiment), so its evidence comes from
-  results reports and news only. The two models answered from different
-  evidence.
+- In these runs `gpt-6-luna` never saw Reddit, CNA or broker-research text
+  (it saw that a sentence exists, its bank, date and sentiment), so its
+  evidence came from results reports and news only, and the two models
+  answered from different evidence. Since then the team has cleared CNA and
+  broker research for a hosted model (DESIGN decision 28); a run after that
+  change is below.

@@ -81,27 +81,30 @@ class LLMBackend(ABC):
 
 
 # What a hosted model may see (decided for every hosted backend:
-# Claude, OpenAI or Groq). Reddit evidence text (other people's posts),
-# CNA text (which stays within the team) and text from a source the config
-# doesn't list never leave this machine; free tiers may have their inputs read
-# by people, and Reddit's developer policy restricts third-party use of its
-# content. Enforced in each hosted backend, not left to the caller. The model
+# Claude, OpenAI or Groq). Reddit evidence text (other people's posts), text
+# from a team-only source the team hasn't cleared for a hosted model, and text
+# from a source the config doesn't list never leave this machine; free tiers
+# may have their inputs read by people, and Reddit's developer policy
+# restricts third-party use of its content. CNA and broker research are
+# team-only but cleared (config/sources.yaml, hosted_model). Enforced in each
+# hosted backend, not left to the caller. The model
 # still sees that the sentence exists, its bank, date, sentiment and id, and
 # can't quote it: a quote it writes is then invented, and the citation check
 # flags it. The local Ollama backend sends nothing off the machine.
 WITHHELD = "[text by a member of the public (Reddit), withheld from the hosted model]"
-WITHHELD_TEAM_ONLY = "[CNA text, kept within the team, withheld from the hosted model]"
+WITHHELD_TEAM_ONLY = "[text kept within the team, withheld from the hosted model]"
 WITHHELD_UNKNOWN = "[text from a source not cleared for the hosted model, withheld]"
 
 
 def withhold_reddit(name: str, content):
     """A tool result as a hosted model may see it: evidence written by members
-    of the public or kept within the team (config/sources.yaml, personal_text
-    and team_only) without its text, link or citation. Evidence from a source
-    the config doesn't list, or with no source, is withheld too."""
+    of the public, or kept within the team and not cleared for a hosted model
+    (config/sources.yaml: personal_text; team_only without hosted_model),
+    without its text, link or citation. Evidence from a source the config
+    doesn't list, or with no source, is withheld too."""
     if name != "search_evidence" or not isinstance(content, dict):
         return content
-    personal, team_only, known = (sources.personal_text_sources(), sources.team_only_sources(),
+    personal, team_only, known = (sources.personal_text_sources(), sources.withheld_team_only_sources(),
                                   sources.weights().keys())
     items = []
     for item in content.get("results") or []:
@@ -130,7 +133,7 @@ def withheld_tool_result(name: str, result_json: str) -> str:
     return json.dumps(withhold_reddit(name, content), ensure_ascii=False)
 
 
-EARLIER_ANSWER = "[an earlier answer, not shown: it may quote Reddit posts or CNA articles]"
+EARLIER_ANSWER = "[an earlier answer, not shown: it may quote Reddit posts]"
 
 
 def history_for_hosted(history: list | None) -> list:

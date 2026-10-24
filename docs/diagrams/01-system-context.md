@@ -47,7 +47,7 @@ flowchart LR
   wayback -- "archived PDFs,<br/>CNA URLs and pages" --> core
 
   core <-- "question sorting; prompts, tool calls,<br/>answers when chosen" --> ollama
-  core <-- "prompts, tool calls, answers, with an API key;<br/>no Reddit, CNA or broker text" --> hosted
+  core <-- "prompts, tool calls, answers, with an API key;<br/>no Reddit text" --> hosted
 ```
 
 Rendered for the report: [SVG](img/01-system-context.svg) · [PNG](img/01-system-context.png)
@@ -62,7 +62,8 @@ SGX ticker is indexed, so it contributes nothing. The chatbot answers through Op
 `gpt-6-luna` by default; Claude is the other hosted option, and both have returned real
 responses. The local Ollama model answers when chosen (`CHATBOT_BACKEND=ollama`, no key
 needed) and sorts every question by intent whichever model answers. A hosted model never
-receives Reddit, CNA or broker-research text. The OpenAI backend also reaches any
+receives Reddit text; CNA and broker-research text, which stays out of git and
+shared folders, may be sent to it, as the team agreed. The OpenAI backend also reaches any
 OpenAI-compatible provider, such as Groq, through `OPENAI_BASE_URL`.
 
 ## Sources
@@ -91,6 +92,7 @@ Each row names the file and line an element comes from, and the text that line m
 | OpenAI is the default | `config/chatbot.yaml:5` | `backend:          {value: "openai", env: CHATBOT_BACKEND}` |
 | OpenAI's model | `config/chatbot.yaml:18` | `openai:  {value: "gpt-6-luna", env: OPENAI_MODEL}` |
 | the local model sorts every question | `config/chatbot.yaml:19` | `intent:  {value: "llama3.1:8b", env: CHATBOT_INTENT_MODEL}` |
-| a hosted model never sees Reddit or CNA text | `chatbot/backends/base.py:97` | `def withhold_reddit(name: str, content):` |
+| CNA and broker research cleared for a hosted model | `config/sources.yaml:29` | `team_only: true,  hosted_model: true` |
+| a hosted model never sees Reddit text | `chatbot/backends/base.py:99` | `def withhold_reddit(name: str, content):` |
 | Ollama when `auto` finds no key | `chatbot/backends/__init__.py:30` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

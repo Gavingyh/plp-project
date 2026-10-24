@@ -48,7 +48,8 @@ def _unsearched_evidence(answer, calls):
     quotes = [m.group(0)[1:-1] for m in _QUOTE_PATTERN.finditer(answer)]
     quotes += [m.group(1) for m in _BLOCKQUOTE.finditer(answer)]
     for q in quotes:
-        pieces = [p for p in re.split(r"\.{3}|…", _norm_text(q)) if len(p.split()) >= 3]
+        # A full stop or comma inside the closing mark ('… uncertainty."') is punctuation, not a quoted word.
+        pieces = [p.strip(" .,;:!?") for p in re.split(r"\.{3}|…", _norm_text(q)) if len(p.split()) >= 3]
         if pieces and not all(any(p in t for t in texts) for p in pieces):
             bad.append(("quote", q))
     bad += [("url", u) for u in _URL_PATTERN.findall(answer) if _norm_url(u) not in urls]

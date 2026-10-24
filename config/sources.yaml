@@ -4,9 +4,12 @@
 #   (aggregate/index.py), relative to a Reddit comment (1.0). A source not
 #   listed here counts default_weight.
 # personal_text: true when members of the public wrote the text.
-# team_only: true when the text may not leave the team (CNA articles).
-#   Text with either flag is never sent to hosted backends
-#   (chatbot/backends/base.py).
+# team_only: true when the text may not leave the team: never committed,
+#   never shared (CNA articles, broker research).
+# hosted_model: true when a hosted chatbot model may still receive a
+#   team_only source's text. The team agreed this on 24 Oct 2026 for CNA and
+#   broker research, so OpenAI's answers can quote them. Personal text
+#   (Reddit) is never sent, whatever this says (chatbot/backends/base.py).
 #
 # earnings was 3.0, dropped to 1.0 after the earnings corpus landed. The 3.0
 # was set when earnings was assumed to be a handful of high-signal documents;
@@ -23,9 +26,9 @@ default_weight: 1.0
 sources:
   arctic_shift: {weight: 1.0, personal_text: true,  team_only: false, label: "Reddit"}   # Reddit posts and comments
   earnings:     {weight: 1.0, personal_text: false, team_only: false, label: "bank results report"}   # the banks' own reports
-  cna:          {weight: 1.5, personal_text: false, team_only: true,  label: "CNA"}
+  cna:          {weight: 1.5, personal_text: false, team_only: true,  hosted_model: true, label: "CNA"}
   google_news:  {weight: 1.5, personal_text: false, team_only: false, label: "news"}
   yahoo_news:   {weight: 1.5, personal_text: false, team_only: false, label: "news"}
   newsapi:      {weight: 1.5, personal_text: false, team_only: false, label: "news"}
   alphavantage: {weight: 1.5, personal_text: false, team_only: false, label: "news"}
-  sgx_research: {weight: 1.0, personal_text: false, team_only: true,  label: "broker research"}   # broker research PDFs: third-party text
+  sgx_research: {weight: 1.0, personal_text: false, team_only: true,  hosted_model: true, label: "broker research"}   # broker research PDFs: third-party text

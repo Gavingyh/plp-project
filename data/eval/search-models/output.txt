@@ -1,0 +1,25 @@
+28 queries over 1277 labelled sentences
+
+all-MiniLM-L6-v2 {'one question, ms': 13.6, 'labelled sentences, s': 19.2, 'corpus estimate, min': 11.5, 'weights in memory, MB': 91, 'width': 384}
+bge-small-en-v1.5 {'one question, ms': 50.2, 'labelled sentences, s': 33.3, 'corpus estimate, min': 19.9, 'weights in memory, MB': 133, 'width': 384}
+bge-base-en-v1.5 {'one question, ms': 38.5, 'labelled sentences, s': 113.6, 'corpus estimate, min': 68.0, 'weights in memory, MB': 438, 'width': 768}
+
+Precision at 5, mean over the queries:
+setting                                        within the topic filter  without a topic
+random                                                           0.738            0.098
+words, then newest (in use within a topic)                       0.818            0.436
+FinBERT (in use without a topic)                                 0.661            0.129
+FinBERT (in use without a topic) + word bonus                    0.668            0.121
+all-MiniLM-L6-v2                                                 0.732            0.293
+all-MiniLM-L6-v2 + word bonus                                    0.754            0.314
+bge-small-en-v1.5                                                0.696            0.307
+bge-small-en-v1.5 + word bonus                                   0.754            0.300
+bge-base-en-v1.5                                                 0.746            0.300
+bge-base-en-v1.5 + word bonus                                    0.796            0.307
+
+Speed on this Mac's processor (45844 sentences in the corpus):
+                                  one question, ms  width  corpus vectors, MB  labelled sentences, s  corpus estimate, min  weights in memory, MB
+FinBERT (in use without a topic)              53.9  768.0               141.0                    NaN                   NaN                    NaN
+all-MiniLM-L6-v2                              13.6  384.0                70.0                   19.2                  11.5                   91.0
+bge-small-en-v1.5                             50.2  384.0                70.0                   33.3                  19.9                  133.0
+bge-base-en-v1.5                              38.5  768.0               141.0                  113.6                  68.0                  438.0

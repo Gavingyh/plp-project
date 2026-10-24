@@ -12,6 +12,14 @@ def test_metrics_for_one_ranked_list():
     assert m["rr"] == 0.5 and m["hit@1"] == 0.0 and m["hit@5"] == 1.0 and m["p@5"] == 0.4
 
 
+def test_a_pool_smaller_than_k_is_scored_like_the_random_baseline():
+    # Three sentences, two relevant: any order and a random draw both give 2 / 3,
+    # so a ranking is never scored below random for the pool's size alone.
+    assert re_.metrics([True, False, True])["p@5"] == pytest.approx(2 / 3)
+    assert re_.random_baseline(3, 2)["p@5"] == pytest.approx(2 / 3)
+    assert re_.metrics([])["p@5"] == 0.0
+
+
 def test_random_baseline_matches_known_values():
     b = re_.random_baseline(10, 1)
     assert b["hit@1"] == pytest.approx(0.1) and b["hit@5"] == pytest.approx(0.5)

@@ -157,24 +157,24 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Sat 10 Oct 2026</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Sat 24 Oct 2026</span></div>
   <h1>What the team has to do before 1 November</h1>
-  <p class="lede">Every open item in one list, in the order things block each other, with the reason for each. On 10 Oct the team made six of the upstream decisions (listed under Decided); Opus has since labelled every sheet, the owner settled the remaining open points on 11 Oct, and the database is merged and repaired, so the model re-run is no longer blocked. The system still runs the older method on all four parts we have measured better ones for: sentiment, aspects, bank attribution and evidence search.</p>
-  <div class="countdown"><b>22</b> days to submission · Sun 1 Nov</div>
+  <p class="lede">The chatbot fixes, the new evidence search and the switch to OpenAI as the chatbot's default are merged into <code>main</code> and tested. What is left is mostly people's work: two short ratings by Monday, the Word report updates by Wednesday, then conclusions, the video and submission. Each item says what is wrong, with its figure, and what the fix does. Figures freeze on Wednesday 28 October.</p>
+  <div class="countdown"><b>8</b> days to submission · Sun 1 Nov</div>
 </header>
 
 <section aria-labelledby="h-path">
   <h2 id="h-path">The critical path</h2>
-  <p class="sub">Each step needs the one before it. The re-score was applied on 12 Oct: the API and the chatbot now serve the chosen model on the LLM&#8217;s aspects. Before the human evaluation, the dashboard needs its model filter and every evaluation is run again.</p>
+  <p class="sub">Each step needs the one before it. The two ratings set the pace: everything after Monday waits on them.</p>
   <ol class="path">
-    <li><span class="d">10 Oct, part done</span><span class="s">Six upstream decisions made; labels and rules settled</span></li>
-    <li><span class="d">10 Oct, done</span><span class="s">New rules written; Opus labelled every sheet (2,075 rows)</span></li>
-    <li><span class="d">12 Oct, done</span><span class="s">Every model re-run; the best one named</span></li>
-    <li><span class="d">12 Oct, done</span><span class="s">Re-scored once with the chosen model and the LLM&#8217;s aspects</span></li>
-    <li><span class="d">14 Oct, done</span><span class="s">Second re-score: aspects follow the new wealth rule</span></li>
-    <li><span class="d">14–18 Oct</span><span class="s">Dashboard reads one model; team restores the 14 Oct snapshot</span></li>
-    <li><span class="d">19–25 Oct</span><span class="s">Human evaluation; results frozen</span></li>
-    <li><span class="d">26 Oct – 1 Nov</span><span class="s">Report, video, submit</span></li>
+    <li><span class="d">24 Oct, done</span><span class="s">Chatbot fixes, new evidence search and the OpenAI default merged and tested</span></li>
+    <li><span class="d">Sun 25 Oct</span><span class="s">Rating sheets out; examiner run path; decision on CNA text in git</span></li>
+    <li><span class="d">Mon 26 Oct</span><span class="s">Both ratings done; docs that contradict the code corrected</span></li>
+    <li><span class="d">Tue 27 Oct</span><span class="s">Agreement and re-rating results written up</span></li>
+    <li><span class="d">Wed 28 Oct</span><span class="s">Word report updated; limitations table in; figures freeze</span></li>
+    <li><span class="d">Fri 30 Oct</span><span class="s">Every changed figure re-checked; conclusions written</span></li>
+    <li><span class="d">Sat 31 Oct</span><span class="s">Video recorded; final consistency check</span></li>
+    <li><span class="d">Sun 1 Nov</span><span class="s">Peer review and submit</span></li>
   </ol>
 
   <div class="filter" role="group" aria-label="Show items for">
@@ -188,266 +188,246 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 </section>
 
 <section aria-labelledby="h-decide">
-  <h2 id="h-decide">1. Still to decide</h2>
-  <p class="sub">Nothing is waiting on a decision. The owner settled the open points on 11 Oct, gave the go-ahead for the re-score on 12 Oct, and agreed the condition for the second one, which was applied on 14 Oct.</p>
+  <h2 id="h-decide">1. Decisions the team needs to make</h2>
+  <p class="sub">Three decisions, each blocking work further down the list.</p>
   <ul class="items">
     <li data-o="decide">
-      <span class="t">The second re-score, with the aspects made under the new wealth wording <span class="chip decide">Applied 14 Oct</span></span>
-      <span class="when">done</span>
-      <p class="why"><b>Result:</b> the whole corpus was classified again with the 10 Oct wealth rule in the aspect model&#8217;s prompt, and the result applied under a condition the owner agreed beforehand (checks pass, base FinBERT&#8217;s headlines identical, each bank&#8217;s headline within 0.02). 6,914 of 45,844 sentences changed aspect. Wealth went from 4,359 sentences to 1,423; most of the rest went to retail banking and &#8220;other&#8221;. Each bank&#8217;s headline fell a little, because the model in use reads the aspect&#8217;s name with the sentence: DBS 0.155 to 0.143, OCBC 0.143 to 0.129, UOB 0.117 to 0.107. The order of the banks is unchanged.</p>
-      <span class="meta">Evidence: <code>docs/evidence/rescore-wealth-wording-2026-10-14.md</code>, <code>docs/evidence/wealth-definition-trial-2026-10-12.md</code>.</span>
+      <span class="t">Take CNA and broker-research text out of the results files in git <span class="chip decide">Decide</span></span>
+      <span class="when">by Sun 25 Oct</span>
+      <p class="why"><b>Problem:</b> 13 evaluation results files committed under <code>data/eval/</code> record the chatbot's tool results word for word, and those include CNA and broker-research sentences (for example <code>data/eval/summaries/summaries.jsonl</code> and <code>data/eval/terms/extracted.jsonl</code>). The repository is private, but the submission hands the code and datasets to the examiners, which takes CNA text outside the team, against our own rule.</p>
+      <p class="why"><b>Fix:</b> before packaging, keep the sentence ids and drop the text from those files, or remove the files from git. Removing them does not clear git history; that only matters if the GitHub repository itself is shared. Claude does it in about 30 minutes once the team agrees.</p>
+      <span class="meta">Found by scanning every committed results file for team-only sources, 24 Oct.</span>
     </li>
     <li data-o="decide">
-      <span class="t">Which aspect set the product shows after the comparison <span class="chip decide">Applied 12 Oct</span></span>
-      <span class="when">done: the LLM&#8217;s</span>
-      <p class="why"><b>Why:</b> decided 11 Oct: the aspect breakdown is delivered as a comparison of the two methods, the centroids and the LLM, in the report and the evaluation. The index, the dashboard and the chatbot still read one set at a time, so the re-score applies the LLM&#8217;s (it matches people&#8217;s aspect 73% of the time against the centroids&#8217; 41%), with llama&#8217;s answer where the two local models disagree, unless the team says otherwise.</p>
-      <span class="meta">Source: llm-aspect-classifier, index-preview evidence.</span>
+      <span class="t">How examiners get the data, the models and a working chatbot <span class="chip decide">Decide</span></span>
+      <span class="when">by Wed 28 Oct</span>
+      <p class="why"><b>Problem:</b> the database (26.2 MB compressed) and the two vector files are not in git, the models sit in a private Hugging Face repo, and the chatbot's default model needs an OpenAI key the examiners won't have. Making the Hugging Face repo public is blocked for now: base FinBERT's licence (CC BY-NC-SA 4.0) requires credit, non-commercial use and the same licence on any copy, and our models were further trained on CNA and broker-research text.</p>
+      <p class="why"><b>Fix:</b> choose one route and write it into the README: give examiners read access (the Hugging Face organisation's read role, or a read-only token) and the data through the submission or SharePoint, and tell them to run the chatbot with <code>CHATBOT_BACKEND=ollama</code> unless they have a key. The teammate building a Docker setup needs the same decision.</p>
+      <span class="meta">Docker brief: nothing private in the image (database, vectors, models, keys mounted or passed at run time), Ollama on the host.</span>
     </li>
-  </ul>
-</section>
-
-<section aria-labelledby="h-label">
-  <h2 id="h-label">2. Labels: Opus 5.5 labels every sheet (decided 10 October)</h2>
-  <p class="sub">Done on 10 Oct. People no longer label the sentiment sheets. The labels are recorded and reported as LLM labels, not human labels: the meeting note said to declare them as human, and the owner changed that on 10 Oct, because the report has to declare its GenAI use and the labels must be described as what they are.</p>
-  <ul class="items">
-    <li data-o="ai">
-      <span class="t">Opus 5.5 labelled every sheet under the new rules: 2,075 rows <span class="chip ai">Done 10 Oct</span></span>
-      <span class="when">done</span>
-      <p class="why"><b>Result:</b> the first round&#8217;s 1,277 rows, the top-up sheet&#8217;s 268, the active-learning sheet&#8217;s 150 and the broker research round&#8217;s 380, each labelled for aspect and then sentiment by Opus raters that saw no other label (36 runs, audited). 757 positive, 879 neutral, 439 negative; 134 flagged as not about the bank. Against people on the 1,277 rows: aspect &#954; 0.802, sentiment &#954; 0.793, the same as the 1 Oct run under the old rules. The labels are in their own folder and have replaced nothing; the first item in section 1 decides how they are used.</p>
-      <span class="meta">Files: <code>data/labeled/llm_rater/rules-2026-10-10/</code>. Evidence: <code>docs/evidence/llm-rater-new-rules-2026-10-10.md</code>.</span>
-    </li>
-    <li data-o="team">
-      <span class="t">Read the two new rules as written into the guideline <span class="chip team">People</span></span>
-      <span class="when">before retraining (12 Oct)</span>
-      <p class="why"><b>Why:</b> the rules were decided on 10 Oct; this is only a check of how they were worded, since Opus labelled 2,075 rows from this wording. (1) <b>Retail products:</b> a feature clearly good for the customer is positive, one clearly bad is negative; a bare mention, a question, a how-to or mixed terms stays neutral. (2) <b>Wealth:</b> the priority and private tiers and the wealth segment&#8217;s figures; loans, mortgages and unit trusts are retail unless the sentence is about a wealth tier. The instructions also sent brokerage accounts, regular savings plans, insurance and robo-advisers to retail; the owner confirmed that on 11 Oct after a check of how the banks classify them, so only the retail rule&#8217;s wording is left to read. If it is wrong, the affected rows get another pass.</p>
-      <span class="meta">File: <code>docs/annotation-guideline.md</code>, &#8220;Two rules decided on 2026-10-10&#8221;.</span>
-    </li>
-    <li data-o="team">
-      <span class="t">Upload the share folder to the team folder, and everyone restores the 14 Oct snapshot with the new code <span class="chip team">People</span></span>
+    <li data-o="decide">
+      <span class="t">Move the figure freeze from 25 to 28 October <span class="chip decide">Confirm</span></span>
       <span class="when">now</span>
-      <p class="why"><b>Why:</b> the code on <code>main</code> now serves the database of 14 Oct, and only the MacBook has it. With an older database the API finds no rows for the served model, and the aspect prompt no longer matches the stored aspects. Everything a teammate needs beside <code>git pull</code> is gathered in one folder, <code>data/run/share/</code> (1.4 GB): the snapshot, the sentence embeddings, the aspect model&#8217;s answers, the three model folders, checksums, and a note that says where each file goes and what a new feature must respect (<code>README-teams.md</code>). Upload the folder as it is. The 12 Oct snapshot is superseded: don&#8217;t upload it.</p>
-      <span class="meta">Snapshot: <code>plp-2026-10-14.db.gz</code> (26.2 MB, SHA-256 <code>2e42aafe&#8230;07a857f0</code>, in the README). For the team only: it holds CNA and broker research text.</span>
-    </li>
-    <li data-o="ai">
-      <span class="t">Follow-ups to the merged and repaired database <span class="chip ai">Done 12 Oct</span></span>
-      <span class="when">done</span>
-      <p class="why"><b>Result:</b> all three are done. (1) The local aspect model classified the 1,499 new sentences, under the wording the rest of the corpus was classified with. (2) The recent windows now end at the newest stored sentence, 25 Sep, and the API returns that date as <code>data_as_of</code>; the old branch no longer merged, because the chatbot was rewritten after it and already says when the data runs to, so only the index and API parts were carried over. The 7-day window now holds 90, 42 and 60 sentences for DBS, OCBC and UOB, where it held 40, 14 and 7. (3) The chatbot&#8217;s evidence search skips the six stored disclaimer lines. Links to earnings reports and broker research are also relative paths now (decided 4 Oct), so no home folder is left in the database.</p>
-      <p class="why"><b>What it was:</b> three things were left. (1) The local aspect model has not classified the 1,499 new sentences (641 broker research, 858 refilled Reddit); the corpus aspect run with the new wealth definition covers them. (2) The index is rebuilt with its 7- and 30-day windows counted back from the moment the 30 Sep index was computed, so earlier figures stay comparable; a plain rebuild counts back from today and empties the 7-day window. The anchored-windows change (decided 4 Oct) is the real fix, and its branch now conflicts with <code>main</code> in the chatbot&#8217;s prompt and tools and nine diagram pages, so it needs a careful merge and a gold-set check. (3) The chatbot&#8217;s evidence search can now return broker reports, including boilerplate lines such as &#8220;Please refer to Disclaimer Target Price &amp;&amp; Ratings History&#8221;; those lines need filtering.</p>
-      <span class="meta">Blended all-time headlines after the merge and repairs: DBS +0.122, OCBC +0.136, UOB +0.074. UOB&#8217;s 30-day figure fell from +0.289 on 230 sentences to +0.215 on 116 when the misdated earnings left the window.</span>
+      <p class="why"><b>Problem:</b> the report's own note freezes figures on 25 Oct "after the human evaluation", but the human evaluation can't finish by then: the ratings need a day and the analysis another.</p>
+      <p class="why"><b>Fix:</b> freeze on Wed 28 Oct, after the ratings (26 Oct) and their write-up (27 Oct). After that date only words change, never numbers.</p>
     </li>
   </ul>
 </section>
 
-<section aria-labelledby="h-wk2">
-  <h2 id="h-wk2">3. By Monday 12 October</h2>
+<section aria-labelledby="h-team">
+  <h2 id="h-team">2. People's work, in date order</h2>
+  <p class="sub">The two ratings take about an hour each and set the pace for everything after them.</p>
   <ul class="items">
     <li data-o="team">
-      <span class="t">Read the chatbot&#8217;s fixed replies <span class="chip team">People</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> advice, other banks, small talk, help, service requests, prompt injection, complaints and off-topic questions get a fixed reply, which is what a user sees most often in a demo. They are in <code>config/intents.yaml</code> and change without code.</p>
-      <span class="meta">Source: chatbot-intent (4 Oct), DESIGN decision 24.</span>
-    </li>
-  </ul>
-</section>
-
-<section aria-labelledby="h-dash">
-  <h2 id="h-dash">4. Dashboard owner</h2>
-  <ul class="items">
-    <li data-o="team">
-      <span class="t">Make the dashboard read one model version <span class="chip team">Dashboard owner</span></span>
-      <span class="when">now: the re-score is applied</span>
-      <p class="why"><b>Why:</b> since 12 Oct the database holds two models&#8217; scores for every sentence, the served model&#8217;s and base FinBERT&#8217;s, and the dashboard&#8217;s queries don&#8217;t filter on <code>model_version</code>. Until they do, the dashboard reads both models&#8217; index rows, lists evidence twice, and its figures can differ from the API&#8217;s and the chatbot&#8217;s. Add <code>AND model_version = ?</code> with <code>config.model_version.MODEL_VERSION</code>, as the API and chatbot do.</p>
-      <span class="meta"><code>dashboard/app.py</code> lines 72, 89 and 103.</span>
+      <span class="t">Replace the OpenAI key <span class="chip crit">Owner</span></span>
+      <span class="when">now</span>
+      <p class="why"><b>Problem:</b> the key in the MacBook's <code>.env</code> was pasted into a chat session, so it has to be treated as exposed. The chatbot now answers through it by default.</p>
+      <p class="why"><b>Fix:</b> in the OpenAI dashboard, revoke it and create a new one, then put the new one in <code>.env</code>. Nothing else changes.</p>
     </li>
     <li data-o="team">
-      <span class="t">Fix the analyst-consensus panel <span class="chip team">Dashboard owner</span></span>
-      <span class="when overdue">overdue (5 Oct)</span>
-      <p class="why"><b>Why:</b> the panel takes one &#8220;latest date&#8221; for all three banks, so UOB&#8217;s older consensus doesn&#8217;t show. One line: <code>ingest.yahoo_analyst.latest_per_bank(conn)</code>, as the API does.</p>
-      <span class="meta">Source: DESIGN 23 (amendment).</span>
+      <span class="t">Upload the new search vectors to SharePoint <span class="chip team">People</span></span>
+      <span class="when">by Sun 25 Oct</span>
+      <p class="why"><b>Problem:</b> since 24 Oct the chatbot ranks evidence for a question that names no topic with vectors from a model built for search, stored in <code>data/search_embeddings.npz</code> (66 MB, not in git). Without the file a teammate's chatbot falls back to matching words.</p>
+      <p class="why"><b>Fix:</b> upload <code>search_embeddings.npz</code> and the updated <code>README-teams.md</code> from <code>data/run/share-2026-10-24/</code>; the snapshot and the other files are unchanged (checksums in <code>SHA256SUMS</code>). Anyone can instead build it in about 5 minutes: <code>HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.search_vectors</code>.</p>
     </li>
     <li data-o="team">
-      <span class="t">Show the chatbot&#8217;s steps while it answers, and update the caption <span class="chip team">Dashboard owner</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> an answer takes about 47 seconds and the Ask page shows only a spinner. The chatbot now reports each step (<code>Conversation.ask(..., on_step=...)</code>, <code>chatbot/progress.py</code>); replace the <code>st.spinner</code> block around line 512 with an <code>st.status</code> box that writes each finished step (checked with Streamlit&#8217;s test runner). Also update the caption above the chat: &#8220;A local model may still cite evidence it never retrieved&#8221; is out of date since strip mode.</p>
-      <span class="meta">Source: HANDOFF, 6 October (evening); <code>tests/test_chatbot_progress.py</code>.</span>
+      <span class="t">Everyone: pull <code>main</code> and upgrade Streamlit <span class="chip team">People</span></span>
+      <span class="when">by Sun 25 Oct</span>
+      <p class="why"><b>Problem:</b> <code>main</code> now holds the chatbot fixes, the search change and the OpenAI default, so an older checkout behaves differently from the system we describe. Five dashboard tests fail with Streamlit 1.63.0, whose test helper returns <code>['Overview']</code> where the tests expect <code>'Overview'</code>; they pass with 1.66.1, the version a fresh install gets.</p>
+      <p class="why"><b>Fix:</b> <code>git pull</code>, then <code>.venv-plp/bin/python3 -m pip install streamlit==1.66.1</code>, then fetch the vectors above. A fresh clone collects 2,941 tests from the repository root, all passing.</p>
     </li>
     <li data-o="team">
-      <span class="t">Restart the dashboard after pulling, and reword its chatbot error line <span class="chip team">Dashboard owner</span></span>
-      <span class="when">by 12 Oct</span>
-      <p class="why"><b>Why:</b> on 10 Oct the Ask page showed &#8220;The chatbot backend could not be reached &#8230; Read timed out&#8221;. The cause was the local model reloading on a Mac short of memory; it is fixed in the chatbot (the model is loaded first with a longer limit, kept loaded for 30 minutes, and its answer is read as it is written), and a running dashboard only picks that up when restarted. The page still adds &#8220;check that <code>ollama serve</code> is running&#8221; under every error, which is wrong when the model is only slow: show the error&#8217;s own text, which now says what to do.</p>
-      <span class="meta"><code>dashboard/app.py</code> around line 517. Evidence: <code>docs/evidence/chatbot-timeout-and-speed-2026-10-10.md</code>.</span>
+      <span class="t">Rater 1: rate the default chatbot's 26 answers for faithfulness <span class="chip team">People</span></span>
+      <span class="when">by Mon 26 Oct</span>
+      <p class="why"><b>Problem:</b> a person rated 32 answers and found 7 of the 26 the model wrote contradicting the tool data although every number was a tool's: three wrong years, two wrong periods, one wrong rank, one wrong list of topics. No automated check caught any of them. Code fixes followed, but the only check of them is Claude reading the answers (gpt-6-luna right in 21 of 21 tries, the local model in 16 of 21), so the report has no human evidence that the fixes work for the model it now uses.</p>
+      <p class="why"><b>Fix:</b> score each of gpt-6-luna's 26 answers 1, 2 or 3 for faithfulness against the tool data printed beside it, on the same scale as before: 1 if a quote, source or figure is invented or contradicted, 2 if only a claim is unsupported, 3 if all is supported. Skip relevance and correctness to save time. About an hour; Claude sends the sheet on 25 Oct.</p>
+      <span class="meta">Evidence: <code>docs/evidence/human-ratings-2026-10-24.md</code>, <code>docs/evidence/chatbot-fixes-2026-10-24.md</code>.</span>
     </li>
     <li data-o="team">
-      <span class="t">Check every dashboard tab, and choose how it reads data <span class="chip team">Dashboard owner</span></span>
-      <span class="when">by 19 Oct</span>
-      <p class="why"><b>Why:</b> the dashboard reads the database directly while everything else uses the API, and the two have disagreed once. A 4 Oct review found: &#8220;Last refreshed&#8221; shows when the page was opened; trend charts draw straight across thin months; 7- and 30-day figures show cells under 5 sentences that the API calls insufficient; the method note describes the old model and aspects; the Topics count table crashes when a bank lacks an aspect (line 383).</p>
-      <span class="meta">Source: <code>dashboard/app.py</code> review, 4 Oct.</span>
-    </li>
-  </ul>
-</section>
-
-<section aria-labelledby="h-wk3">
-  <h2 id="h-wk3">5. 12–18 October: apply the decisions once</h2>
-  <ul class="items">
-    <li data-o="ai">
-      <span class="t">The corpus aspect run with the new wealth definition <span class="chip ai">Done 14 Oct</span></span>
-      <span class="when">done</span>
-      <p class="why"><b>Result:</b> all 45,844 sentences classified under the new wording in a little over a day, none invalid. Applied in the second re-score (section 1).</p>
-      <span class="meta">Answers: <code>data/aspect_llm/llama3.1_8b.eef9b342.jsonl</code>; wording in <code>config/aspects.yaml</code>.</span>
-    </li>
-    <li data-o="ai">
-      <span class="t">Every model re-run: the adapted encoder fine-tuned on Opus&#8217;s labels is the best <span class="chip ai">Done 12 Oct</span></span>
-      <span class="when">done</span>
-      <p class="why"><b>Result:</b> on the first round&#8217;s 299 test rows, macro-F1 over three seeds is 0.649 for the adapted encoder fine-tuned on Opus&#8217;s labels, 0.631 for FinBERT fine-tuned the same way, 0.621 for the 4 Oct retrain on people&#8217;s labels and 0.571 for base FinBERT. The three adapted models averaged reach 0.670 (accuracy 0.716). Negative recall rises from 0.21 (base) to 0.61. On the 100 broker research test rows the adapted set scores 0.740 against base FinBERT&#8217;s 0.687, and cross-validation agrees (+0.014, better in 11 of 15 folds). Its lead over FinBERT fine-tuned the same way is about one seed standard deviation; every measure points the same way. This is the model the re-score applies. Two follow-up checks on 12 Oct changed nothing: a neutral threshold chosen on held-out rows came out at zero, and switching on class weights, source weights or both for this model did not improve cross-validation (&#8722;0.002 to &#8722;0.004 over 15 paired folds).</p>
-      <span class="meta">Evidence: <code>docs/evidence/model-rerun-2026-10-11.md</code>, with precision and recall for each class on three test scopes; the walk-through is <code>docs/briefs/model-comparison-2026-10-12.html</code>. Models: <code>models/experiments-2026-10-11/dapt/</code> (not in git).</span>
-    </li>
-    <li data-o="ai">
-      <span class="t">The re-score: rehearsed on a copy, approved, applied, snapshot made <span class="chip ai">Done 12 Oct</span></span>
-      <span class="when">done</span>
-      <p class="why"><b>Result:</b> the database matched the rehearsed copy row for row. The aspect method alone leaves every headline as it was; the model moves them: all time, DBS 0.122 to 0.155, OCBC 0.136 to 0.143, UOB 0.074 to 0.117, and DBS overtakes OCBC. Neutral falls from about two-thirds of sentences to about half, and 29% of labels change. Reddit rises for every bank, CNA turns negative for every bank, and UOB&#8217;s broker research falls from 0.236 to &#8722;0.026 on 239 sentences, which is worth a person reading. Per-aspect figures change most, because a sentence had 6.4 aspects on average and now has one; some cells rest on under 100 sentences. Base FinBERT&#8217;s scores stay in the database for comparison.</p>
-      <span class="meta">Evidence: <code>docs/evidence/rescore-rehearsal-2026-10-12.md</code>. To undo: <code>data/snapshots/plp-before-rescore-20261012-141607.db</code>.</span>
-      <p class="why"><b>What it was:</b> one combined re-run is cheaper and easier to explain than several. <code>scripts/rescore.py</code> applies the LLM aspects and fine-tuned scores (<code>--finetuned --models &lt;folders&gt;</code>); rehearsed on a copy on 3 Oct it reproduced the preview cell for cell. It changes the database, so the real run waits for the team&#8217;s go-ahead. Afterwards set <code>MODEL_VERSION</code> and <code>assignment_method: llm</code>.</p>
-    </li>
-    <li data-o="ai">
-      <span class="t">Re-run every evaluation on the new snapshot, and re-export the ratings sheet <span class="chip ai">Done 13 Oct</span></span>
-      <span class="when">done on the 12 Oct database; running again on the 14 Oct one</span>
-      <p class="why"><b>Result:</b> on the re-scored database the chatbot behaves as it did on 6 Oct: the right tool on 23 of 24 questions, 8 of 8 on declining advice and saying when there is no data, no invented citation in 32 answers, one figure no tool returned (caught and marked), and 9 of 9 conversation turns. Its evidence search is far more precise now that a sentence has one aspect: about four of the five sentences it is shown are ones people gave that aspect, where it was fewer than two. One wrong answer passes the checks: asked about &#8220;the last 7 days&#8221;, the model gave the all-time figure and the wrong year. The ratings sheet for the human evaluation is re-exported, with the answers the judge doubts first.</p>
-      <span class="meta">Evidence: <code>docs/evidence/chatbot-eval-rescored-2026-10-13.md</code>. Sheet: <code>data/eval/ratings_sheet.csv</code>.</span>
-      <p class="why"><b>Why:</b> the report&#8217;s tables must describe the system as submitted. The ratings sheet for the final chatbot is ordered by the checklist judge, which catches every known invention (25 of 25) though its reasons are often wrong.</p>
+      <span class="t">Rater 2: re-rate the original 32 answers blind <span class="chip team">People</span></span>
+      <span class="when">by Mon 26 Oct</span>
+      <p class="why"><b>Problem:</b> the ratings so far are one person's, so the report can't say how far people agree on what counts as faithful. The AI judge agreed with that person at weighted kappa 0.22 only, so it can't stand in for a second rater.</p>
+      <p class="why"><b>Fix:</b> a different person scores the same 32 answers on a copy with the first rater's scores removed, faithfulness only. Claude computes weighted kappa on 27 Oct. About an hour.</p>
     </li>
     <li data-o="team">
-      <span class="t">Upload the chosen model&#8217;s weights to the team&#8217;s model store <span class="chip team">People</span></span>
-      <span class="when">by 18 Oct</span>
-      <p class="why"><b>Why:</b> they are not in git. The database already holds the model&#8217;s scores for every stored sentence, so the API, the dashboard and the chatbot run without the weights; they are needed to score a new sentence and to reproduce the results. Three folders, 438 MB each. Check the SHA-256 values after uploading (<code>data/eval/model-rerun-2026-10-11/model_checksums.txt</code>). The snapshot is the item in section 2.</p>
-      <span class="meta">Folders: <code>models/experiments-2026-10-11/dapt/seed_42/final</code>, <code>seed_1/final</code>, <code>seed_7/final</code>.</span>
-    </li>
-  </ul>
-</section>
-
-<section aria-labelledby="h-wk4">
-  <h2 id="h-wk4">6. 19–25 October: the evaluation only people can do</h2>
-  <ul class="items">
-    <li data-o="team">
-      <span class="t">Rate the chatbot&#8217;s answers for faithfulness <span class="chip team">People</span></span>
-      <span class="when">19–25 Oct</span>
-      <p class="why"><b>Why:</b> people&#8217;s ratings are the faithfulness measure, and they calibrate the checklist judge. Two raters on the same answers give an agreement figure too.</p>
-      <span class="meta">Sheet: <code>data/eval/ratings_sheet.csv</code>, 32 answers with the tool data behind each, re-exported on 13 Oct. Score 1 if a quote, source or figure is invented, 2 if only a claim is unsupported, 3 if everything is supported.</span>
+      <span class="t">Paste the replacement text into the Word report <span class="chip team">Report editor</span></span>
+      <span class="when">by Wed 28 Oct</span>
+      <p class="why"><b>Problem:</b> the Word report still describes the chatbot before its fixes (a local model, and Table 8 from before 18 Oct) and gives old search figures, 0.66 and 0.62, which a bug in the measure understated; corrected they are 0.70 and 0.65, and the search now ranks differently.</p>
+      <p class="why"><b>Fix:</b> paste the blocks in <code>docs/report/word-updates-2026-10-24.md</code> into sections 3.7, 4.5, 5, Table 9 and the open-items box. They add about 240 words, and the file says what to cut first if the 20-page limit is tight. Add the ratings results from 27 Oct in the same pass.</p>
     </li>
     <li data-o="team">
-      <span class="t">Run the SASSI questionnaire with 5–8 users, and read transcripts <span class="chip team">People</span></span>
-      <span class="when">19–25 Oct</span>
-      <p class="why"><b>Why:</b> the conversational-UI evaluation the plan promises; automated checks can&#8217;t say whether people find the answers useful.</p>
+      <span class="t">Check the limitations-and-defences table and put it in section 5 <span class="chip team">People</span></span>
+      <span class="when">by Wed 28 Oct</span>
+      <p class="why"><b>Problem:</b> five verified weaknesses are not in the report at all. The first-round test labels match each annotator's earlier labels, made with a model's suggestion on screen, on all 299 rows, so the test is not blind. 3,428 sentences naming two or more banks are dropped. Only 27.6% of Reddit sentences reach the index, because the rest name no bank. The intent classifier fails open. There is no clarification step when no bank is known. An examiner who finds a weakness unmentioned marks it down; one disclosed with its cause and a proposed fix counts as evaluation.</p>
+      <p class="why"><b>Fix:</b> Claude drafts one table (weakness, figure, cause, defence, next step) by 28 Oct, replacing scattered caveats so the page count doesn't grow (the report is at 19 of 20 pages). The team reads every row before it goes in.</p>
     </li>
     <li data-o="team">
-      <span class="t">Interpret the results and freeze the tables <span class="chip team">People</span></span>
-      <span class="when">by 25 Oct</span>
-      <p class="why"><b>Why:</b> the conclusions are the team&#8217;s to write; after the freeze, no number in the report changes.</p>
+      <span class="t">SASSI questionnaire with 5 to 8 users, if it can finish in time <span class="chip team">People</span></span>
+      <span class="when">by Wed 28 Oct, or drop</span>
+      <p class="why"><b>Problem:</b> the report has no evidence from real users; the plan promised a SASSI study, and SASSI is the Conversational UIs module's own instrument.</p>
+      <p class="why"><b>Fix:</b> 5 to 8 people use the chatbot for about 15 minutes each and fill in SASSI; report the scores and two or three observations from the transcripts in section 4.5. If it can't finish by 28 Oct, drop it and list it in the limitations table instead.</p>
     </li>
-  </ul>
-</section>
-
-<section aria-labelledby="h-wk5">
-  <h2 id="h-wk5">7. 26 October – 1 November: submit</h2>
-  <ul class="items">
     <li data-o="team">
-      <span class="t">Write the conclusions, each person&#8217;s contribution, and the GenAI pros and cons <span class="chip team">People</span></span>
-      <span class="when">by 30 Oct</span>
-      <p class="why"><b>Why:</b> the module requires them, and only the authors can write them. Drafts to start from: <code>docs/report/approach.md</code>, <code>findings-limitations-solutions.md</code>, <code>report-draft.md</code>.</p>
+      <span class="t">Confirm the dashboard items left open on 14 Oct are closed <span class="chip team">Dashboard owner</span></span>
+      <span class="when">by Wed 28 Oct</span>
+      <p class="why"><b>Problem:</b> on 14 Oct the dashboard read the database directly and had open items: both models' rows shown, an analyst panel missing UOB, a spinner instead of the chatbot's steps, a misleading error line, and 7- and 30-day cells under 5 sentences shown as if reliable. Since 18 Oct it reads everything through the API, which settles the first two; the rest need a check before the video.</p>
+      <p class="why"><b>Fix:</b> click through every tab and the Ask page against the API on the current <code>main</code>; note anything still wrong in this list.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Fix one line in the recall evaluation script <span class="chip team">Script owner</span></span>
+      <span class="when">by Wed 28 Oct</span>
+      <p class="why"><b>Problem:</b> <code>chatbot/retrieval_eval_with_recall.py</code> divides precision by 5 even when a topic holds fewer than 5 sentences (3 of 28 queries), the bug fixed in <code>chatbot/retrieval_eval.py</code> on 24 Oct. Its recall figures are unaffected.</p>
+      <p class="why"><b>Fix:</b> change <code>sum(top) / k</code> to <code>sum(top) / max(len(top), 1)</code> on the precision line and rerun, so the two scripts agree.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Write the conclusions, each person's contribution, and the GenAI pros and cons <span class="chip team">People</span></span>
+      <span class="when">by Fri 30 Oct</span>
+      <p class="why"><b>Problem:</b> the module requires all three, and only the authors can write them. Table 9 (where generative AI was used) still names Gemini and the local model as the chatbot's; the product now uses gpt-6-luna by default.</p>
+      <p class="why"><b>Fix:</b> start from the draft conclusions in section 5 and the Table 9 notes in the Word update file; each member writes their own contribution paragraph.</p>
     </li>
     <li data-o="team">
       <span class="t">Record the demo video, about 20 minutes, everyone presents <span class="chip team">People</span></span>
-      <span class="when">by 31 Oct</span>
-      <p class="why"><b>Why:</b> a deliverable (5%); every member must present. Show the dashboard and the chatbot together, against the submitted snapshot.</p>
-    </li>
-    <li data-o="ai">
-      <span class="t">Final snapshot and data report; the third clean-copy install test is done <span class="chip ai">Claude</span></span>
-      <span class="when">by 31 Oct</span>
-      <p class="why"><b>Why:</b> the marker installs from the README; the last two install tests each found something, and so did the third, on 12 Oct. A fresh clone with the 12 Oct snapshot installed, passed its tests and served the re-scored index. It showed that the documented test counts were the MacBook&#8217;s, six too high (corrected), and that a training test failed now and then when the Mac&#8217;s GPU was busy (those tests now train on the CPU). The final snapshot and the data report wait for the second re-score.</p>
-      <span class="meta">Evidence: <code>docs/evidence/install-test-2026-10-12.md</code>.</span>
+      <span class="when">by Sat 31 Oct</span>
+      <p class="why"><b>Problem:</b> the video is worth 5% and every member must present; a slow or failing chatbot on camera costs more than any figure.</p>
+      <p class="why"><b>Fix:</b> record against the 14 Oct snapshot and the current <code>main</code>, with the new OpenAI key (median answer about 4 seconds in the teammate's benchmark) or the local model; close memory-heavy apps first, since memory pressure halved the local model's speed on 10 Oct.</p>
     </li>
     <li data-o="team">
       <span class="t">Peer review, final read-through, submit <span class="chip team">People</span></span>
       <span class="when">Sun 1 Nov</span>
-      <p class="why"><b>Why:</b> peer review is 5%, and the submission itself is the team&#8217;s.</p>
+      <p class="why"><b>Problem:</b> peer review is 5%, and the submission is the team's to make.</p>
+      <p class="why"><b>Fix:</b> read the final report against the 31 Oct consistency check, then submit.</p>
     </li>
   </ul>
-  <div class="note"><p>For long runs on the MacBook, keep it plugged in with the lid open, and close memory-heavy apps (Docker): on 6 Oct memory pressure slowed a training run from about 1 to 100 seconds a step.</p></div>
 </section>
 
-<section aria-labelledby="h-hold">
-  <h2 id="h-hold">On hold, or nearly done</h2>
+<section aria-labelledby="h-ai">
+  <h2 id="h-ai">3. What Claude does, in date order</h2>
+  <p class="sub">Edits are made on a branch and reviewed as one change before anything reaches <code>main</code>.</p>
   <ul class="items">
     <li data-o="ai">
-      <span class="t">Chatbot speed: free the Mac&#8217;s memory before a demo; one option left to check <span class="chip ai">Mostly done 10 Oct</span></span>
-      <span class="when">before the demo</span>
-      <p class="why"><b>Status:</b> measured on 10 Oct, the local model&#8217;s speed halved within three minutes as the Mac ran short of memory (11.4 tokens a second down to 5.2, with other programs open), so five questions took 25 to 105 seconds. That is the main cause of slow answers, and closing heavy programs before a demo is the fix. One option is built and left off: writing the tool descriptions where Ollama caches them, instead of having the model read all 967 tokens again for every question (about 10 seconds). On the gold set it was no faster on average (median 36.8 against 41.3 seconds, mean 42.9 against 42.3) and no better on the checks (right tool 22 of 24 against 23), in a run disturbed by other work; rerun it on a quiet Mac before turning it on.</p>
-      <span class="meta">Evidence: <code>docs/evidence/chatbot-timeout-and-speed-2026-10-10.md</code>. Setting: <code>OLLAMA_TOOLS_IN_SYSTEM</code>.</span>
+      <span class="t">Build the two rating sheets <span class="chip ai">Claude</span></span>
+      <span class="when">Sun 25 Oct</span>
+      <p class="why"><b>Problem:</b> the ratings gate everything after Monday, and the raters need a sheet each.</p>
+      <p class="why"><b>Fix:</b> sheet 1 holds gpt-6-luna's 26 model-written answers with the tool data behind each; sheet 2 is the original 32 with the first rater's scores removed. Both carry CNA or broker text in the tool data, so they go through SharePoint, not git.</p>
     </li>
     <li data-o="ai">
-      <span class="t">Further model improvements (slang, glossary, active learning, LLM silver labels) <span class="chip ai">After the upstream items</span></span>
-      <span class="when">after section 1</span>
-      <p class="why"><b>Status:</b> a slang dictionary is not worth it (at most 27 of 1,280 labelled train/dev rows hold slang). A glossary of 79 local terms is drafted (<code>data/glossary/</code>; 18 definitions to check). Active learning&#8217;s sheet is built (section 2). LLM silver labels (an LLM labels unlabelled sentences as extra training data, never replacing human labels) need an agreement check first, and a paid model needs the owner&#8217;s approval.</p>
+      <span class="t">Tell examiners how to run the chatbot <span class="chip ai">Claude</span></span>
+      <span class="when">Sun 25 Oct</span>
+      <p class="why"><b>Problem:</b> the default model needs an OpenAI key; without one the chatbot reports the key missing. Sorting each question by intent needs Ollama either way. The README doesn't say so yet, and doesn't list the new vectors file.</p>
+      <p class="why"><b>Fix:</b> the README and RUNBOOK say to set <code>CHATBOT_BACKEND=ollama</code> without a key, and add the search vectors to the install steps. Updated again once the team decides how examiners get the data.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Take CNA and broker text out of the committed results files <span class="chip ai">After the decision</span></span>
+      <span class="when">Sun 25 Oct</span>
+      <p class="why"><b>Problem and fix:</b> see the first decision. About 30 minutes, then a test run.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Correct the documents that contradict the code <span class="chip ai">Claude</span></span>
+      <span class="when">Mon 26 Oct</span>
+      <p class="why"><b>Problem:</b> CLAUDE.md, DESIGN.md and the technical spec quote macro-F1 0.604, the 1 Oct model's; the model in use scores 0.670 (three seeds averaged) and 0.649 per seed. DESIGN.md says every stored score is base FinBERT's, untrue since 12 Oct, and that the local model is the chatbot's default. The technical spec says the dashboard reads the database; it reads the API. A docstring in <code>aggregate/index.py</code> says the 7- and 30-day windows count back from today; they count back from the newest sentence, 25 Sep. Examiners check documents against code, and a wrong statement reads as a wrong system.</p>
+      <p class="why"><b>Fix:</b> correct each statement, then rerun the tests and the diagram check. No figure in the report moves.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Write up the agreement and re-rating results <span class="chip ai">Claude</span></span>
+      <span class="when">Tue 27 Oct</span>
+      <p class="why"><b>Problem:</b> the report needs the human result for the default model and an agreement figure, both by the freeze.</p>
+      <p class="why"><b>Fix:</b> weighted kappa between the two raters on the 32 answers; the share of gpt-6-luna's answers rated unfaithful against 7 of 26 before the fixes; an evidence note and the text for section 4.5 and Table 8.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Draft the limitations-and-defences table <span class="chip ai">Claude</span></span>
+      <span class="when">Wed 28 Oct</span>
+      <p class="why"><b>Problem and fix:</b> see the item under People's work. Every row takes its figure from a verified source.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Re-check every changed figure against the Word report <span class="chip ai">Claude</span></span>
+      <span class="when">Fri 30 Oct</span>
+      <p class="why"><b>Problem:</b> "115 of 115 figures match primary data" was checked against the HTML draft on 14 Oct. The master is now the Word file, edited since, and the 24 Oct updates change the chatbot and search figures, so the claim doesn't yet cover the document we submit.</p>
+      <p class="why"><b>Fix:</b> extract every number from the final Word text, compare it with the checked draft, and recompute each one that is new or changed from the database and evidence files.</p>
+    </li>
+    <li data-o="ai">
+      <span class="t">Final consistency check and clean install <span class="chip ai">Claude</span></span>
+      <span class="when">Sat 31 Oct</span>
+      <p class="why"><b>Problem:</b> the marker installs from the README, which changes this week. The 24 Oct install test passed on a fresh clone, but every earlier install test found something.</p>
+      <p class="why"><b>Fix:</b> a fresh clone of the final <code>main</code>: install, run every test, start the API and dashboard, and compare the report's figures with the API once more.</p>
     </li>
   </ul>
 </section>
 
 <section aria-labelledby="h-done">
-  <h2 id="h-done">Decided</h2>
+  <h2 id="h-done">4. Done since 14 October</h2>
+  <ul class="items">
+    <li data-o="ai">
+      <span class="t">The chatbot's misdescriptions of correct figures fixed <span class="chip ai">Done 24 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> the tools now give the data's end date, a bank's rank and its strongest and weakest topics as finished sentences for the model to copy, and a year no tool returned is flagged. Each of the 7 questions the rater marked unfaithful was asked three times: gpt-6-luna was right in 21 of 21 tries, the local model in 16 of 21, for US$0.0158 in all. The local model's remaining fault: with too little recent data on a topic, it reports the bank's overall score as the topic's.</p>
+      <span class="meta">Evidence: <code>docs/evidence/chatbot-fixes-2026-10-24.md</code>.</span>
+    </li>
+    <li data-o="ai">
+      <span class="t">Evidence search no longer ranks with FinBERT <span class="chip ai">Done 24 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> within a topic, FinBERT similarity found fewer on-topic sentences in the top five than a random draw (0.65 to 0.70 against 0.74); the search now orders by the question's own words, then newest first (0.82). For a question naming no topic, FinBERT was no better than random (0.12 against 0.10); a small model built for search, all-MiniLM-L6-v2, scores 0.31 there. None of the three search models tried beat the word ordering within a topic.</p>
+      <span class="meta">Evidence: <code>docs/evidence/search-models-2026-10-24.md</code>; DESIGN decision 27.</span>
+    </li>
+    <li data-o="decide">
+      <span class="t">OpenAI's gpt-6-luna is the chatbot's default; CNA and broker research cleared for it <span class="chip decide">Done 24 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> the teammates' change (pull request 4) is merged: gpt-6-luna answers by default, the local llama3.1:8b remains the no-key option and still sorts every question, and the Gemini backend is gone. The team then cleared CNA and broker-research sentences for the hosted model; Reddit text is still never sent. A rerun of the 32 questions after clearing (US$0.0068) matched the run before it on every check, and its answers quoted CNA and broker research once each.</p>
+      <span class="meta">DESIGN decision 28; <code>config/sources.yaml</code> (<code>hosted_model</code>).</span>
+    </li>
+    <li data-o="team">
+      <span class="t">First human rating of the chatbot <span class="chip team">Done</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> one person rated 32 answers: 7 of the 26 the model wrote contradicted the tool data, none caught by the automated checks; the AI judge agreed with the person at weighted kappa 0.22.</p>
+      <span class="meta">Evidence: <code>docs/evidence/human-ratings-2026-10-24.md</code>.</span>
+    </li>
+    <li data-o="ai">
+      <span class="t">Merged and tested <code>main</code>; share folder rebuilt <span class="chip ai">Done 24 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> a fresh clone collects 2,941 tests from the repository root, all passing; the diagrams match the merged code (344 source rows checked). The share folder <code>data/run/share-2026-10-24/</code> (218 MB) holds the unchanged 14 Oct snapshot, both vector files and the aspect answers, with checksums.</p>
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-decided">
+  <h2 id="h-decided">Decided</h2>
   <ul class="refs">
+    <li><b>24 Oct, fix or disclose:</b> errors and leaks are fixed before submission; measured weaknesses go in the report with their cause and a proposed fix; work that would move the frozen figures (re-scoring, relabelling, new models) is future work. None of this week's fixes retrains a model.</li>
+    <li><b>24 Oct, the Word report is the master</b> (<code>plp-final-report.docx</code> on SharePoint); Claude's changes come as replacement text in <code>docs/report/word-updates-2026-10-24.md</code>.</li>
+    <li><b>24 Oct, chatbot default:</b> OpenAI's gpt-6-luna; the local llama3.1:8b is the no-key option and still sorts every question. Gemini removed.</li>
+    <li><b>24 Oct, hosted model may quote CNA and broker research;</b> both stay out of git and shared folders otherwise; Reddit text is never sent.</li>
+    <li><b>24 Oct, evidence search:</b> word order within a topic; all-MiniLM-L6-v2 with no topic. FinBERT's vectors stay for aspect discovery only.</li>
     <li><b>12 Oct, scoring model chosen by the agreed rule:</b> the adapted encoder fine-tuned on Opus&#8217;s labels (three seeds averaged). No further retraining is needed unless the labels change.</li>
-    <li><b>11 Oct, broker research test rows:</b> the owner confirmed the same annotator (A) labelled the 100 blind test rows as the 280 training rows; the round is merged, and the rows join the test set when the re-run finishes.</li>
-    <li><b>11 Oct, six researched answers adopted</b> into the guideline: economists&#8217; forecasts, scams the bank did not cause, regular monthly share purchases, &#8220;lol&#8221;, the small &#8220;buy&#8221; rating, report boilerplate. The sarcasm flag is dropped; the report says errors on sarcasm were not measured.</li>
-    <li><b>11 Oct, two bank-recognition fixes made:</b> &#8220;Development Bank of Singapore&#8221; is DBS, and PayLah, digibank or TMRW named alone resolve to their bank. They take effect when bank recognition is applied in the re-score.</li>
-    <li><b>11 Oct, the wealth rule&#8217;s extension is confirmed:</b> brokerage accounts, regular savings plans, insurance and robo-advisers are retail when a customer is speaking; what a bank or analyst reports about them is filed by what is reported.</li>
-    <li><b>11 Oct, the project rule on Opus labels stays as written:</b> human label files are never overwritten, and Opus&#8217;s labels live in their own folder, reported as LLM labels.</li>
-    <li><b>11 Oct, re-score:</b> rehearsed on a copy and shown to the owner before <code>data/plp.db</code> is touched.</li>
-    <li><b>11 Oct, bank recognition:</b> Opus&#8217;s answers on the 201-sentence sheet are accepted as the reference, reported as an LLM reference, not a human one; nobody labels the sheet.</li>
-    <li><b>11 Oct, Gemini:</b> not used; the rejected key is left as it is. Kept in view in case a hosted backend is wanted later.</li>
-    <li><b>11 Oct, scoring model:</b> the dashboard and the chatbot use the fine-tuned FinBERT with the best results in the re-run table (test macro-F1 over three seeds, cross-validation as the tie-breaker). The re-run started on 11 Oct.</li>
-    <li><b>11 Oct, aspects:</b> delivered as a comparison of the centroids and the LLM.</li>
-    <li><b>11 Oct, collection:</b> the batch scripts exist and stay stopped; the corpus is complete as collected (to 25 Sep, with the repairs of 11 Oct).</li>
-    <li><b>11 Oct, scope:</b> no new sources, methods or labelling rounds; the remaining work is the re-run, one re-score, the evaluations, the report and the video.</li>
-    <li><b>11 Oct, index:</b> both stay, the blended index and each source&#8217;s index side by side (the index already holds both).</li>
-    <li><b>11 Oct, local-context questions:</b> answered by web research, with sources, in <code>docs/local-context-questions.md</code>; &#8220;xmm&#8221; is a young woman (the sentence is a joke, neutral), &#8220;Lobang Sis&#8221; is a third-party deals site, and FHR is DBS&#8217;s Fixed Deposit Home Rate.</li>
-    <li><b>11 Oct, data repairs done:</b> six UOB earnings documents re-dated; the Reddit comments for Sep 2021, May 2024 and Mar 2025 refilled (825 documents); the CNA articles file removed from git (it stays in the history).</li>
-    <li><b>11 Oct, one database:</b> <code>data/plp.db</code> is the 30 Sep corpus plus the broker research source; with the repairs; snapshot <code>plp-2026-10-11-v2.db.gz</code>.</li>
-    <li><b>10 Oct, retail products</b> carry sentiment directed at the bank; a product&#8217;s feature is no longer kept neutral.</li>
-    <li><b>10 Oct, wealth</b> means the priority and private tiers (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves.</li>
-    <li><b>10 Oct, test rows</b> are not relabelled (the report should then say annotators saw a model&#8217;s suggestion).</li>
-    <li><b>10 Oct, aspects:</b> both methods run and are reported, the centroids and the LLM.</li>
-    <li><b>10 Oct, which labels the models use:</b> the models train on Opus&#8217;s labels for every sheet, and the test rows keep the labels they have. Train and test then follow different retail rules, which can lower test scores for a reason unrelated to the model; the report says so. On the 299 test rows Opus differs from the kept labels on 42 sentiments.</li>
-    <li><b>10 Oct, labelling:</b> Opus 5.5 labels every sentiment sheet, reported as LLM labels. This replaces the 4 Oct decision that human labels stay where Opus disagrees.</li>
-    <li><b>10 Oct, evaluation:</b> precision and recall for positive, negative and neutral beside macro-F1 and accuracy; every model re-run; the team picks the superior one for the chatbot and dashboard.</li>
-    <li><b>6 Oct, claim wording:</b> the Grounded chatbot claim states what the checks prove, within the Known limits on the chatbot evidence page.</li>
+    <li><b>11 Oct, broker research test rows:</b> the same annotator (A) labelled the 100 blind test rows as the 280 training rows; the rows are in the test set.</li>
+    <li><b>11 Oct, bank recognition:</b> Opus&#8217;s answers on the 201-sentence sheet are the reference, reported as an LLM reference; evaluated, not applied to the stored corpus.</li>
+    <li><b>11 Oct, scope:</b> no new sources, methods or labelling rounds.</li>
+    <li><b>11 Oct, index:</b> the blended index and each source&#8217;s index shown side by side.</li>
+    <li><b>11 Oct, collection:</b> the corpus is complete as collected (to 25 Sep, with the repairs of 11 Oct).</li>
+    <li><b>10 Oct, retail products</b> carry sentiment directed at the bank; <b>wealth</b> means the priority and private tiers.</li>
+    <li><b>10 Oct, test rows</b> are not relabelled; the report says annotators saw a model&#8217;s suggestion.</li>
+    <li><b>10 Oct, which labels the models use:</b> Opus&#8217;s labels for training, people&#8217;s for testing; train and test follow different retail rules, and the report says so.</li>
+    <li><b>10 Oct, labelling:</b> Opus 5.5 labels every sentiment sheet, reported as LLM labels.</li>
     <li><b>7 Oct, broker reports in git:</b> they stay while the repository is private to the team; remove them, with their history, before any public release.</li>
-    <li><b>6 Oct, hosted backend verified:</b> the chatbot ran the gold sets through Groq (<code>openai/gpt-oss-120b</code>, the OpenAI-compatible backend): right tool 24 of 24, no errors.</li>
-    <li><b>7 Oct, order of work:</b> no more retraining or evaluation until the upstream items are cleared.</li>
-    <li><b>4 Oct, DBS Vickers counts as DBS</b> (in bank recognition, the news filter and Opus&#8217;s NER reference).</li>
-    <li><b>4 Oct, chatbot settings:</b> strip invented evidence and rank evidence by the aspect&#8217;s name, both on by default.</li>
-    <li><b>4 Oct, windows anchored</b> to the newest sentence, labelled &#8220;as of&#8221;; merges in the re-score week.</li>
-    <li><b>4 Oct, hosted backends</b> withhold Reddit, CNA and unlisted-source text.</li>
-    <li><b>4 Oct, POSB counts as DBS</b> at collection.</li>
-    <li><b>4 Oct, passing mentions</b> stay; the report gives their share.</li>
-    <li><b>4 Oct, earnings-PDF links</b> become relative paths during the re-score.</li>
-    <li><b>4 Oct, demo chatbot model:</b> <code>llama3.1:8b</code> through Ollama.</li>
+    <li><b>6 Oct, claim wording:</b> the Grounded chatbot claim states what the checks prove, within the Known limits on the chatbot evidence page.</li>
+    <li><b>4 Oct, windows anchored</b> to the newest sentence, labelled &#8220;as of&#8221;.</li>
+    <li><b>4 Oct, hosted backends withhold Reddit, CNA and unlisted-source text</b> (changed 24 Oct: CNA and broker research cleared).</li>
+    <li><b>4 Oct, demo chatbot model:</b> <code>llama3.1:8b</code> (changed 24 Oct: gpt-6-luna is the default).</li>
+    <li><b>4 Oct, DBS Vickers and POSB count as DBS;</b> passing mentions stay, and the report gives their share.</li>
   </ul>
 </section>
 
 <section aria-labelledby="h-refs">
   <h2 id="h-refs">Read more</h2>
   <ul class="refs">
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/briefs/proposal-product-features-2026-10-07.md" target="_blank" rel="noopener">Product features as sentiment: the options</a> <span class="muted">docs/briefs/</span></li>
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/briefs/local-context-proposals-2026-10-07.md" target="_blank" rel="noopener">Proposed local-context answers</a> <span class="muted">docs/briefs/</span></li>
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/dapt-2026-10-06.md" target="_blank" rel="noopener">Adapted pretraining results</a> <span class="muted">docs/evidence/</span></li>
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/sgx-research-evaluation-2026-10-06.md" target="_blank" rel="noopener">Broker research evaluation</a> <span class="muted">docs/evidence/</span></li>
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/report/findings-limitations-solutions.md" target="_blank" rel="noopener">Findings, limitations and solutions</a> <span class="muted">docs/report/</span></li>
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/local-context-questions.md" target="_blank" rel="noopener">Local-context questions</a> <span class="muted">docs/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/report/word-updates-2026-10-24.md" target="_blank" rel="noopener">Updates for the Word report</a> <span class="muted">docs/report/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/chatbot-fixes-2026-10-24.md" target="_blank" rel="noopener">The chatbot after the fixes</a> <span class="muted">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/human-ratings-2026-10-24.md" target="_blank" rel="noopener">Human ratings of the chatbot</a> <span class="muted">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/search-models-2026-10-24.md" target="_blank" rel="noopener">Models built for search</a> <span class="muted">docs/evidence/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/data/README-teams.md" target="_blank" rel="noopener">Data files: read this first</a> <span class="muted">data/</span></li>
     <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/PLAN.md" target="_blank" rel="noopener">PLAN</a> <span class="muted">sequence and open decisions</span></li>
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/submission-checklist.html" target="_blank" rel="noopener">Submission checklist</a> <span class="muted">tick items off there</span></li>
   </ul>
 </section>
 
-<footer>Updated on 14 Oct 2026 after the second re-score; on 13 Oct 2026 with the wealth-wording trial, the chatbot evaluations and the install test; on 12 Oct 2026 after the re-score was applied; before that on 10 Oct 2026 with the team&#8217;s six decisions and the chatbot fixes. Consolidated on 7 Oct 2026 from the 2 Oct page and its updates. Figures are from the evidence files in the repository. Tick items off in the submission checklist; this page is the reasons behind them.</footer>
+<footer>Updated on 24 Oct 2026 for the last week before submission: every open item with its problem, its figure and its fix. Earlier versions on 14, 13, 12 and 10 Oct 2026, consolidated on 7 Oct 2026. Figures are from the evidence files in the repository.</footer>
 
 </div>
 

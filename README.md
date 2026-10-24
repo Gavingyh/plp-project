@@ -180,6 +180,27 @@ the Mac GPU, start the Ollama app and use the documented
 For a first-install test alongside an existing native setup, see the
 [isolated Docker test](docs/RUNBOOK.md#docker-clean-install-test).
 
+### If a port is already in use
+
+If Docker reports `bind: address already in use` or `ports are not available`,
+another application is using the default API port (`8000`) or dashboard port
+(`8501`). Stop that application, or add unused host ports to your local `.env`:
+
+```dotenv
+PLP_API_PORT=8101
+PLP_DASHBOARD_PORT=8503
+```
+
+Save `.env`, then rerun from the project root:
+
+```bash
+docker compose up --build
+```
+
+With these example ports, open **http://localhost:8503** for the dashboard and
+**http://localhost:8101/docs** for the API documentation. Your restored database
+and downloaded models are retained when retrying startup.
+
 ## Quick start (native Python alternative)
 
 **You need Python 3.10 or newer** (developed and tested on 3.14). Check with

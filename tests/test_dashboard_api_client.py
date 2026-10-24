@@ -85,6 +85,27 @@ class ApiClientTests(unittest.TestCase):
             request_json("POST", "/chat", body={"message": "Hello"})
         self.assertNotIn("private backend detail", str(caught.exception))
 
+    def test_structured_chat_service_error_preserves_safe_message_and_setup_hint(self):
+        self.request.return_value = response(503, {"detail": {
+            "code": "openai_key_missing", "message": "Chatbot access is not configured.",
+            "setup_hint": "Set OPENAI_API_KEY on the API server.",
+        }})
+        with self.assertRaisesRegex(ApiError, "not configured") as caught:
+            request_json("POST", "/chat", body={"message": "DBS?"})
+        self.assertEqual(caught.exception.error_code, "openai_key_missing")
+        self.assertEqual(caught.exception.setup_hint, "Set OPENAI_API_KEY on the API server.")
+        self.assertEqual(caught.exception.status_code, 503)
+
+    def test_unstructured_or_malformed_service_error_keeps_generic_http_message(self):
+        for payload in ({"detail": "private upstream text"}, [],
+                        {"detail": {"code": 5, "message": "private upstream text"}},
+                        {"detail": {"code": "bad", "message": "private upstream text", "setup_hint": []}}):
+            with self.subTest(payload=payload):
+                self.request.return_value = response(503, payload)
+                with self.assertRaisesRegex(ApiError, "HTTP 503") as caught:
+                    request_json("POST", "/chat", body={"message": "DBS?"})
+                self.assertNotIn("private upstream text", str(caught.exception))
+
     def test_other_transport_errors_are_wrapped(self):
         self.request.side_effect = requests.RequestException("transport failed")
         with self.assertRaisesRegex(ApiError, "API request failed"):

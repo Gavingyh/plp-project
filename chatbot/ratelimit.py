@@ -5,7 +5,7 @@ A free tier limits requests per minute, requests per day and, for some
 providers, tokens per minute. Going over costs more than a retry: the key can
 be blocked for the day, and an evaluation that dies half way has to be
 redone. This module is the one place that decides whether the next request may
-go, so the backends (openai_backend.py, gemini_backend.py) only call
+go, so the OpenAI-compatible backend only calls
 `pacer.before_request(...)` and `pacer.after_response(...)`.
 
 Three layers, cheapest first:

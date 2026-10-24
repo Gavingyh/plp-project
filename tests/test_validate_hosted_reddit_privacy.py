@@ -1,10 +1,10 @@
 """
-Validation: the Gemini backend never receives Reddit text (CLAUDE.md: its
-free-tier inputs may be read by people). A fake `_generate` records every
+Validation: the OpenAI backend never receives Reddit text under the existing
+hosted evidence policy. A fake `_chat` records every
 payload that would be sent; the searches are faked at chatbot.tools'
 retrieval layer, so the real packaging, tracker and Conversation run.
 
-Reddit text can reach Gemini three ways: a search result this turn, an
+Reddit text can reach OpenAI three ways: a search result this turn, an
 earlier answer in the conversation history (a model or the harness quoted
 it), or the API's /chat history. Each is covered.
 """
@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 
 import chatbot.agent as agent
 import chatbot.tools as tools
-from chatbot.backends.gemini_backend import GeminiBackend
+from chatbot.backends.openai_backend import OpenAIBackend
 
 REDDIT = "honestly the dbs app crashed three times while paying my rent this morning"
 REDDIT_URL = "https://www.reddit.com/r/singapore/comments/abc123/dbs_app/"
@@ -44,23 +44,26 @@ def fake_search(monkeypatch):
     monkeypatch.setattr(tools, "_search_evidence", lambda query, **kw: _hits())
 
 
-class _CapturingGemini(GeminiBackend):
-    """Gemini with `_generate` replaced: calls search_evidence once, then answers."""
+class _CapturingOpenAI(OpenAIBackend):
+    """OpenAI with transport replaced: searches once, then answers."""
 
     def __init__(self, answer="Done."):
         super().__init__(api_key="fake-key")
         self.sent, self.answer = [], answer
 
-    def _generate(self, contents, system, tools_):
-        self.sent.append(json.dumps({"contents": contents, "system": system}, ensure_ascii=False).lower())
+    def _chat(self, messages, tools_):
+        self.sent.append(json.dumps(messages, ensure_ascii=False).lower())
         if len(self.sent) == 1:
-            return {"candidates": [{"content": {"parts": [
-                {"functionCall": {"name": "search_evidence", "args": {"query": "dbs app", "bank": "DBS"}}}]}}]}
-        return {"candidates": [{"content": {"parts": [{"text": self.answer}]}}]}
+            return {"choices": [{"message": {"content": "", "tool_calls": [{
+                "id": "search1", "type": "function", "function": {
+                    "name": "search_evidence", "arguments": json.dumps({"query": "dbs app", "bank": "DBS"})
+                }
+            }]}}]}
+        return {"choices": [{"message": {"content": self.answer}}]}
 
 
 class _QuotingLocalModel:
-    """A non-Gemini model (e.g. Ollama) that searches and quotes the Reddit text."""
+    """A non-OpenAI model (e.g. Ollama) that searches and quotes the Reddit text."""
     name, model = "ollama", "fake"
 
     def __init__(self, answer):
@@ -81,8 +84,8 @@ def _assert_news_kept(sent):
     assert NEWS[:30] in "\n".join(sent)      # control: the filter isn't dropping everything
 
 
-def test_search_results_sent_to_gemini_hold_no_reddit_text():
-    g = _CapturingGemini()
+def test_search_results_sent_to_openai_hold_no_reddit_text():
+    g = _CapturingOpenAI()
     agent.answer_turn("What do people say about the DBS app?", backend=g, verbose=False)
     assert len(g.sent) == 2
     _assert_no_reddit(g.sent)
@@ -100,7 +103,7 @@ EARLIER_ANSWERS = {
     "quote cut by the history limit": "x" * (agent.HISTORY_ANSWER_CHARS - 13 - 60) + f' Users said "{REDDIT}".',
 }
 _LEAKS = {
-    "quote wrapping a line": "history_for_gemini's quote pattern stops at a line break, so a wrapped quote is sent",
+    "quote wrapping a line": "the earlier history filter's quote pattern stops at a line break, so a wrapped quote is sent",
     "bare bullet": "an earlier answer that repeats Reddit text without quote marks is sent as written",
     "link": "Reddit links in an earlier answer are sent; tool results drop them",
     "quote cut by the history limit": "the history cut leaves an unclosed quote, which the quote pattern misses",
@@ -113,17 +116,17 @@ def _cases():
 
 
 @pytest.mark.parametrize("case", _cases())
-def test_an_earlier_answer_quoting_reddit_is_not_sent_to_gemini(monkeypatch, case):
+def test_an_earlier_answer_quoting_reddit_is_not_sent_to_openai(monkeypatch, case):
     conv = agent.Conversation()
     monkeypatch.setattr(agent, "get_backend", lambda name=None: _QuotingLocalModel(EARLIER_ANSWERS[case]))
     conv.ask("What do people say about the DBS app?")
-    g = _CapturingGemini()
+    g = _CapturingOpenAI()
     monkeypatch.setattr(agent, "get_backend", lambda name=None: g)
     conv.ask("And what about OCBC?")
     _assert_no_reddit(g.sent)
 
 
-def test_harness_search_evidence_in_an_earlier_answer_is_not_sent_to_gemini(monkeypatch):
+def test_harness_search_evidence_in_an_earlier_answer_is_not_sent_to_openai(monkeypatch):
     """CHATBOT_ENFORCE_EVIDENCE=search appends real quotes, Reddit ones included."""
     monkeypatch.setenv("CHATBOT_ENFORCE_EVIDENCE", "search")
     conv = agent.Conversation()
@@ -137,20 +140,20 @@ def test_harness_search_evidence_in_an_earlier_answer_is_not_sent_to_gemini(monk
     monkeypatch.setattr(agent, "get_backend", lambda name=None: _NoSearch())
     first = conv.ask("What do people say about the DBS app?")
     assert REDDIT in first.answer          # the harness did add the Reddit quote
-    g = _CapturingGemini()
+    g = _CapturingOpenAI()
     monkeypatch.setattr(agent, "get_backend", lambda name=None: g)
     conv.ask("And what about OCBC?")
     _assert_no_reddit(g.sent)
 
 
 @pytest.mark.parametrize("case", _cases())
-def test_api_chat_history_quoting_reddit_is_not_sent_to_gemini(monkeypatch, case):
+def test_api_chat_history_quoting_reddit_is_not_sent_to_openai(monkeypatch, case):
     from api.main import app
-    g = _CapturingGemini()
+    g = _CapturingOpenAI()
     monkeypatch.setattr(agent, "get_backend", lambda name=None: g)
     history = [{"role": "user", "content": "What do people say about the DBS app?"},
                {"role": "assistant", "content": EARLIER_ANSWERS[case]}]
-    resp = TestClient(app).post("/chat", json={"message": "And what about OCBC?", "backend": "gemini",
+    resp = TestClient(app).post("/chat", json={"message": "And what about OCBC?", "backend": "openai",
                                                "history": history})
     assert resp.status_code == 200, resp.text[:300]
     _assert_no_reddit(g.sent)

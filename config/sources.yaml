@@ -5,8 +5,8 @@
 #   listed here counts default_weight.
 # personal_text: true when members of the public wrote the text.
 # team_only: true when the text may not leave the team (CNA articles).
-#   Text with either flag is never sent to the Gemini backend
-#   (chatbot/backends/gemini_backend.py), whose free tier may be read by people.
+#   Text with either flag is never sent to hosted backends
+#   (chatbot/backends/base.py).
 #
 # earnings was 3.0, dropped to 1.0 after the earnings corpus landed. The 3.0
 # was set when earnings was assumed to be a handful of high-signal documents;

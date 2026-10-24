@@ -126,7 +126,7 @@ class _FakeConversation:
         return TurnResult(question=message, answer="ok")
 
 
-@pytest.mark.parametrize("backend", ["nope", "", "anthropic", "gpt", "gemini-pro", 1])
+@pytest.mark.parametrize("backend", ["nope", "", "anthropic", "gpt", "gemini", 1])
 def test_chat_unknown_backend_is_422(monkeypatch, backend):
     monkeypatch.setattr("api.main.Conversation", _FakeConversation)
     _FakeConversation.seen = None
@@ -145,7 +145,7 @@ def test_chat_unknown_role_is_422(monkeypatch, role):
     assert _FakeConversation.seen is None
 
 
-@pytest.mark.parametrize("backend", ["claude", "openai", "gemini", "ollama", None])
+@pytest.mark.parametrize("backend", ["claude", "openai", "ollama", None])
 def test_chat_known_backend_is_accepted(monkeypatch, backend):
     monkeypatch.setattr("api.main.Conversation", _FakeConversation)
     body = {"message": "hi", "history": [{"role": "user", "content": "a"}, {"role": "assistant", "content": "b"}]}

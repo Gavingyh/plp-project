@@ -96,7 +96,7 @@ def _fake_search(monkeypatch):
 
 
 @pytest.mark.parametrize("aspect, key", [(None, "bank_overall_score"), ("dividend_policy", "topic_score")])
-def test_the_score_reaches_gemini_and_reddit_and_cna_text_do_not(monkeypatch, aspect, key):
+def test_the_score_reaches_openai_and_reddit_and_cna_text_do_not(monkeypatch, aspect, key):
     _fake_search(monkeypatch)
     raw = _tracker().execute("search_evidence", {"query": "app", "bank": "DBS",
                                                  **({"aspect": aspect} if aspect else {})})

@@ -1,6 +1,6 @@
 """config/sources.yaml: source weights and which sources hold text written by
 the public (before, the weights were a dict in aggregate/index.py and
-the Reddit check a literal in the Gemini backend)."""
+the Reddit check a literal in the OpenAI backend)."""
 
 import re
 from pathlib import Path

@@ -1,13 +1,4 @@
-"""
-Tests for the OpenAI and Gemini backends (chatbot/backends/openai_backend.py,
-gemini_backend.py).
-
-Unlike the Ollama tests in tests/test_chatbot_backends.py, which replay
-responses recorded from a running Ollama, these responses are written from
-each provider's documentation (no OpenAI key was available, and the Gemini
-tests predate its live check). They test that the code handles the
-documented shape, not that the live API still returns it.
-"""
+"""OpenAI-compatible tool contracts, errors and backend selection; no live calls."""
 
 import copy
 import json
@@ -16,7 +7,6 @@ import pytest
 
 from chatbot.backends import get_backend
 from chatbot.backends._openai_compat import to_openai_function_tools
-from chatbot.backends.gemini_backend import GeminiBackend, _uppercase_schema_types
 from chatbot.backends.openai_backend import OpenAIBackend
 from chatbot.tools import TOOL_SCHEMAS
 
@@ -188,176 +178,31 @@ def test_openai_backend_400_includes_error_body(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Gemini backend
-# ---------------------------------------------------------------------------
 
-def test_gemini_backend_requires_key():
-    with pytest.raises(RuntimeError, match="GEMINI_API_KEY not set"):
-        GeminiBackend(api_key="")
-
-
-def test_uppercase_schema_types_recursive():
-    # This is the highest-risk conversion in the whole module (see
-    # gemini_backend.py docstring) - test it directly and thoroughly.
-    schema = {
-        "type": "object",
-        "properties": {
-            "bank": {"type": "string", "enum": ["DBS", "OCBC"]},
-            "k": {"type": "integer"},
-            "nested": {"type": "object", "properties": {"flag": {"type": "boolean"}}},
-        },
-    }
-    result = _uppercase_schema_types(schema)
-    assert result["type"] == "OBJECT"
-    assert result["properties"]["bank"]["type"] == "STRING"
-    assert result["properties"]["bank"]["enum"] == ["DBS", "OCBC"]  # non-type fields untouched
-    assert result["properties"]["k"]["type"] == "INTEGER"
-    assert result["properties"]["nested"]["type"] == "OBJECT"
-    assert result["properties"]["nested"]["properties"]["flag"]["type"] == "BOOLEAN"
-
-
-# Written from Google's documented generateContent contract - NOT a pinned
-# real response (no key available). See gemini_backend.py docstring for the
-# specific parts of this shape that are most likely to be wrong.
-_GEMINI_TOOL_CALL_RESPONSE = {
-    "candidates": [{
-        "content": {"role": "model",
-                    "parts": [{"functionCall": {"name": "get_sentiment",
-                                                 "args": {"bank": "DBS"}}}]},
-    }],
-}
-_GEMINI_FINAL_ANSWER_RESPONSE = {
-    "candidates": [{"content": {"role": "model",
-                                 "parts": [{"text": "The sentiment for DBS is neutral."}]}}],
-}
-
-
-def test_gemini_backend_full_loop(monkeypatch):
-    fake_post = _FakePost([_GEMINI_TOOL_CALL_RESPONSE, _GEMINI_FINAL_ANSWER_RESPONSE])
-    monkeypatch.setattr("requests.post", fake_post)
-
-    calls = []
-
-    def tool_executor(name, args):
-        calls.append((name, args))
-        return json.dumps({"score": 0.006})
-
-    backend = GeminiBackend(api_key="fake-key")
-    answer = backend.ask("q", "system prompt", TOOL_SCHEMAS, tool_executor, verbose=False)
-
-    assert answer == "The sentiment for DBS is neutral."
-    assert calls == [("get_sentiment", {"bank": "DBS"})]
-    # the key goes in a header, never the URL (requests puts URLs in error messages)
-    assert fake_post.requests[0]["headers"] == {"x-goog-api-key": "fake-key"}
-    assert not fake_post.requests[0]["params"]
-    assert "fake-key" not in fake_post.requests[0]["url"]
-    # system prompt goes in a dedicated field, not the contents array
-    assert fake_post.requests[0]["json"]["system_instruction"]["parts"][0]["text"] == "system prompt"
-    # the function response must be sent back as a functionResponse part
-    second_contents = fake_post.requests[1]["json"]["contents"]
-    fn_response_part = second_contents[-1]["parts"][0]
-    assert "functionResponse" in fn_response_part
-    assert fn_response_part["functionResponse"]["name"] == "get_sentiment"
-
-
-def test_gemini_backend_400_includes_error_body(monkeypatch):
-    monkeypatch.setattr("requests.post", _FakePost([{}], status_code=400))
-    backend = GeminiBackend(api_key="fake-key")
-    with pytest.raises(RuntimeError, match="fake error body"):
-        backend.ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
-
-
-def test_gemini_backend_no_candidates_does_not_crash(monkeypatch):
-    monkeypatch.setattr("requests.post", _FakePost([{"candidates": []}]))
-    backend = GeminiBackend(api_key="fake-key")
-    answer = backend.ask("q", "s", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
-    assert "no candidates" in answer.lower()
-
-
-# ---------------------------------------------------------------------------
-# Auto-detection priority across all four backends
-# ---------------------------------------------------------------------------
-
-def test_auto_detect_priority_openai_over_gemini(monkeypatch):
+def test_auto_detect_uses_openai_when_its_key_is_present(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.setenv("CHATBOT_BACKEND", "auto")                     # auto-detection only when asked for
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
-    monkeypatch.setenv("GEMINI_API_KEY", "fake")
+    assert isinstance(get_backend(), OpenAIBackend)
+
+
+def test_auto_detect_without_keys_uses_ollama(monkeypatch):
+    from chatbot.backends.ollama_backend import OllamaBackend
+    for key in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
+    assert isinstance(get_backend(), OllamaBackend)
+
+
+def test_the_default_is_openai_when_backend_is_unset(monkeypatch):
+    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "fake")
     backend = get_backend()
     assert isinstance(backend, OpenAIBackend)
 
 
-def test_auto_detect_gemini_when_only_gemini_key_present(monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
-    monkeypatch.setenv("GEMINI_API_KEY", "fake")
-    backend = get_backend()
-    assert isinstance(backend, GeminiBackend)
-
-
-def test_the_default_is_ollama_even_with_a_gemini_key(monkeypatch):
-    # Decided: the demo model is local; a key in .env no longer
-    # switches the chatbot to a hosted model.
-    from chatbot.backends.ollama_backend import OllamaBackend
-    monkeypatch.delenv("CHATBOT_BACKEND", raising=False)
-    monkeypatch.setenv("GEMINI_API_KEY", "fake")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
-    backend = get_backend()
-    assert isinstance(backend, OllamaBackend) and backend.model == "llama3.1:8b"
-
-
-def test_gemini_is_one_setting_away(monkeypatch):
-    monkeypatch.setenv("CHATBOT_BACKEND", "gemini")
-    monkeypatch.setenv("GEMINI_API_KEY", "fake")
-    assert isinstance(get_backend(), GeminiBackend)
-
-
-def test_explicit_backend_name_overrides_auto_detect(monkeypatch):
-    # Claude and OpenAI keys are both present (auto-detect would pick Claude
-    # first), but an explicit name must win regardless - and still needs its
-    # own key, which is set here too.
+def test_explicit_backend_overrides_auto_detection(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "fake")
     monkeypatch.setenv("OPENAI_API_KEY", "fake")
-    monkeypatch.setenv("GEMINI_API_KEY", "fake")
-    backend = get_backend("gemini")
-    assert isinstance(backend, GeminiBackend)
-
-
-@pytest.mark.parametrize("env, expected", [
-    ({}, "gemini-3.8-flash"),
-    ({"GEMINI_CHAT_MODEL": "gemini-3.7-flash"}, "gemini-3.7-flash"),
-    ({"GEMINI_MODEL": "gemini-3.6-flash", "GEMINI_CHAT_MODEL": "gemini-3.7-flash"}, "gemini-3.6-flash"),
-])
-def test_gemini_model_setting(monkeypatch, env, expected):
-    from chatbot.backends import get_backend
-    for var in ("GEMINI_MODEL", "GEMINI_CHAT_MODEL"):
-        monkeypatch.delenv(var, raising=False)
-    for k, v in env.items():
-        monkeypatch.setenv(k, v)
-    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
-    assert get_backend("gemini").model == expected
-
-
-def test_gemini_backend_retries_a_busy_model_then_answers(monkeypatch):
-    fake_post = _FakePost([_GEMINI_FINAL_ANSWER_RESPONSE])
-    statuses = iter([503, 429, 200])
-    real_call = fake_post.__call__
-
-    class _Busy:
-        status_code = 0
-        text = "busy"
-
-    def flaky_post(url, **kwargs):
-        code = next(statuses)
-        if code != 200:
-            resp = _Busy()
-            resp.status_code = code
-            return resp
-        return real_call(url, **kwargs)
-
-    monkeypatch.setattr("requests.post", flaky_post)
-    monkeypatch.setattr("chatbot.backends.gemini_backend.time.sleep", lambda s: None)
-    backend = GeminiBackend(api_key="fake-key")
-    answer = backend.ask("q", "system prompt", TOOL_SCHEMAS, lambda n, a: "{}", verbose=False)
-    assert answer == "The sentiment for DBS is neutral."
+    monkeypatch.setenv("CHATBOT_BACKEND", "auto")
+    assert isinstance(get_backend("openai"), OpenAIBackend)

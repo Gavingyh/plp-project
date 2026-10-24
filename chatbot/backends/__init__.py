@@ -3,11 +3,10 @@ Backend selection for the chatbot.
 
 Settings, defaults and the environment variables that override them:
 config/chatbot.yaml (backend, models, Ollama and OpenAI addresses,
-temperature, thinking). The default backend is Ollama, the local demo
-model: a key in .env no longer switches the chatbot to
-a hosted model by itself. CHATBOT_BACKEND chooses another (claude, openai,
-gemini), or `auto` restores the old behaviour: the first of
-ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY that is set, else Ollama.
+temperature, thinking). The default answer backend is OpenAI and requires
+OPENAI_API_KEY. A missing key never changes the selected provider.
+CHATBOT_BACKEND explicitly chooses another (claude, ollama),
+or `auto` selects ANTHROPIC_API_KEY, then OPENAI_API_KEY, else Ollama.
 """
 
 import os
@@ -15,20 +14,18 @@ import os
 from chatbot import settings
 from chatbot.backends.base import DEFAULT_TEMPERATURE, LLMBackend
 from chatbot.backends.claude_backend import ClaudeBackend
-from chatbot.backends.gemini_backend import GeminiBackend
 from chatbot.backends.ollama_backend import OllamaBackend
 from chatbot.backends.openai_backend import OpenAIBackend
 
 _KEY_ENV_VAR_BY_BACKEND = {
     "claude": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
-    "gemini": "GEMINI_API_KEY",
 }
 
 
 def _auto_detect() -> str:
     for backend_name, env_var in _KEY_ENV_VAR_BY_BACKEND.items():
-        if os.environ.get(env_var):
+        if os.environ.get(env_var, "").strip():
             return backend_name
     return "ollama"
 
@@ -48,33 +45,25 @@ def _think() -> bool | None:
 
 
 def get_backend(name: str | None = None) -> LLMBackend:
-    """Build the requested backend; with no name, the configured one (Ollama
+    """Build the requested backend; with no name, the configured one (OpenAI
     unless CHATBOT_BACKEND says otherwise; `auto` picks by the keys set)."""
-    name = (name or settings.get("backend") or "ollama").lower()
+    name = (name or settings.get("backend") or "openai").strip().lower() or "openai"
     if name == "auto":
         name = _auto_detect()
     temperature = _temperature()
 
     if name == "claude":
         return ClaudeBackend(
-            api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+            api_key=os.environ.get("ANTHROPIC_API_KEY", "").strip(),
             model=settings.get("models.claude"),
             temperature=temperature,
         )
     if name == "openai":
         return OpenAIBackend(
-            api_key=os.environ.get("OPENAI_API_KEY", ""),
+            api_key=os.environ.get("OPENAI_API_KEY", "").strip(),
             model=settings.get("models.openai"),
             temperature=temperature,
             base_url=settings.get("openai_base_url"),
-        )
-    if name == "gemini":
-        return GeminiBackend(
-            api_key=os.environ.get("GEMINI_API_KEY", ""),
-            # GEMINI_CHAT_MODEL is accepted too (config/chatbot.yaml): the key is
-            # for the chatbot only, and that is the name the team's .env uses.
-            model=settings.get("models.gemini"),
-            temperature=temperature,
         )
     if name == "ollama":
         return OllamaBackend(
@@ -84,5 +73,5 @@ def get_backend(name: str | None = None) -> LLMBackend:
             think=_think(),
         )
     raise ValueError(
-        f"Unknown CHATBOT_BACKEND {name!r}: expected 'claude', 'openai', 'gemini', or 'ollama'"
+        f"Unknown CHATBOT_BACKEND {name!r}: expected 'claude', 'openai', or 'ollama'"
     )

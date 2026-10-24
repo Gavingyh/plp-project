@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 import chatbot.agent as agent
 from chatbot.agent import _ToolCallTracker, enforce_evidence
-from chatbot.backends.gemini_backend import history_for_gemini
+from chatbot.backends.base import history_for_hosted
 from chatbot.guards import unverified_numbers
 from config.model_version import MODEL_VERSION
 from ingest.db import now_iso
@@ -104,7 +104,7 @@ def test_a_blockquote_note_is_not_a_citation():
     assert t.answer_has_unverified_citation(ans) is False
 
 
-# 5. Reddit text can still reach Gemini ---------------------------------------
+# 5. Reddit text can still reach OpenAI ---------------------------------------
 
 QUOTE = "my name is bob and I hate DBS fees so much they stole from me"
 
@@ -113,18 +113,18 @@ def test_a_quote_cut_by_the_history_limit_is_withheld():
     answer = "x" * 1135 + f' One Redditor wrote "{QUOTE}"'
     conv = agent.Conversation.from_messages([{"role": "user", "content": "DBS fees?"},
                                              {"role": "assistant", "content": answer}])
-    sent = history_for_gemini(conv.history())[-1]["content"]
+    sent = history_for_hosted(conv.history())[-1]["content"]
     assert "my name is bob" not in sent
 
 
 def test_a_quote_wrapping_a_line_is_withheld():
-    sent = history_for_gemini([{"role": "assistant", "content": 'One wrote "my name is bob and\nI hate DBS fees".'}])
+    sent = history_for_hosted([{"role": "assistant", "content": 'One wrote "my name is bob and\nI hate DBS fees".'}])
     assert "my name is bob" not in sent[0]["content"]
 
 
 def test_a_quote_with_an_inner_quote_mark_is_withheld():
     content = 'One wrote "my card was blocked and the agent said "wait 5 days" before refunding anything at all".'
-    sent = history_for_gemini([{"role": "assistant", "content": content}])[0]["content"]
+    sent = history_for_hosted([{"role": "assistant", "content": content}])[0]["content"]
     assert "wait 5 days" not in sent, sent
 
 
@@ -149,4 +149,4 @@ def test_chat_backend_name_in_capitals_is_accepted(monkeypatch):
         def ask(self, message):
             return agent.TurnResult(question=message, answer="ok")
     monkeypatch.setattr("api.main.Conversation", _Fake)
-    assert TestClient(app).post("/chat", json={"message": "hi", "backend": "Gemini"}).status_code == 200
+    assert TestClient(app).post("/chat", json={"message": "hi", "backend": "OpenAI"}).status_code == 200

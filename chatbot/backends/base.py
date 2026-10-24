@@ -12,6 +12,7 @@ backend converts them to whatever it needs internally.
 """
 
 import json
+import re
 from abc import ABC, abstractmethod
 from typing import Callable
 
@@ -32,14 +33,43 @@ class BackendUnavailable(RuntimeError):
     rejected key, or an error status after retries. The API reports it as 503;
     anything else raised while answering is a bug, reported as 500."""
 
+    def __init__(self, message: str, *, code: str = "backend_unavailable"):
+        super().__init__(message)
+        self.code = code
+
+
+def redacted_error_detail(text: str, api_key: str) -> str:
+    """Keep useful provider diagnostics without echoing a credential."""
+    if api_key:
+        text = re.sub(rf"(?<![\w-]){re.escape(api_key)}(?![\w-])", "[redacted]", text)
+    return text[:500]
+
 
 class LLMBackend(ABC):
     """One implementation per model provider. `ask()` runs the complete
     question -> [tool calls -> tool results]* -> final text answer loop."""
 
     name: str  # short identifier, e.g. "claude", "ollama" - used in logs/errors
+    usage: dict  # created only when a hosted response reports its usage
 
     temperature: float = DEFAULT_TEMPERATURE
+
+    def record_usage(self, input_tokens=None, output_tokens=None, cached_input_tokens=0):
+        """Accumulate provider-reported tokens across tool loops and rewrites.
+
+        Missing usage is marked incomplete, rather than being represented as a
+        free request. This is reported usage, not an account billing balance.
+        """
+        if not hasattr(self, "usage"):
+            self.usage = {"requests": 0, "input_tokens": 0, "output_tokens": 0,
+                          "cached_input_tokens": 0, "complete": True}
+        self.usage["requests"] += 1
+        for key, value in (("input_tokens", input_tokens), ("output_tokens", output_tokens),
+                           ("cached_input_tokens", cached_input_tokens)):
+            if type(value) is int and value >= 0:
+                self.usage[key] += value
+            else:
+                self.usage["complete"] = False
 
     @abstractmethod
     def ask(self, question: str, system: str, tool_schemas: list[dict],
@@ -51,7 +81,7 @@ class LLMBackend(ABC):
 
 
 # What a hosted model may see (decided for every hosted backend:
-# Gemini, Claude, OpenAI or Groq). Reddit evidence text (other people's posts),
+# Claude, OpenAI or Groq). Reddit evidence text (other people's posts),
 # CNA text (which stays within the team) and text from a source the config
 # doesn't list never leave this machine; free tiers may have their inputs read
 # by people, and Reddit's developer policy restricts third-party use of its
@@ -110,6 +140,3 @@ def history_for_hosted(history: list | None) -> list:
     nested ones. The user's own questions stay, and the bank and
     aspect travel in the conversation state, so follow-ups still resolve."""
     return [{**h, "content": EARLIER_ANSWER} if h.get("role") == "assistant" else h for h in history or []]
-
-
-history_for_gemini = history_for_hosted     # its name before the rule covered every hosted backend

@@ -115,6 +115,15 @@ the environment with it, e.g. `python3.14 -m venv .venv-plp`.
    `PLP_API_PORT=8100 scripts/start.sh`. To try the chatbot in the terminal:
    `.venv-plp/bin/python3 -m chatbot.chat`.
 
+The chatbot's answer provider is selected on the API server in `.env`:
+`CHATBOT_BACKEND=openai` is the default, including when the variable is omitted.
+Add `OPENAI_API_KEY`, then restart only the API with `scripts/stop.sh api`
+followed by `scripts/start.sh api`. If the key is missing, Ask shows a setup
+message and disables chat; the other tabs remain usable. Credentials stay on
+the API server. Set `CHATBOT_BACKEND=ollama` explicitly for local answers.
+The local intent classifier still uses Ollama with either answer provider.
+See [chatbot setup and key instructions](docs/RUNBOOK.md#chatbot-backends).
+
 The snapshot already holds the processed corpus. To refresh or rebuild it,
 run the pipeline (order matters — each step consumes the previous one's
 output):

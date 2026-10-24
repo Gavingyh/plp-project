@@ -30,7 +30,7 @@ The pipeline runs without any API key. Keys only add sources:
 |---|---|---|
 | *(none)* | Reddit, earnings PDFs, Yahoo consensus, local chatbot | — |
 | `NEWSAPI_KEY` | news articles (~1 month lookback on free tier) | optional |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | hosted chatbot model (`OPENAI_API_KEY` with `OPENAI_BASE_URL` for any OpenAI-compatible provider, such as Groq) | optional |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | hosted chatbot model (`OPENAI_API_KEY` is required for the default OpenAI answer backend; `ANTHROPIC_API_KEY` for explicit Claude) | required for the selected hosted backend; other tabs work without it |
 
 ---
 
@@ -494,37 +494,77 @@ with `/suggest`.
 
 ### Chatbot backends
 
-By default the chatbot uses the local demo model, `llama3.1:8b`, via Ollama
-(decided 4 Oct), whatever API keys `.env` holds:
+By default the chatbot answers through OpenAI using `gpt-6-luna`. This applies
+even when `CHATBOT_BACKEND` is omitted; `OPENAI_API_KEY` must be configured on
+the API server. To use local answers explicitly, set `CHATBOT_BACKEND=ollama`.
 
-```bash
-ollama pull llama3.1:8b
-ollama serve
+The switch belongs to **FastAPI**, in `.env` on the API host. The dashboard
+sends the same `/chat` request for every provider and has no provider control.
+The dashboard checks `GET /chat/status` before enabling Ask. A missing or
+blank key produces a setup message and disables the input and suggested
+questions, while other tabs keep working. The Administrator setup expander
+explains which environment variable to configure. The browser never asks for
+or receives the key. Add the matching key locally and choose:
+
+| `CHATBOT_BACKEND` | Key | Default answer model |
+|---|---|---|
+| `openai` (default) | `OPENAI_API_KEY` | `gpt-6-luna` |
+| `ollama` (explicit local option) | none | `llama3.1:8b` |
+
+For example, edit `.env` (keep the actual keys out of Git):
+
+```dotenv
+CHATBOT_BACKEND=openai
+OPENAI_API_KEY=<your OpenAI key>
+OPENAI_MODEL=gpt-6-luna
 ```
 
-To use Gemini instead, set `CHATBOT_BACKEND=gemini` (in `.env` or the shell,
-for example `CHATBOT_BACKEND=gemini scripts/start.sh api`); `claude` and
-`openai` work the same way, each with its own key. `CHATBOT_BACKEND=auto`
-picks the first key set (Claude, then OpenAI, then Gemini), as the default
-did before 4 Oct.
+Only change `CHATBOT_BACKEND` to switch backends. Restart the API to load `.env`:
 
-**Gemini** (`GEMINI_API_KEY`, the team's key is for the chatbot only): the
-model comes from `GEMINI_MODEL` or `GEMINI_CHAT_MODEL`, default
-`gemini-3.8-flash`; on 2026-09-30 that model and 3.7 kept answering 503 (high
-demand) while `gemini-3.6-flash` worked, so set that if 3.8 is busy. The
-backend retries a 503 or 429 three times. On the free tier Google may use prompts and responses to improve its
-products and people may review them, and its terms say not to send
-sensitive, confidential or personal information. Since 4 Oct the Gemini
-backend withholds Reddit evidence (text, link and citation) and quoted text
-from earlier answers, so Reddit text never reaches it; it still sees news
-and earnings evidence. Check the terms again before wider use:
-https://ai.google.dev/gemini-api/terms.
+```bash
+scripts/stop.sh api
+scripts/start.sh api
+```
+
+Then clear the conversation in Ask before testing another provider. Keep Ollama
+running: the existing intent classifier remains local for all providers. This
+switch changes the answer model, not FinBERT, topic assignment or training.
+Providers do not automatically fall back to another.
+`claude` remains available; legacy `CHATBOT_BACKEND=auto` explicitly opts into
+key detection (Claude, then OpenAI, otherwise Ollama).
+
+The configuration check makes no model requests and does not verify the key,
+remaining credit, model availability or connectivity. Rejected keys, exhausted
+credit/quota, temporary rate limits and connection failures get readable
+errors when a question is sent; a failed question does not enter conversation
+history. Billing/quota failures are not retried automatically. Credentials are
+configured in `.env` on the API host, never through a dashboard key-entry form.
+
+**Getting keys:**
+
+**OpenAI:** open [OpenAI API keys](https://platform.openai.com/api-keys),
+   select your API project and create a secret key. Put it in `OPENAI_API_KEY`
+   in `.env`; requests use that project's API credit. See the
+   [official quickstart](https://developers.openai.com/api/docs/quickstart).
+
+Model defaults and parameters were checked against provider documentation on
+24 Oct 2026. OpenAI uses
+[`gpt-6-luna`](https://developers.openai.com/api/docs/models/gpt-6-luna) with
+`reasoning_effort=none` for Chat Completions function calls. Run a small pilot
+with each real key before the full benchmark; mocked tests do not verify account
+access or live quotas. The backends retry rate-limit/service-busy responses and
+return HTTP 503 with a useful message when the provider remains unavailable.
+
+Existing hosted-provider filtering remains in force: Reddit, CNA, broker-research
+and private/unknown evidence text, links and citations are withheld, as are earlier
+assistant answers that may quote them. Aggregate figures can still include those
+sources. Hosted evidence answers therefore see a different evidence pool from
+the local model; record this when comparing quality.
 
 **Any OpenAI-compatible provider** (Groq, NVIDIA NIM, OpenRouter, …) goes
 through the `openai` backend with its address in `OPENAI_BASE_URL`. For
-Groq's free tier: create a key at https://console.groq.com/keys, consider
-switching on Zero Data Retention in its Data Controls settings (evidence
-searches send Reddit text), and put three lines in `.env`:
+Groq's free tier: create a key at https://console.groq.com/keys, check its
+Data Controls settings, and put three lines in `.env`:
 
 ```bash
 OPENAI_BASE_URL=https://api.groq.com/openai/v1
@@ -532,8 +572,7 @@ OPENAI_API_KEY=<the Groq key>
 OPENAI_MODEL=openai/gpt-oss-120b        # or llama-3.3-70b-versatile, qwen/qwen3.8-27b
 ```
 
-Then set `CHATBOT_BACKEND=openai` to use it (or `auto`, which prefers it
-over Gemini). Groq's free tier allowed 8,000
+Then set `CHATBOT_BACKEND=openai` to use it. Groq's free tier allowed 8,000
 tokens a minute on 2026-09-30, about one question a minute with this
 chatbot's prompt and tools; the backend waits out a 429 or 503 (after
 Groq's `Retry-After` when sent) four times. Not yet run against Groq: the
@@ -580,8 +619,9 @@ changed:
 
 | setting | default | effect |
 |---|---|---|
-| `CHATBOT_BACKEND` | `ollama` (since 4 Oct) | `gemini`, `claude` or `openai` to use a hosted model; `auto` picks the first API key set |
-| `OLLAMA_MODEL` | `llama3.1:8b` (since 4 Oct) | the local chatbot model, used when the backend is Ollama (the default) |
+| `CHATBOT_BACKEND` | `openai` | requires `OPENAI_API_KEY`; `ollama` explicitly selects local answers; `claude` selects Claude; legacy `auto` opts into key detection |
+| `OLLAMA_MODEL` | `llama3.1:8b` (since 4 Oct) | the answer model when `CHATBOT_BACKEND=ollama` |
+| `OPENAI_MODEL` | `gpt-6-luna` | OpenAI answer model; choose one supporting Chat Completions function calls |
 | `CHATBOT_INTENT_MODEL` | `llama3.1:8b` | the model that sorts questions into intents |
 | `CHATBOT_TEMPERATURE` | `0.2` | decoding temperature on every backend; low for grounded answers |
 | `CHATBOT_TRACE_FILE` | unset | if set, each terminal-chat or API turn appends a JSON line: question, answer, tool calls and results, intent, state |
@@ -639,10 +679,10 @@ done
 The number check flags figures no tool returned; it doesn't prove the
 unflagged ones are used correctly. Read the transcript for that.
 
-### Comparing Ollama, Groq and Gemini without hitting a rate limit
+### Comparing the local baseline with OpenAI
 
-Free tiers limit requests per minute, requests per day and (Groq) tokens per
-minute. `chatbot/ratelimit.py` keeps every hosted request under a budget set in
+OpenAI requests use API credit and the account's rate limits. Optional free-tier
+providers such as Groq also limit requests per day and tokens per minute. `chatbot/ratelimit.py` keeps every hosted request under a budget set in
 `rate_limits` in `config/chatbot.yaml` (below the providers' published limits),
 counts requests over a rolling 24 hours in `data/ratelimit_state.json`, waits
 for a provider's `Retry-After`, believes Groq's own remaining-quota headers, and
@@ -651,15 +691,14 @@ keeps its answers; `--resume` asks only what is left.
 
 ```bash
 .venv-plp/bin/python3 -m chatbot.provider_eval --dry-run   # what is ready and the request budget; sends nothing
-.venv-plp/bin/python3 -m chatbot.provider_eval             # every ready arm, Ollama first
+.venv-plp/bin/python3 -m chatbot.provider_eval --arms openai  # OpenAI only; uses API credit
 .venv-plp/bin/python3 -m chatbot.provider_eval --resume    # after a stop
 .venv-plp/bin/python3 -m chatbot.provider_report           # rebuild docs/evidence/chatbot-provider-eval-<date>.md
 ```
 
-Keys come from `.env` and are never printed: Groq's from `GROQ_API_KEY`, or from
-`OPENAI_API_KEY` when `OPENAI_BASE_URL` points at Groq; Gemini's from
-`GEMINI_API_KEY` (a key from aistudio.google.com/apikey, which starts with
-`AIza`). The local Ollama arm needs Ollama running with `llama3.1:8b` pulled,
+OpenAI uses `OPENAI_API_KEY` from `.env` and the configured `OPENAI_MODEL`.
+The default comparison arms are Ollama and OpenAI. Groq remains optional with
+`--arms groq` and `GROQ_API_KEY`. Keys are never printed. The local Ollama arm needs Ollama running with `llama3.1:8b` pulled,
 which the intent classifier uses in every arm; without it the hosted arms still
 run but no intent is found, so the input-guard checks are not comparable.
 The hosted models never receive Reddit, CNA or broker-research text, so they

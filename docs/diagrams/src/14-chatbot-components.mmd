@@ -62,7 +62,6 @@ classDiagram
   class OllamaBackend
   class ClaudeBackend
   class OpenAIBackend
-  class GeminiBackend
 
   Conversation "1" *-- "*" TurnResult : keeps
   Conversation ..> agent : calls answer_turn
@@ -74,4 +73,3 @@ classDiagram
   LLMBackend <|-- OllamaBackend
   LLMBackend <|-- ClaudeBackend
   LLMBackend <|-- OpenAIBackend
-  LLMBackend <|-- GeminiBackend

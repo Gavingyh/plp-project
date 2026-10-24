@@ -29,8 +29,8 @@ flowchart LR
   end
 
   subgraph llms["Language-model backends"]
-    ollama["Ollama, local<br/>default, no key needed"]
-    hosted["Claude, OpenAI, Gemini<br/>hosted; Claude and Gemini verified"]
+    ollama["Ollama, local, no key needed<br/>sorts every question; answers if chosen"]
+    hosted["OpenAI gpt-6-luna, the default;<br/>Claude. Hosted, both verified"]
   end
 
   investor -- "asks questions,<br/>reads scores and quotes" --> core
@@ -46,8 +46,8 @@ flowchart LR
   ir -- "results PDFs" --> core
   wayback -- "archived PDFs,<br/>CNA URLs and pages" --> core
 
-  core <-- "prompts, tool calls,<br/>answers" --> ollama
-  core <-- "same, with an API key" --> hosted
+  core <-- "question sorting; prompts, tool calls,<br/>answers when chosen" --> ollama
+  core <-- "prompts, tool calls, answers, with an API key;<br/>no Reddit, CNA or broker text" --> hosted
 ```
 
 Rendered for the report: [SVG](img/01-system-context.svg) · [PNG](img/01-system-context.png)
@@ -58,9 +58,12 @@ Shows every external party the code talks to and what crosses each boundary. It
 doesn't show internals (see [02](02-runtime.md) and [04](04-pipeline.md)) or the CNA
 feed, which has a scraper (`ingest/cna_scraper.py`) that writes a JSON file and is not
 connected to the system. Alpha Vantage is drawn dashed because its adapter runs but no
-SGX ticker is indexed, so it contributes nothing. Of the hosted backends, Claude and
-(since 2026-09-30) Gemini have returned real responses; OpenAI is implemented but unverified (it also
-reaches any OpenAI-compatible provider, such as Groq, through `OPENAI_BASE_URL`).
+SGX ticker is indexed, so it contributes nothing. The chatbot answers through OpenAI's
+`gpt-6-luna` by default; Claude is the other hosted option, and both have returned real
+responses. The local Ollama model answers when chosen (`CHATBOT_BACKEND=ollama`, no key
+needed) and sorts every question by intent whichever model answers. A hosted model never
+receives Reddit, CNA or broker-research text. The OpenAI backend also reaches any
+OpenAI-compatible provider, such as Groq, through `OPENAI_BASE_URL`.
 
 ## Sources
 
@@ -72,7 +75,7 @@ Each row names the file and line an element comes from, and the text that line m
 | Google News RSS | `ingest/google_news.py:55` | `RSS_URL = "https://news.google.com` |
 | Yahoo Finance news | `ingest/yahoo_news.py:93` | `yf.Ticker(ticker).get_news(` |
 | Yahoo Finance consensus | `ingest/yahoo_analyst.py:71` | `finance/quoteSummary/` |
-| NewsAPI | `ingest/newsapi.py:56` | `newsapi.org/v2/everything` |
+| NewsAPI | `ingest/newsapi.py:20` | `newsapi.org/v2/everything` |
 | CNA article pages | `ingest/cna_archive.py:69` | `SITE = "www.channelnewsasia.com"` |
 | Wayback index of CNA URLs | `ingest/cna_archive.py:68` | `CDX_URL = "https://web.archive.org/cdx/search/cdx"` |
 | archived CNA pages | `ingest/cna_archive.py:214` | `archived = f"https://web.archive.org/web/` |
@@ -82,10 +85,12 @@ Each row names the file and line an element comes from, and the text that line m
 | OCBC investor relations | `ingest/earnings_fetch_ir.py:70` | `https://www.ocbc.com/group/investors` |
 | Wayback Machine | `ingest/earnings_fetch_uob.py:49` | `CDX_URL = "http://web.archive.org` |
 | Ollama | `config/chatbot.yaml:7` | `ollama_url:       {value: "http://localhost:11434"` |
-| Claude | `chatbot/backends/claude_backend.py:40` | `import anthropic` |
+| Claude | `chatbot/backends/claude_backend.py:41` | `import anthropic` |
 | OpenAI, or any compatible provider via `OPENAI_BASE_URL` | `config/chatbot.yaml:8` | `openai_base_url:  {value: "https://api.openai.com/v1", env: OPENAI_BASE_URL}` |
-| OpenAI unverified | `chatbot/backends/openai_backend.py:7` | `Not yet run against the live API` |
-| Gemini verified | `chatbot/backends/gemini_backend.py:4` | `Verified against the live API` |
-| Gemini | `chatbot/backends/gemini_backend.py:50` | `generativelanguage.googleapis.com` |
-| Ollama is the default without a key | `chatbot/backends/__init__.py:33` | `return "ollama"` |
+| OpenAI verified | `chatbot/backends/openai_backend.py:7` | `Verified against the live API on 2026-10-24 with gpt-6-luna` |
+| OpenAI is the default | `config/chatbot.yaml:5` | `backend:          {value: "openai", env: CHATBOT_BACKEND}` |
+| OpenAI's model | `config/chatbot.yaml:18` | `openai:  {value: "gpt-6-luna", env: OPENAI_MODEL}` |
+| the local model sorts every question | `config/chatbot.yaml:19` | `intent:  {value: "llama3.1:8b", env: CHATBOT_INTENT_MODEL}` |
+| a hosted model never sees Reddit or CNA text | `chatbot/backends/base.py:97` | `def withhold_reddit(name: str, content):` |
+| Ollama when `auto` finds no key | `chatbot/backends/__init__.py:30` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |

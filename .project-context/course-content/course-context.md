@@ -303,4 +303,4 @@ the chatbot found by those runs, and two more Opus 5.5 rating rounds.
   Claude Code had removed the dashboard at the team's request; Claude Code
   stopped and asked, and the team chose to keep the teammate's dashboard.
 
-**Keep updating this section as work continues — needed verbatim-ish for the report's GenAI declaration.**
+**Keep updating this section as work continues — needed verbatim-ish

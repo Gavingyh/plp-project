@@ -110,9 +110,12 @@ def _model_files(folder: Path) -> None:
 
 def _cached_finbert() -> Path:
     from huggingface_hub import snapshot_download
+    from config.model_version import BASE_MODEL_DOWNLOAD_PATTERNS
 
     try:
-        folder = Path(snapshot_download("ProsusAI/finbert", local_files_only=True))
+        revision = {"revision": os.environ["FINBERT_REVISION"]} if os.environ.get("FINBERT_REVISION") else {}
+        folder = Path(snapshot_download("ProsusAI/finbert", local_files_only=True,
+                                       allow_patterns=BASE_MODEL_DOWNLOAD_PATTERNS, **revision))
     except Exception as exc:
         raise RuntimeError(
             "ProsusAI/finbert is not cached locally. Cache its tokenizer and model before running."

@@ -28,7 +28,7 @@ timeouts_seconds:
   ollama: {value: 120}                   # the longest silence allowed from the local model: before its first word, or between two
   ollama_load: {value: 300}              # loading the model before the first request, slow when memory is short
   hosted: {value: 60}
-  intent: {value: 60}
+  intent: {value: 60, env: CHATBOT_INTENT_TIMEOUT}   # Docker allows longer CPU-only cold starts
   judge:  {value: 300}
 retry_waits_seconds:                     # before each retry on 429 / 503
   openai: {value: [5, 15, 30, 60]}       # unless Retry-After says otherwise

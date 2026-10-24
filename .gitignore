@@ -5,6 +5,11 @@ __pycache__/
 .DS_Store
 *.egg-info/
 .pytest_cache/
+.docker-test/
+data/data.zip
+data/.docker-setup.lock
+data/.setup-*/
+data/.bundle-*
 
 # service pid files written by scripts/start.sh
 data/run/

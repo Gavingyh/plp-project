@@ -8,6 +8,8 @@ poor similarity representations; mean pooling is materially better and costs
 nothing. See docs/DESIGN.md, step 1.
 """
 
+import os
+
 import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
@@ -27,8 +29,9 @@ def _get_model():
     global _tokenizer, _model, _device
     if _model is None:
         _device = best_device()
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        _model = AutoModel.from_pretrained(MODEL_NAME).to(_device).eval()
+        revision = {"revision": os.environ["FINBERT_REVISION"]} if os.environ.get("FINBERT_REVISION") else {}
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, **revision)
+        _model = AutoModel.from_pretrained(MODEL_NAME, **revision).to(_device).eval()
     return _tokenizer, _model, _device
 
 

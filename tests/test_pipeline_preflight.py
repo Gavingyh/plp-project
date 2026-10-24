@@ -207,7 +207,9 @@ def test_base_model_cache_check_never_downloads(monkeypatch, tmp_path):
     for name in ("config.json", "model.safetensors", "vocab.txt"):
         (tmp_path / name).write_text("fixture")
     assert stages._cached_finbert() == tmp_path
-    snapshot.assert_called_with("ProsusAI/finbert", local_files_only=True)
+    from config.model_version import BASE_MODEL_DOWNLOAD_PATTERNS
+    snapshot.assert_called_with("ProsusAI/finbert", local_files_only=True,
+                                allow_patterns=BASE_MODEL_DOWNLOAD_PATTERNS)
 
 
 def test_inventory_counts_supported_pdf_locations(prerequisites):

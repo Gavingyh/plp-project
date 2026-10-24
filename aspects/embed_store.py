@@ -16,11 +16,14 @@ USAGE:
 """
 
 import os
+from pathlib import Path
+import sqlite3
+import tempfile
 
 import numpy as np
 
 from aspects.embed import embed_sentences
-from ingest.db import get_connection
+from ingest import db
 
 from config.logging_config import get_logger, setup_logging
 
@@ -36,14 +39,23 @@ def _load_store(path: str | None = None, width: int = 768) -> tuple[list[str], n
     path = path or STORE_PATH
     if not os.path.exists(path):
         return [], np.zeros((0, width), dtype=np.float32)
-    data = np.load(path, allow_pickle=False)
-    return list(data["sentence_ids"]), data["vectors"]
+    with np.load(path, allow_pickle=False) as data:
+        return list(data["sentence_ids"]), data["vectors"]
 
 
 def _save_store(sentence_ids: list[str], vectors: np.ndarray, path: str | None = None) -> None:
     path = path or STORE_PATH
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    np.savez_compressed(path, sentence_ids=np.array(sentence_ids), vectors=vectors)
+    # Readers keep using the last complete cache if a writer is interrupted.
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=os.path.dirname(path), prefix=".vectors-", delete=False) as stream:
+            temporary = stream.name
+            np.savez_compressed(stream, sentence_ids=np.array(sentence_ids, dtype=str), vectors=vectors)
+        os.replace(temporary, path)
+    finally:
+        if temporary and os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 def update(path: str | None = None, embed=None, width: int = 768) -> dict:
@@ -57,7 +69,7 @@ def update(path: str | None = None, embed=None, width: int = 768) -> dict:
     existing_ids, existing_vecs = _load_store(path, width)
     existing_map = dict(zip(existing_ids, existing_vecs))
 
-    conn = get_connection()
+    conn = sqlite3.connect(Path(db.DB_PATH).resolve().as_uri() + "?mode=ro", uri=True)
     try:
         rows = conn.execute("SELECT sentence_id, text FROM sentences").fetchall()
     finally:
@@ -67,6 +79,9 @@ def update(path: str | None = None, embed=None, width: int = 768) -> dict:
     pruned = len(existing_ids) - len(set(existing_ids) & current_ids)
 
     new_rows = [(sid, text) for sid, text in rows if sid not in existing_map]
+    if not new_rows and not pruned and os.path.isfile(path or STORE_PATH):
+        return {"already_cached": len(existing_ids), "newly_embedded": 0,
+                "pruned_stale": 0, "total": len(existing_ids)}
     new_ids, new_vecs = [], np.zeros((0, width), dtype=np.float32)
     if new_rows:
         new_ids = [r[0] for r in new_rows]

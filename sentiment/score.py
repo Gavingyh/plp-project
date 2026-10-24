@@ -28,6 +28,8 @@ USAGE:
   python -m sentiment.score --sources sgx_research   # only these sources' sentences
 """
 
+import os
+
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -71,8 +73,9 @@ def _get_model():
     global _tokenizer, _model, _device, _id2label
     if _model is None:
         _device = best_device()
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        _model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME).to(_device).eval()
+        revision = {"revision": os.environ["FINBERT_REVISION"]} if os.environ.get("FINBERT_REVISION") else {}
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, **revision)
+        _model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, **revision).to(_device).eval()
         _id2label = {k: v.lower() for k, v in _model.config.id2label.items()}
     return _tokenizer, _model, _device, _id2label
 

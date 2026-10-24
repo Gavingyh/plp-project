@@ -110,9 +110,12 @@ def _model_files(folder: Path) -> None:
 
 def _cached_finbert() -> Path:
     from huggingface_hub import snapshot_download
+    from config.model_version import BASE_MODEL_DOWNLOAD_PATTERNS
 
     try:
-        folder = Path(snapshot_download("ProsusAI/finbert", local_files_only=True))
+        revision = {"revision": os.environ["FINBERT_REVISION"]} if os.environ.get("FINBERT_REVISION") else {}
+        folder = Path(snapshot_download("ProsusAI/finbert", local_files_only=True,
+                                       allow_patterns=BASE_MODEL_DOWNLOAD_PATTERNS, **revision))
     except Exception as exc:
         raise RuntimeError(
             "ProsusAI/finbert is not cached locally. Cache its tokenizer and model before running."
@@ -130,6 +133,22 @@ def _cached_finbert() -> Path:
         raise RuntimeError(
             "The cached ProsusAI/finbert is incomplete; cache its tokenizer and model first."
         )
+    return folder
+
+
+def _cached_search_model() -> Path:
+    from huggingface_hub import snapshot_download
+    from config.search_model import DOWNLOAD_PATTERNS, MODEL_NAME, MODEL_REVISION
+
+    try:
+        folder = Path(snapshot_download(MODEL_NAME, revision=MODEL_REVISION,
+                                       local_files_only=True, allow_patterns=DOWNLOAD_PATTERNS))
+    except Exception as exc:
+        raise RuntimeError("MiniLM search model is not cached locally. Run Docker setup or cache the search model before updating data.") from exc
+    if (not (folder / "config.json").is_file()
+            or not (folder / "model.safetensors").is_file()
+            or not any((folder / name).is_file() for name in ("tokenizer.json", "vocab.txt"))):
+        raise RuntimeError("The cached MiniLM search model is incomplete. Run Docker setup again before updating data.")
     return folder
 
 
@@ -200,6 +219,7 @@ def preflight(sources: list[str]) -> dict:
     if method not in ("centroid", "llm"):
         raise ValueError(f"Unknown assignment_method: {method}")
     _cached_finbert()
+    _cached_search_model()
     if model_version.MODEL_VERSION != model_version.BASE_VERSION:
         spec = model_version.FINETUNED.get(model_version.MODEL_VERSION)
         if not spec or not spec["models"]:

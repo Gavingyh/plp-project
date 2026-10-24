@@ -1,0 +1,12 @@
+# Docker Desktop / recent Compose (2.24.4+) supports !reset.
+# Use the Mac's native Ollama for Metal GPU acceleration and existing models.
+services:
+  ollama:
+    profiles: [container-ollama]
+  setup:
+    depends_on: !reset {}
+    environment:
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+  api:
+    environment:
+      OLLAMA_BASE_URL: http://host.docker.internal:11434

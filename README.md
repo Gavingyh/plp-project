@@ -12,6 +12,10 @@ store, and a Streamlit dashboard (`dashboard/`, maintained by a teammate).
 The API is the documented interface for any frontend:
 [docs/api-integration.md](docs/api-integration.md) is its contract.
 
+**Running the submission:** Start with the [Docker quick start](#run-with-docker-recommended-for-assessment).
+It prepares the supplied data and models automatically, then starts the
+dashboard and API with one startup command.
+
 ---
 
 ## Documentation
@@ -82,7 +86,131 @@ caveats — this list is a summary.
 
 ---
 
-## Quick start
+## Run with Docker (recommended for assessment)
+
+Docker starts the Streamlit dashboard, FastAPI and Ollama, prepares the supplied
+database and downloads the required models automatically. No host Python,
+virtual environment, spaCy installation or manual model download is needed.
+Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+with Compose 2.24.4 or newer; wait until its engine is running.
+Allow at least 8 GB of Docker memory and roughly
+20 GB of free disk space for the image, dataset and model caches. An internet
+connection is needed for the first build/download and for OpenAI answers or
+online data collection.
+
+### One-time preparation
+
+1. Open the supplied project folder (or clone this repository). The dataset is
+   supplied separately to the assessors/team. Place it at **`data/data.zip`**:
+
+   ```text
+   plp-project/
+   ├── compose.yaml
+   ├── .env
+   └── data/
+       └── data.zip
+   ```
+
+2. Copy the configuration template, then edit `.env`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set `OPENAI_API_KEY` for chatbot answers. `CHATBOT_BACKEND=openai` is the
+   default. With no key, the other dashboard pages work and Ask explains the
+   missing configuration. NewsAPI is optional: add `NEWSAPI_KEY` to enable that
+   collection source. Keys stay in the local, ignored `.env`; the dashboard
+   never receives them. Both FinBERT repositories are public, so no Hugging
+   Face account/token is required.
+
+### Start the project
+
+From the project root, run:
+
+```bash
+docker compose up --build
+```
+
+Wait for setup to finish and the dashboard to become ready. First startup
+downloads several GB and can take several minutes. The setup logs report data
+restoration and model download progress. Open:
+
+| interface | address |
+|---|---|
+| **BankPulse dashboard** | **http://localhost:8501** |
+| API documentation | http://localhost:8000/docs |
+| API health check | http://localhost:8000/health |
+
+The setup service validates the supplied database/model version and embedding
+cache, restores only missing runtime files from the ZIP, downloads public
+FinBERT and the three SHA-256-verified fine-tuned checkpoints, downloads the
+pinned public MiniLM search model, and pulls the configured Ollama models. Intent classification, topic assignment and optional
+local answers currently share `llama3.1:8b`, downloaded once. The default answer
+provider remains OpenAI. Setup also warms the local intent classifier with a
+synthetic question before starting the interfaces; a CPU-only cold load can
+take several minutes. Setup does not collect new articles, retrain models or
+send questions to a paid API.
+
+Setup also prepares **`data/search_embeddings.npz`** for evidence retrieval.
+Your existing `data.zip` remains usable: if it does not include this cache,
+Docker generates it from the restored database automatically. This adds a
+one-time CPU processing step with progress in the setup logs. Valid cached
+vectors are reused; later data updates embed only new sentences. FinBERT's
+separate `sentence_embeddings.npz` stays available for aspect analysis.
+Both search and sentiment models are available offline after setup; OpenAI
+answers and online collection still require internet access.
+
+Data and imported documents stay under `data/`; fine-tuned checkpoints stay
+under `models/`. Docker volumes retain the base FinBERT and Ollama caches.
+Subsequent starts reuse these files and preserve database updates and pipeline
+history. The PDF source folders are already included in the repository. Add
+new PDFs or CNA JSONL records to the same documented folders, then use
+**Data Management** to run an incremental update.
+
+### Stop, restart and check
+
+Press **Ctrl+C** to stop a foreground run. To run in the background instead:
+
+```bash
+docker compose up -d --build
+docker compose ps -a
+docker compose logs --tail=80 setup api dashboard
+docker compose down
+```
+
+`down` stops/removes the containers while retaining data and model storage.
+After changing an API key in `.env`, apply the new environment with
+`docker compose up -d api`; a container-only `restart` does not reload `.env`.
+
+On Apple Silicon, containerised Ollama uses the CPU. To reuse native Ollama and
+the Mac GPU, start the Ollama app and use the documented
+[native Ollama option](docs/RUNBOOK.md#docker-using-native-ollama-on-a-mac).
+For a first-install test alongside an existing native setup, see the
+[isolated Docker test](docs/RUNBOOK.md#docker-clean-install-test).
+
+### If a port is already in use
+
+If Docker reports `bind: address already in use` or `ports are not available`,
+another application is using the default API port (`8000`) or dashboard port
+(`8501`). Stop that application, or add unused host ports to your local `.env`:
+
+```dotenv
+PLP_API_PORT=8101
+PLP_DASHBOARD_PORT=8503
+```
+
+Save `.env`, then rerun from the project root:
+
+```bash
+docker compose up --build
+```
+
+With these example ports, open **http://localhost:8503** for the dashboard and
+**http://localhost:8101/docs** for the API documentation. Your restored database
+and downloaded models are retained when retrying startup.
+
+## Quick start (native Python alternative)
 
 **You need Python 3.10 or newer** (developed and tested on 3.14). Check with
 `python3 --version`. On a Mac the built-in `python3` is 3.9, and
@@ -182,6 +310,25 @@ database: `python -m chatbot.search_vectors` rebuilds `data/search_embeddings.np
 the chatbot's evidence search (about 5 minutes on a laptop processor), and
 `python -m aspects.embed_store` rebuilds FinBERT's `data/sentence_embeddings.npz`.
 
+### Updating an existing native installation
+
+Docker remains optional; existing native installations can keep using
+`scripts/start.sh`. After pulling these changes, ensure the pinned MiniLM
+revision is cached before running the pipeline with Hugging Face offline mode.
+From the project root, run once with internet access:
+
+```bash
+HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 .venv-plp/bin/python3 - <<'PYTHON'
+from chatbot.search_vectors import embed_sentences, update
+embed_sentences(["DBS banking services."])  # cache the pinned model even if vectors already exist
+print(update())                          # embed only missing sentences
+PYTHON
+```
+
+This uses the local search model, preserves the database and needs no paid
+API call. Docker performs the equivalent preparation automatically. Stop the
+native servers before using Docker with the same data folder and host ports.
+
 ### Sharing the data and models
 
 What a teammate needs, beyond `git clone` and the Quick start:
@@ -203,33 +350,32 @@ download from Hugging Face on first use, and each
 machine pulls its own Ollama models. Never share `.env` (API keys) or
 `data/cna/` (CNA's articles).
 
-The models are in a private Hugging Face model repo,
-`plp-bank-sentiment/plp-finbert-absa`, open to the organisation's members
-(ask to be added); [docs/model-card.md](docs/model-card.md) is its
+The fine-tuned models are in the public Hugging Face model repo,
+`plp-bank-sentiment/plp-finbert-absa`; [docs/model-card.md](docs/model-card.md) is its
 `README.md`. The models in use are in its `adapted-2026-10-11/` folder; the
 top-level `seed_*` folders hold the earlier models trained on people's
 labels. `hf` is installed in the project's environment, not on your PATH.
-Log in with your own token, download the folder, move it to where
+Download the folder without logging in, move it to where
 `config/model_version.py` looks for it, and check the checksums against the
 table at the end of the model card:
 
 ```bash
-.venv-plp/bin/hf auth login
 .venv-plp/bin/hf download plp-bank-sentiment/plp-finbert-absa --include "adapted-2026-10-11/*" --local-dir models/hf-download
 mkdir -p models/experiments-2026-10-11
 mv models/hf-download/adapted-2026-10-11 models/experiments-2026-10-11/dapt
 shasum -a 256 models/experiments-2026-10-11/dapt/seed_*/final/model.safetensors
 ```
 
-To upload a new version, leave out `training_args.bin` (it records a local
+Uploads require authenticated write access. To upload a new version, leave
+out `training_args.bin` (it records a local
 path) and `dev_ids.json` (nothing needs it to load the model):
 
 ```bash
 for s in 42 1 7; do
   .venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa models/experiments-2026-10-11/dapt/seed_$s/final adapted-2026-10-11/seed_$s/final \
-      --exclude "training_args.bin" --exclude "dev_ids.json" --private
+      --exclude "training_args.bin" --exclude "dev_ids.json"
 done
-.venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa docs/model-card.md README.md --private
+.venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa docs/model-card.md README.md
 ```
 
 The database stays on the team drive: it holds CNA and Reddit text and isn't
@@ -344,6 +490,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2894 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2941: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2936 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 2983: adds the diagram and notebook checks
 ```

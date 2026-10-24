@@ -16,6 +16,12 @@ that the API and the chatbot can read it cheaply.
 
 # Base FinBERT's tag (sentiment/score.py writes it on every row it scores).
 BASE_VERSION = "finbert-base-zeroshot-v1"
+# Files used by our PyTorch loaders. Other framework weights are unnecessary;
+# recent huggingface_hub versions require this filter for partial offline caches.
+BASE_MODEL_DOWNLOAD_PATTERNS = [
+    "config.json", "model.safetensors", "pytorch_model.bin", "tokenizer.json",
+    "tokenizer_config.json", "special_tokens_map.json", "vocab.txt",
+]
 MODEL_VERSION = "finbert-adapted-finetuned-2026-10-11-3seed-m0"
 
 # The models and neutral margin behind each fine-tuned version, so that once

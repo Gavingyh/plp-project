@@ -1,0 +1,114 @@
+x-app: &app
+  image: bankpulse-app:${PLP_IMAGE_TAG:-local}
+  build:
+    context: .
+  init: true
+
+x-storage: &storage
+  - type: bind
+    source: ${PLP_DATA_DIR:-./data}
+    target: /app/data
+  - type: bind
+    source: ${PLP_MODELS_DIR:-./models}
+    target: /app/models
+  - hf-cache:/cache/huggingface
+
+x-runtime: &runtime
+  TZ: Asia/Singapore
+  HF_HOME: /cache/huggingface
+  HF_HUB_OFFLINE: "1"
+  TRANSFORMERS_OFFLINE: "1"
+  FINBERT_REVISION: 0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031
+  PLP_DB_PATH: /app/data/plp.db
+  PLP_EMBEDDINGS_PATH: /app/data/sentence_embeddings.npz
+  PLP_SEARCH_EMBEDDINGS_PATH: /app/data/search_embeddings.npz
+  OLLAMA_BASE_URL: http://ollama:11434
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+  CHATBOT_INTENT_MODEL: ${CHATBOT_INTENT_MODEL:-llama3.1:8b}
+  CHATBOT_INTENT_TIMEOUT: ${CHATBOT_INTENT_TIMEOUT:-180}
+
+services:
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama@sha256:4c5b27871a3239a717048f9b93057680a51b60c8119a7016aebb57f938e25e35}
+    environment:
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+    restart: unless-stopped
+
+  setup:
+    <<: *app
+    command: ["python", "-m", "docker.bootstrap"]
+    volumes: *storage
+    environment:
+      <<: *runtime
+      HF_HUB_OFFLINE: "0"
+      TRANSFORMERS_OFFLINE: "0"
+      HF_TOKEN: ${HF_TOKEN:-}
+      PLP_DATA_URL: ${PLP_DATA_URL:-}
+      PLP_DATA_TOKEN: ${PLP_DATA_TOKEN:-}
+      PLP_DATA_SHA256: ${PLP_DATA_SHA256:-}
+      PLP_EXTRA_OLLAMA_MODELS: ${PLP_EXTRA_OLLAMA_MODELS:-}
+      PLP_WARM_INTENT: ${PLP_WARM_INTENT:-1}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    volumes: *storage
+    environment:
+      <<: *runtime
+      CHATBOT_BACKEND: ${CHATBOT_BACKEND:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6-luna}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-5}
+      NEWSAPI_KEY: ${NEWSAPI_KEY:-}
+      ALPHAVANTAGE_KEY: ${ALPHAVANTAGE_KEY:-}
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID:-}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET:-}
+      REDDIT_USER_AGENT: ${REDDIT_USER_AGENT:-plp-practice-module/0.1}
+      LOG_FILE: /app/data/logs/plp.log
+    ports:
+      - "127.0.0.1:${PLP_API_PORT:-8000}:8000"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 10s
+      timeout: 10s
+      start_period: 60s
+      retries: 12
+    stop_grace_period: 45s
+    restart: unless-stopped
+
+  dashboard:
+    <<: *app
+    command: ["python", "-m", "streamlit", "run", "dashboard/app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true", "--browser.gatherUsageStats=false"]
+    environment:
+      TZ: Asia/Singapore
+      PLP_API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:${PLP_DASHBOARD_PORT:-8501}:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  hf-cache:
+  ollama-models:

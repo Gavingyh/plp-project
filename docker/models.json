@@ -1,0 +1,23 @@
+{
+  "base": {
+    "repo": "ProsusAI/finbert",
+    "revision": "0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031"
+  },
+  "finetuned": {
+    "repo": "plp-bank-sentiment/plp-finbert-absa",
+    "revision": "130e6155aafa9d35ae7a1a711b3626356c7228e5",
+    "source": "adapted-2026-10-11",
+    "destination": "models/experiments-2026-10-11/dapt",
+    "model_version": "finbert-adapted-finetuned-2026-10-11-3seed-m0",
+    "weights_sha256": {
+      "seed_42": "1677836f4ee226f2bcb5839dae8e6f2a2a30fd7ed8440c64fce4b3263e33d41c",
+      "seed_1": "8ef23d69590fcf8a03e1cfbcafd321d3fc45c0e1299fd6a5961c8ebdbcaf2028",
+      "seed_7": "627548907b1cd859ce7b10800c933bb177df2646b072ce6376443a9f860e47c4"
+    }
+  },
+  "search": {
+    "repo": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "width": 384
+  }
+}

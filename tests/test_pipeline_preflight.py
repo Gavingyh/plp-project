@@ -26,6 +26,7 @@ def prerequisites(temp_db, tmp_path, monkeypatch):
         monkeypatch.setattr(module, "PDF_DIR", str(folder))
     monkeypatch.setattr(stages.importlib.util, "find_spec", lambda name: object())
     monkeypatch.setattr(stages, "_cached_finbert", lambda: tmp_path / "cached-finbert")
+    monkeypatch.setattr(stages, "_cached_search_model", lambda: tmp_path / "cached-search")
     monkeypatch.setattr(
         aspect_taxonomy, "load", lambda: {"assignment_method": "centroid"}
     )
@@ -207,7 +208,9 @@ def test_base_model_cache_check_never_downloads(monkeypatch, tmp_path):
     for name in ("config.json", "model.safetensors", "vocab.txt"):
         (tmp_path / name).write_text("fixture")
     assert stages._cached_finbert() == tmp_path
-    snapshot.assert_called_with("ProsusAI/finbert", local_files_only=True)
+    from config.model_version import BASE_MODEL_DOWNLOAD_PATTERNS
+    snapshot.assert_called_with("ProsusAI/finbert", local_files_only=True,
+                                allow_patterns=BASE_MODEL_DOWNLOAD_PATTERNS)
 
 
 def test_inventory_counts_supported_pdf_locations(prerequisites):
@@ -311,3 +314,16 @@ def test_online_only_preflight_does_not_require_pdf_folders_or_pdf_dependencies(
     )
     result = stages.preflight(["google_news", "arctic_shift"])
     assert {row["kind"] for row in result["sources"]} == {"online"}
+
+
+def test_missing_search_model_fails_before_import(prerequisites, monkeypatch):
+    _, store = prerequisites
+    def missing():
+        raise RuntimeError("MiniLM search model is not cached locally")
+    monkeypatch.setattr(stages, "_cached_search_model", missing)
+    importer = Mock(side_effect=AssertionError("must not import"))
+    monkeypatch.setattr(stages, "import_sources", importer)
+    result = runner.run_pipeline(["earnings"], store=store)
+    assert result["status"] == "failed" and result["current_stage"] == "preflight"
+    assert "MiniLM" in result["error"]
+    importer.assert_not_called()

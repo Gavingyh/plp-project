@@ -177,8 +177,10 @@ shasum -a 256 plp-2026-10-14.db.gz   # should match the checksum below
 | `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
 | `plp-2026-09-24.db.gz` (superseded) | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | same day, before embeddings, aspects, sentiment and index were run on the news |
 
-`data/sentence_embeddings.npz` isn't shared either. It is a cache that
-`python -m aspects.embed_store` rebuilds from the database.
+The two vector files aren't in git either. Each is a cache rebuilt from the
+database: `python -m chatbot.search_vectors` rebuilds `data/search_embeddings.npz`,
+the chatbot's evidence search (about 5 minutes on a laptop processor), and
+`python -m aspects.embed_store` rebuilds FinBERT's `data/sentence_embeddings.npz`.
 
 ### Sharing the data and models
 
@@ -187,15 +189,17 @@ What a teammate needs, beyond `git clone` and the Quick start:
 | file | needed for | size |
 |---|---|---|
 | the latest snapshot (`plp-2026-10-14.db.gz`) | everything: unpack to `data/plp.db` | 26.2 MB |
-| `data/sentence_embeddings.npz` | the chatbot's evidence search (without it, search falls back to word overlap) | 132 MB |
+| `data/search_embeddings.npz` | the chatbot's evidence search when no topic is named (without it, search falls back to word overlap) | 66 MB |
+| `data/sentence_embeddings.npz` | only aspect discovery and the similarity method; the chatbot no longer reads it | 132 MB |
 | the three fine-tuned models (`models/experiments-2026-10-11/dapt/seed_{42,1,7}/final`) | only to score new sentences, reproduce the sentiment results or re-score; the database already holds their scores for every stored sentence | 3 × 438 MB |
 
-`scripts/share_bundle.sh OUT_DIR` copies the snapshot, the embeddings, the
+`scripts/share_bundle.sh OUT_DIR` copies the snapshot, both vector files, the
 aspect model's answers and the teammates' note (`data/README-teams.md`) into
 one folder with a `SHA256SUMS` file (check with `shasum -a 256 -c
 SHA256SUMS`), for the team's shared drive. The models go through Hugging Face
 instead (below); `--with-models` adds them to the folder only if that is not
-possible. FinBERT downloads from Hugging Face on first use, and each
+possible. FinBERT and the search model (`sentence-transformers/all-MiniLM-L6-v2`)
+download from Hugging Face on first use, and each
 machine pulls its own Ollama models. Never share `.env` (API keys) or
 `data/cna/` (CNA's articles).
 

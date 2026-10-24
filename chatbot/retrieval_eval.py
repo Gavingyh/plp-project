@@ -5,12 +5,15 @@ sentences people labelled (Hit@K, MRR, precision@K).
 For each bank and each aspect with enough labelled sentences for that bank,
 the question "What do people say about <bank>'s <aspect label>?" ranks that
 bank's labelled sentences with the same score `search_evidence` uses
-(FinBERT cosine plus a small word-overlap boost). A sentence is relevant if
+(cosine over the search model's vectors plus a small word-overlap boost;
+within one topic, the question's words then the newest). A sentence is relevant if
 people gave it that aspect. Judging only the labelled pool keeps every
 relevance judgement human: over the whole corpus most retrieved sentences
 would have no judgement at all. A random ranking is the baseline.
 
-Reads only. Needs the embedding cache (python -m aspects.embed_store).
+Reads only. Needs the search vectors (python -m chatbot.search_vectors).
+FinBERT's figures, from before the search changed model, are in
+data/eval/search-models/.
 
 USAGE:
   HF_HUB_OFFLINE=1 python -m chatbot.retrieval_eval
@@ -103,8 +106,7 @@ def evaluate(labels: pd.DataFrame, vec_by_id: dict, embed, aspect_label: dict,
 
 def main():
     argparse.ArgumentParser(description=__doc__.split("\n\n")[0]).parse_args()
-    from aspects.embed import embed_sentences
-    from aspects.embed_store import load_for_search
+    from chatbot.search_vectors import embed_sentences, load_for_search
     from config import aspect_taxonomy
     aspect_label = aspect_taxonomy.labels()
     labels = pd.read_csv(LABELS_PATH)

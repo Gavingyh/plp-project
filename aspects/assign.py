@@ -32,6 +32,7 @@ import yaml
 
 from aspects.embed import embed_sentences
 from aspects.embed_store import load_for_search, update as update_embeddings
+from chatbot.search_vectors import update as update_search_vectors
 from ingest.db import get_connection, init_db, now_iso
 
 from config.logging_config import get_logger, setup_logging
@@ -101,6 +102,7 @@ def run() -> dict:
 
     logger.info("Ensuring all sentences are embedded...")
     logger.info("Embedding cache: %s", update_embeddings())
+    logger.info("Search vectors: %s", update_search_vectors())   # the chatbot's evidence search
     sentence_ids, vectors = load_for_search()
 
     init_db()

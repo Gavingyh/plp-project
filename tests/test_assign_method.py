@@ -21,6 +21,7 @@ def _setup(temp_db, monkeypatch, method, ids=("s1", "s2")):
         "aspects": {"dividend_policy": {"seed_terms": ["dividend"]}, "asset_quality": {"seed_terms": ["npl"]},
                     "other": {"seed_terms": []}}})
     monkeypatch.setattr(assign, "update_embeddings", lambda: {})
+    monkeypatch.setattr(assign, "update_search_vectors", lambda: {})
     monkeypatch.setattr(assign, "load_for_search", lambda: (list(ids), np.ones((len(ids), 2))))
     monkeypatch.setattr(assign, "embed_sentences", lambda terms: np.ones((len(terms), 2)))
 

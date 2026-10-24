@@ -10,8 +10,10 @@ free model trained for matching sentences would do better.
 model beats the ordering in use (the question's words, then newest): the best
 scored 0.80 against 0.82, short of the 0.85 the rule asked for. Without a
 topic, all three models score about 0.30 against FinBERT's 0.12, which passes
-the rule. But in the newest test runs the chatbot never searched without a
-topic, so adopting a model would improve a path the tests don't reach.
+the rule. In the newest test runs the chatbot never searched without a
+topic, so this was first reported as a finding only. It was then adopted, so
+that no search path the chatbot can take ranks at the level of a random draw:
+see "Decision" below.
 
 ## Method
 
@@ -80,6 +82,39 @@ The corpus figures are extrapolated from the labelled sentences.
 Qwen3-Embedding-0.6B was also tried and left out: it had not finished the
 labelled sentences after about 15 minutes, where all-MiniLM-L6-v2 took under
 half a minute.
+
+## How sure: intervals over the 28 queries
+
+From 10,000 resamples of the queries (gain over a random draw, precision at 5):
+
+| Ranking | Gain over random | 95% interval |
+|---|---|---|
+| Within a topic: question's words, then newest | 0.080 | 0.012 to 0.145 |
+| Topic filter and word ordering together, against five random sentences of the bank | 0.719 | 0.618 to 0.807 |
+| No topic: FinBERT with the word bonus | 0.023 | -0.036 to 0.090 |
+| No topic: all-MiniLM-L6-v2 with the word bonus | 0.216 | 0.108 to 0.329 |
+
+Within a topic the word ordering beat random in 16 queries, tied in 5 and
+lost in 7. It was chosen after seeing these same queries, so its gain is an
+optimistic estimate. Recall at 5 within the pool is 0.453 for it against
+0.399 for random, below random in 7 of the 28 queries. FinBERT's ordering by
+the aspect's name scored 0.379, below random in 13
+(`data/eval/retrieval_recall_per_query_2026-10-18.csv`, variant "aspect query +
+stored-aspect filter").
+
+## Decision
+
+all-MiniLM-L6-v2 now ranks the searches that name no topic, from its own
+store (`chatbot/search_vectors.py`, `data/search_embeddings.npz`, 66 MB for the
+45,844 sentences, embedded in about 5 minutes on the processor). Within a topic
+the search uses the word ordering and no vectors. FinBERT's store stays for
+aspect discovery. Measured on the corpus store with `chatbot/retrieval_eval.py`
+(`data/eval/search-models/retrieval_eval_search_model.txt`):
+
+| Search | Precision at 5 | Random |
+|---|---|---|
+| No topic, by the question (the search as it now runs) | 0.314 | 0.098 |
+| Within a topic, words then newest (as it now runs) | 0.818 | 0.738 |
 
 ## Limits
 

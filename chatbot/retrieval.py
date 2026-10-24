@@ -5,9 +5,12 @@ Hybrid retrieval, matched to this corpus's actual scale rather than a generic
 "vector DB + reranker" template:
   1. SQL pre-filter (bank / aspect / sentiment / date range) - cheap, exact,
      and does most of the narrowing before any embedding math happens.
-  2. Semantic ranking - cosine similarity between the query and cached FinBERT
-     sentence embeddings (aspects/embed_store.py) over whatever survives the
-     filter.
+  2. Ranking. Within one topic: the question's words, then the newest first,
+     with no vectors (evidence.within_topic). Otherwise: cosine similarity
+     between the query and cached sentence vectors from a model built for
+     search (chatbot/search_vectors.py) over whatever survives the filter.
+     FinBERT's vectors, used here before, ranked no better than a random draw
+     (docs/evidence/search-models-2026-10-24.md).
   3. Lexical boost - a small score bump for sentences sharing literal query
      keywords, so exact terms (ticker codes, named products like "DBS
      Multiplier") aren't only found by semantic proximity. This is the
@@ -36,8 +39,7 @@ import re
 import numpy as np
 
 from chatbot import settings
-from aspects.embed import embed_sentences
-from aspects.embed_store import load_for_search
+from chatbot.search_vectors import embed_sentences, load_for_search   # a model built for search, not FinBERT
 from ingest.db import get_connection
 
 _WORD = re.compile(r"\w+")

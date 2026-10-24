@@ -8,7 +8,8 @@
 #
 # Contents (see "Sharing the data and models" in README.md):
 #   plp-<date>.db.gz             the latest database snapshot   -> gunzip to data/plp.db
-#   sentence_embeddings.npz      the evidence-search cache       -> data/
+#   search_embeddings.npz        the evidence search's vectors   -> data/
+#   sentence_embeddings.npz      FinBERT's vectors, for aspect discovery -> data/
 #   aspect_llm/<model>.<prompt>.jsonl  the LLM's aspect per sentence for the
 #                                current prompt (ids and labels, no text) -> data/aspect_llm/
 #   models/seed_*/               the served fine-tuned models, without training_args.bin
@@ -28,6 +29,7 @@ snapshot="$(ls -1 "$ROOT"/data/snapshots/plp-*.db.gz 2>/dev/null | sort | tail -
 [ -n "$snapshot" ] || { echo "no snapshot in data/snapshots/" >&2; exit 1; }
 mkdir -p "$OUT"
 cp "$snapshot" "$OUT/"
+[ -f "$ROOT/data/search_embeddings.npz" ] && cp "$ROOT/data/search_embeddings.npz" "$OUT/"
 [ -f "$ROOT/data/sentence_embeddings.npz" ] && cp "$ROOT/data/sentence_embeddings.npz" "$OUT/"
 [ -f "$ROOT/data/README-teams.md" ] && cp "$ROOT/data/README-teams.md" "$OUT/"
 # Only the current prompt's answers: an older prompt's file would be ignored by the code anyway.

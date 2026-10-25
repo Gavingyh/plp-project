@@ -4,7 +4,7 @@ For the team member editing the master report on SharePoint. Each block below
 replaces the named paragraph or table. Every figure comes from the evidence
 note named under it. Section numbers and headings are the Word report's.
 
-Net change: about 291 words longer across sections 2.3, 3.7, 4.5 and 5 (1,507
+Net change: about 322 words longer across sections 2.3, 3.7, 4.5 and 5 (1,538
 words in place of 1,216), mostly the search-model finding and the fixes. If the
 20-page limit is tight, cut first the two sentences on recall and Hit@5 in
 "Evidence search" (about 60 words). Not counted: the team boxes and this
@@ -38,7 +38,7 @@ Replace "Since 18 October these checks run before the answer is returned … Sec
 
 Replace the paragraph "On the submitted database the chatbot chooses the right tool …" and Table 8 with:
 
-> On the submitted database, with either model, the chatbot chooses the right tool, declines advice, admits missing data and shows the reader no invented citation (Table 8). The models differ in how they describe correct figures, and in speed. The 32 questions were also used while the prompt and checks were improved, so these are not held-out results.
+> On the submitted database, with either model, the chatbot chooses the right tool, declines advice, admits missing data and shows the reader no invented citation (Table 8). Both models pass these checks, because the code enforces them whichever model answers; they differ in how they describe correct figures (21 of 21 tries right against 16 of 21, below) and in speed (a median of 6 seconds an answer against 43). The 32 questions were also used while the prompt and checks were improved, so these are not held-out results.
 
 | Check | Local model, before the fixes below | Local model, after | gpt-6-luna, after |
 |---|---:|---:|---:|

@@ -1999,3 +1999,35 @@ name the OpenAI key (Gemini is gone) and this exception.
 - The gold-set check doesn't recognise gpt-6-luna's way of declining an
   out-of-scope bank ("I can't report …"), so it scores 6 of 8 where reading
   gives 8 of 8.
+
+### 25 October
+
+**Docker setup merged; the dataset is `data.zip`.** The teammates' Docker
+setup (pull request 5) fast-forwarded onto `main`. It defines the dataset as
+one file, `data/data.zip`, given to the team and to the assessors with the
+project, and restores it with checks (integrity, the served model's rows,
+vectors matching the sentences). `scripts/share_bundle.sh` now builds that
+file from the latest snapshot, both vector files, the CNA cache and the
+aspect answers; the setup's own validator accepted it (45,844 sentences,
+45,844 vectors, six files restored), and its database is byte for byte the
+14 Oct snapshot. Natively the same restore runs as
+`python -m docker.bootstrap --data-only`. README, `data/README-teams.md`,
+diagram 18 and replacement text for report section 2.3 describe it. The
+models now download from a public Hugging Face repo whose card declares no
+licence. A fresh clone collects 2946 tests in `tests/` and 2993 from the
+root, all passing.
+
+**The gpt-6-luna "figure no tool returned: 2 / 32".** The evaluation records
+the first draft's flags (`chatbot/run_eval.py`, line 173); since 18 Oct a
+draft that fails a check is rewritten before display. Re-checking the final
+answers of both MacBook runs gives 0 of 32: the flags were the 24 of
+"24 September 2026" and a figure the rewrite removed. Recording
+`TurnResult.shown_flags()` beside the first draft is on the to-do.
+
+**Needs a human:**
+- CLAUDE.md's CNA rule needs the `data.zip` exception written in (the edit
+  was refused to Claude as a change to its own instructions).
+- A licence on the public model card (CC BY-NC-SA 4.0, from base FinBERT).
+- Upload `data/run/share-2026-10-25/` (`data.zip`, its note, checksums).
+- The 24 Oct commit of logs and results put `data/logs/plp.log`, the Word
+  report and 13 results files in git; CLAUDE.md says never to stage the log.

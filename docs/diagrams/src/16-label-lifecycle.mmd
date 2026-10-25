@@ -1,6 +1,6 @@
 stateDiagram-v2
   accTitle: Label lifecycle, first round
-  accDescr: A candidate is exported into the train/dev or test split. Train/dev rows carry an LLM suggestion; test rows go to a blind sheet. Two people label each row and disagreements are resolved. Duplicated or leaked rows are dropped; the rest train the model or form the test set. A not-about-the-bank flag is planned.
+  accDescr: A candidate is exported into the train/dev or test split. Train/dev rows carry an LLM suggestion; test rows go to a blind sheet. Two people label each row and disagreements are resolved. Duplicated or leaked rows are dropped; the rest train the model or form the test set. A not-about-the-bank flag was not on this round's sheet.
 
   [*] --> Exported : drawn from the scored sample
   Exported --> Suggested : train/dev split

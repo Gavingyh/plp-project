@@ -6,7 +6,7 @@ the 32 gold-set answers from the run on the re-scored database
 (`data/eval/chatbot_eval_results_rescored2_v2.jsonl`; the 32 answers in the
 ratings sheet match it) on three scales: faithfulness to the
 tool data, relevance to the question, and correctness. Sheet:
-`data/eval/ratings_sheet 171026 (SN).csv`.
+`data/eval/ratings_sheet_rater1.csv`.
 
 **Result.** 7 of the 26 answers the model wrote (27%) state something the
 tool data contradicts. The automated checks flagged none of the 7. The

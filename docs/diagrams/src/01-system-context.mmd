@@ -1,6 +1,6 @@
 flowchart LR
   accTitle: System context
-  accDescr: The sentiment system with its three kinds of user, its five text and data sources, and its four model backends.
+  accDescr: The sentiment system with its three kinds of user, its text and data sources, and its language-model backends.
 
   investor(["Retail investor"])
   team(["Project team<br/>ingests, labels, trains"])
@@ -19,16 +19,17 @@ flowchart LR
     av["Alpha Vantage<br/>returns nothing for SGX tickers"]
     ir["DBS and OCBC<br/>investor-relations sites"]
     wayback["Wayback Machine<br/>UOB earnings PDFs,<br/>index of CNA URLs"]
+    broker["Broker research PDFs<br/>added by the team"]
   end
 
   subgraph llms["Language-model backends"]
     ollama["Ollama, local, no key needed<br/>sorts every question; answers if chosen"]
-    hosted["OpenAI gpt-6-luna, the default;<br/>Claude. Hosted, both verified"]
+    hosted["OpenAI gpt-6-luna, the default, verified;<br/>Claude, the other hosted option"]
   end
 
   investor -- "asks questions,<br/>reads scores and quotes" --> core
   team -- "runs ingestion,<br/>labelling, training" --> core
-  grader -- "restores a snapshot,<br/>starts the services" --> core
+  grader -- "restores data.zip,<br/>starts the services" --> core
 
   reddit -- "posts, comments" --> core
   gnews -- "headlines" --> core
@@ -38,6 +39,7 @@ flowchart LR
   av -. "no articles" .-> core
   ir -- "results PDFs" --> core
   wayback -- "archived PDFs,<br/>CNA URLs and pages" --> core
+  broker -- "research reports" --> core
 
   core <-- "question sorting; prompts, tool calls,<br/>answers when chosen" --> ollama
   core <-- "prompts, tool calls, answers, with an API key;<br/>no Reddit text" --> hosted

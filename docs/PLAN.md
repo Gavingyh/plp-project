@@ -2,12 +2,13 @@
 
 Written 2026-09-26, after all four course modules had been delivered. This is
 the working plan from here to submission. It supersedes the plans in
-`.project-context/plan/`, which describe how the system was first built.
+`.project-context/plan/` (kept outside git), which describe how the system was
+first built.
 
 What is true today is in [STATUS.md](STATUS.md); why the system is built the
 way it is, in [DESIGN.md](DESIGN.md). This file says what happens next, in what
 order, and who can do it. A tickable version is
-[submission-checklist.html](submission-checklist.html).
+[submission-checklist.html](archive/submission-checklist.html) (a 26 Sep record).
 
 ---
 
@@ -38,7 +39,7 @@ fine-tuned deep neural network; Python.
 | **Annotators record aspect and sentiment for each sentence** | Labels no longer depend on the automatic assignment being right, and the human aspect choices become the gold set that evaluates the LLM's aspects | Candidates are re-drawn to include news; the annotation guideline gains aspect definitions ([annotation-guideline.md](annotation-guideline.md)) |
 | **Four text-mining tasks**: aspect discovery (clustering), aspect categorisation (the LLM aspects above), bank entity recognition (new), sentiment classification (the fine-tuned DNN) | All four are real and evaluable. NER is scoped narrowly so it doesn't compete with labelling | The course notes' earlier NER claim becomes true. See section 7 |
 | **No personal names in the repository** | Team preference; work is split offline | Ownership is recorded by role (section 4); contribution summaries go in the report only |
-| **The daily ingestion job is not running on any machine** | Stopped on 26 Sep at the team's request. Over its three runs Yahoo added nothing and one run failed at wake-up before the network was up | The corpus is frozen at 26 Sep unless someone runs `run_news_pull.py` / `run_daily_batch.py` by hand. `scripts/com.plp.dailybatch.plist` remains as a template |
+| **The daily ingestion job is not running on any machine** | Stopped on 26 Sep at the team's request. Over its three runs Yahoo added nothing and one run failed at wake-up before the network was up | Collection stopped on 26 Sep (the newest sentence is from 25 Sep 2026) unless someone runs `run_news_pull.py` / `run_daily_batch.py` by hand. `scripts/com.plp.dailybatch.plist` remains as a template |
 
 ### Made on 2026-10-04
 
@@ -48,25 +49,25 @@ By the project owner, from the decision brief (`docs/briefs/decisions-2026-10-02
 |---|---|---|
 | **DBS Vickers counts as DBS** (6) | DBS Group's list of subsidiaries, 31 Dec 2024 (section 7) | Bank recognition resolves "DBS Vickers" to DBS; UOB Kay Hian stays a separate broker. About 456 sentences change attribution if NER is applied |
 | **POSB counts as DBS at collection** (14) | DBS acquired POSBank in 1998, and POSB runs as a DBS brand | "POSB" joins the DBS aliases in `ingest/base.py`. Affects future collection only: POSB-only posts and sentences missed so far come back only if collection is run again |
-| **Hosted backends never receive Reddit, CNA or unlisted-source text** (13) | The safe default; Reddit's developer policy restricts third-party use of its content | The Claude and OpenAI/Groq backends withhold that evidence and earlier answers, as Gemini did since 4 Oct. *Changed 24 Oct:* CNA and broker research cleared for hosted models (DESIGN decision 28) |
+| **Hosted backends never receive Reddit, CNA or unlisted-source text** (13) | The safe default; Reddit's developer policy restricts third-party use of its content | The Claude and OpenAI/Groq backends withhold that evidence and earlier answers, as Gemini did since 4 Oct. *Changed 24 Oct:* CNA and broker research cleared for hosted models (DESIGN decision 28); the Gemini backend was removed |
 | **Earnings PDF links become relative paths** (10) | The developer's macOS username is in 178 document and 12,254 sentence URLs, every snapshot and 29 committed files (audit, 4 Oct) | Code first; the database rewrite runs in the re-score week, with a backup |
 | **The 7- and 30-day windows count back from the newest sentence**, labelled "as of" its date (12) | The newest sentence is from 25 Sep and collection is stopped, so a rebuild after 12 Oct would leave the 7-day window empty (`aggregate/index.py`) | The tools, the prompt, the starter questions and the API say "as of <date>"; the dashboard owner adds the label to the dashboard |
-| **Demo chatbot model: `llama3.1:8b`** (11) | On 4 Oct the 3B was not faster (median 20.7 s a question against 22.2 s) and called the wrong tool for the trend question ([chatbot-intent](evidence/chatbot-intent-2026-10-04.md)) | The default chatbot model changes from `llama3.2:3b` |
+| **Demo chatbot model: `llama3.1:8b`** (11) | On 4 Oct the 3B was not faster (median 20.7 s a question against 22.2 s) and called the wrong tool for the trend question ([chatbot-intent](evidence/chatbot-intent-2026-10-04.md)) | The default chatbot model changes from `llama3.2:3b`. *Changed 24 Oct:* the default answer model is OpenAI's `gpt-6-luna`; `llama3.1:8b` stays the local option and the intent classifier (DESIGN decisions 11 and 28) |
 | **Chatbot evidence settings on: `CHATBOT_ENFORCE_EVIDENCE=strip`, `CHATBOT_ASPECT_QUERY=1`** (8) | With strip, no invented citation in the 4 Oct live run; ranking by the aspect's name lifts retrieval MRR from 0.217 to 0.559 ([chatbot-eval-build](evidence/chatbot-eval-build-2026-10-01.md)) | Both become the defaults in `config/chatbot.yaml` |
 | **Labels: the human labels stay where Opus disagrees** (202 aspects, 173 sentiments); no full relabel | Opus is an additional rater, never the gold label (DESIGN decision 22) | Only the rows on the economist and wealth-or-retail boundaries are fixed, after the team decides those two rules |
 | **Passing mentions stay** (9) | The default; they are about 6% of sentences | No filtering; the report gives the 6% |
 
 ### Made on 2026-10-10
 
-By the team. Recorded from the meeting note; the follow-on work and the points left open are on the team to-do (`docs/briefs/team-todo-2026-10-07.html`).
+By the team. Recorded from the meeting note; the follow-on work and the points left open are on the team to-do (`docs/briefs/team-todo.html`).
 
 | decision | consequence |
 |---|---|
 | **Retail products carry sentiment directed at the bank**; a product's feature is no longer kept neutral | A rule in `docs/annotation-guideline.md`, worded as the "customer value" option of the 7 Oct paper; the team should confirm the wording |
-| **Wealth means the priority and private tiers** (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves | The `wealth_business` row and a rule in the guideline. `config/aspects.yaml` still has the old definition: changing it means redoing the corpus aspect run (about a day) |
+| **Wealth means the priority and private tiers** (Treasures, priority banking and the like); loans, mortgages and unit trusts are not wealth by themselves | The `wealth_business` row and a rule in the guideline. `config/aspects.yaml` still has the old definition: changing it means redoing the corpus aspect run (about a day). *Done 14 Oct:* the definition was changed, the corpus classified again and the second re-score applied (below) |
 | **The test rows are not relabelled** | The 299 test labels stay; the report should say annotators saw a model's suggestion |
-| **Aspects: both methods run and are reported**, the centroids and the LLM | Which one the index, dashboard and chatbot serve is still open (below) |
-| **Opus 5.5 labels every sentiment sheet** | Done 10 Oct, 2,075 rows ([evidence](evidence/llm-rater-new-rules-2026-10-10.md)). The labels are reported as LLM labels, not human labels (the owner's change to the meeting note, for the GenAI declaration). This replaces the 4 Oct decision above that the human labels stay where Opus disagrees; `CLAUDE.md` and DESIGN decision 22 still state the old rule until the owner changes them |
+| **Aspects: both methods run and are reported**, the centroids and the LLM | Which one the index, dashboard and chatbot serve is still open (below). *Settled 11 and 12 Oct:* the LLM's aspects are applied (below) |
+| **Opus 5.5 labels every sentiment sheet** | Done 10 Oct, 2,075 rows ([evidence](evidence/llm-rater-new-rules-2026-10-10.md)). The labels are reported as LLM labels, not human labels (the owner's change to the meeting note, for the GenAI declaration). This replaces the 4 Oct decision above that the human labels stay where Opus disagrees; DESIGN decision 22 now records the change; the rule in `CLAUDE.md` is being clarified to match |
 | **The models train on Opus's labels; the test rows keep their labels** (from the two decisions on labelling and on the test rows) | Train and test follow different retail rules, which can lower test scores for a reason unrelated to the model; the report says so. On the 299 test rows Opus differs from the kept labels on 42 sentiments |
 | **Evaluation reports precision and recall for positive, negative and neutral** beside macro-F1 and accuracy; every model is re-run and the team links the superior one to the chatbot and dashboard | `train/evaluation_report.py` already writes them; the re-run is in the 12 to 18 Oct week |
 
@@ -82,7 +83,7 @@ By the project owner.
 | **The dashboard and chatbot use the fine-tuned FinBERT with the best results** in the re-run table | Ranked by test macro-F1 over three seeds, cross-validation as the tie-breaker; the re-score applies it once the table exists |
 | **The aspect breakdown is delivered as a comparison** of the centroids and the LLM | Both are evaluated and reported; the re-score applies the LLM's to the product unless the team says otherwise |
 | **Collection is complete:** the batch scripts exist and stay stopped | The corpus runs to 25 Sep; the report says the index is recomputed per batch by design and was frozen for the evaluation |
-| **One database:** `data/plp.db` is the 30 Sep corpus plus the broker research source from the Windows PC, with the repairs | 28,852 documents, 45,844 sentences, 291,508 scored pairs; snapshot `plp-2026-10-11-v2.db.gz` (README) |
+| **One database:** `data/plp.db` is the 30 Sep corpus plus the broker research source from the Windows PC, with the repairs | 28,852 documents, 45,844 sentences, 291,508 scored pairs (the centroid pairs; after the 12 Oct re-score, one pair a sentence, 45,844 a model); snapshot `plp-2026-10-11-v2.db.gz` (README) |
 
 ### Made on 2026-10-12
 
@@ -90,7 +91,7 @@ By the project owner, after the rehearsal on a copy.
 
 | decision | consequence |
 |---|---|
-| **The re-score is applied to `data/plp.db`** | Every sentence has one aspect from the LLM classifier, and the chosen model's scores sit beside base FinBERT's. The API and the chatbot serve the chosen model (`config/model_version.py`). All-time headlines: DBS 0.122 to 0.155, OCBC 0.136 to 0.143, UOB 0.074 to 0.117 ([evidence](evidence/rescore-rehearsal-2026-10-12.md)). The dashboard mixes both models' rows until its owner adds the model-version filter |
+| **The re-score is applied to `data/plp.db`** | Every sentence has one aspect from the LLM classifier, and the chosen model's scores sit beside base FinBERT's. The API and the chatbot serve the chosen model (`config/model_version.py`). All-time headlines: DBS 0.122 to 0.155, OCBC 0.136 to 0.143, UOB 0.074 to 0.117 ([evidence](evidence/rescore-rehearsal-2026-10-12.md)). The dashboard mixes both models' rows until its owner adds the model-version filter. *Settled 18 Oct:* the dashboard reads through the API, which serves only the model in use |
 | **Recent windows end at the newest sentence** (decided 4 Oct, applied with the re-score) | The 7- and 30-day windows count back from 25 Sep 2026; the API returns that date as `data_as_of`. The chatbot's wording is unchanged: it already says when the data runs to. The `decision/anchor-windows` branch predates the chatbot rewrite, so the index and API parts were ported and the branch closed |
 | **PDF links are relative paths** (decided 4 Oct, applied with the re-score) | Extended to broker research, whose links carried a Windows home folder: 203 documents and 12,895 sentences in the database, 10,443 links in 46 committed files. Snapshots from before 12 Oct still hold the old links |
 | **The researched answers that were recommendations are adopted** (11 Oct) | All six are in the [annotation guideline](annotation-guideline.md) |
@@ -104,11 +105,16 @@ By the project owner, who agreed the condition beforehand.
 |---|---|
 | **The second re-score is applied:** the corpus's aspects follow the wealth rule of 10 Oct | The owner agreed it could be applied without a further review if the script's checks passed, base FinBERT's headlines were identical and each bank's headline moved by no more than 0.02; all held. 6,914 sentences changed aspect; wealth went from 4,359 sentences to 1,423; headlines fell by 0.010 to 0.015 ([evidence](evidence/rescore-wealth-wording-2026-10-14.md)). Snapshot `plp-2026-10-14.db.gz` supersedes the 12 Oct one |
 
+### Settled on 2026-10-24
+
+| decision | consequence |
+|---|---|
+| **OpenAI backend** (open until 24 Oct: verify it with a key, or stop claiming it works) | OpenAI's `gpt-6-luna` is the chatbot's default answer model, run and evaluated on the gold set (24/24 right tools, 8/8 refusals, no answer shown with a figure no tool returned; [evidence](evidence/chatbot-fixes-2026-10-24.md)). The Gemini backend was removed. CNA and broker research may be quoted by it (DESIGN decision 28) |
+
 ### Still open
 
-| decision | who | by |
-|---|---|---|
-| **OpenAI backend:** provide a key to verify it, or stop claiming it works (Gemini verified 30 Sep). Since 1 Oct it takes `OPENAI_BASE_URL`, so a free Groq key can verify it ([RUNBOOK](RUNBOOK.md), Chatbot backends) | team | 19 Oct |
+None recorded here. Open work is on the team to-do page
+([briefs/team-todo.html](briefs/team-todo.html)).
 
 ---
 
@@ -119,7 +125,7 @@ is the backbone of the report's solution-approach section.
 
 | component | rubric item | course source | evaluation |
 |---|---|---|---|
-| Corpus: Reddit, earnings PDFs, news, analyst consensus | data | TA Day 1 (CRISP-DM, text preparation); NMSM Day 2 PM (5-step system design) | coverage by source, bank and month ([data report](data-report-2026-09-24.html)); filter decisions logged in `data/news_flagged.csv` |
+| Corpus: Reddit, earnings PDFs, news, analyst consensus | data | TA Day 1 (CRISP-DM, text preparation); NMSM Day 2 PM (5-step system design) | coverage by source, bank and month ([data report](archive/data-report-2026-09-24.html)); filter decisions logged in `data/news_flagged.csv` |
 | Sentence segmentation, bank attribution | preprocessing | TA Day 1 (text preparation), Day 3 (IE pipeline) | counts; attribution errors surfaced in STATUS |
 | **Bank entity recognition and resolution** | text-mining task 3 | TA Day 3 (NER, entity resolution); NMSM Day 1 PM (entity extraction, polysemy/synonymy) | precision, recall, F1 against a ~200-sentence gold set; baseline: today's alias matching |
 | **Aspect discovery** (FinBERT embeddings → UMAP → HDBSCAN) | text-mining task 1 | TA Day 2 (clustering, topic modelling); NMSM Day 1 PM (aspect grouping) | cluster count and noise; cluster-to-aspect correspondence; informs whether `other` hides a missing aspect |
@@ -145,9 +151,11 @@ split is detailed in the checklist.
 - ~~Load the CNA feed through `ingest/news_filter.py`~~ Done 2026-09-26:
   207 articles from 2023 on (DESIGN decision 20)
 - Bank NER: gold set of ~200 sentences (people), the recognition and
-  resolution step and its evaluation (AI). The step and the blank 201-row
-  sheet are done (1 Oct, [evidence](evidence/bank-ner-2026-10-01.md));
-  the labels are not
+  resolution step and its evaluation (AI). The step and the 201-row
+  sheet are done (1 Oct, [evidence](evidence/bank-ner-2026-10-01.md)); no
+  person has labelled it, and Opus 5.5's labels are the reference (team
+  decision, 11 Oct): NER F1 0.997 against alias matching's 0.772. Not applied
+  to the stored corpus
 - Final data snapshot and dataset description for submission (AI, reviewed)
 
 **Labelling** (critical path)
@@ -167,13 +175,16 @@ split is detailed in the checklist.
   the number check are **done** (26 Sep; [evidence](evidence/chatbot-harness-2026-09-26.md)).
   The larger frozen set (v2, 32 questions), multi-turn scenarios, retrieval
   metrics and the judge are built (1 Oct, [evidence](evidence/chatbot-eval-build-2026-10-01.md));
-  calibrating the judge needs people to fill `data/eval/ratings_sheet.csv`
+  calibrating the judge needs people to fill `data/eval/ratings_sheet.csv`.
+  *Done 24 Oct:* one person rated the 32 answers; the judge agrees with them
+  only weakly (weighted kappa 0.22,
+  [evidence](evidence/human-ratings-2026-10-24.md))
 - SASSI user study and transcript reading (people)
 - Dashboard: a teammate owns the Streamlit dashboard in `dashboard/`
   (redesigned 1 Oct; DESIGN decision 23, amended). The API serves every view
-  too ([api-integration.md](api-integration.md)). Still to do: the consensus
-  panel hides UOB (one date for all banks), and every tab needs checking
-  after the redesign
+  too ([api-integration.md](api-integration.md)). *Done 18 Oct:* the
+  dashboard reads only through the API, and its consensus panel calls
+  `/analyst-consensus/latest`, each bank's own newest row
 
 **Report and video** (everyone)
 - Structure, datasets and methods drafts, results tables, script (AI)
@@ -210,7 +221,7 @@ set is blank, for people), [the chatbot evaluation extended](evidence/chatbot-ev
 (gold set v2, conversations, retrieval metrics, a judge; retrieval is the
 weakest link), [what the two pending changes would do to the index](evidence/index-preview-2026-10-01.md),
 the API extended so a dashboard needs nothing else (DESIGN 23, [api-integration.md](api-integration.md); the Streamlit dashboard stays in this repository),
-a [report draft](report/report-draft.md) of the factual sections and an
+a [report draft](archive/report/report-draft.md) of the factual sections and an
 [examiner's assessment](review/examiner-assessment-2026-10-01.md).
 Overnight 1–2 Oct: [the chatbot's live runs](evidence/chatbot-eval-build-2026-10-01.md#live-runs)
 (invented citations come from answers that never searched; the judge never
@@ -218,13 +229,13 @@ disagrees), [a blind top-up labelling sheet](evidence/labelling-topup-2026-10-01
 [cross-validation on two more seeds](evidence/noise-floor-cv-2026-10-02.md)
 (the readable label is no better than the key), a second
 [examiner's assessment](review/examiner-assessment-2026-10-02.md) and the
-[team to-do list with reasons](briefs/team-todo-2026-10-07.html).
+[team to-do list with reasons](briefs/team-todo.html).
 2 Oct: [the chatbot fixes, live](evidence/chatbot-eval-build-2026-10-01.md#second-round-2-oct-the-fixes-live)
 (conversations 9/9; strip enforcement ends invented citations; the checklist
 judge catches them), Opus as an extra rater on the top-up and NER sheets,
 [local-context questions](local-context-questions.md), and for the report,
-[the approach](report/approach.md) and
-[findings, limitations and solutions](report/findings-limitations-solutions.md).
+[the approach](archive/report/approach.md) and
+[findings, limitations and solutions](archive/report/findings-limitations-solutions.md).
 
 The original ordering: labelling gates the DNN, and aspects gate labelling
 (annotators attach sentiment to an aspect), so the aspect classifier comes first.
@@ -298,6 +309,6 @@ UOB Kay Hian stays "not the bank".
 | Labelling finishes late | No trained model, no DNN result | Start the agreement round in week 2 at the latest; fallback in section 5 |
 | Aspect classifier is poor on Reddit text | Weak aspect results | The validation sample shows this in week 1; the human aspect labels measure it either way, and a poor result is still a reportable finding |
 | The local LLM run is slow | Week 1 slips | Batch several sentences per prompt; run overnight; news and earnings first if time is short |
-| API keys still exposed | Misuse of the team's keys | Rotate them now (still not done on 26 Sep) |
+| API keys still exposed | Misuse of the team's keys | Rotate any key that was ever pasted into a chat or a file; the OpenAI key needs rotating (to-do page) |
 | Demo machine differs from the development machine | A tab or backend fails live | Clean-copy test twice; record the demo rather than run it live where possible |
 | Unofficial data endpoints change | No new data | The corpus is frozen for analysis; snapshots are the record of the data used |

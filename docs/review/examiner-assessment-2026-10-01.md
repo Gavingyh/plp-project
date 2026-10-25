@@ -1,5 +1,7 @@
 # An examiner's assessment, 1 October 2026
 
+> **A dated record of 1 Oct 2026, not the current state.** Many of the gaps it names have since been closed. For current figures, see the [documentation map](../README.md).
+
 *Written in the role of an external examiner for the NUS-ISS PLP practice
 module, assessing the repository as it stands on 1 October (`main`), a
 month before submission. Every question is at Bloom level 4 or above

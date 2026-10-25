@@ -1,5 +1,7 @@
 # Data Viability Report
 
+> **A dated record of 6 to 12 Sep 2026, not the current state.** It tested the data sources before the system was built on them. For current figures, see the [documentation map](README.md).
+
 Findings from running the actual pipeline against live data (2026-09-06),
 answering the unknowns flagged in the MVP plan before building further on them.
 

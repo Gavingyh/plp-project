@@ -7,7 +7,7 @@ Who uses the system and which outside services it depends on. For a reader meeti
 ```mermaid
 flowchart LR
   accTitle: System context
-  accDescr: The sentiment system with its three kinds of user, its five text and data sources, and its four model backends.
+  accDescr: The sentiment system with its three kinds of user, its text and data sources, and its language-model backends.
 
   investor(["Retail investor"])
   team(["Project team<br/>ingests, labels, trains"])
@@ -26,16 +26,17 @@ flowchart LR
     av["Alpha Vantage<br/>returns nothing for SGX tickers"]
     ir["DBS and OCBC<br/>investor-relations sites"]
     wayback["Wayback Machine<br/>UOB earnings PDFs,<br/>index of CNA URLs"]
+    broker["Broker research PDFs<br/>added by the team"]
   end
 
   subgraph llms["Language-model backends"]
     ollama["Ollama, local, no key needed<br/>sorts every question; answers if chosen"]
-    hosted["OpenAI gpt-6-luna, the default;<br/>Claude. Hosted, both verified"]
+    hosted["OpenAI gpt-6-luna, the default, verified;<br/>Claude, the other hosted option"]
   end
 
   investor -- "asks questions,<br/>reads scores and quotes" --> core
   team -- "runs ingestion,<br/>labelling, training" --> core
-  grader -- "restores a snapshot,<br/>starts the services" --> core
+  grader -- "restores data.zip,<br/>starts the services" --> core
 
   reddit -- "posts, comments" --> core
   gnews -- "headlines" --> core
@@ -45,6 +46,7 @@ flowchart LR
   av -. "no articles" .-> core
   ir -- "results PDFs" --> core
   wayback -- "archived PDFs,<br/>CNA URLs and pages" --> core
+  broker -- "research reports" --> core
 
   core <-- "question sorting; prompts, tool calls,<br/>answers when chosen" --> ollama
   core <-- "prompts, tool calls, answers, with an API key;<br/>no Reddit text" --> hosted
@@ -59,12 +61,15 @@ doesn't show internals (see [02](02-runtime.md) and [04](04-pipeline.md)) or the
 feed, which has a scraper (`ingest/cna_scraper.py`) that writes a JSON file and is not
 connected to the system. Alpha Vantage is drawn dashed because its adapter runs but no
 SGX ticker is indexed, so it contributes nothing. The chatbot answers through OpenAI's
-`gpt-6-luna` by default; Claude is the other hosted option, and both have returned real
-responses. The local Ollama model answers when chosen (`CHATBOT_BACKEND=ollama`, no key
+`gpt-6-luna` by default; Claude is the other hosted option; the evidence records no run
+of it. The local Ollama model answers when chosen (`CHATBOT_BACKEND=ollama`, no key
 needed) and sorts every question by intent whichever model answers. A hosted model never
-receives Reddit text; CNA and broker-research text, which stays out of git and
-shared folders, may be sent to it, as the team agreed. The OpenAI backend also reaches any
-OpenAI-compatible provider, such as Groq, through `OPENAI_BASE_URL`.
+receives Reddit text; CNA and broker-research text, which stays out of git, may be sent
+to it, as the team agreed. The OpenAI backend can also be pointed at another
+OpenAI-compatible service through `OPENAI_BASE_URL`; the evaluation of the final code used
+OpenAI's own. Broker research PDFs are not fetched: the team adds them to
+`data/sgx_research/` and `ingest/sgx_research_extract.py` reads them. A grader restores the
+shared dataset, `data.zip`, rather than collecting the sources again ([18](18-snapshots.md)).
 
 ## Sources
 
@@ -92,7 +97,9 @@ Each row names the file and line an element comes from, and the text that line m
 | OpenAI is the default | `config/chatbot.yaml:5` | `backend:          {value: "openai", env: CHATBOT_BACKEND}` |
 | OpenAI's model | `config/chatbot.yaml:18` | `openai:  {value: "gpt-6-luna", env: OPENAI_MODEL}` |
 | the local model sorts every question | `config/chatbot.yaml:19` | `intent:  {value: "llama3.1:8b", env: CHATBOT_INTENT_MODEL}` |
-| CNA and broker research cleared for a hosted model | `config/sources.yaml:29` | `team_only: true,  hosted_model: true` |
+| CNA and broker research cleared for a hosted model | `config/sources.yaml:30` | `team_only: true,  hosted_model: true` |
 | a hosted model never sees Reddit text | `chatbot/backends/base.py:99` | `def withhold_reddit(name: str, content):` |
 | Ollama when `auto` finds no key | `chatbot/backends/__init__.py:30` | `return "ollama"` |
 | CNA scraper writes JSON, not the database | `ingest/cna_scraper.py:21` | `import json` |
+| broker research PDFs, added by the team | `ingest/sgx_research_extract.py:4` | `Reads whatever is in data/sgx_research/*.pdf` |
+| a grader restores data.zip | `docker/bootstrap.py:26` | `RUNTIME_FILES = {"plp.db"` |

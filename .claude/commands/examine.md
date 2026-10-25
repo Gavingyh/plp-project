@@ -1,6 +1,6 @@
 ---
 description: Have the examiner grade a report section, the docs, the demo script or the whole submission against the module's requirements
-argument-hint: "[scope: docs/report/approach.md, the demo script, or empty for the whole submission]"
+argument-hint: "[scope: a report section or file, the demo script, or empty for the whole submission]"
 ---
 
 Examine: $ARGUMENTS (if empty, the whole submission).

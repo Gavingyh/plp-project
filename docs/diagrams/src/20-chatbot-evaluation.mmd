@@ -1,31 +1,36 @@
 flowchart TB
   accTitle: Chatbot evaluation
-  accDescr: Each of 23 gold-set questions is asked as a fresh single turn. The run records the answer and every tool call with its result, then checks tool selection, advice and scope behaviour, citation warnings, input guards and unverified figures. A person reads the transcript for number correctness and evidence relevance. A frozen set, retrieval metrics, an LLM judge, a usability questionnaire and multi-turn scenarios are planned.
+  accDescr: Each of the 32 gold-set questions is asked as a fresh single turn, and four conversations test follow-ups. The run records the answer shown and every tool call with its result, then checks tool selection, advice and scope behaviour, citations, fixed replies and figures no tool returned, in the first draft and in the answer shown. A recheck scores stored answers again without calling a model. An LLM judge orders the answers for a person, who rates each one. Retrieval is scored on its own against people's aspect labels. A usability questionnaire is planned.
 
-  gold["Gold set: 23 questions<br/>lookup 5, advice 4, compare 3, out-of-scope 3,<br/>trend 2, thin data 2, evidence 2, consensus 2"]
+  gold["Gold set v2: 32 questions<br/>lookup 9, compare 5, out-of-scope 4, advice 4,<br/>trend 3, evidence 3, thin data 2, consensus 2"]
+  multi["4 conversations, 9 turns checked<br/>follow-ups such as 'and OCBC?'"]
   gold --> turn["answer_turn for each question<br/>a fresh single turn, no history"]
-  turn --> rec["Record answer, every tool call<br/>with its result, guard, flagged figures"]
+  multi --> conv["One Conversation per scenario,<br/>turn by turn"]
+  turn --> rec["Record the answer shown, every tool call<br/>with its result, the fixed reply if one answered,<br/>and the first draft's flags"]
+  conv --> rec
 
   subgraph auto["Checked automatically"]
     a1["Tool selection<br/>expected tool, bank, aspect"]
     a2["Behaviour<br/>declines advice, or says no data"]
-    a3["Citation warning fired?"]
-    a4["Answered by an input guard?"]
-    a5["Figures no tool returned"]
+    a3["Citation no search returned?"]
+    a4["Answered by a fixed reply?"]
+    a5["Figures no tool returned,<br/>in the first draft and in the answer shown"]
   end
 
   rec --> a1 & a2 & a3 & a4 & a5
-  a1 & a2 & a3 & a4 & a5 --> out["Transcript .jsonl<br/>and summary .md<br/>in data/eval, optional tag"]
+  a1 & a2 & a3 & a4 & a5 --> out["Transcript .jsonl<br/>and summary .md<br/>in data/eval, by tag"]
+  out --> recheck["--recheck: the checks again<br/>on the stored answers, no model called"]
 
-  subgraph human["Left to a person"]
-    h1["Is each stated number correct?"]
-    h2["Is cited evidence relevant?"]
-    h3["Is each flagged figure invented?"]
+  subgraph human["Read by people"]
+    judge["LLM judge lists unsupported claims,<br/>to order the answers for reading<br/>chatbot.judge"]
+    h1["A person rates each answer:<br/>faithfulness, relevance, correctness"]
   end
-  out --> h1 & h2 & h3
+  out --> judge --> h1
 
-  plan["<b>Planned, PLAN section 3</b><br/>frozen ~30-question set<br/>retrieval Hit@K and MRR<br/>faithfulness by an LLM judge,<br/>calibrated on human ratings<br/>SASSI questionnaire, 5–8 users<br/>multi-turn scenarios"]
-  out -.-> plan
+  retr["Retrieval, on its own: precision at 5, Hit@K and MRR<br/>against people's aspect labels and a random draw<br/>chatbot.retrieval_eval"]
+
+  plan["SASSI questionnaire, 5 to 8 users<br/>(planned, if time allows)"]
+  h1 -.-> plan
 
   classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
   class plan planned;

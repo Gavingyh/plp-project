@@ -1,32 +1,43 @@
 flowchart TB
   accTitle: Sentiment model development
-  accDescr: Labels are split into train/dev and a frozen random test split. FinBERT is fine-tuned on sentence and aspect pairs. Training length was chosen on dev, the aspect input on cross-validation, then one change at a time was cross-validated against a baseline and chosen by a rule fixed in advance. Three seeds were trained and scored once on test, errors analysed, a neutral margin chosen on dev, and the choice re-checked on two more seeds. Scoring the corpus with the model waits for the team.
+  accDescr: Labels are split into train/dev and a frozen random test split. FinBERT is fine-tuned on sentence and aspect pairs. Training length was chosen on dev, the aspect input on cross-validation, then one change at a time was cross-validated against a baseline and chosen by a rule fixed in advance. Three seeds were trained and scored once on test, errors analysed, a neutral margin chosen on dev, and the choice re-checked on two more seeds. After a training bug was fixed, the encoder was further pretrained on the corpus and fine-tuned on an LLM rater's labels; a rule fixed before the test rows were scored chose that model, and it now scores the corpus.
 
   data["1,277 labelled sentences<br/>978 train/dev (stratified) · 299 test (random, frozen)<br/>train.labels"]
   base["Baselines on the test split<br/>VADER 0.427 · TF-IDF + logistic regression 0.515<br/>FinBERT zero-shot 0.571 (macro-F1)"]
 
-  subgraph s1["30 Sep: the first runs"]
+  subgraph s1["The first runs"]
     r1["FinBERT on (sentence, aspect) pairs<br/>4 epochs, lr 2e-5, batch 16, early stopping<br/>test 0.547"]
     e1["8 epochs, chosen on dev (0.637 against 0.616)<br/>test 0.577"]
     e3["5-fold cross-validation:<br/>the aspect input beats sentence-only in 5 of 5 folds"]
   end
 
-  subgraph s2["1 Oct: one change at a time, 5-fold CV"]
+  subgraph s2["One change at a time, 5-fold CV"]
     bug["Code read before training:<br/>class weights were never applied"]
     var["Against the baseline (0.621):<br/>balanced weights 0.630 · source weights 0.633<br/>readable aspect label 0.637 · prior weights 0.525"]
     rule["Rule fixed beforehand: the combination (0.635)<br/>or the best single change (0.637)"]
     fin["Readable label, seeds 42, 1, 7<br/>test 0.604 ± 0.035, scored once"]
   end
 
-  subgraph s3["1 Oct: errors and the decision threshold"]
+  subgraph s3["Errors and the decision threshold"]
     err["Error analysis: most errors are<br/>neutral sentences called polar"]
     mar["Neutral margin chosen on dev,<br/>three models averaged:<br/>test 0.624, accuracy 0.682"]
   end
 
-  cv3["2 Oct: seeds 1 and 7 cross-validated<br/>readable label +0.005 over 15 paired folds:<br/>no measurable effect"]
-  apply["Score the corpus with it<br/>(planned, team decision, PLAN section 5)"]
+  cv3["Seeds 1 and 7 cross-validated<br/>readable label +0.005 over 15 paired folds:<br/>no measurable effect"]
+
+  subgraph s4["The re-run that chose the model in use"]
+    head["Training bug fixed: the pretrained head's<br/>outputs had been renamed<br/>retrained, test 0.621 ± 0.027"]
+    dapt["Further pretraining on 42,822 corpus sentences,<br/>labelled ones and near-copies left out<br/>train.dapt"]
+    llm["Training labels from an LLM rater:<br/>1,563 pairs from four rounds"]
+    pick["Rule fixed before the test rows were scored:<br/>test macro-F1 over three seeds,<br/>cross-validation as the tie-breaker"]
+    won["Adapted encoder on the LLM rater's labels<br/>test 0.649 ± 0.018; the three averaged 0.670<br/>CV: +0.014 over FinBERT without<br/>the further pretraining, p = 0.016<br/>neutral margin 0, chosen on dev"]
+  end
+
+  apply["Every stored sentence scored with it, beside base FinBERT;<br/>served by the API and the chatbot"]
 
   data --> base
   data --> r1 --> e1 --> e3 --> bug --> var --> rule --> fin --> err --> mar --> cv3
-  mar -. planned .-> apply
-  style apply stroke-dasharray: 5 5
+  cv3 --> head --> dapt --> won
+  llm --> won
+  pick --> won
+  won --> apply

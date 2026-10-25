@@ -1,6 +1,6 @@
 sequenceDiagram
   accTitle: Batch pipeline sequence
-  accDescr: Ingestion writes documents; preprocessing, aspect assignment and scoring each pick up only new rows; the index is deleted and recomputed in full.
+  accDescr: Ingestion writes documents; preprocessing, aspect assignment and scoring each pick up only new rows; the index is deleted and recomputed in full. Aspects come from a local LLM, and each new pair is scored by base FinBERT and by the model in use.
 
   actor op as Operator
   participant ing as run_daily_batch.py
@@ -10,7 +10,7 @@ sequenceDiagram
   participant sc as sentiment.score
   participant agg as aggregate.index
   participant db as plp.db
-  participant npz as embeddings cache
+  participant npz as vector files
 
   op->>ing: run_daily_batch.py
   ing->>db: news (as in diagram 05), Reddit since 7 days ago: documents
@@ -25,15 +25,16 @@ sequenceDiagram
   asg->>emb: update()
   emb->>db: SELECT all sentences
   emb->>npz: embed new sentences, drop removed ones, save
+  asg->>npz: update the search vectors the same way
   asg->>db: SELECT sentences already assigned
-  Note over asg: cosine similarity to each seed-term centroid, floor from config
+  Note over asg: llama3.1:8b through Ollama picks one aspect for each new sentence
   asg->>db: INSERT OR IGNORE sentence_aspects
 
   op->>sc: python -m sentiment.score
   sc->>db: SELECT (sentence, aspect) pairs not yet scored
-  Note over sc: base FinBERT, one label per sentence
-  sc->>db: INSERT OR IGNORE aspect_sentiment
+  Note over sc: base FinBERT first, then the model in use for pairs it hasn't scored
+  sc->>db: INSERT OR IGNORE aspect_sentiment, one row per pair and model
 
   op->>agg: python -m aggregate.index
   agg->>db: DELETE FROM sentiment_index
-  agg->>db: recompute every bank, aspect, window and source, then INSERT
+  agg->>db: recompute every bank, aspect, window, source and model, then INSERT

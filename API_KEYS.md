@@ -1,16 +1,30 @@
-# API Keys — how to get them, where to put them
+# API keys: how to get them, where to put them
 
-**The project runs with no API key at all.** Reddit comes from Arctic Shift
-(no key), earnings PDFs from the banks' IR sites and the Wayback Machine, and
-the chatbot from a local model via Ollama. Keys only add optional sources.
+**One key matters: `OPENAI_API_KEY`, for the chatbot's answers.** The
+chatbot answers with OpenAI's `gpt-6-luna` by default (`backend` in
+`config/chatbot.yaml`). Without the key, the dashboard and the API still
+work and the chat explains the missing setting; a missing key never makes
+the chatbot switch to another provider (`chatbot/backends/__init__.py`).
+For answers with no key at all, set `CHATBOT_BACKEND=ollama`: a local
+`llama3.1:8b` through Ollama answers instead. The question classifier runs
+locally on `llama3.1:8b` with either choice.
+
+Everything else runs without a key: Reddit comes from Arctic Shift, the
+earnings PDFs from the banks' sites and the Wayback Machine, analyst
+consensus from Yahoo Finance.
 
 | key | what it adds | needed? |
 |---|---|---|
-| *(none)* | Reddit, earnings PDFs, Yahoo consensus, local chatbot | — |
-| `NEWSAPI_KEY` | news articles, ~1 month lookback on the free tier | optional |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | a hosted chatbot model instead of the local one | optional |
-| `ALPHAVANTAGE_KEY` | nothing — see below | no |
-| `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` | nothing — see below | no |
+| `OPENAI_API_KEY` | the chatbot's default answer model, `gpt-6-luna` | for chatbot answers, unless `CHATBOT_BACKEND=ollama` |
+| `ANTHROPIC_API_KEY` | Claude as the answer model, with `CHATBOT_BACKEND=claude` | optional |
+| `NEWSAPI_KEY` | news articles, about one month of lookback on the free tier | optional |
+| `ALPHAVANTAGE_KEY` | nothing, see below | no |
+| `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` | nothing, see below | no |
+
+A hosted model receives the question, the tools' figures, and quoted
+sentences from CNA, broker research, news and the banks' reports. It never
+receives Reddit text (`hosted_model` in `config/sources.yaml`,
+`chatbot/backends/base.py`). The Gemini backend has been removed.
 
 Keys go in `.env` in the project root:
 
@@ -26,13 +40,27 @@ every value in it must stay a placeholder.
 
 > **This has already gone wrong once.** Real NewsAPI and Alpha Vantage keys
 > were committed in `.env.example` from the first commit until 2026-09-11.
-> They are still in the git history and should be treated as compromised —
+> They are still in the git history and should be treated as compromised:
 > regenerate both. See [docs/HANDOFF.md](docs/HANDOFF.md).
+
+## 1. OpenAI
+
+1. Sign in at https://platform.openai.com and open the API keys page.
+2. Create a key and copy it into `.env`:
+   ```
+   OPENAI_API_KEY=paste_your_key_here
+   ```
+3. Restart the API (`scripts/stop.sh api`, then `scripts/start.sh api`; in
+   Docker, `docker compose up -d api`). The key stays on the API machine and
+   is never sent to the dashboard.
+
+`OPENAI_MODEL` and `OPENAI_BASE_URL` in `.env.example` change the model or
+point at another OpenAI-compatible provider.
 
 ## Two keys you can skip
 
 **Alpha Vantage** is retained in the codebase but contributes nothing. It
-does not index SGX-listed tickers at all — tested live across `D05`, `D05SI`
+does not index SGX-listed tickers at all: tested live across `D05`, `D05SI`
 and `D05-SI` for all three banks, every response an empty feed. The adapter
 stays in case coverage is added later. Details in
 [docs/data-viability.md](docs/data-viability.md).
@@ -42,12 +70,12 @@ application, so PRAW was unavailable and ingestion moved to Arctic Shift, a
 public archive with no key and several years more history. The section below
 is kept for the record; `ingest/arctic_shift.py` is what actually runs.
 
-## 1. NewsAPI
+## 2. NewsAPI
 
 1. Go to https://newsapi.org/register
 2. Sign up with an email (no card required for the free "Developer" tier).
 3. Your key is shown immediately on the dashboard after signup, and also
-   emailed to you — https://newsapi.org/account
+   emailed to you: https://newsapi.org/account
 4. Copy it into `.env`:
    ```
    NEWSAPI_KEY=paste_your_key_here
@@ -60,10 +88,10 @@ The dashboard's **Data Management → NewsAPI** option uses this key on the API
 machine. Restart the API after changing it, then refresh the dashboard. Missing
 keys disable this source and exclude it from **All available sources**.
 
-## 2. Alpha Vantage *(historical — contributes nothing, see above)*
+## 3. Alpha Vantage *(historical: contributes nothing, see above)*
 
 1. Go to https://www.alphavantage.co/support/#api-key
-2. Enter your email and click "GET FREE API KEY" — no signup form, no
+2. Enter your email and click "GET FREE API KEY": no signup form, no
    password, the key is generated and displayed on the same page.
 3. Copy it into `.env`:
    ```
@@ -71,12 +99,12 @@ keys disable this source and exclude it from **All available sources**.
    ```
 
 Free tier limits: 25 requests/day total (not per-endpoint). The demo key
-(`demo`) only works for a handful of hardcoded example tickers — it will
+(`demo`) only works for a handful of hardcoded example tickers; it will
 not return anything for DBS/OCBC/UOB, so you do need your own key.
 
-## 3. Reddit *(historical — not used; Arctic Shift replaced it)*
+## 4. Reddit *(historical: not used; Arctic Shift replaced it)*
 
-Reddit requires an actual "app" registration, not just an API key — three
+Reddit requires an actual "app" registration, not just an API key; three
 values come out of this step.
 
 1. Log into Reddit, go to https://www.reddit.com/prefs/apps
@@ -88,9 +116,9 @@ values come out of this step.
      by this project since it's read-only)
 4. Click "create app".
 5. Read the values off the app tile that appears:
-   - **client_id** — the string directly under the app name / under
+   - **client_id**: the string directly under the app name / under
      "personal use script", NOT labeled explicitly
-   - **client_secret** — labeled "secret"
+   - **client_secret**: labeled "secret"
 6. Copy both into `.env`, and set a descriptive user agent (Reddit will
    throttle or block generic/default user agents):
    ```

@@ -43,7 +43,7 @@ Rendered for the report: [SVG](img/11-news-filter.svg) · [PNG](img/11-news-filt
 
 ## What this shows and doesn't show
 
-Every exit except "skipped" writes a row to `data/news_flagged.csv` with its reason,
+Every rejection and every flagged keep writes a row to `data/news_flagged.csv` with its reason,
 so nothing is dropped silently. Masking comes first so that "UOB Kay Hian upgrades DBS"
 counts as a DBS article rather than being rejected or counted as UOB. Market notes (a
 currency or macro headline ending in a bank's name) and rating calls are masked unless the

@@ -1,6 +1,8 @@
 # Examiner assessment of the report draft (14 Oct 2026)
 
-The `examiner` agent graded `docs/report/report.html` against the module's
+> **A dated record of 14 Oct 2026, not the current state.** It grades a report draft since superseded by the Word report on the team's SharePoint. For current figures, see the [documentation map](../README.md).
+
+The `examiner` agent graded `docs/report/report.html` (now in `docs/archive/report/`) against the module's
 requirements (`.project-context/course-content/course-context.md`, section
 1). It has no official rubric, so the band is an estimate. The draft was
 graded before the afternoon's corrections; the team page "Report Draft

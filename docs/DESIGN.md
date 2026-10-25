@@ -8,24 +8,36 @@ Why this system is built the way it is. For how to run it, see
 
 ## Before you trust any number
 
-**[STATUS.md](STATUS.md) is the single source of truth for these caveats.**
-It is kept current against the database; this page explains design reasoning
-and will drift. The short version, as of 2026-10-01:
+The current figures, each with its source, are in the
+[documentation map](README.md). This page records why each design choice was
+made and keeps the reasoning of its day: where a later decision changed an
+earlier one, the earlier one says so in a "Now" or "Superseded" line. What
+holds now:
 
-- Read blended cross-bank figures next to the per-source breakdown. DBS
-  carries about 55% of all sentences and roughly six times the earnings
-  volume of the other two banks.
-- The fine-tuned model leads base FinBERT on macro-F1 and trails it on
-  accuracy (0.604 ± 0.035 against 0.571; accuracy 0.66 against 0.70,
-  [evidence](evidence/finetune-fixes-2026-10-01.md)). Every stored score is
-  base FinBERT, zero-shot.
-- Per-aspect scores are not meaningful yet: the current assignment gives a
-  sentence 6.4 of the ten aspects on average. The LLM classifier of decision
-  16 is built and evaluated (0.729 against 0.413) but not yet applied.
-- The GPT backend has never been run against its real API; Gemini was
-  verified on 2026-09-30 ([evidence](evidence/gemini-backend-2026-09-30.md)).
-- Local chatbot models fabricate citations. The code-level check is a
-  detector, not a fix.
+- Compare banks on one source at a time. DBS carries 24,978 of the 45,844
+  sentences and about six times the earnings-report sentences of either
+  other bank (9,093 against 1,561 for OCBC and 1,600 for UOB), and earnings
+  text scores far higher than Reddit for every bank.
+- The index is scored by the fine-tuned model
+  `finbert-adapted-finetuned-2026-10-11-3seed-m0`; base FinBERT's scores are
+  stored beside it and the API serves only the model in use. On the 299
+  first-round test sentences people labelled, it scores macro-F1 0.670 for
+  the three seeds averaged against base FinBERT's 0.571. The gain is in
+  negative and positive recall; the accuracy difference is not significant
+  (exact McNemar p = 0.65). Its training labels came from an LLM rater, not
+  from people ([model-card.md](model-card.md)).
+- Each sentence has one aspect, chosen by `llama3.1:8b` (decision 16); the
+  choice matches people's on 73.9% of the 1,277 labelled sentences
+  ([evidence](evidence/wealth-definition-trial-2026-10-12.md)).
+- The chatbot's default answer model is OpenAI's `gpt-6-luna`; `llama3.1:8b`
+  through Ollama is the no-key option, and it classifies every question
+  (decision 24). The Gemini backend was removed.
+- A draft answer is checked before it is shown: one with a figure no tool
+  returned, or a quote no search returned, is rewritten, then trimmed. On
+  the 32-question gold set no answer shown carried a figure no tool
+  returned, on either model
+  ([evidence](evidence/chatbot-fixes-2026-10-24.md)). The checks don't judge
+  paraphrase or relevance.
 
 What happens next, and in what order, is in [PLAN.md](PLAN.md).
 
@@ -34,7 +46,8 @@ What happens next, and in what order, is in [PLAN.md](PLAN.md).
 ## What the system does
 
 Ingests public text about DBS, OCBC and UOB from several sources, splits it
-into sentences, assigns each sentence to one or more financial aspects,
+into sentences, assigns each sentence one financial aspect (chosen by a
+local LLM, decision 16),
 scores sentiment per (sentence, aspect), aggregates into a per-bank index,
 and exposes the result through a REST API and a chatbot that answers
 questions by querying that store, and a Streamlit dashboard maintained by a
@@ -43,9 +56,9 @@ teammate (decision 23).
 ```
  sources                  ingest/            preprocess/         aspects/
 ┌──────────────┐         ┌─────────┐        ┌───────────┐      ┌──────────────┐
-│ Reddit       │────────▶│         │        │  clean    │      │ FinBERT      │
-│ (ArcticShift)│         │ dedupe  │───────▶│  segment  │─────▶│ embeddings   │
-│ NewsAPI      │────────▶│ normalise│       │  attribute│      │ + assignment │
+│ Reddit       │────────▶│         │        │  clean    │      │ LLM aspect   │
+│ (ArcticShift)│         │ dedupe  │───────▶│  segment  │─────▶│ assignment   │
+│ News, CNA    │────────▶│ normalise│       │  attribute│      │ (llama3.1:8b)│
 │ Earnings PDFs│────────▶│ upsert  │        │  to bank  │      └──────┬───────┘
 │ Yahoo consensus│──────▶│         │        └───────────┘             │
 └──────────────┘         └────┬────┘                                  ▼
@@ -68,6 +81,12 @@ teammate (decision 23).
                                                             any other frontend
 ```
 
+The sources in full: Reddit (through Arctic Shift), Google News, Yahoo News,
+NewsAPI, CNA, the banks' earnings reports, broker research PDFs, and Yahoo's
+analyst consensus. FinBERT's sentence vectors are used offline, to discover
+the aspects (decision 21); the chatbot's evidence search uses its own
+vectors (decision 27).
+
 Everything is stored in one SQLite file (`data/plp.db`). Tables:
 `documents` → `sentences` → `sentence_aspects` + `aspect_sentiment` →
 `sentiment_index`, plus a standalone `analyst_consensus`.
@@ -84,8 +103,8 @@ section most worth reading before changing anything.
 Aspect-based sentiment requires it. A single Reddit comment can praise a
 bank's dividend and criticise its app in consecutive sentences; scoring the
 document as a whole would average those into meaningless neutrality.
-Everything downstream — aspect assignment, sentiment, the index, chatbot
-citations — keys off `sentence_id`.
+Everything downstream (aspect assignment, sentiment, the index, chatbot
+citations) keys off `sentence_id`.
 
 ### 2. Reddit via Arctic Shift, not the official API or a paid scraper
 
@@ -116,7 +135,7 @@ are brokerage IP behind client entitlements and are not on SGX at all. Its
 API also returns 403 behind a WAF.
 
 DBS and OCBC publish the same earnings material openly on their own IR
-sites — plain HTTP, no bot protection, no ToS grey area. UOB sits behind an
+sites: plain HTTP, no bot protection, no ToS grey area. UOB sits behind an
 F5 WAF that answers scripted requests with a challenge stub.
 
 The choice there was deliberate: rather than escalate to fingerprint-spoofing
@@ -125,7 +144,7 @@ which archived them at their original UOB URLs and is not behind that WAF
 (`ingest/earnings_fetch_uob.py`). The bytes are UOB's own published documents;
 only the transport differs. This respects the signal the WAF is sending while
 still closing a coverage gap that had invalidated every cross-bank
-comparison in the project — UOB went from 4 earnings sentences to 1,600.
+comparison in the project: UOB went from 4 earnings sentences to 1,600.
 
 This also produced the closest thing the project has to genuine analyst
 input: DBS publishes a quarterly **analyst call transcript**, in which named
@@ -162,7 +181,7 @@ the real corpus:
 
 At 0.35 even a deliberately coarse two-aspect taxonomy matched *both*
 aspects on essentially every sentence. 0.65 is a calibration point, not a
-final answer — re-sweep when the corpus or taxonomy changes materially.
+final answer; re-sweep when the corpus or taxonomy changes materially.
 
 **Re-swept 2026-09-11** on the full 36,884-sentence corpus, which is the
 material change this note anticipated. At 0.65 the proposal taxonomy now
@@ -186,7 +205,7 @@ measurably the most positive one:
 
 Triple-weighting that amplified a known skew. Weight is now 1.0, and
 `sentiment_index` carries a `source` column so every blended row sits
-alongside its components — the blend is kept (the proposal calls for it) but
+alongside its components: the blend is kept (the proposal calls for it) but
 is no longer opaque.
 
 ### 7. Analyst consensus from Yahoo Finance, with the caveat stated
@@ -196,7 +215,7 @@ Full analyst reports are paywalled. The news-derived proxy in
 `quoteSummary` endpoint returns real consensus data (analyst counts, ratings,
 price targets) for all three banks.
 
-It is an **unofficial API** — the endpoint the `yfinance` library wraps, with
+It is an **unofficial API**: the endpoint the `yfinance` library wraps, with
 no published terms blessing it and a cookie/crumb handshake that exists to
 slow automated access. It also provides consensus *aggregates*, not analyst
 report text. Both caveats are surfaced in the module, the dashboard and the
@@ -218,7 +237,7 @@ Two mechanisms exist because prompt instructions alone failed in testing:
 - **Citation verification.** If `search_evidence` was never called, any
   quoted evidence, `sentence_id` or URL in the answer is fabricated by
   definition, and the response is flagged. This was added after a local
-  model invented sources twice — once as plausible-looking URLs, once as
+  model invented sources twice, once as plausible-looking URLs, once as
   placeholder tokens that a URL-matching check alone would have missed.
 
 ### 10. Retrieval is cosine similarity over cached embeddings, not a vector DB
@@ -235,18 +254,26 @@ within one aspect uses none (decision 27).
 
 The project needs to be runnable by someone without an API key. Backend
 selection auto-detects: a hosted model if a key is present, Ollama
-otherwise. *Changed 2026-10-04:* the default is Ollama with `llama3.1:8b`, the
-demo model, whatever keys are set; `CHATBOT_BACKEND=auto` keeps the old
-behaviour (PLAN section 2). `llama3.2:3b` is the default — its tool-calling was confirmed
-against a running instance, and it is roughly seven times faster per call
-than `qwen3:4b`, which emits a hidden reasoning chain first.
+otherwise. The first local default was `llama3.2:3b`: its tool-calling was
+confirmed against a running instance, and it is roughly seven times faster
+per call than `qwen3:4b`, which emits a hidden reasoning chain first.
+*Changed 2026-10-04:* the default became Ollama with `llama3.1:8b`, the demo
+model, whatever keys are set; `CHATBOT_BACKEND=auto` keeps the old
+behaviour (PLAN section 2).
+
+*Now (since 2026-10-24, decision 28):* the default is OpenAI's `gpt-6-luna`
+(`backend: openai` in `config/chatbot.yaml`), and a missing key never changes
+the selected provider: without a key, set `CHATBOT_BACKEND=ollama`. `auto`
+picks Claude, then OpenAI, then Ollama, by which key is set
+(`chatbot/backends/__init__.py`). `llama3.1:8b` stays the local answer model
+and classifies every question (decision 24). The Gemini backend was removed.
 
 ### 12. Logging is centralised, and logs go to stderr
 
 Third-party libraries (transformers, huggingface_hub) print progress bars
 and load reports that bury pipeline output. `config/logging_config.py`
 silences them by default and restores them under `DEBUG=true`. Logs go to
-stderr so stdout carries only real program output — the chatbot's answer can
+stderr so stdout carries only real program output, and the chatbot's answer can
 be piped on its own. A rotating file captures DEBUG regardless of console
 level, so unattended overnight runs remain diagnosable.
 
@@ -294,10 +321,20 @@ the README with its SHA-256; the embeddings are a cache that
 `python -m aspects.embed_store` rebuilds. Snapshots are also the record of
 exactly which data a reported number came from.
 
+*Now:* teammates and assessors get the dataset as `data/data.zip`, built by
+`scripts/share_bundle.sh` from the latest snapshot plus both vector files,
+the CNA cache and the aspect answers; Docker setup, or
+`python -m docker.bootstrap --data-only`, restores it (README).
+
 ### 16. Aspects assigned by a local LLM, one per sentence
 
-*Decided 2026-09-26; to be implemented. Its taxonomy is replaced by decision
-21's ten aspects; the method stands.* The seed-centroid assignment of
+*Decided 2026-09-26. Its taxonomy is replaced by decision 21's ten aspects;
+the method stands.* *Now:* implemented in `aspects/llm_classify.py` and
+`aspects/assign.py` (`assignment_method: llm` in `config/aspects.yaml`),
+applied to the corpus with the re-score of 12 Oct 2026 and again with the
+wealth rule on 14 Oct 2026 (prompt `eef9b342`, all 45,844 sentences); it
+matches people's aspect on 73.9% of the 1,277 labelled sentences
+([evidence](evidence/wealth-definition-trial-2026-10-12.md)). The seed-centroid assignment of
 decisions 4 and 5 fails in a way no threshold fixes. The four centroids are
 close to each other, so plain transactional or factual sentences ("transfer
 the money to your DBS account") match three or four aspects at once: 46% of
@@ -335,7 +372,13 @@ sentiment class overall, with a floor of roughly 80 rows per aspect.
 
 ### 18. Bank entity recognition, scoped narrowly
 
-*Decided 2026-09-26; to be implemented.* Bank attribution is alias matching
+*Decided 2026-09-26.* *Now:* built in `preprocess/bank_ner.py`, with the two
+fixes below, but not used by ingestion or either re-score; stored bank tags come from
+alias matching. No person has labelled its 201-row gold sheet
+(`data/labeled/ner/gold_sheet.csv`). Against Opus 5.5's labels, the reference
+the team chose on 11 Oct, NER scores F1 0.997 (200 of 201) and alias matching
+0.772 ([evidence](evidence/bank-ner-2026-10-01.md)); it is reported as an LLM
+reference. Bank attribution is alias matching
 (`ingest/base.py`). It works for clean headlines but can't separate the bank
 from things that share its name. The NER task recognises organisation
 mentions with spaCy's pretrained model (installed; its NER is switched off
@@ -359,8 +402,9 @@ initials. A sentence naming only PayLah or digibank (DBS's apps) or TMRW
 (UOB's digital bank) resolved to no bank; each now resolves to its bank.
 TMRW counts in capitals only, because "tmrw" in Reddit text means
 "tomorrow". In the corpus 17 sentences name one of these with no other bank
-name. Bank recognition is still not applied to the database; that happens in
-the re-score.
+name. Bank recognition is still not applied to the database. *Now:* the
+re-scores of 12 and 14 Oct 2026 did not re-tag stored sentences, so stored
+bank tags are unchanged (PLAN section 2, 12 Oct).
 
 ### 19. Chatbot changes drawn from the Conversational UIs module
 
@@ -445,7 +489,10 @@ stock sentiment; retail banking; and the macro environment
 The first labelled round (decision 17) was done under it, and the corpus was
 re-assigned and re-scored under it on 30 Sep.
 
-This replaces decision 16's taxonomy, not its method. Seed-centroid
+This replaces decision 16's taxonomy, not its method. *Now:* the LLM
+classifier of decision 16 assigns the ten aspects; the paragraph below is
+the reasoning of 30 Sep 2026, and the centroid assignment survives only as
+the baseline it was compared with. Seed-centroid
 assignment is still a stopgap, and a worse one with ten aspects: at the
 carried-over 0.65 floor a sentence matches 6.4 aspects on average, and
 annotators changed the assigned aspect on 86% of candidate rows. The LLM
@@ -477,6 +524,12 @@ sentiment labels), the human label stays and there is no full relabel. Only
 the rows on the bank-economist and wealth-or-retail boundaries are fixed,
 once the team decides those two rules (PLAN section 2).
 
+*Changed 2026-10-10 (PLAN section 2):* Opus labels every sentiment sheet and
+the fine-tuned models train on its labels (2,075 rows,
+[evidence](evidence/llm-rater-new-rules-2026-10-10.md)); the test rows keep
+the human labels, so every reported test score is against people. The
+report calls them LLM labels, not human labels.
+
 
 ### 23. The API serves every view a dashboard needs; the dashboard is a teammate's
 
@@ -503,6 +556,11 @@ the documented interface for any other frontend, and each view can move onto
 it. Its analyst-consensus panel still takes one date for all three banks,
 which hides UOB's consensus; `ingest.yahoo_analyst.latest_per_bank` is the
 fix the API uses.
+
+*Now (since 2026-10-18):* the dashboard reads only through the API
+(`dashboard/api_client.py`; nothing in `dashboard/` opens the database), so
+it shows only the model in use, and its consensus panel calls
+`/analyst-consensus/latest`, each bank's own newest row (`dashboard/data.py`).
 
 ---
 
@@ -672,7 +730,8 @@ hosted backends' privacy filter knows a Reddit post that came through a news
 feed only by its link, and hiding links let such text through in a test. The
 reading bands are a judgment, kept in config; and evidence is still ranked
 by FinBERT embeddings, which favour report prose, so the evidence is better
-rather than good. Measured before and after, with the times, in
+rather than good. *Changed 2026-10-24 (decision 27):* FinBERT's vectors no
+longer rank evidence. Measured before and after, with the times, in
 `docs/evidence/chatbot-answers-2026-10-04.md`.
 
 ### 26. Strip mode shows only quotes a search returned
@@ -811,7 +870,7 @@ did, at 0.29 to 0.31, too close to separate.
 
 Decided:
 - Within a topic, the question's words, then the newest first, with no
-  vectors (`evidence.within_topic`; `embedding` restores FinBERT similarity).
+  vectors (`evidence.within_topic`; `embedding` ranks by the search model's vectors instead).
 - With no topic, cosine similarity over vectors from
   `sentence-transformers/all-MiniLM-L6-v2` plus the word bonus: 0.31 on the
   corpus store, against 0.10 for random. Of the three it is the smallest (91
@@ -847,7 +906,7 @@ any adapter is a no-op rather than a duplicate.
 
 **Per-sentence bank attribution.** An explicit in-sentence bank mention wins.
 A document's bank is inherited only for short, single-topic sources (news,
-earnings) — never for long Reddit threads, where inheriting pulled unrelated
+earnings), never for long Reddit threads, where inheriting pulled unrelated
 sentences into a bank's corpus.
 
 **Earnings dates parsed from filenames.** `2Q26_...` → 2026-08-01. Without
@@ -869,13 +928,13 @@ could mislead someone.
   machine since 2026-09-26; the corpus is frozen for analysis.
 - Text only. The speech content of the Conversational UIs module (Days 3–4)
   is out of scope.
-- Alpha Vantage is retained in the codebase but contributes nothing — it
+- Alpha Vantage is retained in the codebase but contributes nothing: it
   does not index SGX-listed tickers (confirmed across all three, in several
   ticker formats).
 - Annual reports and financial-statement PDFs are not ingested; they are
   near-entirely tables, which the prose extractor would strip to nothing.
 - `get_trend`'s `direction` is still computed from two discrete windows
-  (7d vs 30d). A continuous series now exists alongside it —
+  (7d vs 30d). A continuous series now exists alongside it:
   `compute_time_series` buckets by week, month or quarter and is exposed at
   `GET /sentiment/series`, on the dashboard, and as up to 12 monthly points
   inside `get_trend`. It deliberately reuses the stored index's own

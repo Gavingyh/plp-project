@@ -1,6 +1,6 @@
 # Validation of the report draft's figures (14 Oct 2026)
 
-**What this is.** `docs/report/report.html` is the draft of the practice module
+**What this is.** `docs/report/report.html` (now `docs/archive/report/report.html`) was the draft of the practice module
 report. An audit on 13 Oct compared its text with the evidence notes. This
 validation goes one step further back: it recomputes the report's figures
 from primary data (the database, the label files, the trained models scored

@@ -140,7 +140,7 @@ can still use the existing data/chat API routes.
 See [manual-pipeline.md](manual-pipeline.md) for prerequisites, terminal use,
 failure recovery and the existing-data analysis scope.
 
-## Dashboard presentation review — 18 October 2026
+## Dashboard presentation review, 18 October 2026
 
 The presentation work is on `feat/dashboard-presentation`, starting from
 `bd508d7` (the dashboard API integration merge). The comparisons below record
@@ -239,13 +239,13 @@ fits an 800-pixel-high laptop viewport with Snapshot details collapsed.
 |---|---|---|
 | headline score per bank | `GET /sentiment?bank=DBS` | `window` = `all_time` (default), `30d`, `7d`; `insufficient_data` is true when too few sentences; `data_as_of` is the date the 7d and 30d windows end on |
 | bank × aspect grid | `GET /sentiment/index?window=all_time` | one call, 36 rows (3 banks × 11 aspects + `ALL`); `aspect = "ALL"` is the bank's headline; each row's `insufficient_data` is true below 5 sentences |
-| what the blend is made of | `GET /sentiment/index?window=all_time&source=*` and `GET /sources` | every per-source row (249), and sentence counts by bank and source |
+| what the blend is made of | `GET /sentiment/index?window=all_time&source=*` and `GET /sources` | every row, blended and per source (255 for `all_time`: the 36 blended and 219 per-source rows), and sentence counts by bank and source |
 | comparing the banks | `GET /sentiment/compare?aspect=dividend_policy` | all three banks for one aspect, or overall without `aspect` |
 | sentiment over time | `GET /sentiment/series?bank=UOB&bucket=month` | `bucket` = `week`, `month`, `quarter`; optional `aspect`, `source`, `min_n` (default 5) |
 | up or down lately | `GET /sentiment/trend?bank=DBS` | the 7 days against the 30 days to the newest stored data (`data_as_of`), compared before the small-sample shrinkage: `delta_7d_vs_30d` is `recent_7d_unshrunk_score` minus `baseline_30d_unshrunk_score`, both returned; no direction when either window has fewer than 5 sentences |
 | analyst consensus | `GET /analyst-consensus/latest` (all banks) or `GET /analyst-consensus?bank=DBS` | Yahoo Finance aggregates: rating, number of analysts, mean target, price |
 | evidence drill-down | `GET /evidence/latest?bank=OCBC&aspect=dividend_policy&limit=30` | newest sentences with their stored label |
-| evidence search | `GET /evidence?query=dividend+cut&bank=DBS&k=5` | semantic search, as the chatbot uses; `k` from 1 to 50 |
+| evidence search | `GET /evidence?query=dividend+cut&bank=DBS&k=5` | the chatbot's own search: with an `aspect`, sentences on that topic ranked by the question's words, then the newest; without one, by closeness to the question under the `all-MiniLM-L6-v2` search model, plus a small word-overlap boost; `k` from 1 to 50 |
 | data behind a cell | `GET /coverage?bank=DBS&aspect=dividend_policy` | count, date range and sources |
 | labels for the UI | `GET /banks`, `GET /aspects` | aspect keys with readable names ("Dividend Policy") |
 | chat configuration | `GET /chat/status` | configured flag and a safe setup message; no model requests |
@@ -327,7 +327,7 @@ see "per-aspect scores" below.
 ```json
 {"message": "And OCBC?",
  "history": [{"role": "user", "content": "What is the overall sentiment on DBS?"},
-             {"role": "assistant", "content": "DBS's overall sentiment is +0.12 …"}],
+             {"role": "assistant", "content": "DBS's overall sentiment is +0.14 …"}],
  "backend": null}
 ```
 
@@ -354,9 +354,11 @@ disables Ask when configuration is missing, without blocking other tabs.
 Credentials and provider selection belong to the API server; no key-entry
 form or provider selector is needed in the dashboard.
 
-No hosted backend (Claude, OpenAI or Groq)
-receives Reddit or CNA evidence text, or text from a source not listed in
-`config/sources.yaml`, nor earlier answers that may quote them. The response:
+No hosted backend (Claude, OpenAI or Groq) receives Reddit evidence text,
+text from a team-only source not cleared for a hosted model, or text from a
+source not listed in `config/sources.yaml`. CNA and broker research are
+cleared (`hosted_model: true`), so a hosted model may quote them; Reddit text
+never leaves the machine (`chatbot/backends/base.py`). The response:
 
 ```json
 {"question": "And OCBC?", "answer": "…", "guard": null,
@@ -468,10 +470,11 @@ near the numbers they qualify.
   `/sentiment/trend` and `/sentiment/index` return that date as
   `data_as_of` ("2026-09-25"), and `window_note` spells the window out. Show
   "as of <date>" next to any recent figure, and never label it "this week".
-- **Each sentence has one aspect, chosen by a local LLM** (since the re-score
-  of 12 Oct 2026). On the labelled sentences it picks the aspect a person
-  would choose first 73% of the time; the embedding-similarity method it
-  replaced managed 41% and gave a sentence 6.4 aspects on average. A
+- **Each sentence has one aspect, chosen by a local LLM** (`llama3.1:8b`).
+  On the 1,277 sentences people labelled it picks the aspect a person chose
+  73.9% of the time ([evidence](evidence/wealth-definition-trial-2026-10-12.md));
+  the embedding-similarity method it replaced managed 41% and gave a
+  sentence 6.4 aspects on average. A
   per-aspect figure therefore rests on far fewer sentences than before: show
   `n` beside it, and grey out a cell whose `insufficient_data` is true.
 - **Scores come from the fine-tuned model** (the adapted encoder trained on
@@ -494,8 +497,7 @@ near the numbers they qualify.
 
 ## What can change
 
-Field names and endpoints are stable. Values change when the team re-runs
-the pipeline (new aspects from the LLM classifier, scores from the
-fine-tuned model, NER re-attribution): `model_version` and `computed_at`
-identify a run, and the database snapshot in the README says which run is
-current.
+Field names and endpoints are stable. Values change when the pipeline is
+run again (new documents, a new aspect prompt, another model):
+`model_version` and `computed_at` identify a run, and the database snapshot
+in the README says which run is current.

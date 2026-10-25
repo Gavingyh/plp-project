@@ -58,10 +58,12 @@ Rendered for the report: [SVG](img/05-news-ingestion.svg) · [PNG](img/05-news-i
 
 The order of sources is deliberate: the first copy of a duplicated story is the one
 kept, so Yahoo, which carries a summary, goes first. Retries on network errors are left
-out; `request_with_retries` backs off and tries again up to three times. NewsAPI and Alpha
+out; `request_with_retries` tries up to three times in all, backing off between tries. NewsAPI and Alpha
 Vantage are folded into one note because they follow exactly the same pull, filter,
 insert pattern as Yahoo; Alpha Vantage returns nothing for SGX tickers. What the filter
-decides for each article is [11](11-news-filter.md).
+decides for each article is [11](11-news-filter.md). Collection stopped on 26 Sep 2026, so
+the stored corpus runs to 25 Sep 2026; a new run pulls from `--since` and skips what is
+already stored.
 
 ## Sources
 

@@ -1,5 +1,13 @@
 # News dataset
 
+> **Its figures are as of 26 Sep 2026, when news collection stopped.** The
+> database today holds the same news document counts: 5,685 Google News, 207
+> CNA, 114 Yahoo Finance and 13 NewsAPI documents (by bank: DBS 2,602, UOB
+> 1,546, OCBC 1,505, several banks 366). They hold 7,416 sentences: Google
+> News 5,447, CNA 1,599, Yahoo Finance 344, NewsAPI 26. Broker research
+> (`sgx_research`, 25 reports, 641 sentences) was added later and is not
+> news. Corpus-wide figures are in [README.md](README.md).
+
 How the news part of `data/plp.db` was collected, what it covers, and where it
 falls short. Written for the report's datasets section. Numbers are as of
 2026-09-26, after both Google backfills, both cleanups and the CNA load

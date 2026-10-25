@@ -7,7 +7,7 @@ Each rubric item, the component that answers it, and the course module that comp
 ```mermaid
 flowchart LR
   accTitle: Rubric items, components and course modules
-  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition and LLM aspect categorisation are planned; annotation is done and the fine-tuned sentiment model is trained.
+  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition is built but not applied to the stored corpus; every other component is built and in use.
 
   subgraph R["Rubric item"]
     r1["data"]
@@ -25,10 +25,10 @@ flowchart LR
     c1["Corpus: Reddit, earnings,<br/>news, analyst consensus<br/><i>TA · NMSM</i>"]
     c2["Sentence segmentation,<br/>bank attribution<br/><i>TA</i>"]
     c3["Aspect discovery<br/>UMAP + HDBSCAN<br/><i>TA · NMSM</i>"]
-    c4["Aspect categorisation<br/>by a local LLM<br/><i>TA · NMSM</i>"]
-    c5["Bank entity recognition<br/>and resolution<br/><i>TA · NMSM</i>"]
-    c6["Sentiment: fine-tuned FinBERT,<br/>trained, below base on macro-F1<br/><i>TPML · NMSM</i>"]
-    c7["Annotation, kappa at least 0.6<br/><i>TA</i>"]
+    c4["Aspect categorisation by a local LLM,<br/>one aspect a sentence, 73.9% agreement<br/><i>TA · NMSM</i>"]
+    c5["Bank entity recognition<br/>and resolution, built, not applied<br/><i>TA · NMSM</i>"]
+    c6["Sentiment: fine-tuned FinBERT,<br/>macro-F1 0.670 against base 0.571<br/><i>TPML · NMSM</i>"]
+    c7["Annotation: two people, kappa 0.93;<br/>an LLM rater for the training rows<br/><i>TA</i>"]
     c8["Sentiment index, served by the API<br/><i>NMSM</i>"]
     c9["Chatbot with tool calling<br/><i>CNI</i>"]
   end
@@ -38,7 +38,7 @@ flowchart LR
   r1 --> c1
   r2 --> c2
   r3 --> c3
-  r4 -.-> c4
+  r4 --> c4
   r5 -.-> c5
   r6 --> c6
   r7 --> c7
@@ -46,8 +46,8 @@ flowchart LR
   r9 --> c9
   C ~~~ key
 
-  classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
-  class c4,c5 planned;
+  classDef inactive stroke-dasharray: 5 5,color:#555,fill:#fafafa;
+  class c5 inactive;
 ```
 
 Rendered for the report: [SVG](img/17-rubric-map.svg) · [PNG](img/17-rubric-map.png)
@@ -56,11 +56,13 @@ Rendered for the report: [SVG](img/17-rubric-map.svg) · [PNG](img/17-rubric-map
 
 One rubric item maps to one component. The modules each component draws on are
 written inside it rather than drawn as arrows, because fourteen crossing arrows into four
-boxes were unreadable. Two components are planned (dashed): the LLM aspect classifier and
-bank entity recognition. The first annotation round is done (1,277 rows, sentiment kappa
-0.93), and the fine-tuned sentiment model trained on it scores macro-F1 0.547 against base
-FinBERT's 0.571, so base FinBERT zero-shot still scores the corpus. Aspect discovery is built and was run once to derive the taxonomy; PLAN
-section 5 schedules a re-run. Not shown: the day-level course references and the
+boxes were unreadable. Bank entity recognition (dashed) is built, with unit tests, but not
+applied to the stored corpus, and its gold sheet is not yet labelled. Every other component
+is built and in use. The LLM aspect classifier gives every stored sentence one aspect and
+agrees with people on 73.9% of the 1,277 sentences they labelled. People labelled the first
+round (1,277 rows, sentiment kappa 0.93) and the test rows; the model in use trains on an
+LLM rater's labels and scores macro-F1 0.670 against base FinBERT's 0.571 on the 299 test
+rows, and it scores the index. Aspect discovery was run to derive the taxonomy. Not shown: the day-level course references and the
 evaluation for each component, which are in the PLAN table this is drawn from.
 
 ## Sources
@@ -69,26 +71,29 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| data: corpus | `docs/PLAN.md:122` | `| Corpus: Reddit, earnings PDFs, news, analyst consensus | data |` |
-| preprocessing | `docs/PLAN.md:123` | `| Sentence segmentation, bank attribution | preprocessing |` |
-| task 3: bank NER | `docs/PLAN.md:124` | `| **Bank entity recognition and resolution** | text-mining task 3 |` |
-| task 1: aspect discovery | `docs/PLAN.md:125` | `| **Aspect discovery** (FinBERT embeddings → UMAP → HDBSCAN) | text-mining task 1 |` |
-| task 2: aspect categorisation | `docs/PLAN.md:126` | `| **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 |` |
-| DNN, task 4: sentiment | `docs/PLAN.md:127` | `| **Sentiment classification** (fine-tuned FinBERT) | the DNN; text-mining task 4 |` |
-| labels: annotation | `docs/PLAN.md:128` | `| Annotation | labels |` |
-| sentiment mining: index, served by the API | `docs/PLAN.md:129` | `| Sentiment index, served by the API | sentiment mining |` |
-| conversational UI: chatbot | `docs/PLAN.md:130` | `| **Chatbot** (tool calling over the index and evidence) | conversational UI |` |
-| module abbreviations | `docs/PLAN.md:132` | `Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,` |
+| data: corpus | `docs/PLAN.md:128` | `| Corpus: Reddit, earnings PDFs, news, analyst consensus | data |` |
+| preprocessing | `docs/PLAN.md:129` | `| Sentence segmentation, bank attribution | preprocessing |` |
+| task 3: bank NER | `docs/PLAN.md:130` | `| **Bank entity recognition and resolution** | text-mining task 3 |` |
+| task 1: aspect discovery | `docs/PLAN.md:131` | `| **Aspect discovery** (FinBERT embeddings → UMAP → HDBSCAN) | text-mining task 1 |` |
+| task 2: aspect categorisation | `docs/PLAN.md:132` | `| **Aspect categorisation** (local LLM, fixed schema) | text-mining task 2 |` |
+| DNN, task 4: sentiment | `docs/PLAN.md:133` | `| **Sentiment classification** (fine-tuned FinBERT) | the DNN; text-mining task 4 |` |
+| labels: annotation | `docs/PLAN.md:134` | `| Annotation | labels |` |
+| sentiment mining: index, served by the API | `docs/PLAN.md:135` | `| Sentiment index, served by the API | sentiment mining |` |
+| conversational UI: chatbot | `docs/PLAN.md:136` | `| **Chatbot** (tool calling over the index and evidence) | conversational UI |` |
+| module abbreviations | `docs/PLAN.md:138` | `Course modules: TA = Text Analytics, NMSM = New Media and Sentiment Mining,` |
 | aspect discovery is built | `aspects/discover.py:49` | `def run(min_cluster_size: int = 10)` |
 | segmentation is built | `preprocess/segment.py:62` | `def segment(text: str)` |
-| fine-tuning is built | `train/finetune.py:267` | `def run(seed: int = 42` |
-| the fine-tuned model scores today | `docs/api-integration.md:477` | `**Scores come from the fine-tuned model**` |
+| fine-tuning is built | `train/finetune.py:269` | `def run(seed: int = 42` |
+| the fine-tuned model scores today | `docs/api-integration.md:480` | `**Scores come from the fine-tuned model**` |
 | annotation done | `docs/evidence/annotation-agreement-2026-09-27.md:34` | `| candidates, both splits | 1,277 | 0.952 | **0.926** |` |
-| fine-tuned, below base | `docs/evidence/finetune-2026-09-30.md:28` | `| fine-tuned FinBERT, 3 seeds |` |
+| aspect categorisation in use | `config/aspects.yaml:236` | `assignment_method: llm` |
+| aspect agreement with people | `docs/evidence/wealth-definition-trial-2026-10-12.md:53` | `| People, older reading | 1,277 | 72.9% | 73.9% |` |
+| bank names matched, not recognised | `preprocess/pipeline.py:71` | `found = detect_banks(sentence_text)` |
+| the model in use, against base | `docs/model-card.md:53` | `| | **three seeds averaged** | **0.716** | **0.670** |` |
+| trained on the LLM rater's labels | `docs/model-card.md:37` | `**from a large language model, not from people.**` |
 
-## Planned elements
+## Built, not applied
 
 | element | recorded in |
 |---|---|
-| Aspect categorisation by a local LLM | DESIGN.md decision 16; PLAN.md section 2 |
-| Bank entity recognition and resolution | DESIGN.md decision 18; PLAN.md sections 2 and 7 |
+| Bank entity recognition and resolution | DESIGN.md decision 18; PLAN.md sections 2 and 7; `docs/evidence/bank-ner-2026-10-01.md` |

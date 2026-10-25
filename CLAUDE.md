@@ -6,6 +6,8 @@ served by a FastAPI API, a Streamlit dashboard and a tool-calling chatbot.
 
 ## Start here
 
+- `docs/README.md`: which docs are current, which are dated records and
+  which are archived, and the current headline figures with their sources.
 - `docs/HANDOFF.md`: the session log and what needs a human. Read the latest
   entries first, and add one at the end of every session.
 - `docs/STATUS.md` (what's done), `docs/PLAN.md` (sequence and open
@@ -13,6 +15,7 @@ served by a FastAPI API, a Streamlit dashboard and a tool-calling chatbot.
   everything).
 - `docs/evidence/`: dated outputs behind every claim in the docs.
 - `docs/briefs/`: the team to-do page and the decision brief.
+- `docs/archive/`: superseded drafts and briefs; never quote them.
 
 ## Commands
 
@@ -40,14 +43,15 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
   altering a table or deleting rows. Applying LLM aspects, fine-tuned scores
   or NER changes to `data/plp.db` is a team decision; build and test such
   steps on a copy.
-- **Stage files by path.** Never `git add -A` or `git add .`. Never stage
-  `data/logs/plp.log` (tracked, but changes on every run). The database,
+- **Stage files by path.** Never `git add -A` or `git add .`. Logs under
+  `data/logs/` are ignored; keep them out of git. The database,
   snapshots, the dataset `data/data.zip`, embeddings, model weights, caches
   and `.env` are gitignored; keep them that way. Labels and evaluation results under `data/labeled/`
   and `data/eval/` are tracked.
 - **Never edit `.env`.** It holds API keys.
 - **No personal names** anywhere in the repository: code, docs, commit
-  messages.
+  messages. One exception, asked for by the team: the human rater's name
+  stays in the rater column of `data/eval/ratings_sheet_rater1.csv`.
 - **Ask before adding any paid API.**
 - **The OpenAI key is for the chatbot backend only.** Never send it personal
   data or Reddit evidence text, and never use it for labelling,
@@ -58,10 +62,14 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
   `scripts/share_bundle.sh` and given to the assessors with the project,
   holds the CNA cache (25 Oct 2026); and the chatbot's hosted model may
   receive CNA and broker-research sentences to quote (`hosted_model` in
-  `config/sources.yaml`, 24 Oct 2026). Reddit text is never sent to a hosted
-  model.
+  `config/sources.yaml`, 24 Oct 2026). The chatbot never sends Reddit text
+  to a hosted model. Development tools on the team's own accounts may read
+  the data, Reddit and CNA included, and quote short
+  extracts; never publish the articles or the data (team decision,
+  25 Oct 2026).
 - **Opus labels never replace the human labels.** They are an additional
-  rater, kept in `data/labeled/llm_rater/`.
+  rater, kept in `data/labeled/llm_rater/`. The model in use is trained on
+  them; every test set keeps people's labels.
 - **`dashboard/` belongs to a teammate.** Don't edit it; report problems in
   the to-do instead.
 - **Push only completed, tested features** to `main`.
@@ -74,10 +82,14 @@ or UNTESTED. They come from `docs/spec/functional-spec.md`.
 - **Fine-tuning lead** (functional spec 4.4 and 4.5: the fine-tuned
   classifier, sentiment classification, the frozen test split): fine-tuned
   FinBERT scores above base FinBERT on the frozen random test split (299
-  rows): three seeds' mean macro-F1
-  0.604 ± 0.035 against 0.571. The gap is about one seed standard deviation
-  and seed 7 is below base, so it is a modest lead, not a clear win. No test
-  row, and no test text, informs training, dev or any choice of threshold.
+  rows): macro-F1 0.670 for the model in use (three seeds averaged) against
+  0.571, each seed above base (0.628, 0.657, 0.662; mean 0.649 ± 0.018).
+  Accuracy barely differs (0.716 against 0.699, exact McNemar p = 0.65) and
+  the training labels are an LLM's, so it is a modest lead, not a clear win.
+  No test row, and no test text, informs training, dev or any choice of
+  threshold. The model was chosen among the candidates by test macro-F1,
+  under a rule fixed before the test rows were scored, so 0.670 is slightly
+  optimistic (`docs/model-card.md`).
 - **API integrity** (functional spec 4.2: every number fetchable, invalid
   input rejected): the index endpoints (`/sentiment`, `/sentiment/compare`,
   `/sentiment/index`, `/sentiment/trend`, `/sentiment/series`) return the
@@ -97,8 +109,9 @@ or UNTESTED. They come from `docs/spec/functional-spec.md`.
   6 Oct 2026 from "never presents", which twelve validations showed a text
   check can't prove.
 
-Add a fourth claim, Aspect accuracy (the aspect method against the human
-labels), once the team decides the aspect method.
+The aspect method is decided and applied (one aspect a sentence from
+`llama3.1:8b`, 73.9% agreement with people); a fourth claim, Aspect
+accuracy, has not been written.
 
 ## Validation
 
@@ -109,7 +122,7 @@ labels), once the team decides the aspect method.
   confirmed bug. Remove the marker in the commit that fixes the bug; the
   test then guards against its return.
 - The register of known issues is the team to-do page
-  (`docs/briefs/team-todo-*.html`) and the decision brief. An issue that is
+  (`docs/briefs/team-todo.html`) and the decision brief. An issue that is
   in neither is not "known".
 - The `examiner` agent grades a report section or the whole submission
   against the module's requirements; use it from mid-October.

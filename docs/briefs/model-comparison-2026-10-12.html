@@ -226,7 +226,7 @@ footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--rule);
   <div class="scroll"><table class="plain">
     <thead><tr><th>Model</th><th>Starts from</th><th>Fine-tuned on</th><th>Date</th></tr></thead>
     <tbody>
-      <tr class="fam-base"><th><i class="key"></i>Base FinBERT</th><td>FinBERT as published</td><td>Nothing. This is what every stored score in the database comes from today.</td><td></td></tr>
+      <tr class="fam-base"><th><i class="key"></i>Base FinBERT</th><td>FinBERT as published</td><td>Nothing. Its scores are stored beside the model in use, for comparison.</td><td></td></tr>
       <tr class="fam-people"><th><i class="key"></i>Fine-tuned on people's labels</th><td>FinBERT</td><td>978 sentences labelled by the team</td><td>1 Oct</td></tr>
       <tr class="fam-people"><th><i class="key"></i>The same, retrained</th><td>FinBERT</td><td>The same 978 sentences, after a fault in how training began was fixed</td><td>4 Oct</td></tr>
       <tr class="fam-people"><th><i class="key"></i>The same, with broker rows</th><td>FinBERT</td><td>1,258 sentences: the 978 plus 280 from broker research reports</td><td>7 Oct</td></tr>
@@ -254,7 +254,7 @@ footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--rule);
       <ul>
         <li><b>Three runs each.</b> Every fine-tuned model was trained three times from different random starts (seeds 42, 1 and 7), because one run's score can be luck at this size.</li>
         <li><b>The measure is macro-F1.</b> It averages the score for negative, neutral and positive, so the rare negative class counts as much as the common neutral one. Accuracy alone rewards a model for calling everything neutral: 56% of the test rows are neutral.</li>
-        <li><b>The rule for choosing was fixed first:</b> highest test macro-F1 over the three seeds, with cross-validation as the tie-breaker. Nothing was tuned on the test rows.</li>
+        <li><b>The rule for choosing was fixed first:</b> highest test macro-F1 over the three seeds, with cross-validation as the tie-breaker. No setting was tuned on the test rows, but the choice among the candidates used them, so the winner's test score is slightly optimistic.</li>
       </ul>
     </div>
   </div>

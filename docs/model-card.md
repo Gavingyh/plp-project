@@ -23,9 +23,9 @@ model repo; see "Sharing the data and models" in the project README.*
   was continued on the project's own corpus, so that it meets forum
   language and local product names before any label; it was then fine-tuned
   for the task.
-- **Three seeds, averaged.** Averaging scores above every single seed on
-  the test sentences and removes the dependence on which seed is picked
-  (below).
+- **Three seeds, averaged.** The averaged model scores above every single
+  seed on the test sentences (0.670 against 0.628, 0.657 and 0.662; below);
+  with three seeds, that averaging helps in general is not established.
 
 ## Training
 
@@ -63,7 +63,8 @@ P / R is precision and recall.
   model finds 59% and 73%. It pays in neutral recall, 0.91 to 0.73.
 - **Accuracy is not where it leads.** On those 299 sentences the averaged
   model is right on 41 that base FinBERT gets wrong and wrong on 36 that
-  base FinBERT gets right (exact McNemar p = 0.65). The lead is in how the
+  base FinBERT gets right (exact McNemar p = 0.65;
+  `data/eval/model-rerun-2026-10-11/report_data.json`). The lead is in how the
   errors are spread across the classes, which macro-F1 measures, not in the
   number of errors.
 - **By source,** accuracy is 0.81 on earnings text (79 sentences), 0.77 on
@@ -144,13 +145,21 @@ the product serves, `finbert-adapted-finetuned-2026-10-11-3seed-m0`.
 - **Not investment advice.** The scores describe what people wrote, not how
   the banks will perform.
 
-## Before publishing the weights
+## Publication
 
-- Check `ProsusAI/finbert`'s licence.
-- The training labels came from a hosted LLM. Check its provider's terms on
-  using a model's outputs to train another model, and record the outcome.
-- The training text includes Reddit posts, news and broker research. The
-  weights hold no text, but the corpus itself stays within the team.
+- **Published.** The weights are in the public Hugging Face model repo
+  `plp-bank-sentiment/plp-finbert-absa`, folder `adapted-2026-10-11/`, and
+  download without a login.
+- **Still open: the licence.** This card declares none yet. The models are
+  built on `ProsusAI/finbert`, whose licence the team's to-do page records
+  as CC BY-NC-SA 4.0 (credit, non-commercial use, the same licence); the
+  team has to confirm it and add it here.
+- **Still open: the labeller's terms.** The training labels came from a
+  hosted LLM. Its provider's terms on using a model's outputs to train
+  another model have not been recorded here.
+- **The text stays within the team.** The training text includes Reddit
+  posts, news, CNA articles and broker research. The weights hold no text,
+  but the corpus itself is shared only with the team and the assessors.
 
 ## Files and checksums
 

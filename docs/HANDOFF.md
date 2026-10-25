@@ -1180,7 +1180,7 @@ whether slower, fuller answers are worth it on the demo Mac.
 
 The twelfth validation (`docs/validation/2026-10-06-chatbot-answers-twelfth-check.md`,
 fix first) found four gaps after 174c77d, recorded as limits with strict
-expected failures in `tests/test_validate_chatbot_round12_*.py`: a source note
+expected failures in `tests/test_validate_chatbot_off_mode_and_nearest_words_*.py`: a source note
 after a quote keeps its citation (a regression from 174c77d), a retrieved
 figure vouches for the same number counting something else, text in backticks
 keeps its citation, and a blockquote's citation line is flagged in off mode.
@@ -1295,7 +1295,7 @@ re-reading instructions 12 to 15 s; a larger window was slower). Drafted for
 the team (a6c7a07): the product-feature options, proposed local-context
 answers, a glossary of 79 local terms and a blind active-learning sheet of
 150 rows. The team to-do is consolidated and renamed
-`docs/briefs/team-todo-2026-10-07.html` (same published link), ordered by
+`docs/briefs/team-todo.html` (same published link), ordered by
 what blocks what, with decided items in one list.
 
 **Needs a human (7 Oct):** record who labelled the 100 broker research test
@@ -1973,7 +1973,7 @@ through the API). A fresh clone of the branch collects 2894 tests in `tests/`
 and 2941 from the root; all pass on this Mac after Streamlit was upgraded
 from 1.63.0 to 1.66.1, which the five dashboard navigation tests needed.
 Replacement text for the Word report, now the master on SharePoint, is in
-`docs/report/word-updates-2026-10-24.md`.
+`docs/report/word-report-updates.md`.
 
 **CNA and broker research cleared for the hosted model** (the team's
 decision, DESIGN decision 28): both stay team-only, but `hosted_model: true`
@@ -2044,3 +2044,64 @@ since 18 Oct gives 8 of 8.
 - Upload `data/run/share-2026-10-25/` (`data.zip`, its note, checksums).
 - The 24 Oct commit of logs and results put `data/logs/plp.log`, the Word
   report and 13 results files in git; CLAUDE.md says never to stage the log.
+
+(Both CLAUDE.md items above were settled later the same day: the CNA rule
+now names `data.zip`, and the logs and Word copies are out of git; see the
+next entry.)
+
+**Documentation cleanup before the report and slides are written with AI.**
+A teammate will hand the repository to an AI to draft the report and the
+slides, so every stale statement is a likely error in them.
+- *Audits.* Two read-only audits of the docs found about 70 statements that
+  no longer matched the code or the database (the 1 Oct model's 0.604 in
+  CLAUDE.md, DESIGN.md and the technical spec; "every stored score is base
+  FinBERT"; the local model as the default; the dashboard reading the
+  database; aspects not yet applied). A code review found 22 stale comments.
+  All were fixed. A second audit of the rewritten text found no wrong
+  headline figure and about 55 smaller faults, each fixed. The serious ones:
+  - the RUNBOOK's only training recipe did not produce the model in use (the
+    pretraining and LLM-label steps are now there);
+  - three sentences of the Word update overstated a result (tool choice is
+    the model's, not enforced by code; within a topic no vectors beat word
+    matching; aspect agreement is 74%, not 73%);
+  - several places dropped a caveat (the three-try retest was read by the
+    AI assistant and is not held out; the human rating was of
+    `llama3.1:8b`, not the default; kappa 0.93 is an upper bound; choosing
+    the model on test macro-F1 makes 0.670 slightly optimistic);
+  - "collection stopped 26 Sep" missed that 25 broker research reports
+    (4 Oct) and 825 older Reddit posts (11 Oct) were added later; nothing
+    published after 25 Sep was collected.
+- *New and moved.* `docs/README.md` maps which docs are current, which are
+  dated records and which are superseded, and gives every headline figure
+  with its source. Fifteen superseded drafts and briefs, and the old STATUS,
+  are in `docs/archive/`; STATUS.md is rewritten for the current state;
+  dated records carry a banner. The Word-update file is now
+  `docs/report/word-report-updates.md`; it also corrects three errors in the
+  Word report itself (Table 3 holds the 399-sentence figures under text
+  written for the 299; the amber box; the test count). The repository's copy
+  of the Word report was deleted (the master is on SharePoint) and Word files
+  under `docs/` are now ignored, since their cover pages carry names.
+- *Diagrams.* All 23 checked; 18 redrawn, including the chatbot turn's
+  empty-rewrite path; `check_sources.py` passes on 437 rows.
+- *Tests.* The 15 files named by validation round (`round6` to `round13`)
+  now carry topic names (for example `ellipsis_quotes_probes`); one new test
+  for the evaluation summary's "(none)" line, which was printed even when
+  failures were listed. 2957 tests in `tests/` and 3004 from the root: 2956
+  passed, 2 skipped, 46 expected failures.
+- *Repository hygiene.* Logs under `data/logs/` and `.project-context/` are
+  out of git and ignored; absolute paths of this Mac were stripped from the
+  tracked results and logs; the human ratings sheet is
+  `data/eval/ratings_sheet_rater1.csv`, keeping the rater's name in its
+  rater column, which the team asked for.
+- *Rules.* Team decision of 25 Oct: development tools on the team's own
+  accounts may read the data, Reddit and CNA included, and quote short
+  extracts; the chatbot still never sends Reddit text to a hosted model.
+  CLAUDE.md records it, with the rater-name exception and the logs rule.
+
+**Needs a human:**
+- Rotate the OpenAI key; add a licence to the Hugging Face model card;
+  upload `data/run/share-2026-10-25/`; the two human ratings.
+- Paste `docs/report/word-report-updates.md` into the SharePoint master,
+  checking each block against the current text first.
+- Hand the AI writing the report `docs/` without `docs/archive/`, plus the
+  code and `config/`, and start it at `docs/README.md`.

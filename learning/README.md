@@ -21,7 +21,7 @@ If you are writing the report, sections 4 and 5 of each topic (Analyze,
 Evaluate) are the ones that turn "we used X" into a defensible justification.
 For the whole method on one page, with flow diagrams, settings, a short
 teaching note per technique and an evaluation of the approach, start with
-[docs/report/approach.md](../docs/report/approach.md).
+[docs/archive/report/approach.md](../docs/archive/report/approach.md), a 2 Oct record.
 If you are revising for the exam, sections 1, 2 and 7 (Why, Concept,
 Self-check) are the fast path.
 
@@ -29,6 +29,14 @@ Self-check) are the fast path.
 paper or a library's documentation, the URL is in section 8 of that file, and
 that is what belongs in the report's reference list. Claims that could not be
 verified are marked as such rather than quietly dropped.
+
+**The project figures here are dated.** These files were written between
+11 Sep and 11 Oct 2026, and their worked examples describe the project as
+it was then: for example aspects assigned by similarity to seed centroids
+(now one aspect a sentence from `llama3.1:8b`), 44,345 sentences (now
+45,844) and a fine-tuned model at macro-F1 0.604, a three-seed mean (now 0.649, or
+0.670 with the seeds averaged into one model). Use them for
+the concepts; take current figures from [docs/README.md](../docs/README.md).
 
 ---
 
@@ -50,12 +58,12 @@ knowledge dimension:
 Every topic here is written to at least level 4, and most reach 5 and 6. In
 practice that means each file contains:
 
-- **Analyze** — the technique broken into parts, compared against at least two
+- **Analyze:** the technique broken into parts, compared against at least two
   alternatives on stated criteria, and traced through one real example from
   this corpus.
-- **Evaluate** — a judgement on this project's choice, with the evidence, what
+- **Evaluate:** a judgement on this project's choice, with the evidence, what
   that evidence does *not* show, and when the opposite choice would be right.
-- **Create** — an exercise you can do against this repo in under two hours,
+- **Create:** an exercise you can do against this repo in under two hours,
   with an expected outcome so you know whether you got it right.
 
 A file that only defines a term and shows where it is used would be level 2 or

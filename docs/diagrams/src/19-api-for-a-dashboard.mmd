@@ -1,6 +1,6 @@
 flowchart LR
   accTitle: The API behind a dashboard
-  accDescr: Each view a dashboard needs, the API endpoint that feeds it, and what that endpoint reads. The Streamlit dashboard in this repository reads the database directly; this is the contract for any frontend on the API.
+  accDescr: Each view a dashboard needs, the API endpoint that feeds it, and what that endpoint reads. The Streamlit dashboard in this repository reads through the API; this is the contract for it and for any other frontend.
 
   subgraph views["Views a frontend needs"]
     v1["Headline score per bank"]
@@ -10,6 +10,7 @@ flowchart LR
     v5["Analyst consensus"]
     v6["Evidence behind a score"]
     v7["Chat"]
+    v8["Pipeline runs"]
   end
 
   subgraph api["REST API: api/main.py"]
@@ -20,6 +21,7 @@ flowchart LR
     e5["GET /analyst-consensus/latest"]
     e6["GET /evidence/latest<br/>GET /evidence"]
     e7["POST /chat<br/>GET /suggestions"]
+    e8["GET /pipeline/sources<br/>GET, POST /pipeline/runs"]
   end
 
   subgraph reads["What each reads"]
@@ -27,6 +29,7 @@ flowchart LR
     sent[("sentences and<br/>aspect_sentiment")]
     ac[("analyst_consensus")]
     bot["chatbot:<br/>tools and a model"]
+    work["pipeline worker:<br/>the batch steps, diagram 06"]
   end
 
   v1 --> e1
@@ -36,6 +39,7 @@ flowchart LR
   v5 --> e5
   v6 --> e6
   v7 --> e7
+  v8 --> e8
   e1 --> idx
   e2 --> idx
   e3 --> idx
@@ -44,3 +48,4 @@ flowchart LR
   e5 --> ac
   e6 --> sent
   e7 --> bot
+  e8 --> work

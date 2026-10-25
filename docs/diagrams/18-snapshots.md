@@ -58,17 +58,17 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| checkpoint | `docs/RUNBOOK.md:536` | `sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"` |
-| compress | `docs/RUNBOOK.md:537` | `gzip -9 -c data/plp.db > data/snapshots/plp-<date>-vN.db.gz` |
-| verify | `docs/RUNBOOK.md:538` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
-| record checksum in the README | `docs/RUNBOOK.md:539` | `# record name, size and checksum in the README` |
-| after a material change | `docs/RUNBOOK.md:533` | `### Snapshot the database after a material change` |
-| snapshot table | `README.md:313` | `| snapshot | size | sha256 | contents |` |
+| checkpoint | `docs/RUNBOOK.md:539` | `sqlite3 data/plp.db "PRAGMA wal_checkpoint(TRUNCATE);"` |
+| compress | `docs/RUNBOOK.md:540` | `gzip -9 -c data/plp.db > data/snapshots/plp-<date>-vN.db.gz` |
+| verify | `docs/RUNBOOK.md:541` | `sqlite3 /tmp/check.db "PRAGMA integrity_check;"` |
+| record checksum in the README | `docs/RUNBOOK.md:542` | `# record name, size and checksum in the README` |
+| after a material change | `docs/RUNBOOK.md:536` | `### Snapshot the database after a material change` |
+| snapshot table | `README.md:319` | `| snapshot | size | sha256 | contents |` |
 | from the latest snapshot | `scripts/share_bundle.sh:28` | `snapshot="$(ls -1 "$ROOT"/data/snapshots/plp-*.db.gz 2>/dev/null` |
 | build data.zip | `scripts/share_bundle.sh:52` | `z.write(db, "data/plp.db")` |
 | checksum file | `scripts/share_bundle.sh:58` | `shasum -a 256 data.zip > SHA256SUMS` |
-| at data/data.zip | `README.md:290` | `` ours to publish. Put it at `data/data.zip`. Docker restores it on first start `` |
-| native restore | `README.md:295` | `.venv-plp/bin/python3 -m docker.bootstrap --data-only` |
+| at data/data.zip | `README.md:296` | `` ours to publish. Put it at `data/data.zip`. Docker restores it on first start `` |
+| native restore | `README.md:301` | `.venv-plp/bin/python3 -m docker.bootstrap --data-only` |
 | Docker runs the setup | `compose.yaml:46` | `command: ["python", "-m", "docker.bootstrap"]` |
 | the files restored | `docker/bootstrap.py:26` | `RUNTIME_FILES = {"plp.db", "sentence_embeddings.npz", "search_embeddings.npz", "cna/articles.jsonl", "cna/candidates.json"}` |
 | integrity | `docker/bootstrap.py:106` | `if conn.execute("PRAGMA quick_check").fetchone()[0] != "ok":` |
@@ -76,4 +76,4 @@ Each row names the file and line an element comes from, and the text that line m
 | vectors match the sentences | `docker/bootstrap.py:119` | `def validate_embeddings(` |
 | existing files kept | `docker/bootstrap.py:138` | `def publish_missing(source: Path, destination: Path) -> bool:` |
 | checksum at setup | `docker/bootstrap.py:51` | `raise SetupError("data/data.zip failed SHA-256 verification. Obtain the supplied bundle again.")` |
-| decision | `docs/DESIGN.md:288` | `### 15. The database lives outside git, as dated snapshots` |
+| decision | `docs/DESIGN.md:315` | `### 15. The database lives outside git, as dated snapshots` |

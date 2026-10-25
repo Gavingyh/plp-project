@@ -1,36 +1,45 @@
 flowchart TB
   accTitle: Runtime view
-  accDescr: Three services started by scripts/start.sh, the batch commands run by hand, and the local files each reads or writes.
+  accDescr: The services started by scripts/start.sh or by Docker, the batch commands, and the local files each reads or writes. The dashboard reads everything through the API; the API asks Ollama to sort each question and OpenAI, by default, to answer it.
 
-  subgraph services["Services: scripts/start.sh"]
-    ui["Streamlit dashboard, port 8501<br/>FastAPI REST API, port 8000"]
+  subgraph services["Services: scripts/start.sh, or Docker (compose.yaml)"]
+    dash["Streamlit dashboard<br/>port 8501"]
+    api["FastAPI REST API and chatbot<br/>port 8000"]
     oll["Ollama<br/>port 11434"]
   end
 
+  hosted["OpenAI API<br/>answers by default"]
+
   subgraph files["Local files in data/"]
+    zip["data.zip<br/>the shared dataset, not in git"]
     db[("plp.db<br/>SQLite, not in git")]
-    emb[("sentence_embeddings.npz<br/>cache, not in git")]
+    emb[("sentence_embeddings.npz<br/>FinBERT vectors, not in git")]
     semb[("search_embeddings.npz<br/>evidence search, not in git")]
     flagged["news_flagged.csv<br/>news filter log"]
     snaps["snapshots/*.db.gz<br/>not in git"]
   end
 
-  subgraph batch["Batch commands, run by hand"]
-    pull["Ingestion<br/>run_news_pull.py, run_daily_batch.py"]
+  subgraph batch["Batch commands, run by hand or from the dashboard"]
+    pull["Ingestion<br/>run_news_pull.py, run_daily_batch.py,<br/>ingest.sgx_research_extract"]
     pipe["Pipeline steps<br/>preprocess, aspects, sentiment, aggregate"]
   end
 
   plist["launchd daily job<br/>not installed"]
 
-  ui -- "reads scores, evidence" --> db
-  ui -- "evidence search" --> semb
-  ui -- "chat: sorts each question;<br/>answers when chosen" --> oll
+  dash -- "every view, the chat<br/>and pipeline runs" --> api
+  api -- "reads scores, evidence" --> db
+  api -- "evidence search" --> semb
+  api -- "sorts each question;<br/>answers if chosen" --> oll
+  api -- "answers; never Reddit text" --> hosted
+  api -- "starts a run in a worker" --> pipe
+  zip -- "restored by docker.bootstrap" --> db
   pull -- "writes documents" --> db
   pull -- "logs decisions" --> flagged
   pipe -- "reads and writes" --> db
   pipe -- "updates" --> emb
   pipe -- "updates" --> semb
-  db -. "checkpoint and gzip, by hand" .-> snaps
+  db -- "checkpoint and gzip, by hand" --> snaps
+  snaps -- "scripts/share_bundle.sh" --> zip
   plist -. "would run" .-> pull
 
   classDef inactive stroke-dasharray: 5 5,color:#555,fill:#fafafa;

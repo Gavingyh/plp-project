@@ -5,7 +5,7 @@ The states a labelling candidate went through in the 2026-09-27 round, from expo
 ```mermaid
 stateDiagram-v2
   accTitle: Label lifecycle, first round
-  accDescr: A candidate is exported into the train/dev or test split. Train/dev rows carry an LLM suggestion; test rows go to a blind sheet. Two people label each row and disagreements are resolved. Duplicated or leaked rows are dropped; the rest train the model or form the test set. A not-about-the-bank flag is planned.
+  accDescr: A candidate is exported into the train/dev or test split. Train/dev rows carry an LLM suggestion; test rows go to a blind sheet. Two people label each row and disagreements are resolved. Duplicated or leaked rows are dropped; the rest train the model or form the test set. A not-about-the-bank flag was not on this round's sheet.
 
   [*] --> Exported : drawn from the scored sample
   Exported --> Suggested : train/dev split
@@ -35,7 +35,11 @@ never changes. In this round the aspect was corrected once and shared by both an
 so only sentiment went through two independent labels, and the blind test labels turned out
 identical to the same annotators' labels made with the suggestion visible. "Dropped" is
 `train/labels.py`: 5 train/dev copies of test sentences, then 18 duplicate rows. The
-not-about-the-bank flag (dashed) was in the design but not in this round's sheet.
+not-about-the-bank flag (dashed) was in the design but not on this round's sheet; the LLM
+rater used it in the later rounds and flagged 112 rows, which were left out of training
+(`docs/evidence/model-rerun-2026-10-11.md`). The model in use trains on the LLM rater's
+labels for these sentences, not on people's; the 299 test rows keep people's labels
+([09](09-labelling-training.md)).
 
 ## Sources
 
@@ -44,18 +48,18 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | drawn from the scored sample | `notebooks/README.md:17` | `Candidates were stratified within that sample` |
-| suggestions on train/dev only | `docs/PLAN.md:265` | `The local LLM's suggestions are shown for the train/dev` |
+| suggestions on train/dev only | `docs/PLAN.md:276` | `The local LLM's suggestions are shown for the train/dev` |
 | blind sheet | `preprocess/export_blind_test.py:104` | `def export_blind(` |
 | two annotators | `docs/evidence/annotation-agreement-2026-09-27.md:14` | `each annotator's labels on the 1,300 candidates` |
 | resolved | `docs/evidence/annotation-agreement-2026-09-27.md:16` | `the candidates after resolving disagreements` |
 | dropped: leakage | `train/labels.py:152` | `report["train_dev_rows_dropped_as_leaked"] = int(leaked.sum())` |
 | dropped: duplicates | `train/labels.py:155` | `cand, report["duplicate_rows_dropped"] = _dedupe(cand, candidates_path)` |
-| training rows | `train/finetune.py:176` | `df = df[df["split"] == split]` |
+| training rows | `train/finetune.py:178` | `df = df[df["split"] == split]` |
 | held-out test rows | `train/evaluate.py:40` | `df = df[(df["split"] == "test") & (df["label"].isin(LABELS))]` |
 | not-about-bank flag | `docs/annotation-guideline.md:18` | `` set `not_about_bank` and stop `` |
 
-## Planned elements
+## Not in this round
 
 | element | recorded in |
 |---|---|
-| Not-about-the-bank flag | docs/annotation-guideline.md; PLAN.md section 6 |
+| Not-about-the-bank flag | docs/annotation-guideline.md; used by the LLM rater in the later rounds |

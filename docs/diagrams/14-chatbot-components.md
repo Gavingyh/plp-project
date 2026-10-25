@@ -5,7 +5,7 @@ The classes and modules behind a chatbot turn and how they depend on each other.
 ```mermaid
 classDiagram
   accTitle: Chatbot components
-  accDescr: Conversation holds TurnResults and calls answer_turn, which asks the intent classifier first, then uses a tool-call tracker, the output checks in guards, the tools and one of four backends implementing LLMBackend.
+  accDescr: Conversation holds TurnResults and calls answer_turn, which asks the intent classifier first, then uses a tool-call tracker, the output checks in guards, the tools and one of three backends implementing LLMBackend.
 
   class Conversation {
     +backend_name
@@ -25,6 +25,9 @@ classDiagram
     +citation_unverified
     +unverified_numbers
     +unverified_readings
+    +repaired
+    +verified
+    +shown_flags() dict
   }
   class agent {
     <<module>>
@@ -89,7 +92,10 @@ parts; solid arrows with hollow heads are inheritance, and the filled diamond me
 `Conversation` owns its turns. Modules without a class of their own (`chatbot/agent.py`'s functions,
 `intent`, `guards`, `tools`) are drawn as classes marked `module`. The tracker is `_ToolCallTracker` in the
 code; the leading underscore is dropped here because Mermaid would render it oddly. Only
-the members a turn uses are listed. Each backend owns its whole tool-calling loop,
+the members a turn uses are listed: the three flags are the first draft's, `model_answer`
+is the last draft before it is trimmed and its citations numbered, `repaired` says whether
+the answer shown was rewritten, trimmed or withheld, and `shown_flags()` gives the flags of
+the answer shown. Each backend owns its whole tool-calling loop,
 because providers represent tool calls differently (`chatbot/backends/base.py`).
 
 ## Sources
@@ -98,20 +104,22 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| Conversation | `chatbot/agent.py:2457` | `class Conversation:` |
-| state fields | `chatbot/agent.py:2463` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| from_messages | `chatbot/agent.py:2467` | `def from_messages(cls, messages: list[dict]` |
-| TurnResult | `chatbot/agent.py:2159` | `class TurnResult:` |
-| answer_turn | `chatbot/agent.py:2314` | `def answer_turn(question: str` |
-| ToolCallTracker | `chatbot/agent.py:776` | `class _ToolCallTracker:` |
-| citation check | `chatbot/agent.py:938` | `def answer_has_unverified_citation(self, answer: str)` |
+| Conversation | `chatbot/agent.py:2460` | `class Conversation:` |
+| state fields | `chatbot/agent.py:2466` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| from_messages | `chatbot/agent.py:2470` | `def from_messages(cls, messages: list[dict]` |
+| TurnResult | `chatbot/agent.py:2162` | `class TurnResult:` |
+| answer_turn | `chatbot/agent.py:2317` | `def answer_turn(question: str` |
+| ToolCallTracker | `chatbot/agent.py:779` | `class _ToolCallTracker:` |
+| citation check | `chatbot/agent.py:941` | `def answer_has_unverified_citation(self, answer: str)` |
 | intent | `chatbot/intent.py:108` | `def classify_intent(question: str` |
 | reply_for | `chatbot/intent.py:127` | `def reply_for(intent` |
 | guards | `chatbot/guards.py:317` | `def unverified_numbers(answer: str, tool_results: list, question: str = "")` |
-| intent and model_answer kept | `chatbot/agent.py:2165` | `intent: str` |
+| intent and model_answer kept | `chatbot/agent.py:2168` | `intent: str` |
+| what verification did | `chatbot/agent.py:2175` | `repaired: str | None = None` |
+| the flags of the answer shown | `chatbot/agent.py:2181` | `def shown_flags(self) -> dict:` |
 | tools | `chatbot/tools.py:871` | `TOOL_FUNCTIONS = {` |
 | LLMBackend | `chatbot/backends/base.py:48` | `class LLMBackend(ABC):` |
 | temperature | `chatbot/backends/base.py:55` | `temperature: float = DEFAULT_TEMPERATURE` |
-| OllamaBackend | `chatbot/backends/ollama_backend.py:87` | `class OllamaBackend(LLMBackend):` |
+| OllamaBackend | `chatbot/backends/ollama_backend.py:88` | `class OllamaBackend(LLMBackend):` |
 | ClaudeBackend | `chatbot/backends/claude_backend.py:23` | `class ClaudeBackend(LLMBackend):` |
 | OpenAIBackend | `chatbot/backends/openai_backend.py:52` | `class OpenAIBackend(LLMBackend):` |

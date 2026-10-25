@@ -107,10 +107,12 @@ from the code's `CREATE TABLE`: `documents.has_analyst_view` is added afterwards
 `ingest/analyst_tag.py` with `ALTER TABLE`, so a database built from `ingest/db.py` alone
 lacks it.
 
-Rows in the schema dump, taken on 2026-09-26 before CNA was loaded: documents 27,795;
-sentences 42,746; sentence_aspects 90,117; aspect_sentiment 90,117; sentiment_index 257;
-analyst_consensus 14. Loading CNA the same day added rows but changed no table or column;
-current counts are in `docs/STATUS.md`.
+Rows in the database now (read on 25 Oct 2026): documents 28,852; sentences 45,844;
+sentence_aspects 45,844, one aspect a sentence, each with `similarity` 1.0 because the LLM
+that assigns aspects gives no score; aspect_sentiment 91,688, one row a pair for each of
+the two models stored (the fine-tuned model in use and base FinBERT); sentiment_index 886,
+443 for each model; analyst_consensus 14. The schema dump was taken on 2026-09-26; no table
+or column has changed since. Current figures are in [../README.md](../README.md).
 
 ## Sources
 
@@ -122,13 +124,13 @@ Each row names the file and line an element comes from, and the text that line m
 | sentences, created | `ingest/db.py:42` | `CREATE TABLE IF NOT EXISTS sentences (` |
 | sentences key to documents | `ingest/db.py:44` | `doc_id         TEXT NOT NULL REFERENCES documents(doc_id)` |
 | analyst_consensus, created | `ingest/db.py:62` | `CREATE TABLE IF NOT EXISTS analyst_consensus (` |
-| sentence_aspects, created | `aspects/assign.py:47` | `CREATE TABLE IF NOT EXISTS sentence_aspects (` |
-| aspect_sentiment, created | `sentiment/score.py:53` | `CREATE TABLE IF NOT EXISTS aspect_sentiment (` |
+| sentence_aspects, created | `aspects/assign.py:40` | `CREATE TABLE IF NOT EXISTS sentence_aspects (` |
+| aspect_sentiment, created | `sentiment/score.py:52` | `CREATE TABLE IF NOT EXISTS aspect_sentiment (` |
 | sentiment_index, created | `aggregate/index.py:67` | `CREATE TABLE IF NOT EXISTS sentiment_index (` |
 | has_analyst_view added later | `ingest/analyst_tag.py:77` | `ALTER TABLE documents ADD COLUMN has_analyst_view` |
-| join by sentence_id and aspect | `sentiment/score.py:123` | `ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect` |
+| join by sentence_id and aspect | `sentiment/score.py:122` | `ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect` |
 | index derived from aspect_sentiment | `aggregate/index.py:91` | `FROM aspect_sentiment ase` |
 | index joins sentences | `aggregate/index.py:92` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
 | foreign keys not enforced | `docs/diagrams/schema-2026-09-26.txt:114` | `PRAGMA foreign_keys (enforcement on this connection): 0` |
-| sentence_aspects key to sentences | `aspects/assign.py:48` | `sentence_id  TEXT NOT NULL REFERENCES sentences(sentence_id)` |
-| aspect_sentiment key to sentences | `sentiment/score.py:54` | `sentence_id   TEXT NOT NULL REFERENCES sentences(sentence_id)` |
+| sentence_aspects key to sentences | `aspects/assign.py:41` | `sentence_id  TEXT NOT NULL REFERENCES sentences(sentence_id)` |
+| aspect_sentiment key to sentences | `sentiment/score.py:53` | `sentence_id   TEXT NOT NULL REFERENCES sentences(sentence_id)` |

@@ -277,7 +277,8 @@ The order is fixed:
 
 1. **Check prerequisites:** existing database and source folders, Python/PDF
    dependencies, installed `en_core_web_sm`, cached `ProsusAI/finbert`, the
-   configured fine-tuned model files, and the configured topic model in Ollama.
+   cached `all-MiniLM-L6-v2` search model, the configured fine-tuned model
+   files, and the configured topic model in Ollama.
 2. **Collect / import documents:** call selected PDF extractors or online
    adapters and `ingest.db.upsert_documents`. Already-stored IDs are skipped;
    news also uses the existing relevance and cross-source dedup rules.
@@ -365,30 +366,30 @@ The CLI prints the final run record as JSON. Exit codes: `0` completed
 (possibly with warnings), `1` failed, `2` invalid invocation/startup error,
 `3` another manual run is active, `130` interrupted with Ctrl+C.
 
-## Docker setup requirements (planned)
+## Docker setup (implemented)
 
-Ryan's setup review on 18 October 2026: downloading the private models,
-moving folders and checking three hashes is too much manual setup for the
-professor. Docker packaging should automate these steps. This is a future
-packaging requirement; no Docker setup command is implemented in milestone 1.
+A teammate's setup review on 18 October 2026 found that downloading the
+models, moving folders and checking three hashes was too much manual setup
+for an assessor, and asked for Docker packaging to automate it. That
+packaging is now in the repository: see the README, "Run with Docker".
 
-- Provide one documented setup/start entry point instead of separate Python,
-  dependency, model-download and folder-move commands.
-- Offer a prepared team asset bundle (the existing share script supports
-  `--with-models`) so the professor can run with supplied files without a
-  Hugging Face login. For a fresh online setup, accept one-time authentication
-  for the private model repository.
-- Download only `adapted-2026-10-11/`, put all three seeds at the paths in
-  `config/model_version.py`, and verify the weights against the model card's
-  checksums automatically. Reuse verified local files on later starts.
-- Prepare the base FinBERT cache and spaCy model, and check the topic
-  classifier's Ollama dependency. Account for native Ollama on a Mac when
-  choosing the Compose service layout.
-- Persist the database, model files, embeddings and run history across
-  container recreation. Install dependencies in the image; keep credentials
-  out of the image and source control.
-- Show download/setup progress, separate initial setup from normal startup,
-  and give an actionable error if authentication, files or checksums fail.
+- One entry point: `docker compose up --build` (`compose.yaml`) starts the
+  dashboard, the API and Ollama.
+- The dataset is `data/data.zip`, built by `scripts/share_bundle.sh`; the
+  setup service (`docker/bootstrap.py`) restores the missing runtime files
+  from it and keeps existing ones. Natively, `python -m docker.bootstrap
+  --data-only` does the same.
+- The models come from the public Hugging Face repository
+  `plp-bank-sentiment/plp-finbert-absa`, so no login is needed. Setup
+  downloads the three fine-tuned seeds to the paths in
+  `config/model_version.py`, checks each against its SHA-256, and reuses
+  verified files on later starts. The share script leaves the models out.
+- Setup also downloads base FinBERT and the search model, builds
+  `data/search_embeddings.npz` if the dataset lacks it, and pulls
+  `llama3.1:8b` for the question classifier and the aspect step.
+- The database, models, vectors and run history live under `data/` and
+  `models/` and in Docker volumes, so they survive a container being
+  recreated. Keys stay in the local `.env`, out of the image and out of git.
 
 ## Review and validation
 

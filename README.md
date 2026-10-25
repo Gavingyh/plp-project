@@ -1,4 +1,4 @@
-# Retail Investor Sentiment Dashboard — DBS, OCBC, UOB
+# Retail Investor Sentiment Dashboard: DBS, OCBC, UOB
 
 Aspect-based sentiment analysis of Singapore's three listed banks, built for
 the Practice Module of the Graduate Certificate in Practical Language
@@ -16,30 +16,34 @@ The API is the documented interface for any frontend:
 It prepares the supplied data and models automatically, then starts the
 dashboard and API with one startup command.
 
+**Writing about the project?** Start with [docs/README.md](docs/README.md):
+it says which documents describe the system as it is now, which are dated
+records and which are superseded, and it lists the current figures with the
+file or query each comes from.
+
 ---
 
 ## Documentation
 
 | document | what it covers |
 |---|---|
+| **[docs/README.md](docs/README.md)** | The documentation map: which documents are current, which are records, and the current figures with their sources |
 | **[docs/PLAN.md](docs/PLAN.md)** | What happens between now and submission on 1 Nov 2026: decisions made, open decisions, workstreams by role, week-by-week sequence, and how every component maps to the course |
-| [docs/submission-checklist.html](docs/submission-checklist.html) | The same plan as a tickable checklist, split into what only people can do and what AI can do |
-| [docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html) | What the database holds: sources, bank balance, coverage over time, pipeline status, caveats |
-| **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way — the decision log with the evidence behind each choice |
+| **[docs/DESIGN.md](docs/DESIGN.md)** | How the system works and **why** it's built this way: the decision log with the evidence behind each choice |
 | **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | How to set up and run everything, expected timings, troubleshooting |
 | [docs/manual-pipeline.md](docs/manual-pipeline.md) | Manual updates: local PDFs, Google News and Reddit, stages, prerequisites, persisted run status and failure recovery |
-| **[docs/STATUS.md](docs/STATUS.md)** | What's done, what isn't, and how to improve it |
+| **[docs/STATUS.md](docs/STATUS.md)** | What the system does now, how far to trust each figure, what is not done |
 | **[docs/api-integration.md](docs/api-integration.md)** | For whoever builds the dashboard: running the API, which endpoint feeds which view, example responses, the chat contract, and what the screen must say |
-| [docs/report/report-draft.md](docs/report/report-draft.md) | Draft of the report's factual sections, every figure linked to its evidence; conclusions and contributions left to the team |
-| **[docs/HANDOFF.md](docs/HANDOFF.md)** | Start here if you're new to the project — read order, open decisions, what needs a human |
+| [docs/report/word-report-updates.md](docs/report/word-report-updates.md) | Replacement text for the report, not yet pasted in. The report itself is a Word file on the team's SharePoint, not in this repository |
+| **[docs/HANDOFF.md](docs/HANDOFF.md)** | The session log: what each working session changed, and what needs a human |
 | [docs/spec/functional-spec.md](docs/spec/functional-spec.md) | What the system does, for whom, with acceptance criteria and rubric traceability |
 | [docs/spec/technical-spec.md](docs/spec/technical-spec.md) | Data model, API contract, module map, configuration, testing |
 | [docs/diagrams/README.md](docs/diagrams/README.md) | Twenty-three diagrams of the system (data model, pipeline, sequences, chatbot, labelling, plan), each traced to the code, with a shortlist for the report |
 | [learning/](learning/) | Study material on the concepts and techniques used, by subject |
-| [docs/data-viability.md](docs/data-viability.md) | Evidence appendix — per-source findings from testing each data source |
+| [docs/data-viability.md](docs/data-viability.md) | A record from September 2026: what testing each data source found |
 | [docs/news-data.md](docs/news-data.md) | News dataset: sources, coverage, filter and dedup rules, known gaps, counts by month |
 | [docs/annotation-guideline.md](docs/annotation-guideline.md) | Labelling scheme for the annotation task |
-| [docs/verification-ledger.md](docs/verification-ledger.md) | Every number in the docs, with the command that produced it |
+| [docs/verification-ledger.md](docs/verification-ledger.md) | A record of the figures as of 11 Sep 2026, with the queries that produced them; current figures are in docs/README.md |
 | [API_KEYS.md](API_KEYS.md) | Obtaining each API key |
 
 ---
@@ -51,38 +55,40 @@ dashboard and API with one startup command.
   the earnings volume of the other two, and earnings text scores far more
   positive than retail chatter.
 - **The index is scored by a fine-tuned model that leads base FinBERT, by a
-  modest margin.** Since 12 Oct 2026 the API and the chatbot serve the
-  adapted encoder fine-tuned on LLM labels, three seeds averaged. On the 299
-  hand-labelled test rows it scores macro-F1 0.670 and accuracy 0.716
-  against base FinBERT zero-shot's 0.571 and 0.699. The gain is in negative
-  sentences (it finds 59% of them against 21%), paid for with neutral recall
-  (0.73 against 0.91), and its precision on negative is 0.48
-  ([evidence](docs/evidence/model-rerun-2026-10-11.md)). Base FinBERT's
-  scores stay in the database beside it, for comparison.
-- **Each sentence has one aspect, chosen by a local LLM.** Until 12 Oct a
-  sentence carried every aspect it resembled, 6.4 on average, so per-aspect
-  figures from before and after are not comparable
-  ([evidence](docs/evidence/rescore-rehearsal-2026-10-12.md)).
+  modest margin.** The API and the chatbot serve FinBERT further pretrained
+  on the corpus and fine-tuned on (sentence, aspect) pairs labelled by an
+  LLM, three seeds averaged. On the 299 test sentences people labelled it
+  scores macro-F1 0.670 and accuracy 0.716 against base FinBERT zero-shot's
+  0.571 and 0.699. The gain is in negative sentences (it finds 59% of them
+  against 21%), paid for with neutral recall (0.73 against 0.91), and its
+  precision on negative is 0.48. The difference in accuracy is not
+  significant (exact McNemar p = 0.65)
+  ([model card](docs/model-card.md)). Base FinBERT's scores stay in the
+  database beside it, for comparison.
+- **Each sentence has one aspect, chosen by a local LLM** (`llama3.1:8b`).
+  It matches the aspect people chose on 73.9% of the 1,277 sentences they
+  labelled ([evidence](docs/evidence/wealth-definition-trial-2026-10-12.md)).
+  The embedding-similarity method it replaced gave a sentence 6.4 aspects on
+  average, so per-aspect figures from that method are not comparable with
+  today's ([evidence](docs/evidence/rescore-rehearsal-2026-10-12.md)).
 - **Recent figures are "as of" the newest stored sentence, 25 Sep 2026.**
   Collection has stopped, so the 7- and 30-day windows count back from that
-  date, not from today.
-- **Local chatbot models fabricate citations.** Answers carrying a
-  `⚠️ VERIFICATION WARNING` cited evidence that was never retrieved.
-- **Per-aspect scores aren't meaningful yet.** Aspects are matched by
-  embedding similarity, which gives a sentence 6.4 of the 10 aspects on
-  average, and annotators disagreed with the matched aspect on 86% of
-  labelled rows. LLM classification is the replacement: `llama3.1:8b`
-  matches the human aspect on 73% of the 1,277 labelled sentences against
-  41% for the embedding match
-  ([evidence](docs/evidence/llm-aspect-classifier-2026-10-01.md)). It has
-  classified the whole corpus (3 Oct) but isn't applied to the database yet:
-  that is a team decision, and `scripts/rescore.py` is ready for it (DESIGN
-  decisions 16 and 21).
+  date, not from today. Seven-day figures rest on 42 to 90 sentences a bank
+  and every gap between banks is within their sampling intervals
+  ([evidence](docs/evidence/index-uncertainty-2026-10-14.md)).
+- **The chatbot's checks cover quotes and figures, not wording.** Before an
+  answer is shown, a draft with a figure no tool returned, or a quote no
+  search returned, is rewritten and then trimmed; on the 32-question gold
+  set no answer shown carried such a figure. The checks cannot tell whether
+  the model describes a figure correctly: a person found 7 of 26
+  answers written by `llama3.1:8b` unfaithful to the tool data, before the
+  fixes that followed ([evidence](docs/evidence/human-ratings-2026-10-24.md),
+  [fixes](docs/evidence/chatbot-fixes-2026-10-24.md)).
 - **News volume over time is a sampling artefact.** Google News favours recent
   articles; normalise per month before comparing periods.
 
-[docs/STATUS.md](docs/STATUS.md) is the single source of truth for these
-caveats — this list is a summary.
+[docs/STATUS.md](docs/STATUS.md) gives these caveats in full; this list is a
+summary.
 
 ---
 
@@ -253,7 +259,7 @@ The local intent classifier still uses Ollama with either answer provider.
 See [chatbot setup and key instructions](docs/RUNBOOK.md#chatbot-backends).
 
 The snapshot already holds the processed corpus. To refresh or rebuild it,
-run the pipeline (order matters — each step consumes the previous one's
+run the pipeline (order matters: each step consumes the previous one's
 output):
 
 ```bash
@@ -319,7 +325,7 @@ The database in `data.zip` is the latest of these snapshots, kept in
 | `plp-2026-09-30.db.gz` (superseded; the corpus the evaluations to 10 Oct used) | 41.5MB | `e238338726c7da661496d99b2c14a998588fd007d1f189a0690cc67f657dd3f0` | Same documents and sentences as the snapshot below (28,002 and 44,345), re-assigned to the 10-aspect taxonomy (281,744 sentence–aspect pairs, [docs/DESIGN.md](docs/DESIGN.md), decision 21), re-scored with base FinBERT, and the index rebuilt counting each sentence once in its cross-aspect rows. The corpus is frozen from here ([docs/PLAN.md](docs/PLAN.md), section 2) |
 | `plp-2026-09-26-v2.db.gz` (superseded) | 28.9MB | `f6aac79a212368747abd14382838e2bb639ea25366df74015a1ffe6208e4a62b` | 28,002 documents, 44,345 sentences, to 25 Sep: the snapshot below plus 207 CNA articles from 2023 on ([docs/DESIGN.md](docs/DESIGN.md), decision 20); every sentence embedded, aspect-tagged and baseline-scored under the four-aspect taxonomy; index recomputed |
 | `plp-2026-09-26.db.gz` (superseded) | 28.0MB | `3d2417d89eccd7fc21dd7e365f77445e0f0bfc869cc8f30301d50df1fd88fa45` | 27,795 documents, 42,746 sentences, to 25 Sep; every sentence embedded, aspect-tagged and baseline-scored; index recomputed; before CNA |
-| `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/data-report-2026-09-24.html)) |
+| `plp-2026-09-24-v2.db.gz` (superseded) | 28.0MB | `cd3aceff1e8c865ca9b64209b4088dec4913eaed2984497036d318117b469fb0` | 27,737 documents, 42,690 sentences; news backfilled to 2023-01; every sentence embedded, aspect-tagged and baseline-scored; index recomputed ([docs/data-report-2026-09-24.html](docs/archive/data-report-2026-09-24.html)) |
 | `plp-2026-09-24.db.gz` (superseded) | 26.8MB | `f317cf87fb9250a715480c8ee0554d780edbf8ddd19f240be11951ea1d6f2489` | same day, before embeddings, aspects, sentiment and index were run on the news |
 
 The two vector files aren't in git either. Each is a cache rebuilt from the
@@ -502,6 +508,6 @@ data/plp.db   SQLite store (gitignored; see Getting the database)
 ## Tests
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2956 tests
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 3003: adds the diagram and notebook checks
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q   # 2957 tests
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest -q          # 3004: adds the diagram and notebook checks
 ```

@@ -1,12 +1,12 @@
-# Five weeks to submission
+# Five weeks to submission: the plan of 26 Sep 2026
 
-The plan from `docs/PLAN.md` section 5 as a timeline: what people and AI work on each week, and the gate that closes each week. For the team, and for the report's project-management section.
+The plan from `docs/PLAN.md` section 5 as a timeline, as it was drawn on 26 Sep 2026: what people and AI were to work on each week, and the gate that closes each week. It is a record of the plan, not of what was done: what was done is in `docs/STATUS.md` and `docs/HANDOFF.md`. For the report's project-management section.
 
 ```mermaid
 gantt
   accTitle: Plan to 1 November 2026
-  accDescr: Five weekly stages from 28 September to 1 November, people's work and AI work side by side, each week ending in a gate.
-  title Five weeks to submission
+  accDescr: The plan as drawn on 26 September 2026: five weekly stages from 28 September to 1 November, people's work and AI work side by side, each week ending in a gate.
+  title Five weeks to submission, as planned on 26 Sep 2026
   dateFormat YYYY-MM-DD
   axisFormat %d %b
   todayMarker off
@@ -41,8 +41,8 @@ Bars are weeks from the plan's table; they show what each week is for, not effor
 Labelling runs across two weeks because it is the critical path and its gate (about
 1,000 rows) closes on 18 Oct. If it slips, the plan's fallback is to fine-tune on what is
 labelled by then with k-fold cross-validation. The decisions on passing mentions, the
-demo model and the OpenAI backend fall inside weeks 3 and 4 and are listed in PLAN section 2. The chart doesn't update itself: when the plan
-changes, change this source too.
+demo model and the OpenAI backend fall inside weeks 3 and 4 and are listed in PLAN section 2. The chart is not updated as work happens; `docs/PLAN.md` calls this
+table the original ordering.
 
 ## Sources
 
@@ -50,10 +50,10 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| week 1 and its gate | `docs/PLAN.md:234` | `| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled |` |
-| week 2 and its gate | `docs/PLAN.md:235` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; blended index decided |` |
-| week 3 and its gate | `docs/PLAN.md:236` | `| 12 – 18 Oct | ~1,000 rows labelled; model trained |` |
-| week 4 and its gate | `docs/PLAN.md:237` | `| 19 – 25 Oct | Results frozen |` |
-| week 5 and its gate | `docs/PLAN.md:238` | `| 26 Oct – 1 Nov | Submitted |` |
-| submission date | `docs/PLAN.md:16` | `All due **Sunday 1 November 2026**.` |
-| fallback if labelling slips | `docs/PLAN.md:240` | `If labelling slips, the fallback is to fine-tune` |
+| week 1 and its gate | `docs/PLAN.md:245` | `| 28 Sep – 4 Oct | Candidates re-drawn and pre-labelled |` |
+| week 2 and its gate | `docs/PLAN.md:246` | `| 5 – 11 Oct | κ ≥ 0.6 on the shared sample; blended index decided |` |
+| week 3 and its gate | `docs/PLAN.md:247` | `| 12 – 18 Oct | ~1,000 rows labelled; model trained |` |
+| week 4 and its gate | `docs/PLAN.md:248` | `| 19 – 25 Oct | Results frozen |` |
+| week 5 and its gate | `docs/PLAN.md:249` | `| 26 Oct – 1 Nov | Submitted |` |
+| submission date | `docs/PLAN.md:17` | `All due **Sunday 1 November 2026**.` |
+| fallback if labelling slips | `docs/PLAN.md:251` | `If labelling slips, the fallback is to fine-tune` |

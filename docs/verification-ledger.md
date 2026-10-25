@@ -1,5 +1,7 @@
 # Verification ledger
 
+> **A dated record of 11 Sep 2026, not the current state.** Its figures describe the corpus and code of that day. For current figures, see the [documentation map](README.md).
+
 Every number and claim added to the documentation on 2026-09-11, with the
 command that produced it.
 

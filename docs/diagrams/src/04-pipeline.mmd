@@ -1,11 +1,12 @@
 flowchart TB
   accTitle: Processing pipeline
-  accDescr: Sources are ingested into documents, split into sentences, embedded, tagged with aspects, scored and aggregated into an index that the dashboard, API and chatbot read. Planned replacements are dashed.
+  accDescr: Sources are ingested into documents and split into sentences. A local LLM gives each sentence one aspect from the ten found by offline discovery. Each sentence and aspect pair is scored by the fine-tuned model in use and by base FinBERT, both stored, and aggregated into an index for each model. The API serves the model in use, with the evidence, to the dashboard and the chatbot. Bank entity recognition is built but not applied.
 
   subgraph src["Sources"]
     reddit["Reddit<br/>ingest.arctic_shift"]
     news["News<br/>Google, Yahoo, NewsAPI, CNA"]
     pdfs["Earnings PDFs<br/>ingest.earnings_extract"]
+    broker["Broker research PDFs<br/>ingest.sgx_research_extract"]
     cons["Analyst consensus<br/>ingest.yahoo_analyst"]
   end
 
@@ -13,36 +14,39 @@ flowchart TB
   docs[("documents")]
   acons[("analyst_consensus")]
   prep["Split into sentences, attribute bank,<br/>drop near-duplicates<br/>preprocess.pipeline"]
-  ner["Bank entity recognition<br/>(planned, DESIGN 18)"]
+  ner["Bank entity recognition<br/>built, not applied<br/>preprocess.bank_ner"]
   sents[("sentences")]
-  emb["FinBERT embeddings<br/>aspects.embed_store"]
+  emb["FinBERT vectors<br/>aspects.embed_store"]
   disc["Aspect discovery, offline<br/>UMAP + HDBSCAN, aspects.discover"]
-  assign["Seed-centroid aspect assignment<br/>aspects.assign"]
-  llm["LLM aspect classifier<br/>(planned, DESIGN 16)"]
+  tax["10 aspects + other<br/>config/aspects.yaml"]
+  assign["One aspect a sentence<br/>llama3.1:8b, aspects.assign"]
   sa[("sentence_aspects")]
-  score["Base FinBERT, zero-shot<br/>sentiment.score"]
-  ft["Fine-tuned FinBERT, trained 30 Sep;<br/>replaces base only if it beats it<br/>(PLAN section 5)"]
+  score["Each (sentence, aspect) pair scored by<br/>fine-tuned FinBERT, the model in use,<br/>and base FinBERT, kept as the baseline<br/>sentiment.score"]
   as[("aspect_sentiment")]
-  agg["Index: windows, sources,<br/>shrinkage at low volume<br/>aggregate.index"]
+  agg["Index for each model: windows, sources,<br/>shrinkage at low volume<br/>aggregate.index"]
   idx[("sentiment_index")]
-  ui["Dashboard, REST API, chatbot"]
+  svec["Search vectors<br/>all-MiniLM-L6-v2<br/>chatbot.search_vectors"]
+  api["REST API and chatbot<br/>serve the model in use"]
+  dash["Dashboard<br/>reads through the API"]
 
   reddit --> docs
   news --> filt --> docs
   pdfs --> docs
+  broker --> docs
   cons --> acons
   docs --> prep --> sents
-  ner -.-> prep
-  sents --> emb --> assign --> sa
-  emb -.-> disc
-  disc -. "informs the taxonomy" .-> assign
-  llm -. "replaces" .-> assign
+  ner -. "not applied" .-> prep
+  sents --> emb -- "offline" --> disc --> tax
+  tax --> assign
+  sents --> assign --> sa
   sa --> score --> as
-  ft -. "replaces" .-> score
   as --> agg --> idx
-  idx --> ui
-  sents -- "evidence" --> ui
-  acons --> ui
+  sents --> svec
+  idx --> api
+  sents -- "evidence" --> api
+  svec --> api
+  acons --> api
+  api --> dash
 
-  classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
-  class ner,llm,ft planned;
+  classDef inactive stroke-dasharray: 5 5,color:#555,fill:#fafafa;
+  class ner inactive;

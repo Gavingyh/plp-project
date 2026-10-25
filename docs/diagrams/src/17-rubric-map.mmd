@@ -1,6 +1,6 @@
 flowchart LR
   accTitle: Rubric items, components and course modules
-  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition and LLM aspect categorisation are planned; annotation is done and the fine-tuned sentiment model is trained.
+  accDescr: Nine rubric items each map to one component. Components draw on Text Analytics, New Media and Sentiment Mining, Text Processing using Machine Learning, and Conversational UIs. Bank entity recognition is built but not applied to the stored corpus; every other component is built and in use.
 
   subgraph R["Rubric item"]
     r1["data"]
@@ -18,10 +18,10 @@ flowchart LR
     c1["Corpus: Reddit, earnings,<br/>news, analyst consensus<br/><i>TA · NMSM</i>"]
     c2["Sentence segmentation,<br/>bank attribution<br/><i>TA</i>"]
     c3["Aspect discovery<br/>UMAP + HDBSCAN<br/><i>TA · NMSM</i>"]
-    c4["Aspect categorisation<br/>by a local LLM<br/><i>TA · NMSM</i>"]
-    c5["Bank entity recognition<br/>and resolution<br/><i>TA · NMSM</i>"]
-    c6["Sentiment: fine-tuned FinBERT,<br/>trained, below base on macro-F1<br/><i>TPML · NMSM</i>"]
-    c7["Annotation, kappa at least 0.6<br/><i>TA</i>"]
+    c4["Aspect categorisation by a local LLM,<br/>one aspect a sentence, 73.9% agreement<br/><i>TA · NMSM</i>"]
+    c5["Bank entity recognition<br/>and resolution, built, not applied<br/><i>TA · NMSM</i>"]
+    c6["Sentiment: fine-tuned FinBERT,<br/>macro-F1 0.670 against base 0.571<br/><i>TPML · NMSM</i>"]
+    c7["Annotation: two people, kappa 0.93;<br/>an LLM rater for the training rows<br/><i>TA</i>"]
     c8["Sentiment index, served by the API<br/><i>NMSM</i>"]
     c9["Chatbot with tool calling<br/><i>CNI</i>"]
   end
@@ -31,7 +31,7 @@ flowchart LR
   r1 --> c1
   r2 --> c2
   r3 --> c3
-  r4 -.-> c4
+  r4 --> c4
   r5 -.-> c5
   r6 --> c6
   r7 --> c7
@@ -39,5 +39,5 @@ flowchart LR
   r9 --> c9
   C ~~~ key
 
-  classDef planned stroke-dasharray: 5 5,color:#555,fill:#fafafa;
-  class c4,c5 planned;
+  classDef inactive stroke-dasharray: 5 5,color:#555,fill:#fafafa;
+  class c5 inactive;

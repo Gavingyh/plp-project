@@ -258,7 +258,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Paste the replacement text into the Word report <span class="chip team">Report editor</span></span>
       <span class="when">by Wed 28 Oct</span>
       <p class="why"><b>Problem:</b> the Word report still describes the chatbot before its fixes (a local model, and Table 8 from before 18 Oct) and gives old search figures, 0.66 and 0.62, which a bug in the measure understated; corrected they are 0.70 and 0.65, and the search now ranks differently.</p>
-      <p class="why"><b>Fix:</b> paste the blocks in <code>docs/report/word-updates-2026-10-24.md</code> into sections 3.7, 4.5, 5, Table 9 and the open-items box. They add about 240 words, and the file says what to cut first if the 20-page limit is tight. Add the ratings results from 27 Oct in the same pass.</p>
+      <p class="why"><b>Fix:</b> paste the blocks in <code>docs/report/word-report-updates.md</code> into sections 2.3, 3.7, 4.5, 5, Table 9 and the open-items box. The file also corrects three errors already in the Word report: Table 3 shows the 399-sentence figures under text written for the 299 (it gives the 299-sentence table to paste), the amber box at the top says the chatbot results predate 18 Oct, and section 4.6 gives an old test count (now 2,957, or 3,004 with the diagram and notebook checks). It was written against the 24 Oct copy, so check each block against the current master first. The blocks add about 380 words, and the file says what to cut first if the 20-page limit is tight. Add the ratings results from 27 Oct in the same pass.</p>
     </li>
     <li data-o="team">
       <span class="t">Check the limitations-and-defences table and put it in section 5 <span class="chip team">People</span></span>
@@ -277,12 +277,6 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="when">by Wed 28 Oct</span>
       <p class="why"><b>Problem:</b> on 14 Oct the dashboard read the database directly and had open items: both models' rows shown, an analyst panel missing UOB, a spinner instead of the chatbot's steps, a misleading error line, and 7- and 30-day cells under 5 sentences shown as if reliable. Since 18 Oct it reads everything through the API, which settles the first two; the rest need a check before the video.</p>
       <p class="why"><b>Fix:</b> click through every tab and the Ask page against the API on the current <code>main</code>; note anything still wrong in this list.</p>
-    </li>
-    <li data-o="team">
-      <span class="t">Fix one line in the recall evaluation script <span class="chip team">Script owner</span></span>
-      <span class="when">by Wed 28 Oct</span>
-      <p class="why"><b>Problem:</b> <code>chatbot/retrieval_eval_with_recall.py</code> divides precision by 5 even when a topic holds fewer than 5 sentences (3 of 28 queries), the bug fixed in <code>chatbot/retrieval_eval.py</code> on 24 Oct. Its recall figures are unaffected.</p>
-      <p class="why"><b>Fix:</b> change <code>sum(top) / k</code> to <code>sum(top) / max(len(top), 1)</code> on the precision line and rerun, so the two scripts agree.</p>
     </li>
     <li data-o="team">
       <span class="t">Write the conclusions, each person's contribution, and the GenAI pros and cons <span class="chip team">People</span></span>
@@ -319,13 +313,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">The chatbot evaluation records the flags the reader sees <span class="chip ai">Done 25 Oct</span></span>
       <span class="when">done</span>
       <p class="why"><b>Result:</b> the Docker run's table showed gpt-6-luna with 2 of 32 answers carrying "a figure no tool returned", where the older Llama columns show 0. The evaluation recorded only the model's first draft, and since 18 Oct a draft that fails a check is rewritten before it is shown. It now records both, and the summary reports "in the model's first draft" and "in the answer shown". <code>python -m chatbot.run_eval --recheck --tag &lt;tag&gt;</code> fills in the second for an older results file without asking any model. Rechecked, every run since 18 Oct on the MacBook flags 1 or 2 first drafts and 0 answers shown. The Llama columns predate the rewrite, so their first draft was the answer shown.</p>
-      <span class="meta">Evidence: <code>docs/evidence/chatbot-fixes-2026-10-24.md</code>, "First draft and answer shown"; Table 8 in <code>docs/report/word-updates-2026-10-24.md</code> now has both rows.</span>
-    </li>
-    <li data-o="ai">
-      <span class="t">Correct the documents that contradict the code <span class="chip ai">Claude</span></span>
-      <span class="when">Mon 26 Oct</span>
-      <p class="why"><b>Problem:</b> CLAUDE.md, DESIGN.md and the technical spec quote macro-F1 0.604, the 1 Oct model's; the model in use scores 0.670 (three seeds averaged) and 0.649 per seed. DESIGN.md says every stored score is base FinBERT's, untrue since 12 Oct, and that the local model is the chatbot's default. The technical spec says the dashboard reads the database; it reads the API. A docstring in <code>aggregate/index.py</code> says the 7- and 30-day windows count back from today; they count back from the newest sentence, 25 Sep. Examiners check documents against code, and a wrong statement reads as a wrong system.</p>
-      <p class="why"><b>Fix:</b> correct each statement, then rerun the tests and the diagram check. No figure in the report moves.</p>
+      <span class="meta">Evidence: <code>docs/evidence/chatbot-fixes-2026-10-24.md</code>, "First draft and answer shown"; Table 8 in <code>docs/report/word-report-updates.md</code> now has both rows.</span>
     </li>
     <li data-o="ai">
       <span class="t">Write up the agreement and re-rating results <span class="chip ai">Claude</span></span>
@@ -356,6 +344,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-done">
   <h2 id="h-done">4. Done since 14 October</h2>
   <ul class="items">
+    <li data-o="ai">
+      <span class="t">Documents brought in line with the code, ready for an AI to write from <span class="chip ai">Done 25 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> two read-only audits found about 70 statements in the docs that no longer matched the code or the database, among them the 1 Oct model's 0.604 in CLAUDE.md, DESIGN.md and the technical spec, "every stored score is base FinBERT", the local model as the default, and the dashboard reading the database. Each is corrected; decision-log entries keep their reasoning and gain a line saying what holds now. <code>docs/README.md</code> is new: it says which documents are current, which are dated records and which are superseded, and gives every headline figure with its source. Superseded drafts and briefs moved to <code>docs/archive/</code>; STATUS.md was rewritten for the current state. A second audit of the rewritten text found no wrong headline figure and about 55 smaller faults, each fixed: the RUNBOOK lacked the recipe for the model in use; three sentences of the Word update overstated a result; and several places dropped a caveat (the three-try retest was read by an AI and is not held out; the human rating was of <code>llama3.1:8b</code>, not the default). All 23 diagrams were checked and 18 redrawn. The 15 test files named by validation round now carry topic names, the logs and Word copies are out of git, and the recall script's precision line and about 15 code comments are fixed. All 3,004 tests pass.</p>
+      <span class="meta">Evidence: the audit findings and fixes are listed in <code>docs/HANDOFF.md</code>, 25 Oct.</span>
+    </li>
     <li data-o="ai">
       <span class="t">The chatbot's misdescriptions of correct figures fixed <span class="chip ai">Done 24 Oct</span></span>
       <span class="when">done</span>
@@ -399,7 +393,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li><b>25 Oct, the dataset is <code>data.zip</code>:</b> the database, both vector files, the CNA cache and the aspect answers, built by <code>scripts/share_bundle.sh</code>, given to the team and to the assessors with the project, restored by the Docker setup or <code>python -m docker.bootstrap --data-only</code>. It holds CNA articles, so it goes to no one else.</li>
     <li><b>25 Oct, models on a public Hugging Face repo</b> (the Docker setup downloads them without a login); the model card still needs its licence.</li>
     <li><b>24 Oct, fix or disclose:</b> errors and leaks are fixed before submission; measured weaknesses go in the report with their cause and a proposed fix; work that would move the frozen figures (re-scoring, relabelling, new models) is future work. None of this week's fixes retrains a model.</li>
-    <li><b>24 Oct, the Word report is the master</b> (<code>plp-final-report.docx</code> on SharePoint); Claude's changes come as replacement text in <code>docs/report/word-updates-2026-10-24.md</code>.</li>
+    <li><b>24 Oct, the Word report is the master</b> (<code>plp-final-report.docx</code> on SharePoint); Claude's changes come as replacement text in <code>docs/report/word-report-updates.md</code>.</li>
     <li><b>24 Oct, chatbot default:</b> OpenAI's gpt-6-luna; the local llama3.1:8b is the no-key option and still sorts every question. Gemini removed.</li>
     <li><b>24 Oct, hosted model may quote CNA and broker research;</b> both stay out of git and shared folders otherwise; Reddit text is never sent.</li>
     <li><b>24 Oct, evidence search:</b> word order within a topic; all-MiniLM-L6-v2 with no topic. FinBERT's vectors stay for aspect discovery only.</li>
@@ -425,7 +419,8 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-refs">
   <h2 id="h-refs">Read more</h2>
   <ul class="refs">
-    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/report/word-updates-2026-10-24.md" target="_blank" rel="noopener">Updates for the Word report</a> <span class="muted">docs/report/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/README.md" target="_blank" rel="noopener">Documentation map and current figures: start here</a> <span class="muted">docs/</span></li>
+    <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/report/word-report-updates.md" target="_blank" rel="noopener">Updates for the Word report</a> <span class="muted">docs/report/</span></li>
     <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/chatbot-fixes-2026-10-24.md" target="_blank" rel="noopener">The chatbot after the fixes</a> <span class="muted">docs/evidence/</span></li>
     <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/human-ratings-2026-10-24.md" target="_blank" rel="noopener">Human ratings of the chatbot</a> <span class="muted">docs/evidence/</span></li>
     <li><a href="https://github.com/Gavingyh/plp-project/blob/main/docs/evidence/search-models-2026-10-24.md" target="_blank" rel="noopener">Models built for search</a> <span class="muted">docs/evidence/</span></li>
@@ -434,7 +429,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Updated on 25 Oct 2026 after the Docker setup and <code>data.zip</code>; on 24 Oct 2026 for the last week before submission: every open item with its problem, its figure and its fix. Earlier versions on 14, 13, 12 and 10 Oct 2026, consolidated on 7 Oct 2026. Figures are from the evidence files in the repository.</footer>
+<footer>Updated on 25 Oct 2026 after the documentation cleanup, and earlier that day after the Docker setup and <code>data.zip</code>; on 24 Oct 2026 for the last week before submission: every open item with its problem, its figure and its fix. Earlier versions on 14, 13, 12 and 10 Oct 2026, consolidated on 7 Oct 2026. Figures are from the evidence files in the repository.</footer>
 
 </div>
 

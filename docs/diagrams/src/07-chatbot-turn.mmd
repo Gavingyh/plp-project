@@ -12,6 +12,7 @@ flowchart TB
   cap{"Eight model calls used?"}
   budget["Answer: couldn't finish<br/>within the budget"]
   emp{"Empty, or just braces?"}
+  firstQ{"The first draft?"}
   empR["Fixed reply: couldn't answer,<br/>with an example question"]
   chk{"Cites evidence no search returned,<br/>states a figure no tool returned, or<br/>describes the mood in words no tool returned?"}
   used{"Second try already used?"}
@@ -29,7 +30,9 @@ flowchart TB
   cap -- no --> llm
   cap -- yes --> budget --> emp
   tc -- no --> emp
-  emp -- yes --> empR --> out
+  emp -- yes --> firstQ
+  firstQ -- yes --> empR --> out
+  firstQ -- no, the rewrite came back empty --> trim
   emp -- no --> chk
   chk -- no --> refs --> out
   chk -- yes --> used

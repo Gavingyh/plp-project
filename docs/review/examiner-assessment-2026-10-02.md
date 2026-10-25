@@ -1,5 +1,7 @@
 # An examiner's assessment, 2 October 2026
 
+> **A dated record of 2 Oct 2026, not the current state.** Many of the gaps it names have since been closed. For current figures, see the [documentation map](../README.md).
+
 *Written in the role of an external examiner for the NUS-ISS PLP practice
 module. It assesses the repository on `main` the morning after the
 1–2 October overnight runs, 30 days before submission. It follows the

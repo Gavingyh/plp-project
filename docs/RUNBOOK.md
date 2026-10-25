@@ -28,7 +28,7 @@ The pipeline runs without any API key. Keys only add sources:
 
 | key | adds | required? |
 |---|---|---|
-| *(none)* | Reddit, earnings PDFs, Yahoo consensus, local chatbot | — |
+| *(none)* | Reddit, earnings PDFs, Yahoo consensus, local chatbot | none |
 | `NEWSAPI_KEY` | news articles (~1 month lookback on free tier) | optional |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | hosted chatbot model (`OPENAI_API_KEY` is required for the default OpenAI answer backend; `ANTHROPIC_API_KEY` for explicit Claude) | required for the selected hosted backend; other tabs work without it |
 
@@ -250,7 +250,7 @@ Python installations on a typical setup here and only one works:
 
 That last one is the dangerous one: the code uses `X \| None` type syntax
 which Python 3.9 cannot parse, so **every module fails at import**. A
-scheduled overnight backfill was lost this way — conda activation in a shell
+scheduled overnight backfill was lost this way: conda activation in a shell
 profile can silently shadow an activated venv, and the run failed all 79 of
 its work units identically without producing any data.
 
@@ -264,7 +264,7 @@ path avoids the problem entirely.
 
 Set `HF_HUB_OFFLINE=1`. HuggingFace performs a rate-limited metadata check
 even when the model is already cached locally, which can stall with near-zero
-CPU usage — it looks like a hang but is a network wait.
+CPU usage; it looks like a hang but is a network wait.
 
 ```bash
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.assign
@@ -274,7 +274,7 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.assign
 
 ## The pipeline
 
-Steps are **order-dependent** — each consumes the previous step's output.
+Steps are **order-dependent**: each consumes the previous step's output.
 
 The corpus is frozen from 2026-09-26 and the shared snapshot has already been
 through every step below, so a teammate restoring it (README, "Getting the
@@ -379,12 +379,14 @@ Do not assume a hang. On an M-series Mac with MPS:
 |---|---|---|
 | `run_daily_batch.py` (7-day) | ~2–5 min | network-bound |
 | `preprocess.pipeline` | seconds–2 min | scales with new documents |
-| `aspects.assign` | **10–20 min** for ~10k new sentences | FinBERT embedding; longer sentences cost more |
+| `aspects.assign` | **a few hours** for ~10k new sentences; about a day for the whole corpus | asks `llama3.1:8b` for each new sentence's aspect (Ollama must be running), after embedding it with FinBERT and the search model |
 | `sentiment.score` | **20–30 min** for ~18k new pairs | FinBERT classification |
 | `aggregate.index` | ~2 s | pure SQL + arithmetic |
 
-Measured 2026-09-24 on news: 5,751 headline sentences were embedded and
-assigned in under a minute, and 9,891 pairs scored in about a minute.
+Measured 2026-09-24 on news, with the earlier centroid method: 5,751 headline
+sentences were embedded and assigned in under a minute, and 9,891 pairs
+scored in about a minute. The `llm` method in use is far slower (the table
+above).
 Headlines are short; long earnings sentences sit at the slow end of the table.
 
 Steps 3 and 4 only process *new* work, so subsequent runs are fast. Progress
@@ -392,8 +394,9 @@ appears in the logs; the log file also captures DEBUG detail
 (`data/logs/plp.log`).
 
 Step 3 assigns new sentences by `assignment_method` in `config/aspects.yaml`:
-`centroid` (today) or `llm`, one aspect per sentence from `llama3.1:8b`,
-which needs Ollama running. Step 4 stops with "probabilities don't sum to 1"
+`llm`, the configured method, gives one aspect per sentence from
+`llama3.1:8b`, which needs Ollama running; `centroid`, the earlier
+embedding match, is kept for the comparison. Step 4 stops with "probabilities don't sum to 1"
 if the GPU returns garbage; rerun it with `--cpu`.
 
 ### Apply the aspect and sentiment decisions (the re-score)
@@ -450,8 +453,8 @@ changed the aspect of 6,914 sentences and lowered each bank's headline by
 0.010 to 0.015, because the served model reads the aspect's name with the
 sentence ([evidence](evidence/rescore-wealth-wording-2026-10-14.md)). The
 copy before it is `data/snapshots/plp-before-rescore-20261014-000702.db`.
-The files teammates need are gathered by
-`data/run/rescore-2-2026-10-14/build_share.sh` into `data/run/share/`.
+The dataset teammates and assessors need is `data/data.zip`, built by
+`scripts/share_bundle.sh` (README, "Getting the database").
 
 Links to locally read PDFs are relative paths (decided 4 Oct, applied
 12 Oct): `scripts/rewrite_pdf_paths.py` counts by default and writes only
@@ -522,7 +525,7 @@ Removing articles an audit flags is a manual, approved step; see the two
 clean-ups recorded in news-data.md.
 
 CNA is separate from `run_news_pull.py` because it is slow: it fetches every
-article's full text at CNA's 10-second crawl delay (about 75 minutes for the
+article's full text at CNA's 10-second crawl delay (well over an hour for the
 2023–2026 backfill). A re-run only fetches what `data/cna/` doesn't hold yet.
 
 ```bash
@@ -549,7 +552,7 @@ checkout's path first. It ingests only; run the pipeline steps afterwards.
 level but still exits 0; `run_news_pull.py` exits non-zero, and the
 backfill below records such a month as incomplete and moves on.
 
-### UOB earnings — fetched from the Wayback Machine
+### UOB earnings, fetched from the Wayback Machine
 
 UOB's IR site sits behind an F5 WAF that answers any scripted request with a
 199-byte challenge stub (`Request Redirected` / `TS.request.ID`), so
@@ -567,7 +570,7 @@ URLs and is not behind that WAF, so fetch them from there instead:
 The bytes are UOB's own published PDFs; only the transport differs. Two
 limits matter: archive coverage thins out for the most recent
 quarters (the dry run prints per-year counts), and a capture is occasionally
-the WAF stub rather than the document — those are detected by magic bytes and
+the WAF stub rather than the document; those are detected by magic bytes and
 discarded rather than saved as unreadable `.pdf` files.
 
 archive.org is a donated public service and rate-limits under load; the
@@ -598,8 +601,8 @@ rows (825 documents).
 ## Interfaces
 
 The interfaces are the REST API, a terminal chat for testing the chatbot,
-and the Streamlit dashboard (`dashboard/`, a teammate's), which reads the
-database directly. The API is the documented interface for any frontend
+and the Streamlit dashboard (`dashboard/`, a teammate's), which reads
+everything through the API (`dashboard/api_client.py`). The API is the documented interface for any frontend
 (DESIGN decision 23); [api-integration.md](api-integration.md) is its contract.
 
 ### Start and stop
@@ -623,7 +626,8 @@ PLP_API_PORT=8100 scripts/start.sh api
 
 To serve another database, such as a rescored copy, without touching
 `data/plp.db`, set `PLP_DB_PATH`, and `PLP_EMBEDDINGS_PATH` if its sentence
-embeddings differ. The API and the dashboard both read it:
+embeddings differ. The API reads it, and the dashboard follows, since it
+reads the API:
 
 ```bash
 PLP_DB_PATH=data/plp_rescored.db PLP_API_PORT=8100 scripts/start.sh api
@@ -653,7 +657,7 @@ and stop are safe to run twice.
 
 `.env` is parsed line by line rather than sourced, because `. .env` executes
 the file as shell and `.env.example` ships with
-`REDDIT_USER_AGENT=plp-practice-module/0.1 by u/your_username` — an unquoted
+`REDDIT_USER_AGENT=plp-practice-module/0.1 by u/your_username`: an unquoted
 value whose spaces make `by` look like a command. Python's `dotenv` accepts
 that line, so the file is fine; shell is just the wrong parser for it.
 
@@ -691,7 +695,7 @@ curl 'http://localhost:8000/suggestions?limit=6'
 The questions are generated from the sentiment index, not hardcoded, so a
 bank or aspect without enough data is never suggested and a clicked
 suggestion won't dead-end on "insufficient data". Categories are `overall`,
-`aspect`, `compare`, `consensus`, `trend`, `evidence` — useful if the
+`aspect`, `compare`, `consensus`, `trend`, `evidence`, useful if the
 frontend wants to group or icon them. The terminal chat prints the same list
 with `/suggest`.
 
@@ -758,9 +762,11 @@ with each real key before the full benchmark; mocked tests do not verify account
 access or live quotas. The backends retry rate-limit/service-busy responses and
 return HTTP 503 with a useful message when the provider remains unavailable.
 
-Existing hosted-provider filtering remains in force: Reddit, CNA, broker-research
-and private/unknown evidence text, links and citations are withheld, as are earlier
-assistant answers that may quote them. Aggregate figures can still include those
+Existing hosted-provider filtering remains in force: Reddit evidence text and
+text from a source `config/sources.yaml` doesn't clear (`hosted_model`) are
+withheld, as are earlier assistant answers that may quote them. CNA and broker
+research sentences may be sent, by the team's decision of 24 Oct 2026 (DESIGN
+decision 28). Aggregate figures can still include those
 sources. Hosted evidence answers therefore see a different evidence pool from
 the local model; record this when comparing quality.
 
@@ -775,11 +781,12 @@ OPENAI_API_KEY=<the Groq key>
 OPENAI_MODEL=openai/gpt-oss-120b        # or llama-3.3-70b-versatile, qwen/qwen3.8-27b
 ```
 
-Then set `CHATBOT_BACKEND=openai` to use it. Groq's free tier allowed 8,000
-tokens a minute on 2026-09-30, about one question a minute with this
-chatbot's prompt and tools; the backend waits out a 429 or 503 (after
-Groq's `Retry-After` when sent) four times. Not yet run against Groq: the
-first successful answer is this setup's verification.
+Then set `CHATBOT_BACKEND=openai` to use it. Groq's free tier allows only a
+few questions a minute with this chatbot's prompt and tools (the token limit
+in `config/chatbot.yaml` is a cautious guess, not a checked figure); the
+backend waits out a 429 or 503 (after Groq's `Retry-After` when sent) four
+times. It was run once, with `openai/gpt-oss-120b`, on 61 questions and 18
+conversation turns ([evidence](evidence/chatbot-provider-eval-2026-10-06.md)).
 
 An answer is checked before it is returned, and the reader never sees a warning
 (`CHATBOT_VERIFY_BEFORE_REPLY`, on by default since 18 Oct 2026). Each draft is
@@ -835,7 +842,7 @@ changed:
 | `OLLAMA_THINK` | unset | `false` turns a reasoning model's thinking off (qwen3) |
 | `OLLAMA_KEEP_ALIVE` | `30m` | how long Ollama keeps the local model loaded after a question; a shorter time frees its memory sooner, and the next question then waits for the model to load |
 | `OLLAMA_TOOLS_IN_SYSTEM` | `false` | `true` writes the tool descriptions at the start of the instructions, where Ollama caches them, instead of passing them with every question (see `chatbot/backends/ollama_backend.py`) |
-| `CHATBOT_ASPECT_QUERY` | on (since 4 Oct) | `0` turns it off. On, evidence search, when given an aspect, ranks by the aspect's name plus the question's own topic words instead of the whole question: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); off until the team switches it on |
+| `CHATBOT_ASPECT_QUERY` | on (since 4 Oct) | `0` turns it off. On, evidence search, when given an aspect, ranks by the aspect's name plus the question's own topic words instead of the whole question. Measured when FinBERT vectors did the ranking: MRR 0.559 against 0.217 on the human-labelled pool ([evidence](evidence/chatbot-eval-build-2026-10-01.md)); within a topic the ranking now uses these words directly (precision at 5 0.82 against 0.74 for a random draw, [evidence](evidence/search-models-2026-10-24.md)) |
 
 The terminal chat remembers the last three turns, so follow-ups like
 "and OCBC?" work. The API is stateless: send earlier turns in `history`:
@@ -858,15 +865,30 @@ The answer goes to stdout and diagnostics to stderr, so:
 
 ```bash
 .venv-plp/bin/python3 -m chatbot.run_eval --limit 3   # smoke test
-.venv-plp/bin/python3 -m chatbot.run_eval             # full 23-question gold set
+.venv-plp/bin/python3 -m chatbot.run_eval             # the first gold set, 23 questions
+.venv-plp/bin/python3 -m chatbot.run_eval --set v2    # the 32-question gold set behind the reported figures
 ```
 
 Runs `chatbot/eval_gold_set.py` against the chatbot and writes:
-- `data/eval/chatbot_eval_results.jsonl` — full transcript (question, answer,
-  every tool call and its raw result)
-- `data/eval/chatbot_eval_summary.md` — automated checks: tool selection,
+- `data/eval/chatbot_eval_results.jsonl`: the full transcript (question,
+  answer, every tool call and its raw result)
+- `data/eval/chatbot_eval_summary.md`: the automated checks: tool selection,
   advice-decline behaviour, citation-fabrication rate, how many questions an
   input guard answered, and how many answers carried an unverified figure
+
+A draft answer that fails a check is rewritten, then trimmed, before it is
+shown, so the summary gives the citation and figure checks twice: on the
+model's first draft and on the answer shown. The second is what a reader
+sees. Results files written before both were recorded can be checked again
+without calling any model:
+
+```bash
+.venv-plp/bin/python3 -m chatbot.run_eval --recheck --tag <tag>
+```
+
+It re-runs the checks on each stored final answer, scores the refusal check
+again, and rewrites the results and the summary, keeping the run's model and
+time (`chatbot/run_eval.py`, `recheck`).
 
 Use `--tag` to keep runs apart, and `CHATBOT_TEMPERATURE` to compare decoding
 settings. Gold set v2 on each Groq model, one after another (the free tier's
@@ -904,8 +926,8 @@ The default comparison arms are Ollama and OpenAI. Groq remains optional with
 `--arms groq` and `GROQ_API_KEY`. Keys are never printed. The local Ollama arm needs Ollama running with `llama3.1:8b` pulled,
 which the intent classifier uses in every arm; without it the hosted arms still
 run but no intent is found, so the input-guard checks are not comparable.
-The hosted models never receive Reddit, CNA or broker-research text, so they
-see less evidence than the local one.
+The hosted models never receive Reddit text (CNA and broker research may be
+sent since 24 Oct 2026), so they see less evidence than the local one.
 
 ---
 
@@ -936,7 +958,7 @@ LOG_LEVEL=WARNING .venv-plp/bin/python3 run_daily_batch.py  # quiet, for cron
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m pytest tests/ -q
 ```
 
-2956 tests in `tests/`; `pytest -q` from the repository root runs 3003,
+2957 tests in `tests/`; `pytest -q` from the repository root runs 3004,
 adding the diagram and notebook checks. These are a fresh checkout's counts:
 one test runs per gold-set results file in `data/eval/`, so a machine that
 holds the results kept out of git (they quote CNA text) collects one more for
@@ -946,15 +968,15 @@ test marked `xfail(strict=True)` in `tests/test_validate_*.py`, which passes as
 On 6 Oct 2026 three markers are left, covering five cases, each kept as a
 recorded limit (evidence page, Known limits): a quote holding two quotes of
 the other style is removed whole, a real one inside it too, two cases
-(`tests/test_validate_chatbot_round7_review_findings.py`); and three
+(`tests/test_validate_chatbot_nested_quotes_and_inch_marks_review_findings.py`); and three
 ordinary dates the figure check flags, accepted false alarms
-(`tests/test_validate_chatbot_round9_probes.py`). The twelfth validation added
+(`tests/test_validate_chatbot_date_clauses_and_glued_words_probes.py`). The twelfth validation added
 25 more cases, all recorded limits too (a source note after a quote keeps its
 citation, a figure vouched for by subject words, text in backticks, a
-blockquote's citation line; `tests/test_validate_chatbot_round12_*.py`), and
+blockquote's citation line; `tests/test_validate_chatbot_off_mode_and_nearest_words_*.py`), and
 the thirteenth 16 more, also recorded limits (a removed quote's citation kept
 behind a dash or bold, figures skipped as years, durations or under 10, "45
-per cent", ".87"; `tests/test_validate_chatbot_round13_review_findings.py`):
+per cent", ".87"; `tests/test_validate_chatbot_invented_counts_review_findings.py`):
 46 expected failures in all.
 No network calls: external APIs are mocked with captured real payloads, so a
 provider changing its response shape surfaces as a failing test rather than
@@ -1019,7 +1041,7 @@ fails if a page and its `.mmd` differ; `pytest -q` from the repository root runs
 ### Optional: LLM-assisted pre-labelling
 
 Before a human labels anything, a local model can propose a label and
-rationale for each row (`llm_prelabel` / `llm_rationale` columns only — it
+rationale for each row (`llm_prelabel` / `llm_rationale` columns only; it
 never touches `label`). This is free, runs on Ollama, and typically cuts
 labelling to correction rather than labelling from scratch.
 
@@ -1037,17 +1059,17 @@ on macOS to also stop the machine sleeping).
 Fill in the `label` column per [annotation-guideline.md](annotation-guideline.md),
 using `llm_prelabel`/`llm_rationale` to correct rather than label from
 scratch. **Label independently first if you want to measure how often the
-model was right** — anchoring on its suggestion before forming your own view
+model was right**: anchoring on its suggestion before forming your own view
 defeats that measurement.
 
 The `split=test` rows are randomly sampled and must stay untouched by any
-model-assisted process — that is what keeps the eventual evaluation honest.
+model-assisted process; that is what keeps the eventual evaluation honest.
 
 ### Label the test split from the blind sheet, not from candidates.csv
 
 The pre-labelling run above reached the test split before anyone noticed it
 shouldn't have: 199 of the 200 `test` rows carry an `llm_prelabel`, and every
-row carries `base_finbert_label` — base FinBERT being one of the two models
+row carries `base_finbert_label`, base FinBERT being one of the two models
 the test set exists to compare. Labelling next to either column measures
 agreement with a model rather than establishing ground truth.
 
@@ -1060,7 +1082,7 @@ agreement with a model rather than establishing ground truth.
 
 `data/labeled/test_blind.csv` carries the sentence, its aspect and its
 provenance and nothing else. Fill in `label`, and `flag` for rows that
-shouldn't be scored at all — expect some, since a known limitation is that
+shouldn't be scored at all; expect some, since a known limitation is that
 sentences mentioning a bank incidentally still enter the corpus.
 
 Label the blind sheet on its own, before or without looking at the same rows
@@ -1078,7 +1100,7 @@ Two annotators label the same ~150 rows independently, then:
 ```
 
 Target is Cohen's κ ≥ 0.6. Below that, the guideline is ambiguous somewhere
-rather than an annotator being careless — find the disagreements, tighten the
+rather than an annotator being careless: find the disagreements, tighten the
 guideline, re-label the sample. For the aspect, add `--field aspect`: the
 sheets are then matched on `sentence_id` alone and compared over the eleven
 aspect keys.
@@ -1103,8 +1125,30 @@ was produced:
 
 ### Then fine-tune
 
-The configuration chosen on 2026-10-01 by cross-validation (8 epochs, the
-aspect's readable label as the second segment):
+The model in use was built in two steps
+([data/eval/model-rerun-2026-10-11/run.sh](../data/eval/model-rerun-2026-10-11/run.sh)
+runs them all, with cross-validation and scoring;
+[evidence](evidence/model-rerun-2026-10-11.md)). First, FinBERT reads the
+corpus's own unlabelled sentences (further pretraining, under two hours on
+the Mac); then three seeds are fine-tuned from it on the LLM rater's labels:
+
+```bash
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.dapt --out models/dapt-2026-10-11
+for seed in 42 1 7; do
+  HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.finetune --seed $seed --epochs 8 --aspect-text label \
+      --labels data/labeled/llm_rater/rules-2026-10-10/training_set.csv \
+      --base-model models/dapt-2026-10-11/classifier --out-dir models/experiments-2026-10-11/dapt
+done
+```
+
+`config/model_version.py` names those three seeds as the model in use. Most
+users never run this: setup downloads the three seeds from Hugging Face
+(`plp-bank-sentiment/plp-finbert-absa`) and checks them against the SHA-256
+values in `docker/models.json`.
+
+The earlier configuration, chosen on 2026-10-01 by cross-validation (8
+epochs, the aspect's readable label as the second segment), fine-tuned plain
+FinBERT on the people's labels:
 
 ```bash
 for seed in 42 1 7; do
@@ -1125,14 +1169,18 @@ HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m train.evaluate \
 | `--source-weights` | weight rows so the training source mix matches the corpus |
 | `--folds 5 --fold F` | one cross-validation fold: prints dev macro-F1 and keeps no model |
 | `--out-dir DIR` | where `seed_<s>/final` goes (default `models/finbert-absa`) |
+| `--base-model DIR` | start from this encoder instead of FinBERT (the further-pretrained one, for the model in use) |
+| `--labels FILE` | train on this label file instead of the people's labels in `candidates.csv` |
+| `--lr`, `--batch-size` | learning rate (default 2e-5) and batch size (default 16) |
 
 Each saved model records its input format in `input_format.json`, and
 `train.evaluate` feeds it the same way. Both refuse a `candidates.csv` with
 duplicated pairs or a sentence in both splits. Report mean and standard
-deviation across the seeds — a single run's F1 can be seed noise at this data
+deviation across the seeds: a single run's F1 can be seed noise at this data
 size. Choose configurations on cross-validation, never on the test split.
-Models land in `models/` (gitignored, about 440 MB each); share them through
-the team folder with the checksums in the evidence, not git. Results:
+Models land in `models/` (gitignored, about 440 MB each), never in git; the
+three seeds in use are on Hugging Face, with their checksums in
+`docker/models.json`. Results:
 [evidence/finetune-fixes-2026-10-01.md](evidence/finetune-fixes-2026-10-01.md)
 (earlier: [finetune-experiments-2026-09-30.md](evidence/finetune-experiments-2026-09-30.md)).
 
@@ -1141,7 +1189,7 @@ the team folder with the checksums in the evidence, not git. Results:
 ```bash
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval                              # llama3.1:8b
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aspects.llm_classify --eval --model qwen3:4b --no-think
-caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # every sentence without an answer yet (44,345 were classified on 3 Oct; the 1,499 added on 11 Oct, broker research and refilled Reddit comments, are not)
+caffeinate -i .venv-plp/bin/python3 -m aspects.llm_classify --corpus --model llama3.1:8b          # every sentence without an answer yet (all 45,844 have one under the current prompt, eef9b342)
 ```
 
 `--eval` classifies the 1,277 labelled sentences through local Ollama and
@@ -1154,23 +1202,30 @@ another job running on the Mac at the same time.
 Answers are cached in `data/aspect_llm/<model>.<prompt>.jsonl` (gitignored),
 so an interrupted run resumes with the same command and new sentences are
 the only ones classified. `<prompt>` is a hash of the aspect keys,
-definitions, examples and instructions (`96efe244` on 2 Oct). The definitions
+definitions, examples and instructions: `eef9b342` now, with the wealth rule
+of 10 Oct; `96efe244` before it. The definitions
 (`llm_definition`), the examples (`llm_examples`) and the model (`llm_model`)
 are in `config/aspects.yaml`; a test pins the hash, so a change to them is
 deliberate. Change any of them and the next run starts a new file, so the corpus needs a full redo;
 change them back and the old file is used again. Each run prints its cache
-file. Neither command writes to the database; applying the answers to it is a
-team decision ([evidence](evidence/llm-aspect-classifier-2026-10-01.md)).
+file. Neither command writes to the database. `aspects.assign` applies the answers
+to new sentences (`assignment_method: llm`); the re-scores of 12 and 14 Oct
+2026 applied them to the whole corpus with `scripts/rescore.py --aspects llm`
+([evidence](evidence/rescore-wealth-wording-2026-10-14.md)); the classifier's
+first evaluation is in
+[evidence/llm-aspect-classifier-2026-10-01.md](evidence/llm-aspect-classifier-2026-10-01.md).
 
 ### The index preview (reads only)
 
 ```bash
 HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 11000 --cpu
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13   # whole corpus, neutral margin
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 45844 --cpu --margin 0.0    # whole corpus, at the served model's margin
 ```
 
-Shows the index four ways: today's centroid aspects or the LLM's, each with
-base FinBERT or the fine-tuned average. It uses the LLM's cached answers for
+Shows the index four ways: the stored aspects or the LLM's, each with
+base FinBERT or the fine-tuned average. It was built to preview the
+re-score; on the re-scored database the stored aspects are the LLM's, so
+the stored-aspect views equal the LLM ones. It uses the LLM's cached answers for
 the sampled sentences and asks Ollama for any that are missing. The
 fine-tuned probabilities are saved in `data/preview/scores.<key>.jsonl`
 (`<key>` names the models and the device), so a stopped run resumes and a
@@ -1184,7 +1239,7 @@ experiment date. Results go to `data/preview/index_preview*.csv`
 ([evidence](evidence/index-preview-2026-10-01.md)).
 
 ```bash
-HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 44345 --cpu --margin 0.13 --llm-only --per-seed
+HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m aggregate.preview --n 45844 --cpu --margin 0.0 --llm-only --per-seed
 ```
 
 ### The Opus labeller
@@ -1236,5 +1291,5 @@ text (`tests/test_notebooks.py` checks).
 | `Could not reach Ollama` | Ollama not running | `ollama serve` |
 | Chatbot says the model `went silent for 120 seconds` | the computer is short of memory, so the local model is loading or writing very slowly | close other heavy programs and stop any other model job, then ask again; `ollama ps` shows whether the model is loaded |
 | API returns `insufficient_data` everywhere | pipeline not run, or no database restored | restore the snapshot (README), or run steps 1–5 above |
-| Chatbot answer has a verification warning | model fabricated citations | don't trust it; try a hosted backend |
+| Chatbot answer has a verification warning | checking before reply is off (`CHATBOT_VERIFY_BEFORE_REPLY=false`), so a failed draft is flagged instead of rewritten | turn it back on (the default), or don't trust the flagged part |
 | `pip: bad interpreter` | venv was created under an older directory name | use `.venv-plp/bin/python3 -m pip` |

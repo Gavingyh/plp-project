@@ -24,7 +24,7 @@ stateDiagram-v2
   end note
   note right of HasContext
     Added to the next turn's system prompt,
-    so "and OCBC?" keeps the aspect.
+    so "and OCBC?" keeps the aspect,
     and a follow-up keeps the period.
   end note
 ```
@@ -48,14 +48,14 @@ Each row names the file and line an element comes from, and the text that line m
 
 | element | source | symbol checked |
 |---|---|---|
-| new conversation, empty state | `chatbot/agent.py:2463` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
-| compare_banks sets all three | `chatbot/agent.py:2495` | `if c["name"] == "compare_banks":` |
-| a tool call names a bank | `chatbot/agent.py:2497` | `elif args.get("bank"):` |
-| window only if a tool passes one | `chatbot/agent.py:2501` | `if args.get("window"):` |
-| guard-answered question names a bank | `chatbot/agent.py:2503` | `if not r.calls:` |
-| state into the system prompt | `chatbot/agent.py:2343` | `with_state(SYSTEM_PROMPT, state)` |
+| new conversation, empty state | `chatbot/agent.py:2466` | `self.state: dict = {"banks": [], "aspect": None, "window": None}` |
+| compare_banks sets all three | `chatbot/agent.py:2498` | `if c["name"] == "compare_banks":` |
+| a tool call names a bank | `chatbot/agent.py:2500` | `elif args.get("bank"):` |
+| window only if a tool passes one | `chatbot/agent.py:2504` | `if args.get("window"):` |
+| guard-answered question names a bank | `chatbot/agent.py:2506` | `if not r.calls:` |
+| state into the system prompt | `chatbot/agent.py:2346` | `with_state(SYSTEM_PROMPT, state)` |
 | get_sentiment's schema offers a window | `chatbot/tools.py:794` | `"window": _WINDOW_PROP,` |
 | compare_banks's schema offers a window | `chatbot/tools.py:804` | `"window": _WINDOW_PROP}` |
 | get_sentiment accepts a window in Python | `chatbot/tools.py:77` | `def get_sentiment(bank: str, aspect: str | None = None, window: str = "all_time")` |
-| Clear conversation | `chatbot/chat.py:71` | `conv, last = Conversation(backend_name=args.backend, trace_path=args.trace), None` |
-| DESIGN: the state tracks the window | `docs/DESIGN.md:373` | `tracks the current bank, aspect and time window` |
+| Clear conversation | `chatbot/chat.py:72` | `conv, last = Conversation(backend_name=args.backend, trace_path=args.trace), None` |
+| DESIGN: the state tracks the window | `docs/DESIGN.md:417` | `tracks the current bank, aspect and time window` |

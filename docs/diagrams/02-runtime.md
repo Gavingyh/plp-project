@@ -69,17 +69,17 @@ Each row names the file and line an element comes from, and the text that line m
 | API process | `scripts/start.sh:193` | `-m uvicorn api.main:app` |
 | Ollama started if needed | `scripts/start.sh:201` | `start_ollama() {` |
 | plp.db location | `ingest/db.py:17` | `DB_PATH = os.path.join(BASE_DIR, "data", "plp.db")` |
-| embeddings cache location | `aspects/embed_store.py:31` | `STORE_PATH = os.path.abspath(os.environ.get("PLP_EMBEDDINGS_PATH")` |
-| search vectors location | `chatbot/search_vectors.py:33` | `STORE_PATH = os.path.abspath(os.environ.get("PLP_SEARCH_EMBEDDINGS_PATH")` |
+| embeddings cache location | `aspects/embed_store.py:34` | `STORE_PATH = os.path.abspath(os.environ.get("PLP_EMBEDDINGS_PATH")` |
+| search vectors location | `chatbot/search_vectors.py:32` | `STORE_PATH = os.path.abspath(os.environ.get("PLP_SEARCH_EMBEDDINGS_PATH")` |
 | news filter log location | `ingest/news_filter.py:52` | `FLAGGED_PATH = os.path.join(BASE_DIR, "data", "news_flagged.csv")` |
 | dashboard reads only through the API | `dashboard/api_client.py:39` | `base_url = (os.getenv("PLP_API_URL") or default_url).rstrip("/")` |
 | API reads the database | `api/main.py:42` | `from ingest.db import get_connection` |
 | evidence search reads the search vectors | `chatbot/retrieval.py:175` | `all_ids, all_vecs = load_for_search()` |
 | dashboard chat goes through the API | `dashboard/chat.py:47` | `"/chat",` |
 | API chat | `api/main.py:31` | `from chatbot.agent import Conversation` |
-| database not in git | `.gitignore:14` | `data/plp.db` |
-| embeddings not in git | `.gitignore:17` | `data/sentence_embeddings.npz` |
-| search vectors not in git | `.gitignore:18` | `data/search_embeddings.npz` |
-| snapshots not in git | `.gitignore:19` | `data/snapshots/` |
+| database not in git | `.gitignore:21` | `data/plp.db` |
+| embeddings not in git | `.gitignore:24` | `data/sentence_embeddings.npz` |
+| search vectors not in git | `.gitignore:25` | `data/search_embeddings.npz` |
+| snapshots not in git | `.gitignore:26` | `data/snapshots/` |
 | launchd job runs the daily batch | `scripts/com.plp.dailybatch.plist:26` | `<string>run_daily_batch.py</string>` |
 | launchd job not running | `docs/PLAN.md:41` | `The daily ingestion job is not running on any machine` |

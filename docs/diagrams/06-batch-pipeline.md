@@ -73,14 +73,14 @@ Each row names the file and line an element comes from, and the text that line m
 | drop near-duplicates | `preprocess/pipeline.py:121` | `if h in seen_hashes:` |
 | insert sentences | `preprocess/pipeline.py:134` | `INSERT OR IGNORE INTO sentences` |
 | assign refreshes embeddings first | `aspects/assign.py:104` | `update_embeddings()` |
-| embed new sentences | `aspects/embed_store.py:73` | `new_vecs = embed([r[1] for r in new_rows])` |
-| drop removed ones | `aspects/embed_store.py:67` | `pruned = len(existing_ids)` |
-| save the cache | `aspects/embed_store.py:81` | `_save_store(all_ids, all_vecs, path)` |
+| embed new sentences | `aspects/embed_store.py:88` | `new_vecs = embed([r[1] for r in new_rows])` |
+| drop removed ones | `aspects/embed_store.py:79` | `pruned = len(existing_ids)` |
+| save the cache | `aspects/embed_store.py:96` | `_save_store(all_ids, all_vecs, path)` |
 | already assigned | `aspects/assign.py:112` | `already = {r[0] for r in conn.execute(` |
 | cosine to centroids | `aspects/assign.py:125` | `sims = {aspect: _cosine(vec, centroid)` |
 | insert aspects | `aspects/assign.py:139` | `INSERT OR IGNORE INTO sentence_aspects` |
-| pairs not yet scored | `sentiment/score.py:118` | `WHERE NOT EXISTS (` |
-| classify, once per sentence | `sentiment/score.py:143` | `predictions = classify_sentences([text_of[i] for i in chunk])` |
-| insert scores | `sentiment/score.py:149` | `INSERT OR IGNORE INTO aspect_sentiment` |
+| pairs not yet scored | `sentiment/score.py:121` | `WHERE NOT EXISTS (` |
+| classify, once per sentence | `sentiment/score.py:146` | `predictions = classify_sentences([text_of[i] for i in chunk])` |
+| insert scores | `sentiment/score.py:152` | `INSERT OR IGNORE INTO aspect_sentiment` |
 | full recompute | `aggregate/index.py:323` | `conn.execute("DELETE FROM sentiment_index")` |
 | insert index rows | `aggregate/index.py:325` | `INSERT INTO sentiment_index` |

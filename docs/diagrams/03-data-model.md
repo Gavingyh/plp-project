@@ -123,12 +123,12 @@ Each row names the file and line an element comes from, and the text that line m
 | sentences key to documents | `ingest/db.py:44` | `doc_id         TEXT NOT NULL REFERENCES documents(doc_id)` |
 | analyst_consensus, created | `ingest/db.py:62` | `CREATE TABLE IF NOT EXISTS analyst_consensus (` |
 | sentence_aspects, created | `aspects/assign.py:47` | `CREATE TABLE IF NOT EXISTS sentence_aspects (` |
-| aspect_sentiment, created | `sentiment/score.py:51` | `CREATE TABLE IF NOT EXISTS aspect_sentiment (` |
+| aspect_sentiment, created | `sentiment/score.py:53` | `CREATE TABLE IF NOT EXISTS aspect_sentiment (` |
 | sentiment_index, created | `aggregate/index.py:67` | `CREATE TABLE IF NOT EXISTS sentiment_index (` |
 | has_analyst_view added later | `ingest/analyst_tag.py:77` | `ALTER TABLE documents ADD COLUMN has_analyst_view` |
-| join by sentence_id and aspect | `sentiment/score.py:120` | `ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect` |
+| join by sentence_id and aspect | `sentiment/score.py:123` | `ase.sentence_id = sa.sentence_id AND ase.aspect = sa.aspect` |
 | index derived from aspect_sentiment | `aggregate/index.py:91` | `FROM aspect_sentiment ase` |
 | index joins sentences | `aggregate/index.py:92` | `JOIN sentences sa ON sa.sentence_id = ase.sentence_id` |
 | foreign keys not enforced | `docs/diagrams/schema-2026-09-26.txt:114` | `PRAGMA foreign_keys (enforcement on this connection): 0` |
 | sentence_aspects key to sentences | `aspects/assign.py:48` | `sentence_id  TEXT NOT NULL REFERENCES sentences(sentence_id)` |
-| aspect_sentiment key to sentences | `sentiment/score.py:52` | `sentence_id   TEXT NOT NULL REFERENCES sentences(sentence_id)` |
+| aspect_sentiment key to sentences | `sentiment/score.py:54` | `sentence_id   TEXT NOT NULL REFERENCES sentences(sentence_id)` |

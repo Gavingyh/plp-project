@@ -4,13 +4,23 @@ For the team member editing the master report on SharePoint. Each block below
 replaces the named paragraph or table. Every figure comes from the evidence
 note named under it. Section numbers and headings are the Word report's.
 
-Net change: about 240 words longer across sections 3.7, 4.5 and 5 (1,397
-words in place of 1,157), mostly the search-model finding and the fixes. If the
+Net change: about 291 words longer across sections 2.3, 3.7, 4.5 and 5 (1,507
+words in place of 1,216), mostly the search-model finding and the fixes. If the
 20-page limit is tight, cut first the two sentences on recall and Hit@5 in
 "Evidence search" (about 60 words). Not counted: the team boxes and this
 file's notes to the team.
 
 ---
+
+## 2.3, the paragraph
+
+Replace "The database is distributed as a dated snapshot with a SHA-2…" with:
+
+> The dataset is one file, data.zip, supplied with the project and kept out of the public repository because it holds CNA articles and Reddit posts. It holds the database every figure here was computed from (a dated snapshot), the sentence vectors, the CNA cache and the aspect model's answers. Setup restores it only if the database passes an integrity check, holds the served model's scores and matches the vectors, and checks the three fine-tuned models it downloads against their SHA-256. Every figure in this report comes from a file under docs/evidence/ that names the command that produced it, and a fresh clone installed from the README served the stored index.
+
+Notes for the team (not report text):
+- Source: the README ("Run with Docker", "Getting the database"), `docker/bootstrap.py`, `scripts/share_bundle.sh`; the restore was checked on 25 Oct with the setup's own validator (45,844 sentences, 45,844 vectors, six files restored).
+- 110 words in place of 59.
 
 ## 3.7, first paragraph
 
@@ -103,3 +113,5 @@ Replace its last sentence, "The automated results are therefore a floor for trus
 Replace "The human evaluation is half done: a second rater, the user study, and a rerun of the chatbot results on the 18 October version (section 4.5)." with:
 
 > The human evaluation is half done: a second rater, the user study, and a person's check of the three-try answers (section 4.5).
+
+Delete "Which dataset is submitted: the snapshot holds text that must stay within the team (section 2.1)." It is settled: the dataset is `data.zip`, given to the assessors with the project (section 2.3).

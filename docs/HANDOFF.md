@@ -1989,9 +1989,11 @@ name the OpenAI key (Gemini is gone) and this exception.
 - Rotate the OpenAI key: the one in `.env` was pasted into a chat session.
 - Paste the replacement text into the Word report; a person to check the
   three-try answers the AI assistant read.
-- 13 results files already in git hold CNA or broker-research text in their
-  recorded tool results (for example `data/eval/summaries/summaries.jsonl`).
-  The repo is private; removing them, from history too, is a team decision.
+- CNA sentences appear in 97 tracked files, mostly the labelled data the
+  project tracks by design, plus evaluation results (counted on 25 Oct by
+  matching against the database; a count of 13 here on 24 Oct missed the
+  labels and is withdrawn). The raw articles are not in git. Fine while the
+  repo is private; remove with their history before any public release.
 - `chatbot/retrieval_eval_with_recall.py` divides precision by k like the
   old evaluation did; its recall figures are unaffected.
 - The gold-set check doesn't recognise gpt-6-luna's way of declining an

@@ -84,13 +84,13 @@ Each row names the file and line an element comes from, and the text that line m
 | preprocessing | `preprocess/pipeline.py:97` | `def run(sources: set[str]` |
 | bank attribution per sentence | `preprocess/pipeline.py:67` | `def _resolve_sentence_bank(` |
 | sentence splitting | `preprocess/segment.py:62` | `def segment(text: str)` |
-| embeddings | `aspects/embed_store.py:49` | `def update(path: str | None = None, embed=None, width: int = 768) -> dict:` |
-| FinBERT embedding model | `aspects/embed.py:17` | `MODEL_NAME = "ProsusAI/finbert"` |
+| embeddings | `aspects/embed_store.py:61` | `def update(path: str | None = None, embed=None, width: int = 768) -> dict:` |
+| FinBERT embedding model | `aspects/embed.py:19` | `MODEL_NAME = "ProsusAI/finbert"` |
 | discovery: UMAP | `aspects/discover.py:90` | `reducer = umap.UMAP(` |
 | discovery: HDBSCAN | `aspects/discover.py:95` | `clusterer = hdbscan.HDBSCAN(` |
 | assignment from seed centroids | `aspects/assign.py:68` | `vecs = embed_sentences(cfg["seed_terms"])` |
-| sentiment scoring | `sentiment/score.py:108` | `def run(sources: set[str]` |
-| zero-shot base FinBERT | `sentiment/score.py:41` | `MODEL_NAME = "ProsusAI/finbert"` |
+| sentiment scoring | `sentiment/score.py:111` | `def run(sources: set[str]` |
+| zero-shot base FinBERT | `sentiment/score.py:43` | `MODEL_NAME = "ProsusAI/finbert"` |
 | index aggregation | `aggregate/index.py:334` | `def run() -> int:` |
 | fine-tuning code | `train/finetune.py:267` | `def run(seed: int = 42` |
 | first run below base FinBERT | `docs/evidence/finetune-2026-09-30.md:36` | `**Fine-tuning did not beat base FinBERT on macro-F1.**` |

@@ -1,28 +1,29 @@
 flowchart LR
-  accTitle: Database snapshot and restore
-  accDescr: The owner checkpoints the write-ahead log, compresses the database, verifies the copy, records its checksum in the README and puts it in the team's shared folder. A teammate downloads it, checks the checksum and decompresses it to data/plp.db; the two vector caches are rebuilt locally or taken from the shared folder.
+  accTitle: Building and restoring the dataset
+  accDescr: The owner checkpoints and snapshots the database, verifies the copy and records its checksum, then builds data.zip from the latest snapshot, both vector files, the CNA cache and the aspect answers. A teammate or assessor puts data.zip at data/data.zip; Docker setup, or the same script run natively, checks it and restores the missing files.
 
-  subgraph make["Make a snapshot, after a material change"]
+  subgraph make["Build the dataset, after a material change"]
     direction TB
     ck["Checkpoint the write-ahead log<br/>PRAGMA wal_checkpoint(TRUNCATE)"]
-    gz["Compress<br/>gzip -9 to data/snapshots/plp-date-vN.db.gz"]
+    gz["Snapshot<br/>gzip -9 to data/snapshots/plp-date-vN.db.gz"]
     ver{"Decompressed copy passes<br/>PRAGMA integrity_check?"}
     sha["Record name, size and sha256<br/>in the README snapshot table"]
-    up["Put the .gz in the<br/>team's shared folder (by hand)"]
+    zip["scripts/share_bundle.sh: data.zip from the latest<br/>snapshot, both vector files, the CNA cache<br/>and the aspect answers, with SHA256SUMS"]
   end
 
-  subgraph use["Restore, on a teammate's machine"]
+  subgraph use["Restore, on a teammate's or assessor's machine"]
     direction TB
-    dl["Download the latest snapshot"]
-    same{"sha256 matches<br/>the README?"}
-    un["gunzip to data/plp.db"]
-    emb["Rebuild the vector caches, or take them<br/>from the shared folder: chatbot.search_vectors,<br/>aspects.embed_store"]
+    put["data.zip at data/data.zip"]
+    boot["Docker setup, or natively<br/>python -m docker.bootstrap --data-only"]
+    chk{"Integrity, the served model's rows,<br/>vectors match the sentences?"}
+    ok["Missing files restored; existing files kept;<br/>search vectors rebuilt if absent"]
+    stop["Setup stops and says why"]
   end
 
   ck --> gz --> ver
-  ver -- yes --> sha --> up
+  ver -- yes --> sha --> zip
   ver -- no --> gz
-  make -- "shared folder" --> use
-  dl --> same
-  same -- yes --> un --> emb
-  same -- no --> dl
+  make -- "team folder, or the project folder given to assessors" --> use
+  put --> boot --> chk
+  chk -- yes --> ok
+  chk -- no --> stop

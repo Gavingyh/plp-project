@@ -157,10 +157,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <div class="wrap">
 
 <header class="mast">
-  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Sat 24 Oct 2026</span></div>
+  <div class="eyebrow"><span>PLP practice module</span><span>DBS · OCBC · UOB sentiment</span><span>Sun 25 Oct 2026</span></div>
   <h1>What the team has to do before 1 November</h1>
-  <p class="lede">The chatbot fixes, the new evidence search and the switch to OpenAI as the chatbot's default are merged into <code>main</code> and tested. What is left is mostly people's work: two short ratings by Monday, the Word report updates by Wednesday, then conclusions, the video and submission. Each item says what is wrong, with its figure, and what the fix does. Figures freeze on Wednesday 28 October.</p>
-  <div class="countdown"><b>8</b> days to submission · Sun 1 Nov</div>
+  <p class="lede">The chatbot fixes, the new evidence search, the switch to OpenAI as the chatbot's default and the teammates' Docker setup are merged into <code>main</code> and tested, and the dataset is now one file, <code>data.zip</code>. What is left is mostly people's work: two short ratings by Monday, the Word report updates by Wednesday, then conclusions, the video and submission. Each item says what is wrong, with its figure, and what the fix does. Figures freeze on Wednesday 28 October.</p>
+  <div class="countdown"><b>7</b> days to submission · Sun 1 Nov</div>
 </header>
 
 <section aria-labelledby="h-path">
@@ -168,7 +168,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   <p class="sub">Each step needs the one before it. The two ratings set the pace: everything after Monday waits on them.</p>
   <ol class="path">
     <li><span class="d">24 Oct, done</span><span class="s">Chatbot fixes, new evidence search and the OpenAI default merged and tested</span></li>
-    <li><span class="d">Sun 25 Oct</span><span class="s">Rating sheets out; examiner run path; decision on CNA text in git</span></li>
+    <li><span class="d">Sun 25 Oct</span><span class="s">Rating sheets out; data.zip shared with the team and in the assessors' folder</span></li>
     <li><span class="d">Mon 26 Oct</span><span class="s">Both ratings done; docs that contradict the code corrected</span></li>
     <li><span class="d">Tue 27 Oct</span><span class="s">Agreement and re-rating results written up</span></li>
     <li><span class="d">Wed 28 Oct</span><span class="s">Word report updated; limitations table in; figures freeze</span></li>
@@ -189,21 +189,20 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 
 <section aria-labelledby="h-decide">
   <h2 id="h-decide">1. Decisions the team needs to make</h2>
-  <p class="sub">Three decisions, each blocking work further down the list.</p>
+  <p class="sub">Three decisions. How examiners get the data and run the system is settled by the Docker setup (section 4).</p>
   <ul class="items">
     <li data-o="decide">
-      <span class="t">Take CNA and broker-research text out of the results files in git <span class="chip decide">Decide</span></span>
-      <span class="when">by Sun 25 Oct</span>
-      <p class="why"><b>Problem:</b> 13 evaluation results files committed under <code>data/eval/</code> record the chatbot's tool results word for word, and those include CNA and broker-research sentences (for example <code>data/eval/summaries/summaries.jsonl</code> and <code>data/eval/terms/extracted.jsonl</code>). The repository is private, but the submission hands the code and datasets to the examiners, which takes CNA text outside the team, against our own rule.</p>
-      <p class="why"><b>Fix:</b> before packaging, keep the sentence ids and drop the text from those files, or remove the files from git. Removing them does not clear git history; that only matters if the GitHub repository itself is shared. Claude does it in about 30 minutes once the team agrees.</p>
-      <span class="meta">Found by scanning every committed results file for team-only sources, 24 Oct.</span>
+      <span class="t">Agree that CNA and broker sentences in git can wait until a public release <span class="chip decide">Confirm</span></span>
+      <span class="when">by Wed 28 Oct</span>
+      <p class="why"><b>Problem:</b> CNA sentences appear in 97 tracked files, mostly the labelled data the project tracks by design (for example <code>data/labeled/candidates.csv</code>), plus evaluation results; 11 of those files came in with the 24 Oct commit of the results and logs. The CNA rule covers the raw articles in <code>data/cna/</code>, which are not in git (removed on 11 Oct). An earlier count on this page said 13 results files; it missed the labelled data and is withdrawn.</p>
+      <p class="why"><b>Fix:</b> nothing before submission: the repository is private, and the assessors receive the CNA cache in <code>data.zip</code> anyway. Before any public release, remove these sentences with their history, as decided for broker reports on 7 Oct. Confirm, so it stops being an open item.</p>
+      <span class="meta">Counted on 25 Oct by matching every tracked file under <code>data/</code> and <code>docs/</code> against the database's CNA sentences.</span>
     </li>
     <li data-o="decide">
-      <span class="t">How examiners get the data, the models and a working chatbot <span class="chip decide">Decide</span></span>
+      <span class="t">Put a licence on the public model card <span class="chip decide">Decide</span></span>
       <span class="when">by Wed 28 Oct</span>
-      <p class="why"><b>Problem:</b> the database (26.2 MB compressed) and the two vector files are not in git, the models sit in a private Hugging Face repo, and the chatbot's default model needs an OpenAI key the examiners won't have. Making the Hugging Face repo public is blocked for now: base FinBERT's licence (CC BY-NC-SA 4.0) requires credit, non-commercial use and the same licence on any copy, and our models were further trained on CNA and broker-research text.</p>
-      <p class="why"><b>Fix:</b> choose one route and write it into the README: give examiners read access (the Hugging Face organisation's read role, or a read-only token) and the data through the submission or SharePoint, and tell them to run the chatbot with <code>CHATBOT_BACKEND=ollama</code> unless they have a key. The teammate building a Docker setup needs the same decision.</p>
-      <span class="meta">Docker brief: nothing private in the image (database, vectors, models, keys mounted or passed at run time), Ollama on the host.</span>
+      <p class="why"><b>Problem:</b> since the Docker setup was merged, the fine-tuned models download from the Hugging Face repo <code>plp-bank-sentiment/plp-finbert-absa</code> without a login: it is public and not gated. Its model card declares no licence. The models are built on base FinBERT, licensed CC BY-NC-SA 4.0, which lets a public copy exist only with credit to FinBERT, for non-commercial use and under the same licence. They were also further trained on CNA and broker-research text; the model card says so.</p>
+      <p class="why"><b>Fix:</b> add <code>license: cc-by-nc-sa-4.0</code> and <code>base_model: ProsusAI/finbert</code> to the top of <code>docs/model-card.md</code> and upload it as the repo's <code>README.md</code>. Claude does it in about 15 minutes once the owner agrees, since it writes to Hugging Face.</p>
     </li>
     <li data-o="decide">
       <span class="t">Move the figure freeze from 25 to 28 October <span class="chip decide">Confirm</span></span>
@@ -225,16 +224,16 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Fix:</b> in the OpenAI dashboard, revoke it and create a new one, then put the new one in <code>.env</code>. Nothing else changes.</p>
     </li>
     <li data-o="team">
-      <span class="t">Upload the new search vectors to SharePoint <span class="chip team">People</span></span>
+      <span class="t">Share <code>data.zip</code>: the team folder, and the project folder for the assessors <span class="chip team">Owner</span></span>
       <span class="when">by Sun 25 Oct</span>
-      <p class="why"><b>Problem:</b> since 24 Oct the chatbot ranks evidence for a question that names no topic with vectors from a model built for search, stored in <code>data/search_embeddings.npz</code> (66 MB, not in git). Without the file a teammate's chatbot falls back to matching words.</p>
-      <p class="why"><b>Fix:</b> upload <code>search_embeddings.npz</code> and the updated <code>README-teams.md</code> from <code>data/run/share-2026-10-24/</code>; the snapshot and the other files are unchanged (checksums in <code>SHA256SUMS</code>). Anyone can instead build it in about 5 minutes: <code>HF_HUB_OFFLINE=1 .venv-plp/bin/python3 -m chatbot.search_vectors</code>.</p>
+      <p class="why"><b>Problem:</b> the Docker setup defines the dataset as one file, <code>data/data.zip</code>, supplied with the project, and refuses to start without a valid one. Until now the team folder held loose files (a compressed snapshot, vector files) that don't fit it.</p>
+      <p class="why"><b>Fix:</b> upload <code>data.zip</code> (225 MB), <code>README-teams.md</code> and <code>SHA256SUMS</code> from <code>data/run/share-2026-10-25/</code>, built on 25 Oct by <code>scripts/share_bundle.sh</code> from the 14 Oct snapshot, both vector files, the CNA cache and the aspect answers. The setup's own check accepted it: 45,844 sentences, 45,844 vectors, six files restored. Put the same file at <code>data/data.zip</code> in the project folder the assessors receive. It holds CNA articles and Reddit text: the team and the assessors only.</p>
     </li>
     <li data-o="team">
-      <span class="t">Everyone: pull <code>main</code> and upgrade Streamlit <span class="chip team">People</span></span>
-      <span class="when">by Sun 25 Oct</span>
-      <p class="why"><b>Problem:</b> <code>main</code> now holds the chatbot fixes, the search change and the OpenAI default, so an older checkout behaves differently from the system we describe. Five dashboard tests fail with Streamlit 1.63.0, whose test helper returns <code>['Overview']</code> where the tests expect <code>'Overview'</code>; they pass with 1.66.1, the version a fresh install gets.</p>
-      <p class="why"><b>Fix:</b> <code>git pull</code>, then <code>.venv-plp/bin/python3 -m pip install streamlit==1.66.1</code>, then fetch the vectors above. A fresh clone collects 2,941 tests from the repository root, all passing.</p>
+      <span class="t">Everyone: pull <code>main</code>, upgrade Streamlit, restore <code>data.zip</code> <span class="chip team">People</span></span>
+      <span class="when">by Mon 26 Oct</span>
+      <p class="why"><b>Problem:</b> <code>main</code> now holds the chatbot fixes, the search change, the OpenAI default and the Docker setup, so an older checkout behaves differently from the system we describe. Five dashboard tests fail with Streamlit 1.63.0, whose test helper returns <code>['Overview']</code> where the tests expect <code>'Overview'</code>; they pass with 1.66.1, the version a fresh install gets.</p>
+      <p class="why"><b>Fix:</b> <code>git pull</code>; natively, <code>.venv-plp/bin/python3 -m pip install streamlit==1.66.1</code>; then put <code>data.zip</code> at <code>data/data.zip</code> and restore it (Docker on start, or natively <code>.venv-plp/bin/python3 -m docker.bootstrap --data-only</code>). The restore never overwrites, so move an older <code>data/plp.db</code> aside first. On the MacBook all 2,945 tests pass on the merged code.</p>
     </li>
     <li data-o="team">
       <span class="t">Rater 1: rate the default chatbot's 26 answers for faithfulness <span class="chip team">People</span></span>
@@ -248,6 +247,12 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="when">by Mon 26 Oct</span>
       <p class="why"><b>Problem:</b> the ratings so far are one person's, so the report can't say how far people agree on what counts as faithful. The AI judge agreed with that person at weighted kappa 0.22 only, so it can't stand in for a second rater.</p>
       <p class="why"><b>Fix:</b> a different person scores the same 32 answers on a copy with the first rater's scores removed, faithfulness only. Claude computes weighted kappa on 27 Oct. About an hour.</p>
+    </li>
+    <li data-o="team">
+      <span class="t">Re-ask the question that hit an OpenAI service error <span class="chip team">Docker run owner</span></span>
+      <span class="when">by Mon 26 Oct</span>
+      <p class="why"><b>Problem:</b> in the Docker run of the 32 questions on gpt-6-luna, <code>oos-1</code> got an OpenAI 520 error and was scored as a miss, so the table shows 7 of 8 for declining advice and admitting missing data where the chatbot never answered.</p>
+      <p class="why"><b>Fix:</b> run the same command again with <code>--resume</code> (<code>docker compose exec api python -m chatbot.run_eval --backend openai --set v2 --tag luna_v2 --resume</code>); it asks only the failed questions, for about US$0.0003. Rater 1 can then rate these answers.</p>
     </li>
     <li data-o="team">
       <span class="t">Paste the replacement text into the Word report <span class="chip team">Report editor</span></span>
@@ -308,18 +313,13 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Build the two rating sheets <span class="chip ai">Claude</span></span>
       <span class="when">Sun 25 Oct</span>
       <p class="why"><b>Problem:</b> the ratings gate everything after Monday, and the raters need a sheet each.</p>
-      <p class="why"><b>Fix:</b> sheet 1 holds gpt-6-luna's 26 model-written answers with the tool data behind each; sheet 2 is the original 32 with the first rater's scores removed. Both carry CNA or broker text in the tool data, so they go through SharePoint, not git.</p>
+      <p class="why"><b>Fix:</b> sheet 1 holds gpt-6-luna's 26 model-written answers with the tool data behind each, from the Docker run once its failed question is re-asked; sheet 2 is the original 32 with the first rater's scores removed. Both carry CNA or broker text in the tool data, so they go through SharePoint, not git.</p>
     </li>
     <li data-o="ai">
-      <span class="t">Tell examiners how to run the chatbot <span class="chip ai">Claude</span></span>
-      <span class="when">Sun 25 Oct</span>
-      <p class="why"><b>Problem:</b> the default model needs an OpenAI key; without one the chatbot reports the key missing. Sorting each question by intent needs Ollama either way. The README doesn't say so yet, and doesn't list the new vectors file.</p>
-      <p class="why"><b>Fix:</b> the README and RUNBOOK say to set <code>CHATBOT_BACKEND=ollama</code> without a key, and add the search vectors to the install steps. Updated again once the team decides how examiners get the data.</p>
-    </li>
-    <li data-o="ai">
-      <span class="t">Take CNA and broker text out of the committed results files <span class="chip ai">After the decision</span></span>
-      <span class="when">Sun 25 Oct</span>
-      <p class="why"><b>Problem and fix:</b> see the first decision. About 30 minutes, then a test run.</p>
+      <span class="t">Record the flags the reader sees in the chatbot evaluation <span class="chip ai">Claude</span></span>
+      <span class="when">Mon 26 Oct</span>
+      <p class="why"><b>Problem:</b> the Docker run's table shows gpt-6-luna with 2 of 32 answers carrying "a figure no tool returned", where the older Llama columns show 0. The evaluation records the flags on the model's first draft (<code>chatbot/run_eval.py</code>, line 173), and since 18 Oct the chatbot rewrites a draft that fails a check before showing it. Re-checking the final answers of the MacBook's two gpt-6-luna runs gives 0 of 32: the flags were a date (the 24 of "24 September 2026") and a figure the rewrite removed. The Llama columns predate the rewrite, so that row compares different things.</p>
+      <p class="why"><b>Fix:</b> record what the reader saw beside the first draft (<code>TurnResult.shown_flags()</code> already gives it) and report both in the summary; re-check the existing results files without paying for a rerun. Table 8 then labels its rows "in the first draft" and "in the answer shown".</p>
     </li>
     <li data-o="ai">
       <span class="t">Correct the documents that contradict the code <span class="chip ai">Claude</span></span>
@@ -380,6 +380,11 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Result:</b> one person rated 32 answers: 7 of the 26 the model wrote contradicted the tool data, none caught by the automated checks; the AI judge agreed with the person at weighted kappa 0.22.</p>
       <span class="meta">Evidence: <code>docs/evidence/human-ratings-2026-10-24.md</code>.</span>
     </li>
+    <li data-o="team">
+      <span class="t">Docker setup merged; the dataset is <code>data.zip</code> <span class="chip team">Done 25 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> the teammates' Docker setup (pull request 5) starts the API, the dashboard and Ollama with one command, restores <code>data/data.zip</code>, downloads and checks the models, and builds the search vectors if they are missing. With no OpenAI key, every page works and Ask says what to configure, which settles how examiners run the system. <code>scripts/share_bundle.sh</code> now builds <code>data.zip</code> in exactly the layout the setup restores; the README, <code>data/README-teams.md</code> and diagram 18 describe it.</p>
+    </li>
     <li data-o="ai">
       <span class="t">Merged and tested <code>main</code>; share folder rebuilt <span class="chip ai">Done 24 Oct</span></span>
       <span class="when">done</span>
@@ -391,6 +396,8 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
 <section aria-labelledby="h-decided">
   <h2 id="h-decided">Decided</h2>
   <ul class="refs">
+    <li><b>25 Oct, the dataset is <code>data.zip</code>:</b> the database, both vector files, the CNA cache and the aspect answers, built by <code>scripts/share_bundle.sh</code>, given to the team and to the assessors with the project, restored by the Docker setup or <code>python -m docker.bootstrap --data-only</code>. It holds CNA articles, so it goes to no one else.</li>
+    <li><b>25 Oct, models on a public Hugging Face repo</b> (the Docker setup downloads them without a login); the model card still needs its licence.</li>
     <li><b>24 Oct, fix or disclose:</b> errors and leaks are fixed before submission; measured weaknesses go in the report with their cause and a proposed fix; work that would move the frozen figures (re-scoring, relabelling, new models) is future work. None of this week's fixes retrains a model.</li>
     <li><b>24 Oct, the Word report is the master</b> (<code>plp-final-report.docx</code> on SharePoint); Claude's changes come as replacement text in <code>docs/report/word-updates-2026-10-24.md</code>.</li>
     <li><b>24 Oct, chatbot default:</b> OpenAI's gpt-6-luna; the local llama3.1:8b is the no-key option and still sorts every question. Gemini removed.</li>
@@ -427,7 +434,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
   </ul>
 </section>
 
-<footer>Updated on 24 Oct 2026 for the last week before submission: every open item with its problem, its figure and its fix. Earlier versions on 14, 13, 12 and 10 Oct 2026, consolidated on 7 Oct 2026. Figures are from the evidence files in the repository.</footer>
+<footer>Updated on 25 Oct 2026 after the Docker setup and <code>data.zip</code>; on 24 Oct 2026 for the last week before submission: every open item with its problem, its figure and its fix. Earlier versions on 14, 13, 12 and 10 Oct 2026, consolidated on 7 Oct 2026. Figures are from the evidence files in the repository.</footer>
 
 </div>
 

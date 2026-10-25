@@ -285,13 +285,30 @@ for FinBERT steps. [docs/RUNBOOK.md](docs/RUNBOOK.md) explains both.
 
 ## Getting the database
 
-`data/plp.db` (101.4 MB restored from the latest snapshot) is too large for GitHub, so it isn't in the repo.
-Download the latest snapshot from the team's shared folder, then:
+The dataset is one file, **`data.zip`**, supplied with the project and kept off
+GitHub: it is too large, and it holds CNA articles and Reddit text that aren't
+ours to publish. Put it at `data/data.zip`. Docker restores it on first start
+(above). For the native setup, run the same restore and check from the project
+root:
 
 ```bash
-gunzip -c plp-2026-10-14.db.gz > data/plp.db
-shasum -a 256 plp-2026-10-14.db.gz   # should match the checksum below
+.venv-plp/bin/python3 -m docker.bootstrap --data-only
 ```
+
+It restores what is missing and checks it: the database's integrity, that it
+holds the served model's scores, and that the vectors match its sentences.
+Existing files are kept. `data.zip` holds, under `data/`:
+
+| file | what it is |
+|---|---|
+| `plp.db` | the database, 101.4 MB: the latest snapshot below, decompressed |
+| `sentence_embeddings.npz` | FinBERT's vectors, for aspect discovery |
+| `search_embeddings.npz` | the evidence search's vectors; setup rebuilds them if absent |
+| `cna/articles.jsonl`, `cna/candidates.json` | the CNA cache |
+| `aspect_llm/llama3.1_8b.eef9b342.jsonl` | the aspect model's answer per sentence for the current prompt (ids and labels, no text) |
+
+The database in `data.zip` is the latest of these snapshots, kept in
+`data/snapshots/` on the owner's machine:
 
 | snapshot | size | sha256 | contents |
 |---|---|---|---|
@@ -331,24 +348,20 @@ native servers before using Docker with the same data folder and host ports.
 
 ### Sharing the data and models
 
-What a teammate needs, beyond `git clone` and the Quick start:
+A teammate or assessor needs the repository, `data.zip` and, for chatbot
+answers, an OpenAI key in their own `.env`. Everything else is downloaded:
 
-| file | needed for | size |
+| what | where it comes from | size |
 |---|---|---|
-| the latest snapshot (`plp-2026-10-14.db.gz`) | everything: unpack to `data/plp.db` | 26.2 MB |
-| `data/search_embeddings.npz` | the chatbot's evidence search when no topic is named (without it, search falls back to word overlap) | 66 MB |
-| `data/sentence_embeddings.npz` | only aspect discovery and the similarity method; the chatbot no longer reads it | 132 MB |
-| the three fine-tuned models (`models/experiments-2026-10-11/dapt/seed_{42,1,7}/final`) | only to score new sentences, reproduce the sentiment results or re-score; the database already holds their scores for every stored sentence | 3 × 438 MB |
+| `data.zip` | built by `scripts/share_bundle.sh OUT_DIR` from the latest snapshot, both vector files, the CNA cache and the aspect answers, with `README-teams.md` and a `SHA256SUMS` beside it; given to the team and the assessors, put at `data/data.zip` | 225 MB |
+| the three fine-tuned models (`models/experiments-2026-10-11/dapt/seed_{42,1,7}/final`) | Hugging Face, below; Docker setup downloads and checks them | 3 × 438 MB |
+| FinBERT and the search model (`sentence-transformers/all-MiniLM-L6-v2`) | Hugging Face, on first use | |
+| Ollama models | each machine pulls its own | |
 
-`scripts/share_bundle.sh OUT_DIR` copies the snapshot, both vector files, the
-aspect model's answers and the teammates' note (`data/README-teams.md`) into
-one folder with a `SHA256SUMS` file (check with `shasum -a 256 -c
-SHA256SUMS`), for the team's shared drive. The models go through Hugging Face
-instead (below); `--with-models` adds them to the folder only if that is not
-possible. FinBERT and the search model (`sentence-transformers/all-MiniLM-L6-v2`)
-download from Hugging Face on first use, and each
-machine pulls its own Ollama models. Never share `.env` (API keys) or
-`data/cna/` (CNA's articles).
+`data.zip` holds CNA articles and Reddit text: give it only to the team and
+the assessors, and never publish it or put it in git (it is ignored). Never
+share `.env` (API keys). Set `PLP_DATA_SHA256` to the checksum the script
+prints, and setup refuses a damaged or different download.
 
 The fine-tuned models are in the public Hugging Face model repo,
 `plp-bank-sentiment/plp-finbert-absa`; [docs/model-card.md](docs/model-card.md) is its
@@ -378,8 +391,7 @@ done
 .venv-plp/bin/hf upload plp-bank-sentiment/plp-finbert-absa docs/model-card.md README.md
 ```
 
-The database stays on the team drive: it holds CNA and Reddit text and isn't
-ours to publish.
+The database travels only inside `data.zip`, for the same reason.
 
 ---
 

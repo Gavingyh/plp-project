@@ -21,7 +21,6 @@ Errors (backend/network failures): 0
 
 - **compare-1** (compare): unverified figures: +0.43 (first draft only; the answer shown passes)
 - **trend-3** (trend): unverified figures: 26, 25 (first draft only; the answer shown passes)
-(none)
 
 ## Not automated: read the full transcript for these
 

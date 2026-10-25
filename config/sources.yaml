@@ -13,10 +13,11 @@
 #
 # earnings was 3.0, dropped to 1.0 after the earnings corpus landed. The 3.0
 # was set when earnings was assumed to be a handful of high-signal documents;
-# it became the second-largest source (10,658 sentences), and it is
-# management describing its own results, measurably far more positive than
-# any other source: 24.7% of earnings sentences score positive against 2.3%
-# of Reddit sentences. Triple-weighting self-authored promotional prose
+# when the weight was changed it had become the second-largest source
+# (10,658 sentences then, 12,254 now), and it is management describing its
+# own results, far more positive than forum text: base FinBERT calls 42.8% of
+# earnings sentences positive against 5.0% of Reddit sentences (24.7% and
+# 2.3% at the time of the change). Triple-weighting self-authored promotional prose
 # amplified a known skew instead of damping it; 1.0 counts it at face value
 # without letting it dominate.
 

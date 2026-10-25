@@ -22,14 +22,14 @@ Every result carries its source sentence_id, url, and date - the chatbot's
 citation requirement is enforced by what this
 function returns, not left to the model's discretion.
 
-Aspect query (CHATBOT_ASPECT_QUERY=1, off by default): when an
-aspect is given, the semantic score embeds the aspect's readable name plus
-the question's content words instead of the whole question. FinBERT's
-vectors carry a text's register strongly, so a question embeds like a
-Reddit question and ranks the asked topic no better than random, while the
-aspect's name ranks it well (docs/evidence/chatbot-eval-build-2026-10-01.md).
-The word-overlap boost uses the same cleaned text, since question words
-("what", "people", "say") also favour Reddit chatter.
+Aspect query (`aspect_query` in config/chatbot.yaml, on by default;
+CHATBOT_ASPECT_QUERY=0 turns it off): when an aspect is given, the words that
+rank sentences are the aspect's readable name plus the question's content
+words, not the whole question, since question words ("what", "people",
+"say") favour Reddit chatter. It was introduced when FinBERT's vectors did
+the ranking and embedded a question like a Reddit question
+(docs/evidence/chatbot-eval-build-2026-10-01.md); within a topic the
+ordering now uses these words directly.
 """
 
 import config.model_version as current_model

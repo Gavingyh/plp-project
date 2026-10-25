@@ -1,7 +1,11 @@
 """
-Daily batch ingestion entrypoint - the "recomputed after each batch cycle"
-requirement from the project proposal. Run manually or via cron; not a
-live/streaming pipeline (a scope decision; see docs/DESIGN.md).
+Daily batch ingestion entrypoint: collects new documents only. Turning them
+into scores is the pipeline's job (preprocess, aspects, sentiment, index;
+README, or the dashboard's Data Management page). Run manually or via cron;
+not a live/streaming pipeline (a scope decision; see docs/DESIGN.md). The
+daily job is not installed. The submitted figures come from the corpus as it
+stands (posts and articles to 25 Sep 2026); an update, from here or from the
+dashboard, adds to it and changes them.
 
 Pulls news (Yahoo, Google News for the last 45 days, NewsAPI, Alpha Vantage;
 see run_news_pull.py) and Arctic Shift

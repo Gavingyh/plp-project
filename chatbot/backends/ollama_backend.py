@@ -12,11 +12,12 @@ than taken from documentation:
   - a role="tool" message with the JSON result string sent back continues
     the conversation correctly
 
-Models confirmed working (any Ollama model tagged for tool use should also
-work): llama3.2:3b (~4s per tool call - recommended default) and qwen3:4b
+The local, no-key option (CHATBOT_BACKEND=ollama; the default answer
+backend is OpenAI). The configured model is llama3.1:8b (models.ollama in
+config/chatbot.yaml). Also confirmed working (any Ollama model tagged for
+tool use should work): llama3.2:3b, faster but weaker, and qwen3:4b
 (tool-calling works identically, but ~7x slower per call because it emits a
-hidden `thinking` chain-of-thought field first - fine for accuracy-over-
-speed use, not a snappy default). Set OLLAMA_THINK=false to turn the
+hidden `thinking` chain-of-thought field first). Set OLLAMA_THINK=false to turn the
 thinking off; it is sent as Ollama's `think` field only when set.
 
 A tool call the model writes out as text instead of making it is recognised

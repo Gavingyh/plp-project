@@ -34,8 +34,8 @@ from one seed to another.
 
 USAGE:
   HF_HUB_OFFLINE=1 python -m aggregate.preview --n 1000 --cpu
-  HF_HUB_OFFLINE=1 python -m aggregate.preview --n 44345 --cpu --margin 0.13     # the whole corpus
-  HF_HUB_OFFLINE=1 python -m aggregate.preview --n 44345 --cpu --margin 0.13 --per-seed
+  HF_HUB_OFFLINE=1 python -m aggregate.preview --n 45844 --cpu --margin 0.0     # the whole corpus, at the served model's margin
+  HF_HUB_OFFLINE=1 python -m aggregate.preview --n 45844 --cpu --margin 0.0 --per-seed
   HF_HUB_OFFLINE=1 python -m aggregate.preview --n 2000 --models models/experiments-2026-10-01/label/seed_{42,1,7}/final
 """
 

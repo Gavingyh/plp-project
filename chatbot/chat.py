@@ -1,8 +1,9 @@
 """
 An interactive chat with the bot in the terminal, for testing it. It keeps
 the conversation's memory, so follow-ups like "and OCBC?" work, and shows the
-same flags the API returns: which input guard answered, whether a citation
-couldn't be verified, and figures that match nothing the tools returned.
+same flags the API returns: which fixed reply answered (the question
+classifier's, config/intents.yaml), whether a citation couldn't be verified,
+and figures that match nothing the tools returned.
 
 Dashboards reach the same bot through POST /chat (docs/api-integration.md).
 

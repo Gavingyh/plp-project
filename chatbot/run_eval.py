@@ -287,6 +287,7 @@ def _summarize(results: list[dict], model_desc: str | None, stopped: str | None 
         f"## Failures needing a look",
         f"",
     ]
+    listed = 0
     for r in results:
         problems = []
         if r["error"]:
@@ -303,11 +304,8 @@ def _summarize(results: list[dict], model_desc: str | None, stopped: str | None 
                             + (" (first draft only; the answer shown passes)" if first_only else ""))
         if problems:
             lines.append(f"- **{r['id']}** ({r['category']}): {'; '.join(problems)}")
-    if not any(r["error"] or
-               (r["tool_selection_check"].get("applicable") and not r["tool_selection_check"].get("correct")) or
-               (r["behavior_check"].get("applicable") and not r["behavior_check"].get("correct")) or
-               r["citation_fabricated"]
-               for r in results):
+            listed += 1
+    if not listed:
         lines.append("(none)")
 
     lines += [

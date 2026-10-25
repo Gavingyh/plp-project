@@ -22,7 +22,6 @@ Errors (backend/network failures): 0
 - **lookup-2** (lookup): unverified figures: 17 (first draft only; the answer shown passes)
 - **compare-3** (compare): unverified figures: 24 (first draft only; the answer shown passes)
 - **thin-1** (thin_data): unverified figures: 18 (first draft only; the answer shown passes)
-(none)
 
 ## Not automated: read the full transcript for these
 

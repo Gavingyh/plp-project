@@ -1,6 +1,6 @@
 """
-OpenAI (GPT) backend - a second frontier-model option alongside Claude, and
-the way in for any OpenAI-compatible provider: set OPENAI_BASE_URL (default
+OpenAI (GPT) backend - the chatbot's default (gpt-6-luna), and the way in
+for any OpenAI-compatible provider: set OPENAI_BASE_URL (default
 https://api.openai.com/v1) to, say, https://api.groq.com/openai/v1, with that
 provider's key in OPENAI_API_KEY and its model name in OPENAI_MODEL.
 

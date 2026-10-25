@@ -1,25 +1,18 @@
 """
-Aspect assignment: deterministic nearest-centroid assignment against
-the FROZEN taxonomy in config/aspects.yaml. Runs every batch - unlike
-discover.py's clustering, this does NOT change the taxonomy, only which
-bucket each sentence falls into. See docs/DESIGN.md, "The key
-architectural point".
+Aspect assignment against the FROZEN taxonomy in config/aspects.yaml. Runs
+every batch: unlike discover.py's clustering, it does not change the
+taxonomy, only which aspect each new sentence gets.
 
-Bootstrap note: until aspects/discover.py has been run on a large enough
-corpus and its cluster centroids substituted into config/aspects.yaml,
-centroids here come from embedding each aspect's seed_terms and averaging -
-a reasonable starting point, not the final data-driven taxonomy the plan
-calls for.
-
-A sentence may be assigned to more than one aspect if it clears the
-similarity floor for more than one non-OTHER aspect - docs/DESIGN.md, step 6:
-"NIM held up but provisions rose" is about two aspects.
-
-`assignment_method` in config/aspects.yaml chooses the method for sentences
-not yet assigned: `centroid` (above) or `llm`, one aspect per sentence from
-the local LLM (aspects/llm_classify.py, which needs Ollama running). An LLM
-row's `similarity` is 1.0: the LLM gives no score. Once the corpus has the
-LLM's aspects, centroid assignment of new sentences would mix the methods.
+`assignment_method` in config/aspects.yaml chooses the method. The one in
+use is `llm`: one aspect per sentence from the local LLM
+(aspects/llm_classify.py, which needs Ollama running), the method the stored
+corpus was assigned with. The other, `centroid`, is kept for the comparison
+the report makes: each aspect's centroid is the mean FinBERT embedding of its
+seed_terms, and a sentence gets every aspect whose centroid it clears the
+similarity floor for, so it can have several ("NIM held up but provisions
+rose"). An LLM row's `similarity` is 1.0: the LLM gives no score. Once the
+corpus has the LLM's aspects, centroid assignment of new sentences would mix
+the methods.
 
 USAGE:
   python -m aspects.assign

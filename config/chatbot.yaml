@@ -13,7 +13,7 @@ ollama_keep_alive: {value: "30m", env: OLLAMA_KEEP_ALIVE}   # how long Ollama ke
 default_window: {value: "all_time", env: CHATBOT_DEFAULT_WINDOW}   # the chatbot's period when none is asked for: all_time (decided 18 Oct) | 30d | 7d; 30d or 7d too thin to report falls back to all_time
 
 models:
-  ollama:  {value: "llama3.1:8b", env: OLLAMA_MODEL}     # the demo model (decided 4 Oct)
+  ollama:  {value: "llama3.1:8b", env: OLLAMA_MODEL}     # the local answer model, the no-key option (backend: ollama)
   claude:  {value: "claude-sonnet-5", env: CLAUDE_MODEL}
   openai:  {value: "gpt-6-luna", env: OPENAI_MODEL}
   intent:  {value: "llama3.1:8b", env: CHATBOT_INTENT_MODEL}   # the intent classifier (chatbot/intent.py)
@@ -81,7 +81,7 @@ evidence:
   max_per_source:   {value: 2}           # from one source, unless too few others match
   same_wording:     {value: 0.7}         # word overlap at which two sentences count as one wording
   polar_boost:      {value: 0.03}        # added to a positive or negative sentence's rank
-  within_topic:     {value: "words_then_newest"}  # order within one topic: words_then_newest, or embedding (FinBERT similarity)
+  within_topic:     {value: "words_then_newest"}  # order within one topic: words_then_newest, or embedding (the search model's vectors, chatbot/search_vectors.py)
   # Stored sentences that are a report's disclaimer, not something said about
   # a bank: never offered as evidence (regular expressions, case ignored).
   boilerplate:

@@ -17,10 +17,11 @@ is applied via the per-row `confidence` from aspect_sentiment.
 Rolling windows (docs/DESIGN.md, step 3): computes '7d', '30d', and 'all_time'
 per (bank, aspect), so the dashboard's time-series view and the chatbot's
 get_trend tool have real data to show instead of a single snapshot.
-Window cutoffs are relative to actual wall-clock time (not the latest data
-point) - a live dashboard should show genuine recency, including a thin/empty
-7d window if a source hasn't been re-ingested recently, rather than silently
-redefining "recent" to hide that gap.
+The 7- and 30-day windows end at the newest stored sentence
+(`newest_sentence_time`), not at today: the corpus is frozen, so windows
+counted back from today would be empty. The API returns that date as
+`data_as_of`, so "recent" is always shown with the day it ends. Only a
+database with no sentences falls back to the current time.
 
 Window cutoffs and series buckets use each timestamp's UTC instant, parsed
 (`_utc`): CNA's timestamps carry +08:00 and NewsAPI's "Z", so comparing the
@@ -58,9 +59,8 @@ WINDOWS = {"7d": 7, "30d": 30, "all_time": None}
 # what the blend is actually made of (retail chatter vs. management framing),
 # rather than presenting one opaque figure. This matters here: earnings
 # coverage is very unequal across banks (DBS 9,093 sentences, OCBC 1,561,
-# UOB 4 - UOB's IR site is WAF-blocked and its PDFs need adding by hand), so
-# a blended cross-bank comparison is only trustworthy once a reader can see
-# the composition behind it.
+# UOB 1,600), so a blended cross-bank comparison is only trustworthy once a
+# reader can see the composition behind it.
 SOURCE_ALL = "ALL"
 
 _SCHEMA = """
@@ -97,8 +97,10 @@ def _fetch_all_rows(conn):
 def _one_per_sentence(pairs: dict, sentence_id: str, key, item) -> None:
     """Keep, per sentence, the pair with the highest confidence.
 
-    A sentence matched to several aspects has one (sentence, aspect) row per
-    aspect. Rows that aggregate across aspects must count the sentence once:
+    The stored corpus has one aspect per sentence, so today this keeps every
+    row; it guards data from the earlier method, under which a sentence
+    matched to several aspects had one (sentence, aspect) row per aspect.
+    Rows that aggregate across aspects must count the sentence once:
     counting every pair weights a sentence by how many aspects it matched,
     and sentences that match many aspects (earnings-style prose) are far more
     positive than those that match few, so an earlier re-run at 6.4

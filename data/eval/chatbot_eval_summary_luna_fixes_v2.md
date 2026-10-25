@@ -3,7 +3,7 @@
 Model: `OpenAIBackend / gpt-6-luna`  
 Intent classifier: `llama3.1:8b`  
 Run at: 2026-10-24T10:05:23.777328+00:00  
-Rechecked on 2026-10-25 from each stored answer: flags on the answer shown filled in for 0, refusal check changed for 1  
+Rechecked on 2026-10-25 from each stored answer: flags on the answer shown filled in for 0, refusal check changed for 0  
 Questions: 32  
 Errors (backend/network failures): 0
 

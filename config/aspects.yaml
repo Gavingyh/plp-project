@@ -1,8 +1,13 @@
 # Frozen aspect taxonomy.
 #
-# STATUS (2026-09-25): rewritten from the September proposal's 4 a-priori
+# IN USE: assignment_method `llm` (bottom of file). The local LLM gives each
+# sentence one aspect, reading each aspect's `label` and `llm_definition`.
+# `seed_terms` and `similarity_floor` serve only the `centroid` method, kept
+# for the comparison the report makes; they do not affect the stored aspects.
+#
+# HOW THE TAXONOMY WAS BUILT: rewritten from the proposal's 4 a-priori
 # aspects to a 10-aspect taxonomy built from a full manual review of the
-# 338-cluster HDBSCAN discovery run on the current 42,690-sentence corpus
+# 338-cluster HDBSCAN discovery run on the 42,690-sentence corpus of the time
 # (see the aspect-cluster-labels-v2.xlsx workbook shared alongside this
 # file for the cluster-by-cluster reasoning). Summary of what changed and
 # why:
@@ -29,7 +34,7 @@
 #     careers, regulatory boilerplate, PDF-extraction noise, filler) is
 #     deliberately NOT an aspect here. It falls through to "other" below.
 #
-# NOT YET DONE: similarity_floor (see bottom of file) was calibrated in
+# Centroid method only: similarity_floor (see bottom of file) was calibrated in
 # September for a 4-5 aspect taxonomy via aspects/compare_taxonomies.py.
 # It has not been re-swept for this 10-aspect taxonomy, which now spans
 # both very broad aspects (retail_banking_sentiment, investor_stock_sentiment)
@@ -39,7 +44,7 @@
 # for real. Treat 0.65 below as a carried-over starting point, not a
 # validated choice for this taxonomy.
 #
-# Each aspect's `seed_terms` bootstrap its centroid embedding (mean of
+# Centroid method only: each aspect's `seed_terms` bootstrap its centroid embedding (mean of
 # FinBERT embeddings of the seed sentences) until real cluster centroids
 # from discover.py are substituted in directly (see assign.py's bootstrap
 # note). These seed_terms are now full representative SENTENCES pulled
@@ -193,11 +198,10 @@ aspects:
       - "Rate cuts are likely amid a more cautious global growth backdrop."
 
   other:
-    # NOT used to build a centroid (assign.py explicitly skips "other" when
-    # building centroids) — this is purely the fallback label for a sentence
-    # that doesn't clear similarity_floor against any aspect above, plus a
-    # human-readable description of what tends to land there. Editing
-    # seed_terms here has no effect on assignment; it's documentation only.
+    # One of the LLM's answers, for a sentence with no investment topic
+    # (its llm_definition). In the centroid method it is the fallback for a
+    # sentence that clears no aspect's similarity_floor, and it has no
+    # centroid of its own; its seed_terms are documentation only.
     label: "Other / Not an investment aspect"
     llm_definition: "anything else: appointments and pay, awards, M&A and partnerships, CSR, careers, regulatory boilerplate, or no clear investment topic"
     seed_terms:
@@ -209,9 +213,9 @@ aspects:
       - "audit, disclaimer and regulatory-filing boilerplate"
       - "garbled PDF extraction artifacts and generic filler"
 
-# Sentences whose best cosine similarity to any non-OTHER centroid falls
-# below this threshold are assigned to "other" rather than forced into the
-# nearest-but-still-distant aspect.
+# Centroid method only: sentences whose best cosine similarity to any
+# non-OTHER centroid falls below this threshold are assigned to "other"
+# rather than forced into the nearest-but-still-distant aspect.
 #
 # CARRIED OVER, NOT RE-VALIDATED for this taxonomy (see note at top of
 # file). Last calibrated 2026-09-06 from 0.35 -> 0.65 via a live sweep

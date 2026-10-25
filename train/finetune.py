@@ -1,9 +1,11 @@
 """
 Fine-tune FinBERT for aspect-conditioned sentiment classification.
 
-Reads data/labeled/candidates.csv, built from the resolved annotation
-sheets by train/labels.py, and refuses to train if the file has duplicate
-pairs or a sentence in both splits (see check_splits there).
+Reads data/labeled/candidates.csv by default, built from the resolved
+annotation sheets by train/labels.py, and refuses to train if the file has
+duplicate pairs or a sentence in both splits (see check_splits there). The
+served models were trained with `--labels` on the LLM rater's labels (1,563
+pairs; docs/model-card.md) and tested on people's labels.
 
 Sentence-pair (NLI-style) input formulation:
   [CLS] {sentence} [SEP] {aspect} [SEP]  ->  3-way softmax

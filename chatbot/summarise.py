@@ -21,7 +21,7 @@ How it stays honest (the same stance as the chatbot's grounding rules):
 It writes nothing to the database.
 
 USAGE (on the machine with Ollama running):
-  python -m chatbot.summarise --banks DBS OCBC UOB --aspects dividends_capital_returns --k 6
+  python -m chatbot.summarise --banks DBS OCBC UOB --aspects dividend_policy --k 6
   python -m chatbot.summarise --all-aspects --out data/eval/summaries
   python -m chatbot.summarise --model llama3.1:8b --limit 3        # a quick try
 """

@@ -21,7 +21,6 @@ Errors (backend/network failures): 0
 ## Failures needing a look
 
 - **consensus-2** (consensus): unverified figures: 2023 (first draft only; the answer shown passes)
-(none)
 
 ## Not automated: read the full transcript for these
 

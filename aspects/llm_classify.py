@@ -9,8 +9,9 @@ examples, then the input. Ollama's structured output constrains the answer to
 JSON whose `aspect` is one of the keys; an answer that still fails validation
 is retried once and then recorded as `other` and counted.
 
-This module only classifies and evaluates. It writes nothing to the
-database: applying it to the corpus is a separate, approved step. Answers are
+This module only classifies and evaluates; it writes nothing to the
+database. aspects/assign.py applies its answers (assignment_method `llm`),
+which is how the stored corpus got one aspect per sentence. Answers are
 cached in data/aspect_llm/<model>.<prompt>.jsonl (gitignored) so a run
 resumes. <prompt> is a hash of everything the model is asked apart from the
 sentence, so changing an aspect, a definition or an example starts a new file

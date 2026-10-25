@@ -115,3 +115,11 @@ def test_recheck_scores_the_refusal_check_again(eval_dir):
     saved = json.loads(open(eval_dir / "chatbot_eval_results_b.jsonl", encoding="utf-8").readline())
     assert out["behavior_rescored"] == 1 and saved["behavior_check"]["correct"]
     assert "Behavior (advice decline / no-data acknowledgement): 1/1 correct" in open(eval_dir / "chatbot_eval_summary_b.md", encoding="utf-8").read()
+
+
+def test_the_failures_list_says_none_only_when_nothing_is_listed(eval_dir, monkeypatch):
+    monkeypatch.setattr(run_eval, "answer_turn", lambda q, **kw: _turn(["24"], [], "rewritten"))
+    run_eval.run(backend_name="openai", limit=1, tag="n", gold="v2")
+    summary = open(eval_dir / "chatbot_eval_summary_n.md", encoding="utf-8").read()
+    failures = summary.split("## Failures needing a look")[1].split("##")[0]
+    assert "unverified figures: 24" in failures and "(none)" not in failures

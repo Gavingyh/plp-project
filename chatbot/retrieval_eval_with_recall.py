@@ -1,11 +1,12 @@
 """
-Retrieval quality of the chatbot's evidence search, measured on the 1,277
-sentences people labelled (Hit@K, MRR, precision@K).
+Retrieval quality of FinBERT-vector search, measured on the 1,277 sentences
+people labelled (Hit@K, MRR, precision@K, recall@K).
 
 For each bank and each aspect with enough labelled sentences for that bank,
 the question "What do people say about <bank>'s <aspect label>?" ranks that
-bank's labelled sentences with the same score `search_evidence` uses
-(FinBERT cosine plus a small word-overlap boost). A sentence is relevant if
+bank's labelled sentences by FinBERT cosine plus a small word-overlap boost,
+the score `search_evidence` used before it moved to a model built for search
+(data/eval/search-models/compare.py measures the search in use). A sentence is relevant if
 people gave it that aspect. Judging only the labelled pool keeps every
 relevance judgement human: over the whole corpus most retrieved sentences
 would have no judgement at all. A random ranking is the baseline.
@@ -13,7 +14,7 @@ would have no judgement at all. A random ranking is the baseline.
 Reads only. Needs the embedding cache (python -m aspects.embed_store).
 
 USAGE:
-  HF_HUB_OFFLINE=1 python -m chatbot.retrieval_eval
+  HF_HUB_OFFLINE=1 python -m chatbot.retrieval_eval_with_recall
 """
 
 import argparse
@@ -47,7 +48,7 @@ def metrics(relevant_in_order: list[bool], ks=KS) -> dict:
     for k in ks:
         top = relevant_in_order[:k]
         out[f"hit@{k}"] = float(any(top))
-        out[f"p@{k}"] = sum(top) / k
+        out[f"p@{k}"] = sum(top) / max(len(top), 1)   # a pool under k holds fewer
         out[f"recall@{k}"] = sum(top) / total_rel if total_rel else 0.0
     return out
 

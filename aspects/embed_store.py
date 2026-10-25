@@ -6,9 +6,9 @@ evidence search keeps its own store, from a model trained to match sentences
 Incremental: only embeds sentences not already in the cache, so re-running
 after a new ingestion batch is cheap.
 
-At this corpus scale (hundreds to low thousands of sentences for an MVP),
-brute-force cosine similarity over an in-memory matrix is simpler and just as
-correct as a vector-DB - no FAISS/Chroma needed. Revisit only if the corpus
+At this corpus scale (45,844 sentences), brute-force cosine similarity over
+an in-memory matrix is simpler and just as correct as a vector database - no
+FAISS/Chroma needed. Revisit only if the corpus
 grows into the hundreds of thousands.
 
 USAGE:

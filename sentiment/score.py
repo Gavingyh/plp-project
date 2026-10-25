@@ -14,10 +14,9 @@ same output contract (sentence_id, aspect, label, confidence, model_version).
 Both sets of scores sit in the same table distinguished by model_version, so
 the before/after comparison stays possible.
 
-Whole-sentence sentiment is attributed to whichever aspect(s) the sentence was
-assigned. That is a simplification: the real formulation feeds the
-(sentence, aspect) pair to the model so it can condition on the aspect, which
-only a fine-tuned model can do.
+Base FinBERT scores the whole sentence and its label is given to the
+sentence's aspect. The served fine-tuned model reads the (sentence, aspect)
+pair, so its label can depend on the aspect (sentiment/finetuned.py).
 
 Every batch's probabilities are checked before anything is written: the
 Mac's GPU once, under memory pressure, returned garbage without an

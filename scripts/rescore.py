@@ -32,7 +32,7 @@ Dry run unless --apply. Refuses data/plp.db unless --real-db is given too.
 
 USAGE:
   HF_HUB_OFFLINE=1 .venv-plp/bin/python3 scripts/rescore.py --db /tmp/plp-rescore.db --fresh-copy \\
-      --aspects llm --finetuned --margin 0.13 --cpu            # dry run on a fresh copy
+      --aspects llm --finetuned --margin 0.0 --cpu            # dry run on a fresh copy
   ... add --apply to write the copy
 """
 

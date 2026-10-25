@@ -33,10 +33,13 @@ A search the harness makes is recorded with `"by": "harness"`, so the
 evaluation doesn't count it as the model's tool choice.
 
 The harness around the model (docs/DESIGN.md decision 19).
-Each turn runs: input guards (chatbot/guards.py: advice-seeking and
-out-of-scope questions get a fixed reply without calling the model) -> the
-model's tool-calling loop -> output checks (citations, cited sentence ids,
-and every figure against the tools' results). `answer_turn` returns the whole
+Each turn runs: the intent classifier (chatbot/intent.py, a local model:
+advice-seeking, other-bank and off-topic questions get a fixed reply without
+calling the answering model; if the classifier is down the question goes on
+to the model) -> the model's tool-calling loop -> output checks
+(chatbot/guards.py: citations, cited sentence ids, every figure and year
+against the tools' results), with a failing draft rewritten, then trimmed,
+before it is shown. `answer_turn` returns the whole
 record; `ask` keeps the old string-returning interface.
 
 Memory. `Conversation` carries the last few turns, trimmed, plus an explicit state
@@ -2163,7 +2166,7 @@ class TurnResult:
     calls: list = field(default_factory=list)
     guard: str | None = None                 # the intent whose fixed reply answered (config/intents.yaml), if any
     intent: str | None = None                # the classifier's intent; None if it couldn't run
-    model_answer: str | None = None          # the answer before the harness's warnings were appended
+    model_answer: str | None = None          # the last checked draft, before trimming and citation numbering
     citation_unverified: bool = False
     unverified_numbers: list = field(default_factory=list)
     unverified_readings: list = field(default_factory=list)   # "neutral", "slightly positive"... no tool returned

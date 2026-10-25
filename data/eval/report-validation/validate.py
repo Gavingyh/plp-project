@@ -1,4 +1,4 @@
-"""Recompute the figures of docs/report/report.html from primary data (the
+"""Recompute the figures of docs/archive/report/report.html from primary data (the
 database, the label files, the models' stored test results, the chatbot
 transcripts) and compare each with the value the report gives. Reads only.
 

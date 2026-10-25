@@ -1,0 +1,34 @@
+28 (bank, aspect) queries over 3 banks' labelled pools
+
+Mean over queries:
+                                                             hit@1  hit@5  hit@10   p@5  recall@5  recall@10  f1@5  f1@10    rr
+question                                                     0.357  0.571   0.607 0.314     0.066      0.089 0.094  0.109 0.479
+question (random)                                            0.098  0.319   0.478 0.098     0.015      0.030 0.022  0.036 0.217
+label                                                        0.750  0.893   0.964 0.614     0.211      0.276 0.256  0.275 0.828
+label (random)                                               0.098  0.319   0.478 0.098     0.015      0.030 0.022  0.036 0.217
+aspect query (CHATBOT_ASPECT_QUERY)                          0.750  0.893   0.964 0.614     0.211      0.276 0.256  0.275 0.828
+aspect query (CHATBOT_ASPECT_QUERY) (random)                 0.098  0.319   0.478 0.098     0.015      0.030 0.022  0.036 0.217
+question + stored-aspect filter                              0.714  0.964   1.000 0.725     0.390      0.572 0.426  0.560 0.838
+question + stored-aspect filter (random)                     0.738  0.996   1.000 0.738     0.399      0.575 0.435  0.563 0.853
+label + stored-aspect filter                                 0.857  1.000   1.000 0.804     0.427      0.596 0.470  0.587 0.918
+label + stored-aspect filter (random)                        0.738  0.996   1.000 0.738     0.399      0.575 0.435  0.563 0.853
+aspect query + stored-aspect filter                          0.857  1.000   1.000 0.804     0.427      0.596 0.470  0.587 0.918
+aspect query + stored-aspect filter (random)                 0.738  0.996   1.000 0.738     0.399      0.575 0.435  0.563 0.853
+words, then newest + stored-aspect filter (in use)           0.679  1.000   1.000 0.818     0.453      0.598 0.495  0.587 0.827
+words, then newest + stored-aspect filter (in use) (random)  0.738  0.996   1.000 0.738     0.399      0.575 0.435  0.563 0.853
+
+By aspect, question queries, no filter (mean over banks):
+                          relevant  hit@5  p@5   rr  random_p@5  random_rr
+aspect                                                                    
+asset_quality                26.00   0.33 0.13 0.18        0.05       0.16
+capital_liquidity            16.33   0.00 0.00 0.05        0.04       0.14
+dividend_policy              11.00   0.67 0.33 0.35        0.02       0.08
+income_profit_results        49.67   1.00 0.47 0.83        0.12       0.28
+investor_stock_sentiment     29.67   1.00 0.60 1.00        0.06       0.17
+macro_market_environment     10.00   0.00 0.00 0.04        0.02       0.07
+management_guidance          31.00   0.33 0.07 0.15        0.06       0.18
+net_interest_margin          28.00   0.00 0.00 0.07        0.04       0.13
+retail_banking_sentiment    159.00   1.00 0.60 0.83        0.43       0.62
+wealth_business              43.00   1.00 0.73 1.00        0.10       0.26
+
+Per-query results written to /app/data/eval/retrieval_f1_per_query.csv

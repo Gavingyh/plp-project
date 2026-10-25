@@ -2108,11 +2108,12 @@ slides, so every stale statement is a likely error in them.
 
 **Rating sheets built** (no model called), in `data/eval/`
 (`ratings_sheet_gpt-6-luna.csv`, `ratings_sheet_blind_llama3.1-8b.csv`), with
-`README-ratings.md`; `data/eval/ratings_sheet.csv` is the old 14 Oct sheet. Sheet 1: gpt-6-luna's 26 model-written answers from the
-final-code run (`luna_shown_v2`), as shown, with full tool data. Sheet 2: the
-same 26 questions with the local model's answers and tool data from Rater 1's
-sheet of 17 Oct, scores removed, for a blind second rater. Faithfulness is
-required, relevance and correctness optional. The 6 fixed replies are left
-out of both. The first rating sheet was the local `llama3.1:8b` run of
+`README-ratings.md`; `data/eval/ratings_sheet.csv` is the old 14 Oct sheet. Sheet 1: gpt-6-luna's answers to the 32 gold-set
+questions from the final-code run (`luna_shown_v2`), as shown, with full tool
+data. Sheet 2: the local model's answers and tool data from Rater 1's sheet of
+17 Oct, scores removed, for a blind second rater. Both cover the same 32
+questions as the first sheet; 6 are fixed replies, reported apart from the 26
+the model wrote. Faithfulness is required, relevance and correctness
+optional. The first rating sheet was the local `llama3.1:8b` run of
 14 Oct (`rescored2_v2`; 31 of 32 answers identical), not gpt-6-luna.
 - Needs a human: rate both sheets and commit the filled ones.

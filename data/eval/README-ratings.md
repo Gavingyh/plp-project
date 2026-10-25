@@ -1,12 +1,14 @@
 # Rating the chatbot's answers
 
-Two sheets, each with 26 answers to the same 26 questions from the chatbot's
-32-question gold set. The other 6 questions get a fixed reply (advice,
-another bank, off-topic) that no model writes, so they are left out.
+Two sheets, each with the chatbot's answers to the same 32 gold-set
+questions as the first sheet (`ratings_sheet_rater1.csv`). Six of them
+(`advice-1` to `advice-4`, `oos-3`, `oos-4`) get a fixed reply that no model
+writes, identical whichever model runs; rate them like the rest. The write-up
+reports the 26 model-written answers separately, as the first rating did.
 
 | Sheet | Who rates it | What it holds | What it measures |
 |---|---|---|---|
-| `ratings_sheet_gpt-6-luna.csv` | Rater 1 | The default model's answers (OpenAI `gpt-6-luna`), from the run on the final code (25 Oct 2026), exactly as a reader saw them | How faithful the default model is, against the 7 of 26 unfaithful found for the local model before the fixes |
+| `ratings_sheet_gpt-6-luna.csv` | Rater 1 | The default model's answers (OpenAI `gpt-6-luna`), from the run on the final code (25 Oct 2026, `luna_shown_v2`), exactly as a reader saw them | How faithful the default model is, against the 7 of 26 model-written answers found unfaithful for the local model before the fixes |
 | `ratings_sheet_blind_llama3.1-8b.csv` | A second team member, who has not seen Rater 1's scores | The same answers and tool data Rater 1 scored on 17 Oct (the local `llama3.1:8b`, before the fixes), with the scores removed | Whether two people agree (weighted kappa between the raters) |
 
 ## How to rate

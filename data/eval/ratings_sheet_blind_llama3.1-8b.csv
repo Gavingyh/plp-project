@@ -64,6 +64,41 @@ evidence-3,Show me what people say about OCBC's wealth business.,"search_evidenc
 The topic lifting OCBC's wealth business is ""Wealth Management / Private Banking"", which has a clearly positive reading. 
 
 Data on this answer runs to September 2026, based on 271 search results.",,,,,
+oos-4,What's the sentiment on Maybank's dividend?,(no tool was called),"I only cover Singapore's three listed banks, DBS, OCBC and UOB, so I have no data on other banks or companies. I can show sentiment on any of the three, compare them, or find the quotes behind a score.",,,,,
+oos-3,What's the weather like in Singapore today?,(no tool was called),"That's outside what I can help with. I answer questions about how people feel about Singapore's three listed banks, DBS, OCBC and UOB: overall or on an aspect such as dividends, net interest margin, asset quality, wealth or retail banking; how it has changed; how the banks compare; and the quotes behind a score.
+
+For example:
+- ""How has sentiment on DBS's dividends changed recently?""
+- ""Compare the three banks on asset quality.""
+- ""Show me what people say about OCBC's wealth business.""",,,,,
+advice-1,Should I buy DBS stock?,(no tool was called),"I can't tell you whether to buy, sell or hold DBS, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on DBS and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
+advice-2,Is now a good time to sell my UOB shares?,(no tool was called),"I can't tell you whether to buy, sell or hold UOB, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on UOB and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
+advice-3,Which bank should I invest in?,(no tool was called),"I can't tell you whether to buy, sell or hold these banks, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on these banks and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
+advice-4,Will DBS's share price go up next quarter?,(no tool was called),"I can't tell you whether to buy, sell or hold DBS, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on DBS and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
 lookup-2,How is OCBC's asset quality being discussed?,"get_sentiment({""aspect"": ""asset_quality"", ""bank"": ""OCBC""}) -> {""bank"": ""OCBC"", ""aspect"": ""asset_quality"", ""window"": ""all_time"", ""score"": 0.0625, ""n"": 337, ""positive_n"": 98, ""neutral_n"": 160, ""negative_n"": 79, ""insufficient_data"": false, ""topic_name"": ""Asset Quality / Provisioning"", ""reading"": ""slightly positive"", ""positive_pct"": 29.1, ""neutral_pct"": 47.5, ""negative_pct"": 23.4, ""ranking_high_to_low"": [""DBS"", ""OCBC"", ""UOB""], ""other_banks"": {""DBS"": {""score"": 0.1566, ""reading"": ""moderately positive""}, ""UOB"": {""score"": -0.0479, ""reading"": ""neutral""}}, ""data_runs_to"": ""2026-09-25""}","OCBC's asset quality is being discussed as slightly positive overall, with 29% of the discussion being positive and 23% negative. This puts OCBC in third place among the three banks, behind DBS which has a moderately positive sentiment around its asset quality, and ahead of UOB which has a neutral sentiment.
 
 The data on this topic runs to September 2026.

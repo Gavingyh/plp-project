@@ -236,17 +236,17 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Fix:</b> <code>git pull</code>; natively, <code>.venv-plp/bin/python3 -m pip install streamlit==1.66.1</code>; then put <code>data.zip</code> at <code>data/data.zip</code> and restore it (Docker on start, or natively <code>.venv-plp/bin/python3 -m docker.bootstrap --data-only</code>). The restore never overwrites, so move an older <code>data/plp.db</code> aside first. On the MacBook all 2,945 tests pass on the merged code.</p>
     </li>
     <li data-o="team">
-      <span class="t">Rater 1: rate the default chatbot's 26 answers for faithfulness <span class="chip team">People</span></span>
+      <span class="t">Rater 1: rate the default chatbot's 32 answers for faithfulness <span class="chip team">People</span></span>
       <span class="when">by Mon 26 Oct</span>
       <p class="why"><b>Problem:</b> a person rated 32 answers and found 7 of the 26 the model wrote contradicting the tool data although every number was a tool's: three wrong years, two wrong periods, one wrong rank, one wrong list of topics. No automated check caught any of them. Code fixes followed, but the only check of them is Claude reading the answers (gpt-6-luna right in 21 of 21 tries, the local model in 16 of 21), so the report has no human evidence that the fixes work for the model it now uses.</p>
-      <p class="why"><b>Fix:</b> score each of gpt-6-luna's 26 answers 1, 2 or 3 for faithfulness against the tool data printed beside it, on the same scale as before: 1 if a claim contradicts or is absent from the tool data, 2 if only loosely supported, 3 if every claim is supported. Relevance and correctness are optional. About an hour. The sheet is ready in git: <code>data/eval/ratings_sheet_gpt-6-luna.csv</code>, with <code>data/eval/README-ratings.md</code>. (<code>data/eval/ratings_sheet.csv</code> is the old 14 Oct sheet of the local model.)</p>
+      <p class="why"><b>Fix:</b> score each of gpt-6-luna's 32 answers (26 written by the model, 6 fixed replies) 1, 2 or 3 for faithfulness against the tool data printed beside it, on the same scale as before: 1 if a claim contradicts or is absent from the tool data, 2 if only loosely supported, 3 if every claim is supported. Relevance and correctness are optional. About an hour. The sheet is ready in git: <code>data/eval/ratings_sheet_gpt-6-luna.csv</code>, with <code>data/eval/README-ratings.md</code>. (<code>data/eval/ratings_sheet.csv</code> is the old 14 Oct sheet of the local model.)</p>
       <span class="meta">Evidence: <code>docs/evidence/human-ratings-2026-10-24.md</code>, <code>docs/evidence/chatbot-fixes-2026-10-24.md</code>.</span>
     </li>
     <li data-o="team">
       <span class="t">Rater 2: re-rate the original answers blind <span class="chip team">People</span></span>
       <span class="when">by Mon 26 Oct</span>
       <p class="why"><b>Problem:</b> the ratings so far are one person's, so the report can't say how far people agree on what counts as faithful. The AI judge agreed with that person at weighted kappa 0.22 only, so it can't stand in for a second rater.</p>
-      <p class="why"><b>Fix:</b> a different person scores the 26 answers the model wrote, on a copy with the first rater's scores removed, faithfulness only. The other 6 of the 32 are fixed replies, identical whichever model runs, all scored 3, and would only inflate the agreement. Claude computes weighted kappa on 27 Oct. About an hour. The sheet is ready in git: <code>data/eval/ratings_sheet_blind_llama3.1-8b.csv</code>.</p>
+      <p class="why"><b>Fix:</b> a different person scores the same 32 answers on a copy with the first rater's scores removed, faithfulness only. Claude computes weighted kappa on 27 Oct. About an hour. The sheet is ready in git: <code>data/eval/ratings_sheet_blind_llama3.1-8b.csv</code>.</p>
     </li>
     <li data-o="team">
       <span class="t">Re-ask the question that hit an OpenAI service error, then recheck the run <span class="chip team">Docker run owner</span></span>
@@ -306,7 +306,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
     <li data-o="ai">
       <span class="t">Build the two rating sheets <span class="chip ai">Done 25 Oct</span></span>
       <span class="when">done</span>
-      <p class="why"><b>Result:</b> both are in <code>data/eval/</code>, with a note for the raters (<code>README-ratings.md</code>). Sheet 1 holds gpt-6-luna's 26 model-written answers from the final-code run, exactly as the reader saw them, each with the full tool data. Sheet 2 holds the same 26 questions with the local model's answers and tool data that Rater 1 scored on 17 Oct, scores removed. The same 26 questions in both lets the two models be compared answer by answer. Their tool data carries broker and Reddit text, like the first sheet's; the repository is private.</p>
+      <p class="why"><b>Result:</b> both are in <code>data/eval/</code>, with a note for the raters (<code>README-ratings.md</code>). Sheet 1 holds gpt-6-luna's answers to the 32 gold-set questions from the final-code run, exactly as the reader saw them, each with the full tool data. Sheet 2 holds the local model's answers and tool data that Rater 1 scored on 17 Oct, scores removed. The same 32 questions in both, and in the first sheet, lets the two models be compared answer by answer. Their tool data carries broker and Reddit text, like the first sheet's; the repository is private.</p>
     </li>
     <li data-o="ai">
       <span class="t">The chatbot evaluation records the flags the reader sees <span class="chip ai">Done 25 Oct</span></span>
@@ -318,7 +318,7 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <span class="t">Write up the agreement and re-rating results <span class="chip ai">Claude</span></span>
       <span class="when">Tue 27 Oct</span>
       <p class="why"><b>Problem:</b> the report needs the human result for the default model and an agreement figure, both by the freeze.</p>
-      <p class="why"><b>Fix:</b> weighted kappa between the two raters on the 26 model-written answers; the share of gpt-6-luna's answers rated unfaithful against 7 of 26 before the fixes; an evidence note and the text for section 4.5 and Table 8.</p>
+      <p class="why"><b>Fix:</b> weighted kappa between the two raters on the 32 answers and on the 26 the model wrote; the share of gpt-6-luna's answers rated unfaithful against 7 of 26 before the fixes; an evidence note and the text for section 4.5 and Table 8.</p>
     </li>
     <li data-o="ai">
       <span class="t">Draft the limitations-and-defences table <span class="chip ai">Claude</span></span>

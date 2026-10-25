@@ -75,6 +75,12 @@ Sources:
 - [1] broker research, UOB, 7 Aug 2026: data/sgx_research/070827 DBS - United Overseas Bank Ltd Update - Relooking at asset quality.pdf",,,,,
 oos-1,What is the sentiment on Standard Chartered's dividend policy?,"get_coverage({""bank"": ""DBS"", ""aspect"": ""dividend_policy""}) -> {""bank"": ""DBS"", ""aspect"": ""dividend_policy"", ""n"": 414, ""earliest"": ""2021-02-08T04:20:28+00:00"", ""latest"": ""2026-09-24T00:00:00+00:00"", ""by_source"": {""arctic_shift"": 108, ""cna"": 9, ""earnings"": 267, ""google_news"": 13, ""newsapi"": 1, ""sgx_research"": 12, ""yahoo_news"": 4}, ""has_data"": true}","I only have sentiment data on DBS, OCBC and UOB, not Standard Chartered. I can’t report sentiment on Standard Chartered’s dividend policy.",,,,,
 oos-2,How does the market feel about HSBC right now?,"get_coverage({""bank"": ""DBS""}) -> {""bank"": ""DBS"", ""aspect"": ""ALL"", ""n"": 24978, ""earliest"": ""2020-01-06T00:11:48+00:00"", ""latest"": ""2026-09-25T10:37:46+00:00"", ""by_source"": {""arctic_shift"": 12226, ""cna"": 915, ""earnings"": 9093, ""google_news"": 2510, ""newsapi"": 19, ""sgx_research"": 151, ""yahoo_news"": 64}, ""has_data"": true}","I only have sentiment data on DBS, OCBC and UOB, not HSBC, so I can’t report how the market feels about HSBC.",,,,,
+oos-3,What's the weather like in Singapore today?,(no tool was called),"That's outside what I can help with. I answer questions about how people feel about Singapore's three listed banks, DBS, OCBC and UOB: overall or on an aspect such as dividends, net interest margin, asset quality, wealth or retail banking; how it has changed; how the banks compare; and the quotes behind a score.
+
+For example:
+- ""How has sentiment on DBS's dividends changed recently?""
+- ""Compare the three banks on asset quality.""
+- ""Show me what people say about OCBC's wealth business.""",,,,,
 thin-1,What is UOB's sentiment on net interest margin in the last 7 days?,"get_sentiment({""bank"": ""UOB"", ""aspect"": ""net_interest_margin"", ""window"": ""7d""}) -> {""bank"": ""UOB"", ""aspect"": ""net_interest_margin"", ""window"": ""7d"", ""insufficient_data"": true, ""reason"": ""no sentiment data computed for this bank/aspect/window combination (window='7d' may genuinely have zero items, or the pipeline hasn't been run since new data came in)"", ""topic_name"": ""Net Interest Margin"", ""period"": ""the last 7 days of data (18 Sep 2026 to 25 Sep 2026)"", ""data_runs_to"": ""2026-09-24"", ""data_runs_to_in_words"": ""24 September 2026""}
 get_coverage({""bank"": ""UOB"", ""aspect"": ""net_interest_margin""}) -> {""bank"": ""UOB"", ""aspect"": ""net_interest_margin"", ""n"": 188, ""earliest"": ""2020-05-01T00:00:00+00:00"", ""latest"": ""2026-09-17T09:15:00+00:00"", ""by_source"": {""arctic_shift"": 62, ""cna"": 4, ""earnings"": 92, ""google_news"": 6, ""sgx_research"": 24}, ""has_data"": true}
 get_sentiment({""bank"": ""UOB"", ""aspect"": ""net_interest_margin"", ""window"": ""7d""}) -> {""bank"": ""UOB"", ""aspect"": ""net_interest_margin"", ""window"": ""7d"", ""insufficient_data"": true, ""reason"": ""no sentiment data computed for this bank/aspect/window combination (window='7d' may genuinely have zero items, or the pipeline hasn't been run since new data came in)"", ""topic_name"": ""Net Interest Margin"", ""period"": ""the last 7 days of data (18 Sep 2026 to 25 Sep 2026)"", ""data_runs_to"": ""2026-09-24"", ""data_runs_to_in_words"": ""24 September 2026""}
@@ -107,6 +113,34 @@ Period searched: all stored data, up to 25 Sep 2026. If no period is named, all 
 Sources:
 - [1] broker research, UOB, 8 Aug 2025: data/sgx_research/080825 DBS - UOB Update - Keeping watch on asset quality.pdf
 - [2] bank results report, UOB, 1 Aug 2025: data/earnings_pdfs/UOB/news-release-2q-2025.pdf",,,,,
+advice-1,Should I buy DBS stock?,(no tool was called),"I can't tell you whether to buy, sell or hold DBS, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on DBS and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
+advice-2,Is now a good time to sell my UOB shares?,(no tool was called),"I can't tell you whether to buy, sell or hold UOB, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on UOB and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
+advice-3,Which bank should I invest in?,(no tool was called),"I can't tell you whether to buy, sell or hold these banks, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on these banks and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
+advice-4,Will DBS's share price go up next quarter?,(no tool was called),"I can't tell you whether to buy, sell or hold DBS, or where the share price is heading. This assistant reports what retail investors, the news and the banks themselves are saying, and none of it is financial advice.
+
+What I can show you instead:
+- the overall sentiment on DBS and how it has moved recently
+- sentiment on one aspect, such as dividends, net interest margin, asset quality, the wealth business, retail banking or the share price
+- how the three banks compare
+- the quotes behind any of these",,,,,
 consensus-1,What do analysts think of DBS?,"get_analyst_consensus({""bank"": ""DBS""}) -> {""bank"": ""DBS"", ""has_data"": true, ""as_of_date"": ""2026-09-25"", ""n_analysts"": 17, ""consensus_rating"": ""buy"", ""rating_mean_1best_5worst"": 2.35294, ""target_mean"": 78.14118, ""target_high"": 91.0, ""target_low"": 63.0, ""current_price"": 77.41, ""implied_upside_pct"": 0.9, ""rating_breakdown"": {""strong_buy"": 1, ""buy"": 7, ""hold"": 8, ""sell"": 1, ""strong_sell"": 0}, ""source_note"": ""Yahoo Finance consensus aggregate, not analyst report text""}","Analyst consensus on DBS is **buy**, based on 17 analysts. The average price target is S$78.14, with a high of S$91 and a low of S$63; against the current price of S$77.41, that implies 0.9% upside. The data is as of 25 September 2026. This is an aggregate consensus, not the reasoning from individual analyst reports.",,,,,
 consensus-2,What's the average price target for OCBC?,"get_analyst_consensus({""bank"": ""OCBC""}) -> {""bank"": ""OCBC"", ""has_data"": true, ""as_of_date"": ""2026-09-25"", ""n_analysts"": 17, ""consensus_rating"": ""buy"", ""rating_mean_1best_5worst"": 1.85714, ""target_mean"": 31.52941, ""target_high"": 37.23, ""target_low"": 24.63, ""current_price"": 31.82, ""implied_upside_pct"": -0.9, ""rating_breakdown"": {""strong_buy"": 6, ""buy"": 1, ""hold"": 0, ""sell"": 0, ""strong_sell"": 0}, ""source_note"": ""Yahoo Finance consensus aggregate, not analyst report text""}","OCBC’s average analyst price target is **S$31.53**, based on consensus from 17 analysts, as of 25 September 2026.",,,,,
 lookup-6,How do people feel about OCBC's wealth management business?,"get_sentiment({""bank"": ""OCBC"", ""aspect"": ""wealth_business""}) -> {""bank"": ""OCBC"", ""aspect"": ""wealth_business"", ""window"": ""all_time"", ""score"": 0.5425, ""n"": 271, ""positive_n"": 157, ""neutral_n"": 107, ""negative_n"": 7, ""insufficient_data"": false, ""topic_name"": ""Wealth Management / Private Banking"", ""period"": ""all stored data, up to 25 Sep 2026"", ""reading"": ""clearly positive"", ""positive_pct"": 57.9, ""neutral_pct"": 39.5, ""negative_pct"": 2.6, ""ranking_high_to_low"": [""OCBC"", ""DBS"", ""UOB""], ""other_banks"": {""DBS"": {""score"": 0.4594, ""reading"": ""clearly positive""}, ""UOB"": {""score"": 0.4004, ""reading"": ""clearly positive""}}, ""rank_in_words"": ""Of the three banks on Wealth Management / Private Banking, OCBC is first (OCBC first, DBS second, UOB third)."", ""topic_scope"": ""This is the score for Wealth Management / Private Banking as a whole. The tools give no breakdown into smaller topics within it, so name none."", ""data_runs_to"": ""2026-09-25"", ""data_runs_to_in_words"": ""25 September 2026"", ""period_note"": ""No period was asked for, so all stored data is used.""}
@@ -197,3 +231,4 @@ Period searched: all stored data, up to 25 Sep 2026. If no period is named, all 
 
 Sources:
 - [1] bank results report, OCBC, 1 Aug 2026: data/earnings_pdfs/OCBC/2026_OCBC 1H26 Media Release Financial Highlights.pdf",,,,,
+oos-4,What's the sentiment on Maybank's dividend?,(no tool was called),"I only cover Singapore's three listed banks, DBS, OCBC and UOB, so I have no data on other banks or companies. I can show sentiment on any of the three, compare them, or find the quotes behind a score.",,,,,

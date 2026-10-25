@@ -73,4 +73,45 @@ def test_recheck_fills_in_the_answer_shown_from_stored_answers(eval_dir):
     assert out["rechecked"] == 2 and out["shown_unverified_numbers"] == 1
     summary = open(eval_dir / "chatbot_eval_summary_r.md", encoding="utf-8").read()
     assert "`OpenAIBackend / gpt-6-luna`" in summary and "Run at: 2026-10-24T10:00:00+00:00" in summary
-    assert "The same, in the answer shown: 1/2" in summary and "rechecked on" in summary
+    assert "The same, in the answer shown: 1/2" in summary and "Rechecked on" in summary
+
+
+# --- The refusal check: how a hosted model declines a bank the store doesn't cover ---
+
+_OOS_1 = "I only have sentiment data on DBS, OCBC and UOB, not Standard Chartered. I can’t report sentiment on Standard Chartered’s dividend policy."
+_OOS_2 = "I only have sentiment data on DBS, OCBC and UOB, not HSBC, so I can’t report how the market feels about HSBC."
+
+
+_OOS_2_EARLIER = "I can only report sentiment data for DBS, OCBC and UOB, not HSBC."
+
+
+@pytest.mark.parametrize("answer", [_OOS_1, _OOS_2, _OOS_2_EARLIER])
+def test_a_hosted_models_refusal_counts_as_declining(answer):
+    from chatbot.eval_gold_set import GOLD_SET_V2
+    item = next(i for i in GOLD_SET_V2 if i["id"] == "oos-1")
+    assert run_eval._check_behavior(item, answer)["correct"]
+
+
+def test_typographic_apostrophes_match_the_listed_phrases():
+    from chatbot.eval_gold_set import looks_like_declining_unrelated_part, looks_like_no_data_response
+    assert looks_like_declining_unrelated_part("I can’t help with the weather.")
+    assert looks_like_no_data_response("I don’t have data on Maybank.")
+
+
+def test_an_answer_that_gives_a_score_still_fails():
+    from chatbot.eval_gold_set import GOLD_SET_V2
+    item = next(i for i in GOLD_SET_V2 if i["id"] == "oos-2")
+    assert not run_eval._check_behavior(item, "Sentiment on HSBC is slightly positive at +0.21.")["correct"]
+
+
+def test_recheck_scores_the_refusal_check_again(eval_dir):
+    row = {"id": "oos-2", "category": "out_of_scope", "question": "How does the market feel about HSBC right now?",
+           "error": None, "answer": _OOS_2, "model_answer": _OOS_2, "tool_calls": [], "citation_fabricated": False,
+           "unverified_numbers": [], "shown_unverified_numbers": [], "shown_citation_unverified": False,
+           "tool_selection_check": {"applicable": False},
+           "behavior_check": {"applicable": True, "correct": False, "reason": "answered without declining or flagging no data"}}
+    (eval_dir / "chatbot_eval_results_b.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+    out = run_eval.recheck("b")
+    saved = json.loads(open(eval_dir / "chatbot_eval_results_b.jsonl", encoding="utf-8").readline())
+    assert out["behavior_rescored"] == 1 and saved["behavior_check"]["correct"]
+    assert "Behavior (advice decline / no-data acknowledgement): 1/1 correct" in open(eval_dir / "chatbot_eval_summary_b.md", encoding="utf-8").read()

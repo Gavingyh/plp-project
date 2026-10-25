@@ -335,9 +335,18 @@ def recheck(tag: str | None) -> dict:
     old = open(summary_path, encoding="utf-8").read() if os.path.exists(summary_path) else ""
     model = re.search(r"Model: `([^`]*)`", old)
     run_at = re.search(r"Run at: (\S+)", old)
-    filled = 0
+    filled = rescored = 0
+    items = {i["id"]: i for i in GOLD_SET + GOLD_SET_V2 + SCOPE_SET}
     for r in results:
-        if "shown_unverified_numbers" in r or r.get("error"):
+        if r.get("error"):
+            continue
+        # The refusal check reads the answer's wording, and its phrase lists grow when a
+        # model is found to decline in words they missed: score each answer again.
+        if r["id"] in items:
+            behavior = _check_behavior(items[r["id"]], r.get("answer") or "")
+            if behavior != r.get("behavior_check"):
+                r["behavior_check"], rescored = behavior, rescored + 1
+        if "shown_unverified_numbers" in r:
             continue
         tracker = _ToolCallTracker()
         tracker.calls.extend(r.get("tool_calls") or [])
@@ -347,12 +356,12 @@ def recheck(tag: str | None) -> dict:
         r["shown_rechecked"] = True
         filled += 1
     _write_results(results_path, results)
-    note = (f"Flags on the answer shown: rechecked on {datetime.now(timezone.utc).date().isoformat()} "
-            f"from each stored final answer ({filled} answers)")
+    note = (f"Rechecked on {datetime.now(timezone.utc).date().isoformat()} from each stored answer: "
+            f"flags on the answer shown filled in for {filled}, refusal check changed for {rescored}")
     with open(summary_path, "w", encoding="utf-8") as f:
         f.write(_summarize(results, model.group(1) if model else None,
                            run_at=run_at.group(1) if run_at else None, note=note))
-    return {"rechecked": filled, "results_path": results_path, "summary_path": summary_path,
+    return {"rechecked": filled, "behavior_rescored": rescored, "results_path": results_path, "summary_path": summary_path,
             "shown_unverified_numbers": sum(1 for r in results if r.get("shown_unverified_numbers")),
             "first_draft_unverified_numbers": sum(1 for r in results if r.get("unverified_numbers"))}
 

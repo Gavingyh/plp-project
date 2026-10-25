@@ -164,16 +164,26 @@ _NO_DATA_MARKERS = (
     # was found not to recognise it
     "outside what i can help with",
     "don't track", "do not track", "cannot answer", "can't answer",
+    # how a hosted model declines a bank the store doesn't cover ("I only have
+    # sentiment data on DBS, OCBC and UOB, not HSBC, so I can't report how the
+    # market feels about HSBC"), found missing when it answered so on 24 Oct
+    "only have sentiment data", "only report sentiment data", "can't report sentiment", "can't report how",
 )
 
 
+def _plain(answer: str) -> str:
+    """The answer in lower case with typographic apostrophes made straight: a
+    hosted model writes "can’t" where the markers say "can't"."""
+    return answer.lower().replace("\u2019", "'").replace("\u2018", "'")
+
+
 def looks_like_advice_decline(answer: str) -> bool:
-    low = answer.lower()
+    low = _plain(answer)
     return any(m in low for m in _ADVICE_DECLINE_MARKERS)
 
 
 def looks_like_no_data_response(answer: str) -> bool:
-    low = answer.lower()
+    low = _plain(answer)
     return any(m in low for m in _NO_DATA_MARKERS)
 
 
@@ -255,7 +265,7 @@ _UNRELATED_PART_MARKERS = (
 
 
 def looks_like_declining_unrelated_part(answer: str) -> bool:
-    low = answer.lower()
+    low = _plain(answer)
     return any(m in low for m in _UNRELATED_PART_MARKERS)
 
 

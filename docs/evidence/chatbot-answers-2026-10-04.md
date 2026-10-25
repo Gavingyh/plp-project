@@ -894,8 +894,8 @@ here:
   September") is always a date when a tool returned it.
 - Found by the twelfth validation (6 Oct, after 174c77d), left as recorded
   limits, each a strict expected failure in
-  `tests/test_validate_chatbot_round12_review_findings.py` or
-  `tests/test_validate_chatbot_round12_probes.py`:
+  `tests/test_validate_chatbot_off_mode_and_nearest_words_review_findings.py` or
+  `tests/test_validate_chatbot_off_mode_and_nearest_words_probes.py`:
   - A citation behind a source note in the next sentence ('One user called
     OCBC "a scam". (Reddit, [DBS, ...])', and 'A Reddit post [DBS, ...].',
     'Source: a Reddit thread [DBS, ...]') doesn't read the quote in the
@@ -914,7 +914,7 @@ here:
     at f7a90fb).
 - Found by the thirteenth, final validation (6 Oct, after 420ea79), all also
   on `main`, left as recorded limits with strict expected failures in
-  `tests/test_validate_chatbot_round13_review_findings.py`:
+  `tests/test_validate_chatbot_invented_counts_review_findings.py`:
   - An invented quote that strip mode removes leaves its citation when
     anything but a space stands between them: a dash ('"..." — [DBS, ...]'),
     a closing bold or emphasis mark, a closing bracket, a comma, a table
@@ -935,7 +935,7 @@ the checks prove, citing this list: in strip mode, every passage of three or
 more words shown in quote marks is text a search returned (or the tools' own
 wording, such as a reading or a topic name), a citation stays only where its
 sentence's quoted words were returned, and every figure is checked as above.
-The team to-do records the decision (`docs/briefs/team-todo-2026-10-07.html`).
+The team to-do records the decision (`docs/briefs/team-todo.html`).
 
 ## The seven questions again, after
 

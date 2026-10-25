@@ -7,7 +7,7 @@ Scope: `fix/chatbot-answers` against `main` (fifteen commits, fixes in 174c77d),
 |---|---|---|
 | Fine-tuning lead | UNTESTED | out of scope |
 | API integrity | PROVEN | 48 of 48 tool outputs identical on `main` and the branch; 514 index rows, 0 mismatches; every bad bank, window or bucket value tried gets 422 on every route that takes one; `api/` unchanged |
-| Grounded chatbot | DISPROVEN | 2280 tests pass in `tests/` (5 expected failures, recorded limits); 20 invented-quote shapes stripped and flagged in off mode, 7 of 7 correct answers kept; replay: the reworded-figure false alarms cleared, nothing else changed; but 25 strict-xfail cases remain (tests/test_validate_chatbot_round12_probes.py, tests/test_validate_chatbot_round12_review_findings.py), now marked as recorded limits |
+| Grounded chatbot | DISPROVEN | 2280 tests pass in `tests/` (5 expected failures, recorded limits); 20 invented-quote shapes stripped and flagged in off mode, 7 of 7 correct answers kept; replay: the reworded-figure false alarms cleared, nothing else changed; but 25 strict-xfail cases remain (tests/test_validate_chatbot_off_mode_and_nearest_words_probes.py, tests/test_validate_chatbot_off_mode_and_nearest_words_review_findings.py), now marked as recorded limits |
 
 ## Confirmed issues (recorded limits)
 - Source note after a quote keeps its citation [high, regression from 174c77d] chatbot/agent.py:1449: 'One user called OCBC "a scam". (Reddit, CITE)' passes both modes; f7a90fb cut it

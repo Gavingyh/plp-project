@@ -7,7 +7,7 @@ Scope: `fix/chatbot-answers` against `main` (eight commits, fixes in 6e1560f), c
 |---|---|---|
 | Fine-tuning lead | UNTESTED | out of scope |
 | API integrity | PROVEN | 224 tool calls of `main`'s and the branch's plain functions: 0 differ; 12 of 12 bad bank, window or bucket requests got 422 |
-| Grounded chatbot | DISPROVEN | full suite 1409 passed before the new tests; the replay over recorded answers is unchanged; but 6 probes keep an invented quote unflagged or strip a correct one (tests/test_validate_chatbot_round6_probes.py, tests/test_validate_chatbot_round6_review_findings.py, strict xfail) |
+| Grounded chatbot | DISPROVEN | full suite 1409 passed before the new tests; the replay over recorded answers is unchanged; but 6 probes keep an invented quote unflagged or strip a correct one (tests/test_validate_chatbot_quote_spans_probes.py, tests/test_validate_chatbot_quote_spans_review_findings.py, strict xfail) |
 
 ## Confirmed issues
 - Nested quote leaves the invented tail [high, regression from 6e1560f] chatbot/agent.py:217: '“I asked them "<real>" and they said <invented>”' checks only the nested part; a straight outer with a curly inner fails the same way

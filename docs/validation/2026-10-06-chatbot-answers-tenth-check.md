@@ -7,7 +7,7 @@ Scope: `fix/chatbot-answers` against `main` (thirteen commits; the new strip des
 |---|---|---|
 | Fine-tuning lead | UNTESTED | out of scope |
 | API integrity | PROVEN | 281 tool outputs of `main` and the branch: 0 differences; every bad bank, window or bucket value on every route that takes one gets 422; API tests 434 passed |
-| Grounded chatbot | DISPROVEN | 2027 tests pass in `tests/` (5 expected failures, all recorded limits); about 70 invented-quote shapes and 17 correct answers through strip; replay: only the known changes; but 16 strict-xfail tests keep an invented quote, a cited invented passage or an unchecked figure (tests/test_validate_chatbot_round10_probes.py, tests/test_validate_chatbot_round10_review_findings.py) |
+| Grounded chatbot | DISPROVEN | 2027 tests pass in `tests/` (5 expected failures, all recorded limits); about 70 invented-quote shapes and 17 correct answers through strip; replay: only the known changes; but 16 strict-xfail tests keep an invented quote, a cited invented passage or an unchecked figure (tests/test_validate_chatbot_ellipsis_quotes_probes.py, tests/test_validate_chatbot_ellipsis_quotes_review_findings.py) |
 
 ## Confirmed issues
 - Two-word invented quote kept with a citation [high, also on `main`] chatbot/agent.py:1061: 'One user called OCBC "a scam" CITE' passes strip and off mode unflagged; the rule that keeps marks round a one- or two-word term doesn't look at the citation after it

@@ -7,12 +7,12 @@ Scope: `fix/chatbot-answers` against `main` (ten commits, fixes in 31c7e98), cod
 |---|---|---|
 | Fine-tuning lead | UNTESTED | out of scope |
 | API integrity | PROVEN | 63 tool calls of `main` and the branch identical; 223 index comparisons, 0 mismatches (13 null scores below the minimum count, by design); 15 of 15 bad bank, window or bucket values get 422 |
-| Grounded chatbot | DISPROVEN | 1643 tests pass in `tests/` (2 expected failures, the recorded limit); 0 misses in 124 invented-quote probes outside the recorded limits; replay: only the 3 known changes; but an invented count after a returned day passes unflagged in 4 shapes (tests/test_validate_chatbot_round8_review_findings.py) |
+| Grounded chatbot | DISPROVEN | 1643 tests pass in `tests/` (2 expected failures, the recorded limit); 0 misses in 124 invented-quote probes outside the recorded limits; replay: only the 3 known changes; but an invented count after a returned day passes unflagged in 4 shapes (tests/test_validate_chatbot_unplaced_quote_marks_review_findings.py) |
 
 ## Confirmed issues
 - Count before a comma, bracket or "for" hidden [high, from 7446c89, kept by 31c7e98] chatbot/guards.py:78: with data to 25 September, "In September 25, 31 and 40 posts were negative" and "September 25 for DBS against 40 for UOB" flag nothing
 - Words after a closing mark stripped [med, regression from 31c7e98] chatbot/agent.py:356: 'One user: “REAL”DBS also scored 0.31.' loses the model's own correct sentence
-- A word in quote marks before a letter drops its line [med, regression from 31c7e98]: '"DBS"and "OCBC" both rose.' comes back as only the removal note (tests/test_validate_chatbot_round8_probes.py)
+- A word in quote marks before a letter drops its line [med, regression from 31c7e98]: '"DBS"and "OCBC" both rose.' comes back as only the removal note (tests/test_validate_chatbot_unplaced_quote_marks_probes.py)
 - Replay reads untracked results [med] scripts/replay_checks.py:84: the page's `--against 7446c89` output counts five results files kept out of git (CNA text), so a checkout prints different lines
 - Cue nouns make terms into quotes [low, from 31c7e98] chatbot/agent.py:200: "Users call the app 'buggy and slow' often." and "Users report 'long queue times'" lose the term
 - A stray mark after a citation drops a correct line [low, a recorded class]: 'A user wrote "REAL" CITE."'

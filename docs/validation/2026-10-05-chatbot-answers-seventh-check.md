@@ -7,7 +7,7 @@ Scope: `fix/chatbot-answers` against `main` (nine commits, fixes in 7446c89), co
 |---|---|---|
 | Fine-tuning lead | UNTESTED | out of scope |
 | API integrity | PROVEN | 55 outputs of `main`'s and the branch's plain tool functions: identical; 11 bad bank, window or bucket requests over 9 routes: all 422 |
-| Grounded chatbot | DISPROVEN | 1490 tests pass in `tests/` before the new ones; the replay over recorded answers shows only the known changes; but 10 strict-xfail tests keep an invented count or quote unflagged (tests/test_validate_chatbot_round7_review_findings.py, tests/test_validate_chatbot_round7_probes.py) |
+| Grounded chatbot | DISPROVEN | 1490 tests pass in `tests/` before the new ones; the replay over recorded answers shows only the known changes; but 10 strict-xfail tests keep an invented count or quote unflagged (tests/test_validate_chatbot_nested_quotes_and_inch_marks_review_findings.py, tests/test_validate_chatbot_nested_quotes_and_inch_marks_probes.py) |
 
 ## Confirmed issues
 - Unlisted count noun hides a returned day [high, regression from 7446c89] chatbot/guards.py:117: with data to 25 September, "In September 25 customers complained about fees." flags nothing; so do "25 complaints", "25 DBS posts", "25 very angry posts", "25 or so posts"

@@ -7,7 +7,7 @@ Scope: `fix/chatbot-answers` against `main` (eleven commits, fixes in f511f83), 
 |---|---|---|
 | Fine-tuning lead | UNTESTED | out of scope |
 | API integrity | PROVEN | 107 database rows match the endpoints, 0 mismatches (13 thin cells hold back the score by design); every bad bank, window or bucket value tried gets 422 |
-| Grounded chatbot | DISPROVEN | 1783 tests pass in `tests/` before the new ones; but invented quotes after an opening mark at a line end, and words glued to a real quote's closing mark, pass unflagged; an invented count after "In September 25, vs." passes (tests/test_validate_chatbot_round9_probes.py, tests/test_validate_chatbot_round9_review_findings.py, strict xfail) |
+| Grounded chatbot | DISPROVEN | 1783 tests pass in `tests/` before the new ones; but invented quotes after an opening mark at a line end, and words glued to a real quote's closing mark, pass unflagged; an invented count after "In September 25, vs." passes (tests/test_validate_chatbot_date_clauses_and_glued_words_probes.py, tests/test_validate_chatbot_date_clauses_and_glued_words_review_findings.py, strict xfail) |
 
 ## Confirmed issues
 - Stray rule hides an opening mark [high, regression from f511f83] chatbot/agent.py:455-466: '"REAL" "' then an unclosed invented quote on the next line is neither flagged nor stripped; also after a citation, in a list, with curly marks

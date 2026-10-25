@@ -7,7 +7,7 @@ Scope: `fix/chatbot-answers` against `main` (fourteen commits, fixes in f7a90fb)
 |---|---|---|
 | Fine-tuning lead | UNTESTED | out of scope |
 | API integrity | PROVEN | 642 stored index values compared, 0 mismatches; `main` and the branch give byte-identical tool outputs; 17 of 17 bad values get 422 |
-| Grounded chatbot | DISPROVEN | 2146 tests pass in `tests/` (5 expected failures, all recorded limits); 25 invented shapes removed, de-quoted or flagged in strip mode, all flagged in off mode; but 14 strict-xfail tests keep a cited invented term, an invented passage with a citation, or an unchecked figure (tests/test_validate_chatbot_round11_probes.py, tests/test_validate_chatbot_round11_review_findings.py) |
+| Grounded chatbot | DISPROVEN | 2146 tests pass in `tests/` (5 expected failures, all recorded limits); 25 invented shapes removed, de-quoted or flagged in strip mode, all flagged in off mode; but 14 strict-xfail tests keep a cited invented term, an invented passage with a citation, or an unchecked figure (tests/test_validate_chatbot_citation_vouching_probes.py, tests/test_validate_chatbot_citation_vouching_review_findings.py) |
 
 ## Confirmed issues
 - Short quote cited by a link or a leading citation [high, also on `main`] chatbot/agent.py:1241: 'One user called OCBC "a scam" (https://news.example/x).' and 'According to CITE, one user called OCBC "a scam".' pass both modes unchanged

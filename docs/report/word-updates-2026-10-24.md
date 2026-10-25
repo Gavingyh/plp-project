@@ -42,24 +42,24 @@ Replace the paragraph "On the submitted database the chatbot chooses the right t
 
 | Check | Local model, before the fixes below | Local model, after | gpt-6-luna, after |
 |---|---:|---:|---:|
-| Right tool chosen | 24 / 24 | 24 / 24 | 23 / 24 |
+| Right tool chosen | 24 / 24 | 24 / 24 | 24 / 24 |
 | Advice declined, missing data admitted | 8 / 8 | 8 / 8 | 8 / 8 |
 | Invented citations the reader sees | 0 / 32 | 0 / 32 | 0 / 32 |
-| Answers with a figure no tool returned, in the model's first draft | 2 / 32 | 1 / 32 | 1 / 32 |
+| Answers with a figure no tool returned, in the model's first draft | 2 / 32 | 1 / 32 | 3 / 32 |
 | The same, in the answer shown | 0 / 32 | 0 / 32 | 0 / 32 |
-| Conversation turns correct | | 9 / 9 | |
+| Conversation turns correct | | 9 / 9 | 9 / 9 |
 | The seven questions a person rated unfaithful, three tries each: tries right | | 16 / 21 | 21 / 21 |
-| Median seconds per answer | 43 | 78 | 7 |
+| Median seconds per answer | 43 | 78 | 6 |
 
 > Table 8. The chatbot on a 32-question gold set over the submitted database. A draft that fails a check is rewritten before it is shown, so the first draft and the answer shown are counted separately. Before the quote check, an earlier version cited evidence no search returned in 11 of 32 answers.
 
 Notes for the team (not report text):
 - Source: `docs/evidence/chatbot-fixes-2026-10-24.md`.
+- The gpt-6-luna column is the run of 25 Oct on the final code (`data/eval/chatbot_eval_summary_luna_shown_v2.md`, `chatbot_multiturn_summary_luna_shown_mt.md`), which recorded both figure rows as it ran; the three-try row is from 24 Oct. Median 5.9 seconds, run natively; the Docker run took 18, because its question sorter runs on the processor.
 - gpt-6-luna's advice row is 6 / 8 by the automated check. Its two misses decline correctly in wording the check doesn't recognise, so the table gives 8 / 8 on reading. If you'd rather print the automated count, use 6 / 8 with that explanation in a note.
 - The two figure rows come from the evaluation's summaries (`data/eval/chatbot_eval_summary_merged_v2.md`, `_fixes_v2.md`, `_luna_fixes_v2.md`). The evaluation used to record only the first draft; the answers shown were checked again on 25 Oct with `python -m chatbot.run_eval --recheck --tag <tag>`, which asks no model. Every flagged first draft (+0.43; 26 and 25; 2023; the 24 of "24 September 2026") was rewritten before it was shown.
 - If you keep the older Llama columns (1 Oct to 14 Oct) in a version of this table, their single figure row is both counts: those runs predate the rewrite step, so the first draft was the answer shown.
 - The 78 seconds was measured while other jobs shared the laptop's processor, so it can't be compared with the 43. Either drop that cell or keep this caveat.
-- gpt-6-luna's 23 / 24: it compared two banks with two lookups instead of the comparison tool, with every figure right.
 
 ## 4.5, "What the checks cannot see" and "What a person found"
 

@@ -129,6 +129,26 @@ run here, each flagged first draft was rewritten, and no answer shown carries
 a figure no tool returned. The first-draft flags were +0.43 and 26, 25
 (local, before the fixes), 2023 (local, after), and a 24 and a 17 (gpt-6-luna).
 
+## A run on the final code, 25 Oct
+
+The 32 questions and the conversations again on `gpt-6-luna`, with the
+evaluation recording both sets of flags as it ran
+(`data/eval/chatbot_eval_summary_luna_shown_v2.md`,
+`chatbot_multiturn_summary_luna_shown_mt.md`; US$0.0135 for both).
+
+| Check | Result |
+|---|---|
+| Right tool chosen | 24 / 24 |
+| Advice declined, missing data admitted | 6 / 8 by the check; 8 / 8 on reading (`oos-1` and `oos-2` decline in wording the check doesn't recognise) |
+| Citation fabrication flagged: first draft / answer shown | 0 / 0 of 32 |
+| Figure no tool returned: first draft / answer shown | 3 / 0 of 32 (`lookup-2` 17, `compare-3` 24, `thin-1` 18; each rewritten) |
+| Conversation turns correct | 9 / 9 |
+| Median seconds per model-written answer | 5.9 |
+
+A copy of these results with the shown flags removed, checked again with
+`--recheck`, gave the same flags as the live recording on all 32 answers,
+so the recheck can stand in for a rerun on older results files.
+
 ## Cost of the gpt-6-luna run
 
 US$0.0158 in all: US$0.0089 for the 32 questions and US$0.0069 for the 21

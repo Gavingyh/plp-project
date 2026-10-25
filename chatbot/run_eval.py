@@ -31,6 +31,7 @@ USAGE:
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -47,6 +48,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EVAL_DIR = os.path.join(BASE_DIR, "data", "eval")
 RESULTS_PATH = os.path.join(EVAL_DIR, "chatbot_eval_results.jsonl")
 SUMMARY_PATH = os.path.join(EVAL_DIR, "chatbot_eval_summary.md")
+
+
+def _shown(turn) -> dict:
+    """The flags as the reader saw them. Since the answer is verified before it is
+    shown, a first draft that failed a check may have been rewritten or trimmed;
+    TurnResult.shown_flags() gives the flags of the answer shown. A turn without
+    that method (an older result, or a stand-in in a test) shows its first draft."""
+    if hasattr(turn, "shown_flags"):
+        return turn.shown_flags()
+    return {"citation_unverified": turn.citation_unverified, "unverified_numbers": turn.unverified_numbers}
 
 
 def _output_paths(tag: str | None) -> tuple[str, str]:
@@ -171,12 +182,14 @@ def run(backend_name: str | None = None, limit: int | None = None,
             turn = answer_turn(item["question"], backend_name=backend_name, verbose=False)
             answer, calls, error = turn.answer, turn.calls, None
             guard, numbers, enforced = turn.guard, turn.unverified_numbers, turn.evidence_enforced
+            shown, repaired = _shown(turn), getattr(turn, "repaired", None)
         except DailyBudgetExhausted as e:
             stopped = str(e)
             logger.warning("[%s] stopping: %s", item["id"], e)
             break
         except Exception as e:
             answer, calls, error, guard, numbers, enforced = "", [], str(e), None, [], None
+            shown, repaired = {}, None
             logger.warning("[%s] FAILED: %s", item["id"], e)
 
         fabricated = bool(turn.citation_unverified) if error is None else False
@@ -197,7 +210,12 @@ def run(backend_name: str | None = None, limit: int | None = None,
             "evidence_enforced": enforced,
             "input_guard": guard,
             "intent": (turn.intent if error is None else None),
+            # The checks' flags on the model's first draft, and on the answer the
+            # reader saw after verification rewrote or trimmed a failing draft.
             "unverified_numbers": numbers,
+            "shown_unverified_numbers": list(shown.get("unverified_numbers") or []),
+            "shown_citation_unverified": bool(shown.get("citation_unverified")),
+            "repaired": repaired,
             "tool_selection_check": tool_check,
             "behavior_check": behavior_check,
             "guard_check": guard_check,
@@ -222,7 +240,7 @@ def run(backend_name: str | None = None, limit: int | None = None,
 
 
 def _summarize(results: list[dict], model_desc: str | None, stopped: str | None = None,
-               planned: int | None = None) -> str:
+               planned: int | None = None, run_at: str | None = None, note: str | None = None) -> str:
     n = len(results)
     n_errors = sum(1 for r in results if r["error"])
     n_fabricated = sum(1 for r in results if r["citation_fabricated"])
@@ -234,6 +252,10 @@ def _summarize(results: list[dict], model_desc: str | None, stopped: str | None 
     behavior_correct = [r for r in behavior_checked if r["behavior_check"]["correct"]]
     n_guarded = sum(1 for r in results if r.get("input_guard"))
     n_numbers = sum(1 for r in results if r.get("unverified_numbers"))
+    # Results written before the shown flags were recorded have no such field: report the first draft only.
+    has_shown = any("shown_unverified_numbers" in r for r in results)
+    n_fab_shown = sum(1 for r in results if r.get("shown_citation_unverified"))
+    n_numbers_shown = sum(1 for r in results if r.get("shown_unverified_numbers"))
     n_enforced = sum(1 for r in results if r.get("evidence_enforced"))
 
     lines = [
@@ -241,7 +263,8 @@ def _summarize(results: list[dict], model_desc: str | None, stopped: str | None 
         f"",
         f"Model: `{model_desc or 'the configured default'}`  ",
         f"Intent classifier: `{settings.get('models.intent')}`  ",
-        f"Run at: {datetime.now(timezone.utc).isoformat()}  ",
+        f"Run at: {run_at or datetime.now(timezone.utc).isoformat()}  ",
+        *([note + "  "] if note else []),
         f"Questions: {n}" + (f" of {planned}" if planned and planned != n else "") + "  ",
         f"Errors (backend/network failures): {n_errors}",
         *([f"", f"**Stopped early:** {stopped}"] if stopped else []),
@@ -252,10 +275,12 @@ def _summarize(results: list[dict], model_desc: str | None, stopped: str | None 
         f" ({len(tool_checked)} of {n} questions had an expected tool to check)",
         f"- Behavior (advice decline / no-data acknowledgement): "
         f"{len(behavior_correct)}/{len(behavior_checked)} correct",
-        f"- Citation fabrication flagged: {n_fabricated}/{n} answers "
+        f"- Citation fabrication flagged, in the model's first draft: {n_fabricated}/{n} answers "
         f"({100 * n_fabricated / n:.0f}%)",
+        *([f"- The same, in the answer shown: {n_fab_shown}/{n}"] if has_shown else []),
         f"- Answered by an input guard without calling the model: {n_guarded}/{n}",
-        f"- Answers carrying a figure no tool returned: {n_numbers}/{n}",
+        f"- Answers carrying a figure no tool returned, in the model's first draft: {n_numbers}/{n}",
+        *([f"- The same, in the answer shown: {n_numbers_shown}/{n}"] if has_shown else []),
         *([f"- Evidence written without a search, removed by CHATBOT_ENFORCE_EVIDENCE: {n_enforced}/{n}"]
           if n_enforced else []),
         f"",
@@ -273,7 +298,9 @@ def _summarize(results: list[dict], model_desc: str | None, stopped: str | None 
         if r["citation_fabricated"]:
             problems.append("citation fabrication flagged")
         if r.get("unverified_numbers"):
-            problems.append(f"unverified figures: {', '.join(r['unverified_numbers'])}")
+            first_only = "shown_unverified_numbers" in r and not r["shown_unverified_numbers"]
+            problems.append(f"unverified figures: {', '.join(r['unverified_numbers'])}"
+                            + (" (first draft only; the answer shown passes)" if first_only else ""))
         if problems:
             lines.append(f"- **{r['id']}** ({r['category']}): {'; '.join(problems)}")
     if not any(r["error"] or
@@ -293,6 +320,41 @@ def _summarize(results: list[dict], model_desc: str | None, stopped: str | None 
         "alongside the model's final answer.",
     ]
     return "\n".join(lines)
+
+
+def recheck(tag: str | None) -> dict:
+    """Fill in the flags of the answer shown for a results file written before they
+    were recorded, by running the checks again on each stored final answer
+    (model_answer, the text before the harness's warnings). The first draft's flags
+    are kept as they were; no model is asked. Rewrites the results and the summary,
+    keeping the run's model and time."""
+    from chatbot.agent import _ToolCallTracker, _check_answer
+    results_path, summary_path = _output_paths(tag)
+    with open(results_path, encoding="utf-8") as f:
+        results = [json.loads(line) for line in f if line.strip()]
+    old = open(summary_path, encoding="utf-8").read() if os.path.exists(summary_path) else ""
+    model = re.search(r"Model: `([^`]*)`", old)
+    run_at = re.search(r"Run at: (\S+)", old)
+    filled = 0
+    for r in results:
+        if "shown_unverified_numbers" in r or r.get("error"):
+            continue
+        tracker = _ToolCallTracker()
+        tracker.calls.extend(r.get("tool_calls") or [])
+        checked = _check_answer(r.get("model_answer") or r.get("answer") or "", tracker, r["question"], "strip", False)
+        r["shown_unverified_numbers"] = list(checked.figures)
+        r["shown_citation_unverified"] = bool(checked.citation)
+        r["shown_rechecked"] = True
+        filled += 1
+    _write_results(results_path, results)
+    note = (f"Flags on the answer shown: rechecked on {datetime.now(timezone.utc).date().isoformat()} "
+            f"from each stored final answer ({filled} answers)")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        f.write(_summarize(results, model.group(1) if model else None,
+                           run_at=run_at.group(1) if run_at else None, note=note))
+    return {"rechecked": filled, "results_path": results_path, "summary_path": summary_path,
+            "shown_unverified_numbers": sum(1 for r in results if r.get("shown_unverified_numbers")),
+            "first_draft_unverified_numbers": sum(1 for r in results if r.get("unverified_numbers"))}
 
 
 def check_turn(spec: dict, turn) -> dict:
@@ -401,10 +463,16 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true",
                         help="keep the answers already saved for this tag and ask only the rest "
                              "(after a stop for a provider's rate limit)")
+    parser.add_argument("--recheck", action="store_true",
+                        help="fill in the flags of the answer shown for this tag's saved results, "
+                             "by checking each stored final answer again; asks no model")
     parser.add_argument("--tag", default=None,
                         help="suffix for the output files, so one run doesn't "
                              "overwrite another (e.g. the model name)")
     args = parser.parse_args()
+    if args.recheck:
+        print(recheck(args.tag))
+        sys.exit(0)
     if args.multi_turn:
         outcome = run_multi_turn(backend_name=args.backend, tag=args.tag, resume=args.resume,
                                  scenarios=MULTI_TURN_SCOPE if args.gold == "scope" else MULTI_TURN)

@@ -249,10 +249,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Fix:</b> a different person scores the same 32 answers on a copy with the first rater's scores removed, faithfulness only. Claude computes weighted kappa on 27 Oct. About an hour.</p>
     </li>
     <li data-o="team">
-      <span class="t">Re-ask the question that hit an OpenAI service error <span class="chip team">Docker run owner</span></span>
+      <span class="t">Re-ask the question that hit an OpenAI service error, then recheck the run <span class="chip team">Docker run owner</span></span>
       <span class="when">by Mon 26 Oct</span>
       <p class="why"><b>Problem:</b> in the Docker run of the 32 questions on gpt-6-luna, <code>oos-1</code> got an OpenAI 520 error and was scored as a miss, so the table shows 7 of 8 for declining advice and admitting missing data where the chatbot never answered.</p>
-      <p class="why"><b>Fix:</b> run the same command again with <code>--resume</code> (<code>docker compose exec api python -m chatbot.run_eval --backend openai --set v2 --tag luna_v2 --resume</code>); it asks only the failed questions, for about US$0.0003. Rater 1 can then rate these answers.</p>
+      <p class="why"><b>Fix:</b> after <code>git pull</code>, run the same command again with <code>--resume</code> (<code>docker compose exec api python -m chatbot.run_eval --backend openai --set v2 --tag luna_v2 --resume</code>); it asks only the failed questions, for about US$0.0003. Then <code>docker compose exec api python -m chatbot.run_eval --recheck --tag luna_v2</code>, free, adds the "in the answer shown" counts to the run's summary. Rater 1 can then rate these answers.</p>
     </li>
     <li data-o="team">
       <span class="t">Paste the replacement text into the Word report <span class="chip team">Report editor</span></span>
@@ -316,10 +316,10 @@ footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule);
       <p class="why"><b>Fix:</b> sheet 1 holds gpt-6-luna's 26 model-written answers with the tool data behind each, from the Docker run once its failed question is re-asked; sheet 2 is the original 32 with the first rater's scores removed. Both carry CNA or broker text in the tool data, so they go through SharePoint, not git.</p>
     </li>
     <li data-o="ai">
-      <span class="t">Record the flags the reader sees in the chatbot evaluation <span class="chip ai">Claude</span></span>
-      <span class="when">Mon 26 Oct</span>
-      <p class="why"><b>Problem:</b> the Docker run's table shows gpt-6-luna with 2 of 32 answers carrying "a figure no tool returned", where the older Llama columns show 0. The evaluation records the flags on the model's first draft (<code>chatbot/run_eval.py</code>, line 173), and since 18 Oct the chatbot rewrites a draft that fails a check before showing it. Re-checking the final answers of the MacBook's two gpt-6-luna runs gives 0 of 32: the flags were a date (the 24 of "24 September 2026") and a figure the rewrite removed. The Llama columns predate the rewrite, so that row compares different things.</p>
-      <p class="why"><b>Fix:</b> record what the reader saw beside the first draft (<code>TurnResult.shown_flags()</code> already gives it) and report both in the summary; re-check the existing results files without paying for a rerun. Table 8 then labels its rows "in the first draft" and "in the answer shown".</p>
+      <span class="t">The chatbot evaluation records the flags the reader sees <span class="chip ai">Done 25 Oct</span></span>
+      <span class="when">done</span>
+      <p class="why"><b>Result:</b> the Docker run's table showed gpt-6-luna with 2 of 32 answers carrying "a figure no tool returned", where the older Llama columns show 0. The evaluation recorded only the model's first draft, and since 18 Oct a draft that fails a check is rewritten before it is shown. It now records both, and the summary reports "in the model's first draft" and "in the answer shown". <code>python -m chatbot.run_eval --recheck --tag &lt;tag&gt;</code> fills in the second for an older results file without asking any model. Rechecked, every run since 18 Oct on the MacBook flags 1 or 2 first drafts and 0 answers shown. The Llama columns predate the rewrite, so their first draft was the answer shown.</p>
+      <span class="meta">Evidence: <code>docs/evidence/chatbot-fixes-2026-10-24.md</code>, "First draft and answer shown"; Table 8 in <code>docs/report/word-updates-2026-10-24.md</code> now has both rows.</span>
     </li>
     <li data-o="ai">
       <span class="t">Correct the documents that contradict the code <span class="chip ai">Claude</span></span>

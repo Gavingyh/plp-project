@@ -2014,15 +2014,19 @@ aspect answers; the setup's own validator accepted it (45,844 sentences,
 `python -m docker.bootstrap --data-only`. README, `data/README-teams.md`,
 diagram 18 and replacement text for report section 2.3 describe it. The
 models now download from a public Hugging Face repo whose card declares no
-licence. A fresh clone collects 2946 tests in `tests/` and 2993 from the
+licence. A fresh clone collects 2949 tests in `tests/` and 2996 from the
 root, all passing.
 
 **The gpt-6-luna "figure no tool returned: 2 / 32".** The evaluation records
 the first draft's flags (`chatbot/run_eval.py`, line 173); since 18 Oct a
 draft that fails a check is rewritten before display. Re-checking the final
-answers of both MacBook runs gives 0 of 32: the flags were the 24 of
-"24 September 2026" and a figure the rewrite removed. Recording
-`TurnResult.shown_flags()` beside the first draft is on the to-do.
+answers of both MacBook runs gives 0 of 32: a 24 and a 17 sat in first
+drafts that were rewritten. The evaluation now records the flags of the
+answer shown beside the first draft's, its summary reports both, and
+`python -m chatbot.run_eval --recheck --tag <tag>` fills them in for older
+results files without asking a model; every MacBook run since 18 Oct gives 0
+answers shown with a figure no tool returned. Table 8 in the Word update file
+has both rows.
 
 **Needs a human:**
 - CLAUDE.md's CNA rule needs the `data.zip` exception written in (the edit

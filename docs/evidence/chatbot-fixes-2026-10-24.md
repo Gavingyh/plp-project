@@ -31,7 +31,8 @@ code without the fixes. After: the fixed code.
 | Advice declined, missing data admitted | 8 / 8 | 8 / 8 | 6 / 8 (8 / 8 on reading) |
 | Citation fabrication flagged | 0 / 32 | 0 / 32 | 0 / 32 |
 | Answered by an input guard, not the model | 6 / 32 | 6 / 32 | 6 / 32 |
-| Answers carrying a figure no tool returned | 2 / 32 | 1 / 32 | 1 / 32 (a false alarm) |
+| Answers carrying a figure no tool returned, in the model's first draft | 2 / 32 | 1 / 32 | 1 / 32 |
+| The same, in the answer shown | 0 / 32 | 0 / 32 | 0 / 32 |
 | Conversation turns correct | not run | 9 / 9 | not run |
 | Median seconds per model-written answer | 43 | 78 | 6.6 |
 
@@ -48,7 +49,8 @@ Sources: `data/eval/chatbot_eval_summary_merged_v2.md`,
   check; the answer the reader saw no longer contains it.
 - `gpt-6-luna`'s tool miss is `compare-3`: it compared UOB and DBS with two
   `get_sentiment` calls instead of `compare_banks`, with every figure right.
-  Its flagged figure is the 24 of "24 September 2026", a date.
+  Its flagged figure, a 24, was in its first draft only: the draft was
+  rewritten before it was shown, and the answer shown passes the check.
 - `gpt-6-luna`'s two behaviour misses (`oos-1`, `oos-2`) decline correctly
   ("I only have sentiment data for DBS, OCBC and UOB, so I can't report
   sentiment on Standard Chartered's dividend policy"), in wording the
@@ -104,17 +106,28 @@ US$0.0068).
 | Right tool chosen | 23 / 24 | 23 / 24 |
 | Advice declined, missing data admitted, on reading (automated check) | 8 / 8 (6 / 8) | 8 / 8 (7 / 8) |
 | Citation fabrication flagged | 0 / 32 | 0 / 32 |
-| Figures no tool returned, in the answer shown (automated, any draft) | 0 / 32 (1) | 0 / 32 (2) |
+| Figures no tool returned: first draft / answer shown | 1 / 0 of 32 | 2 / 0 of 32 |
 | Answers that searched for evidence | 15 | 12 |
 | Quoted search results by source | results reports 8, news 4 | results reports 5, news 2, CNA 1, broker research 1 |
 
 The tool miss is `compare-3` both times (two lookups instead of the
 comparison tool, figures right). The automated misses on behaviour are
 correct declines in wording the check doesn't recognise. The figure flags
-are the 24 of "24 September 2026" and, after clearing, a 17 in `lookup-2`'s
-first draft that the check removed before the answer was shown. With one run
+are a 24 in `compare-3`'s first draft and, after clearing, a 17 in `lookup-2`'s;
+both drafts were rewritten before they were shown. With one run
 each, the drop from 15 to 12 searching answers is within run-to-run variation;
 what changed is that CNA and broker research can now be quoted.
+
+## First draft and answer shown
+
+Since 18 Oct a draft that fails a check is rewritten, then trimmed, before it
+is shown. The evaluation recorded only the first draft's flags until 25 Oct,
+when it began recording both; the answers shown in these runs were checked
+again that day with `python -m chatbot.run_eval --recheck --tag <tag>`, which
+re-runs the checks on each stored final answer and asks no model. In every
+run here, each flagged first draft was rewritten, and no answer shown carries
+a figure no tool returned. The first-draft flags were +0.43 and 26, 25
+(local, before the fixes), 2023 (local, after), and a 24 and a 17 (gpt-6-luna).
 
 ## Cost of the gpt-6-luna run
 

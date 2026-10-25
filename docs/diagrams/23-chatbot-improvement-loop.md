@@ -41,7 +41,7 @@ Each row names the file and line an element comes from, and the text that line m
 | element | source | symbol checked |
 |---|---|---|
 | gold set v2 | `chatbot/eval_gold_set.py:121` | `GOLD_SET_V2 = ` |
-| conversations | `chatbot/run_eval.py:314` | `def run_multi_turn(` |
+| conversations | `chatbot/run_eval.py:376` | `def run_multi_turn(` |
 | random baseline for retrieval | `chatbot/retrieval_eval.py:57` | `def random_baseline(` |
 | citation flag | `chatbot/agent.py:938` | `def answer_has_unverified_citation(self, answer: str) -> bool:` |
 | strip evidence written without a search | `chatbot/agent.py:2005` | `def strip_unsearched_evidence(answer: str) -> str:` |

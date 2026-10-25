@@ -3,6 +3,7 @@
 Model: `OpenAIBackend / gpt-6-luna`  
 Intent classifier: `llama3.1:8b`  
 Run at: 2026-10-24T10:24:09.714682+00:00  
+Flags on the answer shown: rechecked on 2026-10-25 from each stored final answer (32 answers)  
 Questions: 32  
 Errors (backend/network failures): 0
 
@@ -10,15 +11,17 @@ Errors (backend/network failures): 0
 
 - Tool selection: 23/24 correct (24 of 32 questions had an expected tool to check)
 - Behavior (advice decline / no-data acknowledgement): 7/8 correct
-- Citation fabrication flagged: 0/32 answers (0%)
+- Citation fabrication flagged, in the model's first draft: 0/32 answers (0%)
+- The same, in the answer shown: 0/32
 - Answered by an input guard without calling the model: 6/32
-- Answers carrying a figure no tool returned: 2/32
+- Answers carrying a figure no tool returned, in the model's first draft: 2/32
+- The same, in the answer shown: 0/32
 - Evidence written without a search, removed by CHATBOT_ENFORCE_EVIDENCE: 1/32
 
 ## Failures needing a look
 
-- **lookup-2** (lookup): unverified figures: 17
-- **compare-3** (compare): tool selection: expected tool never called; unverified figures: 24
+- **lookup-2** (lookup): unverified figures: 17 (first draft only; the answer shown passes)
+- **compare-3** (compare): tool selection: expected tool never called; unverified figures: 24 (first draft only; the answer shown passes)
 - **oos-2** (out_of_scope): behavior: answered without declining or flagging no data
 
 ## Not automated: read the full transcript for these

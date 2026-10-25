@@ -3,6 +3,7 @@
 Model: `OllamaBackend / llama3.1:8b`  
 Intent classifier: `llama3.1:8b`  
 Run at: 2026-10-24T08:01:39.723335+00:00  
+Flags on the answer shown: rechecked on 2026-10-25 from each stored final answer (32 answers)  
 Questions: 32  
 Errors (backend/network failures): 0
 
@@ -10,14 +11,16 @@ Errors (backend/network failures): 0
 
 - Tool selection: 24/24 correct (24 of 32 questions had an expected tool to check)
 - Behavior (advice decline / no-data acknowledgement): 8/8 correct
-- Citation fabrication flagged: 0/32 answers (0%)
+- Citation fabrication flagged, in the model's first draft: 0/32 answers (0%)
+- The same, in the answer shown: 0/32
 - Answered by an input guard without calling the model: 6/32
-- Answers carrying a figure no tool returned: 2/32
+- Answers carrying a figure no tool returned, in the model's first draft: 2/32
+- The same, in the answer shown: 0/32
 
 ## Failures needing a look
 
-- **compare-1** (compare): unverified figures: +0.43
-- **trend-3** (trend): unverified figures: 26, 25
+- **compare-1** (compare): unverified figures: +0.43 (first draft only; the answer shown passes)
+- **trend-3** (trend): unverified figures: 26, 25 (first draft only; the answer shown passes)
 (none)
 
 ## Not automated: read the full transcript for these

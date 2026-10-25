@@ -42,8 +42,8 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
   steps on a copy.
 - **Stage files by path.** Never `git add -A` or `git add .`. Never stage
   `data/logs/plp.log` (tracked, but changes on every run). The database,
-  snapshots, embeddings, model weights, caches and `.env` are gitignored;
-  keep them that way. Labels and evaluation results under `data/labeled/`
+  snapshots, the dataset `data/data.zip`, embeddings, model weights, caches
+  and `.env` are gitignored; keep them that way. Labels and evaluation results under `data/labeled/`
   and `data/eval/` are tracked.
 - **Never edit `.env`.** It holds API keys.
 - **No personal names** anywhere in the repository: code, docs, commit
@@ -54,10 +54,12 @@ scripts/start.sh | scripts/stop.sh | scripts/status.sh         # API and dashboa
   classification or judging. (The Gemini backend, with the same rule, was
   removed on 24 Oct 2026.)
 - **CNA articles (`data/cna/`) stay within the team.** Never commit or share
-  them. One exception, agreed by the team on 24 Oct 2026: the chatbot's
-  hosted model may receive CNA and broker-research sentences to quote
-  (`hosted_model` in `config/sources.yaml`). Reddit text is never sent to a
-  hosted model.
+  them. Two exceptions, agreed by the team: the dataset `data.zip`, built by
+  `scripts/share_bundle.sh` and given to the assessors with the project,
+  holds the CNA cache (25 Oct 2026); and the chatbot's hosted model may
+  receive CNA and broker-research sentences to quote (`hosted_model` in
+  `config/sources.yaml`, 24 Oct 2026). Reddit text is never sent to a hosted
+  model.
 - **Opus labels never replace the human labels.** They are an additional
   rater, kept in `data/labeled/llm_rater/`.
 - **`dashboard/` belongs to a teammate.** Don't edit it; report problems in

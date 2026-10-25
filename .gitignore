@@ -34,7 +34,9 @@ ingest/cna_articles.json
 .env
 
 # output of the scheduled daily batch (scripts/com.plp.dailybatch.plist)
-data/logs/daily_batch.log
+# Runtime logs: written on every run, and they hold local paths.
+data/logs/*
+!data/logs/.gitkeep
 
 # LLM aspect-classifier answer cache (aspects/llm_classify.py)
 data/aspect_llm/
@@ -52,3 +54,9 @@ CLAUDE.local.md
 /VALIDATION.md
 # requests sent to hosted chatbot providers in the last 24 hours (chatbot/ratelimit.py)
 data/ratelimit_state.json
+
+# Private notes and course material, kept on the owner's machine.
+.project-context/
+
+# Word copies of the report carry the team's names; the master lives on SharePoint
+docs/**/*.docx

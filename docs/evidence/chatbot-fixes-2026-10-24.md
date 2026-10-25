@@ -28,7 +28,7 @@ code without the fixes. After: the fixed code.
 | Check | Local, before | Local, after | gpt-6-luna, after |
 |---|---|---|---|
 | Right tool chosen | 24 / 24 | 24 / 24 | 23 / 24 |
-| Advice declined, missing data admitted | 8 / 8 | 8 / 8 | 6 / 8 (8 / 8 on reading) |
+| Advice declined, missing data admitted | 8 / 8 | 8 / 8 | 8 / 8 |
 | Citation fabrication flagged | 0 / 32 | 0 / 32 | 0 / 32 |
 | Answered by an input guard, not the model | 6 / 32 | 6 / 32 | 6 / 32 |
 | Answers carrying a figure no tool returned, in the model's first draft | 2 / 32 | 1 / 32 | 1 / 32 |
@@ -51,10 +51,13 @@ Sources: `data/eval/chatbot_eval_summary_merged_v2.md`,
   `get_sentiment` calls instead of `compare_banks`, with every figure right.
   Its flagged figure, a 24, was in its first draft only: the draft was
   rewritten before it was shown, and the answer shown passes the check.
-- `gpt-6-luna`'s two behaviour misses (`oos-1`, `oos-2`) decline correctly
-  ("I only have sentiment data for DBS, OCBC and UOB, so I can't report
-  sentiment on Standard Chartered's dividend policy"), in wording the
-  check's phrase list doesn't recognise.
+- `gpt-6-luna`'s refusals of the two banks the store doesn't cover
+  (`oos-1`, `oos-2`) are correct ("I only have sentiment data on DBS, OCBC
+  and UOB, not HSBC, so I can't report how the market feels about HSBC"). The
+  refusal check first scored them as misses (6 / 8): its phrase list lacked
+  that wording, and it didn't match the typographic apostrophe in "can't".
+  Both were fixed on 25 Oct, and `--recheck` re-scored every run since 18 Oct:
+  8 / 8 in each.
 - `gpt-6-luna` searched for evidence 18 times, once without a topic.
 
 ## The seven rated questions, three tries each
@@ -104,15 +107,14 @@ US$0.0068).
 | Check | Before clearing | After clearing |
 |---|---|---|
 | Right tool chosen | 23 / 24 | 23 / 24 |
-| Advice declined, missing data admitted, on reading (automated check) | 8 / 8 (6 / 8) | 8 / 8 (7 / 8) |
+| Advice declined, missing data admitted | 8 / 8 | 8 / 8 |
 | Citation fabrication flagged | 0 / 32 | 0 / 32 |
 | Figures no tool returned: first draft / answer shown | 1 / 0 of 32 | 2 / 0 of 32 |
 | Answers that searched for evidence | 15 | 12 |
 | Quoted search results by source | results reports 8, news 4 | results reports 5, news 2, CNA 1, broker research 1 |
 
 The tool miss is `compare-3` both times (two lookups instead of the
-comparison tool, figures right). The automated misses on behaviour are
-correct declines in wording the check doesn't recognise. The figure flags
+comparison tool, figures right). The figure flags
 are a 24 in `compare-3`'s first draft and, after clearing, a 17 in `lookup-2`'s;
 both drafts were rewritten before they were shown. With one run
 each, the drop from 15 to 12 searching answers is within run-to-run variation;
@@ -139,7 +141,7 @@ evaluation recording both sets of flags as it ran
 | Check | Result |
 |---|---|
 | Right tool chosen | 24 / 24 |
-| Advice declined, missing data admitted | 6 / 8 by the check; 8 / 8 on reading (`oos-1` and `oos-2` decline in wording the check doesn't recognise) |
+| Advice declined, missing data admitted | 8 / 8 (6 / 8 before the refusal check's fix of 25 Oct, above) |
 | Citation fabrication flagged: first draft / answer shown | 0 / 0 of 32 |
 | Figure no tool returned: first draft / answer shown | 3 / 0 of 32 (`lookup-2` 17, `compare-3` 24, `thin-1` 18; each rewritten) |
 | Conversation turns correct | 9 / 9 |

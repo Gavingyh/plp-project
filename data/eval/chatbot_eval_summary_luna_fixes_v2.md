@@ -3,14 +3,14 @@
 Model: `OpenAIBackend / gpt-6-luna`  
 Intent classifier: `llama3.1:8b`  
 Run at: 2026-10-24T10:05:23.777328+00:00  
-Flags on the answer shown: rechecked on 2026-10-25 from each stored final answer (32 answers)  
+Rechecked on 2026-10-25 from each stored answer: flags on the answer shown filled in for 0, refusal check changed for 1  
 Questions: 32  
 Errors (backend/network failures): 0
 
 ## Automated checks
 
 - Tool selection: 23/24 correct (24 of 32 questions had an expected tool to check)
-- Behavior (advice decline / no-data acknowledgement): 6/8 correct
+- Behavior (advice decline / no-data acknowledgement): 8/8 correct
 - Citation fabrication flagged, in the model's first draft: 0/32 answers (0%)
 - The same, in the answer shown: 0/32
 - Answered by an input guard without calling the model: 6/32
@@ -20,8 +20,6 @@ Errors (backend/network failures): 0
 ## Failures needing a look
 
 - **compare-3** (compare): tool selection: expected tool never called; unverified figures: 24 (first draft only; the answer shown passes)
-- **oos-1** (out_of_scope): behavior: answered without declining or flagging no data
-- **oos-2** (out_of_scope): behavior: answered without declining or flagging no data
 
 ## Not automated: read the full transcript for these
 

@@ -2014,7 +2014,7 @@ aspect answers; the setup's own validator accepted it (45,844 sentences,
 `python -m docker.bootstrap --data-only`. README, `data/README-teams.md`,
 diagram 18 and replacement text for report section 2.3 describe it. The
 models now download from a public Hugging Face repo whose card declares no
-licence. A fresh clone collects 2950 tests in `tests/` and 2997 from the
+licence. A fresh clone collects 2956 tests in `tests/` and 3003 from the
 root, all passing.
 
 **The gpt-6-luna "figure no tool returned: 2 / 32".** The evaluation records
@@ -2031,6 +2031,11 @@ gpt-6-luna with the final code (US$0.0135) recorded both as it ran: right
 tool 24 of 24, 3 first drafts and 0 answers shown with a figure no tool
 returned, 9 of 9 conversation turns, a median 5.9 seconds an answer; a
 recheck of a stripped copy matched the live record on all 32 answers.
+The refusal check scored gpt-6-luna's correct refusals of two uncovered
+banks as misses: it lacked their wording ("I only have sentiment data on
+DBS, OCBC and UOB…") and didn't match the typographic apostrophe in "can't".
+Both fixed; `--recheck` now re-scores the refusal check too, and every run
+since 18 Oct gives 8 of 8.
 
 **Needs a human:**
 - CLAUDE.md's CNA rule needs the `data.zip` exception written in (the edit

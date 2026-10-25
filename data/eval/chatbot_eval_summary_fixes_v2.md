@@ -3,7 +3,7 @@
 Model: `OllamaBackend / llama3.1:8b`  
 Intent classifier: `llama3.1:8b`  
 Run at: 2026-10-24T08:42:05.858806+00:00  
-Flags on the answer shown: rechecked on 2026-10-25 from each stored final answer (32 answers)  
+Rechecked on 2026-10-25 from each stored answer: flags on the answer shown filled in for 0, refusal check changed for 0  
 Questions: 32  
 Errors (backend/network failures): 0
 

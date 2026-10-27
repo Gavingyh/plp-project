@@ -143,7 +143,7 @@ evaluation recording both sets of flags as it ran
 | Right tool chosen | 24 / 24 |
 | Advice declined, missing data admitted | 8 / 8 (6 / 8 before the refusal check's fix of 25 Oct, above) |
 | Citation fabrication flagged: first draft / answer shown | 0 / 0 of 32 |
-| Figure no tool returned: first draft / answer shown | 3 / 0 of 32 (`lookup-2` 17, `compare-3` 24, `thin-1` 18; each rewritten) |
+| Figure no tool returned: first draft / answer shown | 3 / 0 of 32 flagged (`lookup-2` 17, `compare-3` 24, `thin-1` 18). Corrected 27 Oct: these were false alarms, not invented figures. Each recorded first draft differs from the answer shown only in citation format and the added period line, and `lookup-2`'s "17" occurs only inside a sentence ID |
 | Conversation turns correct | 9 / 9 |
 | Median seconds per model-written answer | 5.9 |
 

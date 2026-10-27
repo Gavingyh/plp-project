@@ -2117,3 +2117,41 @@ the model wrote. Faithfulness is required, relevance and correctness
 optional. The first rating sheet was the local `llama3.1:8b` run of
 14 Oct (`rescored2_v2`; 31 of 32 answers identical), not gpt-6-luna.
 - Needs a human: rate both sheets and commit the filled ones.
+
+### 27 October
+
+**Second human rating of the chatbot's answers.** A second team member rated
+both 32-answer sheets, deciding the scores and using an AI assistant to check
+facts against the tool data (rater column "rater 2 (AI-assisted
+fact-checking)"). Write-up: `docs/evidence/second-rating-2026-10-27.md`.
+- Earlier local-model answers (`ratings_sheet_blind_llama3.1-8b.csv`): the
+  same faithfulness score as the first rater on 31 of 32 (weighted kappa
+  0.96), the same seven marked unfaithful. The second rater knew the kinds
+  of fault, not which answers had them, so the agreement is probably high.
+- Final `gpt-6-luna` answers (new `ratings_sheet_gpt-6-luna_rater2.csv`; the
+  blank `ratings_sheet_gpt-6-luna.csv` is kept): 27 of 32 the same. The
+  second rater's one unfaithful mark (`lookup-7`) came from the sheet
+  showing Reddit text the hosted model had received as withheld.
+- Fault in the rating sheets: they show tool results before the hosted
+  model's privacy filter, so a rater cannot see what the model saw.
+
+**Correction.** The 3 first drafts the figure check flagged in the final-code
+run were false alarms, not invented figures (`lookup-2`'s "17" is inside a
+sentence ID). Corrected in `docs/README.md` and
+`docs/evidence/chatbot-fixes-2026-10-24.md`; the 25 October entry above
+keeps its old wording.
+
+**Report and video.** Edits for the report's chatbot sections, a fact-check
+of the other sections, and the chatbot part of the video script were drafted
+outside git. The fact-check found, among others: the report says two people
+labelled the training data (the labels are the LLM rater's); section 3.3
+names the wrong aspect model; one 4.1 figure is from the 299-sentence set;
+the 399 test sentences include 100 broker research rows, which the report
+doesn't say. New project skill `.claude/skills/talk-script/` for spoken
+scripts.
+
+**Needs a human:**
+- Type the report edits into the SharePoint master and send the fact-check
+  items to their sections' authors.
+- Decide the source-code cleanup for submission (a clean copy, or deletions
+  on `main`).

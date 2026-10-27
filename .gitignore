@@ -60,3 +60,4 @@ data/ratelimit_state.json
 
 # Word copies of the report carry the team's names; the master lives on SharePoint
 docs/**/*.docx
+working-folder
